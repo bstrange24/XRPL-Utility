@@ -37,8 +37,6 @@
                     <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
                     } }
 
-                    <app-transaction-options-section [activeTab]="tab"></app-transaction-options-section>
-
                     <app-transaction-options [showWhenTab]="['setPermissionedDomain', 'deletePermissionedDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
 
                     <!-- Action buttons -->

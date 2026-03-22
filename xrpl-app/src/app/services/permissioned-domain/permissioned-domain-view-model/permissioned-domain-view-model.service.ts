@@ -51,27 +51,28 @@ export class PermissionedDomainViewModelService {
                .map((obj: any) => {
                     return {
                          index: obj.index,
+                         // AcceptedCredentials: obj.AcceptedCredentials ?? [],
                          AcceptedCredentials: obj.AcceptedCredentials
-                              ? JSON.stringify(
-                                     obj.AcceptedCredentials.map(
-                                          (item: {
-                                               Credential: {
-                                                    CredentialType: any;
-                                                    Issuer?: string; // Assuming Issuer exists in the original data
-                                               };
-                                          }) => ({
-                                               ...item,
-                                               Credential: {
-                                                    ...item.Credential,
-                                                    CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
-                                                    Issuer: item.Credential.Issuer, // Adjust based on actual structure
-                                               },
-                                          })
-                                     ),
-                                     null,
-                                     '\t'
+                              ? // ? JSON.stringify(
+                                obj.AcceptedCredentials.map(
+                                     (item: {
+                                          Credential: {
+                                               CredentialType: any;
+                                               Issuer?: string; // Assuming Issuer exists in the original data
+                                          };
+                                     }) => ({
+                                          ...item,
+                                          Credential: {
+                                               ...item.Credential,
+                                               CredentialType: Buffer.from(item.Credential.CredentialType, 'hex').toString('utf8'),
+                                               Issuer: item.Credential.Issuer, // Adjust based on actual structure
+                                          },
+                                     })
                                 )
-                              : 'N/A',
+                              : //   null,
+                                //   '\t'
+                                //   )
+                                'N/A',
                          Owner: obj.Owner,
                          Sequence: obj.Sequence,
                     };
@@ -88,11 +89,9 @@ export class PermissionedDomainViewModelService {
 
      domainItems = computed(() => {
           return this.permissionedDomainStoreService.createdPermissionedDomains().map((domain: { index: string; AcceptedCredentials: string | any[] }) => ({
-               // return this.createdPermissionedDomains().map(domain => ({
                id: domain.index,
                display: domain.index.slice(0, 10) + '...' + domain.index.slice(-8),
                secondary: domain.AcceptedCredentials ? `Credentials: ${domain.AcceptedCredentials.length}` : 'No credentials',
-               // secondary: domain.index,
                isCurrentAccount: false,
                isCurrentCode: false,
                isCurrentToken: false,

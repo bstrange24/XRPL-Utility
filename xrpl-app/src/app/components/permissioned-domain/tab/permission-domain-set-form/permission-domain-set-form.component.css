@@ -1,0 +1,36 @@
+.domain-mode-selector {
+     margin-bottom: 1.5rem;
+}
+
+.radio-group.horizontal {
+     display: flex;
+     gap: 1.5rem;
+     flex-wrap: wrap;
+     margin-top: 0.5rem;
+}
+
+.radio-label {
+     display: flex;
+     gap: 0.5rem;
+     cursor: pointer;
+     font-weight: 500;
+     color: #333;
+}
+
+.radio-label.disabled {
+     color: #aaa;
+     cursor: not-allowed;
+}
+
+.radio-label .hint.no-domains {
+     font-size: 0.85rem;
+     color: #888;
+     margin-left: 0.5rem;
+     font-style: italic;
+}
+
+/* Optional: style the actual radio circles */
+input[type="radio"] {
+     accent-color: #007bff;
+     /* or your primary color */
+}

@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
@@ -28,8 +28,23 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
+     // in PermissionedDomainStoreService (or wherever you keep form state)
+     acceptedCredentials = signal<Array<{ issuer: string; credentialType: string }>>([]);
+
      constructor() {
           super();
+     }
+
+     addCredential(issuer: string, credType: string) {
+          this.acceptedCredentials.update(list => [...list, { issuer, credentialType: credType }]);
+     }
+
+     removeCredential(index: number) {
+          this.acceptedCredentials.update(list => list.filter((_, i) => i !== index));
+     }
+
+     resetCredentials() {
+          this.acceptedCredentials.set([]);
      }
 
      onDomainSelected(item: SelectItem | null) {

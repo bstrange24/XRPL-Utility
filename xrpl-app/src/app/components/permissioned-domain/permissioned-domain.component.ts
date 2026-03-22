@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
-import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -31,7 +30,6 @@ import { CredentialViewModelService } from '../../services/credentials/credentia
 import { PermissionedDomainViewModelService } from '../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { CredentialUtilService } from '../../services/credentials/credential-util/credential-util.service';
 import { PermissionedDomainStoreService } from '../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
-import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
@@ -43,12 +41,11 @@ import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-fo
 import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/permissioned-domain.constants';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
-import { ConnectionStatusComponent } from '../shared/conneciton-status/connection-status/connection-status.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, TransactionOptionsSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent, ConnectionStatusComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -112,7 +109,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                this.txUiService.resetCurrentStepToIdle();
                this.permissionedDomainStoreService.resetDomainDropDown();
 
-               // if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
@@ -135,18 +131,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           const currentTab = this.permissionedDomainViewModelService.activeTab();
           const wallet = this.currentWallet();
 
-          let issuerAddress: string | undefined;
-
-          if (currentTab === 'setPermissionedDomain') {
-               issuerAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-               if (!issuerAddress || !xrpl.isValidAddress(issuerAddress)) {
-                    this.toastService.error('Please enter a valid issuer address.', AppConstants.TOAST.ERROR);
-                    return;
-               }
-               this.permissionedDomainStoreService.setField('credentialIssuer', issuerAddress);
-          }
-
           let env: any = null;
           try {
                env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
@@ -155,7 +139,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     includeFee: true,
                     includeLedgerInfo: true,
                     includeServerInfo: true,
-                    ...(currentTab === 'setPermissionedDomain' ? { destinationAddress: issuerAddress } : {}),
                });
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
@@ -183,6 +166,14 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           const permissionedDomainState = this.permissionedDomainStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
+
+          if (currentTab === 'setPermissionedDomain') {
+               const credentials = permissionedDomainState.setAcceptedCredentials ?? [];
+               if (credentials.length === 0 || credentials.length > 10) {
+                    this.toastService.error(`Exactly 1–10 credentials required (got ${credentials.length})`, AppConstants.TOAST.ERROR);
+                    return;
+               }
+          }
 
           const config: PermissionDomainConfig = {
                permissionedDomain: permissionedDomainState,
@@ -214,10 +205,15 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
           if (!txResult) throw new Error('Unable error when submitting transaction.');
 
-          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, issuerAddress, this.permissionedDomainStoreService.credentialIssuer(), '');
+          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, '', this.permissionedDomainStoreService.credentialIssuer(), '');
           if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                this.permissionedDomainStoreService.resetDomainDropDown();
           }
+
+          // if (successFullTx && currentTab === 'setPermissionedDomain' && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+          // this.permissionDomainSetFormComponent?.clearAfterSuccess(); // if you expose it
+          // or inject and call directly if needed
+          // }
 
           this.txUiService.resetCurrentStepToIdle();
      }

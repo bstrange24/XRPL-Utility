@@ -121,7 +121,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
 
-               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);

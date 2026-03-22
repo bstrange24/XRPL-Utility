@@ -105,7 +105,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
 
-               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.prepareTxEnvironment({

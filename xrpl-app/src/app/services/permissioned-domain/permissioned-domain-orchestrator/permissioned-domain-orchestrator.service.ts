@@ -116,7 +116,7 @@ export class PermissionedDomainOrchestratorService extends PerformanceBaseCompon
 
           switch (type) {
                case 'setPermissionedDomain':
-                    return { ...base, permissionedDomainSet: { credentialType: permissionDomain.credentialType, subject: permissionDomain.credentialIssuer } };
+                    return { ...base, permissionedDomainSet: { setAcceptedCredentials: permissionDomain.setAcceptedCredentials } };
                case 'deletePermissionedDomain':
                     return { ...base, permissonedDomainDelete: { domainId: permissionDomain.selectedDomainId } };
           }

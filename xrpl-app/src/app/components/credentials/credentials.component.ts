@@ -119,7 +119,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                this.txUiService.resetCurrentStepToIdle();
                this.credentialStore.resetCredentailFields();
 
-               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);

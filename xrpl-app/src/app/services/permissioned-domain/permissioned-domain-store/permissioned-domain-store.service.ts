@@ -2,6 +2,7 @@ import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
 export interface PermissionedDomainState {
      createdPermissionedDomains: any[];
+     setAcceptedCredentials: any[];
      createdDomains: any[];
      selectedDomainId: string;
      credentialType: string;
@@ -14,6 +15,7 @@ export interface PermissionedDomainState {
 const initialState: PermissionedDomainState = {
      createdPermissionedDomains: [],
      createdDomains: [],
+     setAcceptedCredentials: [],
      selectedDomainId: '',
      credentialType: '',
      credentialIssuer: '',

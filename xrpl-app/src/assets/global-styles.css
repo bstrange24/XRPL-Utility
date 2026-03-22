@@ -1120,6 +1120,24 @@ input:focus+.slider {
      background: #dc2626;
 }
 
+.btn-add {
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     background-color: rgba(12, 34, 235, 0.7);
+     color: white;
+}
+
+.btn-add:hover {
+     background: linear-gradient(135deg, #2e7bff 50%, #045afb 100%);
+     background-color: rgba(12, 34, 235, 0.7);
+     color: white;
+}
+
+.btn-add.btn-sm {
+     padding: 6px;
+     border-radius: 8px;
+     margin-bottom: 0.95em;
+}
+
 .button-row {
      display: flex;
      gap: 0.75rem;

@@ -827,16 +827,79 @@ export class ValidationService {
           // PermissionedDomainSet Actions
           this.registerRule({
                transactionType: 'PermissionedDomainSet',
-               requiredFields: ['permissionedDomainSet.subject', 'permissionedDomainSet.credentialType'],
+               requiredFields: ['permissionedDomainSet.setAcceptedCredentials'],
                validators: [
                     this.walletCredentialRequired(),
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Destination address valid
-                    this.isValidAddress('permissionedDomainSet.subject'),
-                    // this.notSelf('senderAddress', 'subject.address'),
-                    this.requireDestinationTagIfNeeded('permissionedDomainSet'),
+                    ctx => {
+                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                         console.log('Credentials: ', credentials);
+
+                         if (credentials.length === 0 || credentials.length > 10) {
+                              return `Exactly 1–10 credentials required (got ${credentials.length})`;
+                         }
+
+                         const credentialTypes = credentials.map((c: { credentialType: any }) => c.credentialType);
+                         const duplicates = credentialTypes.filter((id: any, index: any) => credentialTypes.indexOf(id) !== index);
+                         if (duplicates.length > 0) {
+                              return `Duplicate credential Type found: ${duplicates.join(', ')}`;
+                         }
+
+                         for (const credential of credentials) {
+                              if (!credential.credentialType || !credential.issuer) {
+                                   return 'Each credential must have both credential Type and issuer';
+                              }
+                              // if (credential.credentialID.length > 64) {
+                              //      return `Credential ID too long: ${credential.credentialID}`;
+                              // }
+                         }
+
+                         return null;
+                    },
+
+                    ctx => {
+                         const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
+                         if (domainId && domainId.length > 256) {
+                              return 'Domain ID exceeds maximum length of 256 characters';
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                         for (const credential of credentials) {
+                              if (credential.issuer && !xrpl.isValidClassicAddress(credential.issuer)) {
+                                   return `Invalid issuer address format for credential: ${credential.credentialType}`;
+                              }
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
+                         const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
+
+                         if (domainId && existingDomains?.some((domain: { DomainID: any }) => domain.DomainID === domainId)) {
+                              return `Permissioned Domain with ID ${domainId} already exists. Use modify operation instead.`;
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                         const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
+
+                         if (existingDomains) {
+                              const usedCredentials = new Set(existingDomains.flatMap((domain: { Credentials: any[] }) => domain.Credentials?.map(c => c.CredentialID) || []));
+                              const duplicates = credentials.filter((c: { credentialID: any }) => usedCredentials.has(c.credentialID));
+                              if (duplicates.length > 0) {
+                                   return `Credentials already used in other domains: ${duplicates.map((c: { credentialID: any }) => c.credentialID).join(', ')}`;
+                              }
+                         }
+                         return null;
+                    },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
@@ -1420,7 +1483,6 @@ export class ValidationService {
                          return null;
                     },
 
-                    // Domain: valid hex or empty (to clear)
                     // Domain validation – accepts plain text or hex
                     ctx => {
                          const domainInput = ctx.inputs['updateMetaData']?.domain?.trim();
@@ -1481,70 +1543,6 @@ export class ValidationService {
                ],
           });
 
-          // UpdateMetaData Actions
-          // this.registerRule({
-          //      transactionType: 'UpdateMetaData',
-          //      requiredFields: [],
-          //      validators: [
-          //           this.walletCredentialRequired(),
-
-          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
-
-          //           ctx => {
-          //                if (ctx.inputs['updateMetaData']['tickSize'] === '' && ctx.inputs['updateMetaData']['transferRate'] === '' && ctx.inputs['updateMetaData']['domain'] === '') {
-          //                     return 'Enter meta data values to be modified.';
-          //                }
-          //                return null;
-          //           },
-
-          //           ctx => {
-          //                if (ctx.inputs['updateMetaData']['tickSize']) {
-          //                     const tickSize = Number.parseInt(ctx.inputs['updateMetaData']['tickSize']);
-          //                     if (tickSize == 0) {
-          //                          return null;
-          //                     }
-
-          //                     if (tickSize < 3 || tickSize > 15) {
-          //                          return 'Invalid tick size. The tick size valid values are 3 to 15 inclusive, or 0 to disable';
-          //                     }
-          //                }
-          //                return null;
-          //           },
-
-          //           ctx => {
-          //                if (ctx.inputs['updateMetaData']['transferRate']) {
-          //                     try {
-          //                          const transferRate = percentToTransferRate(ctx.inputs['updateMetaData']['transferRate'] + '%');
-
-          //                          if (transferRate === 0) {
-          //                               return null;
-          //                          }
-
-          //                          if (transferRate < 1000000000 || transferRate > 2000000000) {
-          //                               return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
-          //                          }
-          //                     } catch (error) {
-          //                          console.error('Error parsing transfer rate:', error);
-          //                          return `Invalid transfer rate. Must be between 0% (no fee) and 100% inclusive.`;
-          //                     }
-          //                }
-          //                return null;
-          //           },
-
-          //           // Master key disabled → must use Regular Key or Multi-Sign
-          //           this.masterKeyDisabledRequiresAltSigning(),
-
-          //           // Ticket validation
-          //           this.ticketValidation(),
-
-          //           // Regular Key signing requirements (only if selected and not multi-signing)
-          //           ...this.regularKeySigningValidation(),
-
-          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
-          //           this.multiSign(),
-          //      ],
-          // });
-
           // SetDepositAuthAccounts Actions
           this.registerRule({
                transactionType: 'SetDepositAuthAccounts',
@@ -1589,7 +1587,7 @@ export class ValidationService {
                          const entries = ctx.inputs['modifyDepositAuth']?.depsositAuthEntries || [];
                          const seen = new Set<string>();
 
-                         for (const [index, entry] of entries.entries()) {
+                         for (const [_index, entry] of entries.entries()) {
                               const addr = entry?.Account?.trim();
                               if (addr && seen.has(addr)) {
                                    return `Duplicate address detected: ${addr} (appears multiple times in the list).`;
@@ -1629,44 +1627,6 @@ export class ValidationService {
                     this.multiSign(),
                ],
           });
-
-          // SetDepositAuthAccounts Actions
-          // this.registerRule({
-          //      transactionType: 'SetDepositAuthAccounts',
-          //      requiredFields: [],
-          //      validators: [
-          //           this.walletCredentialRequired(),
-
-          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
-
-          //           ctx => {
-          //                // Validate each address
-          //                for (const authorizedAddress of ctx.inputs['modifyDepositAuth'].depsositAuthEntries) {
-          //                     // Check for existing preauthorization
-          //                     const alreadyAuthorized = ctx.inputs['network']['accountObjects'].result.account_objects.some((obj: any) => obj.Authorize === authorizedAddress.Account);
-          //                     if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'Y' && alreadyAuthorized) {
-          //                          return `Preauthorization already exists for ${authorizedAddress.Account} (tecDUPLICATE).\nUse Unauthorize to remove.`;
-          //                     }
-          //                     if (ctx.inputs['modifyDepositAuth']['authorizeFlag'] === 'N' && !alreadyAuthorized) {
-          //                          return `No preauthorization exists for ${authorizedAddress.Account}`;
-          //                     }
-          //                }
-          //                return null;
-          //           },
-
-          //           // Master key disabled → must use Regular Key or Multi-Sign
-          //           this.masterKeyDisabledRequiresAltSigning(),
-
-          //           // Ticket validation
-          //           this.ticketValidation(),
-
-          //           // Regular Key signing requirements (only if selected and not multi-signing)
-          //           ...this.regularKeySigningValidation(),
-
-          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
-          //           this.multiSign(),
-          //      ],
-          // });
 
           // SetMultiSign Actions
           this.registerRule({

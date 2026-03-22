@@ -104,7 +104,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                this.txUiService.resetCurrentStepToIdle();
                this.accountConfiguratorStoreService.setField('configurationType', null);
 
-               if (!this.walletManagerService.ensureWalletSelected()) throw new Error('Unable to get selected wallet.');
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
