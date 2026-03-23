@@ -5,6 +5,8 @@ import { PerformanceBaseComponent } from '../../components/shared/performance-ba
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { Wallet } from '../wallets/manager/wallet-manager.service';
 import { percentToTransferRate } from 'xrpl';
+import { PermissionedDomainStoreService } from '../permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
+import { CredentialStore } from '../credentials/credential-store/credential-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -12,6 +14,8 @@ import { percentToTransferRate } from 'xrpl';
 export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+     public readonly credentialStore = inject(CredentialStore);
 
      async setTxOptionalFields(client: xrpl.Client, tx: any, wallet: Wallet, config: any, txType: string, txOptions: any) {
           const invoiceIdField = this.xrplTxOptionsStore.invoiceId();
@@ -59,6 +63,28 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                } else {
                     // Empty input will clear domain
                     tx.Domain = '';
+               }
+          }
+
+          if (txType === 'sendXrp') {
+               const domainInput = this.permissionedDomainStoreService.domainId();
+               if (domainInput && domainInput !== '') {
+                    let domainHex: string;
+
+                    if (/^[0-9A-Fa-f]+$/.test(domainInput)) {
+                         // Already hex
+                         domainHex = domainInput.toUpperCase();
+                    } else {
+                         // Convert string → hex
+                         domainHex = xrpl.convertStringToHex(domainInput);
+                    }
+
+                    this.utilsService.setDomainId(tx, domainHex);
+               }
+
+               const credentials = this.credentialStore.credentialIDs();
+               if (credentials && credentials.length > 0) {
+                    tx.CredentialIDs = credentials;
                }
           }
 

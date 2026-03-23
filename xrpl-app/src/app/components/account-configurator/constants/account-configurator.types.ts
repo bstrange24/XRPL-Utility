@@ -61,7 +61,7 @@ export interface AccountConfig {
      txOptions: any;
      wallet: Wallet;
      simulate?: boolean;
-     amountField?: string;
+     amount?: string;
      nfTokenMinterAddress?: string;
      flagValue?: any;
      operation?: any;
@@ -114,7 +114,8 @@ export interface AccountConfiguratorState {
      enableRegularKeyFlag: string;
      hasSignerList: boolean;
      operations: string;
-     amountField: string;
+     amount: string;
+     destination: string;
      nfTokenMinterAddress: string;
      enableNftMinter: string;
      tickSize: string;

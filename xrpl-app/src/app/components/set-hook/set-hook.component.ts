@@ -29,6 +29,7 @@ import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dro
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { XrplClient } from 'xrpl-accountlib';
 
 @Component({
      selector: 'app-set-hook',
@@ -57,10 +58,12 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
      private readonly cdr = inject(ChangeDetectorRef);
+     private readonly xrplClient = inject(XrplCacheService);
 
      hookWasmHex = signal<string>(''); // User pastes WASM hex here
      hookNamespace = signal<string>(''); // e.g., SHA-256 hex of a string like 'myHookNamespace'
-     hookOn = signal<string>('0000000000000000'); // Default: trigger on all txns
+     // hookOn = signal<string>('0000000000000000'); // Default: trigger on all txns
+     hookOn = signal<string>('0000000000000002');
      hookApiVersion = signal<number>(0); // Usually 0
      flags = signal<number>(0); // e.g., 1 for override
      // Add signals for optional fields: HookParameters (array), HookGrants (array)
@@ -168,6 +171,11 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           return `<code>${walletName}</code> wallet has <strong>${this.currentWallet().balance} XRP</strong> available for sending.`;
      });
 
+     // generateNamespace(seed: string) {
+     //      const hash = xrpl.sha256(seed);
+     //      this.hookNamespace.set(hash.toUpperCase());
+     // }
+
      hasWallets = computed(() => this.wallets().length > 0);
 
      // Computed for UI, similar to send-xrp
@@ -259,6 +267,36 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
           });
      }
 
+     // async installHook(walletSeed: string) {
+     //      if (!this.hookWasmHex() || this.hookWasmHex().length < 10) {
+     //           throw new Error('Invalid WASM');
+     //      }
+
+     //      const wallet = xrpl.Wallet.fromSeed(walletSeed);
+
+     //      const tx: any = {
+     //           TransactionType: 'SetHook',
+     //           Account: wallet.address,
+     //           Hooks: [
+     //                {
+     //                     Hook: {
+     //                          CreateCode: this.hookWasmHex().toUpperCase(),
+     //                          HookOn: this.hookOn(),
+     //                          HookNamespace: this.hookNamespace(),
+     //                          HookApiVersion: 0,
+     //                          Flags: this.flags(),
+     //                     },
+     //                },
+     //           ],
+     //      };
+
+     //      const prepared = await this.xrplClient.autofill(tx);
+     //      const signed = wallet.sign(prepared);
+     //      const result = await this.xrplClient.submitAndWait(signed.tx_blob);
+
+     //      console.log('Hook Result:', result);
+     // }
+
      async setHook() {
           await this.withPerf('sendXrp', async () => {
                this.txUiService.clearAllOptionsAndMessages();
@@ -273,37 +311,34 @@ export class SetHookComponent extends PerformanceBaseComponent implements OnInit
                     }
 
                     // Construct tx (for create operation; adjust for update/delete)
-                    //  const setHookTx: xrpl.setHook = {
-                    //       TransactionType: 'SetHook',
-                    //       Account: wallet.classicAddress,
-                    //       Fee: fee,
-                    //       LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    //       Hooks: [
-                    //            {
-                    //                 Hook: {
-                    //                      CreateCode: this.hookWasmHex().toUpperCase(),
-                    //                      HookOn: this.hookOn(),
-                    //                      HookNamespace: this.hookNamespace().toUpperCase(),
-                    //                      HookApiVersion: this.hookApiVersion(),
-                    //                      Flags: this.flags(),
-                    //                      // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
-                    //                 },
-                    //            },
-                    //       ],
-                    //  };
+                    const setHookTx = {
+                         TransactionType: 'SetHook',
+                         Account: wallet.classicAddress,
+                         Fee: fee,
+                         LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
+                         Hooks: [
+                              {
+                                   Hook: {
+                                        CreateCode: this.hookWasmHex().toUpperCase(),
+                                        HookOn: this.hookOn(),
+                                        HookNamespace: this.hookNamespace().toUpperCase(),
+                                        HookApiVersion: this.hookApiVersion(),
+                                        Flags: this.flags(),
+                                        // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
+                                   },
+                              },
+                         ],
+                    };
 
-                    // Add optional fields like in sendXrp (memos, tags, tickets, multi-sign)
-                    // e.g., if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) { /* set */ }
+                    // const result = await this.txExecutor.submitTransaction(setHookTx as any, wallet, client, {
+                    //      useMultiSign: this.txUiService.useMultiSign(),
+                    // });
 
-                    // Submit (extend txExecutor if needed for SetHook-specific handling)
-                    //  const result = await this.txExecutor.submitTransaction(setHookTx, wallet, client, {
-                    // useMultiSign: this.txUiService.useMultiSign(),
-                    // ... other options like in sendXrp
-                    //  });
-                    //  if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // if (!result.success) {
+                    //      return this.txUiService.setError(`${result.error}`);
+                    // }
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!';
-                    //  await this.refreshAfterTx(client, wallet);
+                    // this.txUiService.setSuccess(this.txUiService.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!');
                } catch (error: any) {
                     this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
                } finally {

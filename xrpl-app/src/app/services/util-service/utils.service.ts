@@ -232,6 +232,7 @@ export class UtilsService {
 
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(6));
+          this.accountConfiguratorStoreService.setField('amount', rounded.toString());
           this.txUiService.amountField.set(rounded.toString());
      }
 

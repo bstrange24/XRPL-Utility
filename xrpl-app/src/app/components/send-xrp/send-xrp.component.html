@@ -6,7 +6,11 @@
      </div>
 </div>
 
-<!-- Main content -->
+@let view = sendXrpViewModelService;
+<!-- Get active tab -->
+@let tab = view.activeTab();
+
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
@@ -14,58 +18,46 @@
 
           <!-- Center form -->
           <div class="form-panel" style="padding-top: 2em">
-               <!-- <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info> -->
-
-               <!-- Info Message -->
-               <!-- <app-account-delete-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-account-delete-summary> -->
+               <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
-               <!-- <app-send-xrp-form></app-send-xrp-form> -->
+               <form #theForm="ngForm" class="main-form">
+                    <app-send-xrp-form
+                         [view]="view"
+                         [info]="view.infoData()"
+                         [destinationItems]="destinationItems()"
+                         [selectedDestinationItem]="selectedDestinationItem()"
+                         [destinationSearchQuery]="destinationSearchQuery()"
+                         [wantsOptions]="txUiService.wantsOptions()"
+                         [canSubmit]="canSubmit()"
+                         [tab]="tab"
+                         (performAction)="performAction()"
+                         (clearFields)="clearInputFields()"
+                         (searchQueryChange)="handleSearchQueryChange($event)"
+                         (destinationChange)="handleDestinationChange($event)"
+                         (toggleOptions)="txUiService.toggleOptions($event)"
+                    />
 
-               <!-- Amount and Destination -->
-               <!-- <div class="form-row">
-                    <div class="form-group">
-                         <label for="destination">Destination</label>
-                         <p class="form-hint">The unique address of the account receiving the XRP payment. Select destination from the dropdown or manually enter a new destination.</p>
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
+                    <!-- Action buttons -->
+                    <div class="button-row">
+                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ sendXrpUtilService.sendButtonLabel() }}</button>
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
-                    <div class="form-group">
-                         <label for="amountField">XRP Amount</label>
-                         <p class="form-hint">Amount, in XRP, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                         <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                    </div>
-               </div>
 
-               <div class="switch-group">
-                    <label class="switch">
-                         <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions($event.target.checked)" name="showOptionalXrp" />
-                         <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
-                    </label>
-               </div>
+                    <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
 
-               @if (txUiService.wantsOptions()) {
-               <app-transaction-options-section [activeTab]="activeTab()"></app-transaction-options-section>
-               } -->
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
 
-               <!-- <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options> -->
-
-               <!-- Action buttons -->
-               <div class="button-row">
-                    <button type="button" class="btn-primary-green" (click)="sendXrp()" [disabled]="!isIdle() || !hasWallets()">{{ sendXrpUtilService.sendButtonLabel() }}</button>
-                    <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
-               </div>
-
-               <!-- Execution time -->
-               <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
-
-               <!-- Transaction Preview -->
-               <app-transaction-preview></app-transaction-preview>
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
+               </form>
           </div>
 
-          <!-- <app-send-xrp-requirements-info></app-send-xrp-requirements-info> -->
+          <app-send-xrp-requirements-info [activeTab]="tab"></app-send-xrp-requirements-info>
      </div>
 </div>

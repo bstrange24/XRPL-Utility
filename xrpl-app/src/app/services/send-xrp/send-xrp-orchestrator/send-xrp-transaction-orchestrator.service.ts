@@ -6,197 +6,131 @@ import { ValidationService } from '../../validation/transaction-validation-rule.
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { ToastService } from '../../toast/toast.service';
-import { UtilsService } from '../../util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { XrpPaymentConfig } from '../../../components/send-xrp/constants/send-xrp.types';
+import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
+import { SEND_XRP_VALIDATION_RULES, SendXrpTxType } from '../../../components/send-xrp/constants/send-xrp.constants';
+import { SendXrpTransactionBuilderService } from '../send-xrp-transaction-builder/send-xrp-transaction-builder.service';
 
-interface XrpPaymentConfig {
-     wallet: Wallet;
-     formValues: {
-          amountField: string; // must be present
-          destinationAddress: string;
-          destinationTagField?: any;
-          invoiceIdField?: any;
-          sourceTagField?: any;
-          isSimulateEnabled?: boolean;
-          useMultiSign?: boolean;
-          isRegularKeyAddress?: boolean;
-          regularKeyAddress?: string;
-          regularKeySeed?: string;
-          multiSignAddress?: string;
-          multiSignSeeds?: string;
-          [key: string]: any;
-     };
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          wallet?: any;
-     };
-}
-
-@Injectable({ providedIn: 'root' })
+@Injectable({
+     providedIn: 'root',
+})
 export class SendXrpTransactionOrchestratorService extends PerformanceBaseComponent {
-     private readonly txEnv = inject(TxEnvironmentService);
+     private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly toast = inject(ToastService);
-     private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly toastService = inject(ToastService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
+     public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
+     public readonly sendXrpTransactionBuilderService = inject(SendXrpTransactionBuilderService);
 
-     async executeXrpPayment(config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
-          const { wallet, formValues, preFetchedEnv } = config;
-          const { isSimulateEnabled = false, useMultiSign = false } = formValues;
-
-          let client: xrpl.Client;
+     async executeXrpPayment(type: SendXrpTxType, config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { account, txOptions, preFetchedEnv, wallet } = config;
           let env: any;
+          let client: xrpl.Client;
           let txHash: string | undefined;
 
           try {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (preFetchedEnv) {
-                    env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Pre-fetched environment missing required fields');
-                    }
-               } else {
-                    const envData = await this.txEnv.prepareTxEnvironment({
+               // Use pre-fetched env if provided, otherwise fetch
+               env =
+                    preFetchedEnv ??
+                    (await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
                          includeFee: true,
-                         includeLedgerIndex: true,
-                    });
+                         includeLedgerInfo: true,
+                         includeServerInfo: true,
+                    }));
 
-                    env = envData;
-                    client = envData.client;
+               client = env.client;
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Failed to fetch required network data');
-                    }
-               }
+               // Validation
+               const validationRule = SEND_XRP_VALIDATION_RULES[type];
+               const validationInputs = this.buildValidationInputs(type, wallet, env, account, txOptions);
+               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               const validationInputs = {
-                    wallet,
-                    network: {
-                         accountInfo: env.accountInfo,
-                         accountObjects: env.accountObjects,
-                         fee: env.fee,
-                         currentLedger: env.currentLedger,
-                    },
-                    paymentXrp: {
-                         amount: formValues.amountField,
-                         destination: formValues.destinationAddress,
-                         destinationTagField: formValues.destinationTagField,
-                         sourceTagField: formValues.sourceTagField,
-                         invoiceIdField: formValues.invoiceIdField,
-                    },
-                    regularKey: {
-                         isRegularKey: formValues.isRegularKeyAddress,
-                         address: formValues.regularKeyAddress,
-                         seed: formValues.regularKeySeed,
-                    },
-               };
+               const tx = this.sendXrpTransactionBuilderService.buildSendXrpTransaction(env.wallet || wallet, env, account);
 
-               const errors = await this.validator.validate('PaymentXrp', {
-                    inputs: validationInputs,
-                    client,
-                    accountInfo: env.accountInfo,
-               });
+               // Optional fields
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.account, type, txOptions);
 
-               if (errors.length > 0) {
-                    return { success: false, error: errors.join('\n• ') };
-               }
+               // Check balances
+               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               const paymentTx: xrpl.Payment = this.xrplTransactionService.buildSendXrpTransaction(env.wallet, formValues.destinationAddress, Number(formValues.amountField), env.fee, env.currentLedger);
-
-               await this.applyOptionalFields(client, paymentTx, wallet, env.accountInfo, formValues);
-
-               const execResult = await this.executor.sendXrpPayment(paymentTx, env.wallet, client, {
-                    useMultiSign: useMultiSign,
-                    isRegularKeyAddress: formValues.isRegularKeyAddress,
-                    regularKeyAddress: formValues.regularKeyAddress,
-                    regularKeySeed: formValues.regularKeySeed,
-                    multiSignAddress: formValues.multiSignAddress,
-                    multiSignSeeds: formValues.multiSignSeeds,
-               });
-
-               if (!execResult.success) {
-                    return { success: false, error: execResult.error };
-               }
-
+               // Execute
+               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
+               if (!execResult.success) return { success: false, error: execResult.error };
                txHash = execResult.hash;
 
-               if (isSimulateEnabled) {
-                    const shortDest = formValues.destinationAddress.slice(0, 7) + '…' + formValues.destinationAddress.slice(-7);
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.toast.success(`Simulated Sending ${formValues.amountField} XRP to ${shortDest}`, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
-                    return { success: true, hash: txHash };
-               }
+               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, paymentTx.LastLedgerSequence!);
-
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
-               const shortDest = formValues.destinationAddress.slice(0, 7) + '…' + formValues.destinationAddress.slice(-7);
-               this.xrplTransactionService.processTxFinalResult(finalResult, `Successfully Sent ${formValues.amountField} XRP to ${shortDest}`, { success: true, hash: txHash });
+
+               const message = this.buildSuccessMessage(type);
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+
                return { success: true, hash: txHash };
           } catch (err: any) {
-               const msg = err.message || 'Unexpected error during XRP payment';
-               console.error('[XrpPayment] execute failed:', err);
+               console.error(`[${type}] executeXrpPayment failed:`, err);
                this.xrplTransactionService.processTxError(err);
-               return { success: false, error: msg };
+               return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
      }
 
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Payment, wallet: Wallet, accountInfo: any, formValues: any) {
-          const isTicket = formValues.isTicket;
-          if (isTicket) {
-               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               const ticket = false;
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          }
+     private buildValidationInputs(type: SendXrpTxType, wallet: Wallet, env: any, account: any, txOptions: any) {
+          const base = {
+               wallet,
+               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+          };
+          return { ...base, paymentXrp: { amount: account.amount, destination: account.destination } };
+     }
 
-          // Tags, Memo, InvoiceID, DomainID, CredentialIDs
-          const destinationTag = this.txUiService.destinationTagField();
-          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
+     private async executeSpecificTx(type: SendXrpTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
+          const opts = {
+               useMultiSign: txOptions.useMultiSign,
+               isRegularKeyAddress: txOptions.isRegularKeyAddress,
+               isSimulateEnabled: txOptions.isSimulateEnabled,
+               regularKeyAddress: account.regularKeyAddress,
+               regularKeySeed: account.regularKeySeed,
+               multiSignAddress: account.multiSignAddress,
+               multiSignSeeds: account.multiSignSeeds,
+          };
+          return this.executor.sendXrpPayment?.(tx as xrpl.Payment, wallet, client, opts);
+     }
 
-          const sourceTag = this.txUiService.sourceTagField();
-          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
+     buildSuccessMessage(type: SendXrpTxType): string {
+          return `Successfully Set XRP`;
+     }
 
-          const memo = this.txUiService.memoField();
-          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
+     handleSimulationSuccess(type: SendXrpTxType, hash?: any) {
+          const msg = `Successfully simulated Sending XRP`;
 
-          const invoiceId = this.txUiService.invoiceIdField();
-          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
-          const domainId = this.txUiService.domainId();
-          if (domainId) this.utilsService.setDomainId(tx, domainId);
-
-          // Credential IDs (array)
-          // if (this.credentialStore.credentialIDs()?.length > 0) {
-          //      const jsonArray: string[] = formValues.credentialIDs
-          //           .split(',')
-          //           .map((id: string) => id.trim())
-          //           .filter((id: string | any[]) => id.length > 0);
-          //      this.credentialStore.credentialIDs.set(jsonArray);
-          //      this.utilsService.setCredentialIDsField(tx, this.credentialStore.credentialIDs());
-          // }
+          return { success: true, hash };
      }
 }

@@ -32,4 +32,11 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
           if (step === 'waiting_validation') return 'Waiting for confirmation...';
           return this.txUiService.stepMessage();
      });
+
+     clearInputFields(): void {
+          this.txUiService.clearAllOptions();
+          this.txUiService.clearOptionalInputFields();
+          this.txUiService.wantsOptions.set(false);
+          this.txUiService.amountField.set('');
+     }
 }
