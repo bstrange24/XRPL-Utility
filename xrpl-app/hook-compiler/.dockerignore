@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+*.wasm
+*.c
+.git
+.gitignore
+README.md

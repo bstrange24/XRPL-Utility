@@ -81,6 +81,21 @@ npm install --save-dev @types/blueimp-md5
 npm install five-bells-condition@5.0.1
 npm install @ng-icons/core @ng-icons/feather-icons
 npm install @ngrx/signals@19 --legacy-peer-deps
+npm i -g @xahau/hooks-cli
+
+# Rebuild the image
+
+docker build -t hook-compiler .
+
+# Run and test
+
+docker run -p 4000:4000 hook-compiler
+
+# In another terminal, test the endpoint
+
+curl -X POST http://localhost:4000/compile \
+ -H "Content-Type: application/json" \
+ -d '{"requireCredential": true}'
 
 Maybe
 npm install ang-jsoneditor jsoneditor

@@ -311,6 +311,28 @@ export class XrplTransactionExecutorService {
           });
      }
 
+     async setHook(
+          env: any,
+          tx: xrpl.Payment,
+          wallet: xrpl.Wallet,
+          client: xrpl.Client,
+          options: {
+               useMultiSign?: boolean;
+               multiSignAddress?: string;
+               multiSignSeeds?: string;
+               isRegularKeyAddress?: boolean;
+               regularKeyAddress?: string;
+               regularKeySeed?: string;
+          } = {}
+     ): Promise<{ success: boolean; hash?: string; error?: string }> {
+          return this.executeTx(env, client, wallet, tx, {
+               simulateMessage: 'Simulated Setting Hook (no changes will be made)...',
+               submitMessage: 'Submitting Set Hook to Ledger...',
+               amount: this.txUiService.amountField(),
+               ...options,
+          });
+     }
+
      async checkCreate(
           tx: xrpl.CheckCreate,
           wallet: xrpl.Wallet,
