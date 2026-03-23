@@ -3,13 +3,12 @@ import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-sear
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { UtilsService } from '../../../../services/util-service/utils.service';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
 })

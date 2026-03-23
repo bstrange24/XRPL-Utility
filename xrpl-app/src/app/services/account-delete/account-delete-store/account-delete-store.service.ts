@@ -5,6 +5,7 @@ export interface AccountDeleteState {
      accountObjects: any;
      serverInfo: any;
      blockingObjects: any;
+     isAccountDelete: boolean;
      savedTxJson: any[];
      savedTxResult: any[];
      destination: string;
@@ -18,6 +19,7 @@ const initialState: AccountDeleteState = {
      savedTxJson: [],
      savedTxResult: [],
      destination: '',
+     isAccountDelete: false,
 };
 
 export const AccountDeleteStoreService = signalStore(

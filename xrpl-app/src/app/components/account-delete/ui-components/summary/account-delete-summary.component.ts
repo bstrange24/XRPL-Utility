@@ -14,11 +14,7 @@ export interface BlockerItem {
 @Component({
      selector: 'app-account-delete-summary',
      standalone: true,
-     imports: [
-          NgIcon,
-          LucideAngularModule,
-          RouterModule, // for [routerLink]
-     ],
+     imports: [NgIcon, LucideAngularModule, RouterModule],
      templateUrl: './account-delete-summary.component.html',
      styleUrl: './account-delete-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

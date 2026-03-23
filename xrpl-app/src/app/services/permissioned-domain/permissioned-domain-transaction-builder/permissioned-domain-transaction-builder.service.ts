@@ -39,7 +39,7 @@ export class PermissionedDomainTransactionBuilderService {
           };
 
           // If editing existing domain → include DomainID
-          if (permissionedDomain.domainId) {
+          if (permissionedDomain.domainMode === 'update' && permissionedDomain.domainId) {
                tx.DomainID = permissionedDomain.domainId;
           }
 

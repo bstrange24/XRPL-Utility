@@ -1,18 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainUtilService } from '../../../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message/warning-message.component';
 
 @Component({
      selector: 'app-permission-domain-set-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, NgIcon, LucideAngularModule, WarningMessageComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule, WarningMessageComponent],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
 })
@@ -23,14 +22,13 @@ export class PermissionDomainSetFormComponent {
      private readonly fb = inject(FormBuilder);
 
      // Inputs
-     view = input.required<any>(); // for actionButtonClass / actionButtonLabel
+     view = input.required<any>();
      destinationItems = input.required<any[]>();
      selectedDestinationItem = input.required<any>();
      destinationSearchQuery = input.required<string>();
      canSubmit = input<boolean>(false);
      warningMessage = 'Updating will completely replace the existing AcceptedCredentials list for this domain.';
      readonly safeWarningMessage = computed(() => this.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
-     // domainMode = signal<'create' | 'update'>('create'); // default to create
 
      // Outputs
      performAction = output<void>();
@@ -38,14 +36,10 @@ export class PermissionDomainSetFormComponent {
      searchQueryChange = output<string>();
      destinationChange = output<any>();
 
-     // NEW: Local reactive form with FormArray
      form: FormGroup;
-
-     // Temporary values for "add new" row (two-way binding or controlled)
      newIssuer: string = '';
      newCredentialType: string = '';
      private _newIssuerItem: SelectItem | null = null; // track the full selected object
-     domainMode = signal<'create' | 'update'>('create');
 
      constructor() {
           this.form = this.fb.group({
@@ -90,7 +84,6 @@ export class PermissionDomainSetFormComponent {
      clearIssuer() {
           this.newIssuer = '';
           this._newIssuerItem = null;
-          // Optional: this.newCredentialType = ''; if you want to clear type too
      }
 
      removeCredential(index: number) {
@@ -120,7 +113,6 @@ export class PermissionDomainSetFormComponent {
 
           this.form.reset();
 
-          // If using store/service for temp form data:
           this.permissionedDomainStoreService.resetDomainFields(); // or specific resetAcceptedCredentials()
      }
 
@@ -130,21 +122,17 @@ export class PermissionDomainSetFormComponent {
           return this.permissionedDomainViewModelService.domainItems().find((d: { id: string }) => d.id === id) ?? null;
      });
 
-     // Methods
      setDomainMode(mode: 'create' | 'update') {
-          this.domainMode.set(mode);
+          this.permissionedDomainStoreService.setField('domainMode', mode);
           if (mode === 'create') {
                this.permissionedDomainStoreService.setField('domainId', '');
           }
      }
 
      onModeChange() {
-          if (this.domainMode() === 'create') {
+          if (this.permissionedDomainStoreService.domainMode() === 'create') {
                this.permissionedDomainStoreService.setField('domainId', '');
-               // ... other reset logic if needed
           }
-          // You can also sync to store here if desired
-          // this.permissionedDomainStoreService.setDomainMode(this.domainMode());
      }
 
      onUpdateDomainSelected(item: SelectItem | null) {

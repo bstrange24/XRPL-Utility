@@ -23,11 +23,21 @@
           <ul class="credentials-list">
                @for (domain of info()!.permissionedDomainsToShow; track domain.index) {
                <li class="credential-item" [class.selected-from-list]="isSelected(domain.index)" (click)="selectDomain(domain)" (keydown.enter)="selectDomain(domain)" (keydown.space)="selectDomain(domain); $event.preventDefault()" [style.cursor]="getCursorStyle()" (click)="selectDomain(domain)">
-                    <div class="credential-meta">
+                    <!-- Main content -->
+                    <div class="credential-content">
                          <app-tooltip-link [href]="explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
-                              <div>Domain ID: <code>{{ domain.index }}</code></div>
+                              <div class="credential-title-line">
+                                   <div>Domain ID: <code>{{ domain.index }}</code></div>
+                              </div>
                          </app-tooltip-link>
-                         <pre class="json-pretty issuer-hint">{{ utilsService.parseUiJson(domain.AcceptedCredentials) | json }}</pre>
+                         <div class="credential-meta chips">
+                              @for (cred of domain.AcceptedCredentials; track cred.CredentialType + cred.Issuer) {
+                              <div class="cred-chip">
+                                   <span class="type">{{ cred.CredentialType }}</span>
+                                   <span class="issuer">{{ cred.Issuer }}</span>
+                              </div>
+                              }
+                         </div>
                     </div>
 
                     <!-- Copy button -->

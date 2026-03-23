@@ -174,7 +174,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
           let txResult: { success: boolean; hash?: string; error?: string } | null = null;
 
-          await this.withPerf('performAction', async () => {
+          await this.withPerf('deleteAccount', async () => {
                try {
                     txResult = await this.deleteAccountOrchestratorService.executeDeleteAccountTx('deleteAccount', config);
                } catch (error: any) {
@@ -182,19 +182,19 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                     return;
                }
-          });
 
-          if (!txResult) return;
+               if (!txResult) return;
 
-          if (txResult) {
-               this.isAccountDelete.set(true);
-               const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, destination, '', '');
-               if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-                    this.deleteWalletAfterDeleteTx(this.walletManagerService.getSelectedIndex());
-                    this.refreshAfterTx(env.client, env.wallet, destination, '');
+               if (txResult) {
+                    this.isAccountDelete.set(true);
+                    const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, destination, '', '');
+                    if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+                         this.deleteWalletAfterDeleteTx(this.walletManagerService.getSelectedIndex());
+                         this.refreshAfterTx(env.client, env.wallet, destination, '');
+                    }
+                    this.isAccountDelete.set(false);
                }
-               this.isAccountDelete.set(false);
-          }
+          });
 
           this.txUiService.wantsOptions.set(false);
           this.txUiService.resetCurrentStepToIdle();

@@ -3,6 +3,7 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { DidData, DidItem, Signer, Toast, ValidationInputs, Wallet } from '../../models/interface-items.model';
+import { AccountDeleteStoreService } from '../account-delete/account-delete-store/account-delete-store.service';
 
 interface TransactionUiSignals {
      // Base
@@ -90,6 +91,7 @@ export type SignalKey = keyof TransactionUiSignals;
 export class TransactionUiService {
      public readonly sanitizer = inject(DomSanitizer);
      public readonly xrplService = inject(XrplService);
+     public readonly accountDeleteStoreService = inject(AccountDeleteStoreService);
 
      readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
      txHash: string | null = null;
@@ -112,7 +114,7 @@ export class TransactionUiService {
      txHashSignal = signal<string[]>([]);
      successMessageSignal = signal<string>('');
      spinnerMessageSignal = signal<string>('');
-     executionTime = signal<string>('');
+     // executionTime = signal<string>('');
      wantsOptions = signal<boolean>(false);
      infoPanelExpanded = signal<boolean>(false);
 
@@ -291,9 +293,9 @@ export class TransactionUiService {
           this.txResultSignal.update(arr => [...arr, tx]);
      }
 
-     setExecutionTime(time: string) {
-          this.executionTime.set(time);
-     }
+     // setExecutionTime(time: string) {
+     //      this.executionTime.set(time);
+     // }
 
      addTxHashSignal(tx: any) {
           this.txHashSignal.update(arr => [...arr, tx]);
@@ -877,7 +879,10 @@ export class TransactionUiService {
           // this.errorMessage = '';
           this.errorMessageSignal.set(null);
           this.updateSpinnerMessageSignal('');
-          this.clearTxResultsHash();
+          // Keep the txJson and txResult displayed when deleting an account.
+          if (this.accountDeleteStoreService.savedTxJson().length <= 0 && this.accountDeleteStoreService.savedTxResult().length <= 0) {
+               this.clearTxResultsHash();
+          }
           this.clearMessages();
           // this.successMessage = '';
      }

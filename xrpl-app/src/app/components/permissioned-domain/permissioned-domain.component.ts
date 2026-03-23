@@ -210,11 +210,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                this.permissionedDomainStoreService.resetDomainDropDown();
           }
 
-          // if (successFullTx && currentTab === 'setPermissionedDomain' && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-          // this.permissionDomainSetFormComponent?.clearAfterSuccess(); // if you expose it
-          // or inject and call directly if needed
-          // }
-
           this.txUiService.resetCurrentStepToIdle();
      }
 

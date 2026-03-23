@@ -10,6 +10,7 @@ export interface PermissionedDomainState {
      subject: string;
      credentialIdSearchQuery: string;
      domainId: string;
+     domainMode: string;
 }
 
 const initialState: PermissionedDomainState = {
@@ -22,6 +23,7 @@ const initialState: PermissionedDomainState = {
      subject: '',
      credentialIdSearchQuery: '',
      domainId: '',
+     domainMode: 'create',
 };
 
 export const PermissionedDomainStoreService = signalStore(
