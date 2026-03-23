@@ -10,7 +10,6 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
@@ -29,7 +28,7 @@ import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WALLET_GENERATOR_TAB_META, WALLET_GENERATOR_TABS } from './constants/wallet-generator.ui';
 import { WALLET_GENERATOR_TAB } from './constants/wallet-generator.constants';
-import { WalletGeneratorActionTypes } from './constants/wallet-generator.types';
+import { ButtonLoadingState, WalletGeneratorActionTypes } from './constants/wallet-generator.types';
 import { WalletsViewModelService } from '../../services/wallets/wallets-view-model/wallets-view-model.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
@@ -38,8 +37,8 @@ import { WalletDeriveSeedComponent } from './tab/wallet-derive-seed/wallet-deriv
 import { WalletDeriveMnemonicComponent } from './tab/wallet-derive-mnemonic/wallet-derive-mnemonic.component';
 import { WalletDeriveSecretNumbersComponent } from './tab/wallet-derive-secret-numbers/wallet-derive-secret-numbers.component';
 import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wallet/wallet-remove-custom-wallet.component';
-import { ButtonLoadingState } from '../../models/interface-items.model';
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
+import { WalletsOrchestratorService } from '../../services/wallets/wallets-orchestrator/wallets-orchestrator.service';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -51,7 +50,6 @@ import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.c
 })
 export class WalletConfiguratorComponent extends WalletDestinationBase implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
-     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -59,10 +57,11 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
+     public readonly walletsOrchestratorService = inject(WalletsOrchestratorService);
+
      readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;
 
-     typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      destinations = computed(() => [...this.customDestinations()]);
 
@@ -75,6 +74,8 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      ngOnInit(): void {
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
+          this.walletsStoreService.resetAll();
+          this.walletsStoreService.setField('secp256k1_encryption_type', true);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -88,13 +89,15 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.txUiService.currentWallet.set(wallet);
           this.xrplCache.invalidateAccountCache(wallet.address);
 
-          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+          if (this.walletsStoreService.selectedAddress() === wallet.address) this.walletsStoreService.setField('selectedAddress', '');
      }
 
      async setTab(tab: string): Promise<void> {
           if (WALLET_GENERATOR_TAB.includes(tab as any)) {
                this.walletsViewModelService.activeTab.set(tab as WalletGeneratorActionTypes);
                this.destinationSearchQuery.set('');
+               this.walletsStoreService.resetAll();
+               this.walletsStoreService.setField('secp256k1_encryption_type', true);
           }
      }
 
@@ -232,62 +235,34 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      }
 
      removeCustomWallet(): void {
-          console.log('[REMOVE] Selected address set to1111111111:', this.selectedDestinationAddress());
-  const address = this.selectedDestinationAddress();
+          const address = this.walletsStoreService.selectedAddress();
 
-  if (!address) {
-    this.toastService.error('Please select a custom wallet first', AppConstants.TOAST.ERROR);
-    return;
-  }
+          console.log('[REMOVE PARENT] Reading from store:', address);
 
-  if (!xrpl.isValidAddress(address)) {
-    this.toastService.error('Invalid address selected', AppConstants.TOAST.ERROR);
-    return;
-  }
-
-  const currentCustoms = this.customDestinations();
-  if (!currentCustoms.some((w) => w.address === address)) {
-    this.toastService.error('Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
-    return;
-  }
-
-  this.customDestinations.update((list) => list.filter((w) => w.address !== address));
-  this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-
-  this.updateDestinations(); // refresh other dropdowns if they use the same source
-
-  // Reset selection
-  this.selectedDestinationAddress.set('');
-  this.destinationSearchQuery.set('');
-
-  this.toastService.success(`Custom wallet ${address} removed successfully`);
-}
-
-     removeCustomWallet1(): void {
-          // this.selectedDestinationAddress.set(this.credentialStore.subject());
-          //                     subjectDestination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-          //                     if (!subjectDestination || !xrpl.isValidAddress(subjectDestination)) {
-          //                          this.toastService.error('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
-          //                          return;
-          //                     }
-
-          // const address = this.selectedDestinationAddress();
-          const address = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           if (!address) {
-               this.toastService.success('Custom wallet not found');
+               this.toastService.error('Please select a custom wallet first', AppConstants.TOAST.ERROR);
                return;
           }
 
-          this.customDestinations.update(list => list.filter(w => w.address !== address));
-          this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
+          if (!xrpl.isValidAddress(address)) {
+               this.toastService.error('Invalid address selected', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          const currentCustoms = this.transactionDropdownService.customDestinations();
+          if (!currentCustoms.some(w => w.address === address)) {
+               this.toastService.error('Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          const custDest = this.transactionDropdownService.customDestinations.update(list => list.filter(w => w.address !== address));
+          this.storageService.set('customDestinations', JSON.stringify(custDest));
 
           this.updateDestinations();
 
-          this.selectedDestinationAddress.set('');
-          this.destinationSearchQuery.set('');
+          // Reset
+          this.walletsStoreService.setField('selectedAddress', '');
 
-          this.dropdownService.setSelectedItems(this.destinationItems());
-          this.dropdownService.closeDropdown();
           this.toastService.success(`Custom wallet ${address} removed successfully`);
      }
 

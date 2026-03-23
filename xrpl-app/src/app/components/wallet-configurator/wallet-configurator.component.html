@@ -40,23 +40,11 @@
                     <app-wallet-generate></app-wallet-generate>
 
                     <!-- Remove custom wallets button -->
-                     @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-  <div class="button-row" style="margin-top: 0em">
-    <button
-      type="button"
-      class="btn-primary-red"
-      (click)="removeCustomWallet()"
-      
-    >
-      {{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}
-    </button>
-  </div>
-}
-                    <!-- @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
+                    @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
                     <div class="button-row" style="margin-top: 0em">
-                         <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+                         <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="!walletsStoreService.selectedAddress()">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
                     </div>
-                    } -->
+                    }
                </form>
 
                <!-- Execution time -->

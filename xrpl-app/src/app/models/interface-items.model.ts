@@ -1,12 +1,3 @@
-export type ButtonLoadingState = {
-     generateNewWalletFromSeed: boolean;
-     generateNewWalletFromMnemonic: boolean;
-     generateNewWalletFromSecretNumbers: boolean;
-     deriveWalletFromFamilySeed: boolean;
-     deriveWalletFromMnemonic: boolean;
-     deriveWalletFromSecretNumbers: boolean;
-};
-
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 export interface CredentialItem {

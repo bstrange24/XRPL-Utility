@@ -16,6 +16,7 @@ export interface WalletState {
      secp256k1_encryption_type: boolean;
      buttonLoading: ButtonLoadingState;
      errorMessage: string;
+     selectedAddress: string;
 }
 
 const initialState: WalletState = {
@@ -40,6 +41,7 @@ const initialState: WalletState = {
           deriveWalletFromSecretNumbers: false,
      },
      errorMessage: '',
+     selectedAddress: '',
 };
 
 export const WalletsStoreService = signalStore(
