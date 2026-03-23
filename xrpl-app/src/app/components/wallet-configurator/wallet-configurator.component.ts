@@ -38,7 +38,6 @@ import { WalletDeriveMnemonicComponent } from './tab/wallet-derive-mnemonic/wall
 import { WalletDeriveSecretNumbersComponent } from './tab/wallet-derive-secret-numbers/wallet-derive-secret-numbers.component';
 import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wallet/wallet-remove-custom-wallet.component';
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
-import { WalletsOrchestratorService } from '../../services/wallets/wallets-orchestrator/wallets-orchestrator.service';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -57,7 +56,6 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
-     public readonly walletsOrchestratorService = inject(WalletsOrchestratorService);
 
      readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;

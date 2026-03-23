@@ -51,7 +51,7 @@ export const WALLET_GENERATOR_TABS: {
           color: '',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
-] as const;
+];
 
 // Tab meta information
 export const WALLET_GENERATOR_TAB_META: Record<
@@ -69,7 +69,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           icon: 'heroWallet',
           colorClass: 'green-button-submenu',
           title: 'New Wallet Generator',
-          desc: `Generate a new XRPL Wallet on {{environment()}}`,
+          desc: `Generate a new XRPL Wallet.`,
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -77,7 +77,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           icon: 'heroWallet',
           colorClass: 'blue-button-submenu',
           title: 'Derive Wallet from Seed',
-          desc: `Derive an existing XRPL Wallet from a seed on {{environment()}}`,
+          desc: `Derive an existing XRPL Wallet from a seed.`,
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -85,7 +85,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           icon: 'heroWallet',
           colorClass: 'blue-button-submenu',
           title: 'Derive Wallet from Mnemonic',
-          desc: `Derive an existing XRPL Wallet from a mnemonic on {{environment()}}`,
+          desc: `Derive an existing XRPL Wallet from a mnemonic.`,
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -93,7 +93,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           icon: 'heroWallet',
           colorClass: 'blue-button-submenu',
           title: 'Derive Wallet from Secret Numbers',
-          desc: `Derive an existing XRPL Wallet from secret numbers on {{environment()}}`,
+          desc: `Derive an existing XRPL Wallet from secret numbers.`,
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -105,22 +105,4 @@ export const WALLET_GENERATOR_TAB_META: Record<
           color: '',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-} as const;
-
-// Button labels and classes per mode
-// export const WALLET_GENERATOR_ACTION_CONFIG: Record<
-//      WalletGeneratorTab,
-//      {
-//           buttonLabel: string;
-//           buttonClass: string;
-//      }
-// > = {
-//      setPermissionedDomain: {
-//           buttonLabel: 'Set Domain',
-//           buttonClass: 'btn-primary',
-//      },
-//      deletePermissionedDomain: {
-//           buttonLabel: 'Delete Domain',
-//           buttonClass: 'btn-danger',
-//      },
-// } as const;
+};

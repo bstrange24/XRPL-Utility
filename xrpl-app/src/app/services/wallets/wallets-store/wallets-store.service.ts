@@ -1,5 +1,5 @@
 import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
-import { ButtonLoadingState } from '../../../models/interface-items.model';
+import { ButtonLoadingState } from '../../../components/wallet-configurator/constants/wallet-generator.types';
 
 export interface WalletState {
      mnemonicInput: string;

@@ -29,19 +29,24 @@ type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 })
 export class UtilsService {
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly xrplService = inject(XrplService);
+     public readonly storageService = inject(StorageService);
+     public readonly walletManagerService = inject(WalletManagerService);
+     public readonly xrplDateService = inject(XrplDateService);
+
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
      isError: boolean = false;
      isSuccess: boolean = false;
-     spinner: boolean = false;
+     // spinner: boolean = false;
 
-     constructor(
-          private readonly xrplService: XrplService,
-          private readonly storageService: StorageService,
-          private readonly walletManagerService: WalletManagerService,
-          public readonly txUiService: TransactionUiService,
-          public readonly xrplDateService: XrplDateService
-     ) {}
+     constructor() {
+          // private readonly xrplService: XrplService,
+          // private readonly storageService: StorageService,
+          // private readonly walletManagerService: WalletManagerService,
+          // public readonly xrplDateService: XrplDateService
+     }
 
      MPT_FLAGS: Record<number, string> = {
           0x00000001: 'MptLocked',
@@ -1868,7 +1873,7 @@ export class UtilsService {
                return { ownerCount, totalReserveXRP };
           } catch (error: any) {
                console.error('Error in getAccountReserves:', error);
-               this.setError(`${error.message || 'Unknown error'}`, undefined);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`, undefined);
                return undefined;
           }
      }
@@ -1887,7 +1892,7 @@ export class UtilsService {
                return { reserveBaseXRP, reserveIncrementXRP };
           } catch (error: any) {
                console.error('Error:', error);
-               this.setError(`${error.message || 'Unknown error'}`, undefined);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`, undefined);
                return undefined;
           }
      }
@@ -1904,12 +1909,12 @@ export class UtilsService {
           return { ownerCount, totalXrpReserves };
      }
 
-     setError(message: string, spinner: { style: { display: string } } | undefined) {
-          this.isError = true;
-          this.isSuccess = false;
-          this.result = `${message}`;
-          this.spinner = false;
-     }
+     // setError(message: string, spinner: { style: { display: string } } | undefined) {
+     //      this.isError = true;
+     //      this.isSuccess = false;
+     //      this.result = `${message}`;
+     //      this.spinner = false;
+     // }
 
      public setSuccess(message: string) {
           this.result = `${message}`;

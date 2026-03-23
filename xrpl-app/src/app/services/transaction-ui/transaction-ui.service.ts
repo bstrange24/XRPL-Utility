@@ -80,15 +80,6 @@ interface TransactionUiSignals {
 
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
 
-export type ButtonLoadingState = {
-     generateNewWalletFromSeed: boolean;
-     generateNewWalletFromMnemonic: boolean;
-     generateNewWalletFromSecretNumbers: boolean;
-     deriveWalletFromFamilySeed: boolean;
-     deriveWalletFromMnemonic: boolean;
-     deriveWalletFromSecretNumbers: boolean;
-};
-
 export type SignalMap = {
      [K in keyof TransactionUiService]: TransactionUiService[K] extends (...args: any) => any ? never : TransactionUiService[K] extends () => unknown ? K : never;
 };
@@ -232,28 +223,6 @@ export class TransactionUiService {
      isUnauthorize = signal<boolean>(false);
      lockedUnlock = signal<string>('');
      holderAccount = signal<string>('');
-
-     // Wallets
-     // mnemonicInput = signal<string>('');
-     // mnemonicValid = signal<boolean>(false);
-     // secretNumberInput = signal<string[]>([]);
-     // secretNumberValid = signal<boolean>(false);
-     // seedInput = signal<string>('');
-     // seedValid = signal<boolean>(false);
-     // encryptionType = signal<string>('');
-     // seed = signal<string>('');
-     // mnemonic = signal<string>('');
-     // secretNumbers = signal<string>('');
-     // ed25519_encryption_type = signal<boolean>(false);
-     // secp256k1_encryption_type = signal<boolean>(true);
-     // buttonLoading = signal<ButtonLoadingState>({
-     //      generateNewWalletFromSeed: false,
-     //      generateNewWalletFromMnemonic: false,
-     //      generateNewWalletFromSecretNumbers: false,
-     //      deriveWalletFromFamilySeed: false,
-     //      deriveWalletFromMnemonic: false,
-     //      deriveWalletFromSecretNumbers: false,
-     // });
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');
