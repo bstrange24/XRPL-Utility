@@ -59,7 +59,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
 
                // Validation
                const validationRule = SEND_XRP_VALIDATION_RULES[type];
-               const validationInputs = this.buildValidationInputs(type, wallet, env, account, txOptions);
+               const validationInputs = this.buildValidationInputs(wallet, env, account, txOptions);
                const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
@@ -73,16 +73,16 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
                // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
+               const execResult = await this.executeSpecificTx(tx, env, env.wallet || wallet, client, account, txOptions);
                if (!execResult.success) return { success: false, error: execResult.error };
                txHash = execResult.hash;
 
-               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
+               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(txHash);
 
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.buildSuccessMessage(type);
+               const message = this.buildSuccessMessage();
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -95,7 +95,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           }
      }
 
-     private buildValidationInputs(type: SendXrpTxType, wallet: Wallet, env: any, account: any, txOptions: any) {
+     private buildValidationInputs(wallet: Wallet, env: any, account: any, txOptions: any) {
           const base = {
                wallet,
                network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
@@ -108,7 +108,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           return { ...base, paymentXrp: { amount: account.amount, destination: account.destination } };
      }
 
-     private async executeSpecificTx(type: SendXrpTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
+     private async executeSpecificTx(tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
           const opts = {
                useMultiSign: txOptions.useMultiSign,
                isRegularKeyAddress: txOptions.isRegularKeyAddress,
@@ -118,14 +118,14 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                multiSignAddress: account.multiSignAddress,
                multiSignSeeds: account.multiSignSeeds,
           };
-          return this.executor.sendXrpPayment?.(tx as xrpl.Payment, wallet, client, opts);
+          return this.executor.sendXrpPayment?.(env, tx as xrpl.Payment, wallet, client, opts);
      }
 
-     buildSuccessMessage(type: SendXrpTxType): string {
+     buildSuccessMessage(): string {
           return `Successfully Set XRP`;
      }
 
-     handleSimulationSuccess(type: SendXrpTxType, hash?: any) {
+     handleSimulationSuccess(hash?: any) {
           const msg = `Successfully simulated Sending XRP`;
 
           this.txUiService.resetCurrentStepToIdle();

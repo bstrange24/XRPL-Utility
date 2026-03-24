@@ -1,0 +1,91 @@
+<div class="requirements-info">
+               <div class="info-header">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+                    <h3>Sign & Submit Transactions</h3>
+               </div>
+
+               <p class="info-subtitle">Prepare, sign (single, regular key, or multi-sign), preview JSON, and submit any XRPL transaction type. Supports getting unsigned/signed blobs, copying/downloading JSON, and viewing results — ideal for manual tx crafting, testing, or advanced workflows.</p>
+
+               <div class="combinations-grid">
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">✍️ Prepare & Sign</span>
+                              <span class="badge required-badge">Transaction JSON</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Transaction Type</span>
+                                   <span class="field-status required">✅ Required (select from dropdown)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Transaction JSON</span>
+                                   <span class="field-status required">✅ Required (editable JSON blob)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Signing Method</span>
+                                   <span class="field-status optional">➕ Single key, regular key, or multi-sign</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Output</span>
+                                   <span class="field-status optional">➕ Signed blob (hex) or full signed tx JSON</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="combination-card">
+                         <div class="combination-header">
+                              <span class="badge time-badge">🚀 Submit & Result</span>
+                              <span class="badge optional-badge">Broadcast & Preview</span>
+                         </div>
+                         <div class="combination-fields">
+                              <div class="field-row">
+                                   <span class="field-name">Signed Transaction</span>
+                                   <span class="field-status required">✅ Required (signed hex/blob)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Submit</span>
+                                   <span class="field-status required">✅ Broadcast to network</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Transaction Result</span>
+                                   <span class="field-status optional">➕ Engine result (tesSUCCESS, tec/tef codes, etc.)</span>
+                              </div>
+                              <div class="field-row">
+                                   <span class="field-name">Actions</span>
+                                   <span class="field-status optional">➕ Copy / download JSON or signed blob</span>
+                              </div>
+                         </div>
+                    </div>
+
+                    <div class="important-notes">
+                         <h5>📝 Important Notes:</h5>
+                         <ul>
+                              <li>All signing happens **client-side** — your secret/seed never leaves your device.</li>
+                              <li><strong>Transaction JSON</strong>: Must be valid XRPL format (TransactionType, Account, Sequence, etc.). Edit directly in the preview area.</li>
+                              <li>
+                                   Supports multiple signing modes:
+                                   <ul>
+                                        <li>Single key (master or regular)</li>
+                                        <li>Multi-sign (if SignerList set and quorum met)</li>
+                                   </ul>
+                              </li>
+                              <li><strong>Get Transaction JSON</strong>: Generates base JSON for the selected type (you fill in details).</li>
+                              <li><strong>Signed Transaction</strong>: Produces the signed blob (hex string) ready for submission or multi-sign addition.</li>
+                              <li><strong>Submit Transaction</strong>: Broadcasts to the connected XRPL node — result shows tesSUCCESS (included) or error codes (tec/tef/tem).</li>
+                              <li>Copy/download buttons let you save unsigned/signed JSON or blobs for offline use, sharing, or later submission.</li>
+                              <li>Transaction preview shows full details before signing/submitting — use to verify fields, fees, and paths.</li>
+                         </ul>
+                         <p></p>
+                         <h5 class="warning-title">⚠️ Security & Submission Risks</h5>
+                         <p style="color: #92400e">Signing exposes control — wrong JSON or compromised device can lead to fund loss or failed txs.</p>
+                         <ul>
+                              <li>Never paste real secrets/seeds into untrusted tools — this page signs locally, but verify your environment.</li>
+                              <li>Invalid JSON (missing Sequence, wrong Account, invalid fields) causes submission failure (tem/tef codes) and fee burn.</li>
+                              <li>Multi-sign requires quorum — incomplete signers cause tecNO_PERMISSION or similar errors.</li>
+                              <li>Submitting the same signed blob twice fails (tesSUCCESS only on first inclusion) — always use fresh signatures.</li>
+                              <li>High fees or malformed tx can lock funds temporarily (e.g., escrows, offers) — double-check before submit.</li>
+                              <li>Always test full flows (prepare → sign → submit) on devnet or Testnet first — mainnet mistakes are irreversible and cost real XRP.</li>
+                         </ul>
+                    </div>
+               </div>
+          </div>

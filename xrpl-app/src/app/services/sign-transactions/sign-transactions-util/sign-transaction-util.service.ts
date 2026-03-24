@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
+import { SignTransationStoreService } from '../sign-transaction-store/sign-transation-store.service';
 
 type TxBuilder = (ctx: { wallet: xrpl.Wallet; accountInfo: any; currentLedger: number; fee: any; selectedTransaction?: string }) => any;
 
@@ -54,11 +55,137 @@ interface SignTransactionOptions {
      providedIn: 'root',
 })
 export class SignTransactionUtilService {
-     constructor(
-          private readonly xrplService: XrplService,
-          public readonly txUiService: TransactionUiService,
-          public readonly utilsService: UtilsService
-     ) {}
+     public readonly signTransationStoreService = inject(SignTransationStoreService);
+     public readonly xrplService = inject(XrplService);
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+
+     constructor() {}
+
+     get isAnyButtonLoading(): boolean {
+          return Object.values(this.signTransationStoreService.buttonLoading()).includes(true);
+     }
+
+     // Transaction Type Dropdown Items
+     transactionTypeItems = computed(() => {
+          const current = this.signTransationStoreService.selectedTransaction();
+
+          return [
+               // Basic
+               // { id: 'batch', display: 'Batch', group: 'Basic' },
+               { id: 'sendXrp', display: 'Send XRP', group: 'Basic' },
+
+               // Trustline
+               { id: 'setTrustline', display: 'Set Trustline', group: 'Trustline' },
+               { id: 'removeTrustline', display: 'Remove Trustline', group: 'Trustline' },
+               { id: 'issueCurrency', display: 'Issue Currency', group: 'Trustline' },
+               { id: 'clawback', display: 'Clawback Currency', group: 'Trustline' },
+
+               // Account Flags
+               { id: 'accountFlagSet', display: 'Account Flag Set', group: 'Account Flags' },
+               { id: 'accountFlagClear', display: 'Account Flag Clear', group: 'Account Flags' },
+
+               // Escrow
+               { id: 'createTimeEscrow', display: 'Create Time Escrow', group: 'Escrow' },
+               { id: 'finishTimeEscrow', display: 'Finish Time Escrow', group: 'Escrow' },
+               { id: 'createConditionEscrow', display: 'Create Condition Escrow', group: 'Escrow' },
+               { id: 'finishConditionEscrow', display: 'Finish Condition Escrow', group: 'Escrow' },
+               { id: 'cancelEscrow', display: 'Cancel Escrow', group: 'Escrow' },
+
+               // Token Escrow
+               { id: 'createTimeEscrowToken', display: 'Create Token Time Escrow', group: 'Token Escrow' },
+               { id: 'finishTimeEscrowToken', display: 'Finish Token Time Escrow', group: 'Token Escrow' },
+               { id: 'createConditionEscrowToken', display: 'Create Token Condition Escrow', group: 'Token Escrow' },
+               { id: 'finishConditionEscrowToken', display: 'Finish Token Condition Escrow', group: 'Token Escrow' },
+
+               // Check
+               { id: 'createCheck', display: 'Check Create', group: 'Check' },
+               { id: 'cashCheck', display: 'Check Cash', group: 'Check' },
+               { id: 'cancelCheck', display: 'Check Cancel', group: 'Check' },
+
+               // Token Check
+               { id: 'createCheckToken', display: 'Check Token Create', group: 'Token Check' },
+               { id: 'cashCheckToken', display: 'Check Token Cash', group: 'Token Check' },
+
+               // Payment Channel
+               { id: 'createPaymentChannel', display: 'Create Payment Channel', group: 'Payment Channel' },
+               { id: 'fundPaymentChannel', display: 'Fund Payment Channel', group: 'Payment Channel' },
+               { id: 'claimPaymentChannel', display: 'Claim Payment Channel', group: 'Payment Channel' },
+               { id: 'closePaymentChannel', display: 'Close Payment Channel', group: 'Payment Channel' },
+
+               // MPT
+               { id: 'createMPT', display: 'MPT Create', group: 'MPT' },
+               { id: 'authorizeMPT', display: 'Authorize MPT', group: 'MPT' },
+               { id: 'unauthorizeMPT', display: 'Unauthorize MPT', group: 'MPT' },
+               { id: 'sendMPT', display: 'Send MPT', group: 'MPT' },
+               { id: 'lockMPT', display: 'Lock MPT', group: 'MPT' },
+               { id: 'unlockMPT', display: 'Unlock MPT', group: 'MPT' },
+               { id: 'destroyMPT', display: 'Destroy MPT', group: 'MPT' },
+          ].map(item => ({
+               id: item.id,
+               display: item.display,
+               group: item.group,
+               // secondary: item.group,
+               secondary: undefined,
+               isCurrentAccount: false,
+               isCurrentCode: false,
+               isCurrentToken: item.id === current,
+               showSecondaryInInput: true,
+          }));
+     });
+
+     readonly getTransactionJsonButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().getJson) return 'Get Transaction JSON';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly signTransactionButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().signed) return 'Signed Transaction';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly submitTransactionButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().submit) return 'Submit Transation';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly signMultiSignButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().multiSign) return 'Sign for Multi-Sign';
+          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          return this.txUiService.stepMessage();
+     });
+
+     onTxJsonChange(value: string) {
+          this.signTransationStoreService.setField('txJson', value);
+
+          try {
+               JSON.parse(value);
+               this.signTransationStoreService.setField('jsonEditorError', '');
+          } catch (e: any) {
+               this.signTransationStoreService.setField('jsonEditorError', 'Invalid JSON');
+          }
+     }
+
+     setTxJson(json: string) {
+          this.signTransationStoreService.setField('txJson', json);
+     }
+
+     setSigned(blob: string) {
+          this.signTransationStoreService.setField('outputField', blob);
+     }
+
+     copyCheckId(checkId: string) {
+          navigator.clipboard.writeText(checkId).then(() => {
+               this.txUiService.showToastMessage('Check ID copied!');
+          });
+     }
 
      async createBatchpRequestText(options: SignTransactionOptions): Promise<string> {
           const { wallet, accountInfo } = options;

@@ -3,25 +3,17 @@ import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-send-xrp-summary',
+     standalone: true,
      imports: [NgIcon],
      templateUrl: './send-xrp-summary.component.html',
      styleUrl: './send-xrp-summary.component.css',
 })
 export class SendXrpSummaryComponent {
-     // Inputs
-     info = input.required<
-          | {
-                 walletName: string;
-            }
-          | null
-          | undefined
-     >();
+     info = input.required<string | null>();
 
-     tab = input.required<'sendXrp'>();
+     tab = input<'sendXrp'>('sendXrp');
+     summaryMessage = input<string>('');
+     infoPanelExpanded = input<boolean>(false);
 
-     summaryMessage = input.required<string>();
-     infoPanelExpanded = input.required<boolean>();
-
-     // Outputs
      toggleInfoPanel = output<void>();
 }

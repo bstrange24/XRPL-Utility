@@ -7,6 +7,7 @@ import { XrplService } from '../xrpl-services/xrpl.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { PrepareTxEnvironmentResult } from '../transaction-environment/tx-environment.service';
+import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 
 export interface TxExecutionOptions {
      simulateMessage: string;
@@ -21,6 +22,7 @@ export class XrplTransactionExecutorService {
      public readonly xrplTransactions = inject(XrplTransactionService);
      public readonly utilsService = inject(UtilsService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplCache = inject(XrplCacheService);
      public readonly xrplService = inject(XrplService);
      constructor() {}
@@ -291,6 +293,7 @@ export class XrplTransactionExecutorService {
      }
 
      async sendXrpPayment(
+          env: any,
           tx: xrpl.Payment,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -303,10 +306,10 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulated XRP payment (no changes will be made)...',
                submitMessage: 'Submitting XRP payment to Ledger...',
-               amount: this.txUiService.amountField(),
+               amount: this.accountConfiguratorStoreService.amount(),
                ...options,
           });
      }

@@ -126,7 +126,7 @@ export class SignTransactionsOrchestratorService extends PerformanceBaseComponen
                await this.applyOptionalFields(client, paymentTx, wallet, env.accountInfo, formValues);
 
                // 5. Execute
-               const execResult = await this.executor.sendXrpPayment(paymentTx, env.wallet, client, {
+               const execResult = await this.executor.sendXrpPayment(env, paymentTx, env.wallet, client, {
                     useMultiSign: useMultiSign,
                     isRegularKeyAddress: formValues.isRegularKeyAddress,
                     regularKeyAddress: formValues.regularKeyAddress,

@@ -34,14 +34,15 @@ import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution
 import { SendXrpViewModelService } from '../../services/send-xrp/send-xrp-view-model/send-xrp-view-model.service';
 import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-xrp-util.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { XrpPaymentConfig } from './constants/send-xrp.types';
+import { SendXrpActionTypes, XrpPaymentConfig } from './constants/send-xrp.types';
 import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
+import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpRequirementsInfoComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, SendXrpRequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpRequirementsInfoComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, SendXrpRequirementsInfoComponent, SendXrpSummaryComponent],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,7 +90,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
 
      async setTab(tab: string): Promise<void> {
           if (SEND_XRP_TABS.includes(tab as any)) {
-               this.sendXrpViewModelService.activeTab.set(tab as 'sendXrp');
+               this.sendXrpViewModelService.activeTab.set(tab as SendXrpActionTypes);
                this.destinationSearchQuery.set('');
 
                if (this.hasWallets()) await this.onAccountChange(true);
@@ -176,11 +177,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
           });
 
           if (!txResult) throw new Error('Unable error when submitting transaction.');
-
-          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, destination, this.credentialStore.credentialIssuer(), '');
-          if (currentTab === 'deleteCredential' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-               this.credentialStore.resetCredentialIdDropDown();
-          }
+          await this.handleTxResult(txResult, env.client, env.wallet, destination, this.credentialStore.credentialIssuer(), '');
 
           this.txUiService.resetCurrentStepToIdle();
      }
