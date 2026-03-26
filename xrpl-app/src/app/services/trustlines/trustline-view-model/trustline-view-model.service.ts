@@ -28,7 +28,7 @@ export class TrustlineViewModelService {
 
      readonly infoData = computed(() => {
           const wallet = this.walletManager.getSelectedWallet();
-          if (!wallet?.address) return null;
+          if (!wallet?.address) return '';
 
           const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
           const explorerBase = this.txUiService.explorerUrl();
@@ -181,7 +181,7 @@ export class TrustlineViewModelService {
           return {
                walletName,
                activeTab: tab,
-               trustlineCount: filteredCount,
+               trustlineCount: filteredCount ? filteredCount : 0,
                totalTrustlines: totalCount,
                trustlinesToShow: relevant.map((tl: any) => ({
                     currency: tl.currency,
