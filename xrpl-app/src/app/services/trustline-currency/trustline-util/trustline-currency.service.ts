@@ -1,43 +1,32 @@
-import { computed, effect, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { SelectItem } from '../../destination-dropdown/destination-dropdown.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { UtilsService } from '../../util-service/utils.service';
-import { AppConstants } from '../../../core/app.constants';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-
-interface IssuerItem {
-     name: string;
-     address: string;
-}
-
-type TrustlineFlagKey = 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze';
-type TrustlineTab = 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers';
+import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import { TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';
+import { IssuerItem } from '../../../models/interface-items.model';
+import { CLEAR_FLAGS, SET_FLAGS, TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 @Injectable({ providedIn: 'root' })
-export class TrustlineCurrencyService {
-     public readonly txUiService = inject(TransactionUiService);
+export class TrustlineCurrencyService extends PerformanceBaseComponent {
+     private readonly currencyStore = inject(CurrencyStoreService);
+     private readonly walletManager = inject(WalletManagerService);
+     private readonly storage = inject(StorageService);
+     private readonly utils = inject(UtilsService);
+     public readonly utilsService = inject(UtilsService);
      public readonly txEnvironmentService = inject(TxEnvironmentService);
 
+     private readonly knownIssuers = signal<Record<string, string[]>>({ XRP: [] });
      private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
      public readonly knownTrustLinesIssuers$ = this.knownTrustLinesIssuers.asReadonly();
-     public readonly preferXrpAsDefault = signal<boolean>(true); // default = true (most pages)
-     public readonly currentWalletAddress = signal<string>('');
-     public readonly currentCurrency = signal<string>('XRP');
-     private readonly currentIssuer = signal<string>('');
-     private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
-     public addMptInCurrencyDropdown = signal<boolean>(false);
-     public addXrpInCurrencyDropdown = signal<boolean>(false);
+     public readonly preferXrpAsDefault = signal<boolean>(false);
+     public readonly addMptInCurrencyDropdown = signal<boolean>(false);
+     public readonly addXrpInCurrencyDropdown = signal<boolean>(false);
 
-     public readonly currencies = signal<string[]>([]);
-     public readonly issuers = signal<IssuerItem[]>([]);
-     public readonly selectedIssuer = signal<string>('');
-     public readonly balance = signal<string>('0');
-     public readonly isIssuer = signal<boolean>(false);
-
-     flags: Record<TrustlineFlagKey, boolean> = {
+     flags = signal<Record<TrustlineFlagKey, boolean>>({
           tfSetfAuth: false,
           tfSetNoRipple: false,
           tfClearNoRipple: false,
@@ -45,7 +34,7 @@ export class TrustlineCurrencyService {
           tfClearFreeze: false,
           tfSetDeepFreeze: false,
           tfClearDeepFreeze: false,
-     };
+     });
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
 
@@ -59,104 +48,243 @@ export class TrustlineCurrencyService {
           tfClearDeepFreeze: 0x00800000,
      };
 
-     trustlineFlags: Record<string, boolean> = { ...AppConstants.TRUSTLINE.FLAGS };
-     trustlineFlagList = AppConstants.TRUSTLINE.FLAG_LIST;
-     flagMap = AppConstants.TRUSTLINE.FLAG_MAP;
-     ledgerFlagMap = AppConstants.TRUSTLINE.LEDGER_FLAG_MAP;
+     public readonly trustlineFlags: Record<string, boolean> = { ...TRUSTLINE.FLAGS };
+     public readonly trustlineFlagList = TRUSTLINE.FLAG_LIST;
+     public readonly flagMap = TRUSTLINE.FLAG_MAP;
+     public readonly ledgerFlagMap = TRUSTLINE.LEDGER_FLAG_MAP;
+     public readonly setFlags = SET_FLAGS;
+     public readonly clearFlags = CLEAR_FLAGS;
 
-     constructor(
-          private readonly storage: StorageService,
-          private readonly utils: UtilsService,
-          private readonly walletManagerService: WalletManagerService,
-          private readonly utilsService: UtilsService
-     ) {
-          this.loadFromStorage();
+     readonly currencies = computed(() => {
+          const map = this.knownIssuers();
+          const addXrp = this.addXrpInCurrencyDropdown();
+          const addMpt = this.addMptInCurrencyDropdown();
+
+          const nonXrp = Object.keys(map)
+               .filter(c => c !== 'XRP' && c.trim() !== '' && c !== 'MPT')
+               .sort((a, b) => a.localeCompare(b));
+
+          const result: string[] = [];
+
+          if (addXrp) result.push('XRP');
+          if (addMpt) result.push('MPT');
+
+          result.push(...nonXrp);
+
+          return result;
+     });
+
+     readonly issuers = computed<IssuerItem[]>(() => {
+          const currency = this.currencyStore.currency();
+          const map = this.knownIssuers();
+
+          if (!currency || currency === 'XRP') return [];
+
+          return (map[currency] || []).map(addr => ({
+               address: addr,
+               name: this.getNiceName(addr, currency),
+          }));
+     });
+
+     readonly currencyItems = computed(() => {
+          const active = this.currencyStore.currency();
+
+          return this.currencies().map(c => ({
+               id: c,
+               display: c,
+               secondary: c === 'XRP' ? 'Native currency' : `${this.getIssuersForCurrency(c).length} issuer(s)`,
+               isCurrentCode: c === active,
+          }));
+     });
+
+     readonly issuerItems = computed(() => {
+          const active = this.currencyStore.issuer();
+
+          return this.issuers().map(i => ({
+               id: i.address,
+               display: i.name,
+               secondary: i.address,
+               isCurrentAccount: i.address === active,
+          }));
+     });
+
+     selectedIssuerItem = computed(() => {
+          const issuer = this.currencyStore.issuer();
+
+          return this.issuerItems().find(i => i.id === issuer);
+     });
+
+     selectCurrency(item: any) {
+          const currency = item?.id ?? item; // ← fixed
+          this.currencyStore.setCurrency(currency);
+
+          const issuers = this.getIssuersForCurrency(currency);
+          if (!issuers.length) {
+               this.currencyStore.setIssuer('');
+               return;
+          }
+          this.currencyStore.setIssuer(issuers[0]); // already correct for your BOB case
      }
 
-     // Has wallets → warning handling
-     private readonly _hasWalletsEffect = effect(() => {
-          if (this.walletManagerService.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
+     selectIssuer(item: any) {
+          const value = item?.id ?? item; // ← fixed
+          this.currencyStore.setIssuer(value);
+     }
 
-     // Selected index change → clear + refresh checks
-     private readonly _selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManagerService.selectedIndex();
-     });
+     addToken(currency: string, issuer: string) {
+          if (!currency || !issuer) return;
 
-     private buildTxLabel(defaultText: string) {
-          return computed(() => {
-               const step = this.txUiService.currentStep();
-               if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
-               return this.txUiService.stepMessage();
+          this.knownIssuers.update(map => {
+               const next = { ...map };
+               next[currency] = next[currency] || [];
+
+               if (!next[currency].includes(issuer)) next[currency].push(issuer);
+
+               return next;
           });
+
+          this.save();
      }
 
-     readonly trustlineSetButtonLabel = this.buildTxLabel('Set Trustline');
-     readonly trustlineRemoveButtonLabel = this.buildTxLabel('Remove Trustline');
-     readonly issueCurrencyButtonLabel = this.buildTxLabel('Issue Currency');
-     readonly clawbackButtonLabel = this.buildTxLabel('Clawback Tokens');
-     readonly addCurrencyIssuerButtonLabel = this.buildTxLabel('Add Currency/Issuer');
-     readonly removeSelectedIssuerButtonLabel = this.buildTxLabel('Remove Selected Issuer');
+     removeToken(currency: string, issuer?: string) {
+          this.knownIssuers.update(map => {
+               const next = { ...map };
 
-     findWalletAsIssuer(walletAddress: string): { currency: string; issuer: string } | null {
-          const normalizedAddr = walletAddress.trim().toLowerCase();
+               if (!next[currency]) return next;
 
-          const known = this.knownTrustLinesIssuers();
+               if (issuer) {
+                    next[currency] = next[currency].filter(i => i !== issuer);
+                    if (!next[currency].length) delete next[currency];
+               } else delete next[currency];
 
-          for (const [currency, issuers] of Object.entries(known)) {
-               if (currency === 'XRP') continue; // skip native
+               return next;
+          });
 
-               for (const issuer of issuers) {
-                    if (issuer.toLowerCase() === normalizedAddr) {
-                         return { currency, issuer };
-                    }
+          this.save();
+     }
+
+     private extractBalance(gatewayBalances: any, wallet: string, currency: string, issuer: string): string {
+          const result = gatewayBalances?.result;
+          if (!result) return '0';
+
+          // Normalize everything for reliable comparison
+          const normCurrency = this.utils.normalizeCurrencyCode(currency);
+          const walletAddr = this.utils.normalizeAddress(wallet); // add this helper if you don't have it
+          const issuerAddr = this.utils.normalizeAddress(issuer);
+
+          // Issuer view (obligation = total issued / negative balance)
+          if (walletAddr === issuerAddr) {
+               // obligations keys are usually the raw currency code (same as ledger)
+               const obligation = result.obligations?.[normCurrency] || result.obligations?.[currency];
+
+               if (!obligation) return '0';
+
+               return '-' + this.utils.formatTokenBalance(obligation, 18);
+          }
+
+          // Holder view (positive balance)
+          const balances = result.balances?.[issuer] || result.assets?.[issuer] || [];
+          const entry = balances.find((b: any) => this.utils.normalizeCurrencyCode(b.currency) === normCurrency);
+
+          return entry ? this.utils.formatTokenBalance(entry.value, 18) : '0';
+     }
+
+     setPreferXrpAsDefault(prefer: boolean) {
+          this.preferXrpAsDefault.set(prefer);
+          // Optionally re-apply default immediately
+          this.initializeDefaultCurrency();
+     }
+
+     private initializeDefaultCurrency() {
+          // Only auto-select if preferXrpAsDefault is true
+          if (this.preferXrpAsDefault()) {
+               if (this.currencyStore.currency() === 'XRP' || !this.currencyStore.currency()) return;
+
+               this.selectCurrency('XRP');
+               return;
+          }
+
+          // Otherwise fall back to first available non-XRP (or nothing)
+          const currencies = this.currencies();
+          if (currencies.length > 0) {
+               const firstNonXrp = currencies.find(c => c !== 'XRP') || currencies[0];
+               this.selectCurrency(firstNonXrp);
+          }
+     }
+
+     getIssuersForCurrency(currency: string): string[] {
+          return this.knownIssuers()[currency] || [];
+     }
+
+     private getNiceName(address: string, currency: string): string {
+          const wallet = this.walletManager.wallets()?.find(w => w.address === address);
+          if (wallet?.name) return wallet.name;
+
+          const short = address.slice(0, 6) + '...' + address.slice(-4);
+          return `${currency} – ${short}`;
+     }
+
+     private save() {
+          this.storage.setKnownIssuers('knownIssuers', this.knownIssuers());
+     }
+
+     load() {
+          const data = this.storage.getKnownIssuers('knownIssuers');
+          const normalized: Record<string, string[]> = {};
+
+          for (const [currency, issuers] of Object.entries(data || {})) {
+               normalized[currency] = Array.isArray(issuers) ? issuers : Object.values(issuers as any);
+          }
+
+          normalized['XRP'] = [];
+          this.knownIssuers.set(normalized);
+     }
+
+     public async refreshCurrentBalance(): Promise<void> {
+          await this.updateBalanceForCurrentCombo();
+     }
+
+     private async updateBalanceForCurrentCombo(): Promise<void> {
+          await this.withPerf('updateBalanceForCurrentCombo', async () => {
+               console.log('updateBalanceForCurrentCombo ................................. updateBalanceForCurrentCombo');
+               const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
+               const currency = this.currencyStore.currency();
+               const issuer = this.currencyStore.issuer();
+               const wallet = this.walletManager.getSelectedWallet()?.classicAddress;
+
+               if (!walletAddress || !currency) {
+                    this.currencyStore.setField('balance', '0');
+                    return;
                }
-          }
 
-          return null;
-     }
+               const env = await this.txEnvironmentService.prepareTxEnvironment({
+                    includeAccountInfo: true,
+                    includeGatewayBalance: true,
+               });
 
-     toggleFlag(key: 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze') {
-          this.flags[key] = !this.flags[key];
-          this.updateFlagTotal();
-     }
+               if (currency === 'XRP') {
+                    try {
+                         const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
+                         this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
+                    } catch {
+                         this.currencyStore.setField('balance', '0');
+                    }
+                    return;
+               }
 
-     updateFlagTotal() {
-          let sum = 0;
-          if (this.flags.tfSetfAuth) sum |= this.flagValues.tfSetfAuth;
-          if (this.flags.tfSetNoRipple) sum |= this.flagValues.tfSetNoRipple;
-          if (this.flags.tfClearNoRipple) sum |= this.flagValues.tfClearNoRipple;
-          if (this.flags.tfSetFreeze) sum |= this.flagValues.tfSetFreeze;
-          if (this.flags.tfClearFreeze) sum |= this.flagValues.tfClearFreeze;
-          if (this.flags.tfSetDeepFreeze) sum |= this.flagValues.tfSetDeepFreeze;
-          if (this.flags.tfClearDeepFreeze) sum |= this.flagValues.tfClearDeepFreeze;
+               if (!issuer) {
+                    this.currencyStore.setField('balance', '0');
+                    return;
+               }
 
-          this.totalFlagsValue.set(sum);
-          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
-     }
-
-     clearFlagsValue(activeTab: string) {
-          if (activeTab !== 'removeTrustline') {
-               this.flags = {
-                    tfSetfAuth: false,
-                    tfSetNoRipple: false,
-                    tfClearNoRipple: false,
-                    tfSetFreeze: false,
-                    tfClearFreeze: false,
-                    tfSetDeepFreeze: false,
-                    tfClearDeepFreeze: false,
-               };
-               this.totalFlagsValue.set(0);
-               this.totalFlagsHex.set('0x0');
-          }
+               try {
+                    const balance = this.extractBalance(env.gatewayBalanceObject, wallet!, currency, issuer);
+                    this.currencyStore.setField('balance', balance);
+               } catch (err) {
+                    console.warn('Failed to fetch token balance:', err);
+                    this.currencyStore.setField('balance', '0');
+               }
+          });
      }
 
      getTrustlineState(accountObjects: xrpl.AccountObjectsResponse, walletAddr: string, issuer: string, encodedCurrency: string): xrpl.LedgerEntry.RippleState | undefined {
@@ -216,610 +344,66 @@ export class TrustlineCurrencyService {
           return mapped;
      }
 
+     refreshNonNativeCurrency(): void {
+          const currency = this.currencyStore.currency() ?? 'XRP';
+          if (currency === 'XRP' || currency === 'MPT') return;
+          this.selectCurrency(currency);
+     }
+
      async hasTrustline(trustlines: xrpl.AccountLinesResponse, currency: string, issuer: string): Promise<boolean> {
           const normalizedCurrency = this.utilsService.decodeIfNeeded(currency);
 
           return trustlines.result.lines.some((line: { account: string; currency: string; limit: string }) => {
                const currencyMatches = this.utilsService.decodeIfNeeded(line.currency) === normalizedCurrency;
-
                const issuerMatches = line.account === issuer;
-
                const limitIsPositive = Number.parseFloat(line.limit) > 0;
-
                return issuerMatches && currencyMatches && limitIsPositive;
           });
      }
 
-     hasTrustline1(accountObjects: any[], account: string, currency: string, issuer: string): boolean {
-          return accountObjects.some(obj => {
-               if (obj.LedgerEntryType !== 'RippleState') return false;
-
-               const isHigh = obj.HighLimit?.issuer === account;
-               const limit = isHigh ? obj.HighLimit : obj.LowLimit;
-
-               return limit?.currency === currency && (isHigh ? obj.LowLimit?.issuer : obj.HighLimit?.issuer) === issuer && Number(limit?.value) > 0;
+     toggleFlag(key: TrustlineFlagKey) {
+          this.flags.update(f => {
+               f[key] = !f[key];
+               return f;
           });
+          this.updateFlagTotal();
      }
 
-     setPreferXrpAsDefault(prefer: boolean) {
-          this.preferXrpAsDefault.set(prefer);
-          // Optionally re-apply default immediately
-          this.initializeDefaultCurrency();
+     updateFlagTotal() {
+          let sum = 0;
+          if (this.flags().tfSetfAuth) sum |= this.flagValues.tfSetfAuth;
+          if (this.flags().tfSetNoRipple) sum |= this.flagValues.tfSetNoRipple;
+          if (this.flags().tfClearNoRipple) sum |= this.flagValues.tfClearNoRipple;
+          if (this.flags().tfSetFreeze) sum |= this.flagValues.tfSetFreeze;
+          if (this.flags().tfClearFreeze) sum |= this.flagValues.tfClearFreeze;
+          if (this.flags().tfSetDeepFreeze) sum |= this.flagValues.tfSetDeepFreeze;
+          if (this.flags().tfClearDeepFreeze) sum |= this.flagValues.tfClearDeepFreeze;
+
+          this.totalFlagsValue.set(sum);
+          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
-     private initializeDefaultCurrency() {
-          // Only auto-select if preferXrpAsDefault is true
-          if (this.preferXrpAsDefault()) {
-               if (this.currentCurrency() === 'XRP' || !this.currentCurrency()) {
-                    return;
-               }
-
-               this.selectCurrency('XRP', '');
-               return;
-          }
-
-          // Otherwise fall back to first available non-XRP (or nothing)
-          const currencies = this.currencies();
-          if (currencies.length > 0) {
-               const firstNonXrp = currencies.find(c => c !== 'XRP') || currencies[0];
-               this.selectCurrency(firstNonXrp, '');
-          }
-     }
-
-     getIssuerItems(): Signal<SelectItem[]> {
-          return computed(() => {
-               return this.issuers().map(iss => ({
-                    id: iss.address,
-                    display: iss.name || `Issuer ${iss.address.slice(0, 8)}...`,
-                    secondary: iss.address,
-                    isCurrentAccount: false,
-                    isCurrentCode: false,
-                    isCurrentToken: iss.address === this.selectedIssuer(),
-               }));
-          });
-     }
-
-     readonly currencyBalance = computed<string>(() => this.balance());
-
-     public async refreshCurrentBalance(): Promise<void> {
-          await this.updateBalanceForCurrentCombo();
-     }
-
-     refreshNonNativeCurrency(): void {
-          const currency = this.currentCurrency() ?? 'XRP';
-          if (currency === 'XRP' || currency === 'MPT') return;
-          this.selectCurrency(currency, '');
-     }
-
-     // Public API — use these in components
-     readonly currencyItems = computed<SelectItem[]>(() => {
-          const currs = this.currencies();
-          const active = this.currentCurrency();
-
-          return currs.map(c => ({
-               id: c,
-               display: c === 'XRP' ? 'XRP' : c,
-               secondary: c === 'XRP' ? 'Native currency' : `${this.getIssuersForCurrency(c).length || 0} issuer(s)`,
-               isCurrentCode: c === active,
-               // ... other props
-          }));
-     });
-
-     readonly issuerItems = computed<SelectItem[]>(() => {
-          const iss = this.issuers();
-          const active = this.selectedIssuer();
-
-          return iss.map(i => ({
-               id: i.address,
-               display: i.name || i.address.slice(0, 8) + '...',
-               secondary: i.address,
-               isCurrentAccount: i.address === active,
-               isCurrentToken: false,
-          }));
-     });
-
-     public resetToDefault(): void {
-          this.selectCurrency('XRP', '');
-     }
-
-     getCurrencyItems(): Signal<SelectItem[]> {
-          return computed(() => {
-               let visibleCurrencies = this.currencies();
-
-               // If flag is false, exclude MPT from display
-               if (!this.addMptInCurrencyDropdown()) {
-                    visibleCurrencies = visibleCurrencies.filter(c => c !== 'MPT');
-               }
-
-               if (!this.addXrpInCurrencyDropdown()) {
-                    visibleCurrencies = visibleCurrencies.filter(c => c !== 'XRP');
-               }
-
-               const currentCode = this.currentCurrency();
-
-               return visibleCurrencies.map(curr => {
-                    let displayName: string;
-                    let secondaryText: string;
-
-                    if (curr === 'XRP') {
-                         displayName = 'XRP';
-                         secondaryText = 'Native currency';
-                    } else if (curr === 'MPT') {
-                         displayName = 'MPT';
-                         secondaryText = 'Multi-Purpose Token';
-                    } else {
-                         displayName = curr;
-                         const count = this.getIssuersForCurrency(curr).length;
-                         const pluralSuffix = count === 1 ? '' : 's';
-                         secondaryText = count === 0 ? 'No issuers' : `${count} issuer${pluralSuffix}`;
-                    }
-
-                    return {
-                         id: curr,
-                         display: displayName,
-                         secondary: secondaryText,
-                         isCurrentAccount: false,
-                         isCurrentCode: curr === currentCode,
-                         isCurrentToken: false,
-                    };
+     clearFlagsValue(activeTab: string) {
+          if (activeTab !== 'removeTrustline') {
+               this.flags.set({
+                    tfSetfAuth: false,
+                    tfSetNoRipple: false,
+                    tfClearNoRipple: false,
+                    tfSetFreeze: false,
+                    tfClearFreeze: false,
+                    tfSetDeepFreeze: false,
+                    tfClearDeepFreeze: false,
                });
+               this.totalFlagsValue.set(0);
+               this.totalFlagsHex.set('0x0');
+          }
+     }
+
+     setFlag(key: TrustlineFlagKey, value: boolean) {
+          this.flags.update(f => {
+               f[key] = value;
+               return f;
           });
+          this.updateFlagTotal();
      }
-
-     private loadFromStorage() {
-          const data = this.storage.getKnownIssuers('knownIssuers');
-          if (data) {
-               const normalized: Record<string, string[]> = {};
-               for (const [currency, issuers] of Object.entries(data as any)) {
-                    if (Array.isArray(issuers)) {
-                         normalized[currency] = issuers;
-                    } else if (issuers && typeof issuers === 'object') {
-                         normalized[currency] = Object.values(issuers);
-                    } else {
-                         normalized[currency] = [];
-                    }
-               }
-               normalized['XRP'] = [];
-               this.knownTrustLinesIssuers.set(normalized);
-          } else {
-               this.knownTrustLinesIssuers.set({ XRP: [] });
-          }
-          this.updateCurrencies();
-     }
-
-     private saveToStorage() {
-          this.storage.setKnownIssuers('knownIssuers', this.knownTrustLinesIssuers());
-     }
-
-     public addToken(currency: string, issuer: string): void {
-          if (!currency?.trim() || !issuer?.trim()) return;
-
-          const curr = currency.trim();
-          const iss = issuer.trim();
-
-          this.knownTrustLinesIssuers.update(map => {
-               if (!map[curr]) {
-                    map[curr] = [];
-               }
-               if (!map[curr].includes(iss)) {
-                    map[curr].push(iss);
-               }
-               return { ...map };
-          });
-
-          this.saveToStorage();
-          this.updateCurrencies();
-     }
-
-     public removeToken(currency: string, issuer?: string): void {
-          if (!currency) return;
-
-          this.knownTrustLinesIssuers.update(map => {
-               if (!map[currency]) return map;
-
-               if (issuer) {
-                    map[currency] = map[currency].filter(i => i !== issuer);
-                    if (map[currency].length === 0) {
-                         delete map[currency];
-                    }
-               } else {
-                    delete map[currency];
-               }
-               return { ...map };
-          });
-
-          this.saveToStorage();
-          this.updateCurrencies();
-     }
-
-     updateCurrencies() {
-          const known = this.knownTrustLinesIssuers();
-
-          // Get sorted IOU currencies (exclude XRP and MPT)
-          const nonXrpIoUs = Object.keys(known)
-               .filter(c => c !== 'XRP' && c.trim() !== '' && c !== 'MPT')
-               .sort((a, b) => a.localeCompare(b)); // alphabetical
-
-          // Build the final ordered list
-          const allCurrencies: string[] = [];
-
-          // 1. XRP always first (if enabled)
-          if (this.addXrpInCurrencyDropdown()) {
-               allCurrencies.push('XRP');
-          }
-
-          // 2. MPT second (if enabled)
-          if (this.addMptInCurrencyDropdown()) {
-               allCurrencies.push('MPT');
-          }
-
-          // 3. All other IOUs in alphabetical order
-          allCurrencies.push(...nonXrpIoUs);
-
-          this.currencies.set(allCurrencies);
-
-          if (this.preferXrpAsDefault()) {
-               if (allCurrencies.includes('XRP')) {
-                    this.selectCurrency('XRP', '');
-               } else if (allCurrencies.length > 0) {
-                    this.selectCurrency(allCurrencies[0], ''); // now always the first real one
-               }
-          } else if (allCurrencies.length > 0) {
-               // Prefer MPT if present, otherwise first IOU
-               const fallback = allCurrencies.includes('MPT') ? 'MPT' : allCurrencies.find(c => c !== 'XRP') || allCurrencies[0];
-               this.selectCurrency(fallback, '');
-          }
-     }
-
-     getAvailableCurrencies(includeXrp: boolean = false): string[] {
-          let currencies = Object.keys(this.knownTrustLinesIssuers);
-
-          if (!includeXrp) {
-               currencies = currencies.filter(c => c !== 'XRP');
-          }
-
-          return currencies.sort((a, b) => a.localeCompare(b));
-     }
-
-     async selectCurrency(currency: string, _nothing: string) {
-          console.log('selectCurrency .................................');
-          const normalized = (currency || 'XRP').trim().toUpperCase();
-
-          if (normalized === 'XRP') {
-               this.currentCurrency.set('XRP');
-               this.currentIssuer.set('');
-               this.issuers.set([]);
-               this.selectedIssuer.set('');
-               this.balance.set('0');
-               this.currencies.set(this.currencies()); // trigger any UI refresh if needed
-               return;
-          }
-
-          this.currentCurrency.set(currency);
-          this.loadIssuersForCurrency(currency); // your existing method
-          this.updateBalanceForCurrentCombo(); // your existing method
-     }
-
-     // Called when user picks an issuer
-     selectIssuer(issuer: string) {
-          this.currentIssuer.set(issuer);
-          this.selectedIssuer.set(issuer);
-          this.updateBalanceForCurrentCombo();
-     }
-
-     private async loadIssuersForCurrency(currency: string) {
-          const known = this.knownTrustLinesIssuers()[currency] || [];
-          const issuers: IssuerItem[] = known
-               .map(addr => ({
-                    name: this.getNiceName(addr, currency),
-                    address: addr,
-               }))
-               .sort((a, b) => a.name.localeCompare(b.name));
-
-          this.issuers.set(issuers);
-
-          if (issuers.length === 0) {
-               this.currentIssuer.set('');
-               this.selectedIssuer.set('');
-               this.balance.set('0');
-               return;
-          }
-
-          // 1. If we already have a selected issuer for this currency → keep it
-          // 2. Otherwise, default to the first one (only on first load)
-          const previouslySelectedForThisCurrency = this.currentIssuer() && known.includes(this.currentIssuer());
-
-          if (!previouslySelectedForThisCurrency) {
-               // First time seeing this currency → pick the first issuer
-               this.currentIssuer.set(issuers[0].address);
-          }
-
-          // Always emit the current (possibly unchanged) issuer
-          this.selectedIssuer.set(this.currentIssuer());
-
-          // Update balance for the active issuer
-          // await this.updateBalanceForCurrentCombo();
-     }
-
-     private getNiceName(address: string, currency: string): string {
-          const wallet = this.walletManagerService.wallets()?.find(w => w.address === address);
-          if (wallet?.name) return wallet.name;
-
-          const custom = this.storage.get('customDestinations');
-          if (custom) {
-               const list = JSON.parse(custom);
-               const found = list.find((d: any) => d.address === address);
-               if (found?.name) return found.name;
-          }
-
-          const short = address.slice(0, 6) + '...' + address.slice(-4);
-          return `${currency} – ${short}`;
-     }
-
-     private async updateBalanceForCurrentCombo(): Promise<void> {
-          console.log('updateBalanceForCurrentCombo ................................. updateBalanceForCurrentCombo');
-          const startTime = performance.now();
-          try {
-               const walletAddress = this.currentWalletAddress();
-               const currency = this.currentCurrency();
-               const issuer = this.currentIssuer();
-
-               if (!walletAddress || !currency) {
-                    this.balance.set('0');
-                    return;
-               }
-
-               const env = await this.txEnvironmentService.prepareTxEnvironment({
-                    includeAccountInfo: true,
-                    includeGatewayBalance: true,
-               });
-
-               if (currency === 'XRP') {
-                    try {
-                         const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-                         this.balance.set(this.utils.formatTokenBalance(bal.toString(), 6));
-                    } catch {
-                         this.balance.set('0');
-                    }
-                    return;
-               }
-
-               if (!issuer) {
-                    this.balance.set('0');
-                    return;
-               }
-
-               try {
-                    const balance = this.extractBalance(env.gatewayBalanceObject, currency, issuer);
-                    this.balance.set(balance);
-               } catch (err) {
-                    console.warn('Failed to fetch token balance:', err);
-                    this.balance.set('0');
-               }
-          } finally {
-               const endTime = performance.now();
-               const duration = endTime - startTime;
-               console.log(`updateBalanceForCurrentCombo took ${duration.toFixed(2)}ms`);
-          }
-     }
-
-     private extractBalance(gatewayBalances: any, currency: string, issuer: string): string {
-          const result = gatewayBalances?.result;
-          if (!result) return '0';
-
-          const normCurrency = this.utils.normalizeCurrencyCode(currency);
-
-          // Issuer perspective
-          if (this.currentWalletAddress() === issuer) {
-               this.isIssuer.set(true);
-               return this.extractIssuerBalance(gatewayBalances, currency);
-          }
-
-          // Holder perspective
-          this.isIssuer.set(false);
-          const balances = result.balances?.[issuer] ? result.balances?.[issuer] : result.assets?.[issuer] || [];
-          const balEntry = balances.find((b: any) => this.utils.normalizeCurrencyCode(b.currency) === normCurrency);
-
-          if (balEntry) {
-               return this.utils.formatTokenBalance(balEntry.value, 18);
-          }
-
-          return '0';
-     }
-
-     private extractIssuerBalance(gatewayBalances: any, currency: string): string {
-          const result = gatewayBalances?.result;
-          if (!result?.obligations) return '0';
-
-          const obligationValue = result.obligations[currency];
-
-          if (!obligationValue) return '0';
-
-          return '-' + this.utils.formatTokenBalance(obligationValue, 18);
-     }
-
-     getCurrencies(): string[] {
-          return this.currencies();
-     }
-
-     setSelectedCurrency(currency: string): void {
-          return this.currentCurrency.set(currency);
-     }
-
-     getSelectedCurrency(): string {
-          return this.currentCurrency();
-     }
-
-     getSelectedIssuer(): string {
-          return this.currentIssuer();
-     }
-
-     getIssuersForCurrency(currency: string): string[] {
-          if (!currency || currency === 'XRP') return [];
-          return this.knownTrustLinesIssuers()[currency] || [];
-     }
-
-     public setAddMptInDropdown(show: boolean): void {
-          this.addMptInCurrencyDropdown.set(show);
-          this.updateCurrencies();
-     }
-
-     public setXrpInDropdown(show: boolean): void {
-          this.addXrpInCurrencyDropdown.set(show);
-          this.updateCurrencies();
-     }
-
-     readonly tabs: {
-          key: TrustlineTab;
-          label: string;
-          icon: string;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'setTrustline',
-               label: 'Set',
-               icon: 'heroAdjustmentsVertical',
-               color: 'blue',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'removeTrustline',
-               label: 'Remove',
-               icon: 'heroTrash',
-               color: 'red',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'issueCurrency',
-               label: 'Send / Issue Currency',
-               icon: 'heroCurrencyDollar',
-               color: 'green',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'clawbackTokens',
-               label: 'Clawback',
-               icon: 'heroTrash',
-               color: 'red',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'addNewIssuers',
-               label: 'Modify Issuers',
-               icon: 'heroPlusCircle',
-               color: 'blue',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
-
-     readonly tabMeta = {
-          setTrustline: {
-               icon: 'heroAdjustmentsVertical',
-               colorClass: 'blue-button-submenu',
-               title: 'Set Trustline',
-               desc: 'Set a trustline to another XRPL address',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          removeTrustline: {
-               icon: 'heroTrash',
-               colorClass: 'red-button-submenu',
-               title: 'Remove Trustline',
-               desc: 'Remove trustline to another XRPL address',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          issueCurrency: {
-               icon: 'heroCurrencyDollar',
-               colorClass: 'green-button-submenu',
-               title: 'Send / Issue Currency',
-               desc: 'Send / Issue currency to another XRPL address',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          clawbackTokens: {
-               icon: 'heroTrash',
-               colorClass: 'red-button-submenu',
-               title: 'Clawback Tokens',
-               desc: 'Clawback tokens from another XRPL address',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          addNewIssuers: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Add/Remove Issuers',
-               desc: 'Add issuers and tokens from external sources.',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     };
-
-     readonly setFlags: {
-          key: TrustlineFlagKey;
-          title: string;
-          hex: string;
-          desc: string;
-          isClearFlag: boolean;
-     }[] = [
-          {
-               key: 'tfSetfAuth',
-               title: 'SetfAuth',
-               hex: '0x00010000',
-               desc: 'Authorize the other party to hold currency issued by this account. (No effect unless using the asfRequireAuth AccountSet flag.) Cannot be unset.',
-               isClearFlag: true,
-          },
-          {
-               key: 'tfSetNoRipple',
-               title: 'SetNoRipple',
-               hex: '0x00020000',
-               desc: 'Enable the No Ripple flag, which blocks rippling between two trust lines of the same currency if this flag is enabled on both.',
-               isClearFlag: true,
-          },
-          {
-               key: 'tfSetFreeze',
-               title: 'SetFreeze',
-               hex: '0x00100000',
-               desc: 'Freeze the trustline (prevent transfers).',
-               isClearFlag: true,
-          },
-          {
-               key: 'tfSetDeepFreeze',
-               title: 'SetDeepFreeze',
-               hex: '0x00400000',
-               desc: 'Deep-Freeze (block sending & receiving). Requires freeze first.',
-               isClearFlag: true,
-          },
-     ];
-
-     readonly clearFlags: {
-          key: TrustlineFlagKey;
-          title: string;
-          hex: string;
-          desc: string;
-          isClearFlag: boolean;
-     }[] = [
-          {
-               key: 'tfClearNoRipple',
-               title: 'ClearNoRipple',
-               hex: '0x00040000',
-               desc: 'Required to remove trustline...',
-               isClearFlag: true,
-          },
-          {
-               key: 'tfClearFreeze',
-               title: 'ClearFreeze',
-               hex: '0x00200000',
-               desc: 'Required to remove a frozen trustline.',
-               isClearFlag: true,
-          },
-          {
-               key: 'tfClearDeepFreeze',
-               title: 'ClearDeepFreeze',
-               hex: '0x00200000',
-               desc: 'Required to remove a deep-frozen trustline.',
-               isClearFlag: true,
-          },
-     ];
 }

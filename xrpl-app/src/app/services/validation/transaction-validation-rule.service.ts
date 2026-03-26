@@ -429,7 +429,7 @@ export class ValidationService {
                     value = ctx.inputs[action]?.tokenCountField;
                     field = 'Ticket Count';
                } else if (action === 'issueCurrency' || action === 'clawbackTokens' || action === 'setTrustline') {
-                    value = ctx.inputs[action]?.trustlineLimitField;
+                    value = ctx.inputs[action]?.amount;
                     field = 'Trustline Limit';
                } else if (action === 'modifyMultiSigners') {
                     value = ctx.inputs[action]?.signerQuorum;
@@ -1898,7 +1898,7 @@ export class ValidationService {
           // TrustSet
           this.registerRule({
                transactionType: 'TrustSet',
-               requiredFields: ['setTrustline.trustlineLimitField', 'setTrustline.currencyCode', 'setTrustline.currencyIssuer'],
+               requiredFields: ['setTrustline.amount', 'setTrustline.currencyCode', 'setTrustline.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1923,7 +1923,7 @@ export class ValidationService {
           // RemoveTrustline
           this.registerRule({
                transactionType: 'RemoveTrustline',
-               requiredFields: ['removeTrustline.trustlineLimitField', 'removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
+               requiredFields: ['removeTrustline.amount', 'removeTrustline.currencyCode', 'removeTrustline.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1947,7 +1947,7 @@ export class ValidationService {
           // IssueCurrency
           this.registerRule({
                transactionType: 'IssueCurrency',
-               requiredFields: ['issueCurrency.destination', 'issueCurrency.trustlineLimitField', 'issueCurrency.currencyCode', 'issueCurrency.currencyIssuer'],
+               requiredFields: ['issueCurrency.destination', 'issueCurrency.amount', 'issueCurrency.currencyCode', 'issueCurrency.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {
@@ -1992,7 +1992,7 @@ export class ValidationService {
           // ClawbackTokens
           this.registerRule({
                transactionType: 'ClawbackTokens',
-               requiredFields: ['clawbackTokens.destination', 'clawbackTokens.trustlineLimitField', 'clawbackTokens.currencyCode', 'clawbackTokens.currencyIssuer'],
+               requiredFields: ['clawbackTokens.destination', 'clawbackTokens.amount', 'clawbackTokens.currencyCode', 'clawbackTokens.currencyIssuer'],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {

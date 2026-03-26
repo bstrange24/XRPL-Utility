@@ -39,6 +39,8 @@ import { EscrowFinishItemComponent } from '../time-escrow/ui-components/escrow-f
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
+import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 
 @Component({
      selector: 'app-conditional-escrow',
@@ -74,6 +76,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      private readonly walletManager = inject(WalletManagerService);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -86,7 +90,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
      currencyItems = this.trustlineCurrencyService.currencyItems;
      issuerItems = this.trustlineCurrencyService.issuerItems;
-     currencyBalanceField = this.trustlineCurrencyService.currencyBalance;
+     currencyBalanceField = this.currencyStoreService.balance();
 
      isMptEnabled = signal<boolean>(false);
 
@@ -142,18 +146,18 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
      selectedEscrowItem = computed(() => this.escrowUtilService.selectedEscrowItem(this.escrowItems(), this.txUiService.escrowSequenceNumberField()));
 
-     selectedIssuerAddress = computed(() => this.trustlineCurrencyService.getSelectedIssuer());
+     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
 
      // Selected currency
      selectedCurrencyItem = computed(() => {
-          const code = this.trustlineCurrencyService.currentCurrency();
+          const code = this.currencyStoreService.currency();
           if (!code) return null;
           return this.currencyItems().find(item => item.id === code) || null;
      });
 
      // Selected issuer
      selectedIssuerItem = computed(() => {
-          const addr = this.trustlineCurrencyService.selectedIssuer();
+          const addr = this.currencyStoreService.issuer();
           if (!addr) return null;
           return this.issuerItems().find(item => item.id === addr) || null;
      });
@@ -311,22 +315,22 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      }
 
      ngOnInit(): void {
-          this.trustlineCurrencyService.setPreferXrpAsDefault(true);
-          this.trustlineCurrencyService.setXrpInDropdown(true);
-          this.trustlineCurrencyService.setAddMptInDropdown(true);
+          // this.trustlineCurrencyService.setPreferXrpAsDefault(true);
+          // this.trustlineCurrencyService.setXrpInDropdown(true);
+          // this.trustlineCurrencyService.setAddMptInDropdown(true);
 
           this.transactionDropdownService.loadCustomDestinations();
           this.setEscrowFinishAfterExpirationToNow();
           this.setEscrowCancelAfterExpirationToNow();
-          this.trustlineCurrencyService.resetToDefault();
+          // this.trustlineCurrencyService.resetToDefault();
           this.txUiService.clearAllOptions();
           this.txUiService.enableEscrowFinishAfterExpirationDate.set(false);
      }
 
      onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
-          this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
-          this.trustlineCurrencyService.selectCurrency(currency, '');
+          // this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
+          this.trustlineCurrencyService.selectCurrency(currency);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -339,7 +343,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
+          // this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
           this.xrplTxOptionsStore.setField('showEnableTrustline', false);
 
@@ -348,13 +352,13 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
           }
 
           // Reset currency to XRP when wallet changes
-          this.trustlineCurrencyService.resetToDefault();
+          // this.trustlineCurrencyService.resetToDefault();
 
           this.setEscrowFinishAfterExpirationToNow();
           this.setEscrowCancelAfterExpirationToNow();
 
           // Only change currency if needed — avoid re-triggering selectCurrency('XRP')
-          const current = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
+          const current = this.currencyStoreService.currency() ?? 'XRP';
           if (current !== 'XRP') this.onCurrencyChange(current);
      }
 
@@ -407,7 +411,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
           this.clearInputFields();
 
-          if (tab === 'create') this.trustlineCurrencyService.resetToDefault();
+          // if (tab === 'create') this.trustlineCurrencyService.resetToDefault();
 
           if (this.hasWallets()) {
                await this.getEscrows(false);
@@ -437,9 +441,9 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
 
                     this.updateLocalAccountState(env.accountObjects, env.wallet.classicAddress);
 
-                    const currencyValue = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
-                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
-                         this.trustlineCurrencyService.selectCurrency(currencyValue, '');
+                    const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
+                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
+                         this.trustlineCurrencyService.selectCurrency(currencyValue);
                     }
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -467,8 +471,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                }
 
                try {
-                    this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
-                    this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
+                    this.currencyStoreService.setField('currencyCode', this.currencyStoreService.currency());
+                    this.currencyStoreService.setField('currencyIssuer', this.currencyStoreService.issuer());
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
@@ -512,8 +516,8 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
                          formValues: {
                               ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createEscrowSpecificKeys)),
                               destinationAddress,
-                              currencyValue: this.trustlineCurrencyService.currentCurrency() || 'XRP',
-                              issuer: this.trustlineCurrencyService?.selectedIssuer?.() || '',
+                              currencyValue: this.currencyStoreService.currency() || 'XRP',
+                              issuer: this.currencyStoreService?.issuer?.() || '',
                               condition: this.txUiService.escrowConditionField()?.trim()?.toUpperCase(),
                               cancelAfter: this.txUiService.escrowCancelTimeField(),
                          },
@@ -812,7 +816,7 @@ export class CreateConditionalEscrowComponent extends PerformanceBaseComponent i
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrencyService.selectCurrency(currency, '');
+          this.trustlineCurrencyService.selectCurrency(currency);
      }
 
      onIssuerChange(issuer: string) {

@@ -130,24 +130,23 @@ export class TransactionUiService {
      checkCreator = signal<string>('');
 
      // Tokens + Trustlines
-     trustlineLimitField = signal<number>(0);
-     currencyCode = signal<string>('XRP');
-     currencyIssuer = signal<string>('');
-     tokenToRemove = signal<string>('');
-     lastCurrency = signal<string>('');
-     lastIssuer = signal<string>('');
-     userAddedissuerFields = signal<string>('');
-     newCurrency = signal<string>('');
-     newIssuer = signal<string>('');
-     issuerToRemove = signal<string>('');
-     trustlineFlags = signal<number>(0);
-     // showEnableTrustline = signal<boolean>(false);
-     missingTrustlineInfo = {
-          currencyCode: signal<string>(''),
-          issuer: signal<string>(''),
-     };
-     currency = signal<string>('');
-     issuer = signal<string>('');
+     // trustlineLimitField = signal<number>(0);
+     // currencyCode = signal<string>('XRP');
+     // currencyIssuer = signal<string>('');
+     // tokenToRemove = signal<string>('');
+     // lastCurrency = signal<string>('');
+     // lastIssuer = signal<string>('');
+     // userAddedissuerFields = signal<string>('');
+     // newCurrency = signal<string>('');
+     // newIssuer = signal<string>('');
+     // issuerToRemove = signal<string>('');
+     // trustlineFlags = signal<number>(0);
+     // missingTrustlineInfo = {
+     //      currencyCode: signal<string>(''),
+     //      issuer: signal<string>(''),
+     // };
+     // currency = signal<string>('');
+     // issuer = signal<string>('');
 
      // Tickets
      // ticketCountField = signal<string>('');
@@ -730,8 +729,8 @@ export class TransactionUiService {
                     destination: options?.createTimeBasedEscrow?.destination,
                     finishAfter: options?.createTimeBasedEscrow?.finishAfter || this.finishAfter(),
                     cancelAfter: options?.createTimeBasedEscrow?.cancelAfter || this.cancelAfter(),
-                    currency: this.currency(),
-                    issuer: this.issuer(),
+                    // currency: this.currency(),
+                    // issuer: this.issuer(),
                },
                finishTimeBasedEscrow: {
                     escrowOwner: options?.finishTimeBasedEscrow?.escrowOwner,
@@ -745,8 +744,8 @@ export class TransactionUiService {
                     destination: options?.createConditionalEscrow?.destination,
                     finishAfter: options?.createConditionalEscrow?.finishAfter || this.finishAfter(),
                     cancelAfter: options?.createConditionalEscrow?.cancelAfter || this.cancelAfter(),
-                    currency: this.currency(),
-                    issuer: this.issuer(),
+                    // currency: this.currency(),
+                    // issuer: this.issuer(),
                     condition: options?.createConditionalEscrow?.condition,
                },
                finishConditionalEscrow: {

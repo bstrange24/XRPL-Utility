@@ -1,0 +1,83 @@
+<div class="info-and-credentials-card" [class.has-trustlines]="info.trustlineCount > 0">
+     @if (info?.isLoading) {
+     <div class="summary-header">Loading trustlines...</div>
+     } @else {
+     <!-- Always-visible summary row -->
+     <div class="summary-header">
+          <div class="summary-text">
+               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+               <code>{{ info.walletName }}</code>
+
+               @if (info.trustlineCount === 0) {
+               <span> {{ info.emptyMessage }}</span>
+               <br />
+               } @else {
+               <span>
+                    has <strong class="object-count">{{ info.trustlineCount }}</strong>
+                    {{ info.countText }}.
+               </span>
+               <br />
+               } @if (info.helpHint) {
+               <br />
+               <span>({{ info.helpHint }})</span>
+               }
+          </div>
+
+          <!-- Expand/Collapse toggle -->
+          @if (info.trustlineCount > 0) {
+          <button type="button" class="expand-toggle-btn" (click)="toggleExpanded()" [attr.aria-expanded]="isExpanded" aria-label="Toggle trustlines list">
+               <span>{{ isExpanded ? 'Hide' : 'Show' }} Trustlines</span>
+               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
+          </button>
+          }
+     </div>
+
+     <!-- Collapsible detailed list -->
+     @if (info.trustlineCount > 0) {
+     <section class="credentials-list-container" [class.expanded]="isExpanded" aria-label="Credential list">
+          <ul class="credentials-list">
+               @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer + tl.balance) {
+               <li class="credential-item">
+                    <!-- Main content -->
+                    <div class="credential-content">
+                         <app-tooltip-link [href]="explorerUrl + 'account/' + tl.issuer + '/tokens'" tooltipText="View issuer tokens on XRPL Explorer">
+                              <div class="credential-title-line">
+                                   <strong class="">{{ tl.currency }}</strong>
+                                   @if (tl.balance !== '0') {
+                                   <span class="balance-badge"> {{ tl.balance }} held </span>
+                                   }
+                              </div>
+                         </app-tooltip-link>
+
+                         <div class="credential-meta chips">
+                              <div class="cred-chip">
+                                   <span class="meta-label">Issuer:</span>
+                                   <span class="type"><code>{{ tl.issuer }}</code></span>
+                              </div>
+                              <div class="cred-chip">
+                                   <span class="meta-label">Limit:</span>
+                                   <span class="type">{{ tl.limit }}</span>
+                              </div>
+                              <div class="cred-chip">
+                                   <span class="meta-label">Balance:</span>
+                                   <span class="type">{{ tl.balance }}</span>
+                              </div>
+                              @if (tl.flags && tl.flags.length > 0) {
+                              <div class="cred-chip">
+                                   <span class="meta-label">Flags:</span>
+                                   <span class="type">{{ tl.flags.join(', ') }}</span>
+                              </div>
+                              }
+                         </div>
+                    </div>
+
+                    <!-- Copy button -->
+                    <button (click)="copyUtilService.copyAndToast(tl.issuer, 'Issuer Address'); $event.stopPropagation()" class="copy-btn-small" title="Copy Issuer Address">
+                         <lucide-icon name="copy" size="15" />
+                    </button>
+               </li>
+               }
+          </ul>
+     </section>
+     } }
+</div>

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
@@ -70,6 +70,22 @@ export class TxEnvironmentService {
      public readonly toastService = inject(ToastService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
+     private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
+     private readonly lastRefreshTime = signal(0);
+     private readonly CACHE_MS = 1500; // 1.5 seconds – adjustable
+
+     async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
+          const now = Date.now();
+
+          if (!force && this.currentEnv() && now - this.lastRefreshTime() < this.CACHE_MS) {
+               return this.currentEnv()!;
+          }
+
+          const env = await this.prepareTxEnvironment(options);
+          this.currentEnv.set(env);
+          this.lastRefreshTime.set(now);
+          return env;
+     }
 
      async prepareTxEnvironmentWithWallet(selectedWallet: Wallet, options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           const {

@@ -15,6 +15,8 @@ import { TrustlineCurrencyService } from '../../trustline-currency/trustline-uti
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 
 type CheckConfigTxDisplayType = 'createCheck' | 'cashCheck' | 'cancelCheck';
 type IconType = 'ng-icon' | 'lucide-icon';
@@ -34,6 +36,8 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly xrplTransactions = inject(XrplTransactionService);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
 
      readonly tabs: {
           key: CheckConfigTxDisplayType;
@@ -281,8 +285,8 @@ export class CheckUtilService extends PerformanceBaseComponent {
           if (item) {
                const parts = item.display?.split(' ') || [];
                this.txUiService.checkCreator.set(parts[3] || '');
-               this.txUiService.currencyCode.set(parts[1] || '');
-               this.txUiService.currencyIssuer.set(item.issuer || '');
+               this.currencyStoreService.setField('currencyCode', parts[1] || '');
+               this.currencyStoreService.setField('currencyIssuer', item.issuer || '');
                if (parts[1] === AppConstants.XRP_CURRENCY) {
                     this.xrplTxOptionsStore.setField('showEnableTrustline', false);
                }

@@ -69,8 +69,8 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SEND_XRP_TAB, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
-          this.trustlineCurrencyService.setPreferXrpAsDefault(false);
-          this.trustlineCurrencyService.setAddMptInDropdown(false);
+          // this.trustlineCurrencyService.setPreferXrpAsDefault(false);
+          // this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
      }
 

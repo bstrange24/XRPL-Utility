@@ -725,6 +725,7 @@ export class XrplTransactionExecutorService {
      }
 
      async setTrustline(
+          env: any,
           tx: xrpl.TrustSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -741,7 +742,7 @@ export class XrplTransactionExecutorService {
                customSpinnerMessage?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Trustline set (no changes will be made)...',
                submitMessage: 'Setting Trustline on the XRP Ledger...',
                amount: '0',
@@ -750,6 +751,7 @@ export class XrplTransactionExecutorService {
      }
 
      async removeTrustline(
+          env: any,
           tx: xrpl.TrustSet,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -762,7 +764,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Trustline removal (no changes will be made)...',
                submitMessage: 'Removing Trustline on the XRP Ledger...',
                amount: '0',
@@ -771,6 +773,7 @@ export class XrplTransactionExecutorService {
      }
 
      async issueCurrency(
+          env: any,
           tx: xrpl.Payment,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -784,7 +787,7 @@ export class XrplTransactionExecutorService {
                paymentType?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Currency issuance (no changes will be made)...',
                submitMessage: 'Issuing Currency on the XRP Ledger...',
                amount: '0',
@@ -793,6 +796,7 @@ export class XrplTransactionExecutorService {
      }
 
      async clawbackTokens(
+          env: any,
           tx: xrpl.Clawback,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -805,7 +809,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Token Clawback (no changes will be made)...',
                submitMessage: 'Clawing back token on the XRP Ledger...',
                amount: '0',

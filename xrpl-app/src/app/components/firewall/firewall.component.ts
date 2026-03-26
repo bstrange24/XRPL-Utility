@@ -329,25 +329,25 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
      });
 
-     issuerItems = computed(() => {
-          const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
-          return this.issuers().map((iss, i) => ({
-               id: iss.address,
-               display: iss.name || `Issuer ${i + 1}`,
-               secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
-               isCurrentAccount: false,
-               isCurrentCode: false,
-               isCurrentToken: iss.address === currentIssuer, // This one!
-          }));
-     });
+     // issuerItems = computed(() => {
+     //      const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
+     //      return this.issuers().map((iss, i) => ({
+     //           id: iss.address,
+     //           display: iss.name || `Issuer ${i + 1}`,
+     //           secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
+     //           isCurrentAccount: false,
+     //           isCurrentCode: false,
+     //           isCurrentToken: iss.address === currentIssuer, // This one!
+     //      }));
+     // });
 
-     selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
+     // selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
 
-     selectedIssuerItem = computed(() => {
-          const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
-          if (!addr) return null;
-          return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
-     });
+     // selectedIssuerItem = computed(() => {
+     //      const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
+     //      if (!addr) return null;
+     //      return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
+     // });
 
      timeUnitItems = computed(() => [
           { id: 'seconds', display: 'Seconds' },
@@ -1188,7 +1188,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
+          // this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
           this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
      }
 

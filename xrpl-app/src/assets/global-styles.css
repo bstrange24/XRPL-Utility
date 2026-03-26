@@ -4516,7 +4516,7 @@ button:disabled,
      padding: 0 16px;
 }
 
-.trustline-item {
+/* .trustline-item {
      display: flex;
      justify-content: space-between;
      align-items: flex-start;
@@ -4544,7 +4544,7 @@ button:disabled,
 
 .trustline-currency {
      font-size: 1.05em;
-}
+} */
 
 .balance-badge {
      font-size: 0.82rem;
@@ -4559,7 +4559,7 @@ button:disabled,
      color: #86efac;
 }
 
-.trustline-meta {
+/* .trustline-meta {
      font-size: 0.82rem;
      color: #555;
      margin-top: 4px;
@@ -4568,7 +4568,7 @@ button:disabled,
 
 .dark .trustline-meta {
      color: #94a3b8;
-}
+} */
 
 /* Payment Channel List */
 .info-and-channels-card {
@@ -5122,7 +5122,7 @@ button:disabled,
 .credentials-list-container.expanded {
      max-height: 500px;
      opacity: 1;
-     padding: 12px 0;
+     padding: 0px 0;
 }
 
 .credentials-list {
@@ -6874,4 +6874,66 @@ button.flag-item-account-flags {
      color: #e2e8f0;
      padding: 12px;
      border-radius: 6px;
+}
+
+
+.cred-chip {
+     display: inline-flex;
+     gap: 6px;
+     padding: 4px 8px;
+     border-radius: 12px;
+     background: rgba(0, 0, 0, 0.05);
+     margin: 2px;
+     font-size: 12px;
+}
+
+.credential-content {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     gap: 6px;
+     /* space between title and meta */
+     min-width: 0;
+}
+
+.credential-title-line {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     font-size: 1rem;
+     /* slightly larger */
+     font-weight: 600;
+     color: #1e40af;
+     line-height: 1.3;
+}
+
+.dark .credential-title-line {
+     color: #60a5fa;
+}
+
+.meta-row {
+     display: flex;
+     align-items: baseline;
+     gap: 8px;
+}
+
+.meta-label {
+     font-weight: 500;
+     color: #6b7280;
+     min-width: 60px;
+     flex-shrink: 0;
+}
+
+.dark .meta-label {
+     color: #94a3b8;
+}
+
+.meta-value {
+     font-family: 'Courier New', monospace;
+     word-break: break-all;
+     color: #2563eb;
+}
+
+.dark .meta-value {
+     color: #93c5fd;
 }

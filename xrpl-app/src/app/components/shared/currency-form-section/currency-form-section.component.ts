@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, SimpleChanges, OnChanges, ChangeDetectorRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, Input, Output, EventEmitter, SimpleChanges, OnChanges, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TrustlinesComponent } from '../../trustlines/trustlines.component';
+import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
 
 @Component({
      selector: 'app-currency-form-section',
@@ -12,6 +13,10 @@ import { TrustlinesComponent } from '../../trustlines/trustlines.component';
      changeDetection: ChangeDetectionStrategy.Default,
 })
 export class CurrencyFormSectionComponent implements OnChanges {
+     public readonly trustlineViewModelService = inject(TrustlineViewModelService);
+     public readonly cdr = inject(ChangeDetectorRef);
+     public readonly trustlinesComponent = inject(TrustlinesComponent);
+
      @Input() layout: 'split' | 'paired' = 'paired';
      @Input() currencyItems: any[] = [];
      @Input() issuerItems: any[] = [];
@@ -27,10 +32,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
      @Output() issuerChange = new EventEmitter<any>();
      @Output() amountChange = new EventEmitter<number>();
 
-     constructor(
-          private readonly cdr: ChangeDetectorRef,
-          public readonly trustlinesComponent: TrustlinesComponent
-     ) {}
+     constructor() {}
 
      get limitLabel(): string {
           const tab = this.activeTab ?? 'setTrustline';
@@ -41,13 +43,13 @@ export class CurrencyFormSectionComponent implements OnChanges {
           }
 
           if (tab === 'removeTrustline') {
-               return 'Current Limit (read-only)';
+               return 'Current Limit';
           }
 
-          return 'Limit';
+          return 'Token Amount';
      }
 
-     ngOnChanges(changes: SimpleChanges) {
+     ngOnChanges(_changes: SimpleChanges) {
           // Always mark when any tracked input changes
           this.cdr.markForCheck();
      }

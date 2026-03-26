@@ -110,8 +110,8 @@ export const AppConstants = {
      TRUST_SET_FLAGS: {
           0x00010000: 'tfSetAuth',
           0x00020000: 'tfSetNoRipple',
-          0x00040000: 'tfClearNoRipple',
           0x00080000: 'tfSetFreeze',
+          0x00040000: 'tfClearNoRipple',
           0x00100000: 'tfClearFreeze',
      },
      RIPPLE_STATE_FLAGS: {

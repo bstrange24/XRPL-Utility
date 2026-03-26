@@ -30,7 +30,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
+// import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { CheckListItem } from '../../models/interface-items.model';
 import { CheckCancelItemComponent } from './ui-components/check-cancel-item/check-cancel-item.component';
@@ -40,6 +40,8 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
+import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 
 @Component({
      selector: 'app-checks',
@@ -71,11 +73,13 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      public readonly acccountDataService = inject(AcccountDataService);
      public readonly checkTransactionOrchestrator = inject(CheckTransactionOrchestrator);
      public readonly mptUtilService = inject(MptUtilService);
-     public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
+     // public readonly trustlineOrchestratorService = inject(TrustlineOrchestratorService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly route = inject(ActivatedRoute);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      selectedDestinationAddress = signal<string>('');
@@ -88,7 +92,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      currencyItems = this.trustlineCurrencyService.currencyItems;
      issuerItems = this.trustlineCurrencyService.issuerItems;
-     currencyBalanceField = this.trustlineCurrencyService.currencyBalance;
+     currencyBalanceField = this.currencyStoreService.balance();
 
      outstandingChecks = signal<string>('');
      mptIssuanceIdField = signal<string>('');
@@ -179,11 +183,11 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      selectedCheckIsExpired = computed(() => this.selectedFullCheck()?.isExpired ?? false);
 
-     selectedIssuerAddress = computed(() => this.trustlineCurrencyService.getSelectedIssuer());
+     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
 
-     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.trustlineCurrencyService.currentCurrency()) ?? null);
+     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
 
-     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.trustlineCurrencyService.selectedIssuer()) ?? null);
+     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.currencyStoreService.issuer()) ?? null);
 
      readonly currentWalletData = computed(() => {
           const currentAddr = this.currentWallet()?.address;
@@ -314,12 +318,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }
           }
 
-          this.trustlineCurrencyService.setPreferXrpAsDefault(true);
-          this.trustlineCurrencyService.setXrpInDropdown(true);
-          this.trustlineCurrencyService.setAddMptInDropdown(false);
+          // this.trustlineCurrencyService.setPreferXrpAsDefault(true);
+          // this.trustlineCurrencyService.setXrpInDropdown(true);
+          // this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
           this.setExpirationToNow();
-          this.trustlineCurrencyService.resetToDefault();
+          // this.trustlineCurrencyService.resetToDefault();
      }
 
      onCheckSelected(item: SelectItem | null) {
@@ -332,8 +336,8 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
      onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
-          this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
-          this.trustlineCurrencyService.selectCurrency(currency, '');
+          // this.trustlineCurrencyService.currentWalletAddress.set(this.currentAddress());
+          this.trustlineCurrencyService.selectCurrency(currency);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
@@ -346,7 +350,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
+          // this.trustlineCurrencyService.currentWalletAddress.set(wallet.address);
           this.txUiService.currentWallet.set(wallet);
           this.xrplTxOptionsStore.setField('showEnableTrustline', false);
 
@@ -355,12 +359,12 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           }
 
           // Reset currency to XRP when wallet changes
-          this.trustlineCurrencyService.resetToDefault();
+          // this.trustlineCurrencyService.resetToDefault();
 
           this.setExpirationToNow();
 
           // Only change currency if needed — avoid re-triggering selectCurrency('XRP')
-          const current = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
+          const current = this.currencyStoreService.currency() ?? 'XRP';
           if (current !== 'XRP') this.onCurrencyChange(current);
      }
 
@@ -412,7 +416,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
           this.checkIdSearchQuery.set('');
           this.clearInputFields();
 
-          if (tab === 'createCheck') this.trustlineCurrencyService.resetToDefault();
+          // if (tab === 'createCheck') this.trustlineCurrencyService.resetToDefault();
 
           if (this.hasWallets()) {
                await this.getChecks(false);
@@ -441,9 +445,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                     this.updateLocalAccountState(env.accountObjects, env.wallet.classicAddress);
 
-                    const currencyValue = this.trustlineCurrencyService.currentCurrency() ?? 'XRP';
-                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.trustlineCurrencyService.selectedIssuer()) {
-                         this.trustlineCurrencyService.selectCurrency(currencyValue, '');
+                    const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
+                    if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
+                         this.trustlineCurrencyService.selectCurrency(currencyValue);
                     }
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -471,8 +475,10 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                }
 
                try {
-                    this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
-                    this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
+                    // this.currencyStoreService.setField('currencyCode', this.trustlineCurrencyService.getSelectedCurrency());
+                    // this.currencyStoreService.setField('currencyIssuer', this.trustlineCurrencyService.selectedIssuer());
+                    // this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
+                    // this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
@@ -557,14 +563,15 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                     // Issuer validation (only for IOU checks)
                     let checkIssuer;
-                    const currencyCode = this.txUiService.currencyCode();
+
+                    const currencyCode = this.currencyStoreService.currencyCode();
                     const accountObjects = env.checkObjects?.result.account_objects;
                     if (accountObjects) {
                          if (currencyCode === AppConstants.XRP_CURRENCY) {
                               checkIssuer = this.getIssuerForCheck(accountObjects, checkId, 'XRP');
                          } else {
                               checkIssuer = this.getIssuerForCheck(accountObjects, checkId, 'Token');
-                              if (checkIssuer && this.txUiService.currencyIssuer() !== checkIssuer) {
+                              if (checkIssuer && this.currencyStoreService.currencyIssuer() !== checkIssuer) {
                                    return this.toastService.error(`Invalid issuer ${checkIssuer} for this check`, AppConstants.TOAST.ERROR);
                               }
                          }
@@ -572,46 +579,46 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
 
                     let trustlinesToCheck: any = env.trustlines;
                     if (this.xrplTxOptionsStore.showEnableTrustline()) {
-                         const currencyCode = this.txUiService.missingTrustlineInfo.currencyCode();
-                         const currencyIssuer = this.txUiService.missingTrustlineInfo.issuer();
+                         const currencyCode = this.trustlineStoreService.missingTrustlineInfo.currencyCode();
+                         const currencyIssuer = this.trustlineStoreService.missingTrustlineInfo.issuer();
                          if (!currencyCode || !currencyIssuer) return;
 
                          this.txUiService.submitAndWait.set(true);
                          this.txUiService.suppressIndividualFeedback.set(true);
 
-                         const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
-                              wallet: this.currentWallet(),
-                              formValues: {
-                                   ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.setTrustlineSpecificKeys)),
-                              },
-                              extra: {},
-                              preFetchedEnv: {
-                                   client: env.client,
-                                   accountInfo: env.accountInfo,
-                                   checkObjects: env.checkObjects,
-                                   fee: env.fee!,
-                                   currentLedger: env.currentLedger!,
-                                   wallet: env.wallet,
-                              },
-                         });
+                         // const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
+                         //      wallet: this.currentWallet(),
+                         //      formValues: {
+                         //           ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.setTrustlineSpecificKeys)),
+                         //      },
+                         //      extra: {},
+                         //      preFetchedEnv: {
+                         //           client: env.client,
+                         //           accountInfo: env.accountInfo,
+                         //           checkObjects: env.checkObjects,
+                         //           fee: env.fee!,
+                         //           currentLedger: env.currentLedger!,
+                         //           wallet: env.wallet,
+                         //      },
+                         // });
 
-                         if (!resetTrustlinesult.success) {
-                              this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
-                              return;
-                         }
+                         // if (!resetTrustlinesult.success) {
+                         //      this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
+                         //      return;
+                         // }
 
-                         const updatedEnv = await this.txEnvironmentService.prepareTxEnvironment({
-                              includeTrustlines: true,
-                              forceRefresh: true,
-                         });
+                         // const updatedEnv = await this.txEnvironmentService.prepareTxEnvironment({
+                         //      includeTrustlines: true,
+                         //      forceRefresh: true,
+                         // });
 
-                         trustlinesToCheck = updatedEnv.trustlines ?? [];
+                         // trustlinesToCheck = updatedEnv.trustlines ?? [];
                     }
 
                     console.log('trustlinesToCheck:', trustlinesToCheck);
 
                     if (currencyCode !== AppConstants.XRP_CURRENCY) {
-                         const issuer = this.txUiService.currencyIssuer();
+                         const issuer = this.currencyStoreService.currencyIssuer();
                          const hasTrustline = await this.trustlineCurrencyService.hasTrustline(trustlinesToCheck, currencyCode, issuer);
 
                          console.log('hasTrustline for', currencyCode, issuer, ':', hasTrustline);
@@ -621,9 +628,9 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
                          } else {
                               // Fix: show the slider / section when MISSING
                               this.xrplTxOptionsStore.setField('showEnableTrustline', true);
-                              this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
-                              this.txUiService.missingTrustlineInfo.issuer.set(issuer);
-                              this.txUiService.trustlineLimitField.set(10000000);
+                              // this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
+                              // this.txUiService.missingTrustlineInfo.issuer.set(issuer);
+                              // this.txUiService.trustlineLimitField.set(10000000);
 
                               // Optional: better user message
                               this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nCashing this check will create a trustline to ${issuer}.`, AppConstants.TOAST.ERROR);
@@ -760,7 +767,7 @@ export class SendChecksComponent extends PerformanceBaseComponent implements OnI
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrencyService.selectCurrency(currency, '');
+          this.trustlineCurrencyService.selectCurrency(currency);
      }
 
      onIssuerChange(issuer: string) {

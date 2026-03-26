@@ -136,7 +136,7 @@
                     </div>
 
                     <!-- Issuer (only when not XRP) -->
-                    @if (trustlineCurrencyService.currentCurrency() !== 'XRP') {
+                    @if (currencyStoreService.currency() !== 'XRP') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
@@ -146,7 +146,7 @@
                          <div class="form-group">
                               <label for="currencyBalance">Currency Balance</label>
                               <p class="form-hint">Total currency balance held by this account.</p>
-                              <input type="text" [value]="currencyBalanceField()" readonly name="currencyBalanceField" />
+                              <input type="text" [value]="currencyStoreService.balance()" readonly name="currencyBalanceField" />
                          </div>
                     </div>
                     }
@@ -233,12 +233,12 @@
                          <div class="form-group">
                               <label for="currencyCode">Currency Code</label>
                               <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" readonly [ngModel]="txUiService.missingTrustlineInfo.currencyCode()" />
+                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.currencyCode()" />
                          </div>
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
                               <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" readonly [ngModel]="txUiService.missingTrustlineInfo.issuer()" />
+                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.issuer()" />
                          </div>
                     </div>
 
@@ -246,7 +246,7 @@
                          <div class="form-group">
                               <label for="trustlineLimitField">Trust Limit</label>
                               <p class="form-hint">Max amount you're willing to hold (set reasonably high)</p>
-                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" min="0" placeholder="e.g. 1000000" [ngModel]="txUiService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" min="0" placeholder="e.g. 1000000" [ngModel]="trustlineStoreService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
                          </div>
                     </div>
 

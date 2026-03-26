@@ -1,3 +1,8 @@
+export interface IssuerItem {
+     name: string;
+     address: string;
+}
+
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
 export interface CredentialItem {

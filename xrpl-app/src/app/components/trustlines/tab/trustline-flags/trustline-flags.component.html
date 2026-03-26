@@ -1,0 +1,44 @@
+<!-- Trustline Flags -->
+@if (trustlineViewModelService.activeTab() === 'setTrustline' || trustlineViewModelService.activeTab() === 'removeTrustline') {
+<div class="tab-content-container flags-container" style="min-width: 350px">
+     <div class="flags-wrapper">
+          <!-- Header -->
+          <div class="token-flags-header">
+               <lucide-icon name="flag" size="20"></lucide-icon>
+               <span class="token-flags-title">Trustline Flags</span>
+          </div>
+
+          @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) {
+          <!-- Get isEnabled -->
+          @let isEnabled = trustlineCurrencyService.flags()[flag.key];
+          <!-- Get isRequired -->
+          @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
+
+          <button type="button" class="flag-item-account-flags" [class.enabled]="isEnabled" [class.required]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
+               <div class="flag-header-account">
+                    <input type="checkbox" class="flag-checkbox" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
+
+                    <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                         <path d="M9 12l2 2 4-4" />
+                         <circle cx="12" cy="12" r="10" />
+                    </svg>
+
+                    <span class="flag-title">{{ flag.title }}</span>
+
+                    @if (isRequired) {
+                    <span class="required-hint">(Required)</span>
+                    }
+               </div>
+
+               <div class="flag-value">{{ flag.hex }}</div>
+               <div class="flag-desc">{{ flag.desc }}</div>
+          </button>
+          }
+
+          <div class="flags-total" style="margin-top: 10px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
+               <span class="total-label">Total Flags Value:</span>
+               <span class="total-value">{{ trustlineCurrencyService.totalFlagsValue() }} ({{ trustlineCurrencyService.totalFlagsHex() }})</span>
+          </div>
+     </div>
+</div>
+}

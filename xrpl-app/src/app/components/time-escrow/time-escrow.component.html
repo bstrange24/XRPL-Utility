@@ -150,7 +150,7 @@
                     </div>
 
                     <!-- Issuer (non-XRP, non-MPT) -->
-                    @if (trustlineCurrencyService.currentCurrency() !== 'XRP' && trustlineCurrencyService.currentCurrency() !== 'MPT') {
+                    @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
                     <div class="form-row">
                          <div class="form-group">
                               <label for="issuer">Issuer</label>
@@ -160,13 +160,13 @@
                          <div class="form-group">
                               <label for="currencyBalance">Currency Balance</label>
                               <p class="form-hint">Total currency balance held by this account.</p>
-                              <input type="text" [value]="currencyBalanceField()" readonly name="currencyBalanceField" />
+                              <input type="text" [value]="currencyStoreService.balance()" readonly name="currencyBalanceField" />
                          </div>
                     </div>
                     }
 
                     <!-- MPT Issuance ID -->
-                    @if (trustlineCurrencyService.currentCurrency() === 'MPT') {
+                    @if (currencyStoreService.currency() === 'MPT') {
                     <div class="form-group">
                          <label for="selectMpt">Select MPT</label>
                          <p class="form-hint">MPT this account holds that can be sent to another account.</p>

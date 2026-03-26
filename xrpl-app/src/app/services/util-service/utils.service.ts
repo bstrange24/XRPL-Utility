@@ -13,6 +13,8 @@ import { MPToken, RippleState } from '../../models/interface-items.model';
 import * as bip39 from 'bip39';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
+import { CurrencyStoreService } from '../currency/currency-store/currency-store.service';
+import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -34,6 +36,8 @@ export class UtilsService {
      public readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
@@ -240,13 +244,15 @@ export class UtilsService {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 
           if (Number.isNaN(num) || num < 0) {
-               this.txUiService.trustlineLimitField.set(0);
+               this.trustlineStoreService.setField('trustlineLimitField', 0);
+               // this.txUiService.trustlineLimitField.set(0);
                return;
           }
 
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(10));
-          this.txUiService.trustlineLimitField.set(rounded);
+          this.trustlineStoreService.setField('trustlineLimitField', rounded);
+          // this.txUiService.trustlineLimitField.set(rounded);
      }
 
      issuedAmount(currency: string, issuer: string, value: any) {
@@ -639,6 +645,12 @@ export class UtilsService {
                return this.encodeIfNeeded(currencyCode);
           }
           return '';
+     }
+
+     normalizeAddress(addr: string): string {
+          if (!addr) return '';
+          // Convert X-address to classic if needed, or just trim/lowercase
+          return addr.trim(); // most wallets already use classic r... addresses
      }
 
      convertDemurrageToUTF8(demurrageCode: string): string {

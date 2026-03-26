@@ -33,6 +33,7 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 
 interface AccountFlags {
      asfRequireDest: boolean;
@@ -101,6 +102,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      // Destination Dropdown
@@ -417,7 +419,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      }
 
      issuerItems = computed(() => {
-          const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
+          const currentIssuer = this.currencyStoreService.issuer();
           return this.issuers().map((iss, i) => ({
                id: iss.address,
                display: iss.name || `Issuer ${i + 1}`,
@@ -428,10 +430,10 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
           }));
      });
 
-     selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
+     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
 
      selectedIssuerItem = computed(() => {
-          const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
+          const addr = this.currencyStoreService.issuer(); // ← read directly from service
           if (!addr) return null;
           return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
      });
@@ -620,7 +622,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
                     this.getExistingNfts(accountObjects, this.currentWallet().address);
 
                     if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT' && this.issuerFields() !== '') {
-                         this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
+                         // this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
                     }
 
                     this.refreshUiState(wallet, accountInfo, accountObjects);
@@ -1535,7 +1537,7 @@ export class NftOffersComponent extends PerformanceBaseComponent implements OnIn
      }
 
      onCurrencyChange(currency: string) {
-          this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
+          // this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
           this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
      }
 

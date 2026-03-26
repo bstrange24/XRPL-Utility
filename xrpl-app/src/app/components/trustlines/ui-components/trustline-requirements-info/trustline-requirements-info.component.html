@@ -1,0 +1,72 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+          <h3>Trust Line Requirements</h3>
+     </div>
+
+     <p class="info-subtitle">Trust Lines allow your account to hold issued currencies (IOUs) from a specific issuer.</p>
+
+     <div class="combinations-grid">
+          <!-- Create / Modify Trust Line -->
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge primary-badge">🔗 Create / Modify Trust Line</span>
+               </div>
+
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">LimitAmount.currency</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">LimitAmount.issuer</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">LimitAmount.value</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Flags (NoRipple, Freeze, etc.)</span>
+                         <span class="field-status optional">➕ Optional</span>
+                    </div>
+               </div>
+          </div>
+
+          <!-- Remove Trust Line -->
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge danger-badge">❌ Remove Trust Line</span>
+               </div>
+
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">LimitAmount.value = 0</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Outstanding Balance</span>
+                         <span class="field-status required">⚠️ Must Be 0</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">No Active Freeze</span>
+                         <span class="field-status required">⚠️ Required</span>
+                    </div>
+               </div>
+          </div>
+
+          <!-- Important Notes -->
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li>Trust Lines are required to hold <strong>issued tokens (IOUs)</strong>. XRP does not require a trust line.</li>
+                    <li>Setting a positive limit creates a trust line if one does not already exist.</li>
+                    <li>Reducing the limit does not remove the trust line unless the balance is <strong>zero</strong>.</li>
+                    <li>To fully remove a trust line, the balance must be zero and the limit must be set to 0.</li>
+                    <li>Each trust line increases your account’s <strong>owner reserve</strong> while it exists.</li>
+                    <li>The issuer may freeze a trust line if they have the Freeze feature enabled.</li>
+                    <li><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). This app hides zero-limit lines.</li>
+               </ul>
+          </div>
+     </div>
+</div>
