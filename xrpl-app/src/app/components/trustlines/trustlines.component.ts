@@ -180,7 +180,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                this.xrplTxOptionsStore.reset();
                this.trustlineStoreService.reset();
 
-               if (!this.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                await this.trustlineUtilService.loadTrustlines(forceRefresh);
           });
