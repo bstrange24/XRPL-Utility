@@ -38,6 +38,7 @@ export const PERMISSION_DOMAIN_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -47,6 +48,7 @@ export const PERMISSION_DOMAIN_TAB_META: Record<
           title: 'Set Permissioned Domain',
           desc: 'Set Permissioned Domain for the selected account.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      [PERMISSION_DOMAIN_CONFIG_TX_DISPLAY_TYPES.DELETE]: {
@@ -55,6 +57,7 @@ export const PERMISSION_DOMAIN_TAB_META: Record<
           title: 'Delete Permissioned Domain',
           desc: 'Delete Permissioned Domain for the selected account.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

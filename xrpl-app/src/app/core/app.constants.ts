@@ -16,6 +16,7 @@ export interface TabMetaInfo {
      desc: string;
      color?: string;
      iconSize?: string;
+     iconType?: 'ng-icon' | 'lucide-icon';
 }
 
 export type IconType = 'ng-icon' | 'lucide-icon';

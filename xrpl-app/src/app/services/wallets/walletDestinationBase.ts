@@ -100,7 +100,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      protected abstract onSelectedWalletIndexChange(): Promise<void>;
 
      /** Generic TX / Refresh Helpers */
-     protected async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null = null, issuer: string | null = null, errorMessage: string = ''): Promise<boolean> {
+     protected async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null = null, issuer: string | null = null, errorMessage: string = '', extraEnvOptions: any = {}): Promise<boolean> {
           if (!result.success) {
                this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
                return false;
@@ -108,17 +108,18 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
 
           // Only refresh account info and balances if we are not in simulate mode, delete account or account config.
           if (!this.xrplTxOptionsStore.isSimulateEnabled() && !this.isAccountDelete() && !this.isAccountConfig()) {
-               await this.refreshAfterTx(client, wallet, destination, issuer);
+               await this.refreshAfterTx(client, wallet, destination, issuer, extraEnvOptions);
                this.clearInputFields();
           }
 
           return true;
      }
 
-     protected async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null = null, issuer: string | null = null): Promise<void> {
+     protected async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null = null, issuer: string | null = null, extraEnvOptions: any = {}): Promise<void> {
           const env = await this.txEnvironmentService.prepareTxEnvironment({
                includeAccountInfo: true,
                includeAccountObject: true,
+               ...extraEnvOptions,
                forceRefresh: true,
           });
 

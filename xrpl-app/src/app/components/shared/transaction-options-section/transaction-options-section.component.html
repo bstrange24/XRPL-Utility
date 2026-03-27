@@ -18,7 +18,7 @@
      <div class="form-group">
           <label for="credentialIDsField">Credential IDs</label>
           <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
+          <textarea name="credentialIDs" style="margin-top: 0" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
      </div>
 </div>
 } @else if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'cashCheck') {
@@ -74,7 +74,7 @@
           <label for="credentialIDsField">Credential IDs</label>
           <p class="form-hint">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
           <!-- <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea> -->
-          <textarea name="credentialIDs" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"></textarea>
+          <textarea name="credentialIDs" style="margin-top: 0" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"></textarea>
      </div>
 </div>
 

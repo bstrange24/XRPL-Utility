@@ -31,15 +31,17 @@ export const SEND_XRP_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
      sendXrp: {
           icon: 'heroPlusCircle',
-          colorClass: 'blue-button-submenu',
+          colorClass: 'green-button-submenu',
           title: 'Send XRP',
           desc: 'Send XRP to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

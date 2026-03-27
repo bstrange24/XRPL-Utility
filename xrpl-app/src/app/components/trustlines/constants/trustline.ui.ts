@@ -31,7 +31,7 @@ export const TRUSTLINE_TABS: {
      },
      {
           key: 'issueCurrency',
-          label: 'Send / Issue Currency',
+          label: 'Send / Issue',
           icon: 'heroCurrencyDollar',
           iconType: 'ng-icon',
           color: '',
@@ -64,6 +64,7 @@ export const TRUSTLINE_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -73,6 +74,7 @@ export const TRUSTLINE_TAB_META: Record<
           title: 'Set Trustline',
           desc: 'Set a trustline to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      removeTrustline: {
@@ -81,14 +83,16 @@ export const TRUSTLINE_TAB_META: Record<
           title: 'Remove Trustline',
           desc: 'Remove trustline to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      issueCurrency: {
           icon: 'heroCurrencyDollar',
           colorClass: 'green-button-submenu',
           title: 'Send / Issue Currency',
-          desc: 'Send / Issue currency to another XRPL address.',
+          desc: 'Send or Issue currency to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      clawbackTokens: {
@@ -97,6 +101,7 @@ export const TRUSTLINE_TAB_META: Record<
           title: 'Clawback Tokens',
           desc: 'Clawback tokens from another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      addNewIssuers: {
@@ -105,6 +110,7 @@ export const TRUSTLINE_TAB_META: Record<
           title: 'Add/Remove Issuers',
           desc: 'Add issuers and tokens from external sources.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

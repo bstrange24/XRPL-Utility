@@ -1,0 +1,48 @@
+<div class="tab-content-container form-fields-container">
+     <div class="form-row">
+          <div class="form-group">
+               <label for="selectPaymentChannelFund">Select Payment Channel to Fund</label>
+               <p class="form-hint">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
+               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+
+               <!-- Expired warning for fundPaymentChannel tab -->
+               @if (viewModel.selectedIsExpired()) {
+               <div class="warning-message expired-warning">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
+                    This selected payment channel has expired.
+               </div>
+               }
+          </div>
+     </div>
+     <div class="form-row">
+          <div class="form-group">
+               <label for="channelId">Channel ID</label>
+               <p class="form-hint">
+                    The unique Channel ID of the channel as a <br />
+                    64-character hexadecimal string.
+               </p>
+               <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
+          </div>
+     </div>
+
+     <div class="form-row">
+          <div class="form-group">
+               <app-xrpl-expiration-input
+                    [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
+                    [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
+                    label="New Expiration Time for the Channel (optional)"
+                    hint="This must be later than either the current time plus the SettleDelay of the channel, or the existing Expiration of the channel. <br />After the Expiration time, any transaction that would access the channel <code class='highlight-code'>closes the channel</code> without taking its normal action.<br />
+                    Any unspent XRP is returned to the source address when the channel closes."
+               ></app-xrpl-expiration-input>
+          </div>
+
+          <div class="form-group">
+               <label for="amount">XRP Amount</label>
+               <p class="form-hint">
+                    Amount of XRP to deduct from the sender's balance and <br />
+                    set aside in this channel.
+               </p>
+               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
+          </div>
+     </div>
+</div>

@@ -15,9 +15,9 @@ import { CredentialActionTypes, CredentialItemVm } from '../../constants/credent
      styleUrl: './credentials-summary.component.css',
 })
 export class CredentialsSummaryComponent {
-     public copyUtilService = inject(CopyUtilService);
+     public readonly copyUtilService = inject(CopyUtilService);
      private readonly txUiService = inject(TransactionUiService);
-     public credentialUtilService = inject(CredentialUtilService);
+     public readonly credentialUtilService = inject(CredentialUtilService);
 
      // Inputs from parent (credentials page)
      wallet = input.required<{ address: string } | null | undefined>();

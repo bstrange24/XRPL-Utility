@@ -55,6 +55,7 @@ export const CREDENTIAL_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -64,6 +65,7 @@ export const CREDENTIAL_TAB_META: Record<
           title: 'Create Credentials',
           desc: 'Create Credentials to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      acceptCredential: {
@@ -72,6 +74,7 @@ export const CREDENTIAL_TAB_META: Record<
           title: 'Accept Credentials',
           desc: 'Accept Credentials from another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      verifyCredential: {
@@ -80,6 +83,7 @@ export const CREDENTIAL_TAB_META: Record<
           title: 'Verify Credentials',
           desc: 'Verify Credentials have been accepted by another XRPL address.',
           color: '',
+          iconType: 'lucide-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      deleteCredential: {
@@ -88,6 +92,7 @@ export const CREDENTIAL_TAB_META: Record<
           title: 'Delete Credentials',
           desc: 'Delete Credentials to another XRPL address.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

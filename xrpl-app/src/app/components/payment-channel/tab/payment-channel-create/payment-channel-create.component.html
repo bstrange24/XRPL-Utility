@@ -1,0 +1,44 @@
+<div class="tab-content-container form-fields-container">
+     <div class="form-row">
+          <div class="form-group">
+               <label for="createXrpAmount">XRP Amount</label>
+               <p class="form-hint">
+                    Amount of XRP to deduct from the sender's balance and <br />
+                    set aside in this channel.
+               </p>
+               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
+          </div>
+
+          <div class="form-group">
+               <label for="destination">Destination</label>
+               <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
+               <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationChanged.emit($event)" placeholder="Enter or select destination address" />
+          </div>
+     </div>
+
+     <div class="form-row">
+          <div class="form-group">
+               <label for="createDestinationTag">Destination Tag</label>
+               <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
+               <input type="text" [(ngModel)]="txUiService.destinationTagField" name="destinationTagField" />
+          </div>
+
+          <div class="form-group">
+               <label for="createSettleDelay">Settle Delay</label>
+               <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.settleDelay" name="settleDelay" />
+          </div>
+     </div>
+
+     <div class="form-row">
+          <div class="form-group">
+               <app-xrpl-expiration-input
+                    [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
+                    [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
+                    label="Channel Expiration Time (optional)"
+                    hint="Expiration time when the channel expires. Any transaction that would modify the channel after this time, <code class='highlight-code'>closes the channel</code>, without otherwise affecting it. <br />This value is immutable. The channel can be closed earlier than this time but cannot remain open after this time."
+               ></app-xrpl-expiration-input>
+          </div>
+          <div class="form-group"></div>
+     </div>
+</div>

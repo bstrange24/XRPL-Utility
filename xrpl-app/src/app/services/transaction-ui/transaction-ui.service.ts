@@ -200,15 +200,6 @@ export class TransactionUiService {
      finishAfter = signal<number>(0);
      cancelAfter = signal<number>(0);
 
-     // Payment Channel
-     channelIDField = signal<string>('');
-     settleDelayField = signal<string>('');
-     publicKeyField = signal<string>('');
-     channelClaimSignatureField = signal<string>('');
-     authorizedWalletAddress = signal<string>('');
-     authorizedWallets: { name?: string; address: string }[] = [];
-     paymentChannelCancelAfterTimeField = signal<string>('');
-
      // MPT
      mptIssuanceIdField = signal<string>('');
      isMptEnabled = signal<boolean>(false);

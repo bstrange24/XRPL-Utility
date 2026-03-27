@@ -436,53 +436,6 @@ export class XrplTransactionService extends PerformanceBaseComponent {
           };
      }
 
-     buildPaymentChannelFundTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelFund {
-          return {
-               TransactionType: 'PaymentChannelFund',
-               Account: wallet.classicAddress,
-               Channel: formValues.channelIDField,
-               Amount: xrpl.xrpToDrops(formValues.amount),
-               Fee: fee,
-               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-     }
-
-     buildPaymentChannelClaimTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelClaim {
-          return {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: formValues.channelIDField,
-               Balance: xrpl.xrpToDrops(formValues.amount),
-               Signature: formValues.channelClaimSignatureField,
-               PublicKey: formValues.publicKeyField || wallet.publicKey,
-               Fee: fee,
-               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
-               Flags: this.paymentChannelUtilService.flags.close ? xrpl.PaymentChannelClaimFlags.tfClose : undefined,
-          };
-     }
-
-     buildPaymentChannelRenewTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.PaymentChannelClaim {
-          return {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: formValues.channelIDField,
-               Fee: fee,
-               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
-               Flags: xrpl.PaymentChannelClaimFlags.tfRenew,
-          };
-     }
-
-     buildPaymentChannelCloseTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, channelIDField: string): xrpl.PaymentChannelClaim {
-          return {
-               TransactionType: 'PaymentChannelClaim',
-               Account: wallet.classicAddress,
-               Channel: channelIDField,
-               Flags: xrpl.PaymentChannelClaimFlags.tfClose,
-               Fee: fee,
-               LastLedgerSequence: currentLedger! + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-     }
-
      buildMptCreateTransaction(wallet: xrpl.Wallet, fee: string | undefined, currentLedger: number | undefined, formValues: any): xrpl.MPTokenIssuanceCreate {
           return {
                TransactionType: 'MPTokenIssuanceCreate',

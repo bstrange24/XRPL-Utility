@@ -3,6 +3,7 @@ import { Component, input, output, computed } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TabConfig, TabMetaInfo } from '../../../../../core/app.constants';
+import { JsonPipe } from '@angular/common';
 
 @Component({
      selector: 'app-tab-menu-with-info',

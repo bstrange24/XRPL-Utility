@@ -1,0 +1,110 @@
+<div class="requirements-info" [class.collapsed]="isCollapsed()">
+     <button class="btn-primary-blue" style="max-width: 100%" (click)="isCollapsed.set(!isCollapsed())">
+          <span [class.rotated]="isCollapsed()">▼</span>
+          Payment Channel Requirements
+     </button>
+
+     <div class="content">
+          <!-- <div class="info-header">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+                         <h3>Payment Channel Requirements</h3>
+                    </div> -->
+
+          <p class="info-subtitle">Payment Channels enable off-ledger XRP micropayments with on-ledger settlement.</p>
+
+          <div class="combinations-grid">
+               <!-- Create Channel -->
+               <div class="combination-card">
+                    <div class="combination-header">
+                         <span class="badge primary-badge">🔓 Create Channel</span>
+                    </div>
+
+                    <div class="combination-fields">
+                         <div class="field-row">
+                              <span class="field-name">Destination</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">Amount (XRP drops)</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">SettleDelay (seconds)</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">PublicKey</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">CancelAfter</span>
+                              <span class="field-status optional">➕ Optional</span>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- Fund Channel -->
+               <div class="combination-card">
+                    <div class="combination-header">
+                         <span class="badge success-badge">➕ Fund Channel</span>
+                    </div>
+
+                    <div class="combination-fields">
+                         <div class="field-row">
+                              <span class="field-name">Channel ID</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">Amount (additional XRP)</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">Expiration</span>
+                              <span class="field-status optional">➕ Optional</span>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- Claim / Close -->
+               <div class="combination-card">
+                    <div class="combination-header">
+                         <span class="badge warning-badge">💰 Claim / Close Channel</span>
+                    </div>
+
+                    <div class="combination-fields">
+                         <div class="field-row">
+                              <span class="field-name">Channel ID</span>
+                              <span class="field-status required">✅ Required</span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name"
+                                   >Balance <br />
+                                   (total claimed amount)</span
+                              >
+                              <span class="field-status required">✅ Required </span>
+                         </div>
+                         <div class="field-row">
+                              <span class="field-name">Signature + PublicKey</span>
+                              <span class="field-status required"
+                                   >✅ Required <br />
+                                   (if claiming)</span
+                              >
+                         </div>
+                    </div>
+               </div>
+
+               <!-- Important Notes -->
+               <div class="important-notes">
+                    <h5>📝 Important Notes:</h5>
+                    <ul>
+                         <li>Payment Channels support <strong>XRP only</strong>.</li>
+                         <li>Claims are cumulative — each claim must specify the <strong>total amount</strong> authorized so far.</li>
+                         <li>The sender signs off-ledger claims; the destination submits them on-ledger.</li>
+                         <li>SettleDelay defines how long the sender must wait after requesting closure.</li>
+                         <li>If CancelAfter is set, the channel can be closed after that time regardless of SettleDelay.</li>
+                         <li>Each Payment Channel increases the sender’s <strong>owner reserve</strong> while open.</li>
+                    </ul>
+               </div>
+          </div>
+     </div>
+</div>

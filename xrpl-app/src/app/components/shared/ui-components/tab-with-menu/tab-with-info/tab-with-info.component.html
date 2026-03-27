@@ -20,7 +20,11 @@
      @if (currentMeta()) {
      <div class="submenu-info-text">
           <div [class]="currentMeta()!.colorClass">
+               @if (currentMeta()!.iconType === 'ng-icon') {
                <ng-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '32'" [color]="currentMeta()!.color" />
+               } @else if (currentMeta()!.iconType === 'lucide-icon') {
+               <lucide-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '32'" />
+               }
           </div>
           <div>
                <h2 class="submenu-info-main-text">{{ currentMeta()!.title }}</h2>

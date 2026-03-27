@@ -59,6 +59,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -68,6 +69,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: 'Modify Account Flags',
           desc: 'Set or Clear account level flags.',
           color: 'green',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyMetaData: {
@@ -76,6 +78,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: 'Modify Account Meta Data',
           desc: 'Modify account metadata.',
           color: 'green',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyDepositAuth: {
@@ -84,6 +87,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: 'Modify Deposit Auth',
           desc: 'Modify Deposit Authorization addresses.',
           color: 'green',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyMultiSigners: {
@@ -92,6 +96,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: 'Modify Multi Sign',
           desc: 'Modify account multisigners.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyRegularKey: {
@@ -100,6 +105,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: 'Modify Regular Key',
           desc: 'Modify the account regular key.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyAccountSetFlags: {
@@ -108,6 +114,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: '',
           desc: '',
           color: '',
+          iconType: 'ng-icon',
           iconSize: '',
      },
      updateMetaData: {
@@ -116,6 +123,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           title: '',
           desc: '',
           color: '',
+          iconType: 'ng-icon',
           iconSize: '',
      },
 };

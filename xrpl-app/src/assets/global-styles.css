@@ -2092,7 +2092,7 @@ app-root {
 .tab-content-columns {
      display: flex;
      gap: 1.5rem;
-     flex-wrap: wrap;
+     /* flex-wrap: nowrap; */
 }
 
 .form-fields-container {
@@ -3313,6 +3313,15 @@ cdk-drop-list {
      margin-right: 0;
      margin-bottom: 0.5em;
 }
+
+.form-hint code.highlight-code {
+     font-weight: bold;
+     font-style: italic;
+     color: #0c4a6e !important;
+     background: transparent;
+     padding: 0 2px;
+}
+
 
 ticket-fields .form-group {
      margin-bottom: 1rem;

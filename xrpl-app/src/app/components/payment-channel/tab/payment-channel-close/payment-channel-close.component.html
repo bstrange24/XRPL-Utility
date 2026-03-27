@@ -1,0 +1,24 @@
+<div class="tab-content-container form-fields-container" style="min-width: 600px">
+     <div class="form-row">
+          <div class="form-group">
+               <label for="selectPaymentChannelClose">Select Payment Channel to Close</label>
+               <p class="form-hint">Select an existing payment channel to close.</p>
+               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+          </div>
+     </div>
+
+     @if ((viewModel.activeTab() === 'claimPaymentChannel' && viewModel.selectedIsExpired()) || (viewModel.activeTab() === 'closePaymentChannel' && viewModel.selectedIsExpired())) {
+     <div class="warning-message expired-warning">
+          <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
+          This selected payment channel has expired.
+     </div>
+     }
+
+     <div class="form-row">
+          <div class="form-group">
+               <label for="closeChannelId">Channel ID</label>
+               <p class="form-hint">The unique ID of the channel as a 64-character hexadecimal string.</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" />
+          </div>
+     </div>
+</div>

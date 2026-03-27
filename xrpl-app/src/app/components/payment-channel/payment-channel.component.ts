@@ -1,13 +1,10 @@
-import { Component, OnInit, inject, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
@@ -17,342 +14,193 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
-import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY, from, switchMap } from 'rxjs';
-import { PaymentChannelObject, UnifiedPaymentChannel } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { PaymentChannelUtilService } from '../../services/payment-channel/payment-channel-util/payment-channel-util.service';
 import { PaymentChannelOrchestratorService } from '../../services/payment-channel/payment-channel-orchestrator/payment-channel-orchestrator.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
-import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { PaymentChannelRequirementsInfoComponent } from './ui-components/payment-channel-requirements-info/payment-channel-requirements-info.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { PaymentChannelViewModelService } from '../../services/payment-channel/payment-channel-transaction-view-model/payment-channel-view-model.service';
+import { PAYMENT_CHANNEL_TAB_META, PAYMENT_CHANNEL_TABS } from './constants/payment-channel.ui';
+import { PAYMENT_CHANNEL_TAB } from './constants/payment-channel.constants';
+import { PaymentChannelActionTypes, PaymentChannelObject, PaymentChannelTxConfig, UnifiedPaymentChannel } from './constants/payment-channel.types';
+import { PaymentChannelStoreService } from '../../services/payment-channel/payment-channel-store/payment-channel-store.service';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { PaymentChannelSummaryComponent } from './ui-components/payment-channel-summary/payment-channel-summary.component';
+import { PaymentChannelCreateComponent } from './tab/payment-channel-create/payment-channel-create.component';
+import { PaymentChannelFundComponent } from './tab/payment-channel-fund/payment-channel-fund.component';
+import { PaymentChannelClaimComponent } from './tab/payment-channel-claim/payment-channel-claim.component';
+import { PaymentChannelCloseComponent } from './tab/payment-channel-close/payment-channel-close.component';
+import { PaymentChannelRenewComponent } from './tab/payment-channel-renew/payment-channel-renew.component';
+import { PaymentChannelFlagsComponent } from './tab/payment-channel-flags/payment-channel-flags.component';
+import { Subscription } from 'rxjs';
+import { PaymentChannelSignatureContextService } from '../../services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service';
 
 @Component({
      selector: 'app-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TooltipLinkComponent, SelectSearchDropdownComponent],
-     animations: [
-          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
-          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
+     imports: [
+          CommonModule,
+          FormsModule,
+          LucideAngularModule,
+          NavbarComponent,
+          OverlayModule,
+          TransactionPreviewComponent,
+          TransactionOptionsComponent,
+          PaymentChannelRequirementsInfoComponent,
+          ExecutionTimeDisplayComponent,
+          TabMenuWithInfoComponent,
+          PaymentChannelSummaryComponent,
+          PaymentChannelCreateComponent,
+          PaymentChannelFundComponent,
+          PaymentChannelRenewComponent,
+          PaymentChannelClaimComponent,
+          PaymentChannelCloseComponent,
+          PaymentChannelFlagsComponent,
+          WalletPanelComponent,
+          WarningMessageComponent,
      ],
      templateUrl: './payment-channel.component.html',
      styleUrl: './payment-channel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreatePaymentChannelComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
-     public readonly utilsService = inject(UtilsService);
+export class CreatePaymentChannelComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly txEnvironmentService = inject(TxEnvironmentService);
-     public readonly transactionDropdownService = inject(TransactionDropdownService);
-     public readonly acccountDataService = inject(AcccountDataService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly route = inject(ActivatedRoute);
      public readonly xrplDateService = inject(XrplDateService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly paymentChannelViewModelService = inject(PaymentChannelViewModelService);
+     public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
+     public readonly paymentChannelSignatureContextService = inject(PaymentChannelSignatureContextService);
+     private readonly signatureSubscription: Subscription = new Subscription();
+     private signatureEffect: any;
+     readonly menuTabs: TabConfig[] = PAYMENT_CHANNEL_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = PAYMENT_CHANNEL_TAB_META;
 
-     selectedDestinationAddress = signal<string>('');
-     destinationSearchQuery = signal<string>('');
-     isCollapsed = false;
-
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
-     activeTab = signal<'create' | 'fund' | 'claim' | 'renew' | 'close'>('create');
-     isCreatorMode = signal<boolean>(false);
-
-     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
-     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
-     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
-     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
-     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
-     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
-
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     private readonly hasWallets = computed(() => this.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
-     private readonly selectedChannelId = computed(() => this.txUiService.channelIDField()?.toString() ?? '');
-
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
-          this.clearInputFields();
 
-          // Fire-and-forget refresh
-          void this.getPaymentChannels(true);
-     });
-
-     selectedChannelForClaim = computed(() => {
-          const id = this.txUiService.channelIDField();
-          if (!id) return null;
-          return this.paymentChannelUtilService.receivablePaymentChannels().find(ch => ch.id === id) ?? null;
-     });
-
-     selectedChannelForRenewOrClose = computed(() => this.paymentChannelUtilService.existingChannelMap().get(this.selectedChannelId()) ?? null);
-
-     isCurrentWalletDestination = computed(() => {
-          const c = this.selectedChannelForClaim();
-          return !!c && c.sender !== this.currentWallet().address;
-     });
-
-     isCurrentWalletSource = computed(() => {
-          const c = this.selectedChannelForRenewOrClose();
-          return !!c && c.destination !== this.currentWallet().address;
-     });
-
-     hasClaimableChannels = computed(() => this.paymentChannelUtilService.receivablePaymentChannels().length > 0);
-     hasRenewableChannels = computed(() => this.paymentChannelUtilService.existingPaymentChannels().length > 0);
-
-     isValidClaimTab = computed(
-          () => this.activeTab() === 'claim' && this.hasClaimableChannels() && !!this.selectedChannelForClaim() && this.selectedChannelForClaim()!.sender !== this.currentWallet().address // destination = current
-     );
-
-     isValidRenewTab = computed(
-          () => this.activeTab() === 'renew' && this.hasRenewableChannels() && !!this.selectedChannelForRenewOrClose() && this.selectedChannelForRenewOrClose()!.destination !== this.currentWallet().address // source = current
-     );
-
-     selectedChannel = computed(() => {
-          const id = this.txUiService.channelIDField();
-          if (!id) return null;
-
-          const tab = this.activeTab();
-
-          let list: UnifiedPaymentChannel[] = [];
-          if (tab === 'claim') list = this.paymentChannelUtilService.receivablePaymentChannels();
-          else if (tab === 'fund' || tab === 'renew') list = this.paymentChannelUtilService.existingPaymentChannels();
-          else if (tab === 'close') list = this.paymentChannelUtilService.closablePaymentChannels();
-
-          return list.find(ch => ch.id === id) ?? null;
-     });
-
-     selectedIsExpired = computed(() => !!this.selectedChannel()?.isExpired);
-
-     // Unified dropdown items
-     channelItems = computed(() => {
-          const tab = this.activeTab();
-
-          // Claim tab is special: depends on creator/normal mode
-          if (tab === 'claim') {
-               if (this.isCreatorMode()) {
-                    // Generate Signature (as Creator): show your OWN created channels
-                    return this.paymentChannelUtilService.existingPaymentChannels().map(e => this.paymentChannelUtilService.formatChannelItem(e, '→', 'You created'));
-               } else {
-                    // Normal Claim (as Destination): show receivable/claimable channels
-                    return this.paymentChannelUtilService.receivablePaymentChannels().map(e => this.paymentChannelUtilService.formatChannelItem(e, '←', `From ${e.sender?.slice(0, 7)}...${e.sender?.slice(-7) ?? 'unknown'}`));
-               }
-          }
-
-          // Other tabs (fund, renew, close) - no mode switch needed
-          if (tab === 'fund' || tab === 'renew') {
-               return this.paymentChannelUtilService.existingPaymentChannels().map(e => this.paymentChannelUtilService.formatChannelItem(e, '→', 'You created'));
-          }
-          if (tab === 'close') {
-               return this.paymentChannelUtilService.closablePaymentChannels().map(e => this.paymentChannelUtilService.formatChannelItem(e, '→', 'You created'));
-          }
-
-          // Fallback for create or unknown
-          return [];
-     });
-
-     // Optional: per-tab booleans if needed (but usually not)
-     selectedClaimIsExpired = computed(() => this.activeTab() === 'claim' && this.selectedIsExpired());
-     selectedFundIsExpired = computed(() => this.activeTab() === 'fund' && this.selectedIsExpired());
-     selectedRenewIsExpired = computed(() => this.activeTab() === 'renew' && this.selectedIsExpired());
-
-     selectedChannelItem = computed(() => {
-          const id = this.txUiService.channelIDField();
-          return this.channelItems().find(i => i.id === id) ?? null;
-     });
-
-     infoData = computed(() => {
-          const wallet = this.currentWallet();
-          if (!wallet?.address) return null;
-
-          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-
-          let channels: any[] = [];
-          const tab = this.activeTab();
-
-          if (tab === 'claim') {
-               // Special case: switch based on creator mode
-               if (this.isCreatorMode()) {
-                    // Creator mode: show your OWN created channels
-                    channels = this.paymentChannelUtilService.existingPaymentChannels();
-               } else {
-                    // Normal mode: show receivable/claimable
-                    channels = this.paymentChannelUtilService.receivablePaymentChannels();
-               }
-          } else if (tab === 'fund' || tab === 'renew') {
-               channels = this.paymentChannelUtilService.existingPaymentChannels();
-          } else if (tab === 'close') {
-               channels = this.paymentChannelUtilService.closablePaymentChannels();
-          } else {
-               // create fallback
-               channels = this.paymentChannelUtilService.existingPaymentChannels();
-          }
-
-          const channelsToShow = channels.map(ch => ({
-               ...ch,
-               isExpired: !!ch.isExpired,
-          }));
-
-          return {
-               walletName,
-               activeTab: tab,
-               channelCount: channels.length,
-               channelsToShow,
-          };
-     });
-
-     constructor() {
-          super();
-          // Auto-select typed address if it's valid and not already selected
-          effect(() => {
-               const typed = this.destinationSearchQuery().trim();
-               const current = this.selectedDestinationAddress();
-
-               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
-                    if (!this.allDestinations().some(d => d.address === typed)) {
-                         this.selectedDestinationAddress.set(typed);
-                    }
+          this.signatureEffect = effect(() => {
+               const signature = this.paymentChannelStoreService.channelClaimSignatureField();
+               if (signature) {
+                    this.paymentChannelUtilService.loadFlagsFromSignature(signature);
                }
           });
-
-          this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['create', 'close', 'claim', 'renew', 'fund'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
+          this.applyTabFromQueryParam(this.route, PAYMENT_CHANNEL_TAB, tab => this.setTab(tab));
+          this.txUiService.clearAllOptions();
+          this.transactionDropdownService.loadCustomDestinations();
+
+          const signature = this.route.snapshot.queryParams['signature'];
+          if (signature) {
+               const context = this.paymentChannelSignatureContextService.getSignatureContext(signature);
+               if (context) {
+                    this.paymentChannelStoreService.setField('channelClaimSignatureField', signature);
+                    this.paymentChannelStoreService.setField('channelIDField', context.channelId);
+                    this.paymentChannelStoreService.setField('amount', context.amount);
+
+                    // Load flags from context
+                    if (context.flags) {
+                         this.paymentChannelStoreService.updateField('flags', () => ({
+                              renew: context.flags.renew ?? false,
+                              close: context.flags.close ?? true,
+                              claimAndClose: context.flags.claimAndClose ?? false,
+                         }));
+                         this.paymentChannelUtilService.updateFlagTotal();
+                    }
                }
           }
-
-          this.transactionDropdownService.loadCustomDestinations();
-          this.txUiService.clearAllOptions();
      }
 
-     private selectWallet(wallet: Wallet): void {
+     ngOnDestroy() {
+          // Clean up effect
+          if (this.signatureEffect) {
+               this.signatureEffect.destroy();
+          }
+
+          // Clean up subscription if using toObservable
+          if (this.signatureSubscription) {
+               this.signatureSubscription.unsubscribe();
+          }
+     }
+
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getPaymentChannels(true);
+     }
+
+     selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
+
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+
           this.populateDefaultDateTime();
      }
 
-     trackByAddress(index: number, item: DropdownItem): string {
+     trackByAddress(_index: number, item: DropdownItem): string {
           return item.address;
      }
 
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
+     async setTab(tab: string): Promise<void> {
+          if (PAYMENT_CHANNEL_TAB.includes(tab as any)) {
+               this.paymentChannelViewModelService.activeTab.set(tab as PaymentChannelActionTypes);
+               this.destinationSearchQuery.set('');
+               this.paymentChannelStoreService.setField('isCreatorMode', false);
+               this.paymentChannelUtilService.clearFlagsValue();
 
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
-     }
-
-     onWalletSelected(wallet: Wallet): void {
-          this.selectWallet(wallet);
-     }
-
-     toggleCreatorMode(input: HTMLInputElement): void {
-          this.isCreatorMode.set(input.checked);
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
-     async setTab(tab: 'create' | 'close' | 'claim' | 'renew' | 'fund'): Promise<void> {
-          this.activeTab.set(tab);
-          this.isCreatorMode.set(false); // reset when leaving Claim tab
-          this.destinationSearchQuery.set('');
-          this.paymentChannelUtilService.clearFlagsValue();
-          this.clearFields();
-          if (this.hasWallets()) {
-               await this.getPaymentChannels(false);
-               this.populateDefaultDateTime();
+               if (this.hasWallets()) {
+                    await this.getPaymentChannels(false);
+                    this.populateDefaultDateTime();
+               }
           }
      }
 
      async getPaymentChannels(forceRefresh = false): Promise<void> {
           await this.measure('getPaymentChannels', true, async () => {
+               // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
+               this.paymentChannelStoreService.resetChannelIdSelection();
 
-               if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) {
-                    return this.toastService.error('Please select a wallet.');
-               }
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
-                    const { wallet, accountInfo, accountObjects, paymentChannelObjects } = await this.measure('getPaymentChannels:prepareTxEnvironment', true, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              includePaymentChannelObjects: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
-
-                    if (!accountInfo || !accountObjects || !paymentChannelObjects) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    await this.measure('getPaymentChannels:processAndUpdate', true, async () => {
-                         this.paymentChannelUtilService.processPaymentChannels(paymentChannelObjects!.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
-                         this.paymentChannelUtilService.walletPaymentChannelCount.set(paymentChannelObjects!.result.account_objects.length);
-                         this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includePaymentChannelObjects: true,
+                         forceRefresh: forceRefresh,
                     });
+
+                    if (!env) throw new Error('Unable to get environment.');
+
+                    this.refreshAccountObject(env);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.paymentChannelUtilService.clearInputFields();
                } catch (error: any) {
                     console.error('Error in getPaymentChannels:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Error getting payment channel detail', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
                }
@@ -360,341 +208,164 @@ export class CreatePaymentChannelComponent extends PerformanceBaseComponent impl
      }
 
      async handlePaymentChannelAction() {
-          await this.withPerf('handlePaymentChannelAction', async () => {
-               this.txUiService.clearAllOptionsAndMessages();
-               try {
-                    const action = this.activeTab();
+          const currentTab = this.paymentChannelViewModelService.activeTab();
+          const wallet = this.currentWallet();
 
-                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-                    if (action === 'create') {
-                         if (!destinationAddress) {
-                              return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-                         }
-                    }
-
-                    const env = await this.measure(
-                         'handlePaymentChannelAction:prepareTxEnvironment',
-                         false,
-                         async () =>
-                              await this.txEnvironmentService.prepareTxEnvironment({
-                                   includeAccountInfo: true,
-                                   includeAccountObject: true,
-                                   includeFee: true,
-                                   includeLedgerIndex: true,
-                                   includeDestinationAccountInfo: true,
-                                   includePaymentChannelObjects: true,
-                                   destinationAddress,
-                              })
-                    );
-
-                    const { client, wallet, accountInfo, accountObjects, paymentChannelObjects, destinationAccountInfo, fee, currentLedger } = env;
-
-                    if (!accountInfo || !accountObjects) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    switch (action) {
-                         case 'create':
-                              await this.createChannel(client, wallet, accountInfo, accountObjects, fee!, currentLedger!, destinationAddress, destinationAccountInfo);
-                              break;
-                         case 'fund':
-                              await this.fundChannel(client, wallet, accountInfo, fee!, currentLedger!);
-                              break;
-                         case 'claim':
-                              await this.claimChannel(client, wallet, accountInfo, fee!, currentLedger!, paymentChannelObjects);
-                              break;
-                         case 'renew':
-                              await this.renewChannel(client, wallet, accountInfo, fee!, currentLedger!);
-                              break;
-                         case 'close':
-                              await this.closeChannel(client, wallet, accountInfo, fee!, currentLedger!, paymentChannelObjects);
-                              break;
-                    }
-
-                    await this.refreshAfterTx(env.client, env.wallet, this.selectedDestinationAddress().trim(), true);
-                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) this.paymentChannelUtilService.resetChannelIdSelection();
-               } catch (error: any) {
-                    console.error('Error in handlePaymentChannelAction:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
+          let destinationAddress = '';
+          if (currentTab === 'createPaymentChannel') {
+               destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    return;
                }
-          });
-     }
+               this.selectedDestinationAddress.set(destinationAddress);
+               this.paymentChannelStoreService.setField('destination', destinationAddress);
+          }
 
-     private async createChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, accountObjects: any, fee: string, currentLedger: number, destinationAddress: string, destinationAccountInfo: any) {
-          await this.withPerf('createChannel', async () => {
-               const result = await this.paymentChannelOrchestratorService.executePaymentChannelTx('create', {
-                    wallet: this.currentWallet(),
-                    formValues: {
-                         ...this.paymentChannelUtilService.getTransactionValues(),
-                         destinationAddress,
-                    },
-                    extra: {},
-                    preFetchedEnv: {
-                         client,
-                         accountInfo,
-                         accountObjects,
-                         fee: fee,
-                         currentLedger: currentLedger,
-                         destinationAccountInfo,
-                         wallet: wallet,
-                    },
-               });
+          if (currentTab !== 'createPaymentChannel' && !this.paymentChannelStoreService.channelIDField()) {
+               this.toastService.error('No channel ID selected.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
-               if (!result.success) {
-                    this.toastService.error(result.error || 'Failed to create payment channel');
+          if (currentTab === 'renewPaymentChannel') {
+               if (!this.paymentChannelViewModelService.isValidRenewTab()) {
+                    this.toastService.error('Invalid renew setup. Ensure you are the source/creator and a channel is selected.');
                     return;
                }
 
-               await this.refreshAfterTx(client, wallet, destinationAddress, true);
-          });
-     }
+               if (!this.paymentChannelViewModelService.isCurrentWalletSource()) {
+                    this.toastService.error('You can only renew a payment channel if you are the creator (source) of the channel.');
+                    return;
+               }
+          }
 
-     private async fundChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number) {
-          await this.withPerf('fundChannel', async () => {
-               const result = await this.paymentChannelOrchestratorService.executePaymentChannelTx('fund', {
-                    wallet: this.currentWallet(),
-                    formValues: {
-                         ...this.paymentChannelUtilService.getTransactionValues(),
-                    },
-                    extra: {},
-                    preFetchedEnv: {
-                         client,
-                         accountInfo,
-                         fee: fee,
-                         currentLedger: currentLedger,
-                         wallet: wallet,
-                    },
-               });
-
-               if (!result.success) {
-                    this.toastService.error(result.error || 'Failed to create payment channel');
+          if (currentTab === 'claimPaymentChannel') {
+               if (!this.paymentChannelViewModelService.isValidClaimTab()) {
+                    this.toastService.error('Invalid claim setup. Ensure you are the destination and a channel is selected.');
                     return;
                }
 
-               await this.refreshAfterTx(client, wallet, null, true);
-          });
-     }
-
-     private async claimChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number, paymentChannelObjects: any) {
-          await this.withPerf('claimChannel', async () => {
-               const { amount, channelIDField, publicKeyField, channelClaimSignatureField } = this.paymentChannelUtilService.getTransactionValues();
-               if (!this.isValidClaimTab()) {
-                    return this.toastService.error('Invalid claim setup. Ensure you are the destination and a channel is selected.');
+               if (!this.paymentChannelViewModelService.isCurrentWalletDestination()) {
+                    this.toastService.error('You can only claim from a payment channel if you are the destination account.');
+                    return;
                }
+          }
 
-               if (!this.isCurrentWalletDestination()) {
-                    return this.toastService.error('You can only claim from a payment channel if you are the destination account.');
-               }
+          let env: any = null;
+          try {
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    includeServerInfo: true,
+                    includeDestinationAccountInfo: true,
+                    includePaymentChannelObjects: true,
+                    destinationAddress,
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
 
-               const requestedDrops = xrpl.xrpToDrops(amount || '0');
-               const channelExist = (paymentChannelObjects.result.account_objects as PaymentChannelObject[]).find(c => c.index === channelIDField);
+          if (!env) throw new Error('Unable to get environment.');
 
-               if (!channelExist) {
-                    return this.toastService.error(`Payment channel ${channelIDField} not found`);
-               }
-
-               const remainingDrops = BigInt(channelExist.Amount || '0') - BigInt(channelExist.Balance || '0');
-               if (BigInt(requestedDrops) > remainingDrops) {
-                    return this.toastService.error(`Claim amount exceeds remaining (${xrpl.dropsToXrp(remainingDrops.toString())} XRP)`);
-               }
-
-               // Measure signature verification – this usually involves a network call to the ledger
-               const signatureVerified = await this.measure('claimChannel:verifySignature', false, () => this.xrplService.getChannelVerifiy(client, channelIDField, amount, publicKeyField, channelClaimSignatureField));
-
+          if (currentTab === 'claimPaymentChannel') {
+               const signatureVerified = await this.xrplService.getChannelVerifiy(env.client, this.paymentChannelStoreService.channelIDField(), this.paymentChannelStoreService.amount(), this.paymentChannelStoreService.publicKeyField(), this.paymentChannelStoreService.channelClaimSignatureField());
                if (!signatureVerified.result.signature_verified) {
-                    return this.toastService.error('Invalid signature');
-               }
-
-               const result = await this.paymentChannelOrchestratorService.executePaymentChannelTx('claim', {
-                    wallet: this.currentWallet(),
-                    formValues: {
-                         ...this.paymentChannelUtilService.getTransactionValues(),
-                    },
-                    extra: {},
-                    preFetchedEnv: {
-                         client,
-                         accountInfo,
-                         fee: fee,
-                         currentLedger: currentLedger,
-                         wallet: wallet,
-                    },
-               });
-
-               if (!result.success) {
-                    this.toastService.error(result.error || 'Failed to create payment channel');
+                    this.toastService.error('Invalid signature');
                     return;
                }
+          }
 
-               await this.refreshAfterTx(client, wallet, null, true);
-          });
-     }
+          const paymentChannelState = this.paymentChannelStoreService.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
 
-     private async renewChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number) {
-          await this.withPerf('renewChannel', async () => {
-               if (!this.isValidRenewTab()) {
-                    return this.toastService.error('Invalid renew setup. Ensure you are the source/creator and a channel is selected.');
-               }
+          const config: PaymentChannelTxConfig = {
+               paymentChannel: paymentChannelState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
+               extra: {},
+          };
 
-               if (!this.isCurrentWalletSource()) {
-                    return this.toastService.error('You can only renew a payment channel if you are the creator (source) of the channel.');
-               }
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
 
-               const result = await this.paymentChannelOrchestratorService.executePaymentChannelTx('renew', {
-                    wallet: this.currentWallet(),
-                    formValues: {
-                         ...this.paymentChannelUtilService.getTransactionValues(),
-                    },
-                    extra: {},
-                    preFetchedEnv: {
-                         client,
-                         accountInfo,
-                         fee: fee,
-                         currentLedger: currentLedger,
-                         wallet: wallet,
-                    },
-               });
-
-               if (!result.success) {
-                    this.toastService.error(result.error || 'Failed to create payment channel');
-                    return;
-               }
-
-               await this.refreshAfterTx(client, wallet, null, true);
-          });
-     }
-
-     private async closeChannel(client: xrpl.Client, wallet: xrpl.Wallet, accountInfo: any, fee: string, currentLedger: number, paymentChannelObjects: any) {
-          await this.withPerf('closeChannel', async () => {
-               const { channelIDField } = this.paymentChannelUtilService.getTransactionValues();
-               const channels = paymentChannelObjects.result.account_objects as PaymentChannelObject[];
-               const channel = channels.find(c => c.index === channelIDField);
-               if (!channel) {
-                    return this.toastService.error(`Payment channel ${channelIDField} not found`);
-               }
-
-               let isOwnerCancelling = wallet.classicAddress === channel.Account;
-
-               // Measure ledger close time fetch (network call)
-               const currentLedgerTime = await this.measure('closeChannel:getLedgerCloseTime', false, () => this.xrplService.getLedgerCloseTime(client));
-
-               if (channel.Expiration && channel.Expiration > currentLedgerTime) {
-                    return this.toastService.error('Cannot close channel before expiration');
-               }
-
-               const hasChannelExpired = this.paymentChannelUtilService.checkChannelExpired(channel);
-
-               const ownerCancelling = !!isOwnerCancelling;
-               const expired = !!hasChannelExpired;
-
-               if (!ownerCancelling && !expired) {
-                    const amount = BigInt(channel.Amount ?? '0');
-                    const balance = BigInt(channel.Balance ?? '0');
-                    const remaining = amount - balance;
-                    if (remaining > 0n) {
-                         return this.toastService.error(`Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`);
+          await this.withPerf('performAction', async () => {
+               try {
+                    switch (currentTab) {
+                         case 'createPaymentChannel':
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('createPaymentChannel', config);
+                              break;
+                         case 'fundPaymentChannel':
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('fundPaymentChannel', config);
+                              break;
+                         case 'claimPaymentChannel':
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('claimPaymentChannel', config);
+                              break;
+                         case 'renewPaymentChannel':
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('renewPaymentChannel', config);
+                              break;
+                         case 'closePaymentChannel':
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('closePaymentChannel', config);
+                              break;
                     }
-               }
-
-               const result = await this.paymentChannelOrchestratorService.executePaymentChannelTx('close', {
-                    wallet: this.currentWallet(),
-                    formValues: {
-                         ...this.paymentChannelUtilService.getTransactionValues(),
-                    },
-                    extra: {},
-                    preFetchedEnv: {
-                         client,
-                         accountInfo,
-                         fee: fee,
-                         currentLedger: currentLedger,
-                         wallet: wallet,
-                    },
-               });
-
-               if (!result.success) {
-                    this.toastService.error(result.error || 'Failed to close payment channel');
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                     return;
                }
-
-               await this.refreshAfterTx(client, wallet, null, true);
           });
+
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
+
+          await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress, this.paymentChannelStoreService.destination(), '', { includePaymentChannelObjects: true });
+          this.txUiService.resetCurrentStepToIdle();
      }
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const [{ accountInfo, accountObjects }, paymentChannelObjects] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, true), this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', 'payment_channel')]);
-          this.paymentChannelUtilService.processPaymentChannels(paymentChannelObjects.result.account_objects as PaymentChannelObject[], wallet.classicAddress);
-          this.paymentChannelUtilService.walletPaymentChannelCount.set(paymentChannelObjects.result.account_objects.length);
-
-          await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
-          this.addCustomDestination(addDest, destination);
-          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
-     }
-
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
-
-     private addCustomDestination(addDest: boolean, destination: string | null) {
-          if (addDest && destination) {
-               const addr = destination.trim();
-               if (xrpl.isValidAddress(addr)) {
-                    const added = this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
-                    if (added) {
-                         console.log('Custom added via service');
-                    }
-               }
+     protected refreshAccountObject(env: any): void {
+          if (env.accountObjects?.result?.account_objects) {
+               this.paymentChannelUtilService.processPaymentChannels(env.accountObjects?.result?.account_objects as PaymentChannelObject[], env.wallet.classicAddress);
+               this.paymentChannelStoreService.setField('walletPaymentChannelCount', env.accountObjects?.result?.account_objects?.length);
           }
      }
 
-     addCancelAfterToExpiration(seconds: number): void {
-          // this.xrplDateService.addSeconds(this.txUiService.paymentChannelCancelAfterTimeField, this.txUiService.paymentChannelCancelAfterTimeField);
+     getClaimAndCloseTooltip(): string {
+          if (this.paymentChannelStoreService.isCreatorMode()) {
+               return 'Adding this flag allows the recipient to claim AND close the channel in one transaction. ' + 'The recipient must include this exact signature to close the channel.';
+          } else {
+               return 'If the creator included the tfClose flag in their signature, you can claim and close ' + 'the channel in one transaction. Check the signature hex to verify.';
+          }
      }
 
-     setCancelAfterExpirationToNow() {
-          // this.txUiService.paymentChannelCancelAfterTimeField.set(this.utilsService.setDateTimeFieldToNow());
+     handleSearchQueryChange(query: string) {
+          this.destinationSearchQuery.set(query);
+          this.paymentChannelStoreService.setField('paymentChannelIdSearchQuery', query);
+     }
+
+     handleDestinationChange(item: SelectItem | null) {
+          const addr = item?.id || '';
+          this.selectedDestinationAddress.set(addr);
+          this.paymentChannelStoreService.setField('destination', addr);
+     }
+
+     paymentChannelSelected(event: UnifiedPaymentChannel) {
+          this.paymentChannelUtilService.selectPaymentChannelFromList(event, this.paymentChannelViewModelService.activeTab());
      }
 
      populateDefaultDateTime() {
-          this.txUiService.paymentChannelCancelAfterTimeField.set('');
+          this.paymentChannelStoreService.setField('paymentChannelCancelAfterTimeField', '');
      }
 
      async generateCreatorClaimSignature() {
           this.paymentChannelUtilService.generateCreatorClaimSignature(this.currentWallet());
      }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
-     clearFields() {
-          this.txUiService.paymentChannelCancelAfterTimeField.set('');
-          this.clearInputFields();
-          this.txUiService.clearAllOptionsAndMessages();
-     }
-
-     clearInputFields() {
+     protected clearInputFields(): void {
           this.selectedDestinationAddress.set('');
-          this.txUiService.channelIDField.set('');
-          this.txUiService.channelClaimSignatureField.set('');
-          this.txUiService.settleDelayField.set('');
-          this.txUiService.amountField.set('');
-          this.txUiService.destinationTagField.set('');
-          this.txUiService.invoiceIdField.set('');
-          this.txUiService.sourceTagField.set('');
+          this.txUiService.clearAllOptionsAndMessages();
      }
 }

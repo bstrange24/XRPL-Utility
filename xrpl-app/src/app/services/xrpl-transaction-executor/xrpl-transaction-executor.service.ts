@@ -662,6 +662,7 @@ export class XrplTransactionExecutorService {
      }
 
      async paymentChannelCreate(
+          env: any,
           tx: xrpl.PaymentChannelCreate,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -674,7 +675,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Payment Channel creation (no changes will be made)...',
                submitMessage: 'Creating Payment Channel on the XRP Ledger...',
                amount: '0',
@@ -683,6 +684,7 @@ export class XrplTransactionExecutorService {
      }
 
      async paymentChannelFundTx(
+          env: any,
           tx: xrpl.PaymentChannelFund,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -695,7 +697,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Payment Channel funding (no changes will be made)...',
                submitMessage: 'Funding Payment Channel on the XRP Ledger...',
                amount: '0',
@@ -704,6 +706,7 @@ export class XrplTransactionExecutorService {
      }
 
      async paymentChannelClaimTx(
+          env: any,
           tx: xrpl.PaymentChannelClaim,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -716,7 +719,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {} // ← Default empty object (optional)
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulating Payment Channel action (no changes will be made)...',
                submitMessage: 'Sending Payment Channel action to the XRP Ledger...',
                amount: '0',

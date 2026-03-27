@@ -321,36 +321,6 @@ export interface DestinationItem {
      isCurrentAccount: boolean;
 }
 
-export interface PaymentChannelObject {
-     LedgerEntryType: string;
-     Account: string;
-     index: string;
-     Expiration?: number;
-     CancelAfter?: number;
-     Destination: string;
-     Amount: string;
-     Balance: string;
-     SettleDelay: number;
-     PublicKey: string;
-}
-
-export interface UnifiedPaymentChannel {
-     id: string;
-     totalAmount: string;
-     balance: string;
-     remaining: string;
-     destination?: string;
-     sender?: string;
-     settleDelay: string;
-     expiration: string;
-     status: string;
-     canClose: boolean;
-     canClaim?: boolean;
-     publicKey?: string;
-     isExpired?: boolean;
-     remainingDrops?: any;
-}
-
 export interface AccountFlags {
      canLock: boolean;
      canClawback: boolean;

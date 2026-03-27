@@ -5,7 +5,7 @@ export const BLOCKER_MAP: Record<string, { label: string; route: string; tab?: s
      Offer: { label: 'DEX Offers', route: '/create-offer' },
      Escrow: { label: 'Escrows', route: '/time-escrow', tab: 'cancelEscrow' },
      Check: { label: 'Checks', route: '/checks', tab: 'cancelCheck' },
-     PayChannel: { label: 'Payment Channels', route: '/payment-channel' },
+     PayChannel: { label: 'Payment Channels', route: '/payment-channel', tab: 'closePaymentChannel' },
      Ticket: { label: 'Tickets', route: '/tickets', tab: 'deleteTickets' },
      SignerList: { label: 'Signer Lists', route: '/account-configurator', tab: 'modifySignerList' },
      RegularKey: { label: 'Regular Key', route: '/account-configurator', tab: 'modifyRegularKey' },
@@ -22,6 +22,7 @@ export const ACCOUNT_DELETE_TAB_META = {
           title: 'Delete Wallet',
           desc: 'Delete currently selected wallet.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

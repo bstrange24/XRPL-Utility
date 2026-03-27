@@ -39,6 +39,7 @@ export const DID_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -48,6 +49,7 @@ export const DID_TAB_META: Record<
           title: 'Set DID',
           desc: 'Set DID for the selected account.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      deleteDid: {
@@ -56,6 +58,7 @@ export const DID_TAB_META: Record<
           title: 'Delete DID',
           desc: 'Delete DID for the selected account.',
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 } as const;

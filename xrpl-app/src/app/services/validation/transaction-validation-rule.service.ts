@@ -8,6 +8,8 @@ import { percentToTransferRate } from 'xrpl';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { AppConstants } from '../../core/app.constants';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
+import { PaymentChannelObject } from '../../components/payment-channel/constants/payment-channel.types';
+import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -42,6 +44,7 @@ export class ValidationService {
      public readonly xrplService = inject(XrplService);
      public readonly utilsService = inject(UtilsService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
 
      constructor() {
           this.registerBuiltInRules();
@@ -1229,14 +1232,6 @@ export class ValidationService {
                     this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelFund'),
 
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.requireDestinationTagIfNeeded('paymentChannelCreate'),
@@ -1263,18 +1258,11 @@ export class ValidationService {
                requiredFields: ['paymentChannelRenew.channelIDField'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     // Destination address valid
-                    // this.isValidAddress('paymentChannelRenew.destination'),
+                    this.isValidAddress('paymentChannelRenew.destination'),
                     // this.notSelf('senderAddress', 'destination'),
                     this.requireDestinationTagIfNeeded('paymentChannelCreate'),
 
@@ -1302,15 +1290,31 @@ export class ValidationService {
                     this.walletCredentialRequired(),
                     this.positiveAmount('paymentChannelClaim'),
 
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
-
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    ctx => {
+                         let requestedDrops: string;
+                         try {
+                              requestedDrops = xrpl.xrpToDrops(ctx.inputs['paymentChannelClaim']['amount']);
+                         } catch {
+                              return 'Invalid XRP amount';
+                         }
+
+                         const channelExist = (ctx.inputs['env']['accountObjects'].result.account_objects as PaymentChannelObject[]).find(c => c.index === ctx.inputs['paymentChannelClaim']['channelIDField']);
+                         if (!channelExist) {
+                              return `Payment channel ${ctx.inputs['paymentChannelClaim']['channelIDField']} not found`;
+                         }
+
+                         if (!ctx.inputs['paymentChannelClaim']['amount']) {
+                              return 'Amount is required';
+                         }
+
+                         const remainingDrops = BigInt(channelExist.Amount || '0') - BigInt(channelExist.Balance || '0');
+                         if (BigInt(requestedDrops) > remainingDrops) {
+                              return `Claim amount exceeds remaining (${xrpl.dropsToXrp(remainingDrops.toString())} XRP)`;
+                         }
+                         return null;
+                    },
 
                     this.optionalNumeric('paymentChannelClaim.channelIDField', 0),
 
@@ -1334,15 +1338,37 @@ export class ValidationService {
                requiredFields: ['paymentChannelClose.channelIDField'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      if (ctx.inputs['seed']) {
-                    //           const { value } = this.utilsService.detectXrpInputType(ctx.inputs['seed']);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    ctx => {
+                         const channels = ctx.inputs['env']['accountObjects'].result.account_objects as PaymentChannelObject[];
+                         const channel = channels.find(c => c.index === ctx.inputs['paymentChannelClose']['channelIDField']);
+                         if (!channel) {
+                              return `Payment channel ${ctx.inputs['paymentChannelClose']['channelIDField']} not found`;
+                         }
+
+                         let isOwnerCancelling = ctx.inputs['wallet']['address'] === channel.Account;
+
+                         if (channel.Expiration && channel.Expiration > ctx.inputs['env']['ledgerInfo']['currentRippleTime']) {
+                              return 'Cannot close channel before expiration';
+                         }
+
+                         const hasChannelExpired = this.paymentChannelUtilService.checkChannelExpired(channel);
+
+                         const ownerCancelling = !!isOwnerCancelling;
+                         const expired = !!hasChannelExpired;
+
+                         if (!ownerCancelling && !expired) {
+                              const amount = BigInt(channel.Amount ?? '0');
+                              const balance = BigInt(channel.Balance ?? '0');
+                              const remaining = amount - balance;
+                              if (remaining > 0n) {
+                                   return `Cannot close channel with non-zero balance. ${xrpl.dropsToXrp(remaining.toString())} XRP still available to claim.`;
+                              }
+                         }
+                         return null;
+                    },
 
                     this.optionalNumeric('channelIDField.channelIDField', 0),
 

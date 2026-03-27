@@ -1,7 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { PaymentChannelObject, UnifiedPaymentChannel } from '../../../models/interface-items.model';
 import * as xrpl from 'xrpl';
 import { sign, verify } from 'ripple-keypairs';
 import { UtilsService } from '../../util-service/utils.service';
@@ -10,8 +9,9 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { AppConstants } from '../../../core/app.constants';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
-
-type PaymentChannelTxType = 'create' | 'fund' | 'claim' | 'renew' | 'close';
+import { PaymentChannelStoreService } from '../payment-channel-store/payment-channel-store.service';
+import { PaymentChannelObject, UnifiedPaymentChannel } from '../../../components/payment-channel/constants/payment-channel.types';
+import { PaymentChannelSignatureContextService } from '../payment-channel-signature-context/payment-channel-signature-context.service';
 
 @Injectable({
      providedIn: 'root',
@@ -20,23 +20,11 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
+     public readonly paymentChannelSignatureContextService = inject(PaymentChannelSignatureContextService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
-     walletPaymentChannelCount = signal<number>(0);
-     existingPaymentChannels = signal<any[]>([]);
-     receivablePaymentChannels = signal<any[]>([]);
-     closablePaymentChannels = signal<any[]>([]);
-     flags = {
-          renew: false,
-          close: true,
-          claimAndClose: false,
-     };
-     totalFlagsValue = signal<number>(0);
-     totalFlagsHex = signal<string>('0x0');
-     private readonly flagValues = {
-          renew: 0x00010000,
-          close: 0x00020000,
-     };
+     selectedPaymentChannelId = computed(() => this.paymentChannelStoreService.channelIDField());
 
      readonly createChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -80,50 +68,13 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           return this.txUiService.stepMessage();
      });
 
-     getTransactionValues() {
-          const amount = this.txUiService.amountField();
-          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
-          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
-          // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
-          const regularKeyAddress = this.txUiService.regularKeyAddress();
-          const regularKeySeed = this.txUiService.regularKeySeed();
-          const multiSignAddress = this.txUiService.multiSignAddress();
-          const multiSignSeeds = this.txUiService.multiSignSeeds();
-          const channelIDField = this.txUiService.channelIDField();
-          const settleDelay = this.txUiService.settleDelayField();
-          const channelClaimSignatureField = this.txUiService.channelClaimSignatureField();
-          const publicKeyField = this.txUiService.publicKeyField();
-          const isTicket = this.xrplTxOptionsStore.isTicket();
-          const memo = this.txUiService.memoField();
-          const isMemoEnabled = this.txUiService.isMemoEnabled();
-          const destinationTag = this.txUiService.destinationTagField();
-          return { amount, isSimulate, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds, channelIDField, settleDelay, channelClaimSignatureField, publicKeyField, isTicket, memo, isMemoEnabled, destinationTag };
-     }
-
-     buildSuccessMessage(type: PaymentChannelTxType, formValues: any): string {
-          if (type === 'create') {
-               return `Payment Channel created successfully`;
-          }
-
-          if (type === 'fund') {
-               return `Payment Channel funded successfully`;
-          }
-
-          if (type === 'claim') {
-               return `Payment Channel claim successfully`;
-          }
-
-          if (type === 'renew') {
-               return `Payment Channel renew successfully`;
-          }
-
-          return `Closed Payment Channel successfully`;
+     toggleCreatorMode(input: HTMLInputElement): void {
+          this.paymentChannelStoreService.setField('isCreatorMode', input.checked);
      }
 
      checkChannelExpired(channel: any) {
-          if (channel.CancelAfter) {
-               const unixExpiration = channel.CancelAfter + AppConstants.RIPPLE_EPOCH_OFFSET;
+          if (channel.CancelAfter || channel.Expiration) {
+               const unixExpiration = channel.CancelAfter ? channel.CancelAfter : channel.Expiration + AppConstants.RIPPLE_EPOCH_OFFSET;
                console.log('Expiration (UTC):', new Date(unixExpiration * 1000).toISOString());
                let isExpired = Date.now() / 1000 > unixExpiration;
                console.log('Expired?', isExpired);
@@ -139,21 +90,86 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      setChannelId(item: SelectItem | null): void {
           const next = item?.id ?? '';
-          if (this.txUiService.channelIDField() !== next) {
-               this.txUiService.channelIDField.set(next);
+          if (this.paymentChannelStoreService.channelIDField() !== next) {
+               this.paymentChannelStoreService.setField('channelIDField', next);
           }
+     }
+
+     selectPaymentChannelFromList(channel: UnifiedPaymentChannel, tab: string): void {
+          const isCreateTab = tab === 'createPaymentChannel';
+
+          if (isCreateTab) {
+               this.paymentChannelStoreService.setField('channelIDField', '');
+               this.paymentChannelStoreService.setField('isPaymentChannelOwner', false);
+               return;
+          }
+
+          this.paymentChannelStoreService.setField('channelIDField', channel.id);
+          this.paymentChannelStoreService.setField('isPaymentChannelOwner', channel.isOwner);
+
+          if (tab === 'claimPaymentChannel' || tab === 'renewPaymentChannel' || tab === 'fundPaymentChannel') {
+               const remainingAmount = channel.remaining?.split(' ')[0] ?? '0';
+               this.paymentChannelStoreService.setField('amount', remainingAmount);
+          }
+
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      onSignatureChannelSelected(item: SelectItem | null) {
           if (!item?.id) {
-               this.txUiService.channelIDField.set('');
+               this.paymentChannelStoreService.setField('channelIDField', '');
                return;
           }
-          const channel = this.existingPaymentChannels().find(e => e.id?.toString() === item.id);
+          const channel = this.paymentChannelStoreService.existingPaymentChannels().find(e => e.id?.toString() === item.id);
           if (channel) {
-               this.txUiService.channelIDField.set(channel.id);
+               this.paymentChannelStoreService.setField('channelIDField', channel.id);
                // Optional: pre-fill amount with full remaining if desired
-               this.txUiService.amountField.set(channel.totalAmount.split(' ')[0] || '0');
+               this.paymentChannelStoreService.setField('amount', channel.totalAmount.split(' ')[0] || '0');
+          }
+     }
+
+     loadFlagsFromSignature(signature: string) {
+          const context = this.paymentChannelSignatureContextService.getSignatureContext(signature);
+
+          if (context && context.flags) {
+               // Update the store with the flags from the signature context
+               this.paymentChannelStoreService.updateField('flags', () => ({
+                    renew: context.flags.renew ?? false,
+                    close: context.flags.close ?? true,
+                    claimAndClose: context.flags.claimAndClose ?? false,
+               }));
+
+               // Update the total flags value
+               this.updateFlagTotal();
+
+               // Also update other fields if needed
+               if (context.channelId && !this.paymentChannelStoreService.channelIDField()) {
+                    this.paymentChannelStoreService.setField('channelIDField', context.channelId);
+               }
+
+               if (context.amount && !this.paymentChannelStoreService.amount()) {
+                    this.paymentChannelStoreService.setField('amount', context.amount);
+               }
+
+               console.log('Loaded flags from signature context:', context.flags);
+          }
+     }
+
+     onSignatureInput(signature: string) {
+          this.paymentChannelStoreService.setField('channelClaimSignatureField', signature);
+          // The subscription will automatically load the flags
+     }
+
+     onChannelSelected(channel: any) {
+          // If channel has flags, you might also want to load them
+          if (channel && channel.Flags) {
+               const hasCloseFlag = (channel.Flags & 0x00020000) !== 0;
+               this.paymentChannelStoreService.updateField('flags', () => ({
+                    renew: false,
+                    close: true,
+                    claimAndClose: hasCloseFlag,
+               }));
+               this.updateFlagTotal();
           }
      }
 
@@ -195,6 +211,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
                          status,
                          canClose: status !== 'Open' || isExpired,
                          isExpired,
+                         isOwner: true,
                     };
                     existing.push(entry);
                     closable.push(entry);
@@ -217,6 +234,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
                          status,
                          canClaim: !isExpired && remainingDrops > 0n,
                          isExpired,
+                         isOwner: false,
                     };
                     receivable.push(entry);
 
@@ -240,9 +258,9 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           console.log('Closable:', closable.length);
           console.groupEnd();
 
-          this.existingPaymentChannels.set(existing);
-          this.receivablePaymentChannels.set(receivable);
-          this.closablePaymentChannels.set(closable);
+          this.paymentChannelStoreService.setField('existingPaymentChannels', existing);
+          this.paymentChannelStoreService.setField('receivablePaymentChannels', receivable);
+          this.paymentChannelStoreService.setField('closablePaymentChannels', closable);
      }
 
      private getProcessPaymentChannelExpiration(obj: PaymentChannelObject, nowUnix: number) {
@@ -268,8 +286,30 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
                this.txUiService.clearAllOptionsAndMessages();
                const wallet = await this.utilsService.getWallet(currentWallet.seed);
                try {
-                    this.txUiService.publicKeyField.set(wallet.publicKey);
-                    this.txUiService.channelClaimSignatureField.set(this.generateChannelSignature(this.txUiService.channelIDField(), this.txUiService.amountField(), wallet));
+                    const channelId = this.paymentChannelStoreService.channelIDField();
+                    const amount = this.paymentChannelStoreService.amount();
+                    const flags = this.paymentChannelStoreService.flags();
+
+                    this.paymentChannelStoreService.setField('publicKeyField', wallet.publicKey);
+                    const signature = this.generateChannelSignature(channelId, amount, wallet);
+
+                    // Save the signature context with flags
+                    this.paymentChannelSignatureContextService.saveSignatureContext(signature, {
+                         channelId: channelId,
+                         amount: amount,
+                         flags: {
+                              claimAndClose: flags.claimAndClose,
+                              renew: flags.renew,
+                              close: flags.close,
+                         },
+                         generatedAt: new Date().toISOString(),
+                         generatedBy: 'creator',
+                    });
+
+                    // Optional: Show success message
+                    console.log('Signature generated and context saved');
+
+                    this.paymentChannelStoreService.setField('channelClaimSignatureField', signature);
                } catch (error: any) {
                     console.error('Error in generateCreatorClaimSignature:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -295,7 +335,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
                     throw new Error('Amount can not be empty');
                }
                const amountDrops = xrpl.xrpToDrops(amountBN);
-               if (Number.isNaN(Number.parseFloat(this.txUiService.amountField())) || Number.parseFloat(this.txUiService.amountField()) <= 0) {
+               if (Number.isNaN(Number.parseFloat(this.paymentChannelStoreService.amount())) || Number.parseFloat(this.paymentChannelStoreService.amount()) <= 0) {
                     throw new Error('Amount must be a valid number and greater than 0');
                }
 
@@ -339,44 +379,59 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           };
      }
 
-     resetChannelIdSelection() {
-          // if (this.txUiService.errorMessage?.length && this.txUiService.errorMessage?.length <= 0) {
-          this.txUiService.channelIDField.set('');
-          this.txUiService.channelClaimSignatureField.set('');
-          this.txUiService.amountField.set('');
-          // }
-     }
-
      toggleFlag(key: 'renew' | 'close' | 'claimAndClose') {
           if (key === 'close') {
                // Do nothing – tfClose is locked
                return;
           }
-          this.flags[key] = !this.flags[key];
+
+          // Update the flag in the store
+          this.paymentChannelStoreService.updateField('flags', currentFlags => ({
+               ...currentFlags,
+               [key]: !currentFlags[key],
+          }));
+
           this.updateFlagTotal();
      }
 
      updateFlagTotal() {
-          let sum = 0;
-          if (this.flags.claimAndClose) sum |= this.flagValues.close;
-          if (this.flags.renew) sum |= this.flagValues.renew;
-          if (this.flags.close) sum |= this.flagValues.close; // always included
+          // Get current flags from store
+          const flags = this.paymentChannelStoreService.flags();
+          const flagValues = this.paymentChannelStoreService.flagValues();
 
-          this.totalFlagsValue.set(sum);
-          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
+          let sum = 0;
+
+          if (flags.claimAndClose) sum |= flagValues.close;
+          if (flags.renew) sum |= flagValues.renew;
+          if (flags.close) sum |= flagValues.close;
+
+          this.paymentChannelStoreService.setField('totalFlagsValue', sum);
+          this.paymentChannelStoreService.setField('totalFlagsHex', '0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
      clearFlagsValue() {
-          this.flags = { renew: false, close: true, claimAndClose: false };
-          this.totalFlagsValue.set(0);
-          this.totalFlagsHex.set('0x0');
+          // Reset flags using updateField
+          this.paymentChannelStoreService.updateField('flags', () => ({
+               renew: false,
+               close: true,
+               claimAndClose: false,
+          }));
+
+          this.paymentChannelStoreService.setField('totalFlagsValue', 0);
+          this.paymentChannelStoreService.setField('totalFlagsHex', '0x0');
      }
 
      existingChannelMap = computed(() => {
           const map = new Map<string, any>();
-          for (const c of this.existingPaymentChannels()) {
+          for (const c of this.paymentChannelStoreService.existingPaymentChannels()) {
                if (c.id) map.set(String(c.id), c);
           }
           return map;
      });
+
+     clearInputFields(): void {
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
+     }
 }
