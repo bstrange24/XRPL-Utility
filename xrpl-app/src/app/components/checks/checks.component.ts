@@ -28,7 +28,6 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
-import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 // import { TrustlineOrchestratorService } from '../../services/trustline-currency/trustline-orchestrator/trustline-orchestrator.service';
 import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
@@ -42,6 +41,7 @@ import { XrplDateService } from '../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
+import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 
 @Component({
      selector: 'app-checks',

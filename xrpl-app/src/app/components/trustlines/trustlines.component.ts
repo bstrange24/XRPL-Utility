@@ -21,7 +21,6 @@ import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { CurrencyFormSectionComponent } from '../shared/currency-form-section/currency-form-section.component';
 import { ActivatedRoute } from '@angular/router';
@@ -45,6 +44,7 @@ import { TrustlineIssuersComponent } from './tab/trustline-issuers/trustline-iss
 import { TrustlineIssueComponent } from './tab/trustline-issue/trustline-issue.component';
 import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-clawback.component';
 import { SummaryComponent } from './ui-components/summary/summary.component';
+import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 
 @Component({
      selector: 'app-trustlines',

@@ -28,18 +28,18 @@ import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-tr
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { EscrowUtilService } from '../../services/escrow/escrow-util/escrow-util.service';
 import { TimeBasedEscrowOrchestrator } from '../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { EscrowCreateItemComponent } from './ui-components/escrow-create-item/escrow-create-item.component';
-import { EscrowFinishItemComponent } from './ui-components/escrow-finish-item/escrow-finish-item.component';
-import { EscrowCancelItemComponent } from './ui-components/escrow-cancel-item/escrow-cancel-item.component';
+import { EscrowCancelItemComponent } from './tab/escrow-cancel-item/escrow-cancel-item.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
+import { EscrowFinishItemComponent } from './tab/escrow-finish-item/escrow-finish-item.component';
+import { EscrowCreateItemComponent } from './tab/escrow-create-item/escrow-create-item.component';
+import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 
 @Component({
      selector: 'app-time-escrow',

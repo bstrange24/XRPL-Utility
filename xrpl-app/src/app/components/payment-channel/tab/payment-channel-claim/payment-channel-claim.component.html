@@ -61,7 +61,7 @@
                <div class="form-group">
                     <label for="generateSign">Generated Signature</label>
                     <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly style="font-family: monospace; width: 100%" />
-                    <button (click)="copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
+                    <button class="btn-primary-blue" (click)="copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
                </div>
           </div>
           }

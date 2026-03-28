@@ -27,16 +27,16 @@ import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
-import { MptUtilService } from '../../services/mpt-service/mpt-util/mpt-util.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { MptOrchestratorServiceService } from '../../services/mpt-service/mpt-orchestrator/mpt-orchestrator.service.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
+import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 
 @Component({
      selector: 'app-mpt',
