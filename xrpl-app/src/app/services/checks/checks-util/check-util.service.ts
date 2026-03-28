@@ -252,31 +252,4 @@ export class CheckUtilService extends PerformanceBaseComponent {
 
           writableSignal.set(newDateTime);
      }
-
-     handleSimulationSuccess(type: CheckTxType, formValues: any, hash?: string) {
-          let msg: string;
-
-          if (type === 'createCheck') {
-               msg = `Simulated Sending Check of ${formValues.amountField} ${formValues.currency || 'XRP'}`;
-          } else if (type === 'cashCheck') {
-               msg = `Simulated Cashing Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
-          } else {
-               msg = `Simulated Cancelling Check ${formValues.checkIdField}`;
-          }
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
-     }
-
-     buildSuccessMessage(type: CheckTxType, formValues: any): string {
-          if (type === 'createCheck') {
-               return `Successfully Sent Check of ${formValues.amountField} ${formValues.currency || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-          }
-          if (type === 'cashCheck') {
-               return `Successfully Cashed Check of ${formValues.amountField} ${formValues.currencyCode || 'XRP'}`;
-          }
-          return `Successfully Cancelled Check ${formValues.checkIdField}`;
-     }
 }

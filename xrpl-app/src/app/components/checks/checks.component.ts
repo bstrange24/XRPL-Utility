@@ -48,11 +48,15 @@ import { ChecksRequirementInfoComponent } from './ui-components/checks-requireme
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { CHECK_TAB_META, CHECK_TABS } from './constants/checks.ui';
 import * as xrpl from 'xrpl';
+import { UtilsService } from '../../services/util-service/utils.service';
+import { ChecksCancelComponent } from './tab/checks-cancel/checks-cancel.component';
+import { ChecksCashComponent } from './tab/checks-cash/checks-cash.component';
+import { ChecksCreateComponent } from './tab/checks-create/checks-create.component';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent, ChecksRequirementInfoComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent, ChecksRequirementInfoComponent,ChecksCreateComponent, ChecksCashComponent,ChecksCancelComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

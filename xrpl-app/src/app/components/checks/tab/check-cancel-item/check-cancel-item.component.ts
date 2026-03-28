@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CancelCheckItem } from '../../../../models/interface-items.model';
 import { UtilsService } from '../../../../services/util-service/utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -8,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CancelCheckItem } from '../../constants/checks.types';
 
 @Component({
      selector: 'app-check-cancel-item',

@@ -10,6 +10,7 @@ export interface CheckState {
      outstandingChecks: string;
      mptIssuanceIdField: string;
      checkExpirationDate: string;
+     enableExpirationDate: boolean;
      outstandingChecksCollapsed: boolean;
      isCheckOwner: boolean;
      isCollapsed: boolean;
@@ -28,6 +29,7 @@ const initialState: CheckState = {
      outstandingChecks: '',
      mptIssuanceIdField: '',
      checkExpirationDate: '',
+     enableExpirationDate: false,
      outstandingChecksCollapsed: false,
      isCheckOwner: false,
      isCollapsed: false,
@@ -87,6 +89,7 @@ export const ChecksStoreService = signalStore(
                patchState(store, {
                     checkIdField: '',
                     checkExpirationDate: '',
+                    enableExpirationDate: false,
                     destination: '',
                     checkIdSearchQuery: '',
                     outstandingChecks: '',

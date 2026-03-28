@@ -13,6 +13,9 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { CHECK_VALIDATION_RULES } from '../../../components/checks/constants/checks.constants';
 import { CheckTxConfig, CheckTxType } from '../../../components/checks/constants/checks.types';
 import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { ChecksTransactionBuilderService } from '../checks-transaction-builder/checks-transaction-builder.service';
+import { AppConstants } from '../../../core/app.constants';
+import { ToastService } from '../../toast/toast.service';
 
 @Injectable({ providedIn: 'root' })
 export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
@@ -22,7 +25,9 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      private readonly xrplTransactionService = inject(XrplTransactionService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
+     private readonly toastService = inject(ToastService);
      private readonly checkUtilService = inject(CheckUtilService);
+     private readonly checksTransactionBuilderService = inject(ChecksTransactionBuilderService);
      private readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
@@ -32,323 +37,139 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
           let client: xrpl.Client;
           let txHash: string | undefined;
 
-          //      try {
-          //           this.txUiService.resetCurrentStepToIdle();
-          //           this.txUiService.clearAllOptionsAndMessages();
+               try {
+                    this.txUiService.resetCurrentStepToIdle();
+                    this.txUiService.clearAllOptionsAndMessages();
 
-          //           // Use pre-fetched env if provided, otherwise fetch
-          //           env =
-          //                preFetchedEnv ??
-          //                (await this.txEnvironmentService.prepareTxEnvironment({
-          //                     includeAccountInfo: true,
-          //                     includeAccountObject: true,
-          //                     includeFee: true,
-          //                     includeLedgerInfo: true,
-          //                     includeServerInfo: true,
-          //                     includePaymentChannelObjects: true,
-          //                }));
+                    // Use pre-fetched env if provided, otherwise fetch
+                    env =
+                         preFetchedEnv ??
+                         (await this.txEnvironmentService.prepareTxEnvironment({
+                              includeAccountInfo: true,
+                              includeAccountObject: true,
+                              includeFee: true,
+                              includeLedgerInfo: true,
+                              includeServerInfo: true,
+                              includePaymentChannelObjects: true,
+                         }));
 
-          //           client = env.client;
-          //           if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
+                    client = env.client;
+                    if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-          //           // Validation
-          //           const validationRule = CHECK_VALIDATION_RULES[type];
-          //           const validationInputs = this.buildValidationInputs(type, wallet, env, check, account, txOptions);
-          //           const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-          //           if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+                    // Validation
+                    const validationRule = CHECK_VALIDATION_RULES[type];
+                    const validationInputs = this.buildValidationInputs(type, wallet, env, check, account, txOptions);
+                    const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+                    if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-          //           // Build transaction
-          //           let tx: any;
-          //           if (type === 'createCheck') {
-          //                tx = this.paymentChannelTransactionBuilderService.buildCreatePaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-          //           } else if (type === 'cashCheck') {
-          //                tx = this.paymentChannelTransactionBuilderService.buildFundPaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-          //           } else (type === 'cancelCheck') {
-          //                tx = this.paymentChannelTransactionBuilderService.buildClaimPaymentChannelTx(env.wallet || wallet, env, paymentChannel);
+                    // Build transaction
+                    let tx: any;
+                    if (type === 'createCheck') {
+                         tx = this.checksTransactionBuilderService.buildCreateCheckTx(env.wallet || wallet, env, check);
+                    } else if (type === 'cashCheck') {
+                         tx = this.checksTransactionBuilderService.buildCashCheckTx(env.wallet || wallet, env, check);
+                    } else {
+                         tx = this.checksTransactionBuilderService.buildCancelCheckTx(env.wallet || wallet, env, check);
+                    }
 
-          //           // Optional fields
-          //           await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.paymentChannel, type, txOptions);
+                    // Optional fields
+                    await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.check, type, txOptions);
 
-          //           // Check balances
-          //           const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-          //           if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+                    // Check balances
+                    const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-          //           // Execute
-          //           const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
-          //           if (!execResult.success) return { success: false, error: execResult.error };
-          //           txHash = execResult.hash;
+                    // Execute
+                    const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, check, txOptions);
+                    if (!execResult.success) return { success: false, error: execResult.error };
+                    txHash = execResult.hash;
 
-          //           if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
+                    if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
 
-          //           const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
-          //           this.txUiService.setTxResultSignal(finalResult);
+                    const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
+                    this.txUiService.setTxResultSignal(finalResult);
 
-          //           const message = this.buildSuccessMessage(type);
-          //           this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+                    const message = this.buildSuccessMessage(type, check);
+                    this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
           return { success: true, hash: txHash };
-          //      } catch (err: any) {
-          //           console.error(`[${type}] executeCredentialTx failed:`, err);
-          //           this.xrplTransactionService.processTxError(err);
-          //           return { success: false, error: err.message || 'Unexpected error', validationError: false };
-          //      } finally {
-          //           this.txUiService.resetCurrentStepToIdle();
-          //      }
+               } catch (err: any) {
+                    console.error(`[${type}] executeCredentialTx failed:`, err);
+                    this.xrplTransactionService.processTxError(err);
+                    return { success: false, error: err.message || 'Unexpected error', validationError: false };
+               } finally {
+                    this.txUiService.resetCurrentStepToIdle();
+               }
      }
 
-     // async executeCheckTx(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
-     //      const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-     //      const { isSimulateEnabled = false } = formValues;
-
-     //      let client: xrpl.Client;
-     //      let env: any;
-     //      let txHash: string | undefined;
-
-     //      try {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
-
-     //           // 1. Use pre-fetched env if available, otherwise fetch
-     //           if (preFetchedEnv) {
-     //                env = preFetchedEnv;
-     //                client = preFetchedEnv.client;
-
-     //                if (!env.accountInfo || !env.fee || !env.currentLedger) {
-     //                     throw new Error('Pre-fetched environment missing required fields');
-     //                }
-     //           } else {
-     //                // Normal fetch fallback
-     //                const envFlags: any = {
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     includeFee: true,
-     //                     includeLedgerIndex: true,
-     //                };
-     //                if (type === 'cashCheck' || type === 'cancelCheck') {
-     //                     envFlags.includeChecks = true;
-     //                }
-     //                if (formValues.destinationAddress) {
-     //                     envFlags.includeDestinationAccountInfo = true;
-     //                     envFlags.destinationAddress = formValues.destinationAddress;
-     //                }
-
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
-     //                client = env.client;
-
-     //                if (!env.accountInfo || !env.fee || !env.currentLedger) {
-     //                     throw new Error('Failed to fetch required network data');
-     //                }
-     //           }
-
-     //           // 2. Validation
-     //           const validationRule = this.getValidationRuleName(type);
-     //           const validationInputs = this.buildValidationInputs(type, wallet, env, formValues, extra);
-     //           const errors = await this.validator.validate(validationRule, {
-     //                inputs: validationInputs,
-     //                client,
-     //                accountInfo: env.accountInfo,
-     //           });
-
-     //           if (errors.length > 0) {
-     //                return { success: false, error: errors.join('\n• ') };
-     //           }
-
-     //           // 3. Build transaction
-     //           const tx = this.buildCheckTransaction(type, env.wallet, env, formValues, extra);
-
-     //           // 4. Apply optional fields
-     //           await this.applyOptionalFields(client, tx, env.wallet, env.accountInfo, type, extra);
-
-     //           // 5. Execute transaction
-     //           const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
-
-     //           if (!execResult.success) {
-     //                return { success: false, error: execResult.error };
-     //           }
-
-     //           txHash = execResult.hash;
-
-     //           if (isSimulateEnabled) {
-     //                return this.checkUtilService.handleSimulationSuccess(type, formValues, txHash);
-     //           }
-
-     //           // 6. Wait for final outcome
-     //           const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
-
-     //           this.txUiService.setTxResultSignal(finalResult);
-
-     //           const message = this.checkUtilService.buildSuccessMessage(type, formValues);
-     //           this.xrplTransactionService.processTxFinalResult(finalResult, message, {
-     //                success: true,
-     //                hash: txHash,
-     //           });
-
-     //           return { success: true, hash: txHash };
-     //      } catch (err: any) {
-     //           const msg = err.message || 'Unexpected error during check transaction';
-     //           console.error(`[${type}] executeCheckTx failed:`, err);
-     //           this.xrplTransactionService.processTxError(err);
-     //           return { success: false, error: msg };
-     //      } finally {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //      }
-     // }
-
-     private getValidationRuleName(type: CheckTxType): string {
-          const ruleMap: Record<CheckTxType, string> = {
-               createCheck: 'CreateCheck',
-               cashCheck: 'CashCheck',
-               cancelCheck: 'CancelCheck',
-          };
-          return ruleMap[type];
-     }
-
-     private buildValidationInputs(type: CheckTxType, wallet: Wallet, env: any, formValues: any, extra: any) {
-          const base = {
-               wallet,
-               network: { accountInfo: env.accountInfo, fee: env.fee, currentLedger: env.currentLedger },
-               regularKey: {
-                    isRegularKey: formValues.isRegularKeyAddress,
-                    address: formValues.regularKeyAddress,
-                    seed: formValues.regularKeySeed,
-               },
-          };
-
-          if (type === 'createCheck') {
-               return {
-                    ...base,
-                    createCheck: {
-                         amount: formValues.amountField,
-                         destination: formValues.destinationAddress,
+     private buildValidationInputs(type: CheckTxType, wallet: Wallet, env: any, check: any, account: any, txOptions: any) {
+               const base = {
+                    wallet,
+                    network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
+                    regularKey: {
+                         isRegularKey: txOptions.isRegularKeyAddress,
+                         address: account.regularKeyAddress,
+                         seed: account.regularKeySeed,
                     },
+                    env
                };
+     
+               switch (type) {
+                    case 'createCheck':
+                         return { ...base, createCheck: { amount: check.amount, destination: check.destination } };
+                    case 'cashCheck':
+                         return { ...base, cashCheck: { amount: check.amount, checkIdField: check.checkIdField } };
+                    case 'cancelCheck':
+                         return { ...base, cancelCheck: { checkIdField: check.checkIdField } };
+               }
           }
 
-          if (type === 'cashCheck') {
-               return {
-                    ...base,
-                    cashCheck: {
-                         amount: formValues.amountField,
-                         checkIdField: formValues.checkIdField,
-                    },
-               };
-          }
+          private async executeSpecificTx(type: CheckTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
+                    const opts = {
+                         useMultiSign: txOptions.useMultiSign,
+                         isRegularKeyAddress: txOptions.isRegularKeyAddress,
+                         isSimulateEnabled: txOptions.isSimulateEnabled,
+                         regularKeyAddress: account.regularKeyAddress,
+                         regularKeySeed: account.regularKeySeed,
+                         multiSignAddress: account.multiSignAddress,
+                         multiSignSeeds: account.multiSignSeeds,
+                    };
+          
+                    switch (type) {
+                         case 'createCheck':
+                              return this.executor.checkCreate?.(env, tx as xrpl.CheckCreate, wallet, client, opts);
+                         case 'cashCheck':
+                              return this.executor.checkCash?.(env,tx as xrpl.CheckCash, wallet, client, opts);
+                              case 'cancelCheck':
+                              return this.executor.checkCancel?.(env,tx as xrpl.CheckCancel, wallet, client, opts);
+                    }
+               }
 
-          return {
-               ...base,
-               cancelCheck: {
-                    checkIdField: formValues.checkIdField,
-               },
-          };
-     }
 
-     private buildCheckTransaction(type: CheckTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
-          const { fee, currentLedger } = env;
+               handleSimulationSuccess(type: CheckTxType, check: any, hash?: string) {
+          let msg: string;
 
           if (type === 'createCheck') {
-               let sendMax = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
-
-               const tx: xrpl.CheckCreate = this.xrplTransactionService.buildCreateCheckTransaction(wallet, sendMax, formValues.destinationAddress, fee, currentLedger);
-
-               if (extra.enableExpirationDate && extra.expiration) {
-                    const rippleTime = this.utilsService.toRippleTime(extra.expiration);
-                    this.utilsService.setExpiration(tx, Number(rippleTime));
-               }
-
-               return tx;
+               msg = `Simulated Sending Check of ${check.amountField} ${check.currency || 'XRP'}`;
+          } else if (type === 'cashCheck') {
+               msg = `Simulated Cashing Check of ${check.amountField} ${check.currencyCode || 'XRP'}`;
+          } else {
+               msg = `Simulated Cancelling Check ${check.checkIdField}`;
           }
 
-          if (type === 'cashCheck') {
-               let amountToCash = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyCode, formValues.currencyIssuer ?? '', formValues.amountField, false).sendMax;
-               return this.xrplTransactionService.buildCashCheckTransaction(wallet, amountToCash, formValues.checkIdField, fee, currentLedger);
-          }
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
-          // cancel
-          return this.xrplTransactionService.buildCheckCancelTransaction(wallet, fee, currentLedger, formValues.checkIdField);
+          return { success: true, hash };
      }
 
-     private async applyOptionalFields(client: xrpl.Client, checkTx: any, wallet: xrpl.Wallet, accountInfo: any, txType: string, extra: any) {
-          if (txType === 'createCheck') {
-               this.setCreateTxOptionalFields(checkTx, extra);
-          }
-
-          const isTicket = extra.isTicket;
-          if (isTicket) {
-               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               const ticket = false;
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(checkTx, ticket, true);
-               }
-          }
-
-          const memoField = this.txUiService.memoField();
-          if (this.txUiService.isMemoEnabled() && memoField) {
-               this.utilsService.setMemoField(checkTx, memoField);
-          }
-     }
-
-     private setCreateTxOptionalFields(checkTx: any, extra: any) {
-          const expValue = extra.expiration;
-          if (expValue && expValue != '' && extra.enableExpirationDate) {
-               if (expValue?.trim()) {
-                    const checkExpiration = this.utilsService.toRippleTime(expValue);
-                    this.utilsService.setExpiration(checkTx, Number(checkExpiration));
-               }
-          }
-
-          const invoiceIdField = this.txUiService.invoiceIdField();
-          if (invoiceIdField) {
-               this.utilsService.setInvoiceIdField(checkTx, invoiceIdField);
-          }
-
-          const sourceTagField = this.txUiService.sourceTagField();
-          if (sourceTagField) {
-               this.utilsService.setSourceTagField(checkTx, sourceTagField);
-          }
-
-          const destinationTagField = this.txUiService.destinationTagField();
-          if (destinationTagField) {
-               this.utilsService.setDestinationTag(checkTx, destinationTagField);
-          }
-     }
-
-     private async executeSpecificTx(type: CheckTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
+     buildSuccessMessage(type: CheckTxType, check: any): string {
           if (type === 'createCheck') {
-               return this.executor.checkCreate(tx as xrpl.CheckCreate, wallet, client, {
-                    destination: formValues.destinationAddress,
-                    // paymentType: 'issued', // or determine from currency
-                    amount: Number(formValues.amountField),
-                    useMultiSign: formValues.useMultiSign,
-                    isRegularKeyAddress: formValues.isRegularKeyAddress,
-                    regularKeyAddress: formValues.regularKeyAddress,
-                    regularKeySeed: formValues.regularKeySeed,
-                    multiSignAddress: formValues.multiSignAddress,
-                    multiSignSeeds: formValues.multiSignSeeds,
-               });
+               return `Successfully Sent Check of ${check.amountField} ${check.currency || 'XRP'} to ${check.destinationAddress?.slice(0, 7) + '…' + check.destinationAddress?.slice(-7)}`;
           }
-
           if (type === 'cashCheck') {
-               return this.executor.checkCash(tx as xrpl.CheckCash, wallet, client, {
-                    // paymentType: 'issued', // improve later
-                    suppressIndividualFeedback: formValues.suppressIndividualFeedback,
-                    useMultiSign: formValues.useMultiSign,
-                    isRegularKeyAddress: formValues.isRegularKeyAddress,
-                    regularKeyAddress: formValues.regularKeyAddress,
-                    regularKeySeed: formValues.regularKeySeed,
-                    multiSignAddress: formValues.multiSignAddress,
-                    multiSignSeeds: formValues.multiSignSeeds,
-               });
+               return `Successfully Cashed Check of ${check.amountField} ${check.currencyCode || 'XRP'}`;
           }
-
-          return this.executor.checkCancel(tx as xrpl.CheckCancel, wallet, client, {
-               useMultiSign: formValues.useMultiSign,
-               isRegularKeyAddress: formValues.isRegularKeyAddress,
-               regularKeyAddress: formValues.regularKeyAddress,
-               regularKeySeed: formValues.regularKeySeed,
-               multiSignAddress: formValues.multiSignAddress,
-               multiSignSeeds: formValues.multiSignSeeds,
-          });
+          return `Successfully Cancelled Check ${check.checkIdField}`;
      }
 }

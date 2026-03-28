@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { CashCheckItem } from '../../../../models/interface-items.model';
 import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/util-service/utils.service';
@@ -8,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
+import { CashCheckItem } from '../../constants/checks.types';
 
 @Component({
      selector: 'app-check-cash-item',

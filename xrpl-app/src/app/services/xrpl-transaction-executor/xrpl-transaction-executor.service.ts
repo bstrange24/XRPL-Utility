@@ -337,6 +337,7 @@ export class XrplTransactionExecutorService {
      }
 
      async checkCreate(
+          env: any,
           tx: xrpl.CheckCreate,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -352,7 +353,7 @@ export class XrplTransactionExecutorService {
                destination?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulated Check create (no changes will be made)...',
                submitMessage: 'Submitting Check create to Ledger...',
                ...options,
@@ -360,6 +361,7 @@ export class XrplTransactionExecutorService {
      }
 
      async checkCancel(
+          env:any,
           tx: xrpl.CheckCancel,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -372,7 +374,7 @@ export class XrplTransactionExecutorService {
                regularKeySeed?: string;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulated Check cancel (no changes will be made)...',
                submitMessage: 'Submitting Check cancel to Ledger...',
                amount: '0',
@@ -381,6 +383,7 @@ export class XrplTransactionExecutorService {
      }
 
      async checkCash(
+          env: any,
           tx: xrpl.CheckCash,
           wallet: xrpl.Wallet,
           client: xrpl.Client,
@@ -395,7 +398,7 @@ export class XrplTransactionExecutorService {
                suppressIndividualFeedback?: boolean;
           } = {}
      ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.execute(client, wallet, tx, {
+          return this.executeTx(env, client, wallet, tx, {
                simulateMessage: 'Simulated Check cash (no changes will be made)...',
                submitMessage: 'Submitting Check cash to Ledger...',
                amount: '0',

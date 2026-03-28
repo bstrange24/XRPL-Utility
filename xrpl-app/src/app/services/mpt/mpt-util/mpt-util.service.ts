@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
-import { AccountFlags, CheckItem, MptDisplayItem, MPToken, MPTokenHolder, MPTokenIssuance } from '../../../models/interface-items.model';
+import { AccountFlags, MptDisplayItem, MPToken, MPTokenHolder, MPTokenIssuance } from '../../../models/interface-items.model';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
