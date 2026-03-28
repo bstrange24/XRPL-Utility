@@ -11,7 +11,7 @@ import * as xrpl from 'xrpl';
 import { ThemeService } from '../../services/theme/theme.service';
 import { NgIcon } from '@ng-icons/core';
 import { NetworkService } from '../../services/network/network-service';
-import { ConnectionStatusComponent } from '../shared/conneciton-status/connection-status/connection-status.component';
+import { ConnectionStatusComponent } from '../shared/connection-status/connection-status/connection-status.component';
 
 @Component({
      selector: 'app-navbar',
