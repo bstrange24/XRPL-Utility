@@ -56,42 +56,6 @@ export interface DidData {
      destinationAddress: string;
 }
 
-export type CheckTxType = 'createCheck' | 'cashCheck' | 'cancelCheck';
-
-export type CreateCheckItem = {
-     tab: 'createCheck';
-     id: string;
-     index: string;
-     amount: string;
-     destination: string;
-     destinationTag?: number;
-     expiration?: number;
-     invoiceId?: string;
-     isExpired: boolean;
-};
-
-export type CashCheckItem = {
-     tab: 'cashCheck';
-     id: string;
-     index: string;
-     amount: string;
-     sender: string;
-     expiration?: number;
-     isExpired: boolean;
-};
-
-export type CancelCheckItem = {
-     tab: 'cancelCheck';
-     id: string;
-     index: string;
-     amount: string;
-     destination: string;
-     expiration?: number;
-     isExpired: boolean;
-};
-
-export type CheckListItem = CreateCheckItem | CashCheckItem | CancelCheckItem;
-
 export interface Toast {
      id: number;
      message: string;
@@ -231,15 +195,6 @@ export type EscrowDropdownItem = {
 export interface IssuerItem {
      name: string;
      address: string;
-}
-
-export interface CheckItem {
-     id: string;
-     display: string;
-     isCurrentAccount: boolean;
-     secondary: string;
-     currency: string;
-     issuer: string;
 }
 
 export interface RippleState {

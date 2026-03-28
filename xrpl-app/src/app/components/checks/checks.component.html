@@ -6,46 +6,29 @@
      </div>
 </div>
 
+@let viewModel = checksTransactionViewModelService;
+<!-- Get view -->
+<!-- @let view = viewModel.vm(); -->
 <!-- Get active tab -->
-@let tab = activeTab();
+@let tab = viewModel.activeTab();
 <!-- Get tab data -->
-@let tabs = checkUtilService.tabs;
+@let tabs = viewModel.tabs;
 <!-- Get tab meta data -->
-@let meta = checkUtilService.tabMeta[tab];
+@let meta = viewModel.tabMeta[tab];
 
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
-               <div class="menu-bar">
-                    @for (item of tabs; track item.key) {
-                    <button class="menu-btn" [class.active]="tab === item.key" (click)="setTab(item.key)">
-                         @if (item.iconType === 'ng-icon') {
-                         <ng-icon [name]="item.icon" [size]="item.iconSize" class="text-red-600"></ng-icon>
-                         } @if (item.iconType === 'lucide-icon') {
-                         <lucide-icon [name]="item.icon" [size]="item.iconSize" style="padding-top: 5px"></lucide-icon>
-                         } {{ item.label }}
-                    </button>
-                    }
-               </div>
-
-               <div class="submenu-info-text">
-                    <div [class]="meta.colorClass">
-                         <ng-icon [name]="meta.icon" [size]="meta.iconSize" [color]="meta.color"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">{{ meta.title }}</h2>
-                         <p class="submenu-info-secondary-text">{{ meta.desc }}</p>
-                    </div>
-               </div>
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
+               @if (viewModel.infoData(); as info) {
                <div class="info-and-checks-card" [class.has-checks]="info.checkCount > 0">
                     <!-- Always-visible summary row -->
                     <div class="summary-header">
@@ -101,10 +84,7 @@
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage() }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
@@ -265,7 +245,7 @@
                     </div>
                     }
 
-                    <!-- <app-transaction-options [showWhenTab]="['create', 'cash','cancel']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
+                    <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck','cancelCheck']" [activeTab]="activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
@@ -285,95 +265,13 @@
                     </div>
 
                     <!-- Execution time -->
-                    <div class="executionTimeDisplay">
-                         <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                    </div>
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
                     <app-transaction-preview></app-transaction-preview>
                </form>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>Check Requirements</h3>
-               </div>
-
-               <p class="info-subtitle">
-                    XRPL Checks allow a sender to authorize a future payment that the recipient must actively<br />
-                    claim.
-               </p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge primary-badge">📝 Create Check</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Destination</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">SendMax</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Expiration</span>
-                                   <span class="field-status optional">➕ Optional</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge success-badge">💰 Cash Check</span>
-                         </div>
-
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">CheckID</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Amount OR DeliverMin</span>
-                                   <span class="field-status required">✅ One Required</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge danger-badge">❌ Cancel Check</span>
-                         </div>
-
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">CheckID</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>A Check does <strong>not</strong> move funds until it is cashed.</li>
-                              <li>Funds remain in the sender’s account until<br />the Check is cashed.</li>
-                              <li>
-                                   The sender must have sufficient balance<br />
-                                   at the time of cashing.
-                              </li>
-                              <li>
-                                   If Expiration is set, the Check cannot<br />
-                                   be cashed after that time.
-                              </li>
-                              <li>
-                                   Each Check object increases the sender’s<br />
-                                   <strong>owner reserve</strong> until it is cashed or canceled.
-                              </li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <app-checks-requirement-info></app-checks-requirement-info>
      </div>
 </div>

@@ -26,7 +26,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/selec
 import { EscrowDisplayItem, EscrowObject } from '../../models/interface-items.model';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
+import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { EscrowUtilService } from '../../services/escrow/escrow-util/escrow-util.service';
 import { TimeBasedEscrowOrchestrator } from '../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';

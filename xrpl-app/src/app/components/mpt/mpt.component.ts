@@ -25,7 +25,7 @@ import { TransactionPreviewComponent } from '../transaction-preview/transaction-
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { CheckUtilService } from '../../services/checks/check-util/check-util.service';
+import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';

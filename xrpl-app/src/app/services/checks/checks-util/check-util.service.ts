@@ -1,5 +1,4 @@
 import { computed, inject, Injectable, Signal, WritableSignal } from '@angular/core';
-import { CheckItem, CheckTxType } from '../../../models/interface-items.model';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
@@ -17,9 +16,8 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
-
-type CheckConfigTxDisplayType = 'createCheck' | 'cashCheck' | 'cancelCheck';
-type IconType = 'ng-icon' | 'lucide-icon';
+import { CheckItem, CheckTxType } from '../../../components/checks/constants/checks.types';
+import { ChecksStoreService } from '../checks-store/checks-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -38,80 +36,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
-
-     readonly tabs: {
-          key: CheckConfigTxDisplayType;
-          label: string;
-          icon: string;
-          iconType: IconType;
-          color: string;
-          iconSize: string;
-     }[] = [
-          {
-               key: 'createCheck',
-               label: 'Create',
-               icon: 'heroPlusCircle',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'cashCheck',
-               label: 'Cash',
-               icon: 'heroCurrencyDollar',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-          {
-               key: 'cancelCheck',
-               label: 'Cancel',
-               icon: 'heroTrash',
-               iconType: 'ng-icon',
-               color: '',
-               iconSize: AppConstants.TAB_ICON_SIZE,
-          },
-     ];
-
-     readonly tabMeta = {
-          createCheck: {
-               icon: 'heroPlusCircle',
-               colorClass: 'blue-button-submenu',
-               title: 'Create Check',
-               desc: 'Create a check to another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          cashCheck: {
-               icon: 'heroArrowPath',
-               colorClass: 'green-button-submenu',
-               title: 'Cash Check',
-               desc: 'Cash check sent from another XRPL address.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-          cancelCheck: {
-               icon: 'shield-ellipsis',
-               colorClass: 'red-button-submenu',
-               title: 'Cancel Check',
-               desc: 'Cancel check create from the selected account.',
-               color: '',
-               iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
-          },
-     };
-
-     private buildTxLabel(defaultText: string) {
-          return computed(() => {
-               const step = this.txUiService.currentStep();
-               if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
-               return this.txUiService.stepMessage();
-          });
-     }
-
-     readonly createCheckButtonLabel = this.buildTxLabel('Create Check');
-     readonly cashCheckButtonLabel = this.buildTxLabel('Cash Check');
-     readonly cancelCheckButtonLabel = this.buildTxLabel('Cancel Check');
+     public readonly checksStoreService = inject(ChecksStoreService);
 
      getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
@@ -218,6 +143,16 @@ export class CheckUtilService extends PerformanceBaseComponent {
                .sort((a, b) => a.destination.localeCompare(b.destination));
           this.utilsService.logObjects('cancellableChecks', mapped);
           return mapped;
+     }
+
+     getCheckById(id: string) {
+          return [...this.checksStoreService.cashableChecks(), ...this.checksStoreService.cancellableChecks()].find(c => c.id === id);
+     }
+
+     getIssuerForCheck(checks: any[], checkIndex: string, currencyType: string): string | null {
+          const check = checks.find(c => c.index === checkIndex);
+          if (currencyType === 'Token') return check?.SendMax?.issuer || null;
+          else return check?.Account || null;
      }
 
      getCheckItems(activeTab: string, cashCheckItems: any, cancelCheckItems: any): CheckItem[] | null {
