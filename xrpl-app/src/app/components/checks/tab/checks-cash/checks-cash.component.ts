@@ -7,6 +7,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
+import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
 
 @Component({
      selector: 'app-checks-cash',
@@ -16,13 +17,16 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './checks-cash.component.css',
 })
 export class ChecksCashComponent {
-     readonly viewModel = inject(ChecksTransactionViewModelService);
+     readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
      readonly txUiService = inject(TransactionUiService);
      readonly utilsService = inject(UtilsService);
      readonly trustlineStoreService = inject(TrustlineStoreService);
+     readonly checkStoreService = inject(ChecksStoreService);
 
      @Input() showEnableTrustline = false;
+     @Output() checkItems = new EventEmitter<SelectItem | null>();
      @Output() checkSelected = new EventEmitter<SelectItem | null>();
+     @Output() selectedCheckItem = new EventEmitter<SelectItem | null>();
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;

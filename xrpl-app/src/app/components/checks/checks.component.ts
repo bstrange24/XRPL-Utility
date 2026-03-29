@@ -130,7 +130,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      onCheckSelected(item: SelectItem | null) {
           if (item) {
                const [amount] = item.display.split(' ');
-               this.txUiService.amountField.set(amount);
+               this.checksStoreService.setField('amount', amount);
           }
           this.checkUtilService.onCheckSelected(item);
      }

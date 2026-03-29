@@ -2,9 +2,9 @@
      <div class="form-group">
           <label for="selectCheck">Select Check to cash</label>
           <p class="form-hint">Check ID generated when the check was created.</p>
-          <app-select-search-dropdown [items]="viewModel.checkItems()" [value]="viewModel.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+          <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
 
-          @if (viewModel.selectedCheckIsExpired()) {
+          @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
           <div class="warning-message expired-warning">
                <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
                This selected check has expired and cannot be cashed.
@@ -14,7 +14,7 @@
      <div class="form-group">
           <label for="amountField">Amount</label>
           <p class="form-hint">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
-          <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+          <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checkStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
      </div>
 </div>
 
