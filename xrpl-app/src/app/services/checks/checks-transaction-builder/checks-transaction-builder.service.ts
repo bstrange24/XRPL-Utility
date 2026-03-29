@@ -17,12 +17,12 @@ export class ChecksTransactionBuilderService {
      buildCreateCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any, currency: any) {
           console.log('Here Billy', currency);
           let sendMax;
-          if (!currency.currencyCode && !currency.currencyIssuer && currency.currency !== 'XRP') {
+          if (currency.currency !== 'XRP') {
                console.log('Here');
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amountField, false).sendMax;
+               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
           } else if (currency.currency === 'XRP') {
                console.log('There');
-               sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amountField, false).sendMax;
+               sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amount, false).sendMax;
           }
 
           const tx: xrpl.CheckCreate = {
