@@ -61,7 +61,7 @@ export const CHECK_TAB_META: Record<
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      cashCheck: {
-          icon: 'heroArrowPath',
+          icon: 'heroCurrencyDollar',
           colorClass: 'green-button-submenu',
           title: 'Cash Check',
           desc: 'Cash check sent from another XRPL address.',
@@ -70,7 +70,7 @@ export const CHECK_TAB_META: Record<
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      cancelCheck: {
-          icon: 'shield-ellipsis',
+          icon: 'heroTrash',
           colorClass: 'red-button-submenu',
           title: 'Cancel Check',
           desc: 'Cancel check create from the selected account.',

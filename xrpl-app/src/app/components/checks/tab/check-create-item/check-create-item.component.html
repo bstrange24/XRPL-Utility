@@ -3,10 +3,8 @@
           <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
                <div class="check-main-line">
                     <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
-
                     <span class="check-arrow"> → </span>
                     <span class="check-address"> {{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }} </span>
-
                     @if (check.isExpired) {
                     <span class="expired-badge">Expired</span>
                     }
@@ -14,7 +12,6 @@
 
                <div class="check-meta" [class.expired]="check.isExpired">
                     <div>Check ID: <code>{{ check.index }}</code></div>
-
                     @if (check.destinationTag) {
                     <div>Destination Tag: <code>{{ check.destinationTag }}</code></div>
                     } @if (check.expiration) {
@@ -30,7 +27,6 @@
                     }
                </div>
           </app-tooltip-link>
-
           <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
                <lucide-icon name="copy" size="15"></lucide-icon>
           </button>

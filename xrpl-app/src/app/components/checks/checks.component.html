@@ -6,9 +6,8 @@
      </div>
 </div>
 
-@let viewModel = checksTransactionViewModelService;
 <!-- Get view -->
-<!-- @let view = viewModel.vm(); -->
+@let viewModel = checksTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
 <!-- Get tab data -->
@@ -89,79 +88,14 @@
                <form #theForm="ngForm" class="main-form">
                     <!-- Create -->
                     @if(tab === 'createCheck') {
-                    <!-- <app-checks-create></app-checks-create> -->
-                     <app-checks-create
-  [destinationItems]="destinationItems()"
-  [selectedDestinationItem]="selectedDestinationItem()"
-  [destinationSearchQuery]="destinationSearchQuery()"
-  (currencySelected)="onCurrencySelected($event)"
-  (issuerSelected)="onIssuerSelected($event)"
-  (optionsToggled)="toggleOptions($event)"
-  (expirationToggled)="toggleExpiration($event)"
-  (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-  (destinationValueChange)="handleDestinationChange($event)" />
+                    <app-checks-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
+                    } @if (tab === 'cashCheck') {
+                    <app-checks-cash></app-checks-cash>
+                    } @if (tab === 'cancelCheck') {
+                    <app-checks-cancel (checkSelected)="onCheckSelected($event)" />
                     }
 
-                    <!-- Currency + Amount (shared with create) -->
-                    @if (tab === 'cashCheck') {
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="selectCheck">Select Check to cash</label>
-                              <p class="form-hint">Check ID generated when the check was created.</p>
-                              <app-select-search-dropdown [items]="viewModel.checkItems()" [value]="viewModel.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
-                              @if (viewModel.selectedCheckIsExpired()) {
-                              <div class="warning-message expired-warning">
-                                   <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-                                   This selected check has expired and cannot be cashed.
-                              </div>
-                              }
-                         </div>
-                         <div class="form-group">
-                              <label for="amountField">Amount</label>
-                              <p class="form-hint">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
-                              <input type="number" id="amountFieldCash" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="txUiService.amountField()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                         </div>
-                    </div>
-
-                    <!-- Trustline  -->
-                    @if (xrplTxOptionsStore.showEnableTrustline()) {
-                    <div class="form-row trustline-section">
-                         <div class="form-group">
-                              <label for="currencyCode">Currency Code</label>
-                              <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-                              <input type="text" id="trustlineCurrencyCode" name="trustlineCurrencyCode" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.currencyCode()" />
-                         </div>
-                         <div class="form-group">
-                              <label for="issuer">Issuer</label>
-                              <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-                              <input type="text" id="trustlineIssuer" name="trustlineIssuer" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.issuer()" />
-                         </div>
-                    </div>
-
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="trustlineLimitField">Trust Limit</label>
-                              <p class="form-hint">Max amount you're willing to hold (set reasonably high)</p>
-                              <input type="number" id="trustlineLimitField" name="trustlineLimitField" min="0" placeholder="e.g. 1000000" [ngModel]="trustlineStoreService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-                         </div>
-                    </div>
-
-                    <!-- Optional: small note -->
-                    <p class="form-hint trustline-note">Enabling this trustline will add a <strong>TrustSet</strong> transaction before cashing the check.</p>
-                    } }
-
-                    <!-- Unified Check ID Dropdown - Works for cash & cancel -->
-                    @if (tab === 'cancelCheck') {
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="selectCheck">Select Check to cancel</label>
-                              <p class="form-hint">Check ID generated when the check was created.</p>
-                              <app-select-search-dropdown [items]="viewModel.checkItems()" [value]="viewModel.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
-                         </div>
-                    </div>
-                    }
-
-                    <!-- <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck','cancelCheck']" [activeTab]="tab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" /> -->
+                    <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck','cancelCheck']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                     <!-- Action buttons -->
                     <div class="button-row">

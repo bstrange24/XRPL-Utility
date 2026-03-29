@@ -21,7 +21,7 @@
           <textarea name="credentialIDs" style="margin-top: 0" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
      </div>
 </div>
-} @else if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'cashCheck') {
+} @else if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'createCheck' || tab === 'cashCheck') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
@@ -63,6 +63,7 @@
      </div>
 </div>
 
+@if (tab !== 'createCheck' && tab !== 'cashCheck') {
 <div class="form-row">
      <div class="form-group">
           <label for="domainIdField">Domain ID</label>
@@ -77,8 +78,7 @@
           <textarea name="credentialIDs" style="margin-top: 0" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"></textarea>
      </div>
 </div>
-
-} @else if (tab === 'deleteAccount') {
+} } @else if (tab === 'deleteAccount') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">

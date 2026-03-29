@@ -8,6 +8,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -20,12 +21,16 @@ export class ChecksTransactionViewModelService {
      public readonly txUiService = inject(TransactionUiService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
-
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
      readonly activeTab = signal<CheckActionTypes>('createCheck');
 
      currencyItems = this.trustlineCurrencyService.currencyItems;
      issuerItems = this.trustlineCurrencyService.issuerItems;
      currencyBalanceField = this.currencyStoreService.balance();
+
+     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
+     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
+     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.currencyStoreService.issuer()) ?? null);
 
      readonly checkCount = computed(() => {
           const tab = this.activeTab();
@@ -148,12 +153,6 @@ export class ChecksTransactionViewModelService {
      });
 
      selectedCheckIsExpired = computed(() => this.selectedFullCheck()?.isExpired ?? false);
-
-     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
-
-     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
-
-     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.currencyStoreService.issuer()) ?? null);
 
      checkItems = computed(() => {
           const mode = this.activeTab();

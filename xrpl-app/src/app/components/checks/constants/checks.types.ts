@@ -3,6 +3,8 @@ import * as xrpl from 'xrpl';
 import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
 import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
 import { CheckState } from '../../../services/checks/checks-store/checks-store.service';
+import { TrustlineState } from '../../trustlines/constants/trustline.types';
+import { CurrencyState } from '../../../services/currency/constants/currency.types';
 
 export type CheckActionTypes = 'createCheck' | 'cashCheck' | 'cancelCheck';
 export type CheckConfigTxDisplayType = 'createCheck' | 'cashCheck' | 'cancelCheck';
@@ -56,6 +58,8 @@ export interface CheckTxConfig {
      check: CheckState;
      account?: AccountConfiguratorState;
      txOptions?: XrplTxOptionsState;
+     trustline?: TrustlineState;
+     currency?: CurrencyState;
      wallet: Wallet;
      preFetchedEnv?: {
           client: xrpl.Client;

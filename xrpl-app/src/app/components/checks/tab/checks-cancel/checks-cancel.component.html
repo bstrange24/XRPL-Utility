@@ -1,1 +1,7 @@
-<p>checks-cancel works!</p>
+<div class="form-row">
+     <div class="form-group">
+          <label for="selectCheck">Select Check to cancel</label>
+          <p class="form-hint">Check ID generated when the check was created.</p>
+          <app-select-search-dropdown [items]="viewModel.checkItems()" [value]="viewModel.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+     </div>
+</div>

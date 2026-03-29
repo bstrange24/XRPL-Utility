@@ -31,122 +31,121 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      private readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
-     async executeCredentialTx1(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
-          const { check, account, txOptions, preFetchedEnv, wallet } = config;
+     async executeCredentialTx(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { check, account, txOptions, trustline, currency, preFetchedEnv, wallet } = config;
           let env: any;
           let client: xrpl.Client;
           let txHash: string | undefined;
 
-               try {
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.txUiService.clearAllOptionsAndMessages();
+          try {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
 
-                    // Use pre-fetched env if provided, otherwise fetch
-                    env =
-                         preFetchedEnv ??
-                         (await this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              includeFee: true,
-                              includeLedgerInfo: true,
-                              includeServerInfo: true,
-                              includePaymentChannelObjects: true,
-                         }));
+               // Use pre-fetched env if provided, otherwise fetch
+               env =
+                    preFetchedEnv ??
+                    (await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeFee: true,
+                         includeLedgerInfo: true,
+                         includeServerInfo: true,
+                         includePaymentChannelObjects: true,
+                    }));
 
-                    client = env.client;
-                    if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
+               client = env.client;
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-                    // Validation
-                    const validationRule = CHECK_VALIDATION_RULES[type];
-                    const validationInputs = this.buildValidationInputs(type, wallet, env, check, account, txOptions);
-                    const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-                    if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+               // Validation
+               const validationRule = CHECK_VALIDATION_RULES[type];
+               const validationInputs = this.buildValidationInputs(type, wallet, env, check, account, txOptions);
+               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-                    // Build transaction
-                    let tx: any;
-                    if (type === 'createCheck') {
-                         tx = this.checksTransactionBuilderService.buildCreateCheckTx(env.wallet || wallet, env, check);
-                    } else if (type === 'cashCheck') {
-                         tx = this.checksTransactionBuilderService.buildCashCheckTx(env.wallet || wallet, env, check);
-                    } else {
-                         tx = this.checksTransactionBuilderService.buildCancelCheckTx(env.wallet || wallet, env, check);
-                    }
-
-                    // Optional fields
-                    await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.check, type, txOptions);
-
-                    // Check balances
-                    const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-                    if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
-
-                    // Execute
-                    const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, check, txOptions);
-                    if (!execResult.success) return { success: false, error: execResult.error };
-                    txHash = execResult.hash;
-
-                    if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
-
-                    const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
-                    this.txUiService.setTxResultSignal(finalResult);
-
-                    const message = this.buildSuccessMessage(type, check);
-                    this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
-
-          return { success: true, hash: txHash };
-               } catch (err: any) {
-                    console.error(`[${type}] executeCredentialTx failed:`, err);
-                    this.xrplTransactionService.processTxError(err);
-                    return { success: false, error: err.message || 'Unexpected error', validationError: false };
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
+               // Build transaction
+               let tx: any;
+               if (type === 'createCheck') {
+                    tx = this.checksTransactionBuilderService.buildCreateCheckTx(env.wallet || wallet, env, check, currency);
+               } else if (type === 'cashCheck') {
+                    tx = this.checksTransactionBuilderService.buildCashCheckTx(env.wallet || wallet, env, check, currency, trustline);
+               } else {
+                    tx = this.checksTransactionBuilderService.buildCancelCheckTx(env.wallet || wallet, env, check);
                }
+
+               // Optional fields
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.check, type, txOptions);
+
+               // Check balances
+               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+
+               // Execute
+               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, check, txOptions);
+               if (!execResult.success) return { success: false, error: execResult.error };
+               txHash = execResult.hash;
+
+               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
+
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
+               this.txUiService.setTxResultSignal(finalResult);
+
+               const message = this.buildSuccessMessage(type, check);
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+
+               return { success: true, hash: txHash };
+          } catch (err: any) {
+               console.error(`[${type}] executeCredentialTx failed:`, err);
+               this.xrplTransactionService.processTxError(err);
+               return { success: false, error: err.message || 'Unexpected error', validationError: false };
+          } finally {
+               this.txUiService.resetCurrentStepToIdle();
+          }
      }
 
      private buildValidationInputs(type: CheckTxType, wallet: Wallet, env: any, check: any, account: any, txOptions: any) {
-               const base = {
-                    wallet,
-                    network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
-                    regularKey: {
-                         isRegularKey: txOptions.isRegularKeyAddress,
-                         address: account.regularKeyAddress,
-                         seed: account.regularKeySeed,
-                    },
-                    env
-               };
-     
-               switch (type) {
-                    case 'createCheck':
-                         return { ...base, createCheck: { amount: check.amount, destination: check.destination } };
-                    case 'cashCheck':
-                         return { ...base, cashCheck: { amount: check.amount, checkIdField: check.checkIdField } };
-                    case 'cancelCheck':
-                         return { ...base, cancelCheck: { checkIdField: check.checkIdField } };
-               }
+          const base = {
+               wallet,
+               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               env,
+          };
+
+          switch (type) {
+               case 'createCheck':
+                    return { ...base, createCheck: { amount: check.amount, destination: check.destination } };
+               case 'cashCheck':
+                    return { ...base, cashCheck: { amount: check.amount, checkIdField: check.checkIdField } };
+               case 'cancelCheck':
+                    return { ...base, cancelCheck: { checkIdField: check.checkIdField } };
           }
+     }
 
-          private async executeSpecificTx(type: CheckTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
-                    const opts = {
-                         useMultiSign: txOptions.useMultiSign,
-                         isRegularKeyAddress: txOptions.isRegularKeyAddress,
-                         isSimulateEnabled: txOptions.isSimulateEnabled,
-                         regularKeyAddress: account.regularKeyAddress,
-                         regularKeySeed: account.regularKeySeed,
-                         multiSignAddress: account.multiSignAddress,
-                         multiSignSeeds: account.multiSignSeeds,
-                    };
-          
-                    switch (type) {
-                         case 'createCheck':
-                              return this.executor.checkCreate?.(env, tx as xrpl.CheckCreate, wallet, client, opts);
-                         case 'cashCheck':
-                              return this.executor.checkCash?.(env,tx as xrpl.CheckCash, wallet, client, opts);
-                              case 'cancelCheck':
-                              return this.executor.checkCancel?.(env,tx as xrpl.CheckCancel, wallet, client, opts);
-                    }
-               }
+     private async executeSpecificTx(type: CheckTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
+          const opts = {
+               useMultiSign: txOptions.useMultiSign,
+               isRegularKeyAddress: txOptions.isRegularKeyAddress,
+               isSimulateEnabled: txOptions.isSimulateEnabled,
+               regularKeyAddress: account.regularKeyAddress,
+               regularKeySeed: account.regularKeySeed,
+               multiSignAddress: account.multiSignAddress,
+               multiSignSeeds: account.multiSignSeeds,
+          };
 
+          switch (type) {
+               case 'createCheck':
+                    return this.executor.checkCreate?.(env, tx as xrpl.CheckCreate, wallet, client, opts);
+               case 'cashCheck':
+                    return this.executor.checkCash?.(env, tx as xrpl.CheckCash, wallet, client, opts);
+               case 'cancelCheck':
+                    return this.executor.checkCancel?.(env, tx as xrpl.CheckCancel, wallet, client, opts);
+          }
+     }
 
-               handleSimulationSuccess(type: CheckTxType, check: any, hash?: string) {
+     handleSimulationSuccess(type: CheckTxType, check: any, hash?: string) {
           let msg: string;
 
           if (type === 'createCheck') {

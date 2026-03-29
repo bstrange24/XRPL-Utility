@@ -298,19 +298,19 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                try {
                     switch (currentTab) {
                          case 'createPaymentChannel':
-                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('createPaymentChannel', config);
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx('createPaymentChannel', config);
                               break;
                          case 'fundPaymentChannel':
-                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('fundPaymentChannel', config);
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx('fundPaymentChannel', config);
                               break;
                          case 'claimPaymentChannel':
-                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('claimPaymentChannel', config);
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx('claimPaymentChannel', config);
                               break;
                          case 'renewPaymentChannel':
-                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('renewPaymentChannel', config);
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx('renewPaymentChannel', config);
                               break;
                          case 'closePaymentChannel':
-                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx1('closePaymentChannel', config);
+                              txResult = await this.paymentChannelOrchestratorService.executeCredentialTx('closePaymentChannel', config);
                               break;
                     }
                } catch (error: any) {

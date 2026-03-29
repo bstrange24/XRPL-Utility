@@ -25,7 +25,7 @@ export type CredentialTxType = (typeof CHECK_TX_TYPES)[keyof typeof CHECK_TX_TYP
 export type CredentialConfigTxDisplayType = (typeof CHECK_CONFIG_TX_DISPLAY_TYPES)[keyof typeof CHECK_CONFIG_TX_DISPLAY_TYPES];
 
 export const CHECK_VALIDATION_RULES: Record<CheckTxType, string> = {
-     [CHECK_TX_TYPES.CREATE]: 'CheckCreate',
-     [CHECK_TX_TYPES.CASH]: 'CheckCash',
-     [CHECK_TX_TYPES.CANCEL]: 'CheckCancel',
+     [CHECK_TX_TYPES.CREATE]: 'CreateCheck',
+     [CHECK_TX_TYPES.CASH]: 'CashCheck',
+     [CHECK_TX_TYPES.CANCEL]: 'CancelCheck',
 } as const;

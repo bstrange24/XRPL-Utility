@@ -15,6 +15,7 @@ import { XrplDateService } from '../../core/xrpl-date.service';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { CurrencyStoreService } from '../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-store.service';
+import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -38,6 +39,7 @@ export class UtilsService {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
+     public readonly checksStoreService = inject(ChecksStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
@@ -231,12 +233,14 @@ export class UtilsService {
 
           if (Number.isNaN(num) || num < 0) {
                this.txUiService.amountField.set('');
+               this.checksStoreService.setField('amount', '');
                return;
           }
 
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(6));
           this.accountConfiguratorStoreService.setField('amount', rounded.toString());
+          this.checksStoreService.setField('amount', rounded.toString());
           this.txUiService.amountField.set(rounded.toString());
      }
 

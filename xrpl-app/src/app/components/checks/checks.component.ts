@@ -15,17 +15,15 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { TransactionOptionsSectionComponent } from '../shared/transaction-options-section/transaction-options-section.component';
 import { CheckCancelItemComponent } from './tab/check-cancel-item/check-cancel-item.component';
 import { CheckCreateItemComponent } from './tab/check-create-item/check-create-item.component';
 import { CheckCashItemComponent } from './tab/check-cash-item/check-cash-item.component';
@@ -48,7 +46,6 @@ import { ChecksRequirementInfoComponent } from './ui-components/checks-requireme
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { CHECK_TAB_META, CHECK_TABS } from './constants/checks.ui';
 import * as xrpl from 'xrpl';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { ChecksCancelComponent } from './tab/checks-cancel/checks-cancel.component';
 import { ChecksCashComponent } from './tab/checks-cash/checks-cash.component';
 import { ChecksCreateComponent } from './tab/checks-create/checks-create.component';
@@ -56,14 +53,13 @@ import { ChecksCreateComponent } from './tab/checks-create/checks-create.compone
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent, ChecksRequirementInfoComponent,ChecksCreateComponent, ChecksCashComponent,ChecksCancelComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent, ChecksRequirementInfoComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendChecksComponent extends WalletDestinationBase implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
@@ -80,11 +76,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      readonly menuTabs: TabConfig[] = CHECK_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = CHECK_TAB_META;
 
-     private readonly createCheckSpecificKeys = ['amountField', 'destinationTagField', 'sourceTagField', 'invoiceIdField', 'currencyCode', 'currencyIssuer'] as const;
-     private readonly cashCheckSpecificKeys = ['amountField', 'checkIdField', 'currencyCode', 'currencyIssuer', 'checkCreator', 'suppressIndividualFeedback'] as const;
-     private readonly setTrustlineSpecificKeys = ['trustlineLimitField', 'currencyCode', 'currencyIssuer', 'submitAndWait', 'suppressIndividualFeedback'] as const;
-     private readonly cancelCheckSpecificKeys = ['checkIdField'] as const;
-
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
@@ -93,12 +84,13 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CHECK_TAB, tab => this.setTab(tab));
+          this.trustlineCurrencyService.load();
           this.trustlineCurrencyService.preferXrpAsDefault.set(true);
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(true);
           this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
           this.transactionDropdownService.loadCustomDestinations();
-          this.setExpirationToNow();
-          // this.trustlineCurrencyService.resetToDefault();
+          this.trustlineCurrencyService.selectCurrency('XRP');
+          this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -131,6 +123,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           // Add this: If both currency and issuer are set, fetch env and update flags
           if (this.currencyStoreService.currency() && address) {
                await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineCurrencyService.refreshCurrentBalance();
           }
      }
 
@@ -155,14 +148,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.populateDefaultDateTime();
      }
 
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
-     }
-
      trackByAddress(_index: number, item: DropdownItem): string {
           return item.address;
      }
@@ -179,10 +164,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.selectWallet(wallet);
      }
 
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      async setTab(tab: string): Promise<void> {
           if (CHECK_TAB.includes(tab as any)) {
                this.checksTransactionViewModelService.activeTab.set(tab as CheckActionTypes);
@@ -191,7 +172,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
                if (this.hasWallets()) {
                     await this.getChecks();
-                    this.setExpirationToNow();
+                    // this.setExpirationToNow();
                }
           }
      }
@@ -200,6 +181,8 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           await this.measure('getChecks', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
+               this.trustlineStoreService.reset();
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -248,34 +231,13 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                this.checksStoreService.setField('destination', destinationAddress);
           }
 
-          // if (currentTab !== 'createPaymentChannel' && !this.paymentChannelStoreService.channelIDField()) {
-          //      this.toastService.error('No channel ID selected.', AppConstants.TOAST.ERROR);
-          //      return;
-          // }
-
-          // if (currentTab === 'renewPaymentChannel') {
-          //      if (!this.paymentChannelViewModelService.isValidRenewTab()) {
-          //           this.toastService.error('Invalid renew setup. Ensure you are the source/creator and a channel is selected.');
-          //           return;
-          //      }
-
-          //      if (!this.paymentChannelViewModelService.isCurrentWalletSource()) {
-          //           this.toastService.error('You can only renew a payment channel if you are the creator (source) of the channel.');
-          //           return;
-          //      }
-          // }
-
-          // if (currentTab === 'claimPaymentChannel') {
-          //      if (!this.paymentChannelViewModelService.isValidClaimTab()) {
-          //           this.toastService.error('Invalid claim setup. Ensure you are the destination and a channel is selected.');
-          //           return;
-          //      }
-
-          //      if (!this.paymentChannelViewModelService.isCurrentWalletDestination()) {
-          //           this.toastService.error('You can only claim from a payment channel if you are the destination account.');
-          //           return;
-          //      }
-          // }
+          if (currentTab === 'cashCheck' || currentTab === 'cancelCheck') {
+               const checkId = this.checksStoreService.checkIdField();
+               if (!checkId) {
+                    this.toastService.error('Please select a valid Check ID', AppConstants.TOAST.ERROR);
+                    return;
+               }
+          }
 
           let env: any = null;
           try {
@@ -297,14 +259,24 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
           if (!env) throw new Error('Unable to get environment.');
 
-          // if (currentTab === 'claimPaymentChannel') {
-          //      const signatureVerified = await this.xrplService.getChannelVerifiy(env.client, this.paymentChannelStoreService.channelIDField(), this.paymentChannelStoreService.amount(), this.paymentChannelStoreService.publicKeyField(), this.paymentChannelStoreService.channelClaimSignatureField());
-          //      if (!signatureVerified.result.signature_verified) {
-          //           this.toastService.error('Invalid signature');
-          //           return;
-          //      }
-          // }
+          if (currentTab === 'cashCheck') {
+               const checkObject = await this.xrplService.getCheckByCheckId(env.client, this.checksStoreService.checkIdField(), 'validated');
+               // Fail fast if not found
+               if (!checkObject) {
+                    return this.toastService.error(`No check found with Check ID ${this.checksStoreService.checkIdField()}`, AppConstants.TOAST.ERROR);
+               }
 
+               // Expiration check (only if present)
+               if (checkObject.Expiration) {
+                    const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
+                    if (currentRippleTime >= checkObject.Expiration) {
+                         return this.toastService.error('This check has expired.', AppConstants.TOAST.ERROR);
+                    }
+               }
+          }
+
+          const currencyState = this.currencyStoreService.getAll();
+          const trustlineState = this.trustlineStoreService.getAll();
           const checkState = this.checksStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
@@ -312,6 +284,8 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           const config: CheckTxConfig = {
                check: checkState,
                account: accountState,
+               trustline: trustlineState,
+               currency: currencyState,
                txOptions: txOptionsState,
                wallet: wallet,
                preFetchedEnv: env,
@@ -324,13 +298,13 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                try {
                     switch (currentTab) {
                          case 'createCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx1('createCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('createCheck', config);
                               break;
                          case 'cashCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx1('cashCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('cashCheck', config);
                               break;
                          case 'cancelCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx1('cancelCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('cancelCheck', config);
                               break;
                     }
                } catch (error: any) {
@@ -346,106 +320,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     // async createCheck(): Promise<void> {
-     //      await this.withPerf('createCheck', async () => {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
-
-     //           if (!this.walletManagerService.ensureWalletSelected()) return;
-
-     //           const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-     //           if (!destination) {
-     //                this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-     //                return;
-     //           }
-
-     //           try {
-     //                // this.currencyStoreService.setField('currencyCode', this.trustlineCurrencyService.getSelectedCurrency());
-     //                // this.currencyStoreService.setField('currencyIssuer', this.trustlineCurrencyService.selectedIssuer());
-     //                // this.txUiService.currencyCode.set(this.trustlineCurrencyService.getSelectedCurrency());
-     //                // this.txUiService.currencyIssuer.set(this.trustlineCurrencyService.selectedIssuer());
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     includeFee: true,
-     //                     includeLedgerIndex: true,
-     //                     includeDestinationAccountInfo: true,
-     //                     destinationAddress: destination,
-     //                });
-
-     //                if (env.destinationAccountInfo?.result?.account_flags?.disallowIncomingCheck) {
-     //                     this.toastService.error(`Destination ${destination} has disallowIncomingCheck enabled. This wallet cannot receive checks.`, AppConstants.TOAST.ERROR);
-     //                     return;
-     //                }
-
-     //                const result = await this.checkTransactionOrchestrator.executeCheckTx('createCheck', {
-     //                     wallet: this.currentWallet(),
-     //                     formValues: {
-     //                          ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.createCheckSpecificKeys)),
-     //                          destinationAddress: destination,
-     //                     },
-     //                     extra: {
-     //                          expiration: this.txUiService.expirationTimeField(),
-     //                          enableExpirationDate: this.txUiService.enableExpirationDate(),
-     //                     },
-     //                     preFetchedEnv: {
-     //                          client: env.client,
-     //                          accountInfo: env.accountInfo,
-     //                          accountObjects: env.accountObjects,
-     //                          fee: env.fee!,
-     //                          currentLedger: env.currentLedger!,
-     //                          destinationAddress: destination,
-     //                          wallet: env.wallet,
-     //                     },
-     //                });
-
-     //                await this.handleTxResult(result, env.client, env.wallet, destination, 'Failed to create check');
-     //           } catch (error: any) {
-     //                console.error('Error creating check:', error);
-     //                this.toastService.error(error.message || 'Error creating check', AppConstants.TOAST.ERROR);
-     //           } finally {
-     //                this.txUiService.resetCurrentStepToIdle();
-     //           }
-     //      });
-     // }
-
      // async cashCheck(): Promise<void> {
-     //      await this.withPerf('cashCheck', async () => {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
-
-     //           if (!this.walletManagerService.ensureWalletSelected()) return;
-
-     //           const checkId = this.txUiService.checkIdField();
-     //           if (!checkId) {
-     //                this.toastService.error('Please select a valid Check ID', AppConstants.TOAST.ERROR);
-     //                return;
-     //           }
-
-     //           try {
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     includeTrustlines: true,
-     //                     includeFee: true,
-     //                     includeLedgerIndex: true,
-     //                     includeChecks: true,
-     //                });
-
-     //                const checkObject = await this.xrplService.getCheckByCheckId(env.client, checkId, 'validated');
-     //                // Fail fast if not found
-     //                if (!checkObject) {
-     //                     return this.toastService.error(`No check found with Check ID ${checkId}`, AppConstants.TOAST.ERROR);
-     //                }
-
-     //                // Expiration check (only if present)
-     //                if (checkObject.Expiration) {
-     //                     const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
-     //                     if (currentRippleTime >= checkObject.Expiration) {
-     //                          return this.toastService.error('This check has expired.', AppConstants.TOAST.ERROR);
-     //                     }
-     //                }
 
      //                // Issuer validation (only for IOU checks)
      //                let checkIssuer;
@@ -505,24 +380,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      //                if (currencyCode !== AppConstants.XRP_CURRENCY) {
      //                     const issuer = this.currencyStoreService.currencyIssuer();
-     //                     const hasTrustline = await this.trustlineCurrencyService.hasTrustline(trustlinesToCheck, currencyCode, issuer);
-
-     //                     console.log('hasTrustline for', currencyCode, issuer, ':', hasTrustline);
-
-     //                     if (hasTrustline) {
-     //                          this.xrplTxOptionsStore.setField('showEnableTrustline', false);
-     //                     } else {
-     //                          // Fix: show the slider / section when MISSING
-     //                          this.xrplTxOptionsStore.setField('showEnableTrustline', true);
-     //                          // this.txUiService.missingTrustlineInfo.currencyCode.set(currencyCode);
-     //                          // this.txUiService.missingTrustlineInfo.issuer.set(issuer);
-     //                          // this.txUiService.trustlineLimitField.set(10000000);
-
-     //                          // Optional: better user message
-     //                          this.toastService.error(`No trustline found for ${currencyCode} (${issuer}).\nCashing this check will create a trustline to ${issuer}.`, AppConstants.TOAST.ERROR);
-     //                          return;
-     //                     }
-     //                }
+     //                     const hasTrustl          const trustline = this.trustlineStoreService.getAll();
 
      //                const result = await this.checkTransactionOrchestrator.executeCheckTx('cashCheck', {
      //                     wallet: this.currentWallet(),
@@ -550,54 +408,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      //      });
      // }
 
-     // async cancelCheck() {
-     //      await this.withPerf('cancelCheck', async () => {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
-
-     //           if (!this.walletManagerService.ensureWalletSelected()) return;
-
-     //           const checkId = this.txUiService.checkIdField();
-     //           if (!checkId) {
-     //                this.toastService.error('Please select a valid Check ID', AppConstants.TOAST.ERROR);
-     //                return;
-     //           }
-
-     //           try {
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     includeAccountInfo: true,
-     //                     includeAccountObject: true,
-     //                     includeFee: true,
-     //                     includeLedgerIndex: true,
-     //                     includeChecks: true,
-     //                });
-
-     //                const result = await this.checkTransactionOrchestrator.executeCheckTx('cancelCheck', {
-     //                     wallet: this.currentWallet(),
-     //                     formValues: {
-     //                          ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cancelCheckSpecificKeys)),
-     //                     },
-     //                     extra: {},
-     //                     preFetchedEnv: {
-     //                          client: env.client,
-     //                          accountInfo: env.accountInfo,
-     //                          accountObjects: env.accountObjects,
-     //                          fee: env.fee!,
-     //                          currentLedger: env.currentLedger!,
-     //                          wallet: env.wallet,
-     //                     },
-     //                });
-
-     //                await this.handleTxResult(result, env.client, env.wallet, null, 'Failed to cancel check');
-     //           } catch (error: any) {
-     //                console.error('Error cancelling check:', error);
-     //                this.toastService.error(error.message || 'Error cancelling check', AppConstants.TOAST.ERROR);
-     //           } finally {
-     //                this.txUiService.resetCurrentStepToIdle();
-     //           }
-     //      });
-     // }
-
      protected refreshAccountObject(env: any): void {
           this.checksStoreService.setField('existingChecks', this.checkUtilService.getExistingChecks(env.accountObjects, env.wallet.classicAddress));
           this.checksStoreService.setField('cashableChecks', this.checkUtilService.getCashableChecks(env.accountObjects, env.wallet.classicAddress));
@@ -611,38 +421,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
-     addCheckToExpiration(seconds: number): void {
-          this.checkUtilService.addToDateTimeField(this.txUiService.expirationTimeField, this.txUiService.expirationTimeField, seconds);
-     }
-
-     setExpirationToNow(): void {
-          this.txUiService.expirationTimeField.set(this.xrplDateService.toLocalDateTimeString(new Date()));
-     }
-
      toggleExpiration(enabled: boolean): void {
-          this.txUiService.enableExpirationDate.set(enabled);
-          if (enabled && !this.txUiService.expirationTimeField()) {
-               this.setExpirationToNow();
-          } else if (!enabled) {
-               this.txUiService.expirationTimeField.set('');
-          }
-     }
-
-     clearExpiration(): void {
-          this.txUiService.expirationTimeField.set('');
-     }
-
-     isValidExpiration(): boolean {
-          if (!this.txUiService.expirationTimeField()) return true;
-          const selected = new Date(this.txUiService.expirationTimeField());
-          return selected > new Date();
-     }
-
-     onFocus(event: FocusEvent): void {
-          const input = event.target as HTMLInputElement;
-          if (input.value) {
-               const num = Number.parseFloat(input.value);
-               if (!Number.isNaN(num)) input.value = num.toFixed(6);
+          this.checksStoreService.setField('enableExpirationDate', enabled);
+          if (!enabled) {
+               this.checksStoreService.setField('checkExpirationDate', '');
           }
      }
 
@@ -667,9 +449,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      }
 
      protected clearInputFields(): void {
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.selectedDestinationAddress.set('');
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-          this.setExpirationToNow();
+          // this.setExpirationToNow();
      }
 }

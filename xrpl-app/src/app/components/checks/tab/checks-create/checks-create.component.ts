@@ -15,57 +15,44 @@ import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
 
 @Component({
-  selector: 'app-checks-create',
-  standalone: true,
-  imports: [CommonModule, FormsModule, SelectSearchDropdownComponent,XrplExpirationInputComponent,TransactionOptionsSectionComponent],
-  templateUrl: './checks-create.component.html',
-  styleUrl: './checks-create.component.css',
+     selector: 'app-checks-create',
+     standalone: true,
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, TransactionOptionsSectionComponent],
+     templateUrl: './checks-create.component.html',
+     styleUrl: './checks-create.component.css',
 })
 export class ChecksCreateComponent {
-  public readonly txUiService = inject(TransactionUiService);
-  public readonly checksStoreService = inject(ChecksStoreService);
-  public readonly currencyStoreService = inject(CurrencyStoreService);
-  public readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
-  public readonly utilsService = inject(UtilsService);
-  public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
-  public readonly trustlineUtilService = inject(TrustlineUtilService);
-  public readonly xrplDateService = inject(XrplDateService);
-  public readonly checkUtilService = inject(CheckUtilService);
-  
-  
-  // Destination dropdown – passed from parent (keeps logic in the main page)
-       @Input() destinationItems: SelectItem[] = [];
-       @Input() selectedDestinationItem: SelectItem | null = null;
-        @Input() destinationSearchQuery: string | null = null;
-       @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-         @Output() currencySelected = new EventEmitter<SelectItem | null>();
-  @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-  @Output() optionsToggled = new EventEmitter<boolean>();
-  @Output() expirationToggled = new EventEmitter<boolean>();
-  @Output() destinationSearchQueryChange = new EventEmitter<string>();
-  @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly checksStoreService = inject(ChecksStoreService);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
+     public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly xrplDateService = inject(XrplDateService);
+     public readonly checkUtilService = inject(CheckUtilService);
 
-   onFocus(event: FocusEvent): void {
-    const input = event.target as HTMLInputElement;
-    if (input.value) {
-      const num = Number.parseFloat(input.value);
-      if (!Number.isNaN(num)) input.value = num.toFixed(6);
-    }
-  }
+     // Destination dropdown – passed from parent (keeps logic in the main page)
+     @Input() destinationItems: SelectItem[] = [];
+     @Input() selectedDestinationItem: SelectItem | null = null;
+     @Input() destinationSearchQuery: string | null = null;
+     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
+     @Output() currencySelected = new EventEmitter<SelectItem | null>();
+     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
+     @Output() optionsToggled = new EventEmitter<boolean>();
+     @Output() expirationToggled = new EventEmitter<boolean>();
+     @Output() destinationSearchQueryChange = new EventEmitter<string>();
+     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
 
-  setExpirationToNow(): void {
-    this.checksStoreService.setField('checkExpirationDate', this.xrplDateService.toLocalDateTimeString(new Date()));
-  }
+     onFocus(event: FocusEvent): void {
+          const input = event.target as HTMLInputElement;
+          if (input.value) {
+               const num = Number.parseFloat(input.value);
+               if (!Number.isNaN(num)) input.value = num.toFixed(6);
+          }
+     }
 
-  addCheckToExpiration(seconds: number): void {
-    this.checkUtilService.addToDateTimeField(
-      this.checksStoreService.checkExpirationDate,
-      this.txUiService.expirationTimeField,
-      seconds
-    );
-  }
-
-  clearExpiration(): void {
-    this.txUiService.expirationTimeField.set('');
-  }
+     setCheckExpirationDate = (value: string): void => {
+          this.checksStoreService.setField('checkExpirationDate', value);
+     };
 }

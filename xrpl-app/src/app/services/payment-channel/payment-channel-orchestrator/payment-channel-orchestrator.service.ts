@@ -31,7 +31,7 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
-     async executeCredentialTx1(type: PaymentChannelTxType, config: PaymentChannelTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+     async executeCredentialTx(type: PaymentChannelTxType, config: PaymentChannelTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { paymentChannel, account, txOptions, preFetchedEnv, wallet } = config;
           let env: any;
           let client: xrpl.Client;

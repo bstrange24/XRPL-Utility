@@ -135,14 +135,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
-     }
-
      trackByAddress(_index: number, item: DropdownItem): string {
           return item.address;
      }
