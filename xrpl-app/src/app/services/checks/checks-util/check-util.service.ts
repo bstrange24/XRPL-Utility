@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, Signal } from '@angular/core';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
@@ -16,7 +16,7 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
-import { CheckItem, CheckTxType } from '../../../components/checks/constants/checks.types';
+import { CheckItem } from '../../../components/checks/constants/checks.types';
 import { ChecksStoreService } from '../checks-store/checks-store.service';
 
 @Injectable({
@@ -37,6 +37,9 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly checksStoreService = inject(ChecksStoreService);
+
+     readonly selectedCheckIndex = computed(() => this.checksStoreService.checkIdField());
+     readonly checksLength = computed(() => this.checksStoreService.existingChecks().length);
 
      getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
@@ -160,7 +163,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      }
 
      getSelectedCheckItem(activeTab: string, cashCheckItems: any, cancelCheckItems: any): CheckItem | null {
-          const id = this.txUiService.checkIdField();
+          const id = this.checksStoreService.checkIdField();
           if (!id) return null;
 
           const items = this.getCheckItems(activeTab, cashCheckItems, cancelCheckItems);
@@ -214,16 +217,32 @@ export class CheckUtilService extends PerformanceBaseComponent {
      }
 
      onCheckSelected(item: SelectItem | null) {
-          const id = item?.id || '';
-          this.txUiService.checkIdField.set(id);
-
           if (item) {
+               const id = item?.id || '';
+               this.checksStoreService.setField('checkIdField', id);
+
                const parts = item.display?.split(' ') || [];
-               this.txUiService.checkCreator.set(parts[3] || '');
-               this.currencyStoreService.setField('currencyCode', parts[1] || '');
+               this.checksStoreService.setField('checkCreator', parts[3] || '');
+               this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(parts[1]) || '');
                this.currencyStoreService.setField('currencyIssuer', item.issuer || '');
                if (parts[1] === AppConstants.XRP_CURRENCY) {
                     this.xrplTxOptionsStore.setField('showEnableTrustline', false);
+               } else {
+                    this.xrplTxOptionsStore.setField('showEnableTrustline', true);
+               }
+          }
+     }
+
+     onCheckSelectedInUi(item: any | null) {
+          if (item) {
+               const id = item?.id || '';
+               this.checksStoreService.setField('checkIdField', id);
+               if (item.amount.split(' ').length > 2) {
+                    this.checksStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
+                    this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(item?.amount?.split(' ')[1]) || '');
+                    this.currencyStoreService.setField('currencyIssuer', item.amount.split(' ')[3].replaceAll(')', '') || '');
+               } else {
+                    this.checksStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
                }
           }
      }
@@ -235,21 +254,4 @@ export class CheckUtilService extends PerformanceBaseComponent {
           const nowUnix = Math.floor(Date.now() / 1000);
           return nowUnix > expirationUnix;
      };
-
-     addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
-          let currentValue = fieldSignal();
-
-          // If field is empty, start from now
-          if (!currentValue) {
-               const now = new Date();
-               currentValue = this.xrplDateService.toLocalDateTimeString(now);
-          }
-
-          const date = new Date(currentValue);
-          date.setSeconds(date.getSeconds() + seconds);
-
-          const newDateTime = this.xrplDateService.toLocalDateTimeString(date);
-
-          writableSignal.set(newDateTime);
-     }
 }

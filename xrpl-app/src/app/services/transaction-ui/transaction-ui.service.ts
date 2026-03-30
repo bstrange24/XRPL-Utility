@@ -114,7 +114,6 @@ export class TransactionUiService {
      txHashSignal = signal<string[]>([]);
      successMessageSignal = signal<string>('');
      spinnerMessageSignal = signal<string>('');
-     // executionTime = signal<string>('');
      wantsOptions = signal<boolean>(false);
      infoPanelExpanded = signal<boolean>(false);
 
@@ -128,29 +127,6 @@ export class TransactionUiService {
      // Checks
      checkIdField = signal<string>('');
      checkCreator = signal<string>('');
-
-     // Tokens + Trustlines
-     // trustlineLimitField = signal<number>(0);
-     // currencyCode = signal<string>('XRP');
-     // currencyIssuer = signal<string>('');
-     // tokenToRemove = signal<string>('');
-     // lastCurrency = signal<string>('');
-     // lastIssuer = signal<string>('');
-     // userAddedissuerFields = signal<string>('');
-     // newCurrency = signal<string>('');
-     // newIssuer = signal<string>('');
-     // issuerToRemove = signal<string>('');
-     // trustlineFlags = signal<number>(0);
-     // missingTrustlineInfo = {
-     //      currencyCode: signal<string>(''),
-     //      issuer: signal<string>(''),
-     // };
-     // currency = signal<string>('');
-     // issuer = signal<string>('');
-
-     // Tickets
-     // ticketCountField = signal<string>('');
-     // selectedTicketSequences = signal<string[]>([]);
 
      // Expiration Dates
      expirationTimeField = signal<string>('');
@@ -170,7 +146,6 @@ export class TransactionUiService {
      multiSigningEnabled = signal<boolean>(false);
      signers: WritableSignal<Signer[]> = signal<Signer[]>([{ Account: '', seed: '', SignerWeight: 1 }]);
      depositAuthAddresses = signal<{ account: string }[]>([{ account: '' }]);
-     // walletTicketCount = signal<number>(0);
      masterKeyDisabled = signal<boolean>(false);
      depositAuthEnabled = signal<boolean>(false);
      isdepositAuthAddress = signal<boolean>(false);
@@ -283,10 +258,6 @@ export class TransactionUiService {
           this.txResultSignal.update(arr => [...arr, tx]);
      }
 
-     // setExecutionTime(time: string) {
-     //      this.executionTime.set(time);
-     // }
-
      addTxHashSignal(tx: any) {
           this.txHashSignal.update(arr => [...arr, tx]);
      }
@@ -346,9 +317,6 @@ export class TransactionUiService {
      private _infoMessage: string | null = null;
      public _warningMessage: string | null = null;
      private _errorMessage: string | null = null;
-     // successMessage: string | null = null;
-
-     // errorMessage: string | null = null;
 
      setPaymentTx(tx: any) {
           this.paymentTx = [...this.paymentTx, tx];
@@ -357,10 +325,6 @@ export class TransactionUiService {
      setTxResult(result: any) {
           this.txResult = [...this.txResult, result];
      }
-
-     // toggleShowEnableTrustline(enabled: boolean) {
-     //      this.showEnableTrustline.set(enabled);
-     // }
 
      toggleOptions(enabled: boolean): void {
           this.wantsOptions.set(enabled);
@@ -391,7 +355,6 @@ export class TransactionUiService {
           this.txResult = [];
           this.txErrorHashes = [];
           this.paymentTx = [];
-          // this.successMessage = '';
      }
 
      private allowOnly(tags: string[], html: string): SafeHtml {

@@ -16,7 +16,6 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { CredentialItem } from '../../models/interface-items.model';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { CredentialTransactionOrchestratorService } from '../../services/credentials/credential-transaction-orchestrator/credential-transaction-orchestrator.service';
@@ -38,7 +37,7 @@ import { CredentialVerifyComponent } from './tab/credential-verify/credential-ve
 import { CredentialCreateComponent } from './tab/credential-create/credential-create.component';
 import { CredentialAcceptComponent } from './tab/credential-accept/credential-accept.component';
 import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui';
-import { CredentialActionTypes, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
+import { CredentialActionTypes, CredentialItem, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
 import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
 import { CREDENTIAL_TAB } from './constants/credential.constants';
 import { StorageService } from '../../services/local-storage/storage.service';

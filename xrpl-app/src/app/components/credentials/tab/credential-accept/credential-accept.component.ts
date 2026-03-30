@@ -3,16 +3,19 @@ import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { NgIcon } from '@ng-icons/core';
+import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 
 @Component({
      selector: 'app-credential-accept',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './credential-accept.component.html',
      styleUrl: './credential-accept.component.css',
 })
 export class CredentialAcceptComponent {
      public readonly credentialStore = inject(CredentialStore);
+     public readonly credentialViewModel = inject(CredentialViewModelService);
 
      view = input.required<any>(); // contains selectedCredentialItem, etc.
      creds = input.required<any>(); // ← added: creds.dropdown

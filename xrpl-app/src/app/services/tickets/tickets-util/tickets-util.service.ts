@@ -14,14 +14,14 @@ export class TicketsUtilService {
      readonly createButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create Ticket(s)';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly deleteButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Delete Selected Ticket(s)';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 

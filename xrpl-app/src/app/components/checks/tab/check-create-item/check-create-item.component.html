@@ -1,34 +1,39 @@
-<ol class="info-data-dropdown">
-     <li class="check-item" [class.expired]="check.isExpired">
-          <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
-               <div class="check-main-line">
-                    <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
-                    <span class="check-arrow"> → </span>
-                    <span class="check-address"> {{ check.destination.slice(0,7) + '...' + check.destination.slice(-7) }} </span>
-                    @if (check.isExpired) {
-                    <span class="expired-badge">Expired</span>
-                    }
-               </div>
+<app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
+     <div class="credential-title-line">
+          <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
+          @if (check.isExpired) {
+          <span class="expired-badge">Expired</span>
+          }
+     </div>
+</app-tooltip-link>
 
-               <div class="check-meta" [class.expired]="check.isExpired">
-                    <div>Check ID: <code>{{ check.index }}</code></div>
-                    @if (check.destinationTag) {
-                    <div>Destination Tag: <code>{{ check.destinationTag }}</code></div>
-                    } @if (check.expiration) {
-                    <div>
-                         Expires:
-                         <code [class.expired]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </code>
-                    </div>
-                    } @if (check.invoiceId) {
-                    <div>
-                         Invoice ID:
-                         <code>{{ utilsService.formatInvoiceId(check.invoiceId) }}</code>
-                    </div>
-                    }
-               </div>
-          </app-tooltip-link>
-          <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
-               <lucide-icon name="copy" size="15"></lucide-icon>
-          </button>
-     </li>
-</ol>
+<div class="credential-meta chips" [class.expired]="check.isExpired">
+     <div class="cred-chip">
+          <span class="meta-label">Check ID:</span>
+          <span class="type">{{ check.index }}</span>
+     </div>
+     <div class="cred-chip">
+          <span class="meta-label">Destination:</span>
+          <span class="type">{{ check.destination }}</span>
+     </div>
+     <div class="cred-chip">
+          <span class="meta-label">Amount:</span>
+          <span class="type">{{ check.amount }}</span>
+     </div>
+     @if (check.destinationTag) {
+     <div class="cred-chip">
+          <span class="meta-label">Destination Tag:</span>
+          <span class="type">{{ check.destinationTag }}</span>
+     </div>
+     } @if (check.expiration) {
+     <div class="cred-chip">
+          <span class="meta-label">Expires:</span>
+          <span class="type" [class.expired]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
+     </div>
+     } @if (check.invoiceId) {
+     <div class="cred-chip">
+          <span class="meta-label">Invoice ID:</span>
+          <span class="type">{{ utilsService.formatInvoiceId(check.invoiceId) }}</span>
+     </div>
+     }
+</div>

@@ -1,7 +1,7 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../services/util-service/utils.service';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
@@ -11,7 +11,7 @@ import { AccountConfiguratorStoreService } from '../../../services/account-confi
 @Component({
      selector: 'app-transaction-options',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './transaction-options.component.html',
      styleUrl: './transaction-options.component.css',
 })

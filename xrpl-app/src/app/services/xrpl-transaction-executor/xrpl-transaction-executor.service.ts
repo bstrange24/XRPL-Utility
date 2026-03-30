@@ -8,6 +8,14 @@ import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.se
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { PrepareTxEnvironmentResult } from '../transaction-environment/tx-environment.service';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
+import { XrplTransactionOrchestratorService } from '../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
+
+export interface TxExecutionOptions {
+     simulateMessage: string;
+     submitMessage: string;
+     insufficientXrpMessage?: string;
+     amount?: string; // '0' for non-payment txs
+}
 
 export interface TxExecutionOptions {
      simulateMessage: string;
@@ -25,6 +33,7 @@ export class XrplTransactionExecutorService {
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplCache = inject(XrplCacheService);
      public readonly xrplService = inject(XrplService);
+     public readonly orchestrator = inject(XrplTransactionOrchestratorService);
      constructor() {}
 
      async executeTx<T extends xrpl.Transaction>(
@@ -48,11 +57,12 @@ export class XrplTransactionExecutorService {
                     this.txUiService.addTxResultSignal(response.result);
                } else {
                     const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
-
                     const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, env.fee, useMultiSign, multiSignAddress, multiSignSeeds);
 
                     if (!signedTx) {
-                         return { success: false, hash: '', error: 'Failed to sign transaction.' };
+                         const msg = 'Failed to sign transaction.';
+                         this.txUiService.setError(msg);
+                         return { success: false, hash: '', error: msg };
                     }
 
                     if (submitAndWait) {
@@ -336,75 +346,75 @@ export class XrplTransactionExecutorService {
           });
      }
 
-     async checkCreate(
-          env: any,
-          tx: xrpl.CheckCreate,
-          wallet: xrpl.Wallet,
-          client: xrpl.Client,
-          options: {
-               useMultiSign?: boolean;
-               multiSignAddress?: string;
-               multiSignSeeds?: string;
-               isRegularKeyAddress?: boolean;
-               regularKeyAddress?: string;
-               regularKeySeed?: string;
-               amount?: any;
-               paymentType?: string;
-               destination?: string;
-          } = {}
-     ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.executeTx(env, client, wallet, tx, {
-               simulateMessage: 'Simulated Check create (no changes will be made)...',
-               submitMessage: 'Submitting Check create to Ledger...',
-               ...options,
-          });
-     }
+     // async checkCreate(
+     //      env: any,
+     //      tx: xrpl.CheckCreate,
+     //      wallet: xrpl.Wallet,
+     //      client: xrpl.Client,
+     //      options: {
+     //           useMultiSign?: boolean;
+     //           multiSignAddress?: string;
+     //           multiSignSeeds?: string;
+     //           isRegularKeyAddress?: boolean;
+     //           regularKeyAddress?: string;
+     //           regularKeySeed?: string;
+     //           amount?: any;
+     //           paymentType?: string;
+     //           destination?: string;
+     //      } = {}
+     // ): Promise<{ success: boolean; hash?: string; error?: string }> {
+     //      return this.executeTx(env, client, wallet, tx, {
+     //           simulateMessage: 'Simulated Check create (no changes will be made)...',
+     //           submitMessage: 'Submitting Check create to Ledger...',
+     //           ...options,
+     //      });
+     // }
 
-     async checkCancel(
-          env:any,
-          tx: xrpl.CheckCancel,
-          wallet: xrpl.Wallet,
-          client: xrpl.Client,
-          options: {
-               useMultiSign?: boolean;
-               multiSignAddress?: string;
-               multiSignSeeds?: string;
-               isRegularKeyAddress?: boolean;
-               regularKeyAddress?: string;
-               regularKeySeed?: string;
-          } = {}
-     ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.executeTx(env, client, wallet, tx, {
-               simulateMessage: 'Simulated Check cancel (no changes will be made)...',
-               submitMessage: 'Submitting Check cancel to Ledger...',
-               amount: '0',
-               ...options,
-          });
-     }
+     // async checkCancel(
+     //      env: any,
+     //      tx: xrpl.CheckCancel,
+     //      wallet: xrpl.Wallet,
+     //      client: xrpl.Client,
+     //      options: {
+     //           useMultiSign?: boolean;
+     //           multiSignAddress?: string;
+     //           multiSignSeeds?: string;
+     //           isRegularKeyAddress?: boolean;
+     //           regularKeyAddress?: string;
+     //           regularKeySeed?: string;
+     //      } = {}
+     // ): Promise<{ success: boolean; hash?: string; error?: string }> {
+     //      return this.executeTx(env, client, wallet, tx, {
+     //           simulateMessage: 'Simulated Check cancel (no changes will be made)...',
+     //           submitMessage: 'Submitting Check cancel to Ledger...',
+     //           amount: '0',
+     //           ...options,
+     //      });
+     // }
 
-     async checkCash(
-          env: any,
-          tx: xrpl.CheckCash,
-          wallet: xrpl.Wallet,
-          client: xrpl.Client,
-          options: {
-               useMultiSign?: boolean;
-               multiSignAddress?: string;
-               multiSignSeeds?: string;
-               isRegularKeyAddress?: boolean;
-               regularKeyAddress?: string;
-               regularKeySeed?: string;
-               paymentType?: string;
-               suppressIndividualFeedback?: boolean;
-          } = {}
-     ): Promise<{ success: boolean; hash?: string; error?: string }> {
-          return this.executeTx(env, client, wallet, tx, {
-               simulateMessage: 'Simulated Check cash (no changes will be made)...',
-               submitMessage: 'Submitting Check cash to Ledger...',
-               amount: '0',
-               ...options,
-          });
-     }
+     // async checkCash(
+     //      env: any,
+     //      tx: xrpl.CheckCash,
+     //      wallet: xrpl.Wallet,
+     //      client: xrpl.Client,
+     //      options: {
+     //           useMultiSign?: boolean;
+     //           multiSignAddress?: string;
+     //           multiSignSeeds?: string;
+     //           isRegularKeyAddress?: boolean;
+     //           regularKeyAddress?: string;
+     //           regularKeySeed?: string;
+     //           paymentType?: string;
+     //           suppressIndividualFeedback?: boolean;
+     //      } = {}
+     // ): Promise<{ success: boolean; hash?: string; error?: string }> {
+     //      return this.executeTx(env, client, wallet, tx, {
+     //           simulateMessage: 'Simulated Check cash (no changes will be made)...',
+     //           submitMessage: 'Submitting Check cash to Ledger...',
+     //           amount: '0',
+     //           ...options,
+     //      });
+     // }
 
      async createCredential(
           env: any,

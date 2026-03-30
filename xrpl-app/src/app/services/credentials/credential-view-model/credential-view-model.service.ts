@@ -1,10 +1,9 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { CredentialUtilService } from '../credential-util/credential-util.service';
-import { CredentialItem } from '../../../models/interface-items.model';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { CredentialActionTypes, CredentialItemVm } from '../../../components/credentials/constants/credential.types';
+import { CredentialActionTypes, CredentialItem, CredentialItemVm } from '../../../components/credentials/constants/credential.types';
 
 @Injectable({
      providedIn: 'root',
@@ -39,6 +38,7 @@ export class CredentialViewModelService {
                accepted: typeof c.Flags === 'number' ? (c.Flags & 65536) !== 0 : c.Flags === 'Credential accepted',
                issuedByMe,
                selectable: tab !== 'createCredential' && (tab !== 'verifyCredential' || issuedByMe),
+               expired: !!c.Expiration && c.Expiration !== 'N/A' && new Date(c.Expiration) < new Date(),
           });
 
           const pendingIssued: CredentialItemVm[] = [];
@@ -84,6 +84,16 @@ export class CredentialViewModelService {
           };
      });
 
+     readonly selectedCredentialIsExpired = computed<boolean>(() => {
+          const selectedId = this.credentialStore.credentialID();
+          if (!selectedId) return false;
+
+          const credsVm = this.credentialVm();
+          const selectedCred = credsVm.list.find(c => c.index === selectedId);
+
+          return selectedCred?.expired ?? false;
+     });
+
      /** Main VM for templates */
      readonly vm = computed(() => {
           const tab = this.activeTab(); // <-- read active tab here
@@ -91,7 +101,7 @@ export class CredentialViewModelService {
           const creds = this.credentialVm(); // <-- must read here, so vm re-runs on tab change
 
           const selectedId = this.credentialStore.credentialID();
-          const selectedCredentialItem = selectedId ? (creds.dropdown.find(i => i.id === selectedId) ?? null) : null;
+          const selectedCredentialItem = selectedId ? (creds.dropdown.find((i: { id: string }) => i.id === selectedId) ?? null) : null;
 
           return {
                tab,
@@ -144,7 +154,7 @@ export class CredentialViewModelService {
           return computed(() => {
                const step = this.txUiService.currentStep();
                if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               if (step === 'waiting_validation') return 'Waiting for ledger validation...';
                return this.txUiService.stepMessage();
           });
      }

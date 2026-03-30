@@ -1,9 +1,9 @@
-import { CredentialItem } from '../../../models/interface-items.model';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
 import * as xrpl from 'xrpl';
 import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
 import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
 import { CredentialState } from '../../../services/credentials/credential-store/credential-store.service';
+import { CredentialItem } from '../../credentials/constants/credential.types';
 
 export interface CredentialItemVm extends CredentialItem {
      accepted: boolean;

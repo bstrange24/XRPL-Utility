@@ -4,12 +4,11 @@ import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
-import { CredentialItem } from '../../../models/interface-items.model';
 import * as xrpl from 'xrpl';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
-import { CredentialActionTypes } from '../../../components/credentials/constants/credential.types';
+import { CredentialActionTypes, CredentialItem } from '../../../components/credentials/constants/credential.types';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({

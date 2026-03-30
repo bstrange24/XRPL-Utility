@@ -8,11 +8,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
      selector: 'app-checks-cash',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './checks-cash.component.html',
      styleUrl: './checks-cash.component.css',
 })

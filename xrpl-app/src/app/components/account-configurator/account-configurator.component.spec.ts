@@ -614,7 +614,7 @@ describe('AccountConfiguratorComponent', () => {
           expect(label()).toContain('Set Regular Key');
 
           mockTxUiService.currentStep.set('waiting_validation');
-          expect(label()).toBe('Waiting for confirmation...');
+          expect(label()).toBe('Waiting for ledger validation...');
      });
 
      it('updateMetaData shows warning when no fields changed', async () => {

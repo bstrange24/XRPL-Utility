@@ -67,10 +67,11 @@ export class ChecksTransactionViewModelService {
                     tab: 'cashCheck',
                     id: c.id,
                     index: c.id,
-                    amount: c.amount,
+                    amount: this.utilsService.formatIOUXrpAmountOutstanding(c.sendMax),
+                    destination: c.destination,
                     sender: c.sender,
                     expiration: c.expiration,
-                    isExpired: c.isExpired,
+                    isExpired: this.checkUtilService.isCheckExpired(c.expiration),
                }));
           }
 
@@ -79,7 +80,7 @@ export class ChecksTransactionViewModelService {
                     tab: 'cancelCheck',
                     id: c.id,
                     index: c.id,
-                    amount: c.amount,
+                    amount: this.utilsService.formatIOUXrpAmountOutstanding(c.sendMax),
                     destination: c.destination,
                     expiration: c.expiration,
                     isExpired: this.checkUtilService.isCheckExpired(c.expiration),
@@ -143,7 +144,7 @@ export class ChecksTransactionViewModelService {
      });
 
      selectedCheckItem = computed<SelectItem | null>(() => {
-          const id = this.txUiService.checkIdField();
+          const id = this.checksStoreService.checkIdField();
           if (!id) return null;
 
           const items = this.checkItems();
@@ -173,7 +174,7 @@ export class ChecksTransactionViewModelService {
      filteredCheckIds = this.checkUtilService.filteredCheckItems(this.checkItems, this.checksStoreService.checkIdSearchQuery);
 
      selectedFullCheck = computed(() => {
-          const selectedId = this.txUiService.checkIdField();
+          const selectedId = this.checksStoreService.checkIdField();
           if (!selectedId) return null;
           return this.checksStoreService.cashableChecks().find(check => check.id === selectedId) ?? null;
      });
@@ -182,7 +183,7 @@ export class ChecksTransactionViewModelService {
           return computed(() => {
                const step = this.txUiService.currentStep();
                if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               if (step === 'waiting_validation') return 'Waiting for ledger validation...';
                return this.txUiService.stepMessage();
           });
      }

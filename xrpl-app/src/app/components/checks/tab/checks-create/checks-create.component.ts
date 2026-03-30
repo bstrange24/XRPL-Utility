@@ -13,11 +13,12 @@ import { TrustlineCurrencyService } from '../../../../services/trustline-currenc
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
 })

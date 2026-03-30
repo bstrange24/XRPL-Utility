@@ -1435,9 +1435,9 @@ export class UtilsService {
 
           if (typeof amount === 'object') {
                // Issued currency
-               const { currency, value } = amount;
+               const { currency, issuer, value } = amount;
                if (currency) {
-                    return `${value} ${this.decodeIfNeeded(currency)}`;
+                    return `${value} ${this.decodeIfNeeded(currency)} (issuer: ${issuer})`;
                } else {
                     return `${value} MPT ${amount.mpt_issuance_id}`;
                }

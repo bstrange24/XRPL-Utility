@@ -29,42 +29,42 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      readonly createChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create Channel';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly fundChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Fund Channel';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly claimFundsButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Claim Funds';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly renewChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Renew Channel';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly closeChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Close Channel';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly generateClaimSignatureButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Generate Claim Signature';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 

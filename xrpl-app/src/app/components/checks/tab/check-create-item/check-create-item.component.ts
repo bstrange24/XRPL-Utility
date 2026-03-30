@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, inject, input, Input } from '@angular/core';
 import { UtilsService } from '../../../../services/util-service/utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -16,13 +16,13 @@ import { CreateCheckItem } from '../../constants/checks.types';
      styleUrl: './check-create-item.component.css',
 })
 export class CheckCreateItemComponent {
-     @Input({ required: true }) check!: CreateCheckItem;
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly copyUtilService = inject(CopyUtilService);
 
-     constructor(
-          public txUiService: TransactionUiService,
-          public utilsService: UtilsService,
-          public copyUtilService: CopyUtilService
-     ) {}
+     constructor() {}
+
+     @Input({ required: true }) check!: CreateCheckItem;
 
      copyAndToast(text: string, label: string = 'Content') {
           this.copyUtilService.copyAndToast(text, label);

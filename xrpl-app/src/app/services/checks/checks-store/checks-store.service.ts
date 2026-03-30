@@ -12,6 +12,8 @@ export interface CheckState {
      checkExpirationDate: string;
      enableExpirationDate: boolean;
      outstandingChecksCollapsed: boolean;
+     deliverMinAmount: string;
+     useDeliverMin: boolean;
      isCheckOwner: boolean;
      isCollapsed: boolean;
      cancellableChecks: any[];
@@ -31,6 +33,8 @@ const initialState: CheckState = {
      checkExpirationDate: '',
      enableExpirationDate: false,
      outstandingChecksCollapsed: false,
+     deliverMinAmount: '',
+     useDeliverMin: false,
      isCheckOwner: false,
      isCollapsed: false,
      cancellableChecks: [],
@@ -84,8 +88,8 @@ export const ChecksStoreService = signalStore(
                });
           },
 
-          /** Reset checkCreator form fields */
-          resetCredentailFields() {
+          /** Reset check form fields */
+          resetCheckFields() {
                patchState(store, {
                     checkIdField: '',
                     checkExpirationDate: '',
@@ -94,10 +98,11 @@ export const ChecksStoreService = signalStore(
                     checkIdSearchQuery: '',
                     outstandingChecks: '',
                     mptIssuanceIdField: '',
-                    cancellableChecks: [],
-                    cashableChecks: [],
-                    existingChecks: [],
-                    existingIOUs: [],
+                    amount: '',
+                    deliverMinAmount: '',
+                    useDeliverMin: false,
+                    isCheckOwner: false,
+                    isCollapsed: false,
                });
           },
 

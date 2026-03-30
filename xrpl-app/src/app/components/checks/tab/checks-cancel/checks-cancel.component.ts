@@ -12,6 +12,8 @@ import { SelectSearchDropdownComponent, SelectItem } from '../../../ui-dropdowns
      styleUrl: './checks-cancel.component.css',
 })
 export class ChecksCancelComponent {
-     readonly viewModel = inject(ChecksTransactionViewModelService);
+     readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
+     @Output() checkItems = new EventEmitter<SelectItem | null>();
      @Output() checkSelected = new EventEmitter<SelectItem | null>();
+     @Output() selectedCheckItem = new EventEmitter<SelectItem | null>();
 }

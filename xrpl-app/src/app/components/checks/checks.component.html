@@ -12,7 +12,6 @@
 @let tab = viewModel.activeTab();
 <!-- Get tab data -->
 @let tabs = menuTabs;
-<!-- Get tab meta data -->
 
 <!-- Main content. -->
 <div class="main-container">
@@ -26,59 +25,8 @@
                <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Info Message -->
-               @if (viewModel.infoData(); as info) {
-               <div class="info-and-checks-card" [class.has-checks]="info.checkCount > 0">
-                    <!-- Always-visible summary row -->
-                    <div class="summary-header">
-                         <div class="summary-text">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                              <code>{{ info.walletName }}</code>
-
-                              @if (info.checkCount === 0) {
-                              <span> has no outstanding checks.</span>
-                              } @else {
-                              <span> has <strong class="object-count">{{ info.checkCount }}</strong> check{{ info.checkCount === 1 ? '' : 's' }} @switch (tab) { @case ('createCheck') { created. } @case ('cashCheck') { that can be cashed. } @case ('cancelCheck') { that can be cancelled. } } </span>
-                              }
-                         </div>
-
-                         <!-- Centered links row -->
-                         @if (info.links) {
-                         <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                         }
-
-                         <!-- Expand/Collapse toggle (only when there are checks) -->
-                         @if (info.checkCount > 0) {
-                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="txUiService.infoPanelExpanded()" aria-label="Toggle checks list">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
-                              <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
-                         </button>
-                         }
-                    </div>
-
-                    <!-- Collapsible detailed list with internal scroll -->
-                    @if (info.checkCount > 0) {
-                    <div class="checks-list-container" [style.max-height]="infoPanelExpanded() ? '380px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
-                         <ul class="checks-list">
-                              @for (check of info.checksToShow; track check.index) {
-                              <!-- Switch to determine what tab data to show -->
-                              @switch (check.tab) {
-                              <!-- Show create tab data -->
-                              @case ('createCheck') {
-                              <app-check-create-item [check]="check" />
-                              }
-                              <!-- Show cash tab data -->
-                              @case ('cashCheck') {
-                              <app-check-cash-item [check]="check" />
-                              }
-                              <!-- Show cancel tab data -->
-                              @case ('cancelCheck') {
-                              <app-check-cancel-item [check]="check" />
-                              } } }
-                         </ul>
-                    </div>
-                    }
-               </div>
-               }
+               @let wallet = currentWallet();
+               <app-checks-summary [wallet]="wallet" [tab]="checksTransactionViewModelService.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"></app-checks-summary>
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {

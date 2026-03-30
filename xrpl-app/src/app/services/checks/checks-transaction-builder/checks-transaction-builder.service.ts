@@ -15,13 +15,10 @@ export class ChecksTransactionBuilderService {
      public readonly trustlineUtilService = inject(TrustlineUtilService);
 
      buildCreateCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any, currency: any) {
-          console.log('Here Billy', currency);
           let sendMax;
           if (currency.currency !== 'XRP') {
-               console.log('Here');
                sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
-          } else if (currency.currency === 'XRP') {
-               console.log('There');
+          } else {
                sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amount, false).sendMax;
           }
 
@@ -34,8 +31,8 @@ export class ChecksTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
 
-          if (check.enableExpirationDate && check.expiration) {
-               const rippleTime = this.utilsService.toRippleTime(check.expiration);
+          if (check.enableExpirationDate && check.checkExpirationDate) {
+               const rippleTime = this.utilsService.toRippleTime(check.checkExpirationDate);
                if (rippleTime <= env.ledgerInfo.currentRippleTime) {
                     throw new Error('Check expiration time must be in the future');
                }
@@ -46,16 +43,28 @@ export class ChecksTransactionBuilderService {
      }
 
      buildCashCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any, currency: any, trustline: any) {
-          let sendMax = this.xrplTransactionService.buildSendMaxAmount(check.currencyCode, check.currencyIssuer ?? '', check.amountField, false).sendMax;
-          const tx: xrpl.CheckCash = {
+          let sendMax;
+          if (currency.currencyCode !== 'XRP') {
+               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
+          } else {
+               sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amount, false).sendMax;
+          }
+
+          const base: any = {
                TransactionType: 'CheckCash',
                Account: wallet.classicAddress,
-               Amount: sendMax,
-               CheckID: check.checkId,
+               CheckID: check.checkIdField,
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
-          return tx;
+
+          if (check.useDeliverMin) {
+               base.DeliverMin = sendMax;
+          } else {
+               base.Amount = sendMax;
+          }
+
+          return base as xrpl.CheckCash;
      }
 
      buildCancelCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any) {

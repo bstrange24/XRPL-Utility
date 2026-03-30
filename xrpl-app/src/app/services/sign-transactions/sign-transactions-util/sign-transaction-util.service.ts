@@ -137,28 +137,28 @@ export class SignTransactionUtilService {
      readonly getTransactionJsonButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().getJson) return 'Get Transaction JSON';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly signTransactionButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().signed) return 'Signed Transaction';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly submitTransactionButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().submit) return 'Submit Transation';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 
      readonly signMultiSignButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().multiSign) return 'Sign for Multi-Sign';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 

@@ -3,28 +3,33 @@
 <div class="switch-group">
      @if (showMemo()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isMemoEnabled()" (ngModelChange)="onMemoToggled($event)" name="isMemoEnabled" />
-          <span class="slider"></span> Add Memo
+          <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isMemoEnabled()" (change)="onMemoToggled($event.checked)">Add Memo</mat-slide-toggle>
+          <!-- <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isMemoEnabled()" (ngModelChange)="onMemoToggled($event)" name="isMemoEnabled" /> -->
+          <!-- <span class="slider"></span> Add Memo -->
      </label>
      } @if (showMultiSign() && multiSigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.useMultiSign()" (ngModelChange)="onMultiSignToggled($event)" name="useMultiSign" />
-          <span class="slider"></span> Use Multi-Sign
+          <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.useMultiSign()" (change)="onMultiSignToggled($event.checked)">Use Multi-Sign</mat-slide-toggle>
+          <!-- <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.useMultiSign()" (ngModelChange)="onMultiSignToggled($event)" name="useMultiSign" /> -->
+          <!-- <span class="slider"></span> Use Multi-Sign -->
      </label>
      } @if (showRegularKey() && regularKeySigningEnabled()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isRegularKeyAddress()" (ngModelChange)="onRegularKeyToggled($event)" name="isRegularKeyAddress" />
-          <span class="slider"></span> Use Regular Key
+          <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isRegularKeyAddress()" (change)="onRegularKeyToggled($event.checked)">Use Regular Key</mat-slide-toggle>
+          <!-- <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isRegularKeyAddress()" (ngModelChange)="onRegularKeyToggled($event)" name="isRegularKeyAddress" /> -->
+          <!-- <span class="slider"></span> Use Regular Key -->
      </label>
      } @if (showTicket() && this.xrplTxOptionsStore.ticketArray().length > 0) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isTicket()" (ngModelChange)="this.xrplTxOptionsStore.setField('isTicket', ($event))" name="isTicket" />
-          <span class="slider"></span> Use Ticket
+          <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isTicket()" (change)="this.xrplTxOptionsStore.setField('isTicket', ($event.checked))" name="isTicket">Use Ticket</mat-slide-toggle>
+          <!-- <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isTicket()" (ngModelChange)="this.xrplTxOptionsStore.setField('isTicket', ($event))" name="isTicket" /> -->
+          <!-- <span class="slider"></span> Use Ticket -->
      </label>
      } @if (showSimulate()) {
      <label class="switch">
-          <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isSimulateEnabled()" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" />
-          <span class="slider"></span> Simulate
+          <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isSimulateEnabled()" (change)="toggleSimulate($event.checked)" name="isSimulateEnabled">Simulate</mat-slide-toggle>
+          <!-- <input type="checkbox" [ngModel]="this.xrplTxOptionsStore.isSimulateEnabled()" (ngModelChange)="toggleSimulate($event)" name="isSimulateEnabled" /> -->
+          <!-- <span class="slider"></span> Simulate -->
      </label>
      }
 </div>

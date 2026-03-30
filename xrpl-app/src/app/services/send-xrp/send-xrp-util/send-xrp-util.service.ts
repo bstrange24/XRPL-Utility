@@ -29,7 +29,7 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
      sendButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Send XRP';
-          if (step === 'waiting_validation') return 'Waiting for confirmation...';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 

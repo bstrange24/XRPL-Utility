@@ -6,9 +6,12 @@
      </div>
 </div>
 
+<!-- Get view -->
 @let view = permissionedDomainViewModelService;
 <!-- Get active tab -->
 @let tab = view.activeTab();
+<!-- Get tab data -->
+@let tabs = menuTabs;
 
 <!-- Main content. -->
 <div class="main-container">
@@ -19,7 +22,6 @@
           <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
-               @let tabs = menuTabs;
                <app-tab-menu-with-info [tabs]="tabs" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Info Message -->

@@ -37,6 +37,7 @@ export type CashCheckItem = {
      id: string;
      index: string;
      amount: string;
+     destination: string;
      sender: string;
      expiration?: number;
      isExpired: boolean;

@@ -4,20 +4,23 @@ import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
 import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-credential-verify',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './credential-verify.component.html',
      styleUrl: './credential-verify.component.css',
 })
 export class CredentialVerifyComponent {
      public readonly credentialStore = inject(CredentialStore);
      public readonly credentialUtilService = inject(CredentialUtilService);
+     public readonly credentialViewModel = inject(CredentialViewModelService);
 
-     view = input.required<any>(); // contains selectedCredentialItem, etc.
-     creds = input.required<any>(); // ← added: creds.dropdown
+     view = input.required<any>();
+     creds = input.required<any>();
      canSubmit = input<boolean>(false);
 
      // Outputs to parent

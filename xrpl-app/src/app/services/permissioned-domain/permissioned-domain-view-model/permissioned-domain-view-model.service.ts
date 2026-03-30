@@ -104,7 +104,7 @@ export class PermissionedDomainViewModelService {
           return computed(() => {
                const step = this.txUiService.currentStep();
                if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for confirmation...';
+               if (step === 'waiting_validation') return 'Waiting for ledger validation...';
                return this.txUiService.stepMessage();
           });
      }

@@ -1,7 +1,6 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
@@ -24,9 +23,6 @@ import { CheckUtilService } from '../../services/checks/checks-util/check-util.s
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { CheckCancelItemComponent } from './tab/check-cancel-item/check-cancel-item.component';
-import { CheckCreateItemComponent } from './tab/check-create-item/check-create-item.component';
-import { CheckCashItemComponent } from './tab/check-cash-item/check-cash-item.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
@@ -49,11 +45,14 @@ import * as xrpl from 'xrpl';
 import { ChecksCancelComponent } from './tab/checks-cancel/checks-cancel.component';
 import { ChecksCashComponent } from './tab/checks-cash/checks-cash.component';
 import { ChecksCreateComponent } from './tab/checks-create/checks-create.component';
+import { XrplTransactionOrchestratorService } from '../../services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
+import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CheckCreateItemComponent, CheckCancelItemComponent, CheckCashItemComponent, ChecksRequirementInfoComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksRequirementInfoComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent, ChecksSummaryComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -71,8 +70,11 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     public readonly validationService = inject(ValidationService);
      public readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
      public readonly checksStoreService = inject(ChecksStoreService);
+
      readonly menuTabs: TabConfig[] = CHECK_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = CHECK_TAB_META;
 
@@ -131,8 +133,15 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           if (item) {
                const [amount] = item.display.split(' ');
                this.checksStoreService.setField('amount', amount);
+               this.checkUtilService.onCheckSelected(item);
           }
-          this.checkUtilService.onCheckSelected(item);
+     }
+
+     onCheckSelectedInUi(item: any | null) {
+          if (item) {
+               this.checksStoreService.setField('amount', item.amount);
+               this.checkUtilService.onCheckSelectedInUi(item);
+          }
      }
 
      selectWallet(wallet: Wallet): void {
@@ -167,12 +176,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      async setTab(tab: string): Promise<void> {
           if (CHECK_TAB.includes(tab as any)) {
                this.checksTransactionViewModelService.activeTab.set(tab as CheckActionTypes);
-               this.destinationSearchQuery.set('');
-               this.checksStoreService.setField('checkIdSearchQuery', '');
+               this.clearInputFields();
 
                if (this.hasWallets()) {
                     await this.getChecks();
-                    // this.setExpirationToNow();
                }
           }
      }
@@ -265,12 +272,28 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                if (!checkObject) {
                     return this.toastService.error(`No check found with Check ID ${this.checksStoreService.checkIdField()}`, AppConstants.TOAST.ERROR);
                }
+               this.checksStoreService.setField('checkCreator', checkObject.Account);
 
                // Expiration check (only if present)
                if (checkObject.Expiration) {
                     const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
                     if (currentRippleTime >= checkObject.Expiration) {
                          return this.toastService.error('This check has expired.', AppConstants.TOAST.ERROR);
+                    }
+               }
+
+               let checkIssuer;
+
+               const currencyCode = this.currencyStoreService.currencyCode();
+               const accountObjects = env.checkObjects?.result.account_objects;
+               if (accountObjects) {
+                    if (currencyCode === AppConstants.XRP_CURRENCY) {
+                         checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, this.checksStoreService.checkIdField(), 'XRP');
+                    } else {
+                         checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, this.checksStoreService.checkIdField(), 'Token');
+                         if (checkIssuer && this.currencyStoreService.currencyIssuer() !== checkIssuer) {
+                              return this.toastService.error(`Invalid issuer ${checkIssuer} for this check`, AppConstants.TOAST.ERROR);
+                         }
                     }
                }
           }
@@ -316,97 +339,9 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
           if (!txResult) throw new Error('Unable error when submitting transaction.');
 
-          await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress, this.checksStoreService.destination(), '', { includePaymentChannelObjects: true });
+          await this.handleTxResult(txResult, env.client, env.wallet, checkState.checkCreator, this.checksStoreService.destination(), '', { includeCheckObjects: true });
           this.txUiService.resetCurrentStepToIdle();
      }
-
-     // async cashCheck(): Promise<void> {
-
-     //                // Issuer validation (only for IOU checks)
-     //                let checkIssuer;
-
-     //                const currencyCode = this.currencyStoreService.currencyCode();
-     //                const accountObjects = env.checkObjects?.result.account_objects;
-     //                if (accountObjects) {
-     //                     if (currencyCode === AppConstants.XRP_CURRENCY) {
-     //                          checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, checkId, 'XRP');
-     //                     } else {
-     //                          checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, checkId, 'Token');
-     //                          if (checkIssuer && this.currencyStoreService.currencyIssuer() !== checkIssuer) {
-     //                               return this.toastService.error(`Invalid issuer ${checkIssuer} for this check`, AppConstants.TOAST.ERROR);
-     //                          }
-     //                     }
-     //                }
-
-     //                let trustlinesToCheck: any = env.trustlines;
-     //                if (this.xrplTxOptionsStore.showEnableTrustline()) {
-     //                     const currencyCode = this.trustlineStoreService.missingTrustlineInfo.currencyCode();
-     //                     const currencyIssuer = this.trustlineStoreService.missingTrustlineInfo.issuer();
-     //                     if (!currencyCode || !currencyIssuer) return;
-
-     //                     this.txUiService.submitAndWait.set(true);
-     //                     this.txUiService.suppressIndividualFeedback.set(true);
-
-     //                     // const resetTrustlinesult = await this.trustlineOrchestratorService.executeTrustlineTx('setTrustline', {
-     //                     //      wallet: this.currentWallet(),
-     //                     //      formValues: {
-     //                     //           ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.setTrustlineSpecificKeys)),
-     //                     //      },
-     //                     //      extra: {},
-     //                     //      preFetchedEnv: {
-     //                     //           client: env.client,
-     //                     //           accountInfo: env.accountInfo,
-     //                     //           checkObjects: env.checkObjects,
-     //                     //           fee: env.fee!,
-     //                     //           currentLedger: env.currentLedger!,
-     //                     //           wallet: env.wallet,
-     //                     //      },
-     //                     // });
-
-     //                     // if (!resetTrustlinesult.success) {
-     //                     //      this.toastService.error(resetTrustlinesult.error || 'Failed to create trustline');
-     //                     //      return;
-     //                     // }
-
-     //                     // const updatedEnv = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     //      includeTrustlines: true,
-     //                     //      forceRefresh: true,
-     //                     // });
-
-     //                     // trustlinesToCheck = updatedEnv.trustlines ?? [];
-     //                }
-
-     //                console.log('trustlinesToCheck:', trustlinesToCheck);
-
-     //                if (currencyCode !== AppConstants.XRP_CURRENCY) {
-     //                     const issuer = this.currencyStoreService.currencyIssuer();
-     //                     const hasTrustl          const trustline = this.trustlineStoreService.getAll();
-
-     //                const result = await this.checkTransactionOrchestrator.executeCheckTx('cashCheck', {
-     //                     wallet: this.currentWallet(),
-     //                     formValues: {
-     //                          ...this.txUiService.getValues(this.txUiService.buildTxKeys(...this.cashCheckSpecificKeys)),
-     //                     },
-     //                     extra: {},
-     //                     preFetchedEnv: {
-     //                          client: env.client,
-     //                          accountInfo: env.accountInfo,
-     //                          checkObjects: env.checkObjects,
-     //                          fee: env.fee!,
-     //                          currentLedger: env.currentLedger!,
-     //                          wallet: env.wallet,
-     //                     },
-     //                });
-
-     //                await this.handleTxResult(result, env.client, env.wallet, checkIssuer || '', 'Failed to cash check');
-     //           } catch (error: any) {
-     //                console.error('Error cashing check:', error);
-     //                this.toastService.error(error.message || 'Error cashing check', AppConstants.TOAST.ERROR);
-     //           } finally {
-     //                this.txUiService.resetCurrentStepToIdle();
-     //           }
-     //      });
-     // }
 
      protected refreshAccountObject(env: any): void {
           this.checksStoreService.setField('existingChecks', this.checkUtilService.getExistingChecks(env.accountObjects, env.wallet.classicAddress));
@@ -450,9 +385,12 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      protected clearInputFields(): void {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
+          this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
+          this.checksStoreService.resetCheckFields();
+          this.currencyStoreService.resetOptions();
+          this.trustlineCurrencyService.selectCurrency('XRP');
           this.txUiService.clearAllFields();
           this.txUiService.clearAllOptions();
-          // this.setExpirationToNow();
      }
 }

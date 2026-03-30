@@ -49,32 +49,19 @@
 </div>
 
 <div class="switch-group">
-     <label class="switch">
-          <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="optionsToggled.emit($event.target.checked)" name="showOptionalXrp" />
-          <span class="slider"></span> Include optional fields (Destination Tag, Source Tag, Invoice ID)
-     </label>
+     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="optionsToggled.emit($event.checked)">Include optional fields (Destination Tag, Source Tag, Invoice ID)</mat-slide-toggle>
 </div>
 
 @if (txUiService.wantsOptions()) {
 <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
 }
 
-<!-- Expiration (create only) -->
-<div class="form-row">
-     <div class="form-group">
-          <div class="switch-group">
-               <label class="switch">
-                    <input type="checkbox" id="setExpiration" [checked]="checksStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.target.checked)" />
-                    <span class="slider"></span> Set Check expiration date
-               </label>
-          </div>
-     </div>
-</div>
+<mat-slide-toggle class="mini-toggle" [checked]="checksStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.checked)">Set Check expiration date</mat-slide-toggle>
 
 <div class="form-row">
      <div class="form-group">
           @if (checksStoreService.enableExpirationDate()) {
-          <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Time (optional)" hint="Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
+          <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date (optional)" hint="Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
           }
      </div>
      <div class="form-group"></div>

@@ -5,38 +5,6 @@ export interface IssuerItem {
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
-export interface CredentialItem {
-     index: string;
-     CredentialType: string;
-     Subject: string;
-     Issuer: string;
-     Expiration?: string;
-     URI?: string;
-     Flags?: any;
-}
-
-export interface CredentialData {
-     version: string;
-     credential_type: string;
-     issuer: string;
-     subject: {
-          full_name: string;
-          destinationAddress: string;
-          dob: string;
-          country: string;
-          id_type: string;
-          id_number: string;
-          expirationDate: string;
-     };
-     verification: {
-          method: string;
-          verified_at: string;
-          verifier: string;
-     };
-     hash: string;
-     uri: string;
-}
-
 export interface DidItem {
      index: string;
      DIDDocument: string;
