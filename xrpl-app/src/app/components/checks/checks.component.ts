@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -149,7 +149,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
-          this.xrplTxOptionsStore.setField('showEnableTrustline', false);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
@@ -178,9 +177,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                this.checksTransactionViewModelService.activeTab.set(tab as CheckActionTypes);
                this.clearInputFields();
 
-               if (this.hasWallets()) {
-                    await this.getChecks();
-               }
+               if (this.hasWallets()) await this.getChecks();
           }
      }
 
@@ -194,16 +191,8 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
 
@@ -223,7 +212,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           });
      }
 
-     async performAction() {
+     async performAction(): Promise<void> {
           const currentTab = this.checksTransactionViewModelService.activeTab();
           const wallet = this.currentWallet();
 
@@ -384,7 +373,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      }
 
      protected clearInputFields(): void {
-          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
           this.checksStoreService.resetCheckFields();

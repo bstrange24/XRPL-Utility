@@ -251,7 +251,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      protected clearInputFields(): void {
           this.permissionedDomainUtilService.clearInputFields();
-          this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
+          this.selectedDestinationAddress.set('');
      }
 }
