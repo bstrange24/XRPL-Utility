@@ -17,8 +17,6 @@ import { AccountConfig, AccountConfigAction } from '../../../components/account-
 import { ACCOUNT_CONFIG_TX_TYPES, ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-configurator.constants';
 import { AppConstants } from '../../../core/app.constants';
 
-// ─── Meta type ───────────────────────────────────────────────────────────────
-
 type AccountConfigTxMeta = {
      validationRule: string;
      buildValidationInputs: (args: { wallet: Wallet; env: any; config: any }) => any;
@@ -26,8 +24,6 @@ type AccountConfigTxMeta = {
      simulationToastMessage: (args: { config: any }) => string;
      successMessage: (args: { config: any }) => string;
 };
-
-// ─── Meta table ──────────────────────────────────────────────────────────────
 
 const ACCOUNT_CONFIG_META: Record<AccountConfigAction, AccountConfigTxMeta> = {
      modifyAccountSetFlags: {
@@ -125,8 +121,6 @@ const ACCOUNT_CONFIG_META: Record<AccountConfigAction, AccountConfigTxMeta> = {
      },
 };
 
-// ─── Signing options helper ───────────────────────────────────────────────────
-
 function buildSigningOpts(account: any, txOptions: any) {
      return {
           useMultiSign: txOptions?.useMultiSign,
@@ -137,8 +131,6 @@ function buildSigningOpts(account: any, txOptions: any) {
           regularKeyAddress: account?.regularKeyAddress,
      };
 }
-
-// ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class AccountConfiguratorOrchestratorService extends PerformanceBaseComponent {
@@ -154,8 +146,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      public readonly toastService = inject(ToastService);
      public readonly xrplDateService = inject(XrplDateService);
 
-     // ── Single tx path ────────────────────────────────────────────────────────
-
      async executeModifyAccountTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean }> {
           const { account, txOptions, preFetchedEnv, wallet } = config;
           let env: any;
@@ -166,7 +156,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // ── 1. Environment ──────────────────────────────────────────
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -180,28 +170,29 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // ── 2. Validation ───────────────────────────────────────────
+               // Validation
                const meta = ACCOUNT_CONFIG_META[type];
 
                const validationInputs = meta.buildValidationInputs({ wallet, env, config: account });
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // ── 3. Build transaction ────────────────────────────────────
+               // Build transaction
                const tx = meta.buildTx({ orchestrator: this, wallet: env.wallet || wallet, env, config });
 
-               // ── 4. Optional fields ──────────────────────────────────────
+               // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.account, type, txOptions);
 
-               // ── 5. Balance check ────────────────────────────────────────
+               // Balance check
                const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               // ── 6. Submit / simulate ────────────────────────────────────
+               //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: env.wallet || wallet,
                     env,
+
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
                     ui: { suppressIndividualFeedback: false },
@@ -213,12 +204,12 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                txHash = submitOrSimResult.hash;
 
-               // ── 7. Simulation early return ──────────────────────────────
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     return this.handleSimulationSuccess(type, config, txHash);
                }
 
-               // ── 8. Wait for final outcome ───────────────────────────────
+               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
@@ -235,8 +226,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
      }
 
-     // ── Parallel flags path ───────────────────────────────────────────────────
-
+     // Parallel Account set path
      async executeAccountSetFlagsTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; results?: Array<{ flagName: string; hash?: string; success: boolean; error?: string }>; error?: string }> {
           const { wallet, preFetchedEnv, operations = [], txOptions, account } = config;
           let env: any;
@@ -247,7 +237,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // ── 1. Environment ──────────────────────────────────────────
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -263,7 +253,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                const baseSequence = env.accountInfo.result.account_data.Sequence;
 
-               // ── 2. Validation ───────────────────────────────────────────
+               // Validation
                const meta = ACCOUNT_CONFIG_META[type];
 
                const validationInputs = meta.buildValidationInputs({ wallet, env, config });
@@ -272,7 +262,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                const ops = operations as Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }>;
 
-               // ── 3. Parallel submission ──────────────────────────���───────
+               // Parallel submission
                const submissionResults = await this.xrplTransactionService.runWithConcurrencyLimit(ops, 3, async (op, index) => {
                     try {
                          config.flagValue = op.flagValue;
@@ -306,7 +296,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                });
 
-               // ── 4. Ordered confirmation ─────────────────────────────────
+               // Ordered confirmation
                for (const result of submissionResults) {
                     if (!result.success || !result.hash) {
                          results.push(result);
@@ -324,7 +314,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // ── 5. Toast summary ────────────────────────────────────────
+               // Toast summary
                const succeeded = results.filter(r => r.success);
                const failed = results.filter(r => !r.success);
 
@@ -356,8 +346,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           }
      }
 
-     // ── Parallel deposit auth path ────────────────────────────────────────────
-
+     // Parallel deposit auth path
      async executeDepositAuthTx(type: AccountConfigAction, config: AccountConfig): Promise<{ success: boolean; modifyCount?: number; validationError?: boolean; results?: Array<{ address: string; hash?: string; success: boolean; error?: string }>; error?: string }> {
           const { wallet, preFetchedEnv, account, txOptions } = config;
           let env: any;
@@ -368,7 +357,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // ── 1. Environment ──────────────────────────────────────────
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -384,14 +373,14 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
 
                const baseSequence = env.accountInfo.result.account_data.Sequence;
 
-               // ── 2. Validation ───────────────────────────────────────────
+               // Validation
                const meta = ACCOUNT_CONFIG_META[type];
 
                const validationInputs = meta.buildValidationInputs({ wallet, env, config });
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // ── 3. Parallel submission ──────────────────────────────────
+               // Parallel submission
                const submissionResults = await this.xrplTransactionService.runWithConcurrencyLimit<{ account: string }>(account.depositAuthAddresses, 3, async (entry, index) => {
                     const address = entry.account;
 
@@ -431,7 +420,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                });
 
-               // ── 4. Ordered confirmation ─────────────────────────────────
+               // Ordered confirmation
                for (const result of submissionResults) {
                     if (!result.success || !result.hash) {
                          results.push(result);
@@ -449,7 +438,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     }
                }
 
-               // ── 5. Toast summary ────────────────────────────────────────
+               // Toast summary
                const succeeded = results.filter(r => r.success);
                const failed = results.filter(r => !r.success);
 
@@ -483,8 +472,6 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                this.txUiService.resetCurrentStepToIdle();
           }
      }
-
-     // ── Shared helpers ────────────────────────────────────────────────────────
 
      handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string) {
           const msg = ACCOUNT_CONFIG_META[type].simulationToastMessage({ config: config.account ?? config });

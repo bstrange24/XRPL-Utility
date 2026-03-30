@@ -1,37 +1,70 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-import { ValidationService } from '../../validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { ToastService } from '../../toast/toast.service';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { ValidationService } from '../../validation/transaction-validation-rule.service';
+import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
+import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
+import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { ToastService } from '../../toast/toast.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { SendXrpTransactionBuilderService } from '../send-xrp-transaction-builder/send-xrp-transaction-builder.service';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { SEND_XRP_TX_TYPES, SEND_XRP_VALIDATION_RULES, SendXrpTxType } from '../../../components/send-xrp/constants/send-xrp.constants';
 import { XrpPaymentConfig } from '../../../components/send-xrp/constants/send-xrp.types';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
-import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { SEND_XRP_VALIDATION_RULES, SendXrpTxType } from '../../../components/send-xrp/constants/send-xrp.constants';
-import { SendXrpTransactionBuilderService } from '../send-xrp-transaction-builder/send-xrp-transaction-builder.service';
+import { AppConstants } from '../../../core/app.constants';
 
-@Injectable({
-     providedIn: 'root',
-})
+type SendXrpTxMeta = {
+     validationRule: string;
+     buildValidationInputs: (args: { wallet: Wallet; env: any; account: any; txOptions: any }) => any;
+     buildTx: (args: { orchestrator: SendXrpTransactionOrchestratorService; env: any; wallet: any; account: any }) => xrpl.Transaction;
+     simulationToastMessage: (args: { orchestrator: SendXrpTransactionOrchestratorService; account: any }) => string;
+     successMessage: (args: { orchestrator: SendXrpTransactionOrchestratorService; account: any }) => string;
+};
+
+const SEND_XRP_META: Record<SendXrpTxType, SendXrpTxMeta> = {
+     sendXrp: {
+          validationRule: SEND_XRP_VALIDATION_RULES[SEND_XRP_TX_TYPES.SEND],
+          buildValidationInputs: ({ wallet, env, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               paymentXrp: {
+                    amount: account.amount,
+                    destination: account.destination,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, account }) => orchestrator.sendXrpTransactionBuilderService.buildSendXrpTransaction(env.wallet || wallet, env, account),
+          simulationToastMessage: () => `Successfully simulated Sending XRP`,
+          successMessage: () => `Successfully Sent XRP`,
+     },
+};
+
+@Injectable({ providedIn: 'root' })
 export class SendXrpTransactionOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly toastService = inject(ToastService);
+     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     public readonly sendXrpTransactionBuilderService = inject(SendXrpTransactionBuilderService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly toastService = inject(ToastService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
-     public readonly sendXrpTransactionBuilderService = inject(SendXrpTransactionBuilderService);
 
      async executeXrpPayment(type: SendXrpTxType, config: XrpPaymentConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { account, txOptions, preFetchedEnv, wallet } = config;
@@ -43,7 +76,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // Use pre-fetched env if provided, otherwise fetch
+               // ── 1. Environment ──────────────────────────────────────────
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -55,34 +88,62 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                     }));
 
                client = env.client;
-               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
+                    throw new Error('Required network data missing');
+               }
 
-               // Validation
-               const validationRule = SEND_XRP_VALIDATION_RULES[type];
-               const validationInputs = this.buildValidationInputs(wallet, env, account, txOptions);
-               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               // ── 2. Validation ───────────────────────────────────────────
+               const meta = SEND_XRP_META[type];
+
+               const validationInputs = meta.buildValidationInputs({ wallet, env, account, txOptions });
+               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               const tx = this.sendXrpTransactionBuilderService.buildSendXrpTransaction(env.wallet || wallet, env, account);
+               // ── 3. Build transaction ────────────────────────────────────
+               const tx = meta.buildTx({ orchestrator: this, env, wallet, account });
 
-               // Optional fields
+               // ── 4. Optional fields ──────────────────────────────────────
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.account, type, txOptions);
 
-               // Check balances
+               // ── 5. Balance check ────────────────────────────────────────
                const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               // Execute
-               const execResult = await this.executeSpecificTx(tx, env, env.wallet || wallet, client, account, txOptions);
-               if (!execResult.success) return { success: false, error: execResult.error };
-               txHash = execResult.hash;
+               // ── 6. Submit / simulate ────────────────────────────────────
+               const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
+                    client,
+                    wallet: env.wallet || wallet,
+                    env,
+                    mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
+                    skipBalanceCheck: true,
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+                    signing: {
+                         useMultiSign: txOptions?.useMultiSign,
+                         multiSignAddress: account?.multiSignAddress,
+                         multiSignSeeds: account?.multiSignSeeds,
+                         isRegularKeyAddress: txOptions?.isRegularKeyAddress,
+                         regularKeySeed: account?.regularKeySeed,
+                         regularKeyAddress: account?.regularKeyAddress,
+                    },
+                    buildTx: () => tx as any,
+               });
 
-               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(txHash);
+               if (!submitOrSimResult.success) return { success: false, error: submitOrSimResult.error };
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
+               txHash = submitOrSimResult.hash;
+
+               // ── 7. Simulation early return ──────────────────────────────
+               if (submitOrSimResult.mode === 'simulate') {
+                    return this.handleSimulationSuccess(account, txHash);
+               }
+
+               // ── 8. Wait for final outcome ───────────────────────────────
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.buildSuccessMessage();
+               const message = meta.successMessage({ orchestrator: this, account });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -95,38 +156,8 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
           }
      }
 
-     private buildValidationInputs(wallet: Wallet, env: any, account: any, txOptions: any) {
-          const base = {
-               wallet,
-               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-          };
-          return { ...base, paymentXrp: { amount: account.amount, destination: account.destination } };
-     }
-
-     private async executeSpecificTx(tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
-          const opts = {
-               useMultiSign: txOptions.useMultiSign,
-               isRegularKeyAddress: txOptions.isRegularKeyAddress,
-               isSimulateEnabled: txOptions.isSimulateEnabled,
-               regularKeyAddress: account.regularKeyAddress,
-               regularKeySeed: account.regularKeySeed,
-               multiSignAddress: account.multiSignAddress,
-               multiSignSeeds: account.multiSignSeeds,
-          };
-          return this.executor.sendXrpPayment?.(env, tx as xrpl.Payment, wallet, client, opts);
-     }
-
-     buildSuccessMessage(): string {
-          return `Successfully Set XRP`;
-     }
-
-     handleSimulationSuccess(hash?: any) {
-          const msg = `Successfully simulated Sending XRP`;
+     handleSimulationSuccess(account: any, hash?: string) {
+          const msg = SEND_XRP_META['sendXrp'].simulationToastMessage({ orchestrator: this, account });
 
           this.txUiService.resetCurrentStepToIdle();
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');

@@ -112,9 +112,7 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                     }));
 
                client = env.client;
-               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
-                    throw new Error('Required network data missing');
-               }
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
                // Validation
                const meta = DID_META[type];
@@ -138,11 +136,14 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                     client,
                     wallet: env.wallet || wallet,
                     env,
+
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
+
                     ui: {
                          suppressIndividualFeedback: false,
                     },
+
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -151,6 +152,7 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
+
                     buildTx: () => tx as any,
                });
 

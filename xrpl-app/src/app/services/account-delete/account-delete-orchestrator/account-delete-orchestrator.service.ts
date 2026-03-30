@@ -17,8 +17,6 @@ import { ACCOUNT_DELETE_TX_TYPES } from '../../../components/account-delete/cons
 import { AppConstants } from '../../../core/app.constants';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
-// ─── Meta type ──────────────────────────────────────────��────────────────────
-
 type AccountDeleteTxMeta = {
      validationRule: string;
      buildValidationInputs: (args: { wallet: Wallet; env: any; accountDelete: any; account: any; txOptions: any }) => any;
@@ -26,8 +24,6 @@ type AccountDeleteTxMeta = {
      simulationToastMessage: (args: { orchestrator: AccountDeleteOrchestratorService; env: any }) => string;
      successMessage: (args: { orchestrator: AccountDeleteOrchestratorService; env: any }) => string;
 };
-
-// ─── Meta table ──────────────────────────────────────────────────────────────
 
 const ACCOUNT_DELETE_META: Record<AccountDeleteTxType, AccountDeleteTxMeta> = {
      deleteAccount: {
@@ -55,8 +51,6 @@ const ACCOUNT_DELETE_META: Record<AccountDeleteTxType, AccountDeleteTxMeta> = {
      },
 };
 
-// ─── Orchestrator ─────────────────────────────────────────────────────────────
-
 @Injectable({ providedIn: 'root' })
 export class AccountDeleteOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
@@ -81,7 +75,7 @@ export class AccountDeleteOrchestratorService extends PerformanceBaseComponent {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // ── 1. Environment ──────────────────────────────────────────
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -94,33 +88,34 @@ export class AccountDeleteOrchestratorService extends PerformanceBaseComponent {
                     }));
 
                client = env.client;
-               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
-                    throw new Error('Required network data missing');
-               }
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // ── 2. Validation ───────────────────────────────────────────
+               // Validation
                const meta = ACCOUNT_DELETE_META[type];
 
                const validationInputs = meta.buildValidationInputs({ wallet, env, accountDelete, account, txOptions });
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // ── 3. Build transaction ────────────────────────────────────
+               // Build transaction
                const tx = meta.buildTx({ orchestrator: this, env, wallet, accountDelete });
 
-               // ── 4. Optional fields ──────────────────────────────────────
+               // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.accountDelete, type, txOptions);
 
-               // ── 5. Submit / simulate ────────────────────────────────────
+               // Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: env.wallet || wallet,
                     env,
+
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
+
                     ui: {
                          suppressIndividualFeedback: false,
                     },
+
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -129,6 +124,7 @@ export class AccountDeleteOrchestratorService extends PerformanceBaseComponent {
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
+
                     buildTx: () => tx as any,
                });
 
@@ -136,12 +132,12 @@ export class AccountDeleteOrchestratorService extends PerformanceBaseComponent {
 
                txHash = submitOrSimResult.hash;
 
-               // ── 6. Simulation early return ──────────────────────────────
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     return this.handleSimulationSuccess(env, txHash);
                }
 
-               // ── 7. Wait for final outcome ───────────────────────────────
+               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
