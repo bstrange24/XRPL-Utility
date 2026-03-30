@@ -30,11 +30,18 @@
                                    <div>Domain ID: <code>{{ domain.index }}</code></div>
                               </div>
                          </app-tooltip-link>
+
                          <div class="credential-meta chips">
-                              @for (cred of domain.AcceptedCredentials; track cred.CredentialType + cred.Issuer) {
+                              <!-- Group credentials by issuer -->
+                              @let groupedCredentials = groupCredentialsByIssuer(domain.AcceptedCredentials); @for (group of groupedCredentials; track group.issuer) {
                               <div class="cred-chip">
-                                   <span class="type">{{ cred.CredentialType }}</span>
-                                   <span class="issuer">{{ cred.Issuer }}</span>
+                                   <span class="type">Credential Type:</span>
+                                   @for (type of group.types; track type; let last = $last) {
+                                   <span class="type"> {{ type }}@if (!last) {<span class="separator">, </span>} </span>
+                                   }
+                              </div>
+                              <div class="cred-chip">
+                                   <div class="issuer">Issuer: {{ group.issuer }}</div>
                               </div>
                               }
                          </div>

@@ -54,6 +54,8 @@ export const PermissionedDomainStoreService = signalStore(
                patchState(store, {
                     selectedDomainId: '',
                     credentialType: '',
+                    setAcceptedCredentials: [],
+                    domainId: '',
                });
           },
 

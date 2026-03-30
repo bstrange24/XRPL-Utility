@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
@@ -51,6 +51,7 @@ import { StorageService } from '../../services/local-storage/storage.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainComponent extends WalletDestinationBase implements OnInit {
+     @ViewChild('setForm') setFormComponent!: PermissionDomainSetFormComponent;
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -76,6 +77,8 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
+          this.permissionedDomainUtilService.clearFields();
+          this.permissionedDomainUtilService.clearFields();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -88,12 +91,14 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
+          this.permissionedDomainUtilService.clearFields();
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
      async setTab(tab: string): Promise<void> {
           if (PERMISSION_DOMAIN_TAB.includes(tab as any)) {
+               this.permissionedDomainUtilService.clearFields();
                this.permissionedDomainViewModelService.activeTab.set(tab as PermissionDomainActionTypes);
                this.destinationSearchQuery.set('');
 
@@ -163,17 +168,28 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                }
           }
 
+          if (currentTab === 'setPermissionedDomain') {
+               let finalCredentials: Array<{ issuer: string; credentialType: string }> = [];
+
+               if (this.setFormComponent) {
+                    finalCredentials = this.setFormComponent.getAllCredentialsForSubmit();
+               } else {
+                    // fallback (should never happen)
+                    finalCredentials = this.permissionedDomainStoreService.getAll().setAcceptedCredentials ?? [];
+               }
+
+               if (finalCredentials.length === 0 || finalCredentials.length > 10) {
+                    this.toastService.error(`Exactly 1–10 credentials required (got ${finalCredentials.length})`, AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               // Push the final list into the store so the transaction builder uses it
+               this.permissionedDomainStoreService.setField('setAcceptedCredentials', finalCredentials);
+          }
+
           const permissionedDomainState = this.permissionedDomainStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
-
-          if (currentTab === 'setPermissionedDomain') {
-               const credentials = permissionedDomainState.setAcceptedCredentials ?? [];
-               if (credentials.length === 0 || credentials.length > 10) {
-                    this.toastService.error(`Exactly 1–10 credentials required (got ${credentials.length})`, AppConstants.TOAST.ERROR);
-                    return;
-               }
-          }
 
           const config: PermissionDomainConfig = {
                permissionedDomain: permissionedDomainState,
@@ -205,9 +221,13 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
           if (!txResult) throw new Error('Unable error when submitting transaction.');
 
-          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, '', this.permissionedDomainStoreService.credentialIssuer(), '');
-          if (currentTab === 'deletePermissionedDomain' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-               this.permissionedDomainStoreService.resetDomainDropDown();
+          const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, '', this.permissionedDomainStoreService.credentialIssuer(), '', { includePermissionedDomains: true });
+          if (successFullTx) {
+               if (currentTab === 'setPermissionedDomain') {
+                    this.clearInputFields();
+               } else if (currentTab === 'deletePermissionedDomain' && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+                    this.permissionedDomainStoreService.resetDomainDropDown();
+               }
           }
 
           this.txUiService.resetCurrentStepToIdle();

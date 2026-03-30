@@ -34,7 +34,7 @@
 
                <form #theForm="ngForm" class="main-form">
                     @switch (tab) { @case ('setPermissionedDomain') {
-                    <app-permission-domain-set-form [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
+                    <app-permission-domain-set-form #setForm [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
                     } @case ('deletePermissionedDomain') {
                     <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
                     } }

@@ -163,6 +163,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
+               //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: env.wallet || wallet,
@@ -191,7 +192,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
 
                txHash = submitOrSimResult.hash;
 
-               // Simulated toast (preserved)
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     return this.handleSimulationSuccess(type, check, currency, txHash);
                }

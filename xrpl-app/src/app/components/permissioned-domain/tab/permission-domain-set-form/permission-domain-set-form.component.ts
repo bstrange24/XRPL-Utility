@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, effect, inject, input, output, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainUtilService } from '../../../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
@@ -7,6 +7,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { LucideAngularModule } from 'lucide-angular';
 import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message/warning-message.component';
+import console from 'node:console';
 
 @Component({
      selector: 'app-permission-domain-set-form',
@@ -45,12 +46,75 @@ export class PermissionDomainSetFormComponent {
           this.form = this.fb.group({
                credentials: this.fb.array([]), // ← dynamic list
           });
+
+          // ← NEW: Auto-clear visual form whenever the store resets to empty
+          effect(() => {
+               const creds = this.permissionedDomainStoreService.getAll().setAcceptedCredentials ?? [];
+               if (creds.length === 0) {
+                    this.clearVisualForm();
+               }
+          });
+     }
+
+     /** Clears ONLY the visual FormArray + pending inputs (no store reset) */
+     private clearVisualForm(): void {
+          // Clear all fieldsets
+          while (this.credentialsArray.length > 0) {
+               this.credentialsArray.removeAt(0);
+          }
+
+          // Clear the "New Issuer" + "New Credential Type" row
+          this.newIssuer = '';
+          this.newCredentialType = '';
+          this._newIssuerItem = null;
+
+          this.form.reset();
+          this.form.markAsPristine();
+          this.form.markAsUntouched();
+     }
+
+     /** Public method you can still call manually if you want */
+     clearAfterSuccess() {
+          // We no longer need the store reset here (the parent already does it)
+          this.clearVisualForm();
+
+          // Optional: you can keep the store reset if you want extra safety
+          // this.permissionedDomainStoreService.resetDomainFields();
+     }
+
+     /** Returns the pending credential from the "Add new" row, or null if empty */
+     getPendingCredential(): { issuer: string; credentialType: string } | null {
+          if (!this.newIssuer || this.newCredentialType.trim() === '') {
+               return null;
+          }
+          return {
+               issuer: this.newIssuer,
+               credentialType: this.newCredentialType.trim(),
+          };
+     }
+
+     /** Returns EVERY credential that should be sent (list + pending) */
+     getAllCredentialsForSubmit(): Array<{ issuer: string; credentialType: string }> {
+          const fromList = this.credentialsArray.value.map((c: any) => ({
+               issuer: c.issuer,
+               credentialType: c.credentialType,
+          }));
+
+          const pending = this.getPendingCredential();
+          if (pending) {
+               // Prevent accidental duplicate if user already clicked "Add"
+               const alreadyExists = fromList.some((c: { issuer: string; credentialType: string }) => c.issuer === pending.issuer && c.credentialType === pending.credentialType);
+               if (!alreadyExists) {
+                    fromList.push(pending);
+               }
+          }
+
+          return fromList;
      }
 
      onNewIssuerSelected(item: SelectItem | null) {
           this._newIssuerItem = item;
           this.newIssuer = item?.id || '';
-          console.log('Selected issuer:', this.newIssuer);
      }
 
      newIssuerSelectedItem() {
@@ -98,22 +162,6 @@ export class PermissionDomainSetFormComponent {
                credentialType: c.credentialType,
           }));
           this.permissionedDomainStoreService.setField('setAcceptedCredentials', creds);
-     }
-
-     clearAfterSuccess() {
-          // Clear the dynamic credentials list
-          while (this.credentialsArray.length > 0) {
-               this.credentialsArray.removeAt(0);
-          }
-
-          // Clear add-row inputs
-          this.newIssuer = '';
-          this.newCredentialType = '';
-          this._newIssuerItem = null; // if using the selected item tracking
-
-          this.form.reset();
-
-          this.permissionedDomainStoreService.resetDomainFields(); // or specific resetAcceptedCredentials()
      }
 
      selectedUpdateDomain = computed(() => {

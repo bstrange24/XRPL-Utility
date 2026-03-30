@@ -64,4 +64,21 @@ export class PermissionedDomainsSummaryComponent {
      getCursorStyle(): string | null {
           return this.tab() === 'setPermissionedDomain' ? null : 'pointer';
      }
+
+     groupCredentialsByIssuer(credentials: { CredentialType: string; Issuer: string }[]) {
+          if (!credentials || credentials.length === 0) return [];
+
+          const groups = new Map<string, Set<string>>();
+
+          credentials.forEach(cred => {
+               const types = groups.get(cred.Issuer) ?? new Set();
+               types.add(cred.CredentialType);
+               groups.set(cred.Issuer, types);
+          });
+
+          return Array.from(groups.entries()).map(([issuer, types]) => ({
+               issuer,
+               types: Array.from(types),
+          }));
+     }
 }
