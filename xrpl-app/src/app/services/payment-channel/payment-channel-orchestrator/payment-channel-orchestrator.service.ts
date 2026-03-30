@@ -1,37 +1,145 @@
 import { inject, Injectable } from '@angular/core';
-import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-import { ToastService } from '../../toast/toast.service';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { ValidationService } from '../../validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { PaymentChannelUtilService } from '../payment-channel-util/payment-channel-util.service';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { PaymentChannelTxConfig } from '../../../components/payment-channel/constants/payment-channel.types';
-import { PaymentChannelTransactionBuilderService } from '../payment-channel-transaction-builder/payment-channel-transaction-builder.service';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { ValidationService } from '../../validation/transaction-validation-rule.service';
+import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { PaymentChannelTxType, PAYMENT_CHANNEL_VALIDATION_RULES } from '../../../components/payment-channel/constants/payment-channel.constants';
+import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { ToastService } from '../../toast/toast.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { PaymentChannelTransactionBuilderService } from '../payment-channel-transaction-builder/payment-channel-transaction-builder.service';
+import { PaymentChannelUtilService } from '../payment-channel-util/payment-channel-util.service';
+import { PAYMENT_CHANNEL, PAYMENT_CHANNEL_VALIDATION_RULES, PaymentChannelTxType } from '../../../components/payment-channel/constants/payment-channel.constants';
+import { PaymentChannelTxConfig } from '../../../components/payment-channel/constants/payment-channel.types';
+import { AppConstants } from '../../../core/app.constants';
 
-@Injectable({
-     providedIn: 'root',
-})
+type PaymentChannelTxMeta = {
+     validationRule: string;
+     buildValidationInputs: (args: { wallet: Wallet; env: any; paymentChannel: any; account: any; txOptions: any }) => any;
+     buildTx: (args: { orchestrator: PaymentChannelOrchestratorService; env: any; wallet: any; paymentChannel: any }) => xrpl.Transaction;
+     simulationToastMessage: (args: { orchestrator: PaymentChannelOrchestratorService; paymentChannel: any }) => string;
+     successMessage: (args: { orchestrator: PaymentChannelOrchestratorService; paymentChannel: any }) => string;
+};
+
+const PAYMENT_CHANNEL_META: Record<PaymentChannelTxType, PaymentChannelTxMeta> = {
+     createPaymentChannel: {
+          validationRule: PAYMENT_CHANNEL_VALIDATION_RULES[PAYMENT_CHANNEL.CREATE],
+          buildValidationInputs: ({ wallet, env, paymentChannel, account, txOptions }) => ({
+               wallet,
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               paymentChannelCreate: {
+                    amount: paymentChannel.amount,
+                    destination: paymentChannel.destination,
+                    settleDelay: paymentChannel.settleDelay,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, paymentChannel }) => orchestrator.paymentChannelTransactionBuilderService.buildCreatePaymentChannelTx(env.wallet || wallet, env, paymentChannel),
+          simulationToastMessage: () => `Simulated Creating Payment Channel`,
+          successMessage: () => `Payment Channel created successfully`,
+     },
+
+     fundPaymentChannel: {
+          validationRule: PAYMENT_CHANNEL_VALIDATION_RULES[PAYMENT_CHANNEL.FUND],
+          buildValidationInputs: ({ wallet, env, paymentChannel, account, txOptions }) => ({
+               wallet,
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               paymentChannelFund: {
+                    amount: paymentChannel.amount,
+                    channelIDField: paymentChannel.channelIDField,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, paymentChannel }) => orchestrator.paymentChannelTransactionBuilderService.buildFundPaymentChannelTx(env.wallet || wallet, env, paymentChannel),
+          simulationToastMessage: () => `Simulated Funding Payment Channel`,
+          successMessage: () => `Payment Channel funded successfully`,
+     },
+
+     claimPaymentChannel: {
+          validationRule: PAYMENT_CHANNEL_VALIDATION_RULES[PAYMENT_CHANNEL.CLAIM],
+          buildValidationInputs: ({ wallet, env, paymentChannel, account, txOptions }) => ({
+               wallet,
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               paymentChannelClaim: {
+                    amount: paymentChannel.amount,
+                    channelIDField: paymentChannel.channelIDField,
+                    claimSignature: paymentChannel.channelClaimSignatureField,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, paymentChannel }) => orchestrator.paymentChannelTransactionBuilderService.buildClaimPaymentChannelTx(env.wallet || wallet, env, paymentChannel),
+          simulationToastMessage: () => `Simulated Claiming Payment Channel`,
+          successMessage: () => `Payment Channel claim successfully`,
+     },
+
+     renewPaymentChannel: {
+          validationRule: PAYMENT_CHANNEL_VALIDATION_RULES[PAYMENT_CHANNEL.RENEW],
+          buildValidationInputs: ({ wallet, env, paymentChannel, account, txOptions }) => ({
+               wallet,
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               paymentChannelRenew: {
+                    channelIDField: paymentChannel.channelIDField,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, paymentChannel }) => orchestrator.paymentChannelTransactionBuilderService.buildRenewPaymentChannelTx(env.wallet || wallet, env, paymentChannel),
+          simulationToastMessage: () => `Simulated Renewing Payment Channel`,
+          successMessage: () => `Payment Channel renew successfully`,
+     },
+
+     closePaymentChannel: {
+          validationRule: PAYMENT_CHANNEL_VALIDATION_RULES[PAYMENT_CHANNEL.CLOSE],
+          buildValidationInputs: ({ wallet, env, paymentChannel, account, txOptions }) => ({
+               wallet,
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               paymentChannelClose: {
+                    channelIDField: paymentChannel.channelIDField,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, paymentChannel }) => orchestrator.paymentChannelTransactionBuilderService.buildClosePaymentChannelTx(env.wallet || wallet, env, paymentChannel),
+          simulationToastMessage: () => `Simulated Closing Payment Channel`,
+          successMessage: () => `Closed Payment Channel successfully`,
+     },
+};
+
+@Injectable({ providedIn: 'root' })
 export class PaymentChannelOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly xrplTransactionService = inject(XrplTransactionService);
-     private readonly toast = inject(ToastService);
      private readonly txUiService = inject(TransactionUiService);
-     public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
      public readonly paymentChannelTransactionBuilderService = inject(PaymentChannelTransactionBuilderService);
+     public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
+     public readonly toastService = inject(ToastService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
-     async executeCredentialTx(type: PaymentChannelTxType, config: PaymentChannelTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+     async executePaymentChannelTx(type: PaymentChannelTxType, config: PaymentChannelTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { paymentChannel, account, txOptions, preFetchedEnv, wallet } = config;
           let env: any;
           let client: xrpl.Client;
@@ -57,48 +165,66 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
                // Validation
-               const validationRule = PAYMENT_CHANNEL_VALIDATION_RULES[type];
-               const validationInputs = this.buildValidationInputs(type, wallet, env, paymentChannel, account, txOptions);
-               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               const meta = PAYMENT_CHANNEL_META[type];
+
+               const validationInputs = meta.buildValidationInputs({ wallet, env, paymentChannel, account, txOptions });
+               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Build transaction
-               let tx: any;
-               if (type === 'createPaymentChannel') {
-                    tx = this.paymentChannelTransactionBuilderService.buildCreatePaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-               } else if (type === 'fundPaymentChannel') {
-                    tx = this.paymentChannelTransactionBuilderService.buildFundPaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-               } else if (type === 'claimPaymentChannel') {
-                    tx = this.paymentChannelTransactionBuilderService.buildClaimPaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-               } else if (type === 'renewPaymentChannel') {
-                    tx = this.paymentChannelTransactionBuilderService.buildRenewPaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-               } else {
-                    tx = this.paymentChannelTransactionBuilderService.buildClosePaymentChannelTx(env.wallet || wallet, env, paymentChannel);
-               }
+               const tx = meta.buildTx({ orchestrator: this, env, wallet, paymentChannel });
 
                // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.paymentChannel, type, txOptions);
 
-               // Check balances
+               // Balance check
                const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
-               if (!execResult.success) return { success: false, error: execResult.error };
-               txHash = execResult.hash;
+               //  Submit / simulate
+               const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
+                    client,
+                    wallet: env.wallet || wallet,
+                    env,
 
-               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
+                    mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
+                    skipBalanceCheck: true,
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+
+                    signing: {
+                         useMultiSign: txOptions?.useMultiSign,
+                         multiSignAddress: account?.multiSignAddress,
+                         multiSignSeeds: account?.multiSignSeeds,
+                         isRegularKeyAddress: txOptions?.isRegularKeyAddress,
+                         regularKeySeed: account?.regularKeySeed,
+                         regularKeyAddress: account?.regularKeyAddress,
+                    },
+
+                    buildTx: () => tx as any,
+               });
+
+               if (!submitOrSimResult.success) return { success: false, error: submitOrSimResult.error };
+
+               txHash = submitOrSimResult.hash;
+
+               // Simulated toast
+               if (submitOrSimResult.mode === 'simulate') {
+                    return this.handleSimulationSuccess(type, paymentChannel, txHash);
+               }
+
+               // Final validated outcome (preserved)
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.buildSuccessMessage(type);
+               const message = meta.successMessage({ orchestrator: this, paymentChannel });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
           } catch (err: any) {
-               console.error(`[${type}] executeCredentialTx failed:`, err);
+               console.error(`[${type}] executePaymentChannelTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
                return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
@@ -106,82 +232,11 @@ export class PaymentChannelOrchestratorService extends PerformanceBaseComponent 
           }
      }
 
-     private buildValidationInputs(type: PaymentChannelTxType, wallet: Wallet, env: any, paymentChannel: any, account: any, txOptions: any) {
-          const base = {
-               wallet,
-               // network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-          };
-
-          switch (type) {
-               case 'createPaymentChannel':
-                    return { ...base, paymentChannelCreate: { amount: paymentChannel.amount, destination: paymentChannel.destination, settleDelay: paymentChannel.settleDelay } };
-               case 'fundPaymentChannel':
-                    return { ...base, paymentChannelFund: { amount: paymentChannel.amount, channelIDField: paymentChannel.channelIDField } };
-               case 'claimPaymentChannel':
-                    return { ...base, paymentChannelClaim: { amount: paymentChannel.amount, channelIDField: paymentChannel.channelIDField, claimSignature: paymentChannel.channelClaimSignatureField } };
-               case 'renewPaymentChannel':
-                    return { ...base, paymentChannelRenew: { channelIDField: paymentChannel.channelIDField } };
-               case 'closePaymentChannel':
-                    return { ...base, paymentChannelClose: { channelIDField: paymentChannel.channelIDField } };
-          }
-     }
-
-     private async executeSpecificTx(type: PaymentChannelTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
-          const opts = {
-               useMultiSign: txOptions.useMultiSign,
-               isRegularKeyAddress: txOptions.isRegularKeyAddress,
-               isSimulateEnabled: txOptions.isSimulateEnabled,
-               regularKeyAddress: account.regularKeyAddress,
-               regularKeySeed: account.regularKeySeed,
-               multiSignAddress: account.multiSignAddress,
-               multiSignSeeds: account.multiSignSeeds,
-          };
-
-          switch (type) {
-               case 'createPaymentChannel':
-                    return this.executor.paymentChannelCreate?.(env, tx as xrpl.PaymentChannelCreate, wallet, client, opts);
-               case 'fundPaymentChannel':
-                    return this.executor.paymentChannelFundTx?.(env, tx as xrpl.PaymentChannelFund, wallet, client, opts);
-               case 'claimPaymentChannel':
-                    return this.executor.paymentChannelClaimTx?.(env, tx as xrpl.PaymentChannelClaim, wallet, client, opts);
-               case 'renewPaymentChannel':
-                    return this.executor.paymentChannelClaimTx?.(env, tx as xrpl.PaymentChannelClaim, wallet, client, opts);
-               case 'closePaymentChannel':
-                    return this.executor.paymentChannelClaimTx?.(env, tx as xrpl.PaymentChannelClaim, wallet, client, opts);
-          }
-     }
-
-     buildSuccessMessage(type: any): string {
-          if (type === 'createPaymentChannel') return `Payment Channel created successfully`;
-          if (type === 'fundPaymentChannel') return `Payment Channel funded successfully`;
-          if (type === 'claimPaymentChannel') return `Payment Channel claim successfully`;
-          if (type === 'renewPaymentChannel') return `Payment Channel renew successfully`;
-          return `Closed Payment Channel successfully`;
-     }
-
-     handleSimulationSuccess(type: PaymentChannelTxType, hash?: string) {
-          let msg: string;
-
-          if (type === 'createPaymentChannel') {
-               msg = `Simulated Creating Payment Channel`;
-          } else if (type === 'fundPaymentChannel') {
-               msg = `Simulated Funding Payment Channel`;
-          } else if (type === 'claimPaymentChannel') {
-               msg = `Simulated Claiming Payment Channel`;
-          } else if (type === 'renewPaymentChannel') {
-               msg = `Simulated Renewing Payment Channel`;
-          } else {
-               msg = `Simulated Closing Payment Channel`;
-          }
+     handleSimulationSuccess(type: PaymentChannelTxType, paymentChannel: any, hash?: string) {
+          const msg = PAYMENT_CHANNEL_META[type].simulationToastMessage({ orchestrator: this, paymentChannel });
 
           this.txUiService.resetCurrentStepToIdle();
-          this.toast.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
 
           return { success: true, hash };
      }
