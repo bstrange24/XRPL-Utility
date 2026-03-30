@@ -1,36 +1,124 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { CredentialUtilService } from '../credential-util/credential-util.service';
-import { AppConstants } from '../../../core/app.constants';
-import { XrplDateService } from '../../../core/xrpl-date.service';
-import { CREDENTIAL_VALIDATION_RULES, CredentialTxType } from '../../../components/credentials/constants/credential.constants';
-import { CredentialTxConfig } from '../../../components/credentials/constants/credential.types';
-import { ToastService } from '../../toast/toast.service';
-import { CredentialState } from '../credential-store/credential-store.service';
-import { CredentialTransactionBuilderService } from '../credential-transaction-builder/credential-transaction-builder.service';
+import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { ToastService } from '../../toast/toast.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { CredentialTransactionBuilderService } from '../credential-transaction-builder/credential-transaction-builder.service';
+import { CredentialUtilService } from '../credential-util/credential-util.service';
+import { CredentialState } from '../credential-store/credential-store.service';
+import { XrplDateService } from '../../../core/xrpl-date.service';
+import { CREDENTIAL_TX_TYPES, CREDENTIAL_VALIDATION_RULES, CredentialTxType } from '../../../components/credentials/constants/credential.constants';
+import { CredentialTxConfig } from '../../../components/credentials/constants/credential.types';
+import { AppConstants } from '../../../core/app.constants';
 
-@Injectable({
-     providedIn: 'root',
-})
+type CredentialTxMeta = {
+     validationRule: string;
+     buildValidationInputs: (args: { wallet: Wallet; env: any; credential: any; account: any; txOptions: any }) => any;
+     buildTx: (args: { orchestrator: CredentialTransactionOrchestratorService; env: any; wallet: any; credential: any; preparedConfig: CredentialState }) => xrpl.Transaction;
+     simulationToastMessage: (args: { orchestrator: CredentialTransactionOrchestratorService; credential: any }) => string;
+     successMessage: (args: { orchestrator: CredentialTransactionOrchestratorService; credential: any }) => string;
+};
+
+const CREDENTIAL_META: Record<CredentialTxType, CredentialTxMeta> = {
+     createCredential: {
+          validationRule: CREDENTIAL_VALIDATION_RULES[CREDENTIAL_TX_TYPES.CREATE],
+          buildValidationInputs: ({ wallet, env, credential, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               env,
+               createCredential: {
+                    credentialType: credential.credentialType,
+                    expirationRipple: credential.expirationDate,
+                    subject: credential.subject,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, credential, preparedConfig }) => orchestrator.credentialTransactionBuilderService.buildCreateCredentialTx(env.wallet || wallet, env, credential, preparedConfig),
+          simulationToastMessage: () => `Simulated Creating Credential`,
+          successMessage: ({ credential }) => `Successfully Created Credential${credential.subject ? ` for ${credential.subject}` : ''}`,
+     },
+
+     acceptCredentials: {
+          validationRule: CREDENTIAL_VALIDATION_RULES[CREDENTIAL_TX_TYPES.ACCEPT],
+          buildValidationInputs: ({ wallet, env, credential, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               env,
+               acceptCredentials: {
+                    credentialID: credential.credentialID,
+                    credentialIssuer: credential.credentialIssuer,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, credential, preparedConfig }) => orchestrator.credentialTransactionBuilderService.buildAcceptCredentialTx(env.wallet || wallet, env, credential, preparedConfig),
+          simulationToastMessage: () => `Simulated Accepting Credential`,
+          successMessage: () => `Successfully Accepted Credential`,
+     },
+
+     deleteCredentials: {
+          validationRule: CREDENTIAL_VALIDATION_RULES[CREDENTIAL_TX_TYPES.DELETE],
+          buildValidationInputs: ({ wallet, env, credential, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               env,
+               deleteCredentials: {
+                    credentialType: credential.credentialType,
+                    subject: credential.subject,
+                    credentialID: credential.credentialID,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, credential }) => orchestrator.credentialTransactionBuilderService.buildDeleteCredentialTx(env.wallet || wallet, env, credential),
+          simulationToastMessage: () => `Simulated Deleting Credential`,
+          successMessage: () => `Successfully Deleted Credential`,
+     },
+};
+
+@Injectable({ providedIn: 'root' })
 export class CredentialTransactionOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly toastService = inject(ToastService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     public readonly credentialTransactionBuilderService = inject(CredentialTransactionBuilderService);
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly xrplDateService = inject(XrplDateService);
-     public readonly credentialTransactionBuilderService = inject(CredentialTransactionBuilderService);
+     public readonly toastService = inject(ToastService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
@@ -59,41 +147,64 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
                // Validation
-               const validationRule = CREDENTIAL_VALIDATION_RULES[type];
-               const validationInputs = this.buildValidationInputs(type, wallet, env, credential, account, txOptions);
-               const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               const meta = CREDENTIAL_META[type];
+
+               const validationInputs = meta.buildValidationInputs({ wallet, env, credential, account, txOptions });
+               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // Build transaction
+               // Prepare config (enrich from ledger + date conversion)
                const preparedConfig = await this.prepareCredentialConfig(type, credential, env);
 
-               let tx: any;
-               if (type === 'createCredential') {
-                    tx = this.credentialTransactionBuilderService.buildCreateCredentialTx(env.wallet || wallet, env, credential, preparedConfig);
-               } else if (type === 'acceptCredentials') {
-                    tx = this.credentialTransactionBuilderService.buildAcceptCredentialTx(env.wallet || wallet, env, credential, preparedConfig);
-               } else {
-                    tx = this.credentialTransactionBuilderService.buildDeleteCredentialTx(env.wallet || wallet, env, credential);
-               }
+               // Build transaction
+               const tx = meta.buildTx({ orchestrator: this, env, wallet, credential, preparedConfig });
 
                // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.credential, type, txOptions);
 
-               // Check balances
+               // Balance check
                const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               // Execute
-               const execResult = await this.executeSpecificTx(type, tx, env, env.wallet || wallet, client, account, txOptions);
-               if (!execResult.success) return { success: false, error: execResult.error };
-               txHash = execResult.hash;
+               //  Submit / simulate
+               const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
+                    client,
+                    wallet: env.wallet || wallet,
+                    env,
 
-               if (txOptions?.isSimulateEnabled) return this.handleSimulationSuccess(type, txHash);
+                    mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
+                    skipBalanceCheck: true,
 
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence);
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+
+                    signing: {
+                         useMultiSign: txOptions?.useMultiSign,
+                         multiSignAddress: account?.multiSignAddress,
+                         multiSignSeeds: account?.multiSignSeeds,
+                         isRegularKeyAddress: txOptions?.isRegularKeyAddress,
+                         regularKeySeed: account?.regularKeySeed,
+                         regularKeyAddress: account?.regularKeyAddress,
+                    },
+
+                    buildTx: () => tx as any,
+               });
+
+               if (!submitOrSimResult.success) return { success: false, error: submitOrSimResult.error };
+
+               txHash = submitOrSimResult.hash;
+
+               // Simulated toast
+               if (submitOrSimResult.mode === 'simulate') {
+                    return this.handleSimulationSuccess(type, credential, txHash);
+               }
+
+               // Final validated outcome (preserved)
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.buildSuccessMessage(type, credential);
+               const message = meta.successMessage({ orchestrator: this, credential });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -106,67 +217,8 @@ export class CredentialTransactionOrchestratorService extends PerformanceBaseCom
           }
      }
 
-     private buildValidationInputs(type: CredentialTxType, wallet: Wallet, env: any, credential: any, account: any, txOptions: any) {
-          const base = {
-               wallet,
-               network: { accountInfo: env.accountInfo, accountObjects: env.accountObjects, fee: env.fee, currentLedger: env.ledgerInfo.lastIndex },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-          };
-
-          switch (type) {
-               case 'createCredential':
-                    return { ...base, createCredential: { credentialType: credential.credentialType, expirationRipple: credential.expirationDate, subject: credential.subject } };
-               case 'deleteCredentials':
-                    return { ...base, deleteCredentials: { credentialType: credential.credentialType, subject: credential.subject, credentialID: credential.credentialID } };
-               case 'acceptCredentials':
-                    return { ...base, acceptCredentials: { credentialID: credential.credentialID, credentialIssuer: credential.credentialIssuer } };
-          }
-     }
-
-     private async executeSpecificTx(type: CredentialTxType, tx: xrpl.Transaction, env: any, wallet: xrpl.Wallet, client: xrpl.Client, account: any, txOptions: any) {
-          const opts = {
-               useMultiSign: txOptions.useMultiSign,
-               isRegularKeyAddress: txOptions.isRegularKeyAddress,
-               isSimulateEnabled: txOptions.isSimulateEnabled,
-               regularKeyAddress: account.regularKeyAddress,
-               regularKeySeed: account.regularKeySeed,
-               multiSignAddress: account.multiSignAddress,
-               multiSignSeeds: account.multiSignSeeds,
-          };
-
-          switch (type) {
-               case 'createCredential':
-                    return this.executor.createCredential?.(env, tx as xrpl.CredentialCreate, wallet, client, opts);
-               case 'deleteCredentials':
-                    return this.executor.deleteCredential?.(env, tx as xrpl.CredentialDelete, wallet, client, opts);
-               case 'acceptCredentials':
-                    return this.executor.acceptCredential?.(env, tx as xrpl.CredentialAccept, wallet, client, opts);
-          }
-     }
-
-     buildSuccessMessage(type: CredentialTxType, config: CredentialState): string {
-          switch (type) {
-               case 'createCredential':
-                    return `Successfully Create Credential for ${config.subject ? config.subject : ''}`;
-               case 'acceptCredentials':
-                    return `Successfully Accepted Credential`;
-               case 'deleteCredentials':
-                    return `Successfully Deleted Credential`;
-               default:
-                    return 'Operation completed';
-          }
-     }
-
-     handleSimulationSuccess(type: CredentialTxType, hash?: string) {
-          let msg: string;
-
-          if (type === 'createCredential') msg = `Successfully simulated creating the Credential.`;
-          else if (type === 'deleteCredentials') msg = `Successfully simulated deleting the Credential.`;
-          else msg = `Successfully simulated accepting the Credential.`;
+     handleSimulationSuccess(type: CredentialTxType, credential: any, hash?: string) {
+          const msg = CREDENTIAL_META[type].simulationToastMessage({ orchestrator: this, credential });
 
           this.txUiService.resetCurrentStepToIdle();
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');

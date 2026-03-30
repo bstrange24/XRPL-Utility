@@ -1,5 +1,6 @@
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
+import { ACCOUNT_CONFIG_TX_TYPES } from './account-configurator.constants';
 
 /**
  * Single source of truth for all account configuration actions
@@ -13,8 +14,6 @@ export const ACCOUNT_CONFIG_ACTIONS = {
      MODIFY_MULTI_SIGNERS: 'modifyMultiSigners',
      MODIFY_REGULAR_KEY: 'modifyRegularKey',
 } as const;
-
-export type AccountConfigAction = (typeof ACCOUNT_CONFIG_ACTIONS)[keyof typeof ACCOUNT_CONFIG_ACTIONS];
 
 /**
  * XRPL Account Flags
@@ -137,8 +136,8 @@ export interface AccountConfiguratorState {
      depositAuthEnabled: boolean;
      isdepositAuthAddress: boolean;
      depositAuthAddress: string;
-     depsositAuthEntries: string; // typo? consider renaming
-     formattedDepsositAuthEntries: string;
+     depositAuthEntries: string; // typo? consider renaming
+     formattedDepositAuthEntries: string;
      isNFTokenMinterEnabled: boolean;
      isAuthorizedNFTokenMinter: boolean;
      isUpdateMetaData: boolean;
@@ -154,4 +153,41 @@ export interface AccountConfiguratorState {
      suppressIndividualFeedback: string;
 }
 
+export type AccountConfigAction = (typeof ACCOUNT_CONFIG_TX_TYPES)[keyof typeof ACCOUNT_CONFIG_TX_TYPES];
+
 export type AccountConfiguratorField = keyof AccountConfiguratorState;
+
+// Single, fully-typed AccountConfig — replaces any prior loose definition in this file.
+// export interface AccountConfig {
+//      account: {
+//           regularKeyAddress?: string;
+//           regularKeySeed?: string;
+//           multiSignAddress?: string;
+//           multiSignSeeds?: string;
+//           depositAuthAddresses?: Array<{ account: string }>;
+//           depsositAuthEntries?: any;
+//           authorizeFlag?: string;
+//           formattedSignerEntries?: any;
+//           signerQuorum?: any;
+//           enableNftMinter?: string;
+//           nfTokenMinterAddress?: string;
+//           enableRegularKeyFlag?: string;
+//           enableMultiSignFlag?: string;
+//           setFlags?: any[];
+//           clearFlags?: any[];
+//           [key: string]: any;
+//      };
+//      txOptions: {
+//           isSimulateEnabled?: boolean;
+//           isRegularKeyAddress?: boolean;
+//           useMultiSign?: boolean;
+//           [key: string]: any;
+//      };
+//      wallet: import('../../../services/wallets/manager/wallet-manager.service').Wallet;
+//      preFetchedEnv?: PrefetchedLedgerEnvironment;
+//      operations?: [];
+//      flagValue?: any;
+//      operation?: any;
+//      destinationAddress?: string;
+//      [key: string]: any;
+// }
