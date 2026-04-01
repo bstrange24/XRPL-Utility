@@ -1,0 +1,36 @@
+<div class="form-row">
+     <div class="form-group">
+          <label for="selectEscrow">Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }}</label>
+          <p class="form-hint">Select an existing escrow to {{activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }}.</p>
+          <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
+          @if (activeTab === 'cancelEscrow' && selectedEscrowIsExpired()) {
+          <div class="warning-message expired-warning">
+               <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
+               This selected escrow has expired.
+          </div>
+          }
+     </div>
+</div>
+
+@if (activeTab === 'finishEscrow' && selectedEscrowIsExpired()) {
+<div class="warning-message expired-warning">
+     <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
+     This selected escrow has expired and cannot be finished.
+</div>
+} @if(activeTab === 'finishEscrow' && !selectedEscrowIsExpired()) {
+<div class="form-row">
+     <div class="form-group">
+          <label for="escrowSequenceNumberField">Escrow Sequence ID</label>
+          <p class="form-hint">Sequence ID generated when the escrow was created.</p>
+          <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" name="escrowSequenceNumberField" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="escrowOwner">Escrow Owner</label>
+          <p class="form-hint">The account that orginally created the escrow.</p>
+          <input type="text" id="escrowOwnerField" [ngModel]="escrowStoreService.escrowOwner()" name="escrowOwnerField" />
+     </div>
+</div>
+}

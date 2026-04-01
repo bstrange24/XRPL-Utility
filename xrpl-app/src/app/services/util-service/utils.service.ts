@@ -16,6 +16,7 @@ import { AccountConfiguratorStoreService } from '../account-configurator/account
 import { CurrencyStoreService } from '../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-store.service';
 import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
+import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -40,6 +41,7 @@ export class UtilsService {
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly checksStoreService = inject(ChecksStoreService);
+     public readonly escrowStoreService = inject(EscrowStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
@@ -241,6 +243,7 @@ export class UtilsService {
           const rounded = Number(num.toFixed(6));
           this.accountConfiguratorStoreService.setField('amount', rounded.toString());
           this.checksStoreService.setField('amount', rounded.toString());
+          this.escrowStoreService.setField('amount', rounded.toString());
           this.txUiService.amountField.set(rounded.toString());
      }
 
@@ -1443,6 +1446,14 @@ export class UtilsService {
                }
           }
 
+          if (amount.split(' ').length === 2) {
+               const splitAmount = amount.split(' ');
+               return `${splitAmount[0]} ${splitAmount[1]}`;
+          } else if (amount.split(' ').length > 2) {
+               const splitAmount = amount.split(' ');
+               return `${splitAmount[0]} ${splitAmount[1]} (issuer: ${splitAmount[4]})`;
+          }
+
           return `${amount} XRP`;
      }
 
@@ -2170,6 +2181,10 @@ export class UtilsService {
 
      setPublicKey(tx: any, publicKeyField: string) {
           tx.PublicKey = publicKeyField;
+     }
+
+     setFinishAfter(tx: any, finishAfter: any) {
+          tx.FinishAfter = finishAfter;
      }
 
      setCancelAfter(tx: any, cancelAfter: any) {

@@ -531,25 +531,16 @@ export class XrplTransactionService extends PerformanceBaseComponent {
 
      buildAmount(currencyCode: string, amount: string, currencyIssuer: string) {
           let amountToCash: any;
-          let currency: string;
-          let paymentType;
-
           if (currencyCode === AppConstants.XRP_CURRENCY) {
                amountToCash = xrpl.xrpToDrops(amount);
-               currency = 'XRP';
-               paymentType = 'XRP';
           } else {
                const encodedCurrency = this.utilsService.encodeIfNeeded(currencyCode);
-
                amountToCash = {
                     value: amount.toString(),
                     currency: encodedCurrency,
                     issuer: currencyIssuer,
                };
-
-               currency = encodedCurrency;
-               paymentType = 'IOU';
           }
-          return { amountToCash, paymentType, currency };
+          return { amountToCash };
      }
 }

@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { CreatePaymentChannelComponent } from './components/payment-channel/payment-channel.component';
-import { CreateTimeEscrowComponent } from './components/time-escrow/time-escrow.component';
-import { CreateConditionalEscrowComponent } from './components/conditional-escrow/conditional-escrow.component';
 import { SendChecksComponent } from './components/checks/checks.component';
 import { CreateTicketsComponent } from './components/tickets/tickets.component';
 import { CreateOfferComponent } from './components/offer/offer.component';
@@ -22,6 +20,8 @@ import { SignTransactionsComponent } from './components/sign-transactions/sign-t
 import { SendXrpComponent } from './components/send-xrp/send-xrp.component';
 import { WalletConfiguratorComponent } from './components/wallet-configurator/wallet-configurator.component';
 import { SetHookComponent } from './components/set-hook/set-hook.component';
+import { TimeBasedEscrowComponent } from './components/escrow/time-based-escrow/time-based-escrow.component';
+import { ConditionalEscrowComponent } from './components/escrow/conditional-escrow/conditional-escrow.component';
 
 export const routes: Routes = [
      { path: '', redirectTo: '/account-configurator', pathMatch: 'full' },
@@ -39,8 +39,8 @@ export const routes: Routes = [
 
      { path: 'send-xrp', component: SendXrpComponent, data: { title: 'Send XRP' } },
      { path: 'payment-channel', component: CreatePaymentChannelComponent, data: { title: 'Payment Channel' } },
-     { path: 'time-escrow', component: CreateTimeEscrowComponent, data: { title: 'Time Escrow' } },
-     { path: 'conditional-escrow', component: CreateConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },
+     { path: 'time-escrow', component: TimeBasedEscrowComponent, data: { title: 'Time Escrow' } },
+     { path: 'conditional-escrow', component: ConditionalEscrowComponent, data: { title: 'Conditional Escrow' } },
      { path: 'checks', component: SendChecksComponent, data: { title: 'Checks' } },
      { path: 'tickets', component: CreateTicketsComponent, data: { title: 'Tickets' } },
      { path: 'create-offer', component: CreateOfferComponent, data: { title: 'Create Offers' } },

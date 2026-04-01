@@ -1,0 +1,111 @@
+@if (page()) {
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+          <h3>Conditional Escrow Requirements</h3>
+     </div>
+
+     <p class="info-subtitle">
+          Conditional Escrows lock XRP, or an IOU, until a specified time <br />
+          A cryptographic fulfillment is required to release funds.
+     </p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge condition-badge">🔐 Condition Only</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Condition</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">FinishAfter</span>
+                         <span class="field-status optional">➕ Optional</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">CancelAfter</span>
+                         <span class="field-status optional">➕ Optional</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li><strong>Condition is required</strong> for conditional escrows.</li>
+                    <li>A valid <strong>cryptographic fulfillment</strong> must be providedto finish the escrow.</li>
+                    <li>You must include at least one of <strong>FinishAfter</strong> or <strong>CancelAfter</strong>.</li>
+                    <li>If both time fields are provided, <strong>FinishAfter must be earlier than CancelAfter</strong>.</li>
+                    <li>Each escrow increases your account’s <strong>owner reserve</strong> until it is finished or canceled.</li>
+               </ul>
+          </div>
+     </div>
+</div>
+} @else {
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
+          <h3>Time-Based Escrow Requirements</h3>
+     </div>
+
+     <p class="info-subtitle">Time based Escrows lock XRP, or an IOU, until a specified time.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">⏱️ Unlock Only</span>
+                    <span class="badge optional-badge">No Expiration</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">FinishAfter</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">CancelAfter</span>
+                         <span class="field-status omitted">❌ Optional</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">⏱️ Unlock + Expiration</span>
+                    <span class="badge required-badge">With Cancel Time</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">FinishAfter</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">CancelAfter</span>
+                         <span class="field-status optional">➕ Optional</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li><strong>FinishAfter is required</strong> for time-based escrows.</li>
+                    <li>If CancelAfter is provided, <strong>FinishAfter must be earlier than CancelAfter</strong>.</li>
+                    <li>Each escrow increases your account’s <strong>owner reserve</strong> until it is finished or canceled.</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ No Cancel Option (Irreversible Escrow)</h5>
+               <p style="color: #92400e">If the escrow does <strong>not</strong> include a CancelAfter time.</p>
+               <ul>
+                    <li>The escrow <strong>can never be canceled</strong> by the sender.</li>
+                    <li>Funds will remain locked until the escrow is finished.</li>
+                    <li>
+                         If the destination cannot or does not finish the escrow, <br />
+                         the XRP may remain locked permanently.
+                    </li>
+               </ul>
+          </div>
+     </div>
+</div>
+}

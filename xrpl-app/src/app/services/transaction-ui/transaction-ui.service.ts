@@ -166,14 +166,14 @@ export class TransactionUiService {
      totalFlagsHex = signal<string>('0x0');
 
      // Escrows
-     escrowFinishTimeField = signal<string>('');
-     escrowCancelTimeField = signal<string>('');
-     escrowOwnerField = signal<string>('');
-     escrowSequenceNumberField = signal<string>('');
-     escrowConditionField = signal<string>('');
-     escrowFulfillmentField = signal<string>('');
-     finishAfter = signal<number>(0);
-     cancelAfter = signal<number>(0);
+     // escrowFinishTimeField = signal<string>('');
+     // escrowCancelTimeField = signal<string>('');
+     // escrowOwnerField = signal<string>('');
+     // escrowSequenceNumberField = signal<string>('');
+     // escrowConditionField = signal<string>('');
+     // escrowFulfillmentField = signal<string>('');
+     // finishAfter = signal<number>(0);
+     // cancelAfter = signal<number>(0);
 
      // MPT
      mptIssuanceIdField = signal<string>('');
@@ -678,36 +678,36 @@ export class TransactionUiService {
                // createTicket: {
                //      ticketCountField: this.ticketCountField(),
                // },
-               createTimeBasedEscrow: {
-                    amount: this.amountField(),
-                    destination: options?.createTimeBasedEscrow?.destination,
-                    finishAfter: options?.createTimeBasedEscrow?.finishAfter || this.finishAfter(),
-                    cancelAfter: options?.createTimeBasedEscrow?.cancelAfter || this.cancelAfter(),
-                    // currency: this.currency(),
-                    // issuer: this.issuer(),
-               },
-               finishTimeBasedEscrow: {
-                    escrowOwner: options?.finishTimeBasedEscrow?.escrowOwner,
-                    escrowSequence: options?.finishTimeBasedEscrow?.escrowSequence,
-               },
-               cancelTimeBasedEscrow: {
-                    escrowSequence: options?.cancelTimeBasedEscrow?.escrowSequence,
-               },
-               createConditionalEscrow: {
-                    amount: this.amountField(),
-                    destination: options?.createConditionalEscrow?.destination,
-                    finishAfter: options?.createConditionalEscrow?.finishAfter || this.finishAfter(),
-                    cancelAfter: options?.createConditionalEscrow?.cancelAfter || this.cancelAfter(),
-                    // currency: this.currency(),
-                    // issuer: this.issuer(),
-                    condition: options?.createConditionalEscrow?.condition,
-               },
-               finishConditionalEscrow: {
-                    escrowOwner: options?.finishConditionalEscrow?.escrowOwner,
-                    escrowSequence: options?.finishConditionalEscrow?.escrowSequence,
-                    condition: options?.finishConditionalEscrow?.condition,
-                    fulfillment: options?.finishConditionalEscrow?.fulfillment,
-               },
+               // createTimeBasedEscrow: {
+               //      amount: this.amountField(),
+               //      destination: options?.createTimeBasedEscrow?.destination,
+               //      // finishAfter: options?.createTimeBasedEscrow?.finishAfter || this.finishAfter(),
+               //      // cancelAfter: options?.createTimeBasedEscrow?.cancelAfter || this.cancelAfter(),
+               //      // currency: this.currency(),
+               //      // issuer: this.issuer(),
+               // },
+               // finishTimeBasedEscrow: {
+               //      escrowOwner: options?.finishTimeBasedEscrow?.escrowOwner,
+               //      escrowSequence: options?.finishTimeBasedEscrow?.escrowSequence,
+               // },
+               // cancelTimeBasedEscrow: {
+               //      escrowSequence: options?.cancelTimeBasedEscrow?.escrowSequence,
+               // },
+               // createConditionalEscrow: {
+               //      amount: this.amountField(),
+               //      destination: options?.createConditionalEscrow?.destination,
+               //      finishAfter: options?.createConditionalEscrow?.finishAfter || this.finishAfter(),
+               //      cancelAfter: options?.createConditionalEscrow?.cancelAfter || this.cancelAfter(),
+               //      // currency: this.currency(),
+               //      // issuer: this.issuer(),
+               //      condition: options?.createConditionalEscrow?.condition,
+               // },
+               // finishConditionalEscrow: {
+               //      escrowOwner: options?.finishConditionalEscrow?.escrowOwner,
+               //      escrowSequence: options?.finishConditionalEscrow?.escrowSequence,
+               //      condition: options?.finishConditionalEscrow?.condition,
+               //      fulfillment: options?.finishConditionalEscrow?.fulfillment,
+               // },
                paymentChannelCreate: {
                     amount: this.amountField(),
                     destination: options?.paymentChannelCreate?.destination,
@@ -725,36 +725,7 @@ export class TransactionUiService {
                paymentChannelClose: {
                     channelIDField: options?.paymentChannelClose?.channelIDField,
                },
-               // multiSign: {
-               //      enabled: this.useMultiSign(),
-               //      addresses: this.useMultiSign()
-               //           ? this.multiSignAddress()
-               //                  .split(',')
-               //                  .map(a => a.trim())
-               //           : undefined,
-               //      seeds: this.useMultiSign()
-               //           ? this.multiSignSeeds()
-               //                  .split(',')
-               //                  .map(s => s.trim())
-               //           : undefined,
-               //      signerQuorum: this.signerQuorum(),
-               //      signers: this.signers(),
-               // },
-
-               // regularKey: {
-               //      isRegularKey: this.isRegularKeyAddress(),
-               //      address: this.isRegularKeyAddress() ? this.regularKeyAddress() : undefined,
-               //      seed: this.isRegularKeyAddress() ? this.regularKeySeed() : undefined,
-               // },
-
-               // ticket: {
-               //      enabled: this.isTicket(),
-               //      singleTicket: this.selectedSingleTicket() || undefined,
-               //      selectedTicket: this.selectedTickets().length > 0 ? this.selectedTickets()[0] : undefined,
-               // },
-
                did: options.did,
-
                domain: {
                     domainId: options.domain?.domainId ?? this.domainId(),
                     date: options.domain?.date,
@@ -791,10 +762,10 @@ export class TransactionUiService {
           // this.regularKeySeed.set('');
           // this.selectedSingleTicket.set('');
           this.wantsOptions.set(false);
-          this.escrowFinishTimeField.set('');
-          this.escrowCancelTimeField.set('');
-          this.escrowOwnerField.set('');
-          this.escrowSequenceNumberField.set('');
+          // this.escrowFinishTimeField.set('');
+          // this.escrowCancelTimeField.set('');
+          // this.escrowOwnerField.set('');
+          // this.escrowSequenceNumberField.set('');
           this.isMptEnabled.set(false);
           this.metaDataField.set('');
           this.authAction.set('authorize');
@@ -853,8 +824,4 @@ export class TransactionUiService {
           this.domainId.set('');
           // this.credentialIDs.set([]);
      }
-
-     // clearOptionalExpirationDate() {
-     //      this.credential().subject.expirationDate = '';
-     // }
 }

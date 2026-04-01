@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, Signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { CopyUtilService } from '../../copy-util/copy-util.service';
 import { DownloadUtilService } from '../../download-util/download-util.service';
 import { ToastService } from '../../toast/toast.service';
@@ -8,13 +8,13 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
-import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../models/interface-items.model';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
-import { AppConstants } from '../../../core/app.constants';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-
-type EscrowTxType = 'create' | 'finish' | 'cancel';
+import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { EscrowStoreService } from '../escrow-store/escrow-store.service';
+import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../components/escrow/constants/time-escrow.types';
 
 @Injectable({
      providedIn: 'root',
@@ -31,6 +31,11 @@ export class EscrowUtilService {
      public readonly xrplTransactions = inject(XrplTransactionService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly escrowStoreService = inject(EscrowStoreService);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+
+     readonly escrowLength = computed(() => this.escrowStoreService.existingEscrow().length);
+     readonly selectedEscrowSequenceNumber = computed(() => this.escrowStoreService.escrowSequenceNumber());
 
      readonly createEscrowButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -60,20 +65,26 @@ export class EscrowUtilService {
           return this.txUiService.stepMessage();
      });
 
-     async getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string): Promise<EscrowDataForUI[]> {
-          const filtered = (escrowObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress && (obj.FinishAfter || obj.CancelAfter) && !obj.Condition);
+     async getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string, isConditional: boolean = false, activeTab: string): Promise<EscrowDataForUI[]> {
+          const filtered = (escrowObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress && (isConditional ? !!obj.Condition : (obj.FinishAfter || obj.CancelAfter) && !obj.Condition));
 
           const mapped = await Promise.all(
                filtered.map(async (obj: any): Promise<EscrowDataForUI> => {
                     const sendMax = obj.Amount;
                     let amount = '0';
                     let currency = '';
+                    let issuer = '';
 
                     if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
+                         if (activeTab === 'createEscrow') {
+                              amount = String(sendMax);
+                         } else {
+                              amount = String(xrpl.dropsToXrp(sendMax));
+                         }
                     } else if (sendMax?.value) {
                          amount = sendMax.value;
                          currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                         issuer = sendMax.issuer;
                     }
 
                     let EscrowSequence: number | null = null;
@@ -90,7 +101,7 @@ export class EscrowUtilService {
 
                     return {
                          Account: obj.Account,
-                         Amount: `${amount} ${currency}`,
+                         Amount: `${amount} ${currency} ${issuer ? `issued by ${issuer}` : ''}`.trim(),
                          Destination: obj.Destination,
                          DestinationTag: obj.DestinationTag,
                          CancelAfter: obj.CancelAfter,
@@ -102,47 +113,6 @@ export class EscrowUtilService {
           );
 
           mapped.sort((a, b) => a.Destination.localeCompare(b.Destination));
-
-          this.utilsService.logObjects('existingEscrow', mapped);
-
-          return mapped;
-     }
-
-     getExistingEscrows1(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
-          const mapped = (escrowObjects.result.account_objects ?? [])
-               .filter(
-                    (obj: any) =>
-                         obj.LedgerEntryType === 'Escrow' &&
-                         obj.Account === classicAddress &&
-                         // Only time-based escrows:
-                         (obj.FinishAfter || obj.CancelAfter) &&
-                         !obj.Condition
-               )
-               .map((obj: any): EscrowDataForUI => {
-                    const sendMax = obj.Amount;
-                    let amount = '0';
-                    let currency = '';
-
-                    if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                    }
-
-                    return {
-                         Account: obj.Account,
-                         Amount: `${amount} ${currency}`,
-                         Destination: obj.Destination,
-                         DestinationTag: obj.DestinationTag,
-                         CancelAfter: obj.CancelAfter,
-                         FinishAfter: obj.FinishAfter,
-                         TxHash: obj.PreviousTxnID,
-                         Sequence: obj.PreviousTxnID,
-                    };
-               })
-               .sort((a, b) => a.Destination.localeCompare(b.Destination));
-
           this.utilsService.logObjects('existingEscrow', mapped);
           return mapped;
      }
@@ -151,8 +121,8 @@ export class EscrowUtilService {
           const filteredEscrows = (escrowObjects.result.account_objects ?? []).filter(
                (obj: any) =>
                     obj.LedgerEntryType === 'Escrow' &&
-                    (activeTab === 'cancel'
-                         ? obj.Account === classicAddress // owner can cancel
+                    (activeTab === 'cancelEscrow'
+                         ? obj.Account === classicAddress // creator can cancel
                          : obj.Destination === classicAddress) // receiver can finish
           );
 
@@ -160,11 +130,20 @@ export class EscrowUtilService {
                filteredEscrows.map(async (obj: any) => {
                     const sendMax = obj.Amount;
                     let amount = '0';
+                    let currency = '';
+                    let issuer = '';
 
                     if (typeof sendMax === 'string') {
-                         amount = String(xrpl.dropsToXrp(sendMax));
+                         if (activeTab === 'cancelEscrow') {
+                              amount = String(sendMax);
+                         } else {
+                              amount = String(xrpl.dropsToXrp(sendMax));
+                         }
                     } else if (sendMax?.value) {
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+                         // amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+                         amount = sendMax.value;
+                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                         issuer = sendMax.issuer;
                     }
 
                     let EscrowSequence: number | null = null;
@@ -179,10 +158,12 @@ export class EscrowUtilService {
                     }
 
                     return {
-                         Amount: amount,
+                         Amount: `${amount} ${currency} ${issuer ? `issued by ${issuer}` : ''}`.trim(),
                          Sender: obj.Account,
                          Destination: obj.Destination,
                          EscrowSequence,
+                         CancelAfter: obj.CancelAfter,
+                         FinishAfter: obj.FinishAfter,
                     };
                })
           );
@@ -302,33 +283,6 @@ export class EscrowUtilService {
           return { canCancel: true, reason: '' };
      }
 
-     // private validateCancel(escrow: { CancelAfter?: number; owner: string; escrowType: string }, now: number, callerAddress: string): { canCancel: boolean; reason: string } {
-     //      const { CancelAfter, owner, escrowType } = escrow;
-
-     //      if (escrowType !== 'finish' && !CancelAfter) {
-     //           return {
-     //                canCancel: false,
-     //                reason: 'No CancelAfter time defined.',
-     //           };
-     //      }
-
-     //      if (now < CancelAfter!) {
-     //           return {
-     //                canCancel: false,
-     //                reason: `Escrow can only be canceled after ${this.utilsService.convertXRPLTime(CancelAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
-     //           };
-     //      }
-
-     //      if (callerAddress !== owner) {
-     //           return {
-     //                canCancel: false,
-     //                reason: `Only the escrow owner (${owner}) can cancel this escrow.`,
-     //           };
-     //      }
-
-     //      return { canCancel: true, reason: '' };
-     // }
-
      private validateFinish(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string }, ledgerRippleTime: number, fulfillment?: string): { canFinish: boolean; reason: string } {
           const { FinishAfter, CancelAfter, Condition } = escrow;
 
@@ -361,51 +315,6 @@ export class EscrowUtilService {
 
           return { canFinish: true, reason: '' };
      }
-
-     // private validateFinish(escrow: { FinishAfter?: number; CancelAfter?: number; Condition?: string }, now: number, fulfillment?: string): { canFinish: boolean; reason: string } {
-     //      const { FinishAfter, CancelAfter, Condition } = escrow;
-
-     //      // Expired escrows cannot be finished
-     //      if (CancelAfter !== undefined && now >= CancelAfter) {
-     //           return {
-     //                canFinish: false,
-     //                reason: 'Escrow has expired and can no longer be finished.',
-     //           };
-     //      }
-
-     //      // Must have either FinishAfter or Condition
-     //      if (FinishAfter === undefined && !Condition) {
-     //           return {
-     //                canFinish: false,
-     //                reason: 'No FinishAfter time or Condition defined.',
-     //           };
-     //      }
-
-     //      // Time requirement
-     //      if (FinishAfter !== undefined && now < FinishAfter) {
-     //           return {
-     //                canFinish: false,
-     //                reason: `Escrow can only be finished after ${this.utilsService.convertXRPLTime(FinishAfter)}, current time is ${this.utilsService.convertXRPLTime(now)}.`,
-     //           };
-     //      }
-
-     //      // Condition validation
-     //      if (Condition && !fulfillment) {
-     //           return {
-     //                canFinish: false,
-     //                reason: 'A fulfillment is required for condition-based escrow.',
-     //           };
-     //      }
-
-     //      if (!Condition && fulfillment) {
-     //           return {
-     //                canFinish: false,
-     //                reason: 'No condition is set, so fulfillment is not applicable.',
-     //           };
-     //      }
-
-     //      return { canFinish: true, reason: '' };
-     // }
 
      validateEscrowCreate(input: EscrowValidationInput): EscrowValidationResult {
           const { finishAfter, cancelAfter, condition, currentRippleTime } = input;
@@ -473,34 +382,6 @@ export class EscrowUtilService {
           return `${amount.value} ${this.utilsService.normalizeCurrencyCode(amount.currency)}`;
      }
 
-     buildSuccessMessage(type: EscrowTxType, formValues: any): string {
-          if (type === 'create') {
-               const prefix = formValues.condition ? 'Conditional ' : 'Time-Based ';
-               return `Successfully Created ${prefix}Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-          }
-          if (type === 'finish') {
-               return `Successfully Finished Time Based Escrow ${formValues.escrowSequenceNumberField}`;
-          }
-          return `Successfully Cancelled Time Based Escrow ${formValues.escrowSequenceNumberField}`;
-     }
-
-     handleSimulationSuccess(type: EscrowTxType, formValues: any, hash?: string) {
-          let msg: string;
-
-          if (type === 'create') {
-               msg = `Simulated Creating Time Based Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-          } else if (type === 'finish') {
-               msg = `Simulated Finishing Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-          } else {
-               msg = `Simulated Cancelling Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-          }
-
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
-     }
-
      isEscrowExpired(cancelAfter?: number, finishAfter?: number, activeTab?: string): boolean {
           if (!cancelAfter) return false; // No cancel time → never expired for finish
 
@@ -509,7 +390,7 @@ export class EscrowUtilService {
           const cancelTime = cancelAfter + rippleEpoch;
 
           // For finish tab: expired if past cancel time (cannot finish anymore)
-          if (activeTab === 'finish') {
+          if (activeTab === 'finishEscrow') {
                return now > cancelTime;
           }
 
@@ -517,20 +398,30 @@ export class EscrowUtilService {
           return now > cancelTime;
      }
 
-     addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
-          let currentValue = fieldSignal();
+     onEscrowSelected(item: SelectItem | null) {
+          if (item) {
+               const id = item?.id || '';
+               this.escrowStoreService.setField('escrowSequenceNumber', id);
 
-          // If field is empty, start from now
-          if (!currentValue) {
-               const now = new Date();
-               currentValue = this.xrplDateService.toLocalDateTimeString(now);
+               const parts = item.display?.split(' ') || [];
+               this.escrowStoreService.setField('escrowOwner', parts[3] || '');
+               this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(parts[1]) || '');
+               this.currencyStoreService.setField('currencyIssuer', item.issuer || '');
           }
+     }
 
-          const date = new Date(currentValue);
-          date.setSeconds(date.getSeconds() + seconds);
-
-          const newDateTime = this.xrplDateService.toLocalDateTimeString(date);
-
-          writableSignal.set(newDateTime);
+     onEscrowSelectedInUi(item: any | null) {
+          if (item) {
+               const id = item?.id || '';
+               this.escrowStoreService.setField('escrowSequenceNumber', id);
+               if (item.amount.split(' ').length > 2) {
+                    this.escrowStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
+                    this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(item?.amount?.split(' ')[1]) || '');
+                    this.currencyStoreService.setField('currencyIssuer', item.amount.split(' ')[3].replaceAll(')', '') || '');
+               } else {
+                    this.escrowStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
+               }
+               this.escrowStoreService.setField('escrowOwner', item.sender || '');
+          }
      }
 }

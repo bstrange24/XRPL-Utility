@@ -1,0 +1,108 @@
+<!-- Currency + Amount -->
+<div class="form-row">
+     <div class="form-group">
+          <label for="currencyCodeCreate">Currency Code</label>
+          <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+               <ng-template #itemTemplate let-item>
+                    <div class="flex items-center gap-2">
+                         @if (item.id === 'XRP') {
+                         <span class="text-yellow-500 font-bold">XRP</span>
+                         } @else {
+                         <span>{{ item.display }}</span>
+                         }
+                         <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                    </div>
+               </ng-template>
+          </app-select-search-dropdown>
+     </div>
+     <div class="form-group">
+          <label for="amountField">Amount</label>
+          <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+          <input type="number" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" placeholder="e.g. 10.5" step="0.000001" min="0" />
+     </div>
+</div>
+
+<!-- Issuer (non-XRP, non-MPT) -->
+@if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="issuer">Issuer</label>
+          <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+     </div>
+     <div class="form-group">
+          <label for="currencyBalance">Currency Balance</label>
+          <p class="form-hint">Total currency balance held by this account.</p>
+          <input type="text" [value]="currencyStoreService.balance()" readonly />
+     </div>
+</div>
+}
+
+<!-- MPT -->
+@if (currencyStoreService.currency() === 'MPT') {
+<div class="form-group">
+     <label for="selectMpt">Select MPT</label>
+     <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+</div>
+<div class="form-row">
+     <div class="form-group">
+          <label for="mptIssuanceId">MPT Issuance ID</label>
+          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" name="mptIssuanceId" />
+     </div>
+</div>
+}
+
+<!-- Destination + Tag -->
+<div class="form-row">
+     <div class="form-group">
+          <label for="destination">Destination</label>
+          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address" />
+     </div>
+     <div class="form-group">
+          <label for="destinationTag">Destination Tag</label>
+          <input type="text" [ngModel]="txUiService.destinationTagField()" name="destinationTagField" />
+     </div>
+</div>
+
+<!-- Condition (conditional escrow only) -->
+@if (isConditional) {
+<div class="form-row">
+     <div class="form-group">
+          <label for="escrowConditionField">Condition</label>
+          <p class="form-hint">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+          <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" name="escrowConditionField" />
+     </div>
+</div>
+<div class="form-row">
+     <div class="form-group">
+          <label for="escrowFulfillmentField">Fulfillment</label>
+          <p class="form-hint">PREIMAGE-SHA-256 crypto-condition fulfillment matching the held payment's Condition.</p>
+          <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" name="escrowFulfillmentField" />
+     </div>
+</div>
+}
+
+<!-- Toggles -->
+<div class="form-row">
+     <div class="form-group">
+          <mat-slide-toggle [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.checked)"> Set Escrow Finish After Time </mat-slide-toggle>
+     </div>
+     <div class="form-group">
+          <mat-slide-toggle [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.checked)"> Set Escrow Cancel After Time </mat-slide-toggle>
+     </div>
+</div>
+
+<!-- Expiration Inputs -->
+<div class="form-row">
+     <div class="form-group">
+          @if (escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
+          <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)" label="Escrow Finish After Expiration Date" hint="The time when the escrowed value can be released to the recipient."> </app-xrpl-expiration-input>
+          }
+     </div>
+     <div class="form-group">
+          @if (escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
+          <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)" label="Escrow Cancel After Expiration Date" hint="The time before the escrow can be cancelled by the sender."> </app-xrpl-expiration-input>
+          }
+     </div>
+</div>

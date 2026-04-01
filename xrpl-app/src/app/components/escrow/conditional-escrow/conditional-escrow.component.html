@@ -1,0 +1,72 @@
+<div class="banner">
+     <div class="banner-content">
+          <div id="navbar-container">
+               <app-navbar></app-navbar>
+          </div>
+     </div>
+</div>
+
+<!-- Get view -->
+@let viewModel = escrowTransactionViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+<!-- Get tab data -->
+@let tabs = conditionMenuTabs;
+
+<!-- Main content. -->
+<div class="main-container">
+     <div class="content-wrapper">
+          <!-- Left Wallet panel -->
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+
+          <!-- Center form -->
+          <div class="form-panel">
+               <!-- Menu / Tabs -->
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="timeTabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+
+               <!-- Info Message -->
+               @let wallet = currentWallet();
+               <app-escrow-summary [wallet]="wallet" [tab]="viewModel.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [escrowLength]="escrowUtilService.escrowLength()" (toggleInfoPanel)="toggleInfoPanel()" (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)"></app-escrow-summary>
+
+               <!-- Warning Message -->
+               @if (txUiService.warningMessage) {
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+               }
+
+               <form #theForm="ngForm" class="main-form">
+                    <!-- Create -->
+                    @if (activeTab === 'createEscrow') {
+                    <app-escrows-create [isConditional]="true"></app-escrows-create>
+                    } @else if (activeTab === 'finishEscrow') {
+                    <app-escrows-finish [isConditional]="true"></app-escrows-finish>
+                    } @else if (activeTab === 'cancelEscrow') {
+                    <app-escrows-cancel></app-escrows-cancel>
+                    }
+
+                    <app-transaction-options [showWhenTab]="['createEscrow', 'finishEscrow', 'cancelEscrow']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+
+                    <!-- Action buttons -->
+                    <div class="button-row">
+                         @if (activeTab === 'createEscrow') {
+                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ escrowUtilService.createEscrowButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-green" (click)="getCondition(); $event.preventDefault();" [disabled]="!isIdle() || !hasWallets()">{{ escrowUtilService.generateConditionButtonLabel() }}</button>
+                         } @else if (activeTab === 'finishEscrow') {
+                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || viewModel.selectedEscrowIsExpired()">{{ escrowUtilService.finishEscrowButtonLabel() }}</button>
+                         } @else if (activeTab === 'cancelEscrow') {
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ escrowUtilService.cancelEscrowButtonLabel() }}</button>
+                         }
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    </div>
+
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
+               </form>
+          </div>
+
+          <!-- New: Right panel for info/tips -->
+          <app-escrow-requirements-info [page]="isConditional"></app-escrow-requirements-info>
+     </div>
+</div>

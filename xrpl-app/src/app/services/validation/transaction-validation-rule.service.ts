@@ -10,6 +10,7 @@ import { AppConstants } from '../../core/app.constants';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { PaymentChannelObject } from '../../components/payment-channel/constants/payment-channel.types';
 import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
+import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -41,6 +42,7 @@ export class ValidationService {
      private readonly rules = new Map<string, TransactionValidationRule>();
      public readonly txUiService = inject(TransactionUiService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly xrplService = inject(XrplService);
      public readonly utilsService = inject(UtilsService);
      public readonly xrplDateService = inject(XrplDateService);
@@ -2077,6 +2079,118 @@ export class ValidationService {
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
                     this.isValidAddress('destination.address'),
+               ],
+          });
+
+          // CreateEscrow
+          this.registerRule({
+               transactionType: 'CreateEscrow',
+               requiredFields: ['createEscrow.amount', 'createEscrow.destination'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    // ctx => {
+                    //      const seed = this.getSeed(ctx);
+                    //      if (seed) {
+                    //           const { value } = this.utilsService.detectXrpInputType(seed);
+                    //           if (value === 'unknown') return 'Account seed is invalid';
+                    //      }
+                    //      return null;
+                    // },
+
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    this.positiveAmount('createEscrow'),
+
+                    ctx => {
+                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
+                              this.validateDate('createEscrow', 'finishAfter');
+                         }
+
+                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
+                              this.validateDate('createEscrow', 'cancelAfter');
+                         }
+                         return null;
+                    },
+
+                    ctx => {
+                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
+                              const finishAfter = new Date(ctx.inputs['createEscrow'].finishAfter).getTime();
+                              const cancelAfter = new Date(ctx.inputs['createEscrow'].cancelAfter).getTime();
+                              if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                                   return 'Finish After must be before Cancel After';
+                              }
+                         }
+                         return null;
+                    },
+                    this.isValidAddress('createEscrow.destination'),
+                    this.requireDestinationTagIfNeeded('createEscrow'),
+
+                    this.validDestinationTag('createEscrow'),
+                    this.optionalNumeric('destinationTag', 0),
+
+                    // // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // // Ticket validation
+                    this.ticketValidation(),
+
+                    // // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+
+                    this.invoiceId('CreateEscrow'),
+               ],
+          });
+
+          // FinishEscrow
+          this.registerRule({
+               transactionType: 'FinishEscrow',
+               requiredFields: ['finishEscrow.escrowSequenceNumber', 'finishEscrow.escrowSequenceNumber'],
+               validators: [
+                    this.walletCredentialRequired(),
+
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    this.optionalNumeric('escrowSequenceNumber', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // CancelEscrow
+          this.registerRule({
+               transactionType: 'CancelEscrow',
+               requiredFields: ['cancelEscrow.escrowSequenceNumber'],
+               validators: [
+                    this.walletCredentialRequired(),
+
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    this.optionalNumeric('escrowSequenceNumber', 0),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
                ],
           });
 

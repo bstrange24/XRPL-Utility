@@ -1,323 +1,241 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-import { ValidationService } from '../../validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { ToastService } from '../../toast/toast.service';
-import { UtilsService } from '../../util-service/utils.service';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { AppConstants } from '../../../core/app.constants';
-import { EscrowUtilService } from '../escrow-util/escrow-util.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { ValidationService } from '../../validation/transaction-validation-rule.service';
+import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
+import { UtilsService } from '../../util-service/utils.service';
+import { ToastService } from '../../toast/toast.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
+import { EscrowUtilService } from '../escrow-util/escrow-util.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { AppConstants } from '../../../core/app.constants';
+import { ESCROW_TX_TYPES, ESCROW_VALIDATION_RULES, EscrowTxType } from '../../../components/escrow/constants/time-escrow.constants';
+import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
+import { EscrowConfig } from '../../../components/escrow/constants/time-escrow.types';
+import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { EscrowTransactionBuilderService } from '../escrow-transaction-builder/escrow-transaction-builder.service';
 
-type EscrowTxType = 'create' | 'finish' | 'cancel';
+type EscrowTxMeta = {
+     validationRule: string;
+     buildValidationInputs: (args: { orchestrator: EscrowOrchestratorService; wallet: Wallet; env: any; escrow: any; account: any; currency: any; txOptions: any }) => any;
+     buildTx: (args: { orchestrator: EscrowOrchestratorService; env: any; wallet: any; escrow: any; currency: any; trustline: any }) => xrpl.Transaction;
+     simulationToastMessage: (args: { orchestrator: EscrowOrchestratorService; escrow: any; currency: any }) => string;
+     successMessage: (args: { orchestrator: EscrowOrchestratorService; escrow: any; currency: any }) => string;
+};
 
-interface EscrowConfig {
-     wallet: Wallet;
-     formValues: {
-          amountField?: string;
-          destinationAddress?: string;
-          escrowFinishTimeField?: any;
-          escrowCancelTimeField?: any;
-          currencyValue?: string;
-          issuer?: string;
-          escrowSequenceNumberField?: string;
-          escrowOwnerField?: string;
-          condition?: string;
-          fulfillment?: string;
-          isConditional?: boolean;
-          isSimulateEnabled?: boolean;
-          useMultiSign?: boolean;
-          isRegularKeyAddress?: boolean;
-          regularKeyAddress?: string;
-          regularKeySeed?: string;
-          multiSignAddress?: string;
-          multiSignSeeds?: string | string[];
-          [key: string]: any;
-     };
-     extra?: Record<string, any>;
-     preFetchedEnv?: {
-          client: xrpl.Client;
-          accountInfo: any;
-          accountObjects?: any;
-          fee: string;
-          currentLedger: number;
-          destinationAccountInfo?: any;
-          escrowObjects?: any;
-          escrowObjectsBySequenceId?: any;
-          wallet?: any;
-     };
-}
+const ESCROW_META: Record<EscrowTxType, EscrowTxMeta> = {
+     createEscrow: {
+          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.CREATE],
+          buildValidationInputs: ({ wallet, env, escrow, currency, account, txOptions, orchestrator }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               createEscrow: {
+                    amount: escrow.amount,
+                    destination: escrow.destination,
+                    finishAfter: escrow.escrowFinishAfterExpirationDate ? orchestrator.utilsService.toRippleTime(escrow.escrowFinishAfterExpirationDate) : '',
+                    cancelAfter: escrow.escrowCancelAfterExpirationDate ? orchestrator.utilsService.toRippleTime(escrow.escrowCancelAfterExpirationDate) : '',
+                    issuer: currency.issuer,
+                    currencyValue: currency.currencyValue,
+                    condition: escrow.condition,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, escrow, currency }) => orchestrator.escrowTransactionBuilderService.buildCreateEscrowTx(env.wallet || wallet, env, escrow, currency),
+          simulationToastMessage: ({ orchestrator, escrow, currency }) => `Simulated Sending Escrow of ${escrow.amount} ${orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP'}`,
+          successMessage: ({ orchestrator, escrow, currency }) => {
+               const code = orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP';
+               const dest = escrow.destination;
+               const shortDest = dest ? `${dest.slice(0, 7)}…${dest.slice(-7)}` : '';
+               return `Successfully Sent Escrow of ${escrow.amount} ${code}${shortDest ? ` to ${shortDest}` : ''}`;
+          },
+     },
+
+     finishEscrow: {
+          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.FINISH],
+          buildValidationInputs: ({ wallet, env, escrow, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    fee: env.fee,
+                    currentLedger: env.currentLedger,
+               },
+               regularKey: {
+                    isRegularKey: escrow.isRegularKeyAddress,
+                    address: escrow.regularKeyAddress,
+                    seed: escrow.regularKeySeed,
+               },
+               finishEscrow: {
+                    escrowOwner: escrow.escrowOwnerField,
+                    escrowSequenceNumber: escrow.escrowSequenceNumber,
+                    condition: escrow.condition,
+                    fulfillment: escrow.fulfillment,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, escrow, currency }) => orchestrator.escrowTransactionBuilderService.buildFinishEscrowTx(env.wallet || wallet, env, escrow),
+          simulationToastMessage: ({ orchestrator, escrow, currency }) => `Simulated Finishing Escrow of ${escrow.amount} ${orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP'}`,
+          successMessage: ({ orchestrator, escrow, currency }) => {
+               const code = orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP';
+               return `Successfully Finished Escrow of ${escrow.amount} ${code}`;
+          },
+     },
+
+     cancelEscrow: {
+          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.CANCEL],
+          buildValidationInputs: ({ wallet, env, escrow, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               env,
+               cancelEscrow: {
+                    escrowSequenceNumber: escrow.escrowSequenceNumber,
+               },
+          }),
+          buildTx: ({ orchestrator, env, wallet, escrow }) => orchestrator.escrowTransactionBuilderService.buildCancelEscrowTx(env.wallet, env, escrow),
+          simulationToastMessage: () => `Simulated Cancelling Escrow`,
+          successMessage: () => `Successfully Cancelled Escrow`,
+     },
+};
 
 @Injectable({ providedIn: 'root' })
-export class TimeBasedEscrowOrchestrator extends PerformanceBaseComponent {
+export class EscrowOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
-     private readonly xrplTransactionService = inject(XrplTransactionService);
-     private readonly utilsService = inject(UtilsService);
-     private readonly txUiService = inject(TransactionUiService);
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly toastService = inject(ToastService);
      public readonly escrowUtilService = inject(EscrowUtilService);
+     public readonly escrowTransactionBuilderService = inject(EscrowTransactionBuilderService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
+     public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
 
-     async executeEscrowTx(type: EscrowTxType, config: EscrowConfig): Promise<{ success: boolean; hash?: string; error?: string }> {
-          const { wallet, formValues, extra = {}, preFetchedEnv } = config;
-          const { isSimulateEnabled = false } = formValues;
-
-          let client: xrpl.Client;
+     async executeEscrowTx(type: EscrowTxType, config: EscrowConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { escrow, account, txOptions, trustline, currency, preFetchedEnv, wallet } = config;
           let env: any;
+          let client: xrpl.Client;
           let txHash: string | undefined;
 
           try {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               if (preFetchedEnv) {
-                    env = preFetchedEnv;
-                    client = preFetchedEnv.client;
-
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Pre-fetched environment missing required fields');
-                    }
-               } else {
-                    // Normal fetch fallback
-                    const envFlags: any = {
+               // Use pre-fetched env if provided, otherwise fetch
+               env =
+                    preFetchedEnv ??
+                    (await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
+                         includeAccountObject: true,
                          includeFee: true,
-                         includeLedgerIndex: true,
-                    };
+                         includeLedgerInfo: true,
+                         includeServerInfo: true,
+                         includeChecks: true,
+                    }));
 
-                    if (type === 'create') {
-                         envFlags.includeAccountObject = true;
-                         envFlags.includeDestinationAccountInfo = true;
-                         envFlags.destinationAddress = formValues.destinationAddress;
-                    } else if (type === 'finish') {
-                         envFlags.includeEscrowBySequenceId = true;
-                         envFlags.escrowSequenceNumberField = formValues.escrowSequenceNumberField;
-                    } else if (type === 'cancel') {
-                         envFlags.includeEscrows = true;
-                    }
+               client = env.client;
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-                    const env = await this.txEnvironmentService.prepareTxEnvironment(envFlags);
-                    client = env.client;
+               // Validation
+               const meta = ESCROW_META[type];
 
-                    if (!env.accountInfo || !env.fee || !env.currentLedger) {
-                         throw new Error('Failed to fetch required network data');
-                    }
+               const validationInputs = meta.buildValidationInputs({ orchestrator: this, wallet, env, escrow, account, currency, txOptions });
+               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+
+               // Build transaction
+               const tx = meta.buildTx({ orchestrator: this, env, wallet, escrow, currency, trustline });
+
+               // Optional fields
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.escrow, type, txOptions);
+
+               // Balance checks (token vs xrp)
+               let isInsufficientBalance;
+               if (currency?.currency !== 'XRP') {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
+               } else {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');
                }
+               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               const validationRule = this.getValidationRuleName(type);
-               const validationInputs = this.buildValidationInputs(type, wallet, env, formValues);
-               const errors = await this.validator.validate(validationRule, {
-                    inputs: validationInputs,
+               //  Submit / simulate
+               const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
-                    accountInfo: env.accountInfo,
+                    wallet: env.wallet || wallet,
+                    env,
+
+                    mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
+                    skipBalanceCheck: true,
+
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+
+                    signing: {
+                         useMultiSign: txOptions?.useMultiSign,
+                         multiSignAddress: account?.multiSignAddress,
+                         multiSignSeeds: account?.multiSignSeeds,
+                         isRegularKeyAddress: txOptions?.isRegularKeyAddress,
+                         regularKeySeed: account?.regularKeySeed,
+                         regularKeyAddress: account?.regularKeyAddress,
+                    },
+
+                    buildTx: () => tx as any,
                });
 
-               if (errors.length > 0) {
-                    return { success: false, error: errors.join('\n• ') };
+               if (!submitOrSimResult.success) return { success: false, error: submitOrSimResult.error };
+
+               txHash = submitOrSimResult.hash;
+
+               // Simulated toast
+               if (submitOrSimResult.mode === 'simulate') {
+                    return this.handleSimulationSuccess(type, escrow, currency, txHash);
                }
 
-               const tx = this.buildEscrowTransaction(type, env.wallet, env, formValues, extra);
-
-               await this.applyOptionalFields(client, tx, wallet, env.accountInfo, type, formValues);
-
-               const execResult = await this.executeSpecificTx(type, tx, env.wallet, client, formValues);
-
-               if (!execResult.success) {
-                    return { success: false, error: execResult.error };
-               }
-
-               txHash = execResult.hash;
-
-               if (isSimulateEnabled) {
-                    return this.escrowUtilService.handleSimulationSuccess(type, formValues, txHash);
-               }
-
-               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, tx.LastLedgerSequence!);
-
+               // Final validated outcome (preserved)
+               const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = this.escrowUtilService.buildSuccessMessage(type, formValues);
-               this.xrplTransactionService.processTxFinalResult(finalResult, message, {
-                    success: true,
-                    hash: txHash,
-               });
+               const message = meta.successMessage({ orchestrator: this, escrow, currency });
+               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
           } catch (err: any) {
-               const msg = err.message || 'Unexpected error during time-based escrow transaction';
                console.error(`[${type}] executeEscrowTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
-               return { success: false, error: msg };
+               return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
      }
 
-     private getValidationRuleName(type: EscrowTxType): string {
-          const map: Record<EscrowTxType, string> = {
-               create: 'CreateTimeBasedEscrow',
-               finish: 'FinishTimeBasedEscrow',
-               cancel: 'CancelTimeBasedEscrow',
-          };
-          return map[type];
+     handleSimulationSuccess(type: EscrowTxType, escrow: any, currency: any, hash?: string) {
+          const msg = ESCROW_META[type].simulationToastMessage({ orchestrator: this, escrow, currency });
+
+          this.txUiService.resetCurrentStepToIdle();
+          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
+
+          return { success: true, hash };
      }
-
-     private buildValidationInputs(type: EscrowTxType, wallet: Wallet, env: any, formValues: any) {
-          const base = {
-               wallet,
-               network: { accountInfo: env.accountInfo, fee: env.fee, currentLedger: env.currentLedger },
-               regularKey: {
-                    isRegularKey: formValues.isRegularKeyAddress,
-                    address: formValues.regularKeyAddress,
-                    seed: formValues.regularKeySeed,
-               },
-          };
-
-          if (type === 'create') {
-               return {
-                    ...base,
-                    createTimeBasedEscrow: {
-                         amount: formValues.amountField,
-                         destination: formValues.destinationAddress,
-                         finishAfter: this.utilsService.toRippleTime(formValues.escrowFinishTimeField),
-                         cancelAfter: this.utilsService.toRippleTime(formValues.escrowCancelTimeField),
-                         issuer: formValues.issuer,
-                         currencyValue: formValues.currencyValue,
-                         condition: formValues.condition,
-                    },
-               };
-          }
-
-          if (type === 'finish') {
-               return {
-                    ...base,
-                    finishTimeBasedEscrow: {
-                         escrowOwner: formValues.escrowOwnerField,
-                         escrowSequenceNumberField: formValues.escrowSequenceNumberField,
-                         condition: formValues.condition,
-                         fulfillment: formValues.fulfillment,
-                    },
-               };
-          }
-
-          return {
-               ...base,
-               cancelTimeBasedEscrow: {
-                    escrowSequenceNumberField: formValues.escrowSequenceNumberField,
-               },
-          };
-     }
-
-     private buildEscrowTransaction(type: EscrowTxType, wallet: xrpl.Wallet, env: any, formValues: any, extra: any): xrpl.Transaction {
-          const { fee, currentLedger } = env;
-
-          if (type === 'create') {
-               let amountToCash;
-               if (formValues.currencyValue === 'MPT') {
-                    amountToCash = this.xrplTransactionService.buildSendMaxAmount(formValues.currencyValue, formValues.currencyIssuer ?? '', '', true).sendMax;
-               } else {
-                    amountToCash = this.xrplTransactionService.buildAmount(formValues.currencyValue, formValues.amountField, formValues.issuer);
-               }
-
-               const tx = this.xrplTransactionService.buildCreateTimeBasedEscrowTransaction(wallet, amountToCash, formValues.destinationAddress, fee, currentLedger);
-
-               if (formValues.condition) {
-                    tx.Condition = formValues.condition;
-               }
-
-               if (this.txUiService.enableEscrowFinishAfterExpirationDate()) {
-                    tx.FinishAfter = formValues.escrowFinishTimeField ? this.utilsService.toRippleTime(formValues.escrowFinishTimeField) : 0;
-               }
-
-               if (this.txUiService.enableEscrowCancelAfterExpirationDate()) {
-                    tx.CancelAfter = formValues.escrowCancelTimeField ? this.utilsService.toRippleTime(formValues.escrowCancelTimeField) : 0;
-               }
-
-               return tx;
-          }
-
-          if (type === 'finish') {
-               const tx = this.xrplTransactionService.buildFinishTimeBasedEscrowTransaction(wallet, fee, currentLedger, formValues.escrowOwnerField, Number.parseInt(formValues.escrowSequenceNumberField));
-               if (formValues.fulfillment) tx.Fulfillment = formValues.fulfillment;
-               if (formValues.condition) tx.Condition = formValues.condition;
-               return tx;
-          }
-
-          // cancel
-          return this.xrplTransactionService.buildCancelTimeBasedEscrowTransaction(wallet, formValues.escrowOwnerField || wallet.classicAddress, fee, currentLedger, Number.parseInt(formValues.escrowSequenceNumberField));
-     }
-
-     private async applyOptionalFields(client: xrpl.Client, tx: xrpl.Transaction, wallet: Wallet, accountInfo: any, type: EscrowTxType, formValues: any) {
-          const isTicket = formValues.isTicket;
-          if (isTicket) {
-               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               const ticket = false;
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          }
-
-          const memo = this.txUiService.memoField();
-          if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
-
-          if (this.txUiService.destinationTagField()) {
-               this.utilsService.setDestinationTag(tx, this.txUiService.destinationTagField());
-          }
-
-          this.utilsService.setTxAmount(type, formValues, tx);
-
-          if (type === 'create' && formValues.condition && formValues.fulfillment) {
-               tx.Condition = formValues.condition;
-          }
-
-          if (type === 'finish' && formValues.condition && formValues.fulfillment) {
-               tx.Condition = formValues.condition;
-               tx.Fulfillment = formValues.fulfillment;
-          }
-     }
-
-     private async executeSpecificTx(type: EscrowTxType, tx: xrpl.Transaction, wallet: xrpl.Wallet, client: xrpl.Client, formValues: any) {
-          const opts = {
-               useMultiSign: formValues.useMultiSign,
-               isRegularKeyAddress: formValues.isRegularKeyAddress,
-               regularKeyAddress: formValues.regularKeyAddress,
-               regularKeySeed: formValues.regularKeySeed,
-               multiSignAddress: formValues.multiSignAddress,
-               multiSignSeeds: formValues.multiSignSeeds,
-          };
-
-          if (type === 'create') {
-               return this.executor.createEscrow?.(tx as xrpl.EscrowCreate, wallet, client, opts);
-          }
-
-          if (type === 'finish') {
-               return this.executor.finishEscrow?.(tx as xrpl.EscrowFinish, wallet, client, opts);
-          }
-
-          return this.executor.cancelEscrow?.(tx as xrpl.EscrowCancel, wallet, client, opts);
-     }
-
-     // private handleSimulationSuccess(type: EscrowTxType, formValues: any, hash?: string) {
-     //      let msg: string;
-
-     //      if (type === 'create') {
-     //           msg = `Simulated Creating Time Based Escrow of ${formValues.amountField} ${formValues.currencyValue || 'XRP'} to ${formValues.destinationAddress?.slice(0, 7) + '…' + formValues.destinationAddress?.slice(-7)}`;
-     //      } else if (type === 'finish') {
-     //           msg = `Simulated Finishing Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-     //      } else {
-     //           msg = `Simulated Cancelling Time Based Escrow with Sequence ID ${formValues.escrowSequenceNumberField}`;
-     //      }
-
-     //      this.txUiService.resetCurrentStepToIdle();
-     //      this.toast.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-     //      return { success: true, hash };
-     // }
 }
