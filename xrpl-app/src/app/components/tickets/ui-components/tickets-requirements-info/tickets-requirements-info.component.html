@@ -1,0 +1,63 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>XRPL Tickets Overview</h3>
+     </div>
+
+     <p class="info-subtitle">Tickets reserve sequence numbers in advance, allowing transactions to be sent out-of-order or in parallel without depending on the account's current Sequence.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🎟️ Ticket Creation</span>
+                    <span class="badge required-badge">Single Transaction</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">TicketCount</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Max per account</span>
+                         <span class="field-status omitted">250 Tickets</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🎟️ Using a Ticket</span>
+                    <span class="badge optional-badge">In any Transaction</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Sequence</span>
+                         <span class="field-status omitted">❌ Set to 0</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">TicketSequence</span>
+                         <span class="field-status required">✅ Required</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li><strong>TicketCount is required</strong> in a TicketCreate transaction (1 to 250).</li>
+                    <li>Each unused Ticket counts toward your account’s <strong>owner reserve</strong> (typically 0.2 XRP per Ticket) until used.</li>
+                    <li>Tickets allow out-of-order execution — use any available TicketSequence in any order, but each can only be used <strong>once</strong>.</li>
+                    <li>Maximum 250 Tickets per account at any time (creation fails if it would exceed this).</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ Reserve Cost & Cleanup</h5>
+               <p style="color: #92400e">Tickets reserve XRP until consumed.</p>
+               <ul>
+                    <li>Each Ticket increases your <strong>owner reserve</strong> — cost adds up quickly with many Tickets.</li>
+                    <li>Once used, the Ticket is removed and the reserve XRP is freed.</li>
+                    <li>Unused Tickets remain forever unless the account's Sequence surpasses them (they become invalid but still reserve XRP).</li>
+                    <li>Plan TicketCount carefully to avoid locking unnecessary XRP.</li>
+               </ul>
+          </div>
+     </div>
+</div>

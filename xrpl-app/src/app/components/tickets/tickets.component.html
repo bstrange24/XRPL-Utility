@@ -6,233 +6,138 @@
      </div>
 </div>
 
-<!-- Main content -->
+<!-- Get view -->
+@let viewModel = ticketsViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+<!-- Get tab data -->
+@let tabs = menuTabs;
+
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroTicket" size="20" class="text-red-600"></ng-icon>
-                         Create
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'delete'" (click)="setTab('delete')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Delete
-                    </button>
-               </div>
-
-               <!-- Create Menu -->
-               @if (activeTab() === 'create') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroTicket" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Create Ticket</h2>
-                              <p class="submenu-info-secondary-text">Create a ticket for the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Delete Menu -->
-               @if (activeTab() === 'delete') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delete Ticket</h2>
-                              <p class="submenu-info-secondary-text">Delete a ticket for the selected account</p>
-                         </div>
-                    </div>
-               </div>
-               }
+               <!-- Menu / Tabs -->
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Dynamic info panel -->
-               @if (infoData()) {
+               @if (viewModel.infoData()) {
                <div class="info-only-card">
                     <div class="info-panel-content">
                          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                         <div class="info-text" [innerHTML]="infoData()"></div>
+                         <div class="info-text" [innerHTML]="viewModel.infoData()"></div>
                     </div>
                </div>
                }
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
-               <!-- Create tickets -->
-               @if (activeTab() === 'create') {
-               <div class="form-row">
-                    <div class="form-group">
-                         <label for="ticketCountField">Number of Tickets to create</label>
-                         <p class="form-hint">Number of Tickets to create for the selected account.</p>
-                         <input type="text" [(ngModel)]="xrplTxOptionsStore.ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
-                    </div>
-               </div>
-               }
-
-               <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
-               @if (activeTab() === 'delete' && xrplTxOptionsStore.walletTicketCount() > 0) {
-               <div class="form-row" style="margin-bottom: 1.2em">
-                    <div class="form-group">
-                         <label for="ticketDropdownField">Select Tickets to Delete</label>
-                         <p class="form-hint">Select available tickets to delete for the selected account.</p>
-                         <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeTicketDropdown()">
-                              <input #ticketDropdownInput type="text" [value]="ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="xrplTxOptionsStore.selectedTicketSequences().length > 0 ? xrplTxOptionsStore.selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketSearchQuery()" class="combobox-input" autocomplete="off" />
-                              <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
-                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                              </button>
+               <form #theForm="ngForm" class="main-form">
+                    <!-- Create tickets -->
+                    @if (tab === 'createTicket') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="ticketCountField">Number of Tickets to create</label>
+                              <p class="form-hint">Number of Tickets to create for the selected account.</p>
+                              <input type="text" [(ngModel)]="xrplTxOptionsStore.ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
                          </div>
                     </div>
-               </div>
+                    }
 
-               <!-- NEW: Selected Tickets Chips -->
-               @if (xrplTxOptionsStore.selectedTicketSequences().length > 0) {
-               <div class="ticket-container">
-                    <!-- List of selected tickets -->
-                    <div class="ticket-list">
-                         @for (ticketSeq of xrplTxOptionsStore.selectedTicketSequences(); track ticketSeq) {
-                         <div class="ticket-item">
-                              <span class="ticket-number">{{ ticketSeq }}</span>
-
-                              <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
-                                   <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
-                              </button>
-                         </div>
-                         }
-                    </div>
-
-                    <!-- Footer row -->
-                    <div class="ticket-footer">
-                         <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
-                    </div>
-               </div>
-               }
-
-               <!-- Dropdown Template -->
-               <ng-template #ticketDropdownTemplate>
-                    <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                         <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
-                              <!-- Header: Select All + Clear -->
-                              <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
-                                   <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                                        <input type="checkbox" [checked]="allTicketsSelected()" (change)="toggleSelectAllTickets()" style="width: 16px; height: 16px" />
-                                        <span>Select All</span>
-                                   </label>
-                                   <button class="clear-btn" (click)="clearAllSelections()" [disabled]="xrplTxOptionsStore.selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="xrplTxOptionsStore.selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
+                    <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
+                    @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
+                    <div class="form-row" style="margin-bottom: 1.2em">
+                         <div class="form-group">
+                              <label for="ticketDropdownField">Select Tickets to Delete</label>
+                              <p class="form-hint">Select available tickets to delete for the selected account.</p>
+                              <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeTicketDropdown()">
+                                   <input #ticketDropdownInput type="text" [value]="ticketStore.ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="xrplTxOptionsStore.selectedTicketSequences().length > 0 ? xrplTxOptionsStore.selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketStore.ticketSearchQuery()" class="combobox-input" autocomplete="off" />
+                                   <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
+                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                                   </button>
                               </div>
+                         </div>
+                    </div>
 
-                              <!-- Ticket Items -->
-                              @for (ticket of filteredTickets(); track ticket) {
-                              <label class="combobox-item ticket-item" [class.highlighted]="highlightedTicketIndex() === $index" (mouseenter)="highlightedTicketIndex.set($index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                                   <input type="checkbox" [checked]="xrplTxOptionsStore.selectedTicketSequences().includes(ticketsUtilService.convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
+                    <!-- NEW: Selected Tickets Chips -->
+                    @if (xrplTxOptionsStore.selectedTicketSequences().length > 0) {
+                    <div class="ticket-container">
+                         <!-- List of selected tickets -->
+                         <div class="ticket-list">
+                              @for (ticketSeq of xrplTxOptionsStore.selectedTicketSequences(); track ticketSeq) {
+                              <div class="ticket-item">
+                                   <span class="ticket-number">{{ ticketSeq }}</span>
 
-                                   <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
-                              </label>
-                              } @empty {
-                              <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No tickets match your search</div>
+                                   <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
+                                        <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
+                                   </button>
+                              </div>
                               }
                          </div>
+
+                         <!-- Footer row -->
+                         <div class="ticket-footer">
+                              <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
+                         </div>
                     </div>
-               </ng-template>
-               }
-
-               <!-- <app-transaction-options [showWhenTab]="['create','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
-
-               <!-- Action buttons -->
-               <div class="button-row">
-                    @if (activeTab() === 'create') {
-                    <button type="button" class="btn-primary-blue" (click)="createTickets()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ ticketsUtilService.createButtonLabel() }}</button>
-                    } @if (activeTab() === 'delete') {
-                    <button type="button" class="btn-primary-red" (click)="deleteSelectedTickets()" [disabled]="!isIdle() || !hasWalletsSignal()">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }
-                    <button type="button" class="btn-secondary-clear-fields" (click)="clearFields()" [disabled]="txUiService.currentStep() !== 'idle' || !hasWalletsSignal()">Clear Fields</button>
-               </div>
 
-               <!-- Execution time -->
-               <div class="executionTimeDisplay">
-                    <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-               </div>
+                    <!-- Dropdown Template -->
+                    <ng-template #ticketDropdownTemplate>
+                         <div class="combobox-wrapper" (click)="$event.stopPropagation()">
+                              <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
+                                   <!-- Header: Select All + Clear -->
+                                   <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
+                                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
+                                             <input type="checkbox" [checked]="viewModel.allTicketsSelected()" (change)="toggleSelectAllTickets()" style="width: 16px; height: 16px" />
+                                             <span>Select All</span>
+                                        </label>
+                                        <button class="clear-btn" (click)="clearAllSelections()" [disabled]="xrplTxOptionsStore.selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="xrplTxOptionsStore.selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
+                                   </div>
 
-               <app-transaction-preview></app-transaction-preview>
+                                   <!-- Ticket Items -->
+                                   @for (ticket of filteredTickets(); track ticket) {
+                                   <label class="combobox-item ticket-item" [class.highlighted]="ticketStore.highlightedTicketIndex() === $index" (mouseenter)="ticketStore.setField('highlightedTicketIndex' ,$index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
+                                        <input type="checkbox" [checked]="xrplTxOptionsStore.selectedTicketSequences().includes(ticketsUtilService.convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
+
+                                        <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
+                                   </label>
+                                   } @empty {
+                                   <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No tickets match your search</div>
+                                   }
+                              </div>
+                         </div>
+                    </ng-template>
+                    }
+
+                    <app-transaction-options [showWhenTab]="['createTicket','deleteTicket']" [activeTab]="ticketsViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+
+                    <!-- Action buttons -->
+                    <div class="button-row">
+                         @if (tab === 'createTicket') {
+                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ticketsUtilService.createButtonLabel() }}</button>
+                         } @if (tab === 'deleteTicket') {
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ticketsUtilService.deleteButtonLabel() }}</button>
+                         }
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    </div>
+
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
+               </form>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>XRPL Tickets Overview</h3>
-               </div>
-
-               <p class="info-subtitle">Tickets reserve sequence numbers in advance, allowing transactions to be sent out-of-order or in parallel without depending on the account's current Sequence.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🎟️ Ticket Creation</span>
-                              <span class="badge required-badge">Single Transaction</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">TicketCount</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Max per account</span>
-                                   <span class="field-status omitted">250 Tickets</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🎟️ Using a Ticket</span>
-                              <span class="badge optional-badge">In any Transaction</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Sequence</span>
-                                   <span class="field-status omitted">❌ Set to 0</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">TicketSequence</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li><strong>TicketCount is required</strong> in a TicketCreate transaction (1 to 250).</li>
-                              <li>Each unused Ticket counts toward your account’s <strong>owner reserve</strong> (typically 0.2 XRP per Ticket) until used.</li>
-                              <li>Tickets allow out-of-order execution — use any available TicketSequence in any order, but each can only be used <strong>once</strong>.</li>
-                              <li>Maximum 250 Tickets per account at any time (creation fails if it would exceed this).</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Reserve Cost & Cleanup</h5>
-                         <p style="color: #92400e">Tickets reserve XRP until consumed.</p>
-                         <ul>
-                              <li>Each Ticket increases your <strong>owner reserve</strong> — cost adds up quickly with many Tickets.</li>
-                              <li>Once used, the Ticket is removed and the reserve XRP is freed.</li>
-                              <li>Unused Tickets remain forever unless the account's Sequence surpasses them (they become invalid but still reserve XRP).</li>
-                              <li>Plan TicketCount carefully to avoid locking unnecessary XRP.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <!-- New: Right panel for info/tips -->
+          <app-tickets-requirements-info></app-tickets-requirements-info>
      </div>
 </div>

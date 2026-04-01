@@ -1,12 +1,11 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, signal, computed, DestroyRef, ViewContainerRef, ElementRef, TemplateRef, ViewChild, effect, ChangeDetectorRef } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -27,154 +26,86 @@ import { TicketsOrchestratorService } from '../../services/tickets/tickets-orche
 import { TemplatePortal } from '@angular/cdk/portal';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { TICKET_TAB_META, TICKET_TABS } from './constants/tickets.ui';
+import { TICKET_TAB } from './constants/tickets.constants';
+import { TicketsViewModelService } from '../../services/tickets/tickets-view-model/tickets-view-model.service';
+import { TicketActionTypes, TicketTxConfig } from './constants/tickets.types';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { TicketStore } from '../../services/tickets/tickets-store/tickets-store.service';
+import { TicketsRequirementsInfoComponent } from './ui-components/tickets-requirements-info/tickets-requirements-info.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent],
-     animations: [
-          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
-          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
-     ],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateTicketsComponent extends PerformanceBaseComponent implements OnInit {
+export class CreateTicketsComponent extends WalletDestinationBase implements OnInit {
      private ticketOverlayRef: OverlayRef | null = null;
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
      private readonly destroyRef = inject(DestroyRef);
-     public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly txEnvironmentService = inject(TxEnvironmentService);
      public readonly ticketsOrchestratorService = inject(TicketsOrchestratorService);
-     public readonly acccountDataService = inject(AcccountDataService);
      public readonly ticketsUtilService = inject(TicketsUtilService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     public readonly route = inject(ActivatedRoute);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly ticketsViewModelService = inject(TicketsViewModelService);
+     public readonly ticketStore = inject(TicketStore);
+     public readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
      @ViewChild('ticketDropdownInput') ticketDropdownInput!: ElementRef<HTMLInputElement>;
      @ViewChild('ticketDropdownTemplate') ticketDropdownTemplate!: TemplateRef<any>;
 
-     activeTab = signal<'create' | 'delete'>('create');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     ticketSearchQuery = signal<string>('');
-     isTicketDropdownOpen = signal<boolean>(false);
-     highlightedTicketIndex = signal<number>(-1);
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
+     readonly menuTabs: TabConfig[] = TICKET_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = TICKET_TAB_META;
 
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-
-     // Has wallets → warning handling
-     private readonly _hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly _walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly _selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
-          this.txUiService.clearAllOptionsAndMessages();
-
-          // Fire-and-forget refresh
-          void this.getTickets(true);
-     });
-
-     readonly infoData = computed(() => {
-          const currentAddr = this.currentWallet()?.address;
-          if (!currentAddr) return null;
-
-          const wallet = this.walletManager.wallets().find(w => w.address === currentAddr);
-          if (!wallet?.address) return null;
-
-          const name = wallet.name || 'Selected wallet';
-          const count = this.xrplTxOptionsStore.walletTicketCount();
-          const label = this.activeTab() === 'create' ? 'available Tickets for use.' : 'Tickets that can be deleted.';
-
-          return `<code>${name}</code> wallet has <strong class="object-count">${count}</strong> ${label}`;
-     });
-
-     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
-
-     readonly allTicketsSelected = this.ticketsUtilService.getAllTicketsSelected(this.xrplTxOptionsStore.ticketArray(), this.xrplTxOptionsStore.selectedTicketSequences());
-
-     readonly hasSelectedTickets = computed(() => this.xrplTxOptionsStore.selectedTicketSequences().length > 0);
-
-     constructor() {
-          super();
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['create', 'delete'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
-               }
-          }
-
+          this.applyTabFromQueryParam(this.route, TICKET_TAB, tab => this.setTab(tab));
           this.txUiService.clearAllOptions();
      }
 
-     private selectWallet(wallet: Wallet): void {
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getTickets(false);
+     }
+
+     selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
-     }
 
-     private ensureWalletSelected(): boolean {
-          if (!this.hasWallets() || this.walletManagerService.getSelectedIndex() < 0) {
-               console.warn('No wallets have been selected. Possibly no wallets are in the app right now.');
-               return false;
-          }
-          return true;
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
      }
 
-     async setTab(tab: 'create' | 'delete'): Promise<void> {
-          this.activeTab.set(tab);
-          this.txUiService.clearAllOptions();
-          this.txUiService.clearAllOptionsAndMessages();
-          if (this.hasWallets()) {
-               await this.getTickets(false);
+     async setTab(tab: string): Promise<void> {
+          if (TICKET_TAB.includes(tab as any)) {
+               this.ticketsViewModelService.activeTab.set(tab as TicketActionTypes);
+               this.clearInputFields();
+
+               if (this.hasWallets()) await this.getTickets(false);
           }
      }
 
@@ -182,25 +113,17 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           await this.measure('getTickets', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
 
-               if (!this.ensureWalletSelected()) return;
+               if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh: forceRefresh,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-                         return;
-                    }
-
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) throw new Error('Unable to get environment.');
                     const ticketObjects = env.accountObjects ? this.utilsService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
                     this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.refreshAccountObject(env);
                } catch (error: any) {
                     console.error('Error in getTickets:', error);
                     this.toastService.error(error.message || 'Failed to get tickets account', AppConstants.TOAST.ERROR);
@@ -210,158 +133,98 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           });
      }
 
-     async createTickets(): Promise<void> {
-          await this.withPerf('createTickets', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+     async performAction(): Promise<void> {
+          const currentTab = this.ticketsViewModelService.activeTab();
+          const wallet = this.currentWallet();
 
-               if (!this.ensureWalletSelected()) return;
-
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    const ticketCount = this.xrplTxOptionsStore.ticketCountField();
-                    if (this.xrplTxOptionsStore.walletTicketCount() + Number(ticketCount) > 250) {
-                         throw new Error(`An XRPL can not hold more than 250 Tickets at one time. This account already has ${this.xrplTxOptionsStore.walletTicketCount()}`);
-                    }
-
-                    const result = await this.ticketsOrchestratorService.executeCreateTickets({
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.ticketsUtilService.getTransactionValues(),
-                              ticketCountField: ticketCount,
-                         },
-                         preFetchedEnv: {
-                              client: env.client,
-                              accountInfo: env.accountInfo,
-                              accountObjects: env.accountObjects,
-                              fee: env.fee!,
-                              currentLedger: env.currentLedger!,
-                              wallet: env.wallet,
-                         },
-                    });
-
-                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to create tickets');
-               } catch (error: any) {
-                    console.error('Error in createTicket:', error);
-                    this.toastService.error(error.message || 'Error creating tickets', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
+          if (currentTab === 'createTicket') {
+               const ticketCount = this.xrplTxOptionsStore.ticketCountField();
+               if (this.xrplTxOptionsStore.walletTicketCount() + Number(ticketCount) > 250) {
+                    throw new Error(`An XRPL can not hold more than 250 Tickets at one time. This account already has ${this.xrplTxOptionsStore.walletTicketCount()}`);
                }
-          });
-     }
-
-     async deleteSelectedTickets(): Promise<void> {
-          await this.withPerf('createTickets', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (!this.ensureWalletSelected()) return;
-
-               try {
-                    const ticketsToDelete = this.xrplTxOptionsStore.selectedTicketSequences();
-                    if (ticketsToDelete.length === 0) {
-                         return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
-                    }
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeTickets: true,
-                    });
-
-                    if (!env.accountInfo || !env.accountObjects) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    if (!env.ticketObjects) {
-                         return this.toastService.error('Failed to fetch ticket data.', AppConstants.TOAST.ERROR);
-                    }
-
-                    const result = await this.ticketsOrchestratorService.deleteTickets({
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.ticketsUtilService.getTransactionValues(),
-                              // ticketSequences: this.xrplTxOptionsStore.selectedTicketSequences(),
-                         },
-                         preFetchedEnv: {
-                              client: env.client,
-                              accountInfo: env.accountInfo,
-                              accountObjects: env.accountObjects,
-                              fee: env.fee!,
-                              currentLedger: env.currentLedger!,
-                              wallet: env.wallet,
-                         },
-                    });
-
-                    await this.handleTxResult(result, env.client, env.wallet, '', 'Failed to delete tickets');
-               } catch (err: any) {
-                    console.error('Erorr deleting tickets failed', err);
-                    this.toastService.error(err.message || 'Failed to delete tickets', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     private async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, errorMessage: string): Promise<boolean> {
-          if (!result.success) {
-               this.toastService.error(result.error || errorMessage, AppConstants.TOAST.ERROR);
-               return false;
           }
 
-          await this.refreshAfterTx(client, wallet);
+          let env: any = null;
+          try {
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    includeServerInfo: true,
+                    includeTickets: true,
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
 
-          this.clearFields();
-          this.cdr.markForCheck();
-          return true;
-     }
+          if (!env) throw new Error('Unable to get environment.');
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-
-          const ticketObjects = this.utilsService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
-          this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
-
-          await this.refreshWallets(client, [wallet.classicAddress]);
-          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
-     }
-
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
+          if (currentTab === 'deleteTicket') {
+               const ticketsToDelete = this.xrplTxOptionsStore.selectedTicketSequences();
+               if (ticketsToDelete.length === 0) {
+                    return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
                }
-          );
+          }
+
+          const ticketState = this.ticketStore.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
+
+          const config: TicketTxConfig = {
+               ticket: ticketState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
+               extra: {},
+          };
+
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+
+          await this.withPerf('performAction', async () => {
+               try {
+                    switch (currentTab) {
+                         case 'createTicket':
+                              txResult = await this.ticketsOrchestratorService.executeTicketTx('createTicket', config);
+                              break;
+                         case 'deleteTicket':
+                              txResult = await this.ticketsOrchestratorService.executeTicketTx('deleteTicket', config);
+                              break;
+                    }
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
+               }
+          });
+
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
+
+          await this.handleTxResult(txResult, env.client, env.wallet, '', '', '', { includeTicketObjects: true });
+          this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected refreshAccountObject(env: any): void {
+          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+
+          // NEW: Always refresh ticket count from the fresh account_objects
+          const ticketObjects = env.accountObjects ? this.utilsService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+          const newCount = ticketObjects?.result?.account_objects?.length ?? 0;
+          this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
      }
 
      toggleSelectAllTickets(): void {
-          if (this.allTicketsSelected()) {
-               this.xrplTxOptionsStore.setField('selectedTicketSequences', []); // Empty string[]
+          if (this.ticketsViewModelService.allTicketsSelected()) {
+               this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           } else {
-               this.xrplTxOptionsStore.setField(
-                    'selectedTicketSequences',
-                    [...this.xrplTxOptionsStore.ticketArray()] // ticketArray is string[]
-               );
+               this.xrplTxOptionsStore.setField('selectedTicketSequences', [...this.xrplTxOptionsStore.ticketArray()]);
           }
      }
 
      toggleTicketSelection(seq: string): void {
-          // 👈 Parameter type: string
           this.xrplTxOptionsStore.updateField('selectedTicketSequences', list => (list.includes(seq) ? list.filter(t => t !== seq) : [...list, seq]));
      }
 
@@ -371,13 +234,18 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     clearFields(): void {
+     // clearFields(): void {
+     //      this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
+     //      this.xrplTxOptionsStore.setField('ticketCountField', '');
+     // }
+
+     protected clearInputFields(): void {
+          this.destinationSearchQuery.set('');
+          this.selectedDestinationAddress.set('');
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
           this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           this.xrplTxOptionsStore.setField('ticketCountField', '');
-     }
-
-     get safeWarningMessage(): string {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '';
      }
 
      openTicketDropdown(): void {
@@ -419,13 +287,15 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                this.ticketOverlayRef.attach(new TemplatePortal(this.ticketDropdownTemplate, this.viewContainerRef));
           }
 
-          this.highlightedTicketIndex.set(-1);
+          this.ticketStore.setField('highlightedTicketIndex', -1);
+          // this.highlightedTicketIndex.set(-1);
      }
 
      closeTicketDropdown(): void {
           this.ticketOverlayRef?.dispose();
           this.ticketOverlayRef = null;
-          this.isTicketDropdownOpen.set(false);
+          this.ticketStore.setField('isTicketDropdownOpen', false);
+          // this.isTicketDropdownOpen.set(false);
      }
 
      toggleTicketDropdown(): void {
@@ -434,12 +304,12 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
 
      onTicketSearchInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
-          this.ticketSearchQuery.set(value);
+          this.ticketStore.setField('ticketSearchQuery', value);
      }
 
      filteredTickets = computed(() => {
           const tickets = this.xrplTxOptionsStore.ticketArray(); // string[]
-          const q = this.ticketSearchQuery().trim().toLowerCase();
+          const q = this.ticketStore.ticketSearchQuery().trim().toLowerCase();
           if (!q) return tickets;
           return tickets.filter(
                (ticket: string) => ticket.toLowerCase().includes(q) // String comparison
@@ -450,7 +320,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
           const items = this.filteredTickets();
           if (items.length === 0) return;
 
-          let index = this.highlightedTicketIndex();
+          let index = this.ticketStore.highlightedTicketIndex();
 
           if (event.key === 'ArrowDown') {
                event.preventDefault();
@@ -469,7 +339,7 @@ export class CreateTicketsComponent extends PerformanceBaseComponent implements 
                return; // Allow typing in search
           }
 
-          this.highlightedTicketIndex.set(index);
+          this.ticketStore.setField('highlightedTicketIndex', index);
 
           // CRITICAL: Scroll the highlighted item into view
           requestAnimationFrame(() => {

@@ -428,7 +428,7 @@ export class ValidationService {
                let value;
                let field;
                if (action === 'createTicket') {
-                    value = ctx.inputs[action]?.ticketCountField;
+                    value = ctx.inputs[action]?.amount;
                     field = 'Ticket Count';
                } else if (action === 'createMpt') {
                     value = ctx.inputs[action]?.tokenCountField;
@@ -740,7 +740,7 @@ export class ValidationService {
           // CreateTicket
           this.registerRule({
                transactionType: 'CreateTicket',
-               requiredFields: ['createTicket.ticketCountField'],
+               requiredFields: ['createTicket.amount'],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {
