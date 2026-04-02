@@ -1,13 +1,10 @@
-import { OnInit, Component, inject, DestroyRef, signal, computed, ChangeDetectionStrategy, ViewChild, effect, AfterViewInit, ChangeDetectorRef } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
@@ -19,10 +16,8 @@ import { NavbarComponent } from '../navbar/navbar.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
-import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { JsonEditorComponent } from '../json-editor/json-editor.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
@@ -31,92 +26,55 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
-import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
-import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
+import { MptRequirementsInfoComponent } from './ui-components/mpt-requirements-info/mpt-requirements-info.component';
+import { MptTransactionViewModelService } from '../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
+import { MPT_TAB_META, MPT_TABS } from './constants/mpt.ui';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { MPT_TAB } from './constants/mpt.constants';
+import { MptActionTypes, MptTxConfig, MptTxType } from './constants/mpt.types';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { StorageService } from '../../services/local-storage/storage.service';
+import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
+import { SummaryComponent } from './ui-components/summary/summary.component';
+import { MptAuthorizeUnauthorizeComponent } from './tab/mpt-authorize-unauthorize/mpt-authorize-unauthorize.component';
+import { MptLockUnlockComponent } from './tab/mpt-lock-unlock/mpt-lock-unlock.component';
+import { MptSendComponent } from './tab/mpt-send/mpt-send.component';
+import { MptClawbackComponent } from './tab/mpt-clawback/mpt-clawback.component';
+import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
+import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
+import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TooltipLinkComponent, SelectSearchDropdownComponent, JsonEditorComponent],
-     animations: [
-          trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('300ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])]),
-          trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-20px)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(100%)' }))])]),
-     ],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, MptRequirementsInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MptComponent extends PerformanceBaseComponent implements OnInit, AfterViewInit {
-     private readonly destroyRef = inject(DestroyRef);
-     public readonly utilsService = inject(UtilsService);
+export class MptComponent extends WalletDestinationBase implements OnInit, AfterViewInit {
+     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
+     public readonly xrplCache = inject(XrplCacheService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly txEnvironmentService = inject(TxEnvironmentService);
-     public readonly transactionDropdownService = inject(TransactionDropdownService);
      public readonly checkUtilService = inject(CheckUtilService);
-     public readonly acccountDataService = inject(AcccountDataService);
      public readonly checkTransactionOrchestrator = inject(CheckTransactionOrchestrator);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     public readonly route = inject(ActivatedRoute);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
+     public readonly mptStoreService = inject(MptStoreService);
+     readonly menuTabs: TabConfig[] = MPT_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = MPT_TAB_META;
 
-     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>('');
-     destinationSearchQuery = signal<string>('');
-
-     activeTab = signal<'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy'>('create');
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
-     selectedWalletIndex = signal<number>(0);
-     existingMpts = signal<any[]>([]);
-     existingMptsCollapsed = signal<boolean>(false);
-     outstandingIOUCollapsed = signal<boolean>(false);
-     XLS89_TEMPLATE = signal<string>(`{
-  "t": "TBILL",
-  "n": "T-Bill Yield Token",
-  "d": "A yield-bearing stablecoin backed by short-term U.S. Treasuries and money market instruments.",
-  "i": "example.org/tbill-icon.png",
-  "ac": "rwa",
-  "as": "treasury",
-  "in": "Example Yield Co.",
-  "us": [
-    {
-      "u": "exampleyield.co/tbill",
-      "c": "website",
-      "t": "Product Page"
-    },
-    {
-      "u": "exampleyield.co/docs",
-      "c": "docs",
-      "t": "Yield Token Docs"
-    }
-  ],
-  "ai": {
-    "interest_rate": "5.00%",
-    "interest_type": "variable",
-    "yield_source": "U.S. Treasury Bills",
-    "maturity_date": "2045-06-30",
-    "cusip": "912796RX0"
-  }
-}`);
      monacoOptions = {
           theme: 'vs',
           language: 'json',
@@ -127,199 +85,20 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           scrollBeyondLastLine: false,
      };
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
-          this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields(true);
-
-          // Fire-and-forget refresh
-          void this.getMptDetails(false);
-     });
-
-     allDestinations = this.transactionDropdownService.allDestinations(this.transactionDropdownService.customDestinations);
-     destinationMap = this.transactionDropdownService.destinationMap(this.allDestinations);
-     destinationItems = this.transactionDropdownService.destinationItems(this.allDestinations);
-     selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this.destinationMap, this.destinationItems);
-     filteredDestinations = this.transactionDropdownService.filteredDestinations(this.allDestinations, this.destinationSearchQuery);
-     destinationDisplay = this.transactionDropdownService.destinationDisplay(this.selectedDestinationAddress, this.destinationSearchQuery, this.destinationMap);
-
-     readonly currentAddress = computed(() => this.currentWallet().address);
-     private readonly hasWallets = computed(() => this.wallets().length > 0);
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-     readonly hasWalletsSignal = this.walletManagerService.hasWallets;
-
-     infoData = computed(() => {
-          const wallet = this.currentWallet();
-          if (!wallet?.address) return null;
-
-          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const explorerBase = this.txUiService.explorerUrl();
-          const address = wallet.address;
-
-          const mpts = this.existingMpts();
-          const count = mpts.length;
-
-          const links = count > 0 ? `<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>` : '';
-
-          const mptsToShow = this.infoPanelExpanded()
-               ? this.existingMpts().map(m => {
-                      // Safely decode the metadata (handle cases where it's missing/invalid)
-                      let decodedMetadata;
-
-                      try {
-                           if (m.MPTokenMetadata) {
-                                decodedMetadata = xrpl.decodeMPTokenMetadata(m.MPTokenMetadata) as any; // ← quick & dirty
-                           }
-                      } catch (error) {
-                           console.warn('Failed to decode MPTokenMetadata:', error);
-                      }
-
-                      console.log('decodedMetadata?.uris: ', decodedMetadata?.uris);
-
-                      return {
-                           mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
-                           id: m.id || 'We have big issues',
-                           amount: m.amount,
-                           isHolder: m.isHolder,
-                           maxAmount: m.MaximumAmount,
-                           outstanding: m.OutstandingAmount,
-                           transferFee: m.TransferFee,
-                           flags: this.mptUtilService.decodeMptFlagsForUi(m.Flags || 0),
-
-                           // New clean fields - easy to use in template
-                           ticker: decodedMetadata?.ticker ? decodedMetadata?.ticker : 'N/A',
-                           usefulLinks: (decodedMetadata?.uris || []).map((link: { uri: any; u: any; title: any; t: any; c: any; category: any }) => ({
-                                uri: link.uri || link.u || '',
-                                title: link.title || link.t || link.c || 'Link',
-                                category: link.category || '',
-                           })),
-
-                           // Optional: pre-formatted HTML string for displaying links nicely
-                           linkHtml:
-                                (decodedMetadata?.uris || []).length > 0
-                                     ? (decodedMetadata?.uris || [])
-                                            .map(
-                                                 (link: { u: any; t: any; c: any }) => `
-                <a href="${link.u}" target="_blank" rel="noopener noreferrer" class="mpt-link">${link.t || link.c || 'Link'}</a>`
-                                            )
-                                            .join(' • ')
-                                     : 'No links provided',
-
-                           // If you still want the full original JSON string (for debugging)
-                           MPTokenMetadataFull: JSON.stringify(decodedMetadata, null, '\t'),
-                      };
-                 })
-               : [];
-
-          return {
-               walletName,
-               mptCount: count,
-               mptsToShow,
-               links,
-          };
-     });
-
-     // MPT Dropdown Items
-     mptItems = computed(() => {
-          const t = this.existingMpts().map(m => {
-               const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
-               let isHolder = false;
-               if (type === 'MPToken') {
-                    isHolder = true;
-               }
-               const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
-
-               const displayAmount = amount === '0' ? '0' : amount;
-
-               return {
-                    id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                    // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
-                    display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
-                    secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
-                    isCurrentAccount: false,
-                    isCurrentCode: false,
-                    isCurrentToken: false,
-               };
-          });
-          return t;
-     });
-
-     selectedMptItem = computed(() => {
-          const id = this.txUiService.mptIssuanceIdField();
-          if (!id) return null;
-          return this.mptItems().find(i => i.id === id) || null;
-     });
-
-     metadataByteLength = computed(() => {
-          const meta = this.txUiService.metaDataField().trim();
-          if (!meta) return 0;
-
-          try {
-               // Convert to hex (same as xrpl.convertStringToHex does)
-               const hex = xrpl.convertStringToHex(meta);
-               return hex.length / 2; // hex string: 2 chars = 1 byte
-          } catch {
-               return 0;
-          }
-     });
-
-     metadataIsValid = computed(() => {
-          return this.metadataByteLength() <= 1024;
-     });
-
-     onMptSelected(item: SelectItem | null) {
-          this.txUiService.mptIssuanceIdField.set(item?.id || '');
-     }
-
-     constructor() {
-          super();
-
-          effect(() => {
-               const typed = this.destinationSearchQuery().trim();
-               const current = this.selectedDestinationAddress();
-
-               if (typed && typed !== current && xrpl.isValidAddress(typed)) {
-                    if (!this.allDestinations().some(d => d.address === typed)) {
-                         this.selectedDestinationAddress.set(typed);
-                    }
-               }
-          });
-
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['create', 'authorize', 'unauthorize', 'send', 'lock', 'unlock', 'clawback', 'destroy'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
-               }
-          }
+          this.applyTabFromQueryParam(this.route, MPT_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
-          this.txUiService.metaDataField.set(this.XLS89_TEMPLATE());
-          this.txUiService.clearAllOptions();
+          this.mptStoreService.setField('metaData', this.mptStoreService.XLS89_TEMPLATE());
+     }
+
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getMptDetails(false);
      }
 
      ngAfterViewInit(): void {
@@ -329,84 +108,60 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           }, 0);
      }
 
-     private selectWallet(wallet: Wallet): void {
-          if (wallet?.address === this.currentWallet()?.address) {
-               return; // prevent re-processing the same wallet
-          }
+     onMptSelected(item: SelectItem | null) {
+          if (!item) return;
+          this.mptStoreService.setField('mptIssuanceId', item?.id || '');
+     }
+
+     onMptSelectedFromSummary(mpt: any): void {
+          if (!mpt) return;
+          this.mptStoreService.setField('mptIssuanceId', mpt.mpt_issuance_id || mpt.id || '');
+     }
+
+     selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
           this.txUiService.currentWallet.set(wallet);
 
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
-     trackByAddress(index: number, item: DropdownItem): string {
+     trackByAddress(_index: number, item: DropdownItem): string {
           return item.address;
      }
 
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
-
-     onMptSelect(selected: any) {
-          if (selected) {
-               this.txUiService.mptIssuanceIdField.set(selected.mpt_issuance_id);
-          }
-     }
-
      toggleExistingMpts() {
-          this.existingMptsCollapsed.set(!this.existingMptsCollapsed);
-     }
-
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
+          this.mptStoreService.setField('outstandingMptsCollapsed', !this.mptStoreService.outstandingMptsCollapsed());
      }
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
      }
 
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
+     async setTab(tab: string): Promise<void> {
+          if (MPT_TAB.includes(tab as any)) {
+               this.mptTransactionViewModelService.activeTab.set(tab as MptActionTypes);
+               this.clearInputFields();
 
-     async setTab(tab: 'create' | 'authorize' | 'unauthorize' | 'send' | 'lock' | 'unlock' | 'clawback' | 'destroy'): Promise<void> {
-          this.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
-
-          this.clearFields(true);
-          if (this.hasWallets()) {
-               await this.getMptDetails(true);
+               if (this.hasWallets()) await this.getMptDetails(false);
           }
      }
 
      async getMptDetails(forceRefresh = false): Promise<void> {
           await this.measure('getMptDetails', true, async () => {
+               this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
+               this.txUiService.resetCurrentStepToIdle();
+
+               if (!this.walletManagerService.ensureWalletSelected()) return;
+
                try {
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.txUiService.resetCurrentStepToIdle();
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) throw new Error('Unable to get environment.');
 
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-
-                    const { wallet, accountInfo, accountObjects } = await this.measure('getChecks:prepareTxEnvironment', false, async () =>
-                         this.txEnvironmentService.prepareTxEnvironment({
-                              includeAccountInfo: true,
-                              includeAccountObject: true,
-                              forceRefresh: forceRefresh,
-                         })
-                    );
-
-                    if (!accountInfo || !accountObjects) {
-                         throw new Error('Failed to fetch account information');
-                    }
-
-                    await this.measure('getChecks:processAndUpdate', false, async () => {
-                         this.existingMpts.set(this.mptUtilService.getMpts(accountObjects, wallet.classicAddress));
-
-                         this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
-                    });
+                    this.refreshAccountObject(env);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getMptDetails:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
@@ -416,388 +171,134 @@ export class MptComponent extends PerformanceBaseComponent implements OnInit, Af
           });
      }
 
-     async createMpt() {
-          await this.withPerf('createMpt', async () => {
-               try {
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.txUiService.clearAllOptionsAndMessages();
+     async performAction(): Promise<void> {
+          const currentTab = this.mptTransactionViewModelService.activeTab();
+          const wallet = this.currentWallet();
 
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
+          if (currentTab === 'createMpt') {
+               const byteLength = this.mptTransactionViewModelService.metadataByteLength();
+               if (byteLength > 1024) return this.toastService.error(`Token Metadata exceeds maximum size: ${byteLength} bytes (limit: 1024 bytes)`, AppConstants.TOAST.ERROR);
+               if (byteLength > 0 && !this.mptTransactionViewModelService.metadataIsValid()) return this.toastService.error('Invalid metadata encoding', AppConstants.TOAST.ERROR);
+          }
 
-                    const byteLength = this.metadataByteLength();
-
-                    if (byteLength > 1024) return this.toastService.error(`Token Metadata exceeds maximum size: ${byteLength} bytes (limit: 1024 bytes)`, AppConstants.TOAST.ERROR);
-
-                    if (byteLength > 0 && !this.metadataIsValid()) return this.toastService.error('Invalid metadata encoding', AppConstants.TOAST.ERROR);
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    const { client, accountInfo, accountObjects, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    const flags = this.mptUtilService.getFlagsValue(this.mptUtilService.flags);
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx('create', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                              flags: flags,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed to create mpt', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, null, false);
-               } catch (error: any) {
-                    console.error('Error in createMpt:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+          let destinationAddress = '';
+          if (currentTab === 'sendMpt' || currentTab === 'clawbackMpt' || currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt') {
+               destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
+                    this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
+                    return;
                }
-          });
-     }
+               this.selectedDestinationAddress.set(destinationAddress);
+               this.mptStoreService.setField('destination', destinationAddress);
+          }
 
-     async authorizeMpt(authorizeFlag: 'Y' | 'N') {
-          await this.withPerf('authorizeMpt', async () => {
-               try {
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.txUiService.clearAllOptionsAndMessages();
+          let env: any = null;
+          try {
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    includeServerInfo: true,
+                    includeDestinationAccountInfo: true,
+                    destinationAddress,
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
 
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
+          if (!env) throw new Error('Unable to get environment.');
 
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    const { client, accountInfo, accountObjects, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx(authorizeFlag === 'N' ? 'unauthorize' : 'authorize', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                              authorize: authorizeFlag,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed to authorize mpt', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, null, false);
-               } catch (error: any) {
-                    console.error(`Error creating authorizeMpt: ${error.message}`);
-                    this.toastService.error(`Error authorizing Mpt: ${error.message}`, AppConstants.TOAST.ERROR);
+          if (currentTab === 'sendMpt') {
+               if (!this.mptUtilService.isDestinationAuthorizedForMpt(env.accountObjects.result.account_objects, env.destinationAccountObject.result.account_objects, this.mptStoreService.mptIssuanceId())) {
+                    return this.toastService.error(`Destination ${destinationAddress} is not authorized to receive this MPT. Please ensure authorization has been completed.`, AppConstants.TOAST.ERROR);
                }
-          });
-     }
+          }
 
-     async setMptLockUnlock(locked: 'Y' | 'N') {
-          await this.withPerf('setMptLockUnlock', async () => {
+          if (currentTab === 'lockMpt' || currentTab === 'unlockMpt') {
+               const accountIssuerToken = this.mptUtilService.getAllMptTokens(env.accountObjects);
+               if (!accountIssuerToken) return this.toastService.error(`MPT issuance ID ${this.mptStoreService.mptIssuanceId()} was not issued by ${wallet.classicAddress}.`, AppConstants.TOAST.ERROR);
+          }
+
+          const mptState = this.mptStoreService.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
+
+          const config: MptTxConfig = {
+               mpt: mptState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
+               extra: {},
+          };
+
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+          let txType: string;
+
+          await this.withPerf('performAction', async () => {
                try {
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.txUiService.clearAllOptionsAndMessages();
-
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    const { client, accountInfo, accountObjects, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    const accountIssuerToken = this.mptUtilService.getAllMptTokens(accountObjects);
-
-                    if (!accountIssuerToken) return this.toastService.error(`MPT issuance ID ${this.txUiService.mptIssuanceIdField()} was not issued by ${wallet.classicAddress}.`, AppConstants.TOAST.ERROR);
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx(locked === 'N' ? 'unlock' : 'lock', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                              locked: locked,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed mpt locking', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, null, false);
-               } catch (error: any) {
-                    console.error('Error in setMptLocked:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
-               }
-          });
-     }
-
-     async sendMpt() {
-          await this.withPerf('sendMpt', async () => {
-               try {
-                    this.txUiService.resetCurrentStepToIdle();
-                    this.txUiService.clearAllOptionsAndMessages();
-
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-
-                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-                    if (!destinationAddress) return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeDestinationAccountInfo: true,
-                         includeDestinationAccountObject: true,
-                         destinationAddress,
-                    });
-
-                    const { client, accountInfo, accountObjects, destinationAccountObject, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects || !destinationAccountObject) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    if (!this.mptUtilService.isDestinationAuthorizedForMpt(accountObjects.result.account_objects, destinationAccountObject.result.account_objects, this.txUiService.mptIssuanceIdField())) {
-                         return this.toastService.error(`Destination ${destinationAddress} is not authorized to receive this MPT. Please ensure authorization has been completed.`, AppConstants.TOAST.ERROR);
+                    switch (currentTab) {
+                         case 'createMpt':
+                              txType = 'createMpt' as MptTxType;
+                              break;
+                         case 'authorizeMpt':
+                         case 'unauthorizeMpt':
+                              const action = this.mptStoreService.authAction();
+                              if (action === 'authorize' || action === 'unauthorize') txType = `${action}Mpt` as MptTxType;
+                              else throw new Error(`Invalid auth action: ${action}`);
+                              break;
+                         case 'lockMpt':
+                         case 'unlockMpt':
+                              const lockAction = this.mptStoreService.lockAction();
+                              if (lockAction === 'lock' || lockAction === 'unlock') txType = `${lockAction}Mpt` as MptTxType;
+                              else throw new Error(`Invalid lock action: ${lockAction}`);
+                              break;
+                         case 'sendMpt':
+                              txType = 'sendMpt' as MptTxType;
+                              break;
+                         case 'clawbackMpt':
+                              txType = 'clawbackMpt' as MptTxType;
+                              break;
+                         case 'destroyMpt':
+                              txType = 'destroyMpt' as MptTxType;
+                              break;
+                         default:
+                              throw new Error(`Unknown tab: ${currentTab}`);
                     }
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx('send', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                              destinationAddress,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed to send mpt', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, destinationAddress, false);
+                    txResult = await this.mptOrchestratorServiceService.executeMptTx(txType as MptTxType, config);
                } catch (error: any) {
-                    console.error('Error in sendMpt:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
                }
           });
+
+          if (!txResult) throw new Error('Unable error when submitting transaction.');
+
+          await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
+          this.txUiService.resetCurrentStepToIdle();
      }
 
-     async destroyMpt() {
-          await this.withPerf('destroyMpt', async () => {
-               try {
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.txUiService.resetCurrentStepToIdle();
-
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                    });
-
-                    const { client, accountInfo, accountObjects, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx('destroy', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed mpt locking', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, null, false);
-               } catch (error: any) {
-                    console.error('Error in destroyMpt:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
-               }
-          });
-     }
-
-     async clawbackMpt() {
-          await this.withPerf('clawbackMpt', async () => {
-               try {
-                    this.txUiService.clearAllOptionsAndMessages();
-                    this.txUiService.resetCurrentStepToIdle();
-
-                    if (this.hasWallets() && this.walletManagerService.getSelectedIndex() < 0) return this.toastService.error('Please select a wallet.', AppConstants.TOAST.ERROR);
-
-                    // This is the holder address
-                    const destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-
-                    if (!destinationAddress) return this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         includeFee: true,
-                         includeLedgerIndex: true,
-                         includeDestinationAccountInfo: true,
-                         includeDestinationAccountObject: true,
-                         destinationAddress,
-                    });
-
-                    const { client, accountInfo, accountObjects, destinationAccountObject, fee, currentLedger, wallet } = env;
-
-                    if (!accountInfo || !accountObjects || !destinationAccountObject) return this.toastService.error('Failed to fetch account information', AppConstants.TOAST.ERROR);
-
-                    const result = await this.mptOrchestratorServiceService.executeMptTx('clawback', {
-                         wallet: this.currentWallet(),
-                         formValues: {
-                              ...this.getTransactionValues(),
-                              destinationAddress,
-                         },
-                         extra: {},
-                         preFetchedEnv: {
-                              client,
-                              accountInfo,
-                              accountObjects,
-                              fee: fee!,
-                              currentLedger: currentLedger!,
-                              wallet: wallet,
-                         },
-                    });
-
-                    if (!result.success) return this.toastService.error(result.error || 'Failed to send mpt', AppConstants.TOAST.ERROR);
-
-                    await this.refreshAfterTx(client, wallet, destinationAddress, false);
-               } catch (error: any) {
-                    console.error(`Error during clawbackMpt: ${error.message}`);
-                    this.toastService.error(`Error during clawback: ${error.message}`, AppConstants.TOAST.ERROR);
-               }
-          });
-     }
-
-     private getTransactionValues() {
-          const tokenCountField = this.txUiService.tokenCountField();
-          const assetScaleField = this.txUiService.assetScaleField();
-          const transferFeeField = this.txUiService.transferFeeField();
-          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
-          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
-          // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
-          const regularKeyAddress = this.txUiService.regularKeyAddress();
-          const regularKeySeed = this.txUiService.regularKeySeed();
-          const multiSignAddress = this.txUiService.multiSignAddress();
-          const multiSignSeeds = this.txUiService.multiSignSeeds();
-          const mptIssuanceIdField = this.txUiService.mptIssuanceIdField();
-          const amount = this.txUiService.amountField();
-          return { tokenCountField, isSimulate, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds, assetScaleField, transferFeeField, mptIssuanceIdField, amount };
-     }
-
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.existingMpts.set(this.mptUtilService.getMpts(accountObjects, wallet.classicAddress));
-          await this.refreshWallets(client, destination ? [wallet.classicAddress, destination] : [wallet.classicAddress]);
-          this.addCustomDestination(addDest, destination);
-          this.acccountDataService.refreshUiState(wallet, accountInfo, accountObjects);
+     protected refreshAccountObject(env: any) {
+          this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
+          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.txUiService.clearAllOptions();
      }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
-
-     private addCustomDestination(addDest: boolean, destination: string | null) {
-          if (addDest && destination) {
-               const addr = destination.trim();
-               if (xrpl.isValidAddress(addr)) {
-                    const added = this.transactionDropdownService.addCustomIfNewAndSelect(destination, this.destinationMap, this.selectedDestinationAddress, this.destinationSearchQuery);
-                    if (added) {
-                         console.log('Custom added via service');
-                    }
-               }
-          }
-     }
-
-     copyMptId(mpt_issuance_id: string) {
-          navigator.clipboard.writeText(mpt_issuance_id).then(() => {
-               this.txUiService.showToastMessage('MPT Issuance ID copied!');
-          });
-     }
-
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
-     loadXls89Template() {
-          this.txUiService.metaDataField.set(JSON.stringify(this.XLS89_TEMPLATE(), null, 2));
+     protected clearInputFields() {
+          this.mptUtilService.resetFlags();
+          this.selectedDestinationAddress.set('');
+          this.mptStoreService.resetMptFields();
+          this.txUiService.clearAllOptionsAndMessages();
      }
 
      clearFields(clearAllFields: boolean) {
           if (clearAllFields) {
-               this.mptUtilService.flags.canClawback = false;
-               this.mptUtilService.flags.canLock = false;
-               this.mptUtilService.flags.isRequireAuth = false;
-               this.mptUtilService.flags.canTransfer = false;
-               this.mptUtilService.flags.canTrade = false;
-               this.mptUtilService.flags.canEscrow = false;
+               this.mptUtilService.resetFlags();
+               this.mptStoreService.resetMptFields();
           }
 
           this.selectedDestinationAddress.set('');

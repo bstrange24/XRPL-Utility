@@ -6,624 +6,115 @@
      </div>
 </div>
 
+<!-- Get view -->
+@let viewModel = mptTransactionViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+<!-- Get tab data -->
+@let tabs = menuTabs;
+
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
                <!-- Menu / Tabs -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'create'" (click)="setTab('create')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Create
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'unauthorize'" (click)="setTab('unauthorize')">
-                         <lucide-angular name="shield-ellipsis" size="20" class="text-red-600" style="padding-top: 5px"></lucide-angular>
-                         Authorize
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'send'" (click)="setTab('send')">
-                         <ng-icon name="heroPaperAirplane" size="20" class="text-red-600"></ng-icon>
-                         Send
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'lock'" (click)="setTab('lock')">
-                         <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
-                         Lock/Unlock
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'clawback'" (click)="setTab('clawback')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clawback
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'destroy'" (click)="setTab('destroy')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Destroy
-                    </button>
-               </div>
-
-               <div class="submenu-info-text">
-                    <!-- Create Menu -->
-                    @if (activeTab() === 'create') {
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Create MPT Token</h2>
-                         <p class="submenu-info-secondary-text">Create MPT Tokens for the selected account.</p>
-                    </div>
-                    }
-
-                    <!-- Authorize/Unauthorize Menu -->
-                    @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-                    <div [ngClass]="{'orange-button-submenu': txUiService.authAction() === 'authorize','red-button-submenu': txUiService.authAction() === 'unauthorize'}">
-                         <lucide-angular name="shield-ellipsis" size="27" class="text-red-600" style="padding-top: 5px"></lucide-angular>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Authorize/Unauthorize MPT Token</h2>
-                         <p class="submenu-info-secondary-text">Authorize/Unauthorize MPT Tokens for the selected account.</p>
-                    </div>
-                    }
-
-                    <!-- Fund Menu -->
-                    @if (activeTab() === 'send') {
-                    <div class="green-button-submenu">
-                         <ng-icon name="heroPaperAirplane" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Send MPT</h2>
-                         <p class="submenu-info-secondary-text">Send created MPT to another XRPL address</p>
-                    </div>
-                    }
-
-                    <!-- Claim Menu -->
-                    @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-                    <div [ngClass]="{'green-button-submenu': txUiService.lockAction() === 'unlock','red-button-submenu': txUiService.lockAction() === 'lock'}">
-                         <ng-icon name="heroLockOpen" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Lock/Unlock MPT</h2>
-                         <p class="submenu-info-secondary-text">Lock/Unlock MPT so another XRPL address can't send it</p>
-                    </div>
-                    }
-
-                    <!-- Close Menu -->
-                    @if (activeTab() === 'clawback') {
-                    <div class="red-button-submenu">
-                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Clawback MPT</h2>
-                         <p class="submenu-info-secondary-text">Clawback a previously created MPT</p>
-                    </div>
-                    }
-
-                    <!-- Close Menu -->
-                    @if (activeTab() === 'destroy') {
-                    <div class="red-button-submenu">
-                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Destroy MPT</h2>
-                         <p class="submenu-info-secondary-text">Destroy a previously created MPT</p>
-                    </div>
-                    }
-               </div>
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
                <!-- Info Message -->
-               @if (infoData(); as info) {
-               <div class="info-and-mpts-card" [class.has-mpts]="info.mptCount > 0">
-                    <!-- Always-visible summary row -->
-                    <div class="summary-header">
-                         <div class="summary-text">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                              <code>{{ info.walletName }}</code>
-
-                              @if (info.mptCount === 0) {
-                              <span> has no Multi-Purpose Tokens.</span>
-                              } @else {
-                              <span> has <strong class="object-count">{{ info.mptCount }}</strong> Multi-Purpose Token{{ info.mptCount === 1 ? '' : 's' }}.</span>
-                              }
-                         </div>
-                         @if (info.links) {
-                         <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
-                         }
-
-                         <!-- Expand/Collapse toggle (only when there are MPTs) -->
-                         @if (info.mptCount > 0) {
-                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle MPT list">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} list</span>
-                              <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
-                         </button>
-                         }
-                    </div>
-
-                    <!-- Collapsible detailed list with internal scroll -->
-                    @if (info.mptCount > 0) {
-                    <div class="mpts-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
-                         <ul class="mpts-list">
-                              @for (mpt of info.mptsToShow; track mpt.id) {
-                              <li class="mpt-item">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
-                                        <div class="mpt-main-line">
-                                             <strong>MPT</strong>
-                                             @if (mpt.amount && mpt.amount !== '0') {
-                                             <span class="mpt-amount-badge"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
-                                             } @else if (mpt.maxAmount && mpt.maxAmount !== '0') {
-                                             <span class="mpt-amount-badge"> {{ mpt.maxAmount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
-                                             }
-                                        </div>
-
-                                        <div class="mpt-meta">
-                                             <div>MPT Issuance ID: <code>{{ mpt.mpt_issuance_id.slice(0,12) }}...{{ mpt.mpt_issuance_id.slice(-10) }}</code></div>
-                                             <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div>
-
-                                             <!-- Only show these if flags/transferFee/ticker exist (likely issuer view) -->
-                                             @if (mpt.flags.length > 0 || mpt.transferFee || mpt.ticker || mpt.usefulLinks?.length || mpt.outstanding) {
-
-                                             <!-- Ticker -->
-                                             @if (mpt.ticker && mpt.ticker.length > 0 && mpt.ticker !== 'N/A') {
-                                             <div>Ticker: {{ mpt.ticker }}</div>
-                                             }
-
-                                             <!-- Transfer Fee -->
-                                             @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
-                                             <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div>
-                                             }
-                                             <!-- Flags -->
-                                             @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
-                                             <div>Flags: {{ mpt.flags }}</div>
-                                             }
-
-                                             <!-- Outstanding MPT's -->
-                                             @if (mpt.outstanding && mpt.outstanding > 0) {
-                                             <div>Outstanding Amount: {{ mpt.outstanding }}</div>
-                                             } }
-                                        </div>
-                                   </app-tooltip-link>
-
-                                   <button (click)="copyAndToast(mpt.mpt_issuance_id, 'MPT Issuance ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy MPT Issuance ID">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
-                                   </button>
-                              </li>
-                              }
-                         </ul>
-                    </div>
-                    }
-               </div>
-               }
+               <app-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (mptSelected)="onMptSelectedFromSummary($event)"></app-summary>
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text">{{ safeWarningMessage }}</div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-columns">
                          <div class="tab-content-container form-fields-container">
                               <!-- Create sections -->
-                              @if(activeTab() === 'create') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="assetScaleField">Asset Scale</label>
-                                        <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-                                        <input type="number" (ngModel)="txUiService.assetScaleField()" (ngModelChange)="txUiService.assetScaleField.set($event)" name="assetScaleField" placeholder="Value between 1 and 15" min="0" max="15" step="1" />
-                                   </div>
-                              </div>
+                              @if(tab === 'createMpt') {
+                              <app-mpt-create [metadataByteLength]="viewModel.metadataByteLength()" [metadataIsValid]="viewModel.metadataIsValid()"> </app-mpt-create>
+                              }
 
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="maxToken">Maximum Tokens</label>
-                                        <p class="form-hint">Maximum tokens that can ever be issued.</p>
-                                        <input type="number" (ngModel)="txUiService.tokenCountField()" (ngModelChange)="txUiService.tokenCountField.set($event)" name="tokenCountField" placeholder="Enter maximum tokens to create" min="1" step="1" />
-                                   </div>
-                              </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="transferFee">Transfer Fee</label>
-                                        <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
-                                        <input type="number" (ngModel)="txUiService.transferFeeField()" (ngModelChange)="txUiService.transferFeeField.set($event)" name="transferFeeField" placeholder="This will be a percentage" min="0" max="50000" step="1" />
-                                   </div>
-                              </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="labelWithLink" class="label-with-link">
-                                             Token Meta Data
-                                             <br />
-                                             <span class="label-meta">
-                                                  JSON Metadata
-                                                  <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer">XLS-89</a>
-                                             </span>
-                                             <button type="button" class="format-did-data" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
-                                        </label>
-                                        <app-json-editor class="json-error-banner" [(value)]="txUiService.metaDataField" #jsonEditor></app-json-editor>
-
-                                        <div class="metadata-info">
-                                             <small class="text-muted"> Metadata size: {{ metadataByteLength() }} / 1024 bytes </small>
-                                             @if (metadataByteLength() > 1024) {
-                                             <small class="text-danger d-block">
-                                                  <strong>Exceeded limit – transaction will fail</strong>
-                                             </small>
-                                             } @else if (metadataByteLength() > 900) {
-                                             <small class="text-warning d-block"> Approaching limit ({{ metadataByteLength() }} bytes) </small>
-                                             }
-                                        </div>
-                                   </div>
-                              </div>
+                              <!-- Auth section -->
+                              @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
+                              <app-mpt-authorize-unauthorize [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-authorize-unauthorize>
                               }
 
                               <!-- MPT IssuanceId sections -->
-                              @if (activeTab() === 'authorize' || activeTab() === 'unauthorize' || activeTab() === 'lock' || activeTab() === 'unlock') {
-                              <!-- Auth section -->
-                              @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="mptIssuanceAction">Action</label>
-                                        <div class="radio-group-horizontal" style="margin-top: 0.7em; display: flex; gap: 2.2rem; flex-wrap: wrap">
-                                             <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                                                  <input type="radio" name="authAction" [value]="'authorize'" (ngModel)="txUiService.authAction()" (ngModelChange)="txUiService.authAction.set($event)" [checked]="txUiService.authAction() === 'authorize'" />
-                                                  <ng-icon name="heroCheckCircle" size="22" class="text-green-600"></ng-icon>
-                                                  Authorize
-                                             </label>
-
-                                             <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                                                  <input type="radio" name="authAction" [value]="'unauthorize'" (ngModel)="txUiService.authAction()" (ngModelChange)="txUiService.authAction.set($event)" [checked]="txUiService.authAction() === 'unauthorize'" />
-                                                  <ng-icon name="heroXCircle" size="22" class="text-red-600"></ng-icon>
-                                                  Unauthorize
-                                             </label>
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-                              <!-- Lock section -->
-                              @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="action">Action</label>
-                                        <div class="radio-group-horizontal" style="margin-top: 0.7em; margin-bottom: 0.7em; display: flex; gap: 2.2rem; flex-wrap: wrap">
-                                             <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                                                  <input type="radio" name="lockAction" [value]="'unlock'" (ngModel)="txUiService.lockAction()" (ngModelChange)="txUiService.lockAction.set($event)" [checked]="txUiService.lockAction() === 'unlock'" />
-                                                  <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
-                                                  Unlock
-                                             </label>
-                                             <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                                                  <input type="radio" name="lockAction" [value]="'lock'" (ngModel)="txUiService.lockAction()" (ngModelChange)="txUiService.lockAction.set($event)" [checked]="txUiService.lockAction() === 'lock'" />
-                                                  <ng-icon name="heroLockClosed" size="20" class="text-red-600"></ng-icon>
-                                                  Lock
-                                             </label>
-                                        </div>
-                                   </div>
-                              </div>
-                              }
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">MPT Issuer</label>
-                                        <p class="form-hint">Account that issued the MPT.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
-                              </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="lockMptIssuanceId">MPT Issuance ID</label>
-                                        <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                        <input type="text" (ngModel)="txUiService.mptIssuanceIdField()" (ngModelChange)="txUiService.mptIssuanceIdField.set($event)" name="mptIssuanceIdField" placeholder="" />
-                                   </div>
-                              </div>
+                              @if (tab === 'lockMpt' || tab === 'unlockMpt') {
+                              <app-mpt-lock-unlock [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-lock-unlock>
                               }
 
                               <!-- Send MPT sections -->
-                              @if (activeTab() === 'send') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="sendSelectMpt">Select MPT</label>
-                                        <p class="form-hint">MPT this account holds that can be sent to another account.</p>
-                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                   </div>
-                              </div>
-
-                              <div class="form-group">
-                                   <label for="sendMptIssuanceId">MPT Issuance ID</label>
-                                   <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                   <input type="text" [ngModel]="txUiService.mptIssuanceIdField()" (ngModelChange)="txUiService.mptIssuanceIdField.set($event)" name="mptIssuanceIdField" placeholder="" />
-                              </div>
-
-                              <!-- Destination (create only) -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Destination</label>
-                                        <p class="form-hint">Account that will recieve the MPT.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label for="sendMptAmount">MPT Amount</label>
-                                        <p class="form-hint">Amount of MPT to send.</p>
-                                        <input type="number" (ngModel)="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" placeholder="" min="1" step="1" />
-                                   </div>
-                              </div>
+                              @if (tab === 'sendMpt') {
+                              <app-mpt-send [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-send>
                               }
 
-                              <!-- Clawback/Destroy MPT sections -->
-                              @if (activeTab() === 'clawback' || activeTab() === 'destroy') {
-                              <!-- Clawback MPT sections -->
-                              @if(activeTab() === 'clawback') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="selectMptToClawback">Select MPT to Clawback</label>
-                                        <p class="form-hint">MPT to clawback.</p>
-                                        <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                                   </div>
-                              </div>
-
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="clawbackMptIssuanceId">MPT Issuance ID</label>
-                                        <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                        <input type="text" [ngModel]="txUiService.mptIssuanceIdField()" (ngModelChange)="txUiService.mptIssuanceIdField.set($event)" name="mptIssuanceIdField" placeholder="" />
-                                   </div>
-                              </div>
-
-                              <!-- Destination -->
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">MPT Holder</label>
-                                        <p class="form-hint">MPT holder address to clawback tokens from.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select destination address" />
-                                   </div>
-
-                                   <div class="form-group">
-                                        <label for="amountToClawback">Amount to Clawback</label>
-                                        <p class="form-hint">MPT amount to clawback form an existing holder.</p>
-                                        <input type="number" (ngModel)="txUiService.amountField()" (ngModelChange)="txUiService.amountField.set($event)" name="amountField" placeholder="" min="1" step="1" />
-                                   </div>
-                              </div>
+                              <!-- Clawback -->
+                              @if (tab === 'clawbackMpt') {
+                              <app-mpt-clawback [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-clawback>
                               }
-                              <!-- Destroy MPT sections -->
-                              @if(activeTab() === 'destroy') {
-                              <div class="form-group">
-                                   <label for="selectMptToDestroy">Select MPT to Destroy</label>
-                                   <p class="form-hint">MPT to destroy.</p>
-                                   <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-                              </div>
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="mptIssuanceId">MPT Issuance ID</label>
-                                        <p class="form-hint">Identifies the MPTokenIssuance.</p>
-                                        <input type="text" [ngModel]="txUiService.mptIssuanceIdField()" (ngModelChange)="txUiService.mptIssuanceIdField.set($event)" name="mptIssuanceIdField" placeholder="" />
-                                   </div>
-                              </div>
-                              } }
+
+                              <!-- Destroy -->
+                              @if (tab === 'destroyMpt') {
+                              <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
+                              }
                          </div>
 
                          <!-- MPT Flags -->
-                         @if (activeTab() === 'create') {
+                         @if (tab === 'createMpt') {
                          <div class="tab-content-container flags-container" style="min-width: 350px">
-                              <div class="flags-wrapper">
-                                   <!-- Header -->
-                                   <div class="token-flags-header">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">MPT Flags</span>
-                                   </div>
-
-                                   <!-- canLock -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canLock" (click)="mptUtilService.toggleFlag('canLock')" type="button">
-                                        <div class="flag-header-account">
-                                             <input type="checkbox" id="canLock" name="canLock" [checked]="mptUtilService.flags.canLock" class="flag-checkbox" />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">MPTCanLock</span>
-                                        </div>
-                                        <div class="flag-value">0x00000002 tfMPTCanLock</div>
-                                        <div class="flag-desc">The MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
-                                   </button>
-
-                                   <!-- isRequireAuth -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.isRequireAuth" (click)="mptUtilService.toggleFlag('isRequireAuth')" type="button">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="flag-checkbox" disabled />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M9 12l2 2 4-4" />
-                                                  <circle cx="12" cy="12" r="10" />
-                                             </svg>
-                                             <span class="flag-title">MPTRequireAuth</span>
-                                        </div>
-                                        <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
-                                        <div class="flag-desc">Individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
-                                   </button>
-
-                                   <!-- canEscrow -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canEscrow" (click)="mptUtilService.toggleFlag('canEscrow')" type="button">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="mptUtilService.flags.canEscrow" class="flag-checkbox" disabled />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">MPTCanEscrow</span>
-                                        </div>
-                                        <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
-                                        <div class="flag-desc">Individual holders can place their balances into an escrow.</div>
-                                   </button>
-
-                                   <!-- canTrade -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTrade" (click)="mptUtilService.toggleFlag('canTrade')" type="button">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="mptUtilService.flags.canTrade" class="flag-checkbox" disabled />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">MPTCanTrade</span>
-                                        </div>
-                                        <div class="flag-value">0x00000010 tfMPTCanTrade</div>
-                                        <div class="flag-desc">Individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
-                                   </button>
-
-                                   <!-- canTransfer -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTransfer" (click)="mptUtilService.toggleFlag('canTransfer')" type="button">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="mptUtilService.flags.canTransfer" class="flag-checkbox" disabled />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">MPTCanTransfer</span>
-                                        </div>
-                                        <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
-                                        <div class="flag-desc">Tokens may be transferred to other accounts that are not the issuer.</div>
-                                   </button>
-
-                                   <!-- canClawback -->
-                                   <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canClawback" (click)="mptUtilService.toggleFlag('canClawback')" type="button">
-                                        <div class="flag-header">
-                                             <input type="checkbox" [checked]="mptUtilService.flags.canClawback" class="flag-checkbox" disabled />
-                                             <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                             </svg>
-                                             <span class="flag-title">MPTCanClawback</span>
-                                        </div>
-                                        <div class="flag-value">0x00000040 tfMPTCanClawback</div>
-                                        <div class="flag-desc">The issuer may use the Clawback transaction to clawback value from individual holders.</div>
-                                   </button>
-
-                                   <!-- TOTAL FLAGS VALUE -->
-                                   <div class="flags-total">
-                                        <span class="total-label">Total Flags Value:</span>
-                                        <span class="total-value">{{ mptUtilService.totalFlagsValue() }} ({{ mptUtilService.totalFlagsHex() }})</span>
-                                   </div>
-                              </div>
+                              <app-mpt-flags></app-mpt-flags>
                          </div>
                          }
                     </div>
 
-                    <!-- <app-transaction-options [showWhenTab]="['create', 'authorize','unauthorize','send','lock','unlock','clawback', 'destroy']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
+                    <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt','unauthorizeMpt','sendMpt','lockMpt','unlockMpt','clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
                          <!-- Create -->
-                         @if (activeTab() === 'create') {
-                         <button type="button" class="btn-primary-blue" (click)="createMpt()" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.createMptButtonLabel() }}</button>
+                         @if (tab === 'createMpt') {
+                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.createMptButtonLabel() }}</button>
                          }
                          <!-- Authorize / Unauthorize -->
-                         @if (activeTab() === 'authorize' || activeTab() === 'unauthorize') {
-                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-orange': txUiService.authAction() === 'authorize','btn-primary-red': txUiService.authAction() === 'unauthorize'}" (click)="authorizeMpt(txUiService.authAction() === 'authorize' ? 'Y' : 'N')" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.authorizeButtonLabel() }}</button>
+                         @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
+                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-orange': mptStoreService.authAction() === 'authorize','btn-primary-red': mptStoreService.authAction() === 'unauthorize'}" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.authorizeButtonLabel() }}</button>
                          }
                          <!-- Send -->
-                         @if (activeTab() === 'send') {
-                         <button type="button" class="btn-primary-green" (click)="sendMpt()" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.sendMptButtonLabel() }}</button>
+                         @if (tab === 'sendMpt') {
+                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.sendMptButtonLabel() }}</button>
                          }
                          <!-- Lock / Unlock -->
-                         @if (activeTab() === 'lock' || activeTab() === 'unlock') {
-                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-red': txUiService.lockAction() === 'lock','btn-primary-green': txUiService.lockAction() === 'unlock'}" (click)="setMptLockUnlock(txUiService.lockAction() === 'lock' ? 'Y' : 'N')" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.lockMptButtonLabel() }}</button>
+                         @if (tab === 'lockMpt' || tab === 'unlockMpt') {
+                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-red': mptStoreService.lockAction() === 'lock','btn-primary-green': mptStoreService.lockAction() === 'unlock'}" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.lockMptButtonLabel() }}</button>
                          }
                          <!-- Clawback -->
-                         @if (activeTab() === 'clawback') {
-                         <button type="button" class="btn-primary-red" (click)="clawbackMpt()" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
+                         @if (tab === 'clawbackMpt') {
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
                          }
 
                          <!-- Destroy -->
-                         @if (activeTab() === 'destroy') {
-                         <button type="button" class="btn-primary-red" (click)="destroyMpt()" [disabled]="!isIdle() || !hasWalletsSignal">{{ mptUtilService.destroyMptButtonLabel() }}</button>
+                         @if (tab === 'destroyMpt') {
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.destroyMptButtonLabel() }}</button>
                          }
                          <!-- CLEAR FIELDS -->
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWalletsSignal" (click)="clearFields(true)">Clear Fields</button>
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets" (click)="clearFields(true)">Clear Fields</button>
                     </div>
+
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
                </form>
-
-               <!-- Execution time -->
-               <div class="executionTimeDisplay">
-                    <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-               </div>
-               <app-transaction-preview></app-transaction-preview>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>XRPL Multi-Purpose Tokens (MPTs)</h3>
-               </div>
-
-               <p class="info-subtitle">Multi-Purpose Tokens are an advanced fungible token standard on the XRPL, with on-chain metadata, supply controls, transfer fees, and compliance features—ideal for real-world asset tokenization and institutional DeFi.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🪙 MPT Issuance</span>
-                              <span class="badge required-badge">Core Creation</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">AssetScale</span>
-                                   <span class="field-status required">✅ Required</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name"
-                                        >Metadata /<br />
-                                        MetadataPointer</span
-                                   >
-                                   <span class="field-status optional"
-                                        >➕ Optional <br />
-                                        (on-chain or link)</span
-                                   >
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">MaximumAmount</span>
-                                   <span class="field-status optional"
-                                        >➕ Optional <br />
-                                        (supply cap)</span
-                                   >
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🪙 MPT Features</span>
-                              <span class="badge optional-badge">Advanced Settings</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">TransferFee</span>
-                                   <span class="field-status optional">➕ Optional</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Flags</span>
-                                   <span class="field-status optional">➕ Optional</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">DomainID <br />(Permissioned access)</span>
-                                   <span class="field-status optional">➕ Optional </span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>MPTs require the <strong>MPTokensV1</strong> amendment to be enabled on the network.</li>
-                              <li>Metadata is immutable once set — use on-chain JSON (up to 1024 bytes) or a pointer to off-chain data for details like name, ticker, description (follows XLS-89 schema).</li>
-                              <li>Each MPT issuance and each holder's balance counts toward your account’s <strong>owner reserve</strong> — plan carefully to avoid excessive reserve lockup.</li>
-                              <li>Unlike traditional trust lines, MPTs are more efficient and support features like fixed supply caps without blackholing the issuer account.</li>
-                              <li>Recipients must authorize holding the MPT (via MPTokenAuthorize) before receiving it.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Irreversible & Compliance Considerations</h5>
-                         <p style="color: #92400e">Many MPT properties are permanent after creation.</p>
-                         <ul>
-                              <li>Metadata and most flags <strong>cannot be changed</strong> post-issuance (future amendments may allow limited mutability).</li>
-                              <li>If non-transferable, tokens <strong>cannot be moved</strong> — useful for credits or locked assets, but irreversible without issuer controls.</li>
-                              <li>Supply cap (if set) is hard — you cannot issue beyond MaximumAmount.</li>
-                              <li>Deletion of an MPT issuance (MPTokenIssuanceDestroy) is only possible if <strong>no holders remain</strong>.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <app-mpt-requirements-info></app-mpt-requirements-info>
      </div>
 </div>

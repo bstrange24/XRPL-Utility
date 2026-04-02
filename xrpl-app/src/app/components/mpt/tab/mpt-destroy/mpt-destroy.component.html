@@ -1,0 +1,12 @@
+<div class="form-group">
+     <label for="selectMptToDestroy">Select MPT to Destroy</label>
+     <p class="form-hint">MPT to destroy.</p>
+     <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+</div>
+<div class="form-row">
+     <div class="form-group">
+          <label for="mptIssuanceId">MPT Issuance ID</label>
+          <p class="form-hint">Identifies the MPTokenIssuance.</p>
+          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" name="mptIssuanceIdField" placeholder="" />
+     </div>
+</div>

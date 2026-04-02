@@ -1,5 +1,4 @@
-import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
-import { computed } from '@angular/core';
+import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
 export interface MptState {
      mptIssuanceId: string;
@@ -13,27 +12,18 @@ export interface MptState {
      transferFee: number;
      isAuthorized: boolean;
      isUnauthorized: boolean;
-     lockedUnlocked: 'locked' | 'unlocked' | '';
      holderAccount: string;
      destination: string;
      amount: string;
      mptIdSearchQuery: string;
-     outstandingChecks: string;
-     escrowCancelAfterExpirationDate: string;
-     escrowFinishAfterExpirationDate: string;
-     enableEscrowCancelAfterExpirationDate: boolean;
-     enableEscrowFinishAfterExpirationDate: boolean;
-     outstandingChecksCollapsed: boolean;
+     XLS89_TEMPLATE: string;
+     outstandingMpts: string;
+     outstandingMptsCollapsed: boolean;
      deliverMinAmount: string;
      isMptEnabled: boolean;
      useDeliverMin: boolean;
      isCheckOwner: boolean;
      isCollapsed: boolean;
-     expiredOrFulfilledEscrows: any[];
-     allEscrowsRaw: any[];
-     finishEscrow: any[];
-     existingEscrow: any[];
-     existingIOUs: any[];
      existingMpts: any[];
 }
 
@@ -41,7 +31,7 @@ const initialState: MptState = {
      mptIssuanceId: '',
      metaData: '',
      authAction: 'authorize',
-     lockAction: 'lock',
+     lockAction: 'unlock',
      metadataError: '',
      tokenCount: 0,
      assetScale: 0,
@@ -49,26 +39,44 @@ const initialState: MptState = {
      transferFee: 0,
      isAuthorized: false,
      isUnauthorized: false,
-     lockedUnlocked: '',
      holderAccount: '',
      destination: '',
      amount: '',
      mptIdSearchQuery: '',
-     outstandingChecks: '',
-     escrowCancelAfterExpirationDate: '',
-     escrowFinishAfterExpirationDate: '',
-     enableEscrowFinishAfterExpirationDate: false,
-     enableEscrowCancelAfterExpirationDate: false,
-     outstandingChecksCollapsed: false,
+     XLS89_TEMPLATE: `{
+  "t": "TBILL",
+  "n": "T-Bill Yield Token",
+  "d": "A yield-bearing stablecoin backed by short-term U.S. Treasuries and money market instruments.",
+  "i": "example.org/tbill-icon.png",
+  "ac": "rwa",
+  "as": "treasury",
+  "in": "Example Yield Co.",
+  "us": [
+    {
+      "u": "exampleyield.co/tbill",
+      "c": "website",
+      "t": "Product Page"
+    },
+    {
+      "u": "exampleyield.co/docs",
+      "c": "docs",
+      "t": "Yield Token Docs"
+    }
+  ],
+  "ai": {
+    "interest_rate": "5.00%",
+    "interest_type": "variable",
+    "yield_source": "U.S. Treasury Bills",
+    "maturity_date": "2045-06-30",
+    "cusip": "912796RX0"
+  }
+}`,
+     outstandingMpts: '',
+     outstandingMptsCollapsed: false,
      deliverMinAmount: '',
      useDeliverMin: false,
      isCheckOwner: false,
      isCollapsed: false,
-     expiredOrFulfilledEscrows: [],
-     allEscrowsRaw: [],
-     finishEscrow: [],
-     existingEscrow: [],
-     existingIOUs: [],
      existingMpts: [],
      isMptEnabled: false,
 };
@@ -78,23 +86,10 @@ export const MptStoreService = signalStore(
 
      withState(initialState),
 
-     withComputed(store => ({
-          escrowCancelAfterExpirationDate: computed(() => store.escrowCancelAfterExpirationDate()),
-          escrowFinishAfterExpirationDate: computed(() => store.escrowFinishAfterExpirationDate()),
-     })),
-
      withMethods(store => ({
           /** Generic setter */
           setField<K extends keyof MptState>(field: K, value: MptState[K]) {
                patchState(store, { [field]: value });
-          },
-
-          setEscrowFinishAfterExpirationDate(value: string) {
-               patchState(store, { escrowFinishAfterExpirationDate: value });
-          },
-
-          setEscrowCancelAfterExpirationDate(value: string) {
-               patchState(store, { escrowCancelAfterExpirationDate: value });
           },
 
           /** Generic updater */
@@ -109,11 +104,6 @@ export const MptStoreService = signalStore(
                patchState(store, structuredClone(initialState));
           },
 
-          /** Clear expiration */
-          clearOptionalExpirationDate() {
-               patchState(store, { escrowCancelAfterExpirationDate: '', escrowFinishAfterExpirationDate: '' });
-          },
-
           /** Reset dropdown-related fields */
           resetChannelIdSelection() {
                patchState(store, {
@@ -125,13 +115,10 @@ export const MptStoreService = signalStore(
           /** Reset MPT form fields */
           resetMptFields() {
                patchState(store, {
-                    escrowFinishAfterExpirationDate: '',
-                    escrowCancelAfterExpirationDate: '',
-                    enableEscrowFinishAfterExpirationDate: false,
-                    enableEscrowCancelAfterExpirationDate: false,
                     destination: '',
                     mptIdSearchQuery: '',
-                    outstandingChecks: '',
+                    outstandingMpts: '',
+                    outstandingMptsCollapsed: false,
                     mptIssuanceId: '',
                     amount: '',
                     deliverMinAmount: '',

@@ -12,6 +12,8 @@ import * as xrpl from 'xrpl';
 import { MPTokenIssuanceCreate, MPTokenIssuanceCreateFlags } from 'xrpl';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { MptStoreService } from '../mpt-store/mpt-store.service';
+import { MptFlagKey } from '../../../components/mpt/constants/mpt.types';
 
 @Injectable({
      providedIn: 'root',
@@ -25,7 +27,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
-     public readonly xrplTransactions = inject(XrplTransactionService);
+     public readonly mptStoreService = inject(MptStoreService);
 
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
@@ -47,6 +49,8 @@ export class MptUtilService extends PerformanceBaseComponent {
           canTransfer: false,
      };
 
+     readonly selectedMptIssuanceId = computed(() => this.mptStoreService.mptIssuanceId());
+
      readonly createMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create MPT';
@@ -57,7 +61,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      readonly authorizeButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') {
-               return this.txUiService.authAction() === 'authorize' ? 'Authorize MPT' : 'Unauthorize MPT';
+               return this.mptStoreService.authAction() === 'authorize' ? 'Authorize MPT' : 'Unauthorize MPT';
           }
           if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
@@ -73,7 +77,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      readonly lockMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') {
-               return this.txUiService.lockAction() === 'lock' ? 'Lock MPT' : 'Unlock MPT';
+               return this.mptStoreService.lockAction() === 'lock' ? 'Lock MPT' : 'Unlock MPT';
           }
           if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
@@ -297,8 +301,8 @@ export class MptUtilService extends PerformanceBaseComponent {
           return (flags & this.flagValues.isRequireAuth) !== 0;
      }
 
-     toggleFlag(key: 'canLock' | 'isRequireAuth' | 'canEscrow' | 'canClawback' | 'canTransfer' | 'canTrade') {
-          this.flags[key] = !this.flags[key];
+     toggleFlag(flag: MptFlagKey): void {
+          this.flags[flag] = !this.flags[flag];
           this.updateFlagTotal();
      }
 
@@ -313,6 +317,15 @@ export class MptUtilService extends PerformanceBaseComponent {
 
           this.totalFlagsValue.set(sum);
           this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
+     }
+
+     resetFlags() {
+          this.flags.canClawback = false;
+          this.flags.canLock = false;
+          this.flags.isRequireAuth = false;
+          this.flags.canTransfer = false;
+          this.flags.canTrade = false;
+          this.flags.canEscrow = false;
      }
 
      getFlagsValue(flags: AccountFlags): number {
@@ -358,7 +371,6 @@ export class MptUtilService extends PerformanceBaseComponent {
           return activeFlags;
      }
 
-     // Add this to your component class
      decodeMptFlagsForUi(flags: number): string {
           const flagDefinitions = [
                { value: 2, name: 'canLock' },

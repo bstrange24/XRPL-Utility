@@ -1,0 +1,34 @@
+<div class="form-row">
+     <div class="form-group">
+          <label for="action">Action</label>
+          <div class="radio-group-horizontal" style="margin-top: 0.7em; margin-bottom: 0.7em; display: flex; gap: 2.2rem; flex-wrap: wrap">
+               <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
+                    <input type="radio" name="lockAction" value="unlock" [checked]="mptStoreService.lockAction() === 'unlock'" (change)="mptStoreService.setField('lockAction', 'unlock')" />
+                    <ng-icon name="heroLockOpen" size="20" class="text-red-600"></ng-icon>
+                    Unlock
+               </label>
+
+               <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
+                    <input type="radio" name="lockAction" value="lock" [checked]="mptStoreService.lockAction() === 'lock'" (change)="mptStoreService.setField('lockAction', 'lock')" />
+                    <ng-icon name="heroLockClosed" size="20" class="text-red-600"></ng-icon>
+                    Lock
+               </label>
+          </div>
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="destination">MPT Issuer</label>
+          <p class="form-hint">Account that issued the MPT.</p>
+          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="lockMptIssuanceId">MPT Issuance ID</label>
+          <p class="form-hint">Identifies the MPTokenIssuance.</p>
+          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" name="mptIssuanceIdField" placeholder="" />
+     </div>
+</div>

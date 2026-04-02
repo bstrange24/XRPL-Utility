@@ -1,0 +1,92 @@
+<div class="flags-wrapper">
+     <!-- Header -->
+     <div class="token-flags-header">
+          <lucide-icon name="flag" size="20"></lucide-icon>
+          <span class="token-flags-title">MPT Flags</span>
+     </div>
+
+     <!-- canLock -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canLock" (click)="mptUtilService.toggleFlag('canLock')" type="button">
+          <div class="flag-header-account">
+               <input type="checkbox" id="canLock" name="canLock" [checked]="mptUtilService.flags.canLock" class="flag-checkbox" />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+               </svg>
+               <span class="flag-title">MPTCanLock</span>
+          </div>
+          <div class="flag-value">0x00000002 tfMPTCanLock</div>
+          <div class="flag-desc">The MPT can be locked both individually and globally. If not set, the MPT cannot be locked in any way.</div>
+     </button>
+
+     <!-- isRequireAuth -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.isRequireAuth" (click)="mptUtilService.toggleFlag('isRequireAuth')" type="button">
+          <div class="flag-header">
+               <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="flag-checkbox" disabled />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4" />
+                    <circle cx="12" cy="12" r="10" />
+               </svg>
+               <span class="flag-title">MPTRequireAuth</span>
+          </div>
+          <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
+          <div class="flag-desc">Individual holders must be authorized. This enables issuers to limit who can hold their assets.</div>
+     </button>
+
+     <!-- canEscrow -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canEscrow" (click)="mptUtilService.toggleFlag('canEscrow')" type="button">
+          <div class="flag-header">
+               <input type="checkbox" [checked]="mptUtilService.flags.canEscrow" class="flag-checkbox" disabled />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+               </svg>
+               <span class="flag-title">MPTCanEscrow</span>
+          </div>
+          <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
+          <div class="flag-desc">Individual holders can place their balances into an escrow.</div>
+     </button>
+
+     <!-- canTrade -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTrade" (click)="mptUtilService.toggleFlag('canTrade')" type="button">
+          <div class="flag-header">
+               <input type="checkbox" [checked]="mptUtilService.flags.canTrade" class="flag-checkbox" disabled />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+               </svg>
+               <span class="flag-title">MPTCanTrade</span>
+          </div>
+          <div class="flag-value">0x00000010 tfMPTCanTrade</div>
+          <div class="flag-desc">Individual holders can trade their balances using the XRP Ledger DEX or AMM.</div>
+     </button>
+
+     <!-- canTransfer -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTransfer" (click)="mptUtilService.toggleFlag('canTransfer')" type="button">
+          <div class="flag-header">
+               <input type="checkbox" [checked]="mptUtilService.flags.canTransfer" class="flag-checkbox" disabled />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+               </svg>
+               <span class="flag-title">MPTCanTransfer</span>
+          </div>
+          <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
+          <div class="flag-desc">Tokens may be transferred to other accounts that are not the issuer.</div>
+     </button>
+
+     <!-- canClawback -->
+     <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canClawback" (click)="mptUtilService.toggleFlag('canClawback')" type="button">
+          <div class="flag-header">
+               <input type="checkbox" [checked]="mptUtilService.flags.canClawback" class="flag-checkbox" disabled />
+               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
+               </svg>
+               <span class="flag-title">MPTCanClawback</span>
+          </div>
+          <div class="flag-value">0x00000040 tfMPTCanClawback</div>
+          <div class="flag-desc">The issuer may use the Clawback transaction to clawback value from individual holders.</div>
+     </button>
+
+     <!-- TOTAL FLAGS VALUE -->
+     <div class="flags-total">
+          <span class="total-label">Total Flags Value:</span>
+          <span class="total-value">{{ mptUtilService.totalFlagsValue() }} ({{ mptUtilService.totalFlagsHex() }})</span>
+     </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="form-row">
+     <div class="form-group">
+          <label for="assetScaleField">Asset Scale</label>
+          <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
+          <input type="number" (ngModel)="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" name="assetScaleField" placeholder="Value between 1 and 15" min="0" max="15" step="1" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="maxToken">Maximum Tokens</label>
+          <p class="form-hint">Maximum tokens that can ever be issued.</p>
+          <input type="number" (ngModel)="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" name="tokenCountField" placeholder="Enter maximum tokens to create" min="1" step="1" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="transferFee">Transfer Fee</label>
+          <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
+          <input type="number" (ngModel)="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" name="transferFeeField" placeholder="This will be a percentage" min="0" max="50000" step="1" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label for="labelWithLink" class="label-with-link">
+               Token Meta Data
+               <br />
+               <span class="label-meta">
+                    JSON Metadata
+                    <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer">XLS-89</a>
+               </span>
+               <button type="button" class="format-did-data" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
+          </label>
+          <app-json-editor class="json-error-banner" [value]="mptStoreService.metaData()" #jsonEditor></app-json-editor>
+
+          <div class="metadata-info">
+               <small class="text-muted"> Metadata size: {{ viewModel.metadataByteLength() }} / 1024 bytes </small>
+               @if (viewModel.metadataByteLength() > 1024) {
+               <small class="text-danger d-block">
+                    <strong>Exceeded limit – transaction will fail</strong>
+               </small>
+               } @else if (viewModel.metadataByteLength() > 900) {
+               <small class="text-warning d-block"> Approaching limit ({{ viewModel.metadataByteLength() }} bytes) </small>
+               }
+          </div>
+     </div>
+</div>

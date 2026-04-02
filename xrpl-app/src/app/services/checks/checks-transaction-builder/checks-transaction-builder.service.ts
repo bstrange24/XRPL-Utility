@@ -75,6 +75,7 @@ export class ChecksTransactionBuilderService {
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
+
           return tx;
      }
 }

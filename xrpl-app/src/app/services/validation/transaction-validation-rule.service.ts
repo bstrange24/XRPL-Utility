@@ -431,8 +431,8 @@ export class ValidationService {
                     value = ctx.inputs[action]?.amount;
                     field = 'Ticket Count';
                } else if (action === 'createMpt') {
-                    value = ctx.inputs[action]?.tokenCountField;
-                    field = 'Ticket Count';
+                    value = ctx.inputs[action]?.amount;
+                    field = 'Token Count';
                } else if (action === 'issueCurrency' || action === 'clawbackTokens' || action === 'setTrustline') {
                     value = ctx.inputs[action]?.amount;
                     field = 'Trustline Limit';
@@ -2398,24 +2398,16 @@ export class ValidationService {
                ],
           });
 
-          // MptCreate
+          // CreateMpt
           this.registerRule({
-               transactionType: 'MptCreate',
-               requiredFields: ['createMpt.tokenCountField'],
+               transactionType: 'CreateMpt',
+               requiredFields: ['createMpt.amount'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    this.optionalNumeric('tokenCountField', 0),
+                    this.optionalNumeric('amount', 0),
 
                     ctx => {
                          if (ctx.inputs['createMpt']?.assetScaleField) {
@@ -2427,13 +2419,6 @@ export class ValidationService {
                     ctx => {
                          if (ctx.inputs['createMpt']?.transferFeeField) {
                               this.isValidNumber('transferFeeField', 'Transfer fee', 0, 50000);
-                         }
-                         return null;
-                    },
-
-                    ctx => {
-                         if (ctx.inputs['createMpt']?.tokenCountField) {
-                              this.isValidNumber('tokenCountField', 'Token Count', 0);
                          }
                          return null;
                     },
@@ -2454,20 +2439,12 @@ export class ValidationService {
                ],
           });
 
-          // MptAuthorize
+          // AuthorizeMpt
           this.registerRule({
-               transactionType: 'MptAuthorize',
-               requiredFields: ['authorizeMpt.mptIssuanceIdField'],
+               transactionType: 'AuthorizeMpt',
+               requiredFields: ['authorizeMpt.mptIssuanceId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2485,20 +2462,12 @@ export class ValidationService {
                ],
           });
 
-          // MptUnauthorize
+          // UnauthorizeMpt
           this.registerRule({
-               transactionType: 'MptUnauthorize',
-               requiredFields: ['unauthorize.mptIssuanceIdField'],
+               transactionType: 'UnauthorizeMpt',
+               requiredFields: ['unauthorizeMpt.mptIssuanceId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2516,20 +2485,12 @@ export class ValidationService {
                ],
           });
 
-          // MptSend
+          // SendMpt
           this.registerRule({
-               transactionType: 'MptSend',
-               requiredFields: ['send.mptIssuanceIdField', 'send.destinationAddress', 'send.amount'],
+               transactionType: 'SendMpt',
+               requiredFields: ['sendMpt.mptIssuanceId', 'sendMpt.destination', 'sendMpt.amount'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2547,20 +2508,12 @@ export class ValidationService {
                ],
           });
 
-          // MptLock
+          // LockMpt
           this.registerRule({
-               transactionType: 'MptLock',
-               requiredFields: ['lock.mptIssuanceIdField'],
+               transactionType: 'LockMpt',
+               requiredFields: ['lockMpt.mptIssuanceId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2578,20 +2531,12 @@ export class ValidationService {
                ],
           });
 
-          // MptUnlock
+          // UnlockMpt
           this.registerRule({
-               transactionType: 'MptUnlock',
-               requiredFields: ['unlock.mptIssuanceIdField'],
+               transactionType: 'UnlockMpt',
+               requiredFields: ['unlockMpt.mptIssuanceId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2609,20 +2554,12 @@ export class ValidationService {
                ],
           });
 
-          // MptClawback
+          // ClawbackMpt
           this.registerRule({
-               transactionType: 'MptClawback',
-               requiredFields: ['clawback.mptIssuanceIdField', 'clawback.destinationAddress', 'clawback.amount'],
+               transactionType: 'ClawbackMpt',
+               requiredFields: ['clawbackMpt.mptIssuanceId', 'clawbackMpt.destination', 'clawbackMpt.amount'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
@@ -2640,20 +2577,12 @@ export class ValidationService {
                ],
           });
 
-          // MptDestroy
+          // DestroyMpt
           this.registerRule({
-               transactionType: 'MptDestroy',
-               requiredFields: ['destroy.mptIssuanceIdField'],
+               transactionType: 'DestroyMpt',
+               requiredFields: ['destroyMpt.mptIssuanceId'],
                validators: [
                     this.walletCredentialRequired(),
-                    // ctx => {
-                    //      const seed = this.getSeed(ctx);
-                    //      if (seed) {
-                    //           const { value } = this.utilsService.detectXrpInputType(seed);
-                    //           if (value === 'unknown') return 'Account seed is invalid';
-                    //      }
-                    //      return null;
-                    // },
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
