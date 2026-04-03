@@ -388,20 +388,6 @@ export class ValidationService {
           };
      }
 
-     private masterKeyDisabledRequiresAltSigning1(): ValidatorFn {
-          return ctx => {
-               const flags = ctx.accountInfo?.result?.account_flags;
-               const disableMaster = flags?.disableMasterKey === true;
-               const usingRegularKey = !!ctx.inputs['isRegularKeyAddress'];
-               const usingMultiSign = !!ctx.inputs['useMultiSign'];
-
-               if (disableMaster && !usingRegularKey && !usingMultiSign) {
-                    return 'Master key is disabled. Must sign with Regular Key or Multi-sign.';
-               }
-               return null;
-          };
-     }
-
      private ticketValidation(): ValidatorFn {
           return ctx => {
                if (!ctx.inputs['isTicket']) return null;
@@ -643,6 +629,119 @@ export class ValidationService {
 
                if (value === 'unknown') {
                     return 'Wallet signing credential is invalid';
+               }
+
+               return null;
+          };
+     }
+
+     private validNftTaxon(): ValidatorFn {
+          return ctx => {
+               const taxon = ctx.inputs['createNft']?.taxon;
+               if (taxon === undefined || taxon === '') return null;
+
+               const num = Number(taxon);
+               if (Number.isNaN(num) || !Number.isInteger(num) || num < 0 || num > 0xffffffff) {
+                    return 'Taxon must be an integer between 0 and 4294967295 (0xFFFFFFFF)';
+               }
+               return null;
+          };
+     }
+
+     private validTransferFee(): ValidatorFn {
+          return ctx => {
+               const transferFee = ctx.inputs['createNft']?.transferFee;
+               const flags = ctx.inputs['createNft']?.nftFlags ?? 0; // or however you store the combined flags
+
+               if (transferFee === undefined || transferFee === '' || transferFee === null) return null;
+
+               const num = Number(transferFee);
+               if (Number.isNaN(num) || !Number.isInteger(num) || num < 0 || num > 50000) {
+                    return 'Transfer Fee must be an integer between 0 and 50000 (0.000% – 50.000%)';
+               }
+
+               // Critical: TransferFee requires tfTransferable flag
+               const isTransferable = !!(flags & xrpl.NFTokenMintFlags.tfTransferable);
+               if (num > 0 && !isTransferable) {
+                    return 'Transfer Fee can only be set when the Transferable flag is enabled';
+               }
+
+               return null;
+          };
+     }
+
+     private validNftExpiration(): ValidatorFn {
+          return async ctx => {
+               const expirationStr = ctx.inputs['createNft']?.expiration; // or nftOffer.expiration, etc.
+
+               if (!expirationStr) return null;
+
+               try {
+                    const rippleTime = this.xrplDateService.toRippleTime(expirationStr);
+                    if (Number.isNaN(rippleTime) || rippleTime! <= 0) {
+                         return 'Invalid expiration date format';
+                    }
+
+                    // Must be in the future (compare to current ledger close time)
+                    const currentLedgerTime = ctx.inputs['env']['ledgerInfo']?.currentRippleTime;
+
+                    if (rippleTime! <= currentLedgerTime!) {
+                         return 'Expiration must be in the future';
+                    }
+               } catch (e) {
+                    return 'Invalid expiration date';
+               }
+
+               return null;
+          };
+     }
+
+     private validNftMinter(): ValidatorFn {
+          return ctx => {
+               const minter = (ctx.inputs['createNft']?.nfTokenMinterAddress || ctx.inputs['createNft']?.nftCreator || '').trim();
+
+               if (!minter) return null; // optional in most cases
+
+               if (!xrpl.isValidClassicAddress(minter)) {
+                    return 'NFT Minter must be a valid XRPL classic address';
+               }
+
+               const account = ctx.accountInfo?.result?.account_data?.Account;
+               if (account && minter === account) {
+                    return 'Cannot set the account itself as its own NFT minter (creates a loop)';
+               }
+
+               return null;
+          };
+     }
+
+     private validNftUri(): ValidatorFn {
+          return ctx => {
+               const uri = ctx.inputs['createNft']?.initialURI?.trim();
+               if (!uri) return null; // URI is optional
+
+               if (uri.length > 256) {
+                    return 'URI cannot exceed 256 bytes';
+               }
+
+               // Basic check that it looks like a URL or IPFS
+               if (!uri.startsWith('http') && !uri.startsWith('ipfs') && !uri.startsWith('https')) {
+                    return 'URI should preferably start with http/https/ipfs';
+               }
+
+               return null;
+          };
+     }
+
+     private nftFlagsConsistency(): ValidatorFn {
+          return ctx => {
+               const flags = ctx.inputs['createNft']?.nftFlags ?? 0;
+               const transferFee = ctx.inputs['createNft']?.transferFee;
+
+               const isTransferable = !!(flags & xrpl.NFTokenMintFlags.tfTransferable);
+
+               if (transferFee && Number(transferFee) > 0 && !isTransferable) {
+                    return 'Transferable flag must be enabled when setting a Transfer Fee > 0';
                }
 
                return null;
@@ -1893,35 +1992,112 @@ export class ValidationService {
                          return null;
                     },
 
+                    // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
                     this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
                     ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
                     this.multiSign(),
                ],
           });
 
-          // SetNftMinterAddress Actions
-          // this.registerRule({
-          //      transactionType: 'SetNftMinterAddress',
-          //      requiredFields: ['modifyMetaData.nfTokenMinterAddress'],
-          //      validators: [
-          //           this.walletCredentialRequired(),
+          // CreateNft Actions
+          this.registerRule({
+               transactionType: 'CreateNft',
+               requiredFields: ['createNft.taxon'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+                    this.validNftTaxon(),
+                    this.validTransferFee(),
+                    this.validNftMinter(),
+                    this.validNftUri(),
+                    this.nftFlagsConsistency(),
+                    this.validNftExpiration(),
 
-          //           // Master key disabled → must use Regular Key or Multi-Sign
-          //           this.masterKeyDisabledRequiresAltSigning(),
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
 
-          //           // Ticket validation
-          //           this.ticketValidation(),
+                    // Ticket validation
+                    this.ticketValidation(),
 
-          //           // Regular Key signing requirements (only if selected and not multi-signing)
-          //           ...this.regularKeySigningValidation(),
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
 
-          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
-          //           this.multiSign(),
-          //      ],
-          // });
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // BurnNft Actions
+          this.registerRule({
+               transactionType: 'BurnNft',
+               requiredFields: ['burnNft.nftId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    ctx => {
+                         const nftId = ctx.inputs['burnNft']?.nftId?.trim();
+                         if (!nftId) return null;
+                         if (nftId.length !== 64 || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
+                              return 'NFT ID must be a valid 64-character hex string';
+                         }
+                         return null;
+                    },
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // UpdateNFTMetadata Actions
+          this.registerRule({
+               transactionType: 'UpdateNFTMetadata',
+               requiredFields: ['updateNFTMetadata.nftId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    ctx => {
+                         const nftId = ctx.inputs['updateNFTMetadata']?.nftId?.trim();
+                         if (!nftId || nftId.length !== 64 || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
+                              return 'NFT ID must be a valid 64-character hex string';
+                         }
+                         return null;
+                    },
+
+                    // Add URI or other metadata validation if your update supports it
+                    this.validNftUri(),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
 
           // TrustSet
           this.registerRule({
