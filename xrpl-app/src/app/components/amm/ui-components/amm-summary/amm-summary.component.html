@@ -1,1 +1,18 @@
-<p>amm-summary works!</p>
+@let store = ammStoreService;
+@let view = ammTransactionViewModelService;
+
+@if (store.assetPool1Balance() || store.assetPool2Balance() || store.lpTokenBalance()) {
+<div class="info-only-card">
+     <div class="info-panel-content">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <div class="info-text">
+               <strong>AMM Pool:</strong>
+               Pool 1 ({{ view.pool1Currency() || 'Asset 1' }}): <strong>{{ store.assetPool1Balance() || '0' }}</strong>
+               &nbsp;|&nbsp;
+               Pool 2 ({{ view.pool2Currency() || 'Asset 2' }}): <strong>{{ store.assetPool2Balance() || '0' }}</strong>
+               &nbsp;|&nbsp;
+               LP Tokens: <strong>{{ store.lpTokenBalance() || '0' }}</strong>
+          </div>
+     </div>
+</div>
+}

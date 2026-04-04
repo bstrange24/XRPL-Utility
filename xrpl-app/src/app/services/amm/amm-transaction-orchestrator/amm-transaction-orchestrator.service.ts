@@ -1,174 +1,20 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { AmmTxType, AmmTxConfig } from '../../../components/amm/constants/amm.types';
-import { NftOfferTxType } from '../../../components/nft-offers/constants/nft-offers.types';
+import { AmmTxType, AmmTxConfig, PoolOptions } from '../../../components/amm/constants/amm.types';
 import { AppConstants } from '../../../core/app.constants';
-import { ChecksTransactionBuilderService } from '../../checks/checks-transaction-builder/checks-transaction-builder.service';
-import { NftTransactionBuilderService } from '../../nft/nft-transaction-builder/nft-transaction-builder.service';
 import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
 import { ValidationService } from '../../validation/transaction-validation-rule.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { AMM_TX_TYPES, AMM_VALIDATION_RULES } from '../../../components/amm/constants/amm.constants';
+import { AMM_VALIDATION_RULES } from '../../../components/amm/constants/amm.constants';
 import { AmmStoreService } from '../amm-store/amm-store.service';
-
-type NftOfferMeta = {
-     validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; amm: any; account: any; txOptions: any; currency: any }) => any;
-     buildTx: (args: { orchestrator: AmmTransactionOrchestratorService; env: any; wallet: any; amm: any; currency: any }) => xrpl.Transaction;
-     simulationToastMessage: (args: { orchestrator: AmmTransactionOrchestratorService; amm: any }) => string;
-     successMessage: (args: { orchestrator: AmmTransactionOrchestratorService; amm: any }) => string;
-};
-
-const NFT_META: Record<NftOfferTxType, NftOfferMeta> = {
-     createAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.CREATE_AMM],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               createAMM: { nftId: amm.nftId, nftOfferId: amm.nftOfferId },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm }) => orchestrator.nftTransactionBuilderService.buildBuyNftDataTx(env.wallet || wallet, env, amm),
-          simulationToastMessage: ({ amm }) => `Simulated Buying NFT of ${amm.nftId}`,
-          successMessage: ({ amm }) => {
-               return `Successfully Bought NFT of ${amm.nftId}`;
-          },
-     },
-
-     depositToAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.DEPOSIT_TO_AMM],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions, currency }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               depositToAMM: { nftId: amm.nftId, currency },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm, currency }) => orchestrator.nftTransactionBuilderService.buildDepositToAmmDataTx(env.wallet || wallet, env, amm, currency),
-          simulationToastMessage: ({ amm }) => `Simulated Depositing to AMM of ${amm.nftId}`,
-          successMessage: ({ amm }) => {
-               return `Successfully Deposited to AMM of ${amm.nftId}`;
-          },
-     },
-
-     withdrawlTokenFromAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.WITHDRAWL_TOKEN_FROM_AMM],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions, currency }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               withdrawlTokenFromAMM: { nftId: amm.nftId, nftOfferId: amm.nftOfferId, currency },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm, currency }) => orchestrator.nftTransactionBuilderService.buildWithdrawlTokenFromAmmDataTx(env.wallet || wallet, env, amm, currency),
-          simulationToastMessage: ({ amm }) => `Simulated Withdrawing Token from AMM for ${amm.nftId}`,
-          successMessage: ({ amm }) => `Successfully Withdrew Token from AMM for ${amm.nftId}`,
-     },
-
-     clawbackFromAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.CLAWBACK],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions, currency }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               clawbackFromAMM: { nftId: amm.nftId, nftOfferId: amm.nftOfferId, currency },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm, currency }) => orchestrator.nftTransactionBuilderService.buildClawbackFromAmmDataTx(env.wallet || wallet, env, amm, currency),
-          simulationToastMessage: ({ amm }) => `Simulated Clawback from AMM for ${amm.nftId}`,
-          successMessage: ({ amm }) => `Successfully Clawed back from AMM for ${amm.nftId}`,
-     },
-
-     swapViaAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.SWAP],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               swapViaAMM: { nftOfferId: amm.nftOfferId },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm }) => orchestrator.nftTransactionBuilderService.buildSwapViaAmmDataTx(env.wallet || wallet, env, amm),
-          simulationToastMessage: ({ amm }) => `Simulated Swapping via AMM for ${amm.nftOfferId}`,
-          successMessage: ({ amm }) => `Successfully Swapped via AMM for ${amm.nftOfferId}`,
-     },
-
-     swapViaAMM: {
-          validationRule: AMM_VALIDATION_RULES[AMM_TX_TYPES.SWAP],
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               swapViaAMM: { nftOfferId: amm.nftOfferId },
-          }),
-          buildTx: ({ orchestrator, env, wallet, amm }) => orchestrator.nftTransactionBuilderService.buildSwapViaAmmDataTx(env.wallet || wallet, env, amm),
-          simulationToastMessage: ({ amm }) => `Simulated Swapping via AMM for ${amm.nftOfferId}`,
-          successMessage: ({ amm }) => `Successfully Swapped via AMM for ${amm.nftOfferId}`,
-     },
-};
+import { AmmTransactionBuilderService } from '../amm-transaction-builder/amm-transaction-builder.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({
      providedIn: 'root',
@@ -177,18 +23,20 @@ export class AmmTransactionOrchestratorService {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);
      private readonly toastService = inject(ToastService);
-     public readonly checksTransactionBuilderService = inject(ChecksTransactionBuilderService);
      private readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
-     public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
-     public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
-     public readonly nftTransactionBuilderService = inject(NftTransactionBuilderService);
+     private readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
+     private readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
      public readonly ammStoreService = inject(AmmStoreService);
+     public readonly ammTransactionBuilderService = inject(AmmTransactionBuilderService);
+     private readonly xrplService = inject(XrplService);
 
-     async executeNftOfferTx(type: AmmTxType, config: AmmTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
-          const { amm, account, currency, txOptions, preFetchedEnv, wallet } = config;
+     async executeAmmTx(
+          type: AmmTxType,
+          config: AmmTxConfig,
+     ): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+          const { amm, account, txOptions, preFetchedEnv, wallet, extra } = config;
           let env: any;
           let client: xrpl.Client;
           let txHash: string | undefined;
@@ -197,7 +45,6 @@ export class AmmTransactionOrchestratorService {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -206,43 +53,110 @@ export class AmmTransactionOrchestratorService {
                          includeFee: true,
                          includeLedgerInfo: true,
                          includeServerInfo: true,
-                         includeNftSellOffers: type === 'buyNft' || type === 'buyNftOffer',
-                         includeNftBuyOffers: type === 'sellNft' || type === 'sellNftOffer',
                     }));
 
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Validation
-               const meta = NFT_META[type];
+               // Validate
+               const validationRule = AMM_VALIDATION_RULES[type];
+               if (validationRule) {
+                    const validationInputs = {
+                         wallet,
+                         network: {
+                              accountInfo: env.accountInfo,
+                              accountObjects: env.accountObjects,
+                              fee: env.fee,
+                              currentLedger: env.ledgerInfo.lastIndex,
+                         },
+                         regularKey: {
+                              isRegularKey: txOptions?.isRegularKeyAddress,
+                              address: account?.regularKeyAddress,
+                              seed: account?.regularKeySeed,
+                         },
+                         env,
+                    };
+                    const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+                    if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+               }
 
-               const validationInputs = meta.buildValidationInputs({ wallet, env, amm, account, txOptions, currency });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+               // Fetch LP token participation data for operations that need it
+               let lpToken: { currency: string; issuer: string; balance: string } | undefined;
+               if (type === 'withdrawlTokenFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM') {
+                    const pool1Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
+                    const pool2Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
+                    try {
+                         const ammResponse = await this.xrplService.getAMMInfo(client, pool1Asset, pool2Asset, wallet.classicAddress, 'validated');
+                         if (ammResponse?.result?.amm) {
+                              lpToken = {
+                                   issuer: ammResponse.result.amm.account,
+                                   currency: ammResponse.result.amm.lp_token.currency,
+                                   balance: ammResponse.result.amm.lp_token.value,
+                              };
+                         }
+                    } catch {
+                         // AMM pool not found – builder will handle validation error
+                    }
+
+                    if (!lpToken && type !== 'deleteAMM') {
+                         return { success: false, error: 'No LP token found for this AMM pool.', validationError: true };
+                    }
+               }
+
+               // Validate LP token amount for withdraw
+               if (type === 'withdrawlTokenFromAMM' && lpToken) {
+                    const lpBalance = Number.parseFloat(lpToken.balance);
+                    const requested = Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replace(/,/g, ''));
+                    if (requested > lpBalance) {
+                         return { success: false, error: `Insufficient LP token balance. Available: ${lpToken.balance}`, validationError: true };
+                    }
+               }
 
                // Build transaction
-               const tx = meta.buildTx({ orchestrator: this, env, wallet, amm, currency });
+               const depositOptions: PoolOptions = extra?.['depositOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
+               const withdrawOptions: PoolOptions = extra?.['withdrawOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
+               const destination: string = extra?.['destination'] ?? '';
+               const effectiveWallet: xrpl.Wallet = env.wallet || wallet;
 
-               // Optional fields
-               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.amm, type, txOptions);
+               let tx: xrpl.Transaction;
+               switch (type) {
+                    case 'createAMM':
+                         tx = this.ammTransactionBuilderService.buildCreateAmmTx(effectiveWallet, amm, env);
+                         break;
+                    case 'depositToAMM':
+                         tx = this.ammTransactionBuilderService.buildDepositToAmmTx(effectiveWallet, amm, env, depositOptions);
+                         break;
+                    case 'withdrawlTokenFromAMM':
+                         tx = this.ammTransactionBuilderService.buildWithdrawFromAmmTx(effectiveWallet, amm, env, withdrawOptions, lpToken!);
+                         break;
+                    case 'clawbackFromAMM':
+                         tx = this.ammTransactionBuilderService.buildClawbackFromAmmTx(effectiveWallet, amm, env, lpToken!);
+                         break;
+                    case 'swapViaAMM':
+                         tx = this.ammTransactionBuilderService.buildSwapViaAmmTx(effectiveWallet, amm, env, destination);
+                         break;
+                    case 'deleteAMM':
+                         tx = this.ammTransactionBuilderService.buildDeleteAmmTx(effectiveWallet, amm, env);
+                         break;
+                    default:
+                         throw new Error(`Unknown AMM transaction type: ${type}`);
+               }
 
-               // Balance checks (token vs xrp)
-               let isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               // Set optional fields (memo, ticket, etc.)
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, amm, type, txOptions);
 
-               //  Submit / simulate
+               // Balance check
+               const balanceCheck = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+               if (!balanceCheck.success) return { success: false, error: balanceCheck.error };
+
+               // Submit or simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
-                    wallet: env.wallet || wallet,
+                    wallet: effectiveWallet,
                     env,
-
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
-
-                    ui: {
-                         suppressIndividualFeedback: false,
-                    },
-
+                    ui: { suppressIndividualFeedback: false },
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -251,7 +165,6 @@ export class AmmTransactionOrchestratorService {
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
-
                     buildTx: () => tx as any,
                });
 
@@ -259,21 +172,22 @@ export class AmmTransactionOrchestratorService {
 
                txHash = submitOrSimResult.hash;
 
-               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
-                    return this.handleSimulationSuccess(type, amm, txHash);
+                    const msg = this.getSimulationMessage(type);
+                    this.txUiService.resetCurrentStepToIdle();
+                    this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, txHash, this.txUiService.explorerUrl() + 'tx/');
+                    return { success: true, hash: txHash };
                }
 
-               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = meta.successMessage({ orchestrator: this, amm });
-               this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
+               const successMsg = this.getSuccessMessage(type);
+               this.xrplTransactionService.processTxFinalResult(finalResult, successMsg, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
           } catch (err: any) {
-               console.error(`[${type}] executeNftOfferTx failed:`, err);
+               console.error(`[${type}] executeAmmTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
                return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {
@@ -281,12 +195,27 @@ export class AmmTransactionOrchestratorService {
           }
      }
 
-     handleSimulationSuccess(type: NftOfferTxType, amm: any, hash?: string) {
-          const msg = NFT_META[type].simulationToastMessage({ orchestrator: this, amm });
+     private getSimulationMessage(type: AmmTxType): string {
+          const map: Record<AmmTxType, string> = {
+               createAMM: 'Simulated AMM Create successfully!',
+               depositToAMM: 'Simulated AMM Deposit successfully!',
+               withdrawlTokenFromAMM: 'Simulated AMM Withdraw successfully!',
+               clawbackFromAMM: 'Simulated AMM Clawback successfully!',
+               swapViaAMM: 'Simulated AMM Swap successfully!',
+               deleteAMM: 'Simulated AMM Delete successfully!',
+          };
+          return map[type] ?? 'Simulated transaction successfully!';
+     }
 
-          this.txUiService.resetCurrentStepToIdle();
-          this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');
-
-          return { success: true, hash };
+     private getSuccessMessage(type: AmmTxType): string {
+          const map: Record<AmmTxType, string> = {
+               createAMM: 'AMM created successfully!',
+               depositToAMM: 'Deposited to AMM successfully!',
+               withdrawlTokenFromAMM: 'Withdrew from AMM successfully!',
+               clawbackFromAMM: 'Clawback from AMM successful!',
+               swapViaAMM: 'Swap via AMM successful!',
+               deleteAMM: 'AMM deleted successfully!',
+          };
+          return map[type] ?? 'Transaction successful!';
      }
 }
