@@ -1,120 +1,115 @@
-import { Component, inject, OnInit, computed, DestroyRef, signal, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
-import { trigger, style, transition, animate } from '@angular/animations';
+import { Component, inject, OnInit, computed, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { IssuedCurrencyAmount } from 'xrpl';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { BehaviorSubject, combineLatest, Observable, Subject, takeUntil } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { OfferCurrencyService } from '../../services/offer-currency/offer-currency.service';
-import BigNumber from 'bignumber.js';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
-import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
-
-interface XRPLCurrency {
-     currency: string;
-     issuer?: string;
-}
-
-interface CurrencyAmountXRP {
-     currency: 'XRP';
-     value: string;
-}
-
-interface CurrencyAmountToken {
-     currency: string;
-     issuer: string;
-     value: string;
-}
-
-interface SectionContent {
-     key: string;
-     value: string;
-}
-
-interface SectionSubItem {
-     key: string;
-     openByDefault: boolean;
-     content: SectionContent[];
-}
-
-interface Section {
-     title: string;
-     openByDefault: boolean;
-     content?: SectionContent[];
-     subItems?: SectionSubItem[];
-}
-
-type CurrencyAmount = CurrencyAmountXRP | CurrencyAmountToken;
-
-interface IssuerItem {
-     name: string;
-     address: string;
-}
-
-type PoolOptions = {
-     bothPools: boolean;
-     firstPoolOnly: boolean;
-     secondPoolOnly: boolean;
-};
+import { AmmRequirementsInfoComponent } from './ui-components/amm-requirements-info/amm-requirements-info.component';
+import { AmmStoreService } from '../../services/amm/amm-store/amm-store.service';
+import { AmmTransactionViewModelService } from '../../services/amm/amm-transaction-view-model/amm-transaction-view-model.service';
+import { AMM_TABS, AMM_TAB_META } from './constants/amm.ui';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { AmmActionTypes, IssuerItem, PoolOptions, XRPLCurrency } from './constants/amm.types';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
+import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
+import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
+import { AmmUtilsService } from '../../services/amm/amm-utils/amm-utils.service';
+import { AmmTransactionOrchestratorService } from '../../services/amm/amm-transaction-orchestrator/amm-transaction-orchestrator.service';
 
 @Component({
      selector: 'app-amm',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent, AmmRequirementsInfoComponent],
      templateUrl: './amm.component.html',
      styleUrl: './amm.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateAmmComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
-     public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
+export class CreateAmmComponent extends WalletDestinationBase implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly validationService = inject(ValidationService);
-     private readonly dropdownService = inject(DestinationDropdownService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
-     public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly offerCurrency = inject(OfferCurrencyService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     public readonly route = inject(ActivatedRoute);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly ammStoreService = inject(AmmStoreService);
+     public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
+     public readonly accountConfiguratorStore = inject(AccountConfiguratorStoreService);
+     public readonly ammTransactionOrchestratorService = inject(AmmTransactionOrchestratorService);
+     public readonly ammUtilsService = inject(AmmUtilsService);
+
+     readonly menuTabs: TabConfig[] = AMM_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = AMM_TAB_META;
+
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
+          this.txUiService.clearAllOptionsAndMessages();
+     }
+
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getAMMPoolInfo(true);
+     }
+
+     async onCurrencyChange(item: any) {
+          const currency = item?.id ?? item ?? 'XRP';
+          this.trustlineCurrencyService.selectCurrency(currency);
+          await this.syncAfterSelection();
+     }
+
+     async onIssuerChange(item: any) {
+          const issuer = item?.id ?? item ?? 'XRP';
+          this.trustlineCurrencyService.selectIssuer(issuer);
+          await this.syncAfterSelection();
+     }
+
+     async onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.selectCurrency(currency);
+          await this.trustlineUtilService.loadTrustlines(false);
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     async onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrencyService.selectIssuer(address);
+
+          // Add this: If both currency and issuer are set, fetch env and update flags
+          if (this.currencyStoreService.currency() && address) {
+               await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+          }
+     }
 
      public weWantIssuers$!: Observable<IssuerItem[]>;
      public weSpendIssuers$!: Observable<IssuerItem[]>;
@@ -124,56 +119,48 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      private ammInfoTrigger = new Subject<void>();
 
      // Destination Dropdown
-     typedDestination = signal<string>('');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>('');
-     destinationSearchQuery = signal<string>('');
-     checkIdSearchQuery = signal<string>('');
+     // typedDestination = signal<string>('');
+     // customDestinations = signal<{ name?: string; address: string }[]>([]);
+     // checkIdSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
-     activeTab = signal<'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM'>('createAMM');
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
-     amountField = signal<string>('');
-     destinationField = signal<string>('');
-     destinationTagField = signal<string>('');
-     currencyFieldDropDownValue = signal<string>('XRP');
-     selectedWalletIndex = signal<number>(0);
+     // activeTab = signal<'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM'>('createAMM');
+     // currencyFieldDropDownValue = signal<string>('XRP');
+     // selectedWalletIndex = signal<number>(0);
      currencyChangeTrigger = signal(0);
-     holderField = signal<string>('');
-     insufficientLiquidityWarning = signal<boolean>(false);
-     lpTokenBalanceField = signal<string>('0');
-     tradingFeeField = signal<string>('0.1');
-     withdrawlLpTokenFromPoolField = signal<string>('');
+     // holderField = signal<string>('');
+     // insufficientLiquidityWarning = signal<boolean>(false);
+     // lpTokenBalanceField = signal<string>('0');
+     // tradingFeeField = signal<string>('0.1');
+     // withdrawlLpTokenFromPoolField = signal<string>('');
 
      // Pool & LP balances – now signals instead of BehaviorSubjects
-     assetPool1Balance = signal<string>('0');
-     assetPool2Balance = signal<string>('0');
-     lpTokenBalance = signal<string>('0');
+     // assetPool1Balance = signal<string>('0');
+     // assetPool2Balance = signal<string>('0');
+     // lpTokenBalance = signal<string>('0');
 
-     signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
+     // signers: { account: string; seed: string; weight: number }[] = [{ account: '', seed: '', weight: 1 }];
 
      // Primary currency/issuer/amount signals (removed duplicate "*Field" versions)
-     weWantCurrency = signal<string>('');
-     weSpendCurrency = signal<string>('XRP');
-     availableCurrencies: string[] = [];
-     weWantIssuer = signal<string>('');
-     weSpendIssuer = signal<string>('');
-     weWantAmount = signal<string>('');
-     weSpendAmount = signal<string>('');
+     // weWantCurrency = signal<string>('');
+     // weSpendCurrency = signal<string>('XRP');
+     // availableCurrencies: string[] = [];
+     // weWantIssuer = signal<string>('');
+     // weSpendIssuer = signal<string>('');
+     // weWantAmount = signal<string>('');
+     // weSpendAmount = signal<string>('');
 
-     isMarketOrder = signal<boolean>(false);
-     isFillOrKill = signal<boolean>(false);
-     isPassive = signal<boolean>(true);
+     // isMarketOrder = signal<boolean>(false);
+     // isFillOrKill = signal<boolean>(false);
+     // isPassive = signal<boolean>(true);
 
      knownIssuers = signal<Record<string, string[]>>({ XRP: [] });
      knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
 
-     existingOffers: any = [];
-     existingSellOffers: any = [];
-     existingBuyOffers: any = [];
-     existingSellOffersCollapsed = signal<boolean>(true);
+     // existingOffers: any = [];
+     // existingSellOffers: any = [];
+     // existingBuyOffers: any = [];
+     // existingSellOffersCollapsed = signal<boolean>(true);
 
      withdrawOptions = signal<PoolOptions>({
           bothPools: true,
@@ -191,74 +178,13 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      weWantIssuersTrigger = signal(0);
      weSpendIssuersTrigger = signal(0);
 
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
-          this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields();
-
-          // Fire-and-forget refresh
-          void this.getAMMPoolInfo(true, false);
-     });
-
-     // Computed properties
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
-
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-          return this.destinations().map(d => ({
-               id: d.address,
-               display: d.name || 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-          }));
-     });
-
      destinations = computed(() => [
           ...this.wallets().map((w: DropdownItem) => ({
                name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
                address: w.address,
           })),
-          ...this.customDestinations(),
+          // ...this.customDestinations(),
      ]);
-
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery();
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-          return this.dropdownService.formatDisplay(dest);
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          if (q === '') return this.destinations();
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
-     });
 
      storedIssuers = computed(() => {
           const issuersMap = this.knownTrustLinesIssuers();
@@ -378,18 +304,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           return '';
      });
 
-     hasWallets = computed(() => this.wallets().length > 0);
-
-     constructor() {
-          super();
-          this.txUiService.clearAllOptionsAndMessages();
-          this.weWantIssuers$ = this.offerCurrency.weWant.issuers$;
-          this.weSpendIssuers$ = this.offerCurrency.weSpend.issuers$;
-          this.weWantBalance$ = this.offerCurrency.weWant.balance$;
-          this.weSpendBalance$ = this.offerCurrency.weSpend.balance$;
-          this.availableCurrencies = this.offerCurrency.getAvailableCurrencies(true);
-     }
-
      ngOnInit(): void {
           const tab = this.route.snapshot.queryParamMap.get('tab');
           if (tab) {
@@ -447,27 +361,20 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           if (stored) this.customDestinations.set(JSON.parse(stored));
      }
 
-     private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
-
-          // Prevent self as destination
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
-     }
-
      trackByAddress(index: number, item: DropdownItem): string {
           return item.address;
      }
 
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
+     selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
 
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(v => !v);
+          this.currentWallet.set(wallet);
+          this.txUiService.currentWallet.set(wallet);
+
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+
+          this.trustlineCurrencyService.refreshCurrentBalance();
+          // this.populateDefaultDateTime();
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -499,12 +406,12 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.existingSellOffersCollapsed.set(!this.existingSellOffersCollapsed);
      }
 
-     async setTab(tab: 'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM'): Promise<void> {
-          this.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
-          this.clearFields();
-          if (this.hasWallets()) {
-               await this.getAMMPoolInfo(true, true);
+     async setTab(tab: string): Promise<void> {
+          if (AMM_TABS.includes(tab as any)) {
+               this.ammTransactionViewModelService.activeTab.set(tab as AmmActionTypes);
+               // this.clearInputFields();
+
+               if (this.hasWallets()) await this.getAMMPoolInfo(false);
           }
      }
 
@@ -633,7 +540,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Create successfully!' : 'AMM created successfully!';
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in createAMM:', error);
@@ -733,7 +640,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
 
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Deposit successfully!' : 'AMM Deposit successfully!';
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in depositToAMM:', error);
@@ -871,7 +778,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Withdraw successfully!' : 'AMM Withdraw successfully!';
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in withdrawlTokenFromAMM:', error);
@@ -955,7 +862,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated AMM Clawback successfully!' : 'AMM Clawback successful!';
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in clawbackFromAMM:', error);
@@ -1007,7 +914,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                     // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Swap via AMM successfully!' : 'Swap via AMM successful!';
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.withdrawlLpTokenFromPoolField.set('');
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in swapViaAMM:', error);
@@ -1058,7 +965,7 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
                          // const currencyChangePromise = Promise.all([this.onWeSpendCurrencyChange(), this.onWeWantCurrencyChange()]);
                          // const [participation] = await Promise.all([this.checkAmmParticipation(client, wallet.classicAddress, asset, asset2, true), currencyChangePromise]);
                          // this.updatePoolBalances(participation?.ammInfo);
-                         await this.refreshAfterTx(client, wallet, null, false);
+                         // await this.refreshAfterTx(client, wallet, null, false);
                     }
                } catch (error: any) {
                     console.error('Error in deleteAMM:', error);
@@ -1365,25 +1272,25 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           }
      }
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination || '');
-          await this.offerCurrency.refreshBothBalances(this.currentWallet());
-          await this.getAMMPoolInfo(true, false);
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
-     }
+     // private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
+     //      const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+     //      destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+     //      if (addDest) this.addNewDestinationFromUser(destination || '');
+     //      await this.offerCurrency.refreshBothBalances(this.currentWallet());
+     //      await this.getAMMPoolInfo(true, false);
+     //      this.refreshUiState(wallet, accountInfo, accountObjects);
+     //      this.txUiService.clearAllOptions();
+     // }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(
+     //           client,
+     //           addresses, // only the addresses to target
+     //           (updatedList, newCurrent) => {
+     //                this.currentWallet.set({ ...newCurrent });
+     //           }
+     //      );
+     // }
 
      // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
      //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
@@ -1504,19 +1411,6 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           return { currency, issuer: issuerAddress };
      }
 
-     updateDestinations() {
-          // Optional: persist destinations
-          const allItems = [
-               ...this.wallets().map(wallet => ({
-                    name: wallet.name ?? this.truncateAddress(wallet.address),
-                    address: wallet.address,
-               })),
-               ...this.customDestinations(),
-          ];
-          this.storageService.set('destinations', allItems);
-          this.ensureDefaultNotSelected();
-     }
-
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet().address;
           if (currentAddress && this.destinations().length > 0) {
@@ -1527,14 +1421,14 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           }
      }
 
-     private truncateAddress(address: string): string {
-          return `${address.slice(0, 8)}...${address.slice(-6)}`;
-     }
-
      private async getWallet(): Promise<xrpl.Wallet> {
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) throw new Error('Wallet could not be created');
           return wallet;
+     }
+
+     protected async refreshAccountObject(env: any): Promise<void> {
+          return;
      }
 
      private addNewDestinationFromUser(destination: string): void {
@@ -1593,6 +1487,22 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
           this.txUiService.setInfoMessage(message);
      }
 
+     private async syncAfterSelection(load = true) {
+          if (load) await this.trustlineUtilService.loadTrustlines();
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     handleSearchQueryChange(query: string) {
+          this.destinationSearchQuery.set(query);
+          this.ammStoreService.setField('ammIdSearchQuery', query);
+     }
+
+     handleDestinationChange(item: SelectItem | null) {
+          const addr = item?.id || '';
+          this.selectedDestinationAddress.set(addr);
+          this.ammStoreService.setField('destination', addr);
+     }
+
      onWeWantIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
           this.weWantIssuer.set(address);
@@ -1629,5 +1539,15 @@ export class CreateAmmComponent extends PerformanceBaseComponent implements OnIn
      async onWeSpendCurrencyChange() {
           this.offerCurrency.selectWeSpendCurrency(this.weSpendCurrency(), this.currentWallet());
           this.ammInfoTrigger.next();
+     }
+
+     protected clearInputFields(): void {
+          this.destinationSearchQuery.set('');
+          this.selectedDestinationAddress.set('');
+          // this.ammStoreService.resetNftFields();
+          this.currencyStoreService.resetOptions();
+          this.trustlineCurrencyService.selectCurrency('XRP');
+          this.txUiService.clearAllFields();
+          this.txUiService.clearAllOptions();
      }
 }

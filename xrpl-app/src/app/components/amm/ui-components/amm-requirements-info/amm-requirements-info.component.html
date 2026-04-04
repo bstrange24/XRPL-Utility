@@ -1,0 +1,87 @@
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>Automated Market Maker (AMM)</h3>
+     </div>
+
+     <p class="info-subtitle">AMMs on XRPL enable decentralized liquidity pools for trading between any two assets (XRP or issued tokens). Create pools, deposit/withdraw liquidity, swap assets via the pool, clawback issued tokens from the pool, or delete empty pools using AMMCreate, AMMDeposit, AMMWithdraw, AMMClawback, and AMMDelete transactions.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🏦 Create / Manage Liquidity</span>
+                    <span class="badge required-badge">AMMCreate / Deposit / Withdraw</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">Asset 1 + Asset 2</span>
+                         <span class="field-status required">✅ Required (currency codes + issuers)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Amount 1 + Amount 2</span>
+                         <span class="field-status required">✅ Required (initial amounts for create/deposit)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">TradingFee</span>
+                         <span class="field-status optional">➕ Optional (0–1000 = 0–1% in 0.001% steps; set at create)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">LP Token Balance</span>
+                         <span class="field-status optional">➕ Shown after deposit (used for withdraw/clawback)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">🔄 Swap / Clawback / Delete</span>
+                    <span class="badge optional-badge">AMMClawback / Swap / AMMDelete</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">AMM ID</span>
+                         <span class="field-status required">✅ Required (for clawback/delete/swap)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Amount (for swap/clawback)</span>
+                         <span class="field-status required">✅ Required (exact or min/max for swap)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Holder (for clawback)</span>
+                         <span class="field-status optional">➕ Optional (specific LP holder to clawback from)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Conditions for Delete</span>
+                         <span class="field-status required">✅ Pool must be empty (no LP tokens outstanding)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li>Requires the <strong>AMM</strong> amendment (XLS-30) to be enabled on the network.</li>
+                    <li>Each AMM pool is identified by its unique <strong>AMM ID</strong> (hash of Asset1 + Asset2 + issuer(s)).</li>
+                    <li><strong>TradingFee</strong>: Set once at creation (0–1%); liquidity providers earn proportional share of fees on swaps.</li>
+                    <li>Depositing liquidity mints LP tokens to your account — these represent your share of the pool and can be withdrawn or traded.</li>
+                    <li>Withdrawing burns LP tokens and returns proportional assets from both sides of the pool (or one side with exact flags).</li>
+                    <li>Swaps use Payment tx with AMM path — specify exact input/output or min received; slippage protection via limit fields.</li>
+                    <li>Clawback: Only the issuer of one asset can clawback their tokens from the pool (useful for stablecoins or regulated assets).</li>
+                    <li>Deleting an AMM requires zero outstanding LP tokens — all liquidity must be withdrawn first; deletes the pool object and frees reserve.</li>
+                    <li>Each AMM pool and each holder's LP tokens consume **owner reserve** (~0.2 XRP per object) until removed.</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ Irreversibility & Liquidity Risks</h5>
+               <p style="color: #92400e">AMM pools lock funds in shared liquidity — impermanent loss, fee misconfiguration, or clawback can affect returns or access.</p>
+               <ul>
+                    <li>TradingFee is **permanent** once set at creation — choose carefully (high fees discourage trading; low fees reduce LP rewards).</li>
+                    <li>Depositing creates LP tokens that track pool share — impermanent loss occurs if asset prices diverge significantly.</li>
+                    <li>Clawback removes issuer tokens from the pool — can disrupt liquidity or force LPs to withdraw early if not anticipated.</li>
+                    <li>Deleting an AMM is **irreversible** — pool gone forever; ensure no users hold LP tokens or the tx fails (tec codes like tecOWNERS).</li>
+                    <li>Swaps are **instant but irreversible** — no native slippage protection beyond your min received; large trades can suffer high impact.</li>
+                    <li>Reserve costs add up with many pools or large LP holdings — monitor owner reserve to avoid account freeze-out.</li>
+                    <li>Always test full flows (create → deposit → swap → withdraw → clawback → delete) on devnet or Testnet first — wrong asset pairs, amounts, or fees burn tx fees without effect.</li>
+               </ul>
+          </div>
+     </div>
+</div>
