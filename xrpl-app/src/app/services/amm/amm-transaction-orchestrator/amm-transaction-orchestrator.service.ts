@@ -12,9 +12,152 @@ import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orche
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { AMM_VALIDATION_RULES } from '../../../components/amm/constants/amm.constants';
-import { AmmStoreService } from '../amm-store/amm-store.service';
+import { AmmState, AmmStoreService } from '../amm-store/amm-store.service';
 import { AmmTransactionBuilderService } from '../amm-transaction-builder/amm-transaction-builder.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
+
+type AmmValidationMeta = {
+     buildValidationInputs: (args: { wallet: Wallet; env: any; amm: AmmState; account: any; txOptions: any }) => any;
+};
+
+const AMM_VALIDATION_META: Record<AmmTxType, AmmValidationMeta> = {
+     createAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               firstPoolAssetAmount: amm.weWantAmount,
+               secondPoolAssetAmount: amm.weSpendAmount,
+               firstPoolCurrencyField: amm.weWantCurrency,
+               secondPoolCurrencyField: amm.weSpendCurrency,
+               firstPoolIssuerField: amm.weWantIssuer,
+               secondPoolIssuerField: amm.weSpendIssuer,
+               tradingFeeField: amm.tradingFeeField,
+          }),
+     },
+     depositToAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               weWantCurrencyField: amm.weWantCurrency,
+               weSpendCurrencyField: amm.weSpendCurrency,
+               weWantIssuerField: amm.weWantIssuer,
+               weSpendIssuerField: amm.weSpendIssuer,
+               weWantAmountField: amm.weWantAmount,
+               weSpendAmountField: amm.weSpendAmount,
+          }),
+     },
+     withdrawlTokenFromAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               weWantCurrencyField: amm.weWantCurrency,
+               weSpendCurrencyField: amm.weSpendCurrency,
+               weWantIssuerField: amm.weWantIssuer,
+               weSpendIssuerField: amm.weSpendIssuer,
+               weWantAmountField: amm.weWantAmount,
+               weSpendAmountField: amm.weSpendAmount,
+          }),
+     },
+     clawbackFromAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               weWantCurrencyField: amm.weWantCurrency,
+               weSpendCurrencyField: amm.weSpendCurrency,
+               weWantIssuerField: amm.weWantIssuer,
+               weSpendIssuerField: amm.weSpendIssuer,
+               lpTokenAmountField: amm.withdrawlLpTokenFromPoolField,
+          }),
+     },
+     swapViaAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               weWantCurrencyField: amm.weWantCurrency,
+               weSpendCurrencyField: amm.weSpendCurrency,
+               weWantIssuerField: amm.weWantIssuer,
+               weSpendIssuerField: amm.weSpendIssuer,
+               weWantAmountField: amm.weWantAmount,
+               weSpendAmountField: amm.weSpendAmount,
+          }),
+     },
+     deleteAMM: {
+          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
+               wallet,
+               network: {
+                    accountInfo: env.accountInfo,
+                    accountObjects: env.accountObjects,
+                    fee: env.fee,
+                    currentLedger: env.ledgerInfo.lastIndex,
+               },
+               regularKey: {
+                    isRegularKey: txOptions?.isRegularKeyAddress,
+                    address: account?.regularKeyAddress,
+                    seed: account?.regularKeySeed,
+               },
+               env,
+               weWantCurrencyField: amm.weWantCurrency,
+               weSpendCurrencyField: amm.weSpendCurrency,
+               weWantIssuerField: amm.weWantIssuer,
+               weSpendIssuerField: amm.weSpendIssuer,
+          }),
+     },
+};
 
 @Injectable({
      providedIn: 'root',
@@ -59,26 +202,10 @@ export class AmmTransactionOrchestratorService {
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
                // Validate
-               const validationRule = AMM_VALIDATION_RULES[type];
-               if (validationRule) {
-                    const validationInputs = {
-                         wallet,
-                         network: {
-                              accountInfo: env.accountInfo,
-                              accountObjects: env.accountObjects,
-                              fee: env.fee,
-                              currentLedger: env.ledgerInfo.lastIndex,
-                         },
-                         regularKey: {
-                              isRegularKey: txOptions?.isRegularKeyAddress,
-                              address: account?.regularKeyAddress,
-                              seed: account?.regularKeySeed,
-                         },
-                         env,
-                    };
-                    const errors = await this.validator.validate(validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-                    if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
-               }
+               const meta = AMM_VALIDATION_META[type];
+               const validationInputs = meta.buildValidationInputs({ wallet, env, amm, account, txOptions });
+               const errors = await this.validator.validate(AMM_VALIDATION_RULES[type], { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Fetch LP token participation data for operations that need it
                let lpToken: { currency: string; issuer: string; balance: string } | undefined;

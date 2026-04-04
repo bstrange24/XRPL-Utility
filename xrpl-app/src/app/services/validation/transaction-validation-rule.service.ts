@@ -583,8 +583,8 @@ export class ValidationService {
 
      private requireCurrencyPair(): ValidatorFn {
           return ctx => {
-               const want = ctx.inputs['firstPoolCurrencyField'];
-               const spend = ctx.inputs['secondPoolCurrencyField'];
+               const want = ctx.inputs['firstPoolCurrencyField'] || ctx.inputs['weWantCurrencyField'];
+               const spend = ctx.inputs['secondPoolCurrencyField'] || ctx.inputs['weSpendCurrencyField'];
                if (!want || !spend) {
                     return 'Both currencies in the trading pair are required';
                }
