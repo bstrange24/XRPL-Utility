@@ -83,10 +83,10 @@ export class AmmTransactionOrchestratorService {
                // Fetch LP token participation data for operations that need it
                let lpToken: { currency: string; issuer: string; balance: string } | undefined;
                if (type === 'withdrawlTokenFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM') {
-                    const asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
-                    const asset2 = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
+                    const pool1Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
+                    const pool2Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
                     try {
-                         const ammResponse = await this.xrplService.getAMMInfo(client, asset, asset2, wallet.classicAddress, 'validated');
+                         const ammResponse = await this.xrplService.getAMMInfo(client, pool1Asset, pool2Asset, wallet.classicAddress, 'validated');
                          if (ammResponse?.result?.amm) {
                               lpToken = {
                                    issuer: ammResponse.result.amm.account,
