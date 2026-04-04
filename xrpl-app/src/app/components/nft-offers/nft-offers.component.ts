@@ -177,6 +177,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
+          this.getNFTOffers(true);
      }
 
      async setTab(tab: string): Promise<void> {
@@ -201,23 +202,22 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
 
-                    const { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet);
-                    this.utilsService.logAccountInfoObjects(accountInfo, accountObjects);
-                    this.utilsService.logObjects('nftInfo', nftInfo);
-                    this.utilsService.logObjects('sellOffersResponse', sellOffersResponse);
-                    this.utilsService.logObjects('buyOffersResponse', buyOffersResponse);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 
-                    this.nftUtilService.getExistingSellOffers(accountObjects, ledgerInfo);
-                    this.nftUtilService.getExistingBuyOffers(accountObjects, ledgerInfo);
-                    this.nftUtilService.getExistingNfts(accountObjects, this.currentWallet().address);
+                    const { ledgerInfo } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet, {
+                         accountInfo: env.accountInfo,
+                         accountObjects: env.accountObjects,
+                    });
+
+                    this.nftUtilService.getExistingSellOffers(env.accountObjects, ledgerInfo);
+                    this.nftUtilService.getExistingBuyOffers(env.accountObjects, ledgerInfo);
+                    this.nftUtilService.getExistingNfts(env.accountObjects, this.currentWallet().address);
 
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
                          await this.trustlineUtilService.loadTrustlines(forceRefresh);
                          this.trustlineCurrencyService.selectCurrency(currencyValue);
                     }
-
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getNFT:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
@@ -360,7 +360,10 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          const { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet);
+          const { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet, {
+               accountInfo: env.accountInfo,
+               accountObjects: env.accountObjects,
+          });
           this.nftUtilService.getExistingSellOffers(accountObjects, ledgerInfo);
           this.nftUtilService.getExistingBuyOffers(accountObjects, ledgerInfo);
           this.nftUtilService.getExistingNfts(accountObjects, env.wallet.classicAddress);

@@ -219,7 +219,87 @@ export class NftUtilService {
           this.nftCreateStoreService.setField('nftId', ids.join(', '));
      }
 
-     async getNftOfferDetails(client: any, wallet: any) {
+     async getNftOfferDetails(client: any, wallet: any, prefetched?: { accountInfo?: any; accountObjects?: xrpl.AccountObjectsResponse; ledgerInfo?: any }) {
+          // ── Phase 1: Core data (reuse what the caller already has) ──
+          const coreTasks: Promise<any>[] = [
+               prefetched?.ledgerInfo ?? this.xrplService.getLedgerInfo(client),
+               prefetched?.accountInfo ?? this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
+               prefetched?.accountObjects ?? this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
+               this.xrplService.getAccountNFTs(client, wallet.classicAddress, 'validated', '').catch(() => ({ result: { account_nfts: [] } })),
+               this.xrplService.getAccountNFTOffers(client, wallet.classicAddress, 'validated', 'nft_offer').catch(() => ({ result: { account_nfts: [] } })),
+          ];
+
+          const nftId = this.nftCreateStoreService.nftId();
+
+          // Only fetch per-NFT sell/buy offers when a specific NFT ID is entered
+          if (nftId) {
+               coreTasks.push(
+                    this.xrplService.getNFTSellOffers(client, nftId).catch(() => ({ result: { offers: [] } })),
+                    this.xrplService.getNFTBuyOffers(client, nftId).catch(() => ({ result: { offers: [] } }))
+               );
+          }
+
+          const results = await Promise.all(coreTasks);
+
+          const ledgerInfo = results[0];
+          const accountInfo = results[1];
+          const accountObjects = results[2];
+          const nftInfo = results[3];
+          const nftAccountOffers = results[4];
+          const sellOffersResponse = nftId ? results[5] : null;
+          const buyOffersResponse = nftId ? results[6] : null;
+
+          // ── Phase 2: Filter account-level offers ──
+          const s = this.filterSellOffers(nftAccountOffers, wallet);
+          const b = this.filterBuyOffers(nftAccountOffers, wallet);
+
+          // ── Phase 3: If a specific NFT ID was provided, return directly ──
+          if (nftId) {
+               return {
+                    ledgerInfo,
+                    accountInfo,
+                    accountObjects,
+                    nftInfo,
+                    sellOffersResponse,
+                    buyOffersResponse,
+                    s,
+                    b,
+               };
+          }
+
+          // ── Phase 4: No NFT ID — account-level offer aggregation ──
+          const nfts = nftInfo.result.account_nfts;
+          if (nfts.length === 0) {
+               return {
+                    ledgerInfo,
+                    accountInfo,
+                    accountObjects,
+                    nftInfo,
+                    sellOffersResponse: [],
+                    buyOffersResponse: [],
+               };
+          }
+
+          // Fetch per-NFT offers in parallel (N+1, but only when no single NFT is selected)
+          const [buyOffersResponses, sellOffersResponses] = await Promise.all([Promise.all(this.createBuyOfferPromises(nfts, client)), Promise.all(this.createSellOfferPromises(nfts, client))]);
+
+          const buyOffers = this.createBuyOffersResponse(nfts, buyOffersResponses);
+          const sellOffers = this.createSellOffersResponse(nfts, sellOffersResponses);
+
+          const mergedBuyOffersResponse = this.mergeOffers(buyOffers, b);
+          const mergedSellOffersResponse = this.mergeOffers(sellOffers, s);
+
+          return {
+               ledgerInfo,
+               accountInfo,
+               accountObjects,
+               nftInfo,
+               sellOffersResponse: mergedSellOffersResponse,
+               buyOffersResponse: mergedBuyOffersResponse,
+          };
+     }
+
+     async getNftOfferDetails1(client: any, wallet: any, prefetched?: { accountInfo?: any; accountObjects?: any }) {
           if (this.nftCreateStoreService.nftId()) {
                // Single NFT mode - returns { result: { offers: [...] } }
                const [ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse, nftAccountOffers] = await Promise.all([
@@ -391,7 +471,7 @@ export class NftUtilService {
           return merged;
      }
 
-     getExistingNfts(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     getExistingNfts(checkObjects: any, classicAddress: string) {
           const nftPages = (checkObjects?.result?.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'NFTokenPage');
 
           // Flatten all NFTokens from all pages
@@ -419,7 +499,7 @@ export class NftUtilService {
           return this.nftCreateStoreService.existingNfts();
      }
 
-     getExistingSellOffers(accountObjects: xrpl.AccountObjectsResponse, ledgerInfo: any) {
+     getExistingSellOffers(accountObjects: any, ledgerInfo: any) {
           const offers = (accountObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'NFTokenOffer' && (obj.Flags & 1) === 1) // tfSellNFToken
                .map((obj: any) => ({
@@ -437,7 +517,7 @@ export class NftUtilService {
           this.utilsService.logObjects('existingSellOffers (from account_objects)', this.nftCreateStoreService.existingSellOffers());
      }
 
-     getExistingBuyOffers(accountObjects: xrpl.AccountObjectsResponse, ledgerInfo: any) {
+     getExistingBuyOffers(accountObjects: any, ledgerInfo: any) {
           const offers = (accountObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'NFTokenOffer' && (obj.Flags & 1) === 0) // Buy offer
                .map((obj: any) => ({
