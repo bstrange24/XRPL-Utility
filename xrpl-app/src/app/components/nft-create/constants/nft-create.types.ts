@@ -35,7 +35,7 @@ export interface NftFlags {
      mutableNft: boolean;
 }
 
-export interface BactchFlags {
+export interface BatchFlags {
      canLock: boolean;
      canClawback: boolean;
      isRequireAuth: boolean;

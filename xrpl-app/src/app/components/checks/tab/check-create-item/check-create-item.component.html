@@ -27,7 +27,7 @@
      </div>
      } @if (check.expiration) {
      <div class="cred-chip">
-          <span class="meta-label">Expires:</span>
+          <span class="meta-label">{{ check.isExpired ? 'Expired:' : 'Expires:' }}</span>
           <span class="type" [class.expired]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
      </div>
      } @if (check.invoiceId) {

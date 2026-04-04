@@ -2006,6 +2006,116 @@ export class ValidationService {
                ],
           });
 
+          // SellNft Actions
+          this.registerRule({
+               transactionType: 'SellNft',
+               requiredFields: ['sellNft.nftId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // BuyNft Actions
+          this.registerRule({
+               transactionType: 'BuyNft',
+               requiredFields: ['buyNft.nftId', 'buyNft.nftOfferId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // BuyNftOffer Actions
+          this.registerRule({
+               transactionType: 'BuyNftOffer',
+               requiredFields: ['buyNftOffer.nftId', 'buyNftOffer.nftOfferId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // SellNftOffer Actions
+          this.registerRule({
+               transactionType: 'SellNftOffer',
+               requiredFields: ['sellNftOffer.nftId', 'sellNftOffer.nftOfferId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
+          // CancelNftOffer Actions
+          this.registerRule({
+               transactionType: 'CancelNftOffer',
+               requiredFields: ['cancelNftOffer.nftOfferId'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+
+                    // Master key disabled → must use Regular Key or Multi-Sign
+                    this.masterKeyDisabledRequiresAltSigning(),
+
+                    // Ticket validation
+                    this.ticketValidation(),
+
+                    // Regular Key signing requirements (only if selected and not multi-signing)
+                    ...this.regularKeySigningValidation(),
+
+                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
+                    this.multiSign(),
+               ],
+          });
+
           // CreateNft Actions
           this.registerRule({
                transactionType: 'CreateNft',

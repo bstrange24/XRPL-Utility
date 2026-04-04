@@ -1,1 +1,15 @@
-<p>nft-cancel-offers works!</p>
+<div class="form-row">
+     <div class="form-group">
+          <label>Select Offer to Cancel</label>
+          <p class="form-hint">Select an existing NFT to cancel.</p>
+          <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers"> </app-select-search-dropdown>
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group" style="padding-top: 0.8em">
+          <label>NFT Offer ID</label>
+          <p class="form-hint">NFT Offer ID generated when the offer was created.</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftOfferIdField" placeholder="" />
+     </div>
+</div>

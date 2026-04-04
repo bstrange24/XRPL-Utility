@@ -17,6 +17,7 @@ import { CurrencyStoreService } from '../currency/currency-store/currency-store.
 import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-store.service';
 import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
+import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -42,6 +43,7 @@ export class UtilsService {
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly checksStoreService = inject(ChecksStoreService);
      public readonly escrowStoreService = inject(EscrowStoreService);
+     public readonly nftCreateStoreService = inject(CreateNftStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
@@ -244,6 +246,7 @@ export class UtilsService {
           this.accountConfiguratorStoreService.setField('amount', rounded.toString());
           this.checksStoreService.setField('amount', rounded.toString());
           this.escrowStoreService.setField('amount', rounded.toString());
+          this.nftCreateStoreService.setField('amount', rounded.toString());
           this.txUiService.amountField.set(rounded.toString());
      }
 

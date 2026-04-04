@@ -1,1 +1,42 @@
-<p>nft-buy-offers works!</p>
+<!-- Currency + Amount -->
+<app-currency-amount-form
+     [currencyItems]="checksTransactionViewModelService.currencyItems()"
+     [selectedCurrencyItem]="checksTransactionViewModelService.selectedCurrencyItem()"
+     [amount]="checksStoreService.amount()"
+     [currency]="currencyStoreService.currency()"
+     [issuerItems]="checksTransactionViewModelService.issuerItems()"
+     [selectedIssuerItem]="checksTransactionViewModelService.selectedIssuerItem()"
+     [balance]="currencyStoreService.balance()"
+     (currencySelected)="currencySelected.emit($event)"
+     (amountChange)="utilsService.updateAmount($event)"
+     (issuerSelected)="issuerSelected.emit($event)"
+/>
+
+<!-- <div class="form-row">
+     <div class="form-group">
+          @if (nftCreateStoreService.existingNfts().length > 0) {
+          <label>Select NFT</label>
+          <p class="form-hint">Select an existing NFT to cancel.</p>
+          <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found"> </app-select-search-dropdown>
+          }
+     </div>
+</div> -->
+
+<div class="form-row">
+     <div class="form-group" style="padding-top: 0.8em">
+          <label>NFT Token Id</label>
+          <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" placeholder="" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="NFT offer expiration when the offer will expire."> </app-xrpl-expiration-input>
+     </div>
+     <div class="form-group">
+          <label>Owner</label>
+          <p class="form-hint">Owner of the NFT.</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" placeholder="" />
+     </div>
+</div>

@@ -15,11 +15,12 @@
                     <span class="type">{{ escrow.EscrowSequence }}</span>
                </div>
                <div class="cred-chip">
-                    <span class="meta-label">Finishes:</span>
+                    <span class="meta-label">{{ escrow.isExpired ? 'Finished:' : 'Finishes:' }}</span>
                     <span class="type" [class.expired]="escrow.isExpired">{{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }}</span>
                </div>
                <div class="cred-chip">
-                    <span class="meta-label">Cancellable after:</span>
+                    <span class="meta-label">Cancellable after:</span>x
+                    <span class="meta-label">{{ escrow.isExpired ? 'Finished:' : 'Cancellable after:' }}</span>
                     <span class="type" [class.expired]="escrow.isExpired">{{ escrow.cancelAfter ? utilsService.convertXRPLTime(escrow.cancelAfter) : 'N/A' }}</span>
                </div>
           </div>

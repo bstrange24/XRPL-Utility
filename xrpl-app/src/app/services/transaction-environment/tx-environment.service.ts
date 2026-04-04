@@ -6,6 +6,7 @@ import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.
 import { UtilsService } from '../util-service/utils.service';
 import { ToastService } from '../toast/toast.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
+import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
 
 export interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
@@ -22,6 +23,8 @@ export interface PrepareTxEnvironmentOptions {
      includePaymentChannelObjects?: boolean;
      includeMptObjects?: boolean;
      includeGatewayBalance?: boolean;
+     includeNftSellOffers?: boolean;
+     includeNftBuyOffers?: boolean;
      includeFee?: boolean;
      includeServerInfo?: boolean;
      includeBlockingObjects?: boolean;
@@ -55,6 +58,8 @@ export interface PrepareTxEnvironmentResult {
      destinationAccountInfo?: xrpl.AccountInfoResponse;
      destinationAccountObject?: xrpl.AccountObjectsResponse;
      gatewayBalanceObject?: any;
+     nftSellOffersObject?: any;
+     nftBuyOffersObject?: any;
      serverInfo?: any;
      blockingObjects?: any;
 }
@@ -69,6 +74,7 @@ export class TxEnvironmentService {
      private readonly utilsService = inject(UtilsService);
      public readonly toastService = inject(ToastService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     private readonly nftCreateStoreService = inject(CreateNftStoreService);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
      private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
      private readonly lastRefreshTime = signal(0);
@@ -104,6 +110,8 @@ export class TxEnvironmentService {
                includePaymentChannelObjects = false,
                includeMptObjects = false,
                includeGatewayBalance = false,
+               includeNftSellOffers = false,
+               includeNftBuyOffers = false,
                includeBlockingObjects = false,
                includeFee = false,
                forceRefresh = false,
@@ -174,6 +182,14 @@ export class TxEnvironmentService {
 
           if (includeGatewayBalance) {
                tasks.gatewayBalanceObject = this.xrplCache.getGatewayBalance(client, address, forceRefresh);
+          }
+
+          if (includeNftSellOffers) {
+               tasks.nftSellOffersObject = this.xrplService.getNFTSellOffers(client, this.nftCreateStoreService.nftId());
+          }
+
+          if (includeNftBuyOffers) {
+               tasks.nftBuyOffersObject = this.xrplService.getNFTBuyOffers(client, this.nftCreateStoreService.nftId());
           }
 
           if (includeEscrowBySequenceId && escrowSequenceNumberField) {

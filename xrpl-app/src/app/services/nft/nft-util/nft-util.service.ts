@@ -3,6 +3,8 @@ import { CreateNftStoreService } from '../nft-store/nft-store.service';
 import { AccountFlags, NftFlags } from '../../../components/nft-create/constants/nft-create.types';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
+import { UtilsService } from '../../util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',
@@ -10,6 +12,8 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 export class NftUtilService {
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly xrplService = inject(XrplService);
+     public readonly utilsService = inject(UtilsService);
 
      nftFlagValues = {
           burnableNft: 0x00000001,
@@ -62,6 +66,37 @@ export class NftUtilService {
      readonly updateNftMetadataButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Update NFT Metadata';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly createNftBuyButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Buy NFT';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+     readonly createNftSellButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Sell NFT';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+     readonly createNftBuyOfferButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Buy NFT Offer';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+     readonly createNftSellOfferButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Sell NFT Offer';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+     readonly createNftCancelOfferButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Cancel NFT Offer';
           if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
@@ -182,5 +217,311 @@ export class NftUtilService {
           }
 
           this.nftCreateStoreService.setField('nftId', ids.join(', '));
+     }
+
+     async getNftOfferDetails(client: any, wallet: any) {
+          if (this.nftCreateStoreService.nftId()) {
+               // Single NFT mode - returns { result: { offers: [...] } }
+               const [ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse, nftAccountOffers] = await Promise.all([
+                    this.xrplService.getLedgerInfo(client),
+                    this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
+                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
+                    this.xrplService.getAccountNFTs(client, wallet.classicAddress, 'validated', '').catch(() => ({ result: { account_nfts: [] } })),
+                    this.xrplService.getNFTSellOffers(client, this.nftCreateStoreService.nftId()).catch(() => ({ result: { offers: [] } })),
+                    this.xrplService.getNFTBuyOffers(client, this.nftCreateStoreService.nftId()).catch(() => ({ result: { offers: [] } })),
+                    this.xrplService.getAccountNFTOffers(client, wallet.classicAddress, 'validated', 'nft_offer').catch(() => ({ result: { account_nfts: [] } })),
+               ]);
+
+               // Filter only sell offers (Flags = 1) and buy offers (Flags = 0)
+               const s = this.filterSellOffers(nftAccountOffers, wallet);
+               const b = this.filterBuyOffers(nftAccountOffers, wallet);
+
+               return { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse, s, b };
+          } else {
+               const [ledgerInfo, accountInfo, accountObjects, nftInfo, nftAccountOffers] = await Promise.all([
+                    this.xrplService.getLedgerInfo(client),
+                    this.xrplService.getAccountInfo(client, wallet.classicAddress, 'validated', ''),
+                    this.xrplService.getAccountObjects(client, wallet.classicAddress, 'validated', ''),
+                    this.xrplService.getAccountNFTs(client, wallet.classicAddress, 'validated', '').catch(() => ({ result: { account_nfts: [] } })),
+                    this.xrplService.getAccountNFTOffers(client, wallet.classicAddress, 'validated', 'nft_offer').catch(() => ({ result: { account_nfts: [] } })),
+               ]);
+
+               const nfts = nftInfo.result.account_nfts;
+               if (nfts.length === 0) {
+                    return { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse: [], buyOffersResponse: [] };
+               }
+
+               // CREATE ALL PROMISES FIRST
+               const buyOfferPromises = this.createBuyOfferPromises(nfts, client);
+               const sellOfferPromises = this.createSellOfferPromises(nfts, client);
+
+               // AWAIT ALL PROMISES IN PARALLEL
+               const [buyOffersResponses, sellOffersResponses] = await Promise.all([Promise.all(buyOfferPromises), Promise.all(sellOfferPromises)]);
+
+               const buyOffersResponse = this.createBuyOffersResponse(nfts, buyOffersResponses);
+               const sellOffersResponse = this.createSellOffersResponse(nfts, sellOffersResponses);
+               this.utilsService.logObjects('buyOffersResponse', buyOffersResponse);
+               this.utilsService.logObjects('sellOffersResponse', sellOffersResponse);
+
+               // Filter only sell offers (Flags = 1) and buy offers (Flags = 0)
+               const s = this.filterSellOffers(nftAccountOffers, wallet);
+               const b = this.filterBuyOffers(nftAccountOffers, wallet);
+               this.utilsService.logObjects('s', s);
+               this.utilsService.logObjects('b', b);
+
+               const mergedBuyOffersResponse = this.mergeOffers(buyOffersResponse, b);
+               const mergedSellOffersResponse = this.mergeOffers(sellOffersResponse, s);
+               // const mergedBuyOffersResponse = this.mergeByNftId(buyOffersResponse, b, false);
+               // const mergedSellOffersResponse = this.mergeByNftId(sellOffersResponse, s, true);
+               this.utilsService.logObjects('mergedBuyOffersResponse', mergedBuyOffersResponse);
+               this.utilsService.logObjects('mergedSellOffersResponse', mergedSellOffersResponse);
+
+               // return { accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse };
+               return { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse: mergedSellOffersResponse, buyOffersResponse: mergedBuyOffersResponse };
+          }
+     }
+
+     private createSellOffersResponse(nfts: any, sellOffersResponses: any[]) {
+          return nfts.map((nft: any, index: any) => ({
+               nftId: nft.NFTokenID,
+               offers: sellOffersResponses[index]?.result?.offers || [],
+          }));
+     }
+
+     private createBuyOffersResponse(nfts: any, buyOffersResponses: any[]) {
+          return nfts.map((nft: any, index: any) => ({
+               nftId: nft.NFTokenID,
+               offers: buyOffersResponses[index]?.result?.offers || [],
+          }));
+     }
+
+     private createSellOfferPromises(nfts: any, client: any) {
+          return nfts.map((nft: any) =>
+               this.xrplService.getNFTSellOffers(client, nft.NFTokenID).catch(err => {
+                    console.warn(`Sell offers error for ${nft.NFTokenID}:`, err.message);
+                    return { result: { offers: [] } };
+               })
+          );
+     }
+
+     private createBuyOfferPromises(nfts: any, client: any) {
+          return nfts.map((nft: any) =>
+               this.xrplService.getNFTBuyOffers(client, nft.NFTokenID).catch(err => {
+                    console.warn(`Buy offers error for ${nft.NFTokenID}:`, err.message);
+                    return { result: { offers: [] } };
+               })
+          );
+     }
+
+     private filterBuyOffers(nftAccountOffers: any, wallet: any) {
+          const sells = nftAccountOffers.result.account_objects.filter((obj: any) => {
+               return obj.LedgerEntryType === 'NFTokenOffer' && obj.Flags === 0;
+          });
+
+          const b = sells.map((o: any) => ({
+               nftOfferIndex: o.index,
+               nftId: o.NFTokenID,
+               amount: o.Amount,
+               owner: o.Owner, // the NFT’s current owner (seller)
+               buyer: wallet.classicAddress, // the account that submitted this offer
+               expiration: o.Expiration ?? null,
+          }));
+          return b;
+     }
+
+     private filterSellOffers(nftAccountOffers: any, wallet: any) {
+          const buys = nftAccountOffers.result.account_objects.filter((obj: any) => {
+               return obj.LedgerEntryType === 'NFTokenOffer' && obj.Flags === 1;
+          });
+
+          const s = buys.map((o: any) => ({
+               nftOfferIndex: o.index,
+               nftId: o.NFTokenID,
+               amount: o.Amount,
+               seller: wallet.classicAddress, // the account that submitted this offer
+               buyer: o.Destination ?? null, // optional target buyer
+               expiration: o.Expiration ?? null,
+          }));
+          return s;
+     }
+
+     private mergeOffers(existingResponses: any[], newOffers: any[]) {
+          // Flatten all existing offer indices
+          const existingIndices = new Set(existingResponses.flatMap(r => r.offers.map((o: any) => o.nftOfferIndex || o.nft_offer_index)));
+
+          // Filter new offers to only those not already in existingIndices
+          const filteredNewOffers = newOffers.filter(o => !existingIndices.has(o.nftOfferIndex));
+
+          if (filteredNewOffers.length > 0) {
+               return [
+                    ...existingResponses,
+                    {
+                         nftId: 'account_level', // marker bucket for account_objects
+                         offers: filteredNewOffers,
+                    },
+               ];
+          }
+          return existingResponses;
+     }
+
+     mergeByNftId(existingResponses: any[], newOffers: any[], isSell: boolean) {
+          // Clone so we don't mutate original
+          const merged = [...existingResponses];
+
+          for (const offer of newOffers) {
+               const nftId = offer.nftId;
+
+               // Find existing entry for this NFT
+               let existing = merged.find(r => r.nftId === nftId);
+               if (!existing) {
+                    // No entry yet → create it
+                    existing = { nftId, offers: [] };
+                    merged.push(existing);
+               }
+
+               // Collect existing offer indices
+               const existingIndices = new Set(existing.offers.map((o: any) => o.nftOfferIndex || o.index));
+
+               // Only push if not already there
+               if (!existingIndices.has(offer.nftOfferIndex)) {
+                    existing.offers.push(offer);
+               }
+          }
+
+          return merged;
+     }
+
+     getExistingNfts(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const nftPages = (checkObjects?.result?.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'NFTokenPage');
+
+          // Flatten all NFTokens from all pages
+          const allNfts = nftPages.flatMap((page: any) => {
+               return page.NFTokens.map((entry: any) => {
+                    const nft = entry.NFToken;
+
+                    return {
+                         LedgerEntryType: page.LedgerEntryType,
+                         PageIndex: page.index,
+                         NFTokenID: nft.NFTokenID,
+                         Flags: nft.Flags ?? 0,
+                         Issuer: nft.Issuer,
+                         Taxon: nft.NFTaxon,
+                         TransferFee: nft.TransferFee,
+                         Sequence: nft.Sequence,
+                         URI_hex: nft.URI,
+                         URI: nft.URI ? this.utilsService.decodeHex(nft.URI) : null,
+                    };
+               });
+          });
+
+          this.nftCreateStoreService.setField('existingNfts', allNfts);
+          this.utilsService.logObjects('existingNfts', this.nftCreateStoreService.existingNfts());
+          return this.nftCreateStoreService.existingNfts();
+     }
+
+     getExistingSellOffers(accountObjects: xrpl.AccountObjectsResponse, ledgerInfo: any) {
+          const offers = (accountObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'NFTokenOffer' && (obj.Flags & 1) === 1) // tfSellNFToken
+               .map((obj: any) => ({
+                    OfferIndex: obj.index,
+                    NFTokenID: obj.NFTokenID,
+                    Amount: obj.Amount,
+                    Owner: obj.Owner,
+                    Destination: obj.Destination,
+                    Expiration: obj.Expiration,
+                    Flags: obj.Flags,
+                    isExpired: obj.Expiration ? ledgerInfo.currentRippleTime > obj.Expiration : false,
+               }));
+
+          this.nftCreateStoreService.setField('existingSellOffers', offers);
+          this.utilsService.logObjects('existingSellOffers (from account_objects)', this.nftCreateStoreService.existingSellOffers());
+     }
+
+     getExistingBuyOffers(accountObjects: xrpl.AccountObjectsResponse, ledgerInfo: any) {
+          const offers = (accountObjects.result.account_objects ?? [])
+               .filter((obj: any) => obj.LedgerEntryType === 'NFTokenOffer' && (obj.Flags & 1) === 0) // Buy offer
+               .map((obj: any) => ({
+                    OfferIndex: obj.index,
+                    NFTokenID: obj.NFTokenID,
+                    Amount: obj.Amount,
+                    Owner: obj.Owner,
+                    Destination: obj.Destination,
+                    Expiration: obj.Expiration,
+                    Flags: obj.Flags,
+                    isExpired: obj.Expiration ? ledgerInfo.currentRippleTime > obj.Expiration : false,
+               }));
+
+          this.nftCreateStoreService.setField('existingBuyOffers', offers);
+          this.utilsService.logObjects('existingBuyOffers (from account_objects)', this.nftCreateStoreService.existingBuyOffers());
+     }
+
+     getExistingSellOffers1(sellOfferData: any) {
+          if (sellOfferData.length > 0) {
+               const allSellOffers = sellOfferData.flatMap((nft: any) => {
+                    return nft.offers.map((offer: any) => {
+                         return {
+                              LedgerEntryType: 'NFTokenOffer',
+                              NFTokenID: nft.nftId,
+                              OfferIndex: offer.nft_offer_index,
+                              AmountDrops: offer.amount,
+                              AmountXRP: xrpl.dropsToXrp(offer.amount),
+                              Flags: offer.flags ?? 0,
+                              Owner: offer.owner,
+                              IsSellOffer: (offer.flags & 1) === 1,
+                         };
+                    });
+               });
+
+               this.nftCreateStoreService.setField('existingSellOffers', allSellOffers);
+          }
+          this.utilsService.logObjects('existingSellOffers', this.nftCreateStoreService.existingSellOffers());
+          return this.nftCreateStoreService.existingSellOffers();
+     }
+
+     getExistingBuyOffers1(checkObjects: any) {
+          if (checkObjects && checkObjects?.result?.offers?.length > 0) {
+               const nftPages = (checkObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'NFTokenPage');
+
+               // Flatten all NFTokens from all pages
+               const allNfts = nftPages.flatMap((page: any) => {
+                    return page.NFTokens.map((entry: any) => {
+                         const nft = entry.NFToken;
+
+                         return {
+                              LedgerEntryType: page.LedgerEntryType,
+                              PageIndex: page.index,
+                              NFTokenID: nft.NFTokenID,
+                              Flags: nft.Flags ?? 0,
+                              Issuer: nft.Issuer,
+                              Taxon: nft.NFTaxon,
+                              TransferFee: nft.TransferFee,
+                              Sequence: nft.Sequence,
+                              URI_hex: nft.URI,
+                              URI: nft.URI ? this.utilsService.decodeHex(nft.URI) : null,
+                         };
+                    });
+               });
+
+               this.nftCreateStoreService.setField('existingBuyOffers', allNfts);
+          }
+          this.utilsService.logObjects('existingBuyOffers', this.nftCreateStoreService.existingBuyOffers());
+          return this.nftCreateStoreService.existingBuyOffers();
+     }
+
+     /** filterOffers
+      * Filter offers where:
+      * - no Destination is specified (anyone can buy)
+      * - OR destination matches our wallet
+      * - And price is valid
+      */
+     filterOffers(sellOffer: any[], wallet: any) {
+          const validOffers = sellOffer.filter(offer => {
+               const isUnrestricted = !offer.Destination;
+               const isTargeted = offer.Destination === wallet.classicAddress;
+               return (isUnrestricted || isTargeted) && offer.amount;
+          });
+          // Sort by lowest price
+          validOffers.sort((a, b) => parseInt(a.amount) - parseInt(b.amount));
+          return validOffers;
      }
 }

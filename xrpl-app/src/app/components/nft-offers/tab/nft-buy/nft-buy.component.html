@@ -1,1 +1,15 @@
-<p>nft-buy works!</p>
+<div class="form-row">
+     <div class="form-group">
+          <label>NFT Offer Index</label>
+          <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
+          <input type="text" id="nftIndexField" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" [placeholder]="" />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group" style="padding-top: 0.4em">
+          <label>NFT Token Id</label>
+          <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" placeholder="" />
+     </div>
+</div>

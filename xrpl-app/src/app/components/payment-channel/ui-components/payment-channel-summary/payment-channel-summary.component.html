@@ -53,8 +53,8 @@
 
                               @if (channel.expiration) {
                               <div class="cred-chip">
-                                   <span class="meta-label" [class.expired]="channel.isExpired">Expires:</span>
-                                   <span class="type">{{ channel.expiration }}</span>
+                                   <span class="meta-label">{{ channel.isExpired ? 'Expired:' : 'Expires:' }}</span>
+                                   <span class="type" [class.expired]="channel.isExpired">{{ channel.expiration }}</span>
                               </div>
                               } @if (channel.sender) {
                               <div class="cred-chip">

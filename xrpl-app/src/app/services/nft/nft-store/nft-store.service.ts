@@ -4,6 +4,8 @@ import { signalStore, withState, withMethods, withComputed, patchState } from '@
 export interface NFtState {
      nftId: string;
      nftIndex: string;
+     nftOfferId: string;
+     selectedNftOfferIndex: string;
      destination: string;
      amount: string;
      taxon: string;
@@ -15,6 +17,7 @@ export interface NFtState {
      expiration: string;
      outstandingNftsCollapsed: boolean;
      existingNftsCollapsed: boolean;
+     existingSellOffersCollapsed: boolean;
      minterAddress: string;
      issuerAddress: string;
      enableExpirationDate: boolean;
@@ -26,15 +29,15 @@ export interface NFtState {
      nfTokenMinterAddress: string;
      nfTokenIssuerAddress: string;
      existingNfts: any[];
-
-     cashableChecks: any[];
-     existingChecks: any[];
-     existingIOUs: any[];
+     existingSellOffers: any[];
+     existingBuyOffers: any[];
 }
 
 const initialState: NFtState = {
      nftId: '',
      nftIndex: '',
+     nftOfferId: '',
+     selectedNftOfferIndex: '',
      destination: '',
      amount: '',
      nftCreator: '',
@@ -45,6 +48,7 @@ const initialState: NFtState = {
      outstandingNfts: '',
      outstandingNftsCollapsed: false,
      existingNftsCollapsed: false,
+     existingSellOffersCollapsed: false,
      minterAddress: '',
      issuerAddress: '',
      expiration: '',
@@ -57,10 +61,8 @@ const initialState: NFtState = {
      nfTokenMinterAddress: '',
      nfTokenIssuerAddress: '',
      existingNfts: [],
-
-     cashableChecks: [],
-     existingChecks: [],
-     existingIOUs: [],
+     existingSellOffers: [],
+     existingBuyOffers: [],
 };
 
 export const CreateNftStoreService = signalStore(
@@ -78,7 +80,7 @@ export const CreateNftStoreService = signalStore(
                patchState(store, { [field]: value });
           },
 
-          setPaymentChannelCancelAfterTime(value: string) {
+          setExpiration(value: string) {
                patchState(store, { expiration: value });
           },
 
@@ -95,12 +97,12 @@ export const CreateNftStoreService = signalStore(
           },
 
           /** Clear expiration */
-          clearOptionalExpirationDate() {
+          clearExpiration() {
                patchState(store, { expiration: '' });
           },
 
           /** Reset dropdown-related fields */
-          resetChannelIdSelection() {
+          resetNftIdSelection() {
                patchState(store, {
                     nftId: '',
                     nftIndex: '',
@@ -114,6 +116,7 @@ export const CreateNftStoreService = signalStore(
                patchState(store, {
                     nftId: '',
                     nftIndex: '',
+                    nftOfferId: '',
                     taxon: '',
                     nftCreator: '',
                     expiration: '',

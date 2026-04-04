@@ -79,7 +79,9 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      }
 
      onNftSelected(item: SelectItem | null) {
+          if (item) {
           this.nftCreateStoreService.setField('nftId', item?.id || '');
+          }
      }
 
      selectWallet(wallet: Wallet): void {
@@ -89,6 +91,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+          this.populateDefaultDateTime();
      }
 
      trackByAddress(_index: number, item: DropdownItem): string {
@@ -118,7 +121,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
-               this.txUiService.resetCurrentStepToIdle();
+              
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 

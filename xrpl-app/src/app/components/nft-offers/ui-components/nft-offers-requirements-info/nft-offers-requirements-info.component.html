@@ -1,1 +1,88 @@
-<p>nft-offers-requirements-info works!</p>
+<div class="requirements-info">
+     <div class="info-header">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <h3>NFT Offers (Buy / Sell / Cancel)</h3>
+     </div>
+
+     <p class="info-subtitle">Create sell offers (list your NFT for sale), buy offers (bid on someone else's NFT), accept offers (complete a purchase), or cancel your own active offers using NFTokenCreateOffer, NFTokenAcceptOffer, and NFTokenCancelOffer transactions.</p>
+
+     <div class="combinations-grid">
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">💰 Create Offer</span>
+                    <span class="badge required-badge">NFTokenCreateOffer</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">NFTokenID</span>
+                         <span class="field-status required">✅ Required (32-byte hex ID of the NFT)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Amount</span>
+                         <span class="field-status required">✅ Required (XRP drops or issued currency amount)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">OfferType</span>
+                         <span class="field-status required">✅ Sell (your NFT) or Buy (bid on another's)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Expiration</span>
+                         <span class="field-status optional">➕ Optional (ledger close time or relative seconds)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">Destination</span>
+                         <span class="field-status optional">➕ Optional (specific buyer for direct offers)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="combination-card">
+               <div class="combination-header">
+                    <span class="badge time-badge">✅ Accept / Cancel Offer</span>
+                    <span class="badge optional-badge">NFTokenAcceptOffer or Cancel</span>
+               </div>
+               <div class="combination-fields">
+                    <div class="field-row">
+                         <span class="field-name">NFTokenOfferIndex</span>
+                         <span class="field-status required">✅ Required (offer ID to accept or cancel)</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">NFTokenID (for accept)</span>
+                         <span class="field-status required">✅ Required when accepting</span>
+                    </div>
+                    <div class="field-row">
+                         <span class="field-name">BrokerFee (optional)</span>
+                         <span class="field-status optional">➕ Optional (small XRP fee to broker)</span>
+                    </div>
+               </div>
+          </div>
+
+          <div class="important-notes">
+               <h5>📝 Important Notes:</h5>
+               <ul>
+                    <li>Requires the <strong>NonFungibleTokensV1_1</strong> (or later) amendment to be enabled on the network.</li>
+                    <li>Sell offer: You must own the NFT; offer locks it until accepted, canceled, or expired.</li>
+                    <li>Buy offer: You bid on an NFT you don't own; seller must accept to complete transfer.</li>
+                    <li><strong>Amount</strong>: Can be XRP (drops) or issued currency (with issuer). For sell offers, if tfOnlyXRP was set at mint, only XRP is allowed.</li>
+                    <li><strong>Expiration</strong>: Ledger close time (absolute) or relative seconds from now — expired offers auto-remove without fee.</li>
+                    <li>Accepting a sell offer transfers the NFT to you and pays the seller (minus any TransferFee royalty if set at mint).</li>
+                    <li>Accepting a buy offer transfers the NFT from you to the bidder and receives payment.</li>
+                    <li>Cancel: Only the creator of the offer can cancel it — frees the NFT (if sell offer) and removes from ledger.</li>
+                    <li>Offers consume **owner reserve** (~0.2 XRP per active offer) until accepted, canceled, or expired.</li>
+                    <li>BrokerFee: Optional small XRP amount paid to a third-party broker account on accept (useful for marketplaces).</li>
+               </ul>
+               <p></p>
+               <h5 class="warning-title">⚠️ Irreversibility & Offer Risks</h5>
+               <p style="color: #92400e">Offers lock NFTs or funds until resolved — mistakes can lead to lost opportunities or unintended transfers.</p>
+               <ul>
+                    <li>Once an offer is accepted, the transfer is **permanent** — NFT moves and payment is made; no native reversal.</li>
+                    <li>Sell offers lock your NFT — if you cancel or it expires, you regain control, but during the offer period, you cannot burn/transfer it elsewhere.</li>
+                    <li>Wrong NFTokenID or OfferIndex causes transaction failure — double-check IDs before submitting.</li>
+                    <li>If TransferFee was set at mint, seller receives less than Amount on accept — factor royalties into pricing.</li>
+                    <li>Expired offers auto-cleanup, but active offers consume reserve — too many can lock up your account's XRP unnecessarily.</li>
+                    <li>Destination (direct offer) restricts who can accept — if set incorrectly, offer may never be taken.</li>
+                    <li>Always test offer creation, acceptance, and cancellation on devnet or Testnet first — wrong amounts, expirations, or IDs burn fees without effect.</li>
+               </ul>
+          </div>
+     </div>
+</div>

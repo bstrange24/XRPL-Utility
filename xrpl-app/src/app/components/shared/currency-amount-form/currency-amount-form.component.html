@@ -1,0 +1,41 @@
+<!-- Currency + Amount -->
+<div class="form-row">
+     <div class="form-group">
+          <label for="currencyCode">Currency Code</label>
+          <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+               <ng-template #itemTemplate let-item>
+                    <div class="flex items-center gap-2">
+                         @if (item.id === 'XRP') {
+                         <span class="text-yellow-500 font-bold">XRP</span>
+                         } @else {
+                         <span>{{ item.display }}</span>
+                         }
+                         <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                    </div>
+               </ng-template>
+          </app-select-search-dropdown>
+     </div>
+
+     <div class="form-group">
+          <label for="amountField">Amount</label>
+          <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+          <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="amount-input" />
+     </div>
+</div>
+
+<!-- Issuer (only when not XRP) -->
+@if (currency !== 'XRP') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="issuer">Issuer</label>
+          <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+     </div>
+     <div class="form-group">
+          <label for="currencyBalance">Currency Balance</label>
+          <p class="form-hint">Total currency balance held by this account.</p>
+          <input type="text" [value]="balance" readonly name="currencyBalanceField" />
+     </div>
+</div>
+}
