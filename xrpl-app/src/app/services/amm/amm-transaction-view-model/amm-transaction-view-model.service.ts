@@ -1,38 +1,94 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import * as xrpl from 'xrpl';
 import { AmmActionTypes } from '../../../components/amm/constants/amm.types';
-import { CheckUtilService } from '../../checks/checks-util/check-util.service';
-import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
-import { NftUtilService } from '../../nft/nft-util/nft-util.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
-import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AmmStoreService } from '../amm-store/amm-store.service';
+import { OfferCurrencyService } from '../../offer-currency/offer-currency.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class AmmTransactionViewModelService {
      public readonly xrplCacheService = inject(XrplCacheService);
-     public readonly checkUtilService = inject(CheckUtilService);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
-     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
-     public readonly currencyStoreService = inject(CurrencyStoreService);
-     public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly ammStoreService = inject(AmmStoreService);
-     public readonly nftUtilService = inject(NftUtilService);
+     public readonly offerCurrency = inject(OfferCurrencyService);
+
      readonly activeTab = signal<AmmActionTypes>('createAMM');
 
-     currencyItems = this.trustlineCurrencyService.currencyItems;
-     issuerItems = this.trustlineCurrencyService.issuerItems;
-     currencyBalanceField = this.currencyStoreService.balance();
+     // Pool 1 (weWant) signals – synced by component from OfferCurrencyService RxJS streams
+     readonly pool1Currency = signal<string>('');
+     readonly pool1Issuer = signal<string>('');
+     readonly pool1IssuersTrigger = signal(0);
 
-     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
-     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
-     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.currencyStoreService.issuer()) ?? null);
+     // Pool 2 (weSpend) signals – synced by component from OfferCurrencyService RxJS streams
+     readonly pool2Currency = signal<string>('XRP');
+     readonly pool2Issuer = signal<string>('');
+     readonly pool2IssuersTrigger = signal(0);
+
+     // ─── Pool 1 currency dropdown ───────────────────────────────────────────
+     pool1CurrencyItems = computed(() => {
+          this.pool1Currency(); // reactive trigger
+          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
+               id: curr,
+               display: curr,
+               secondary:
+                    curr === 'XRP'
+                         ? 'Native currency'
+                         : (() => {
+                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                           })(),
+          }));
+     });
+
+     selectedPool1CurrencyItem = computed(() => {
+          const code = this.pool1Currency();
+          return this.pool1CurrencyItems().find(i => i.id === code) ?? null;
+     });
+
+     // ─── Pool 1 issuer dropdown ──────────────────────────────────────────────
+     pool1IssuerItems = computed(() => {
+          this.pool1IssuersTrigger();
+          return (this.offerCurrency.weWant.issuers$.value ?? []).map((iss, i) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
+          }));
+     });
+
+     selectedPool1IssuerItem = computed(() => {
+          const addr = this.pool1Issuer();
+          return this.pool1IssuerItems().find(i => i.id === addr) ?? null;
+     });
+
+     // ─── Pool 2 currency dropdown (currently XRP only) ──────────────────────
+     pool2CurrencyItems = computed(() => [
+          {
+               id: 'XRP',
+               display: 'XRP',
+               secondary: 'Native currency',
+          },
+     ]);
+
+     selectedPool2CurrencyItem = computed(() => this.pool2CurrencyItems()[0] ?? null);
+
+     // ─── Pool 2 issuer dropdown ──────────────────────────────────────────────
+     pool2IssuerItems = computed(() => {
+          this.pool2IssuersTrigger();
+          return (this.offerCurrency.weSpend.issuers$.value ?? []).map((iss, i) => ({
+               id: iss.address,
+               display: iss.name || `Issuer ${i + 1}`,
+               secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
+          }));
+     });
+
+     selectedPool2IssuerItem = computed(() => {
+          const addr = this.pool2Issuer();
+          return this.pool2IssuerItems().find(i => i.id === addr) ?? null;
+     });
 }
