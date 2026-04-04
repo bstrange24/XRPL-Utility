@@ -34,7 +34,7 @@ export class AmmTransactionBuilderService {
                Amount2: isSpendXrp ? we_want : we_spend,
                TradingFee: tradingFeeBps,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-               Fee: env.fee,
+               Fee: (Number(env.fee) * 500).toString(),
           };
      }
 

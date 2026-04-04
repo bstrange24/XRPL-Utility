@@ -175,10 +175,7 @@ export class AmmTransactionOrchestratorService {
      public readonly ammTransactionBuilderService = inject(AmmTransactionBuilderService);
      private readonly xrplService = inject(XrplService);
 
-     async executeAmmTx(
-          type: AmmTxType,
-          config: AmmTxConfig,
-     ): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+     async executeAmmTx(type: AmmTxType, config: AmmTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { amm, account, txOptions, preFetchedEnv, wallet, extra } = config;
           let env: any;
           let client: xrpl.Client;
@@ -188,6 +185,7 @@ export class AmmTransactionOrchestratorService {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -269,21 +267,25 @@ export class AmmTransactionOrchestratorService {
                          throw new Error(`Unknown AMM transaction type: ${type}`);
                }
 
-               // Set optional fields (memo, ticket, etc.)
+               // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, amm, type, txOptions);
 
                // Balance check
                const balanceCheck = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!balanceCheck.success) return { success: false, error: balanceCheck.error };
 
-               // Submit or simulate
+               //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: effectiveWallet,
                     env,
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
-                    ui: { suppressIndividualFeedback: false },
+
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -292,6 +294,7 @@ export class AmmTransactionOrchestratorService {
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
+
                     buildTx: () => tx as any,
                });
 
@@ -299,6 +302,7 @@ export class AmmTransactionOrchestratorService {
 
                txHash = submitOrSimResult.hash;
 
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     const msg = this.getSimulationMessage(type);
                     this.txUiService.resetCurrentStepToIdle();
@@ -306,6 +310,7 @@ export class AmmTransactionOrchestratorService {
                     return { success: true, hash: txHash };
                }
 
+               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 

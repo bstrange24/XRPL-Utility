@@ -2948,9 +2948,9 @@ export class ValidationService {
                validators: [this.validCurrency('weWantCurrencyField'), this.validCurrency('weSpendCurrencyField'), this.requireIssuerIfNotXRP('weWantCurrencyField', 'weWantIssuerField'), this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'), this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'), this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField')],
           });
 
-          // AMMCreate
+          // CreateAMM
           this.registerRule({
-               transactionType: 'AMMCreate',
+               transactionType: 'CreateAMM',
                requiredFields: ['firstPoolAssetAmount', 'secondPoolAssetAmount', 'firstPoolCurrencyField', 'secondPoolCurrencyField', 'tradingFeeField'],
                validators: [
                     this.positiveNumber('firstPoolAssetAmount'),
@@ -2974,9 +2974,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMDeposit
+          // DepositToAMM
           this.registerRule({
-               transactionType: 'AMMDeposit',
+               transactionType: 'DepositToAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     // At least one amount must be provided
@@ -3003,9 +3003,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMWithdraw
+          // WithdrawFromAMM
           this.registerRule({
-               transactionType: 'AMMWithdraw',
+               transactionType: 'WithdrawFromAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     // You can optionally require LP token amount
@@ -3032,9 +3032,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMVote (for changing trading fee)
+          // VoteAMM (for changing trading fee)
           this.registerRule({
-               transactionType: 'AMMVote',
+               transactionType: 'VoteAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField', 'tradingFeeField'],
                validators: [
                     this.numeric('tradingFeeField', { min: 0, max: 1000 }),
@@ -3055,9 +3055,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMBid (optional – for auction slot)
+          // BidAMM (optional – for auction slot)
           this.registerRule({
-               transactionType: 'AMMBid',
+               transactionType: 'BidAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     this.validCurrency('weWantCurrencyField'),
@@ -3077,9 +3077,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMDelete (only allowed if pool is empty)
+          // DeleteAMM (only allowed if pool is empty)
           this.registerRule({
-               transactionType: 'AMMDelete',
+               transactionType: 'DeleteAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     this.validCurrency('weWantCurrencyField'),
@@ -3099,9 +3099,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMClawback – only allowed if the account has the clawback flag set
+          // ClawbackAMM – only allowed if the account has the clawback flag set
           this.registerRule({
-               transactionType: 'AMMClawback',
+               transactionType: 'ClawbackAMM',
                requiredFields: [
                     'lpTokenAmountField', // amount of LP tokens to claw back
                     'weWantCurrencyField',
@@ -3136,9 +3136,9 @@ export class ValidationService {
                ],
           });
 
-          // AMMSwap – uses a Payment with DeliverMin or Amount + Path (but we treat it separately in UI)
+          // SwapViaAMM – uses a Payment with DeliverMin or Amount + Path (but we treat it separately in UI)
           this.registerRule({
-               transactionType: 'AMMSwap',
+               transactionType: 'SwapViaAMM',
                requiredFields: ['weWantAmountField', 'weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     this.positiveNumber('weWantAmountField'),

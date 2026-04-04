@@ -133,7 +133,6 @@ export class NftTransactionOrchestrator extends PerformanceBaseComponent {
                          includeFee: true,
                          includeLedgerInfo: true,
                          includeServerInfo: true,
-                         includeChecks: true,
                     }));
 
                client = env.client;
