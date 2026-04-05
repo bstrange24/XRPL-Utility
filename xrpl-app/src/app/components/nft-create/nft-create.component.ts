@@ -80,7 +80,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      onNftSelected(item: SelectItem | null) {
           if (item) {
-          this.nftCreateStoreService.setField('nftId', item?.id || '');
+               this.nftCreateStoreService.setField('nftId', item?.id || '');
           }
      }
 
@@ -121,7 +121,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
-              
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -228,7 +227,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, nftState.nftCreator, this.nftCreateStoreService.destination(), '', { includeNftObjects: true });
           this.txUiService.resetCurrentStepToIdle();

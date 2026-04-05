@@ -313,7 +313,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, destination);
           await this.trustlineCurrencyService.refreshCurrentBalance();

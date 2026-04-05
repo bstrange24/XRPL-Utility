@@ -5,11 +5,11 @@ import * as xrpl from 'xrpl';
 import { CurrencyState } from '../../../services/currency/constants/currency.types';
 import { AmmState } from '../../../services/amm/amm-store/amm-store.service';
 
-export type AmmActionTypes = 'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
-export type AmmConfigTxDisplayType = 'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
+export type AmmActionTypes = 'createAMM' | 'depositToAMM' | 'withdrawalFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
+export type AmmConfigTxDisplayType = 'createAMM' | 'depositToAMM' | 'withdrawalFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
 
-export type AmmTxType = 'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
-export type AmmFlagKey = 'createAMM' | 'depositToAMM' | 'withdrawlTokenFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
+export type AmmTxType = 'createAMM' | 'depositToAMM' | 'withdrawalFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
+export type AmmFlagKey = 'createAMM' | 'depositToAMM' | 'withdrawalFromAMM' | 'clawbackFromAMM' | 'swapViaAMM' | 'deleteAMM';
 
 export interface AmmTxConfig {
      amm: AmmState;

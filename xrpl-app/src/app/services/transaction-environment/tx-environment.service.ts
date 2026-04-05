@@ -7,6 +7,7 @@ import { UtilsService } from '../util-service/utils.service';
 import { ToastService } from '../toast/toast.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
+import { AmmUtilsService } from '../amm/amm-utils/amm-utils.service';
 
 export interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
@@ -25,6 +26,8 @@ export interface PrepareTxEnvironmentOptions {
      includeGatewayBalance?: boolean;
      includeNftSellOffers?: boolean;
      includeNftBuyOffers?: boolean;
+     includeAmmResponse?: boolean;
+     includeParticipation?: boolean;
      includeFee?: boolean;
      includeServerInfo?: boolean;
      includeBlockingObjects?: boolean;
@@ -38,6 +41,8 @@ export interface PrepareTxEnvironmentOptions {
           closeTime: number;
           currentRippleTime: number;
      };
+     asset?: xrpl.IssuedCurrencyAmount | xrpl.Currency;
+     asset2?: xrpl.IssuedCurrencyAmount | xrpl.Currency;
 }
 
 export interface PrepareTxEnvironmentResult {
@@ -60,6 +65,8 @@ export interface PrepareTxEnvironmentResult {
      gatewayBalanceObject?: any;
      nftSellOffersObject?: any;
      nftBuyOffersObject?: any;
+     ammResponse?: any;
+     participation?: any;
      serverInfo?: any;
      blockingObjects?: any;
 }
@@ -75,6 +82,7 @@ export class TxEnvironmentService {
      public readonly toastService = inject(ToastService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly nftCreateStoreService = inject(CreateNftStoreService);
+     private readonly ammUtilsService = inject(AmmUtilsService);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
      private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
      private readonly lastRefreshTime = signal(0);
@@ -112,11 +120,15 @@ export class TxEnvironmentService {
                includeGatewayBalance = false,
                includeNftSellOffers = false,
                includeNftBuyOffers = false,
+               includeAmmResponse = false,
+               includeParticipation = false,
                includeBlockingObjects = false,
                includeFee = false,
                forceRefresh = false,
                destinationAddress = '',
                escrowSequenceNumberField = '',
+               asset,
+               asset2,
           } = options;
 
           const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
@@ -190,6 +202,16 @@ export class TxEnvironmentService {
 
           if (includeNftBuyOffers) {
                tasks.nftBuyOffersObject = this.xrplService.getNFTBuyOffers(client, this.nftCreateStoreService.nftId());
+          }
+
+          if (includeAmmResponse) {
+               const ammPromise = this.xrplService.getAMMInfo(client, asset, asset2, wallet.classicAddress, 'validated');
+
+               tasks.ammResponse = ammPromise;
+
+               if (includeParticipation) {
+                    tasks.participation = ammPromise.then(ammResp => this.ammUtilsService.checkAmmParticipation(true, ammResp));
+               }
           }
 
           if (includeEscrowBySequenceId && escrowSequenceNumberField) {

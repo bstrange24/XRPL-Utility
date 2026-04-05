@@ -23,23 +23,12 @@ export interface AmmState {
      lpTokenBalanceField: string;
      tradingFeeField: string;
      withdrawlLpTokenFromPoolField: string;
-
-     nftId: string;
-     nftIndex: string;
-     nftOfferId: string;
-     selectedNftOfferIndex: string;
      destination: string;
      amount: string;
      ammIdSearchQuery: string;
      transferFee: number;
-     outstandingNfts: string;
      expiration: string;
-     outstandingNftsCollapsed: boolean;
-     existingNftsCollapsed: boolean;
-     existingSellOffersCollapsed: boolean;
      issuerAddress: string;
-     enableExpirationDate: boolean;
-     nftCountField: string;
      isCollapsed: boolean;
 }
 
@@ -65,23 +54,12 @@ const initialState: AmmState = {
      lpTokenBalanceField: '0',
      tradingFeeField: '0.1',
      withdrawlLpTokenFromPoolField: '',
-
-     nftId: '',
-     nftIndex: '',
-     nftOfferId: '',
-     selectedNftOfferIndex: '',
      destination: '',
      amount: '',
      ammIdSearchQuery: '',
      transferFee: 0,
-     outstandingNfts: '',
-     outstandingNftsCollapsed: false,
-     existingNftsCollapsed: false,
-     existingSellOffersCollapsed: false,
      issuerAddress: '',
      expiration: '',
-     nftCountField: '',
-     enableExpirationDate: false,
      isCollapsed: false,
 };
 
@@ -124,8 +102,6 @@ export const AmmStoreService = signalStore(
           /** Reset dropdown-related fields */
           resetNftIdSelection() {
                patchState(store, {
-                    nftId: '',
-                    nftIndex: '',
                     amount: '',
                });
           },
@@ -133,16 +109,10 @@ export const AmmStoreService = signalStore(
           /** Reset AMM form fields */
           resetAmmFields() {
                patchState(store, {
-                    nftId: '',
-                    nftIndex: '',
-                    nftOfferId: '',
                     expiration: '',
-                    enableExpirationDate: false,
                     issuerAddress: '',
-                    nftCountField: '',
                     destination: '',
                     ammIdSearchQuery: '',
-                    outstandingNfts: '',
                     amount: '',
                     transferFee: 0,
                     isCollapsed: false,

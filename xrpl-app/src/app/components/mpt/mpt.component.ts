@@ -276,7 +276,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
           this.txUiService.resetCurrentStepToIdle();

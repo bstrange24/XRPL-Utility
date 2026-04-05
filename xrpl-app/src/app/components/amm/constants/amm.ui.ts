@@ -29,7 +29,7 @@ export const AMM_TABS: {
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
-          key: 'withdrawlTokenFromAMM',
+          key: 'withdrawalFromAMM',
           label: 'Withdrawl',
           icon: 'heroCurrencyDollar',
           iconType: 'ng-icon',
@@ -93,7 +93,7 @@ export const AMM_TAB_META: Record<
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
-     withdrawlTokenFromAMM: {
+     withdrawalFromAMM: {
           icon: 'heroCurrencyDollar',
           colorClass: 'blue-button-submenu',
           title: 'Withdrawl assets from AMM',

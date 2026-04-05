@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
@@ -7,6 +7,8 @@ import { AmmTransactionViewModelService } from '../../../../services/amm/amm-tra
 import { AmmUtilsService } from '../../../../services/amm/amm-utils/amm-utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { PoolOptions } from '../../constants/amm.types';
+import { UtilsService } from '../../../../services/util-service/utils.service';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 
 @Component({
      selector: 'app-amm-fields',
@@ -20,6 +22,16 @@ export class AmmFieldsComponent {
      public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
      public readonly ammUtilsService = inject(AmmUtilsService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+     public readonly walletManagerService = inject(WalletManagerService);
+
+     readonly amountHintMap: Record<string, { verb: string; preposition: string }> = {
+          createAMM: { verb: 'seed', preposition: 'to create' },
+          depositToAMM: { verb: 'deposit', preposition: 'into' },
+          withdrawalFromAMM: { verb: 'withdraw', preposition: 'from' },
+          clawbackFromAMM: { verb: 'claw back', preposition: 'from' },
+          swapViaAMM: { verb: 'swap', preposition: 'through' },
+     };
 
      // Inputs from parent (destination dropdown)
      tab = input.required<string>();

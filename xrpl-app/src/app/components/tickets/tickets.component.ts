@@ -201,7 +201,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, '', '', '', { includeTicketObjects: true });
           this.txUiService.resetCurrentStepToIdle();

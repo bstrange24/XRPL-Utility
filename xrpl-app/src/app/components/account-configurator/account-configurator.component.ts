@@ -173,7 +173,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           this.isAccountConfig.set(true);
           const successFullTx = await this.handleTxResult(txResult, env.client, env.wallet, '', '', '');

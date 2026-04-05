@@ -183,11 +183,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      selectedOfferSequences = signal<number[]>([]); // Note: number[] because Offer.Sequence is number
      isOfferDropdownOpen = signal<boolean>(false);
 
-     public weWantIssuers$!: Observable<IssuerItem[]>;
-     public weSpendIssuers$!: Observable<IssuerItem[]>;
-     public weWantBalance$!: Observable<string>;
-     public weSpendBalance$!: Observable<string>;
-     private readonly destroy$ = new Subject<void>();
      private readonly ammInfoTrigger = new Subject<void>();
 
      // Destination Dropdown
@@ -428,9 +423,11 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      weWantIssuerItems = computed(() => {
           this.weWantIssuersTrigger();
+
           const currentIssuer = this.weWantIssuer();
-          const issuers = this.offerCurrency.weWant.issuers$.value || [];
-          return issuers.map((iss: IssuerItem, i: number) => ({
+          const issuers = this.offerCurrency.weWant.issuers();
+
+          return issuers.map((iss, i) => ({
                id: iss.address,
                display: iss.name || `Issuer ${i + 1}`,
                secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
@@ -446,9 +443,11 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
 
      weSpendIssuerItems = computed(() => {
           this.weSpendIssuersTrigger();
+
           const currentIssuer = this.weSpendIssuer();
-          const issuers = this.offerCurrency.weSpend.issuers$.value || [];
-          return issuers.map((iss: IssuerItem, i: number) => ({
+          const issuers = this.offerCurrency.weSpend.issuers();
+
+          return issuers.map((iss, i) => ({
                id: iss.address,
                display: iss.name || `Issuer ${i + 1}`,
                secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
@@ -504,10 +503,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           super();
           this.cdr = inject(ChangeDetectorRef);
           this.txUiService.clearAllOptionsAndMessages();
-          this.weWantIssuers$ = this.offerCurrency.weWant.issuers$;
-          this.weSpendIssuers$ = this.offerCurrency.weSpend.issuers$;
-          this.weWantBalance$ = this.offerCurrency.weWant.balance$;
-          this.weSpendBalance$ = this.offerCurrency.weSpend.balance$;
           this.availableCurrencies = this.offerCurrency.getAvailableCurrencies(true);
      }
 
@@ -515,50 +510,55 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
           const tab = this.route.snapshot.queryParamMap.get('tab');
           if (tab) {
                const allowedTabs = ['createOffer', 'getOffers', 'getOrderBook', 'cancelOffer'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
+               if (allowedTabs.includes(tab as any)) {
+                    this.setTab(tab as any);
                }
           }
 
           this.loadCustomDestinations();
           this.currencyFieldDropDownValue.set('XRP');
 
-          // Auto-select first issuer when issuers list changes
-          this.offerCurrency.weWant.issuers$.pipe(takeUntil(this.destroy$)).subscribe(issuers => {
+          // ===== ISSUERS AUTO-SELECT =====
+          effect(() => {
+               const issuers = this.offerCurrency.weWant.issuers();
                this.weWantIssuersTrigger.update(n => n + 1);
-               const firstIssuer = issuers[0]?.address ?? '';
-               this.offerCurrency.selectWeWantIssuer(firstIssuer, this.currentWallet());
+
+               if (issuers.length > 0 && !this.offerCurrency.weWant.issuer()) {
+                    this.offerCurrency.selectWeWantIssuer(issuers[0].address, this.currentWallet());
+               }
           });
 
-          this.offerCurrency.weSpend.issuers$.pipe(takeUntil(this.destroy$)).subscribe(issuers => {
+          effect(() => {
+               const issuers = this.offerCurrency.weSpend.issuers();
                this.weSpendIssuersTrigger.update(n => n + 1);
-               const firstIssuer = issuers[0]?.address ?? '';
-               this.offerCurrency.selectWeSpendIssuer(firstIssuer, this.currentWallet());
+
+               if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
+                    this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
+               }
           });
 
-          // Keep signals in sync with service selections
-          this.offerCurrency.weWant.currency$.pipe(takeUntil(this.destroy$)).subscribe(currency => {
-               this.weWantCurrency.set(currency);
+          // ===== SYNC LOCAL SIGNALS (if you still want them) =====
+          effect(() => {
+               this.weWantCurrency.set(this.offerCurrency.weWant.currency());
           });
 
-          this.offerCurrency.weWant.issuer$.pipe(takeUntil(this.destroy$)).subscribe(issuer => {
-               this.weWantIssuer.set(issuer);
+          effect(() => {
+               this.weWantIssuer.set(this.offerCurrency.weWant.issuer());
           });
 
-          this.offerCurrency.weSpend.currency$.pipe(takeUntil(this.destroy$)).subscribe(currency => {
-               this.weSpendCurrency.set(currency);
+          effect(() => {
+               this.weSpendCurrency.set(this.offerCurrency.weSpend.currency());
           });
 
-          this.offerCurrency.weSpend.issuer$.pipe(takeUntil(this.destroy$)).subscribe(issuer => {
-               this.weSpendIssuer.set(issuer);
+          effect(() => {
+               this.weSpendIssuer.set(this.offerCurrency.weSpend.issuer());
           });
 
-          // Initial defaults
+          // ===== DEFAULTS =====
           this.weSpendCurrency.set('XRP');
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
+
           this.txUiService.clearAllOptions();
      }
 
@@ -605,8 +605,6 @@ export class CreateOfferComponent extends PerformanceBaseComponent implements On
      }
 
      ngOnDestroy(): void {
-          this.destroy$.next();
-          this.destroy$.complete();
           const existing = this.amountTimeout();
           if (existing) clearTimeout(existing);
      }

@@ -219,7 +219,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, '', this.permissionedDomainStoreService.credentialIssuer(), '', { includePermissionedDomains: true });
           if (successFullTx) {

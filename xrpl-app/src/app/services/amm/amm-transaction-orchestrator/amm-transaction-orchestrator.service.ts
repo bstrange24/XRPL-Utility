@@ -68,7 +68,7 @@ const AMM_VALIDATION_META: Record<AmmTxType, AmmValidationMeta> = {
                weSpendAmountField: amm.weSpendAmount,
           }),
      },
-     withdrawlTokenFromAMM: {
+     withdrawalFromAMM: {
           buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
                wallet,
                network: {
@@ -207,7 +207,7 @@ export class AmmTransactionOrchestratorService {
 
                // Fetch LP token participation data for operations that need it
                let lpToken: { currency: string; issuer: string; balance: string } | undefined;
-               if (type === 'withdrawlTokenFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM') {
+               if (type === 'withdrawalFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM') {
                     const pool1Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
                     const pool2Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
                     try {
@@ -229,7 +229,7 @@ export class AmmTransactionOrchestratorService {
                }
 
                // Validate LP token amount for withdraw
-               if (type === 'withdrawlTokenFromAMM' && lpToken) {
+               if (type === 'withdrawalFromAMM' && lpToken) {
                     const lpBalance = Number.parseFloat(lpToken.balance);
                     const requested = Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replace(/,/g, ''));
                     if (requested > lpBalance) {
@@ -251,7 +251,7 @@ export class AmmTransactionOrchestratorService {
                     case 'depositToAMM':
                          tx = this.ammTransactionBuilderService.buildDepositToAmmTx(effectiveWallet, amm, env, depositOptions);
                          break;
-                    case 'withdrawlTokenFromAMM':
+                    case 'withdrawalFromAMM':
                          tx = this.ammTransactionBuilderService.buildWithdrawFromAmmTx(effectiveWallet, amm, env, withdrawOptions, lpToken!);
                          break;
                     case 'clawbackFromAMM':
@@ -331,7 +331,7 @@ export class AmmTransactionOrchestratorService {
           const map: Record<AmmTxType, string> = {
                createAMM: 'Simulated AMM Create successfully!',
                depositToAMM: 'Simulated AMM Deposit successfully!',
-               withdrawlTokenFromAMM: 'Simulated AMM Withdraw successfully!',
+               withdrawalFromAMM: 'Simulated AMM Withdraw successfully!',
                clawbackFromAMM: 'Simulated AMM Clawback successfully!',
                swapViaAMM: 'Simulated AMM Swap successfully!',
                deleteAMM: 'Simulated AMM Delete successfully!',
@@ -343,7 +343,7 @@ export class AmmTransactionOrchestratorService {
           const map: Record<AmmTxType, string> = {
                createAMM: 'AMM created successfully!',
                depositToAMM: 'Deposited to AMM successfully!',
-               withdrawlTokenFromAMM: 'Withdrew from AMM successfully!',
+               withdrawalFromAMM: 'Withdrew from AMM successfully!',
                clawbackFromAMM: 'Clawback from AMM successful!',
                swapViaAMM: 'Swap via AMM successful!',
                deleteAMM: 'AMM deleted successfully!',

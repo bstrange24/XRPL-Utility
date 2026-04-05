@@ -5,6 +5,7 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 import { AmmStoreService } from '../amm-store/amm-store.service';
 import { PoolOptions } from '../../../components/amm/constants/amm.types';
 import { AmmTransactionViewModelService } from '../amm-transaction-view-model/amm-transaction-view-model.service';
+import * as xrpl from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
@@ -35,7 +36,7 @@ export class AmmUtilsService {
                     return 'Create AMM';
                case 'depositToAMM':
                     return 'Deposit Tokens to AMM';
-               case 'withdrawlTokenFromAMM':
+               case 'withdrawalFromAMM':
                     return 'Withdraw Token from AMM';
                case 'clawbackFromAMM':
                     return 'Clawback Token from AMM';
@@ -54,7 +55,7 @@ export class AmmUtilsService {
                case 'createAMM':
                     return 'btn-primary-blue';
                case 'depositToAMM':
-               case 'withdrawlTokenFromAMM':
+               case 'withdrawalFromAMM':
                case 'swapViaAMM':
                     return 'btn-primary-green';
                case 'clawbackFromAMM':
@@ -79,6 +80,47 @@ export class AmmUtilsService {
                firstPoolOnly: key === 'firstPoolOnly',
                secondPoolOnly: key === 'secondPoolOnly',
           });
+     }
+
+     async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any) {
+          let result: { isAmmPool: boolean; isLiquidityProvider: boolean; ammInfo?: any; lpTokens: { issuer: string; currency: string; balance: string }[] } = {
+               isAmmPool: false,
+               isLiquidityProvider: false,
+               ammInfo: undefined,
+               lpTokens: [], // always an array
+          };
+
+          try {
+               if (ammResponse.result && ammResponse.result.amm) {
+                    this.utilsService.logObjects('checkAmmParticipation', ammResponse.result.amm);
+                    result.isAmmPool = true;
+                    result.ammInfo = ammResponse.result.amm;
+                    result.lpTokens.push({
+                         issuer: ammResponse.result.amm.account,
+                         currency: ammResponse.result.amm.lp_token.currency, // Assuming LPTokenCurrency is part of the response
+                         balance: ammResponse.result.amm.lp_token.value, // Balance not directly available here
+                    });
+                    if (displayChanges) {
+                         this.ammStoreService.setField('lpTokenBalance', ammResponse.result.amm.lp_token.value);
+                         const toDisplay = (amt: any): string => {
+                              const val = typeof amt === 'string' ? xrpl.dropsToXrp(amt) : amt.value;
+                              return this.utilsService.formatTokenBalance(val, 18);
+                         };
+                         this.ammStoreService.setField('assetPool1Balance', toDisplay(result.ammInfo.amount));
+                         this.ammStoreService.setField('assetPool2Balance', toDisplay(result.ammInfo.amount2));
+                    }
+               } else {
+                    if (displayChanges) {
+                         this.ammStoreService.setField('lpTokenBalance', '0');
+                         this.ammStoreService.setField('assetPool1Balance', '0');
+                         this.ammStoreService.setField('assetPool2Balance', '0');
+                    }
+               }
+          } catch (e) {
+               // Not an AMM, ignore
+               console.warn('Not an AMM account:', e);
+          }
+          return result;
      }
 
      clearInputFields(): void {

@@ -1,9 +1,10 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Subject, takeUntil } from 'rxjs';
+import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -41,31 +42,17 @@ import { AmmUtilsService } from '../../services/amm/amm-utils/amm-utils.service'
 import { AmmTransactionOrchestratorService } from '../../services/amm/amm-transaction-orchestrator/amm-transaction-orchestrator.service';
 import { AmmFieldsComponent } from './tab/amm-fields/amm-fields.component';
 import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.component';
+import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
 
 @Component({
      selector: 'app-amm',
      standalone: true,
-     imports: [
-          CommonModule,
-          FormsModule,
-          LucideAngularModule,
-          OverlayModule,
-          NavbarComponent,
-          WalletPanelComponent,
-          TransactionOptionsComponent,
-          ExecutionTimeDisplayComponent,
-          TabMenuWithInfoComponent,
-          WarningMessageComponent,
-          TransactionPreviewComponent,
-          AmmRequirementsInfoComponent,
-          AmmFieldsComponent,
-          AmmSummaryComponent,
-     ],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, AmmRequirementsInfoComponent, AmmFieldsComponent, AmmSummaryComponent],
      templateUrl: './amm.component.html',
      styleUrl: './amm.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateAmmComponent extends WalletDestinationBase implements OnInit, OnDestroy {
+export class CreateAmmComponent extends WalletDestinationBase implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -77,28 +64,63 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
      public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
      public readonly accountConfiguratorStore = inject(AccountConfiguratorStoreService);
      public readonly ammTransactionOrchestratorService = inject(AmmTransactionOrchestratorService);
+     public readonly ammTransactionBuilderService = inject(AmmTransactionBuilderService);
+
      public readonly ammUtilsService = inject(AmmUtilsService);
 
      readonly menuTabs: TabConfig[] = AMM_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = AMM_TAB_META;
 
-     private readonly destroy$ = new Subject<void>();
-
-     constructor(
-          walletManager: WalletManagerService,
-          transactionUiService: TransactionUiService,
-          transactionDropdownService: TransactionDropdownService,
-          walletDataService: WalletDataService,
-          txEnvironmentService: TxEnvironmentService,
-          copyUtilService: CopyUtilService,
-          toastService: ToastService,
-          acccountDataService: AcccountDataService,
-          route: ActivatedRoute,
-          storageService: StorageService,
-     ) {
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // ===== Pool 1 (weWant) =====
+          effect(() => {
+               const currency = this.offerCurrency.weWant.currency();
+               this.ammTransactionViewModelService.pool1Currency.set(currency);
+               this.ammStoreService.setField('weWantCurrency', currency);
+          });
+
+          effect(() => {
+               const issuer = this.offerCurrency.weWant.issuer();
+               this.ammTransactionViewModelService.pool1Issuer.set(issuer);
+               this.ammStoreService.setField('weWantIssuer', issuer);
+          });
+
+          effect(() => {
+               const issuers = this.offerCurrency.weWant.issuers();
+
+               this.ammTransactionViewModelService.pool1IssuersTrigger.update(n => n + 1);
+
+               if (issuers.length > 0 && !this.offerCurrency.weWant.issuer()) {
+                    this.offerCurrency.selectWeWantIssuer(issuers[0].address, this.currentWallet());
+               }
+          });
+
+          // ===== Pool 2 (weSpend) =====
+          effect(() => {
+               const currency = this.offerCurrency.weSpend.currency();
+               this.ammTransactionViewModelService.pool2Currency.set(currency);
+               this.ammStoreService.setField('weSpendCurrency', currency);
+          });
+
+          effect(() => {
+               const issuer = this.offerCurrency.weSpend.issuer();
+               this.ammTransactionViewModelService.pool2Issuer.set(issuer);
+               this.ammStoreService.setField('weSpendIssuer', issuer);
+          });
+
+          effect(() => {
+               const issuers = this.offerCurrency.weSpend.issuers();
+
+               this.ammTransactionViewModelService.pool2IssuersTrigger.update(n => n + 1);
+
+               if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
+                    this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
+               }
+          });
      }
 
      ngOnInit(): void {
@@ -109,52 +131,18 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
           this.trustlineCurrencyService.preferXrpAsDefault.set(true);
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(true);
 
-          // Sync Pool 1 (weWant) state to view model signals
-          this.offerCurrency.weWant.currency$.pipe(takeUntil(this.destroy$)).subscribe(currency => {
-               this.ammTransactionViewModelService.pool1Currency.set(currency);
-               this.ammStoreService.setField('weWantCurrency', currency);
-          });
-          this.offerCurrency.weWant.issuer$.pipe(takeUntil(this.destroy$)).subscribe(issuer => {
-               this.ammTransactionViewModelService.pool1Issuer.set(issuer);
-               this.ammStoreService.setField('weWantIssuer', issuer);
-          });
-          this.offerCurrency.weWant.issuers$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-               this.ammTransactionViewModelService.pool1IssuersTrigger.update(n => n + 1);
-               const firstIssuer = this.offerCurrency.weWant.issuers$.value[0]?.address ?? '';
-               this.offerCurrency.selectWeWantIssuer(firstIssuer, this.currentWallet());
-          });
-
-          // Sync Pool 2 (weSpend) state to view model signals
-          this.offerCurrency.weSpend.currency$.pipe(takeUntil(this.destroy$)).subscribe(currency => {
-               this.ammTransactionViewModelService.pool2Currency.set(currency);
-               this.ammStoreService.setField('weSpendCurrency', currency);
-          });
-          this.offerCurrency.weSpend.issuer$.pipe(takeUntil(this.destroy$)).subscribe(issuer => {
-               this.ammTransactionViewModelService.pool2Issuer.set(issuer);
-               this.ammStoreService.setField('weSpendIssuer', issuer);
-          });
-          this.offerCurrency.weSpend.issuers$.pipe(takeUntil(this.destroy$)).subscribe(() => {
-               this.ammTransactionViewModelService.pool2IssuersTrigger.update(n => n + 1);
-               const firstIssuer = this.offerCurrency.weSpend.issuers$.value[0]?.address ?? '';
-               this.offerCurrency.selectWeSpendIssuer(firstIssuer, this.currentWallet());
-          });
-
-          // Default pool 2 to XRP
+          // Default pool 2
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
-          this.txUiService.clearAllOptions();
-     }
 
-     ngOnDestroy(): void {
-          this.destroy$.next();
-          this.destroy$.complete();
+          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.onAccountChange(true);
      }
 
-     selectWallet(wallet: Wallet): void {
+     async selectWallet(wallet: Wallet): Promise<void> {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
@@ -165,6 +153,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
 
           this.offerCurrency.setWalletAddress(wallet.address);
           this.trustlineCurrencyService.refreshCurrentBalance();
+          await this.offerCurrency.refreshBothBalances(wallet);
      }
 
      async setTab(tab: string): Promise<void> {
@@ -184,13 +173,35 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
                this.txUiService.resetCurrentStepToIdle();
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
+               const wallet = this.walletManagerService.getSelectedWallet();
 
                try {
-                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
-                    if (!env) throw new Error('Unable to get environment.');
+                    let env: any = null;
+                    if (this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
+                         const asset = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weWantCurrency()), this.ammStoreService.weWantIssuer());
+                         const asset2 = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weSpendCurrency()), this.ammStoreService.weSpendIssuer());
 
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                    this.ammUtilsService.clearInputFields();
+                         try {
+                              env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet!, {
+                                   includeAccountInfo: true,
+                                   includeAccountObject: true,
+                                   includeAmmResponse: true,
+                                   includeParticipation: true,
+                                   forceRefresh: forceRefresh,
+                                   asset,
+                                   asset2,
+                              });
+                         } catch (err: any) {
+                              console.error('prepareTxEnvironment failed:', err);
+                              this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+                              return;
+                         }
+
+                         if (!env) throw new Error('Unable to get environment.');
+
+                         this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                         this.ammUtilsService.clearInputFields();
+                    }
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
@@ -259,7 +270,13 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
           if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
+          this.trustlineCurrencyService.refreshCurrentBalance();
+          await this.offerCurrency.refreshBothBalances(wallet);
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected refreshAccountObject(env: any): void {
+          this.txUiService.clearAllOptions();
      }
 
      onPool1CurrencySelected(item: SelectItem | null): void {
@@ -284,15 +301,13 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
 
      handleSearchQueryChange(query: string): void {
           this.destinationSearchQuery.set(query);
+          this.ammStoreService.setField('ammIdSearchQuery', query);
      }
 
      handleDestinationChange(item: SelectItem | null): void {
           const addr = item?.id || '';
           this.selectedDestinationAddress.set(addr);
-     }
-
-     protected refreshAccountObject(_env: any): void {
-          return;
+          this.ammStoreService.setField('destination', addr);
      }
 
      protected clearInputFields(): void {

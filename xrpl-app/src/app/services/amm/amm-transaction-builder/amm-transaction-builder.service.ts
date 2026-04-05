@@ -34,7 +34,7 @@ export class AmmTransactionBuilderService {
                Amount2: isSpendXrp ? we_want : we_spend,
                TradingFee: tradingFeeBps,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-               Fee: (Number(env.fee) * 500).toString(),
+               Fee: (Number(env.fee) * 150000).toString(),
           };
      }
 
@@ -62,8 +62,7 @@ export class AmmTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
 
-          const toAmt = (a: string | xrpl.IssuedCurrencyAmount) =>
-               typeof a === 'string' ? a : ({ currency: a.currency, issuer: a.issuer, value: a.value } as xrpl.IssuedCurrencyAmount);
+          const toAmt = (a: string | xrpl.IssuedCurrencyAmount) => (typeof a === 'string' ? a : ({ currency: a.currency, issuer: a.issuer, value: a.value } as xrpl.IssuedCurrencyAmount));
 
           if (depositOptions.bothPools) {
                return { ...baseFields, Amount: toAmt(we_spend), Amount2: toAmt(we_want), Flags: xrpl.AMMDepositFlags.tfTwoAsset };
@@ -133,15 +132,9 @@ export class AmmTransactionBuilderService {
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
           const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
 
-          const sendMax: string | xrpl.IssuedCurrencyAmount =
-               amm.weSpendCurrency === 'XRP'
-                    ? xrpl.xrpToDrops(amm.weSpendAmount)
-                    : { currency: weSpendCurrency, issuer: amm.weSpendIssuer, value: amm.weSpendAmount };
+          const sendMax: string | xrpl.IssuedCurrencyAmount = amm.weSpendCurrency === 'XRP' ? xrpl.xrpToDrops(amm.weSpendAmount) : { currency: weSpendCurrency, issuer: amm.weSpendIssuer, value: amm.weSpendAmount };
 
-          const amount: string | xrpl.IssuedCurrencyAmount =
-               amm.weWantCurrency === 'XRP'
-                    ? xrpl.xrpToDrops(amm.weWantAmount)
-                    : { currency: weWantCurrency, issuer: amm.weWantIssuer, value: amm.weWantAmount };
+          const amount: string | xrpl.IssuedCurrencyAmount = amm.weWantCurrency === 'XRP' ? xrpl.xrpToDrops(amm.weWantAmount) : { currency: weWantCurrency, issuer: amm.weWantIssuer, value: amm.weWantAmount };
 
           return {
                TransactionType: 'Payment',

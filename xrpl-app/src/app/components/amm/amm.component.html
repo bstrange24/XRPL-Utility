@@ -35,7 +35,6 @@
                <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-columns">
                          <div class="tab-content-container form-fields-container">
-
                               <!-- AMM Form Fields -->
                               <app-amm-fields
                                    [tab]="tab"
@@ -55,28 +54,12 @@
                     </div>
 
                     <!-- Transaction Options -->
-                    <app-transaction-options
-                         [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawlTokenFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']"
-                         [activeTab]="viewModel.activeTab"
-                         [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()"
-                         [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+                    <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button
-                              type="button"
-                              [class]="ammUtilsService.actionButtonClass()"
-                              (click)="performAction()"
-                              [disabled]="!isIdle() || !hasWallets()">
-                              {{ txUiService.spinner() ? 'Processing...' : ammUtilsService.actionButtonLabel() }}
-                         </button>
-                         <button
-                              type="button"
-                              class="btn-secondary-clear-fields"
-                              (click)="clearInputFields()"
-                              [disabled]="!isIdle() || !hasWallets()">
-                              Clear Fields
-                         </button>
+                         <button type="button" [class]="ammUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ txUiService.spinner() ? 'Processing...' : ammUtilsService.actionButtonLabel() }}</button>
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
 
                     <!-- Execution time -->

@@ -3003,9 +3003,9 @@ export class ValidationService {
                ],
           });
 
-          // WithdrawFromAMM
+          // WithdrawalFromAMM
           this.registerRule({
-               transactionType: 'WithdrawFromAMM',
+               transactionType: 'WithdrawalFromAMM',
                requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField'],
                validators: [
                     // You can optionally require LP token amount

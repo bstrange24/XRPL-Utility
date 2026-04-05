@@ -320,7 +320,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                }
           });
 
-          if (!txResult) throw new Error('Unable error when submitting transaction.');
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress, this.paymentChannelStoreService.destination(), '', { includePaymentChannelObjects: true });
           this.txUiService.resetCurrentStepToIdle();
