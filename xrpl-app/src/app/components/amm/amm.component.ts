@@ -280,23 +280,19 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
      }
 
      onPool1CurrencySelected(item: SelectItem | null): void {
-          const currency = item?.id || 'XRP';
-          this.offerCurrency.selectWeWantCurrency(currency, this.currentWallet());
+          this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
      }
 
      onPool1IssuerSelected(item: SelectItem | null): void {
-          const address = item?.id || '';
-          this.offerCurrency.selectWeWantIssuer(address, this.currentWallet());
+          this.offerCurrency.selectWeWantIssuer(item?.id || '', this.currentWallet());
      }
 
      onPool2CurrencySelected(item: SelectItem | null): void {
-          const currency = item?.id || 'XRP';
-          this.offerCurrency.selectWeSpendCurrency(currency, this.currentWallet());
+          this.offerCurrency.selectWeSpendCurrency(item?.id || 'XRP', this.currentWallet());
      }
 
      onPool2IssuerSelected(item: SelectItem | null): void {
-          const address = item?.id || '';
-          this.offerCurrency.selectWeSpendIssuer(address, this.currentWallet());
+          this.offerCurrency.selectWeSpendIssuer(item?.id || '', this.currentWallet());
      }
 
      handleSearchQueryChange(query: string): void {

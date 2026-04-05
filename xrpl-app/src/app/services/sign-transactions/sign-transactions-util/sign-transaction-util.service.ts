@@ -603,19 +603,4 @@ export class SignTransactionUtilService {
                return;
           }
      }
-
-     private applyOptions(tx: any) {
-          // Tags, Memo, InvoiceID, DomainID, CredentialIDs
-          const destinationTag = this.txUiService.destinationTagField();
-          if (destinationTag) this.utilsService.setDestinationTag(tx, destinationTag);
-
-          const sourceTag = this.txUiService.sourceTagField();
-          if (sourceTag) this.utilsService.setSourceTagField(tx, sourceTag);
-
-          const invoiceId = this.txUiService.invoiceIdField();
-          if (invoiceId) this.utilsService.setInvoiceIdField(tx, invoiceId);
-
-          const domainId = this.txUiService.domainId();
-          if (domainId) this.utilsService.setDomainId(tx, domainId);
-     }
 }

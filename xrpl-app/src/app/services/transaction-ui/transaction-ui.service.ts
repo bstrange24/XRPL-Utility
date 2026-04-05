@@ -102,7 +102,7 @@ export class TransactionUiService {
      suppressIndividualFeedback = signal<boolean>(false);
      submitAndWait = signal<boolean>(false);
      result = signal<string>('');
-     spinnerMessage = signal<string>('');
+     // spinnerMessage = signal<string>('');
      toastId = 0;
      errorMessageSignal = signal<string | null>(null);
      spinner = signal<boolean>(false);
@@ -162,8 +162,8 @@ export class TransactionUiService {
      isMessageKey = signal<boolean>(false);
      domain = signal<string>('');
      url = signal<string>('');
-     totalFlagsValue = signal<number>(0);
-     totalFlagsHex = signal<string>('0x0');
+     // totalFlagsValue = signal<number>(0);
+     // totalFlagsHex = signal<string>('0x0');
 
      // Escrows
      // escrowFinishTimeField = signal<string>('');
@@ -176,20 +176,20 @@ export class TransactionUiService {
      // cancelAfter = signal<number>(0);
 
      // MPT
-     mptIssuanceIdField = signal<string>('');
-     isMptEnabled = signal<boolean>(false);
-     metaDataField = signal<string>('');
-     authAction = signal<string>('authorize');
-     lockAction = signal<string>('unlock');
-     metadataError = signal<string>('');
-     tokenCountField = signal<number>(0);
-     assetScaleField = signal<number>(0);
-     isMptFlagModeEnabled = signal<boolean>(false);
-     transferFeeField = signal<number>(0);
-     isAuthorized = signal<boolean>(false);
-     isUnauthorize = signal<boolean>(false);
-     lockedUnlock = signal<string>('');
-     holderAccount = signal<string>('');
+     // mptIssuanceIdField = signal<string>('');
+     // isMptEnabled = signal<boolean>(false);
+     // metaDataField = signal<string>('');
+     // authAction = signal<string>('authorize');
+     // lockAction = signal<string>('unlock');
+     // metadataError = signal<string>('');
+     // tokenCountField = signal<number>(0);
+     // assetScaleField = signal<number>(0);
+     // isMptFlagModeEnabled = signal<boolean>(false);
+     // transferFeeField = signal<number>(0);
+     // isAuthorized = signal<boolean>(false);
+     // isUnauthorize = signal<boolean>(false);
+     // lockedUnlock = signal<string>('');
+     // holderAccount = signal<string>('');
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');
@@ -414,24 +414,24 @@ export class TransactionUiService {
           this.setWarning(null);
      }
 
-     async showWithDelay(message: string, delayMs: number = 200) {
-          this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-     }
+     // async showWithDelay(message: string, delayMs: number = 200) {
+     //      this.updateSpinnerMessage(message);
+     //      await new Promise(resolve => setTimeout(resolve, delayMs));
+     // }
 
-     async showSpinnerWithDelay(message: string, delayMs: number = 200) {
-          this.spinner.set(true);
-          this.updateSpinnerMessage(message);
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-     }
+     // async showSpinnerWithDelay(message: string, delayMs: number = 200) {
+     //      this.spinner.set(true);
+     //      this.updateSpinnerMessage(message);
+     //      await new Promise(resolve => setTimeout(resolve, delayMs));
+     // }
 
-     updateSpinnerMessage(message: string) {
-          this.spinnerMessage.set(message);
-     }
+     // updateSpinnerMessage(message: string) {
+     //      this.spinnerMessage.set(message);
+     // }
 
-     updateSpinnerMessageSignal(message: string) {
-          this.spinnerMessageSignal.set(message);
-     }
+     // updateSpinnerMessageSignal(message: string) {
+     //      this.spinnerMessageSignal.set(message);
+     // }
 
      showToastMessage(message: string, duration = 3000) {
           const id = ++this.toastId;
@@ -766,19 +766,19 @@ export class TransactionUiService {
           // this.escrowCancelTimeField.set('');
           // this.escrowOwnerField.set('');
           // this.escrowSequenceNumberField.set('');
-          this.isMptEnabled.set(false);
-          this.metaDataField.set('');
-          this.authAction.set('authorize');
-          this.lockAction.set('unlock');
-          this.metadataError.set('');
-          this.tokenCountField.set(0);
-          this.assetScaleField.set(0);
-          this.isMptFlagModeEnabled.set(false);
-          this.transferFeeField.set(0);
-          this.isAuthorized.set(false);
-          this.isUnauthorize.set(false);
-          this.lockedUnlock.set('');
-          this.holderAccount.set('');
+          // this.isMptEnabled.set(false);
+          // this.metaDataField.set('');
+          // this.authAction.set('authorize');
+          // this.lockAction.set('unlock');
+          // this.metadataError.set('');
+          // this.tokenCountField.set(0);
+          // this.assetScaleField.set(0);
+          // this.isMptFlagModeEnabled.set(false);
+          // this.transferFeeField.set(0);
+          // this.isAuthorized.set(false);
+          // this.isUnauthorize.set(false);
+          // this.lockedUnlock.set('');
+          // this.holderAccount.set('');
           this.expirationTimeField.set('');
           this.enableExpirationDate.set(false);
           this.enableEscrowFinishAfterExpirationDate.set(false);
@@ -802,7 +802,7 @@ export class TransactionUiService {
      clearAllOptionsAndMessages() {
           // this.errorMessage = '';
           this.errorMessageSignal.set(null);
-          this.updateSpinnerMessageSignal('');
+          // this.updateSpinnerMessageSignal('');
           // Keep the txJson and txResult displayed when deleting an account.
           if (this.accountDeleteStoreService.savedTxJson().length <= 0 && this.accountDeleteStoreService.savedTxResult().length <= 0) {
                this.clearTxResultsHash();

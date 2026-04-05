@@ -6,19 +6,28 @@
      </div>
 </div>
 
+<!-- Get view -->
 @let viewModel = offerTransactionViewModelService;
+<!-- Get active tab -->
 @let tab = viewModel.activeTab();
+<!-- Get tab data -->
 @let tabs = menuTabs;
 
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
+          <!-- Left Wallet panel -->
           <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
+          <!-- Center form -->
           <div class="form-panel">
+               <!-- Menu / Tabs -->
                <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
+               <!-- Info Message -->
                <app-offer-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-offer-summary>
 
+               <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
@@ -26,42 +35,27 @@
                <form #theForm="ngForm" class="main-form">
                     <div class="tab-content-columns">
                          <div class="tab-content-container form-fields-container">
-                              <app-offer-fields
-                                   [tab]="tab"
-                                   (weWantCurrencySelected)="onWeWantCurrencySelected($event)"
-                                   (weWantIssuerSelected)="onWeWantIssuerSelected($event)"
-                                   (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)"
-                                   (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)"
-                                   (weWantAmountChange)="handleWeWantAmountChange()"
-                                   (weSpendAmountChange)="handleWeSpendAmountChange()"
-                                   (invertOrder)="invertOrder()"
-                              />
+                              <app-offer-fields [tab]="tab" (weWantCurrencySelected)="onWeWantCurrencySelected($event)" (weWantIssuerSelected)="onWeWantIssuerSelected($event)" (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)" (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)" (weWantAmountChange)="handleWeWantAmountChange()" (weSpendAmountChange)="handleWeSpendAmountChange()" (invertOrder)="invertOrder()" />
                          </div>
                     </div>
 
-                    <app-transaction-options
-                         [showWhenTab]="['createOffer', 'cancelOffer']"
-                         [activeTab]="viewModel.activeTab"
-                         [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()"
-                         [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"
-                    />
+                    <app-transaction-options [showWhenTab]="['createOffer', 'cancelOffer']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
+                    <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">
-                              {{ txUiService.spinner() ? 'Processing...' : offerUtilsService.actionButtonLabel() }}
-                         </button>
+                         <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ txUiService.spinner() ? 'Processing...' : offerUtilsService.actionButtonLabel() }}</button>
 
                          @if (tab === 'createOffer' || tab === 'getOrderBook') {
-                         <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">
-                              Invert Order
-                         </button>
+                         <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">Invert Order</button>
                          }
 
                          <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
 
+                    <!-- Execution time -->
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
 
+                    <!-- Transaction Preview -->
                     <app-transaction-preview></app-transaction-preview>
                </form>
           </div>

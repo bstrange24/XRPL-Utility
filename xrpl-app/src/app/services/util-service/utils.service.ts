@@ -18,6 +18,7 @@ import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-s
 import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
+import { MptStoreService } from '../mpt/mpt-store/mpt-store.service';
 
 type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
@@ -44,6 +45,7 @@ export class UtilsService {
      public readonly checksStoreService = inject(ChecksStoreService);
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
+     private readonly mptStoreService = inject(MptStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
@@ -1464,7 +1466,7 @@ export class UtilsService {
           if (type === 'create') {
                if (formValues.currencyValue === 'MPT') {
                     const curr: xrpl.MPTAmount = {
-                         mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
+                         mpt_issuance_id: this.mptStoreService.mptIssuanceId(),
                          value: this.txUiService.amountField(),
                     };
                     tx.Amount = curr;

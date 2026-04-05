@@ -162,7 +162,7 @@ export class ChecksTransactionViewModelService {
           return this.checkUtilService.mapCheckItems(checks, modeSignal, amt => this.utilsService.formatIOUXrpAmountOutstanding(amt))();
      });
 
-     checkIdDisplay = this.checkUtilService.checkIdDisplay(this.txUiService.checkIdField, this.checkItems, this.checksStoreService.checkIdSearchQuery);
+     checkIdDisplay = this.checkUtilService.checkIdDisplay(this.checksStoreService.checkIdField, this.checkItems, this.checksStoreService.checkIdSearchQuery);
 
      checkIdInputDisplay = computed(() => {
           if (this.checksStoreService.checkIdSearchQuery()) {

@@ -132,7 +132,7 @@ export class XrplTransactionExecutorService {
           }
 
           // 3. Show spinner
-          this.txUiService.showSpinnerWithDelay(isSimulateEnabled ? simulateMessage : submitMessage, 200);
+          // this.txUiService.showSpinnerWithDelay(isSimulateEnabled ? simulateMessage : submitMessage, 200);
 
           // 4. Set preview
           this.txUiService.addTxSignal(tx);

@@ -42,22 +42,7 @@ import { OfferRequirementsInfoComponent } from './ui-components/offer-requiremen
 @Component({
      selector: 'app-offer',
      standalone: true,
-     imports: [
-          CommonModule,
-          FormsModule,
-          LucideAngularModule,
-          OverlayModule,
-          NavbarComponent,
-          WalletPanelComponent,
-          TransactionOptionsComponent,
-          ExecutionTimeDisplayComponent,
-          TabMenuWithInfoComponent,
-          WarningMessageComponent,
-          TransactionPreviewComponent,
-          OfferFieldsComponent,
-          OfferSummaryComponent,
-          OfferRequirementsInfoComponent,
-     ],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent, OfferSummaryComponent, OfferRequirementsInfoComponent],
      templateUrl: './offer.component.html',
      styleUrl: './offer.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,20 +61,8 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
      readonly menuTabs: TabConfig[] = OFFER_TABS as unknown as TabConfig[];
      readonly tabMeta: Record<string, TabMetaInfo> = OFFER_TAB_META;
-     
 
-     constructor(
-          walletManager: WalletManagerService,
-          transactionUiService: TransactionUiService,
-          transactionDropdownService: TransactionDropdownService,
-          walletDataService: WalletDataService,
-          txEnvironmentService: TxEnvironmentService,
-          copyUtilService: CopyUtilService,
-          toastService: ToastService,
-          acccountDataService: AcccountDataService,
-          route: ActivatedRoute,
-          storageService: StorageService,
-     ) {
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.txUiService.clearAllOptionsAndMessages();
 
@@ -107,7 +80,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           effect(() => {
                const issuers = this.offerCurrency.weWant.issuers();
+
                this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
+
                if (issuers.length > 0 && !this.offerCurrency.weWant.issuer()) {
                     this.offerCurrency.selectWeWantIssuer(issuers[0].address, this.currentWallet());
                }
@@ -127,7 +102,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           effect(() => {
                const issuers = this.offerCurrency.weSpend.issuers();
+
                this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
+
                if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
                     this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
                }
@@ -139,6 +116,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.transactionDropdownService.loadCustomDestinations();
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
+
           this.txUiService.clearAllOptions();
      }
 
@@ -156,6 +134,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
           this.offerCurrency.setWalletAddress(wallet.address);
+          this.trustlineCurrencyService.refreshCurrentBalance();
           await this.offerCurrency.refreshBothBalances(wallet);
      }
 
@@ -263,6 +242,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
           await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
+          this.trustlineCurrencyService.refreshCurrentBalance();
           await this.offerCurrency.refreshBothBalances(wallet);
           this.txUiService.resetCurrentStepToIdle();
      }

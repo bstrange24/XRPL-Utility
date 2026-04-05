@@ -24,6 +24,10 @@ export class OfferTransactionViewModelService {
      readonly weSpendCurrency = signal<string>('XRP');
      readonly weSpendIssuer = signal<string>('');
 
+     // User balances for the selected pool assets
+     readonly weWantUserBalance = computed(() => this.offerCurrency.weWant.balance());
+     readonly weSpendUserBalance = computed(() => this.offerCurrency.weSpend.balance());
+
      readonly weWantCurrencyItems = computed(() => {
           this.weWantCurrency();
           return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
@@ -104,6 +108,9 @@ export class OfferTransactionViewModelService {
           const offers = this.offerStoreService.existingOffers();
           const offerCount = offers.length;
 
+          const stats = this.offerStoreService.orderBookStats();
+          const pair = this.offerStoreService.orderBookPair();
+
           const base = {
                walletName,
                offerCount,
@@ -116,15 +123,21 @@ export class OfferTransactionViewModelService {
                })),
           };
 
-          if (this.activeTab() === 'getOrderBook') {
-               const stats = this.offerStoreService.orderBookStats();
-               const pair = this.offerStoreService.orderBookPair();
-               if (stats && pair) {
-                    return { ...base, pair, stats };
-               }
-          }
-
-          return base;
+          return {
+               ...base,
+               pair: pair ?? '',
+               stats: stats ?? {
+                    vwap: 0,
+                    simpleAvg: 0,
+                    bestRate: 0,
+                    spread: 0,
+                    spreadPercent: 0,
+                    liquidityRatio: 0,
+                    depth: 'N/A',
+                    execution: 'N/A',
+                    volatility: 'N/A',
+               },
+          };
      });
 
      private decodeOfferFlags(flags: number): string[] {

@@ -9,6 +9,7 @@ import { CredentialStore } from '../credentials/credential-store/credential-stor
 import { Wallet } from '../wallets/manager/wallet-manager.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
+import { MptStoreService } from '../mpt/mpt-store/mpt-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -18,6 +19,7 @@ export class XrplTransactionService extends PerformanceBaseComponent {
      private readonly utilsService = inject(UtilsService);
      private readonly toastService = inject(ToastService);
      private readonly txUiService = inject(TransactionUiService);
+     private readonly mptStoreService = inject(MptStoreService);
      private readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      private readonly credentialStore = inject(CredentialStore);
 
@@ -512,7 +514,7 @@ export class XrplTransactionService extends PerformanceBaseComponent {
                currency = 'XRP';
           } else if (mptNeeded) {
                const curr: any = {
-                    mpt_issuance_id: this.txUiService.mptIssuanceIdField(),
+                    mpt_issuance_id: this.mptStoreService.mptIssuanceId(),
                     value: amountField,
                };
                sendMax = curr;

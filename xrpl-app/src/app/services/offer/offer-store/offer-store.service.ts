@@ -1,4 +1,3 @@
-import { computed } from '@angular/core';
 import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
 
 export interface OfferState {

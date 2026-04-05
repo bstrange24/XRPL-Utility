@@ -463,8 +463,8 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                }
           });
 
-          this.txUiService.totalFlagsValue.set(sum);
-          this.txUiService.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
+          this.accountConfiguratorStoreService.setField('totalFlagsValue', sum);
+          this.accountConfiguratorStoreService.setField('totalFlagsHex', '0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
      preventNegative(event: KeyboardEvent): void {

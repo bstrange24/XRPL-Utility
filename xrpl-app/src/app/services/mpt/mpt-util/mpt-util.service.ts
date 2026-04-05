@@ -259,19 +259,19 @@ export class MptUtilService extends PerformanceBaseComponent {
 
      getAllMptTokens(accountObjects: xrpl.AccountObjectsResponse) {
           const mptokens = accountObjects.result.account_objects.filter((o: any) => o.LedgerEntryType === 'MPTToken' || o.LedgerEntryType === 'MPTokenIssuance' || o.LedgerEntryType === 'MPToken');
-          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.txUiService.mptIssuanceIdField());
+          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptStoreService.mptIssuanceId());
           return accountIssuerToken;
      }
 
      getMPTokenIssuance(accountObjects: xrpl.AccountObjectsResponse) {
           const mptokens = accountObjects.result.account_objects.filter((o: any) => o.LedgerEntryType === 'MPTokenIssuance');
-          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.txUiService.mptIssuanceIdField());
+          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptStoreService.mptIssuanceId());
           return accountIssuerToken;
      }
 
      getMptToken(accountObjects: xrpl.AccountObjectsResponse) {
           const mptokens = accountObjects.result.account_objects.filter((o: any) => o.LedgerEntryType === 'MPToken');
-          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.txUiService.mptIssuanceIdField());
+          const accountIssuerToken = mptokens.some((obj: any) => obj.mpt_issuance_id === this.mptStoreService.mptIssuanceId());
           return accountIssuerToken;
      }
 

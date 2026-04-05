@@ -13,7 +13,7 @@
 <!-- Get tab data -->
 @let tabs = menuTabs;
 
-<!-- Main content -->
+<!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
@@ -24,7 +24,7 @@
                <!-- Menu / Tabs -->
                <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
-               <!-- Pool summary info -->
+               <!-- Info Message -->
                <app-amm-summary></app-amm-summary>
 
                <!-- Warning Message -->
@@ -53,7 +53,6 @@
                          </div>
                     </div>
 
-                    <!-- Transaction Options -->
                     <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                     <!-- Action buttons -->

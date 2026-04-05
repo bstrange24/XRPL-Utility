@@ -35,6 +35,7 @@ export class OfferTransactionOrchestratorService {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -120,7 +121,7 @@ export class OfferTransactionOrchestratorService {
 
           const total = sequences.length;
           const isSimulate = txOptions?.isSimulateEnabled;
-          this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} offer(s)...` : `Cancelling ${total} offer(s)...`, 200);
+          // this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} offer(s)...` : `Cancelling ${total} offer(s)...`, 200);
 
           const deletedHashes: string[] = [];
           let successCount = 0;
@@ -128,7 +129,7 @@ export class OfferTransactionOrchestratorService {
           for (let i = 0; i < sequences.length; i++) {
                const sequence = Number(sequences[i]);
                const progressMsg = isSimulate ? `Simulating offer ${i + 1}/${total}...` : `Cancelling offer ${i + 1}/${total}...`;
-               this.txUiService.updateSpinnerMessage(progressMsg);
+               // this.txUiService.updateSpinnerMessage(progressMsg);
 
                const freshLedger = await env.client.getLedgerIndex();
                const cancelEnv = { ...env, ledgerInfo: { lastIndex: freshLedger } };
@@ -142,7 +143,7 @@ export class OfferTransactionOrchestratorService {
                     env,
                     mode: isSimulate ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
-                    ui: { suppressIndividualFeedback: true},
+                    ui: { suppressIndividualFeedback: true },
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,

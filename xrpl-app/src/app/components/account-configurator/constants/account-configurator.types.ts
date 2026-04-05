@@ -151,6 +151,8 @@ export interface AccountConfiguratorState {
      walletTicketCount: number;
      url: string;
      suppressIndividualFeedback: string;
+     totalFlagsValue: number;
+     totalFlagsHex: string;
 }
 
 export type AccountConfigAction = (typeof ACCOUNT_CONFIG_TX_TYPES)[keyof typeof ACCOUNT_CONFIG_TX_TYPES];

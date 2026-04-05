@@ -66,6 +66,10 @@ export class CancelOfferTabComponent {
           return `${offer.Sequence}: Gets: ${offer.TakerGets} → Pays: ${offer.TakerPays}`;
      }
 
+     formatOfferSequenceDisplay(offer: any): string {
+          return `${offer.Sequence}`;
+     }
+
      onOfferSearchInput(event: Event): void {
           this.offerSearchQuery.set((event.target as HTMLInputElement).value);
      }
@@ -127,11 +131,20 @@ export class CancelOfferTabComponent {
           if (items.length === 0) return;
           let index = this.highlightedOfferIndex();
 
-          if (event.key === 'ArrowDown') { event.preventDefault(); index = index < items.length - 1 ? index + 1 : index; }
-          else if (event.key === 'ArrowUp') { event.preventDefault(); index = index >= 0 ? index - 1 : items.length - 1; }
-          else if (event.key === 'Enter' && index >= 0) { event.preventDefault(); this.toggleOfferSelection(items[index]); return; }
-          else if (event.key === 'Escape') { this.closeOfferDropdown(); return; }
-          else return;
+          if (event.key === 'ArrowDown') {
+               event.preventDefault();
+               index = index < items.length - 1 ? index + 1 : index;
+          } else if (event.key === 'ArrowUp') {
+               event.preventDefault();
+               index = index >= 0 ? index - 1 : items.length - 1;
+          } else if (event.key === 'Enter' && index >= 0) {
+               event.preventDefault();
+               this.toggleOfferSelection(items[index]);
+               return;
+          } else if (event.key === 'Escape') {
+               this.closeOfferDropdown();
+               return;
+          } else return;
 
           this.highlightedOfferIndex.set(index);
           setTimeout(() => {

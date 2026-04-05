@@ -56,6 +56,8 @@ const initialState: AccountConfiguratorState = {
      walletTicketCount: 0,
      url: '',
      suppressIndividualFeedback: '',
+     totalFlagsValue: 0,
+     totalFlagsHex: '0x0',
 };
 
 export const AccountConfiguratorStoreService = signalStore(

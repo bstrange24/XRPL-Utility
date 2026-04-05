@@ -77,7 +77,7 @@ export class EscrowsCreateComponent {
      }
 
      public selectedMptItem() {
-          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), this.txUiService.mptIssuanceIdField());
+          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), this.mptStoreService.mptIssuanceId());
      }
 
      public destinationItems() {

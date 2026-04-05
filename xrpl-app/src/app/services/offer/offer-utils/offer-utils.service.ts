@@ -130,52 +130,70 @@ export class OfferUtilsService {
 
                type CurrencyAmount = { currency: string; value: string; issuer?: string };
 
-               const we_want: CurrencyAmount =
-                    weWantCurr === AppConstants.XRP_CURRENCY
-                         ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() }
-                         : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
+               const we_want: CurrencyAmount = weWantCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() } : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
 
-               const we_spend: CurrencyAmount =
-                    weSpendCurr === AppConstants.XRP_CURRENCY
-                         ? { currency: 'XRP', value: this.offerStoreService.weSpendAmount() }
-                         : { currency: this.utilsService.encodeIfNeeded(weSpendCurr), issuer: this.offerStoreService.weSpendIssuer(), value: this.offerStoreService.weSpendAmount() };
+               const we_spend: CurrencyAmount = weSpendCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weSpendAmount() } : { currency: this.utilsService.encodeIfNeeded(weSpendCurr), issuer: this.offerStoreService.weSpendIssuer(), value: this.offerStoreService.weSpendAmount() };
 
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);
                const displayWeSpend = this.utilsService.decodeIfNeeded(we_spend.currency);
                const offerType = we_spend.currency === AppConstants.XRP_CURRENCY ? 'buy' : 'sell';
 
-               const [orderBook, counterOrderBook, ammData] = await Promise.all([
-                    client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_want, taker_pays: we_spend }),
-                    client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_spend, taker_pays: we_want }),
-                    client.request({ command: 'amm_info', asset: we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer } : { currency: 'XRP' }, asset2: we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer } : { currency: 'XRP' } } as any).catch(() => null) as any,
-               ]);
+               if (weWantCurr && weSpendCurr) {
+                    const [orderBook, counterOrderBook, ammData] = await Promise.all([
+                         client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_want, taker_pays: we_spend }),
+                         client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_spend, taker_pays: we_want }),
+                         client.request({ command: 'amm_info', asset: we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer } : { currency: 'XRP' }, asset2: we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer } : { currency: 'XRP' } } as any).catch(() => null) as any,
+                    ]);
 
-               const combinedOffers: any[] = [...orderBook.result.offers];
+                    const combinedOffers: any[] = [...orderBook.result.offers];
 
-               if (ammData?.result?.amm) {
-                    const amm = ammData.result.amm;
-                    const takerGets = we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer!, value: typeof amm.amount2 === 'string' ? String(xrpl.dropsToXrp(amm.amount2)) : amm.amount2.value } : typeof amm.amount2 === 'string' ? amm.amount2 : amm.amount2.value;
-                    const takerPays = we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer!, value: typeof amm.amount === 'string' ? String(xrpl.dropsToXrp(amm.amount)) : amm.amount.value } : typeof amm.amount === 'string' ? amm.amount : amm.amount.value;
-                    combinedOffers.unshift({ Account: amm.account || 'AMM_POOL', Flags: 0, LedgerEntryType: 'Offer', Sequence: 0, TakerGets: takerGets, TakerPays: takerPays, isAMM: true });
+                    if (ammData?.result?.amm) {
+                         const amm = ammData.result.amm;
+                         const takerGets = we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer!, value: typeof amm.amount2 === 'string' ? String(xrpl.dropsToXrp(amm.amount2)) : amm.amount2.value } : typeof amm.amount2 === 'string' ? amm.amount2 : amm.amount2.value;
+                         const takerPays = we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer!, value: typeof amm.amount === 'string' ? String(xrpl.dropsToXrp(amm.amount)) : amm.amount.value } : typeof amm.amount === 'string' ? amm.amount : amm.amount.value;
+                         combinedOffers.unshift({ Account: amm.account || 'AMM_POOL', Flags: 0, LedgerEntryType: 'Offer', Sequence: 0, TakerGets: takerGets, TakerPays: takerPays, isAMM: true });
+                    }
+
+                    const spread = this.computeBidAskSpread(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers);
+                    const liquidity = this.computeLiquidityRatio(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers, offerType === 'sell');
+                    const stats = this.computeAverageExchangeRateBothWays(combinedOffers, 5);
+
+                    const pair = `${displayWeWant}/${displayWeSpend}`;
+                    this.offerStoreService.setField('orderBookPair', pair);
+                    this.offerStoreService.setField('orderBookStats', {
+                         // vwap: stats.forward.vwap.toFixed(8) ? stats.forward.vwap.toFixed(8) : 0,
+                         // simpleAvg: stats.forward.simpleAvg.toFixed(8) ? stats.forward.simpleAvg.toFixed(8) : 0,
+                         // bestRate: stats.forward.bestRate.toFixed(8) ? stats.forward.bestRate.toFixed(8) : 0,
+                         // spread: spread.spread.toFixed(8) ? spread.spread.toFixed(8) : 0,
+                         // spreadPercent: spread.spreadPercent.toFixed(2) ? spread.spreadPercent.toFixed(2) : 0,
+                         // liquidityRatio: liquidity.ratio.toFixed(2) ? liquidity.ratio.toFixed(2) : 0,
+                         // depth: `${stats.forward.depthDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.depthXRP.toFixed(2)} ${displayWeSpend}`,
+                         // execution: stats.forward.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
+                         // volatility: `${stats.forward.volatility.toFixed(8)} (${stats.forward.volatilityPercent.toFixed(2)}%)`,
+
+                         vwap: stats?.forward?.vwap != null ? stats.forward.vwap.toFixed(8) : '0',
+                         simpleAvg: stats?.forward?.simpleAvg != null ? stats.forward.simpleAvg.toFixed(8) : '0',
+                         bestRate: stats?.forward?.bestRate != null ? stats.forward.bestRate.toFixed(8) : '0',
+                         spread: spread?.spread != null ? spread.spread.toFixed(8) : '0',
+                         spreadPercent: spread?.spreadPercent != null ? spread.spreadPercent.toFixed(2) : '0',
+                         liquidityRatio: liquidity?.ratio != null ? liquidity.ratio.toFixed(2) : '0',
+                         depth: `${stats?.forward?.depthDOG != null ? stats.forward.depthDOG.toFixed(2) : '0'} ${displayWeWant} for ${stats?.forward?.depthXRP != null ? stats.forward.depthXRP.toFixed(2) : '0'} ${displayWeSpend}`,
+                         execution: stats?.forward?.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
+                         volatility: `${stats?.forward?.volatility != null ? stats.forward.volatility.toFixed(8) : '0'} (${stats?.forward?.volatilityPercent != null ? stats.forward.volatilityPercent.toFixed(2) : '0'}%)`,
+                    });
+               } else {
+                    this.offerStoreService.setField('orderBookStats', {
+                         vwap: 0,
+                         simpleAvg: 0,
+                         bestRate: 0,
+                         spread: 0,
+                         spreadPercent: 0,
+                         liquidityRatio: 0,
+                         depth: `N/A`,
+                         execution: `N/A`,
+                         volatility: `N/A`,
+                    });
                }
-
-               const spread = this.computeBidAskSpread(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers);
-               const liquidity = this.computeLiquidityRatio(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers, offerType === 'sell');
-               const stats = this.computeAverageExchangeRateBothWays(combinedOffers, 5);
-
-               const pair = `${displayWeWant}/${displayWeSpend}`;
-               this.offerStoreService.setField('orderBookPair', pair);
-               this.offerStoreService.setField('orderBookStats', {
-                    vwap: stats.forward.vwap.toFixed(8),
-                    simpleAvg: stats.forward.simpleAvg.toFixed(8),
-                    bestRate: stats.forward.bestRate.toFixed(8),
-                    spread: spread.spread.toFixed(8),
-                    spreadPercent: spread.spreadPercent.toFixed(2),
-                    liquidityRatio: liquidity.ratio.toFixed(2),
-                    depth: `${stats.forward.depthDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.depthXRP.toFixed(2)} ${displayWeSpend}`,
-                    execution: stats.forward.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
-                    volatility: `${stats.forward.volatility.toFixed(8)} (${stats.forward.volatilityPercent.toFixed(2)}%)`,
-               });
           } catch (error: any) {
                console.error('Error in fetchOrderBook:', error);
                this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -200,7 +218,7 @@ export class OfferUtilsService {
           }
 
           this.txUiService.spinner.set(true);
-          this.txUiService.showSpinnerWithDelay('Calculating best rate...', 500);
+          // this.txUiService.showSpinnerWithDelay('Calculating best rate...', 500);
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -214,12 +232,10 @@ export class OfferUtilsService {
                const weWant: CA = weWantCurr === 'XRP' ? { currency: 'XRP', value: '0' } : { currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr, issuer: this.offerStoreService.weWantIssuer(), value: '0' };
                const weSpend: CA = weSpendCurr === 'XRP' ? { currency: 'XRP', value: weSpendAmt } : { currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr, issuer: this.offerStoreService.weSpendIssuer(), value: weSpendAmt };
 
-               const client = await (this.offerCurrency as any).getClient?.() ?? null;
+               const client = (await (this.offerCurrency as any).getClient?.()) ?? null;
                if (!client) return;
 
-               const [orderBook] = await Promise.all([
-                    client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress }),
-               ]);
+               const [orderBook] = await Promise.all([client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress })]);
 
                const allOffers = [...orderBook.result.offers];
                allOffers.sort((a: any, b: any) => {
@@ -261,7 +277,7 @@ export class OfferUtilsService {
           }
 
           this.txUiService.spinner.set(true);
-          this.txUiService.showSpinnerWithDelay('Calculating required amount...', 500);
+          // this.txUiService.showSpinnerWithDelay('Calculating required amount...', 500);
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -275,12 +291,10 @@ export class OfferUtilsService {
                const weWant: CA = weWantCurr === 'XRP' ? { currency: 'XRP', value: weWantAmt } : { currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr, issuer: this.offerStoreService.weWantIssuer(), value: weWantAmt };
                const weSpend: CA = weSpendCurr === 'XRP' ? { currency: 'XRP', value: '0' } : { currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr, issuer: this.offerStoreService.weSpendIssuer(), value: '0' };
 
-               const client = await (this.offerCurrency as any).getClient?.() ?? null;
+               const client = (await (this.offerCurrency as any).getClient?.()) ?? null;
                if (!client) return;
 
-               const [orderBook] = await Promise.all([
-                    client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress }),
-               ]);
+               const [orderBook] = await Promise.all([client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress })]);
 
                const allOffers = [...orderBook.result.offers];
                allOffers.sort((a: any, b: any) => {
@@ -345,8 +359,7 @@ export class OfferUtilsService {
      }
 
      private computeLiquidityRatio(tokenXrpOffers: any[], xrpTokenOffers: any[], isTokenXrp = true) {
-          const sumVolume = (offers: any[]) =>
-               offers.reduce((sum, o) => sum + (o.TakerGets?.value ? parseFloat(o.TakerGets.value) : parseFloat(o.TakerGets) / 1_000_000), 0);
+          const sumVolume = (offers: any[]) => offers.reduce((sum, o) => sum + (o.TakerGets?.value ? parseFloat(o.TakerGets.value) : parseFloat(o.TakerGets) / 1_000_000), 0);
           const tokenVolume = tokenXrpOffers.length > 0 ? sumVolume(tokenXrpOffers) : 0;
           const xrpVolume = xrpTokenOffers.length > 0 ? sumVolume(xrpTokenOffers) : 0;
           const ratio = isTokenXrp ? (xrpVolume > 0 ? tokenVolume / xrpVolume : 0) : tokenVolume > 0 ? xrpVolume / tokenVolume : 0;
@@ -378,7 +391,10 @@ export class OfferUtilsService {
           for (const offer of offers) {
                const gv = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1_000_000 : parseFloat(offer.TakerGets?.value ?? '0');
                const pv = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1_000_000 : parseFloat(offer.TakerPays?.value ?? '0');
-               if (pv / gv <= maxQuality) { depthGets += gv; depthPays += pv; }
+               if (pv / gv <= maxQuality) {
+                    depthGets += gv;
+                    depthPays += pv;
+               }
           }
 
           let execGets = 0;
@@ -389,7 +405,11 @@ export class OfferUtilsService {
                const gv = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1_000_000 : parseFloat(offer.TakerGets?.value ?? '0');
                const pv = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1_000_000 : parseFloat(offer.TakerPays?.value ?? '0');
                const paysToUse = Math.min(remainingPays, pv);
-               if (paysToUse > 0) { execGets += (paysToUse / pv) * gv; execPays += paysToUse; remainingPays -= paysToUse; }
+               if (paysToUse > 0) {
+                    execGets += (paysToUse / pv) * gv;
+                    execPays += paysToUse;
+                    remainingPays -= paysToUse;
+               }
                if (remainingPays <= 0) break;
           }
           if (remainingPays > 0) insufficientLiquidity = true;

@@ -1,25 +1,7 @@
 @if (tab() === 'createOffer') {
-<app-create-offer
-     (weWantCurrencySelected)="weWantCurrencySelected.emit($event)"
-     (weWantIssuerSelected)="weWantIssuerSelected.emit($event)"
-     (weSpendCurrencySelected)="weSpendCurrencySelected.emit($event)"
-     (weSpendIssuerSelected)="weSpendIssuerSelected.emit($event)"
-     (weWantAmountChange)="weWantAmountChange.emit()"
-     (weSpendAmountChange)="weSpendAmountChange.emit()"
-     (invertOrder)="invertOrder.emit()"
-/>
-}
-
-@if (tab() === 'getOrderBook') {
-<app-get-order-book
-     (weWantCurrencySelected)="weWantCurrencySelected.emit($event)"
-     (weWantIssuerSelected)="weWantIssuerSelected.emit($event)"
-     (weSpendCurrencySelected)="weSpendCurrencySelected.emit($event)"
-     (weSpendIssuerSelected)="weSpendIssuerSelected.emit($event)"
-     (invertOrder)="invertOrder.emit()"
-/>
-}
-
-@if (tab() === 'cancelOffer') {
+<app-create-offer (weWantCurrencySelected)="weWantCurrencySelected.emit($event)" (weWantIssuerSelected)="weWantIssuerSelected.emit($event)" (weSpendCurrencySelected)="weSpendCurrencySelected.emit($event)" (weSpendIssuerSelected)="weSpendIssuerSelected.emit($event)" (weWantAmountChange)="weWantAmountChange.emit()" (weSpendAmountChange)="weSpendAmountChange.emit()" (invertOrder)="invertOrder.emit()" />
+} @if (tab() === 'getOrderBook') {
+<app-get-order-book (weWantCurrencySelected)="weWantCurrencySelected.emit($event)" (weWantIssuerSelected)="weWantIssuerSelected.emit($event)" (weSpendCurrencySelected)="weSpendCurrencySelected.emit($event)" (weSpendIssuerSelected)="weSpendIssuerSelected.emit($event)" (invertOrder)="invertOrder.emit()" />
+} @if (tab() === 'cancelOffer') {
 <app-cancel-offer />
 }
