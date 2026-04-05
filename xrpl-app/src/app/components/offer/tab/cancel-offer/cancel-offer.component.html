@@ -1,0 +1,71 @@
+@if (offerStoreService.existingOffers().length > 0) {
+<div class="form-row" style="margin-bottom: 1.2em">
+     <div class="form-group">
+          <label>Select Offers to Cancel</label>
+          <p class="form-hint">Select existing offers to cancel for the selected account.</p>
+          <div class="combobox-container" (clickOutside)="closeOfferDropdown()">
+               <input
+                    #offerDropdownInput
+                    type="text"
+                    [value]="offerSearchQuery()"
+                    (input)="onOfferSearchInput($event)"
+                    (focus)="openOfferDropdown()"
+                    (keydown)="onOfferKeyDown($event)"
+                    [placeholder]="selectedOfferSequences().length > 0 ? selectedOfferSequences().length + ' offer(s) selected' : 'Search offers by sequence...'"
+                    class="combobox-input"
+                    autocomplete="off"
+               />
+               <button class="combobox-toggle" (click)="toggleOfferDropdown()" type="button">
+                    <lucide-icon name="chevron-down" size="18"></lucide-icon>
+               </button>
+          </div>
+     </div>
+</div>
+
+@if (selectedOffers().length > 0) {
+<div class="offer-container">
+     <div class="offer-list">
+          @for (offer of selectedOffers(); track offer.Sequence) {
+          <div class="offer-item">
+               <span class="offer-sequence">{{ formatOfferDisplay(offer) }}</span>
+               <button type="button" class="offer-remove" (click)="toggleOfferSelection(offer)" aria-label="Remove offer">
+                    <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
+               </button>
+          </div>
+          }
+     </div>
+     <div class="offer-footer">
+          <button type="button" class="clear-btn" (click)="clearAllOfferSelections()">Clear all</button>
+     </div>
+</div>
+}
+
+<ng-template #offerDropdownTemplate>
+     <div class="combobox-wrapper" (click)="$event.stopPropagation()">
+          <div class="combobox-dropdown-overlay offer-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
+               <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
+                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
+                         <input type="checkbox" [checked]="allOffersSelected()" (change)="toggleSelectAllOffers()" style="width: 16px; height: 16px" />
+                         <span>Select All</span>
+                    </label>
+                    <button class="clear-btn" (click)="clearAllOfferSelections()" [disabled]="selectedOfferSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer" [style.opacity]="selectedOfferSequences().length === 0 ? 0.5 : 1">Clear</button>
+               </div>
+
+               @for (offer of filteredOffers(); track offer.Sequence; let i = $index) {
+               <label class="combobox-item offer-item" [class.highlighted]="highlightedOfferIndex() === i" (mouseenter)="highlightedOfferIndex.set(i)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
+                    <input type="checkbox" [checked]="selectedOfferSequences().includes(offer.Sequence)" (change)="toggleOfferSelection(offer)" style="width: 16px; height: 16px; cursor: pointer" />
+                    <span class="offer-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937">{{ formatOfferDisplay(offer) }}</span>
+               </label>
+               } @empty {
+               <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No offers match your search</div>
+               }
+          </div>
+     </div>
+</ng-template>
+} @else {
+<div class="form-row">
+     <div class="form-group" style="grid-column: 1 / -1">
+          <p class="form-hint" style="color: #6b7280">No outstanding offers found for this account.</p>
+     </div>
+</div>
+}
