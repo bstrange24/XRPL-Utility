@@ -1,0 +1,64 @@
+@let vm = view;
+
+<div class="form-row">
+     <div class="form-group">
+          <label>Taker Gets – Buy Side</label>
+     </div>
+     <div class="form-group">
+          <label>Taker Pays – Sell Side</label>
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label>Currency Code</label>
+          <p class="form-hint">The token you want to receive.</p>
+          <app-select-search-dropdown
+               [items]="vm.weWantCurrencyItems()"
+               [value]="vm.selectedWeWantCurrencyItem()"
+               [showShortAddress]="false"
+               (valueChange)="weWantCurrencySelected.emit($event)"
+               placeholder="Search currency code..."
+               emptyMessage="No currencies available"
+          />
+     </div>
+     <div class="form-group">
+          <label>Currency Code</label>
+          <p class="form-hint">The token you want to spend.</p>
+          <app-select-search-dropdown
+               [items]="vm.weSpendCurrencyItems()"
+               [value]="vm.selectedWeSpendCurrencyItem()"
+               [showShortAddress]="false"
+               (valueChange)="weSpendCurrencySelected.emit($event)"
+               placeholder="Search currency code..."
+               emptyMessage="No currencies available"
+          />
+     </div>
+</div>
+
+<div class="form-row">
+     <div class="form-group">
+          <label>Issuer</label>
+          <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
+          <app-select-search-dropdown
+               [items]="vm.weWantIssuerItems()"
+               [value]="vm.selectedWeWantIssuerItem()"
+               [showShortAddress]="true"
+               (valueChange)="weWantIssuerSelected.emit($event)"
+               placeholder="Search issuer address or name..."
+               emptyMessage="No issuers available for this currency"
+          />
+     </div>
+     <div class="form-group">
+          <label>Issuer</label>
+          <p class="form-hint">The XRPL account that issues the token you want to spend.</p>
+          <app-select-search-dropdown
+               [items]="vm.weSpendIssuerItems()"
+               [value]="vm.selectedWeSpendIssuerItem()"
+               [showShortAddress]="true"
+               (valueChange)="weSpendIssuerSelected.emit($event)"
+               placeholder="Search issuer address or name..."
+               emptyMessage="No issuers available for this currency"
+          />
+     </div>
+</div>

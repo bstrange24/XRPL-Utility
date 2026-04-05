@@ -1,0 +1,72 @@
+@if (view.infoData(); as info) {
+<div class="info-and-offers-card" [class.has-offers]="info.offerCount > 0 || info.isOrderBookTab">
+     <div class="summary-header">
+          <div class="summary-text">
+               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
+               <code>{{ info.walletName }}</code>
+
+               @if (info.offerCount === 0 && !info.isOrderBookTab) {
+               <span> has no outstanding offers.</span>
+               } @else {
+               <span>
+                    @if (info.isOrderBookTab) {
+                    viewing order book for <strong>{{ $any(info).pair }}</strong>
+                    } @else {
+                    has <strong class="object-count">{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }}.
+                    }
+               </span>
+               }
+          </div>
+
+          @if (info.offerCount > 0 || info.isOrderBookTab) {
+          <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel.emit()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle offers / order book details">
+               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
+               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"></ng-icon>
+          </button>
+          }
+     </div>
+
+     @if (info.offerCount > 0 || info.isOrderBookTab) {
+     <div class="offers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
+          @if (info.isOrderBookTab) {
+          <div class="orderbook-stats">
+               <ul class="stats-list">
+                    <li><strong>Pair:</strong> {{ $any(info).pair }}</li>
+                    <li><strong>VWAP:</strong> {{ $any(info).stats.vwap }} {{ $any(info).pair }}</li>
+                    <li><strong>Simple Avg:</strong> {{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</li>
+                    <li><strong>Best Rate:</strong> {{ $any(info).stats.bestRate }} {{ $any(info).pair }}</li>
+                    <li><strong>Spread:</strong> {{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</li>
+                    <li><strong>Depth (30% slippage):</strong> {{ $any(info).stats.depth }}</li>
+                    <li><strong>Execution (15 input):</strong> {{ $any(info).stats.execution }}</li>
+                    <li><strong>Volatility:</strong> {{ $any(info).stats.volatility }}</li>
+                    <li><strong>Liquidity Ratio:</strong> {{ $any(info).stats.liquidityRatio }}</li>
+               </ul>
+          </div>
+          } @else {
+          <ul class="offers-list">
+               @for (offer of info.offersToShow; track offer.index) {
+               <li class="offer-item">
+                    <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
+                         <div class="offer-main-line">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
+                         <div class="offer-meta">
+                              <div>Offer Index: <code>{{ offer.index }}</code></div>
+                              @if (offer.flags.length) {
+                              <div>Flags: {{ offer.flags.join(', ') }}</div>
+                              }
+                         </div>
+                    </app-tooltip-link>
+
+                    <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn-small" title="Copy Offer Index">
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                         </svg>
+                    </button>
+               </li>
+               }
+          </ul>
+          }
+     </div>
+     }
+</div>
+}

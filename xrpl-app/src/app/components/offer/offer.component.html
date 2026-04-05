@@ -6,558 +6,66 @@
      </div>
 </div>
 
-<!-- Main content. -->
+@let viewModel = offerTransactionViewModelService;
+@let tab = viewModel.activeTab();
+@let tabs = menuTabs;
+
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn" [class.active]="activeTab() === 'createOffer'" (click)="setTab('createOffer')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Create Offer
-                    </button>
-                    <!-- <button class="menu-btn" [class.active]="activeTab() === 'getOffers'" (click)="setTab('getOffers')">
-                         <ng-icon name="heroPlusCircle" size="20" class="text-red-600"></ng-icon>
-                         Get Offers
-                    </button> -->
-                    <button class="menu-btn" [class.active]="activeTab() === 'getOrderBook'" (click)="setTab('getOrderBook')">
-                         <ng-icon name="heroCurrencyDollar" size="20" class="text-red-600"></ng-icon>
-                         Get Order Book
-                    </button>
-                    <button class="menu-btn" [class.active]="activeTab() === 'cancelOffer'" (click)="setTab('cancelOffer')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Cancel Offer
-                    </button>
-               </div>
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
-               <div class="submenu-info-text">
-                    <!-- Create Offer Menu -->
-                    @if (activeTab() === 'createOffer') {
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Create Offer</h2>
-                         <p class="submenu-info-secondary-text">Create Offer on the XRPL DEX.</p>
-                    </div>
-                    }
+               <app-offer-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-offer-summary>
 
-                    <!-- Get Offer Menu -->
-                    <!-- @if (activeTab() === 'getOffers') {
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroPlusCircle" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Offers</h2>
-                              <p class="submenu-info-secondary-text">Get existing offers, orderbooks and create offers on the XRPL DEX.</p>
-                         </div>
-               } -->
-
-                    <!-- Get OrderBook Menu -->
-                    @if (activeTab() === 'getOrderBook') {
-                    <div class="blue-button-submenu">
-                         <ng-icon name="heroCurrencyDollar" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Get Order Book</h2>
-                         <p class="submenu-info-secondary-text">Get order book on the XRPL Dex for the currency pair.</p>
-                    </div>
-                    }
-
-                    <!-- Cancel Offer Menu -->
-                    @if (activeTab() === 'cancelOffer') {
-                    <div class="red-button-submenu">
-                         <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                    </div>
-                    <div>
-                         <h2 class="submenu-info-main-text">Cancel Offer</h2>
-                         <p class="submenu-info-secondary-text">Cancel offer on the XRPL DEX.</p>
-                    </div>
-                    }
-               </div>
-
-               <!-- Info Message -->
-               <!-- Info Message + Offers / Order Book Card -->
-               @if (infoData(); as info) {
-               <div class="info-and-offers-card" [class.has-offers]="info.offerCount > 0 || info.isOrderBookTab">
-                    <!-- Always-visible summary row -->
-                    <div class="summary-header">
-                         <div class="summary-text">
-                              <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                              <code>{{ info.walletName }}</code>
-
-                              @if (info.offerCount === 0 && !info.isOrderBookTab) {
-                              <span> has no outstanding offers.</span>
-                              } @else {
-                              <span> @if (info.isOrderBookTab) { viewing order book for <strong>{{ $any(info).pair }}</strong> } @else { has <strong class="object-count">{{ info.offerCount }}</strong> outstanding offer{{ info.offerCount === 1 ? '' : 's' }} @switch (activeTab()) { @case ('createOffer') { created. } @case ('getOffers') { on the DEX. } @case ('getOrderBook') { on the DEX. } @case ('cancelOffer') { that can be cancelled. } } } </span>
-                              }
-                         </div>
-
-                         <!-- Expand/Collapse toggle (shown if there is content to expand) -->
-                         @if (info.offerCount > 0 || info.isOrderBookTab) {
-                         <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle offers / order book details">
-                              <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} details</span>
-                              <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
-                         </button>
-                         }
-                    </div>
-
-                    <!-- Collapsible content area with scroll -->
-                    @if (info.offerCount > 0 || info.isOrderBookTab) {
-                    <div class="offers-list-container" [style.max-height]="infoPanelExpanded() ? '480px' : '0px'" [style.opacity]="infoPanelExpanded() ? '1' : '0'" [style.padding]="infoPanelExpanded() ? '1px 0' : '0'">
-                         <!-- Order Book Stats (when in getOrderBook tab) -->
-                         @if (info.isOrderBookTab) {
-                         <div class="orderbook-stats">
-                              <ul class="stats-list">
-                                   <li><strong>Pair:</strong> {{ $any(info).pair }}</li>
-                                   <li><strong>VWAP:</strong> {{ $any(info).stats.vwap }} {{ $any(info).pair }}</li>
-                                   <li><strong>Simple Avg:</strong> {{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</li>
-                                   <li><strong>Best Rate:</strong> {{ $any(info).stats.bestRate }} {{ $any(info).pair }}</li>
-                                   <li><strong>Spread:</strong> {{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</li>
-                                   <li><strong>Depth (30% slippage):</strong> {{ $any(info).stats.depth }}</li>
-                                   <li><strong>Execution (15 input):</strong> {{ $any(info).stats.execution }}</li>
-                                   <li><strong>Volatility:</strong> {{ $any(info).stats.volatility }}</li>
-                                   <li><strong>Liquidity Ratio:</strong> {{ $any(info).stats.liquidityRatio }}</li>
-                              </ul>
-                         </div>
-                         } @else {
-                         <!-- Normal offers list -->
-                         <ul class="offers-list">
-                              @for (offer of info.offersToShow; track offer.index) {
-                              <li class="offer-item">
-                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'offer/' + offer.index" tooltipText="View Offer on XRPL Explorer">
-                                        <div class="offer-main-line">{{ offer.takerGets }} → {{ offer.takerPays }}</div>
-
-                                        <div class="offer-meta">
-                                             <div>Offer Index: <code>{{ offer.index }}</code></div>
-                                             @if (offer.flags.length) {
-                                             <div>Flags: {{ offer.flags.join(', ') }}</div>
-                                             }
-                                        </div>
-                                   </app-tooltip-link>
-
-                                   <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn-small" title="Copy Offer Index">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                        </svg>
-                                   </button>
-                              </li>
-                              }
-                         </ul>
-                         }
-                    </div>
-                    }
-               </div>
-               }
-
-               <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
-
-               <!-- Existing offers on selected account -->
-               <!-- @if (existingOffers().length > 0) {
-               <div class="outstanding-checks-panel">
-                    <div class="panel-header" (click)="toggleExistingOffers()" style="cursor: pointer; user-select: none">
-                         <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
-                              <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Existing Offers ({{ existingOffers().length }})
-                         </h3>
-                    </div>
-
-                    <div class="credential-list-container" [class.collapsed]="displayExistingOffers()">
-                         @if (!displayExistingOffers()) {
-                         <div class="checks-list">
-                              @for (offer of existingOffers(); track offer.Sequence){
-                              <div class="check-card">
-                                   <div class="check-extras">
-                                        @if (offer.LedgerEntryType) {
-                                        <span class="badge badge-invoice">LedgerEntryType: {{ offer.LedgerEntryType }}</span>
-                                        } @else {
-                                        <span class="badge badge-tag-not-set">LedgerEntryType: Not set</span>
-                                        } @if (offer.Account) {
-                                        <span class="badge badge-address">Account: {{ offer.Account }}</span>
-                                        } @else {
-                                        <span class="badge badge-address-not-set">Account: Not set</span>
-                                        } @if (offer.Flags !== undefined && offer.Flags !== 0) {
-                                        <span class="badge badge-expire">
-                                             Flags: @for (f of decodeOfferFlags(offer.Flags); track f) {
-                                             <span>{{ f }}</span>
-                                             }
-                                             <span class="flag-original"> ({{ offer.Flags }})</span>
-                                        </span>
-                                        } @else {
-                                        <span class="badge badge-expire-not-set">Flags: Not set</span>
-                                        }
-
-                                        <div class="line-break"></div>
-
-                                        @if (offer.TakerGets) {
-                                        <span class="badge badge-uri">TakerGets: {{ offer.TakerGets }}</span>
-                                        } @else {
-                                        <span class="badge badge-uri-not-set">TakerGets: Not set</span>
-                                        } @if (offer.TakerPays) {
-                                        <span class="badge badge-uri">TakerPays: {{ offer.TakerPays }}</span>
-                                        } @else {
-                                        <span class="badge badge-uri-not-set"> TakerPays: Not set</span>
-                                        } @if (offer.TxHash) {
-                                        <span class="badge badge-credential-index">Hash: {{ offer.TxHash }}</span>
-                                        } @else {
-                                        <span class="badge badge-credential-index-not-set">Hash: Not set</span>
-                                        }
-                                   </div>
-
-                                   <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyOfferHash(offer.TxHash); $event.stopPropagation(); $event.preventDefault()" title="Copy NFT Token ID" type="button">
-                                             <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
-                                             <a [href]="`${this.txUiService.explorerUrl()}entry/` + offer.TxHash" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
-                                                  <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
-                                             </a>
-                                        </button>
-                                   </div>
-                              </div>
-                              }
-                         </div>
-                         }
-                    </div>
-               </div>
-               } -->
 
                <form #theForm="ngForm" class="main-form">
-                    <div [@tabTransition]="activeTab()">
-                         <div class="tab-content-columns">
-                              <!-- ==================== LEFT: FORM FIELDS ==================== -->
-                              <div class="tab-content-container form-fields-container">
-                                   <!-- Get Offers -->
-                                   @if(activeTab() !== 'cancelOffer') {
-                                   <div class="form-row">
-                                        <!-- Info -->
-                                        <div class="form-group">
-                                             <span class="tooltip" tooltip-data="Taker Gets.">
-                                                  <label for="weWantCurrencyField">Taker Gets - Buy Side</label>
-                                             </span>
-                                        </div>
-                                        <div class="form-group">
-                                             <span class="tooltip" tooltip-data="Taker Pays.">
-                                                  <label for="weSpendCurrencyField">Taker Pays - Sell Side</label>
-                                             </span>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <!-- We Want Currency -->
-                                        <div class="form-group">
-                                             <label for="weWantCurrency">Currency Code</label>
-                                             <p class="form-hint">The token you want to receive or deposit/withdraw.</p>
-                                             <app-select-search-dropdown [items]="weWantCurrencyItems()" [value]="selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeWantCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex items-center gap-2">
-                                                            @if (item.id === 'XRP') {
-                                                            <span class="text-yellow-500 font-bold">XRP</span>
-                                                            } @else {
-                                                            <span>{{ item.display }}</span>
-                                                            }
-                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-
-                                        <!-- We Spend Currency -->
-                                        <div class="form-group">
-                                             <label for="weSpendCurrency">Currency Code</label>
-                                             <p class="form-hint">The token you want to spend or deposit/withdraw.</p>
-                                             <app-select-search-dropdown [items]="weSpendCurrencyItems()" [value]="selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="onWeSpendCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex items-center gap-2">
-                                                            @if (item.id === 'XRP') {
-                                                            <span class="text-yellow-500 font-bold">XRP</span>
-                                                            } @else {
-                                                            <span>{{ item.display }}</span>
-                                                            }
-                                                            <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <!-- Issuer -->
-                                        <div class="form-group">
-                                             <label for="weWantIssuer">Issuer</label>
-                                             <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
-                                             <app-select-search-dropdown [items]="weWantIssuerItems()" [value]="selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="onWeWantIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex flex-col">
-                                                            <span class="font-medium">{{ item.display }}</span>
-                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-                                        <div class="form-group">
-                                             <label for="weWantIssuer">Issuer</label>
-                                             <p class="form-hint">The XRPL account that issues the token you want to receive.</p>
-                                             <app-select-search-dropdown [items]="weSpendIssuerItems()" [value]="selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="onWeSpendIssuerSelected($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency">
-                                                  <ng-template #itemTemplate let-item>
-                                                       <div class="flex flex-col">
-                                                            <span class="font-medium">{{ item.display }}</span>
-                                                            <span class="text-xs text-gray-500">{{ item.secondary }}</span>
-                                                       </div>
-                                                  </ng-template>
-                                             </app-select-search-dropdown>
-                                        </div>
-                                   </div>
-
-                                   @if(activeTab() === 'createOffer') {
-                                   <div class="form-row">
-                                        <!-- Amount -->
-                                        <div class="form-group">
-                                             <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weWantAmount" name="weWantAmountField" (ngModelChange)="onWeWantAmountChange()" placeholder="e.g. 10.5" />
-                                        </div>
-                                        <div class="form-group">
-                                             <label>Amount</label>
-                                             <input type="text" [(ngModel)]="weSpendAmount" name="weSpendAmount" (ngModelChange)="onWeSpendAmountChange()" placeholder="e.g. 10.5" />
-                                        </div>
-                                   </div>
-
-                                   <div class="form-row">
-                                        <!-- Currency Balance -->
-                                        <div class="form-group">
-                                             <label>Currency Balance</label>
-                                             <!-- <input type="text" [value]="(weWantBalance) ?? '0'" readonly name="weWantTokenBalanceField" /> -->
-                                        </div>
-                                        <div class="form-group">
-                                             <label>Currency Balance</label>
-                                             <!-- <input type="text" [value]="(weSpendBalance) ?? '0'" readonly name="weSpendTokenBalanceField" /> -->
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Flags header -->
-                                   @if(activeTab() === 'createOffer') {
-                                   <div class="token-flags-header" style="margin-top: 0.8em; margin-bottom: 0.5em">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Offer Flags</span>
-                                   </div>
-
-                                   <div class="form-row-account-flags">
-                                        @for (flag of offerFlagsConfig; track flag.key) {
-                                        <button class="flag-item-account-flags" [class.enabled]="flags[flag.key]" (click)="toggleFlag(flag.key)" type="button">
-                                             <div class="flag-header-account">
-                                                  <input type="checkbox" [id]="flag.key" [name]="flag.key" [checked]="flags[flag.key]" class="flag-checkbox" />
-                                                  <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                       <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                  </svg>
-                                                  <span class="flag-title-account-flags">{{ flag.title }}</span>
-                                             </div>
-
-                                             <div class="flag-value">{{ FLAG_VALUES[flag.key] }} {{ flag.key }}</div>
-                                             <div class="flag-desc">{{ flag.desc }}</div>
-                                        </button>
-                                        }
-                                        <div class="flag-item-account-flags">
-                                             <div class="flags-total">
-                                                  <span class="total-label">Total Flags Value:</span>
-                                                  <span class="total-value">{{ totalFlagsValue() }} ({{ totalFlagsHex() }})</span>
-                                             </div>
-                                        </div>
-                                   </div>
-                                   } }
-
-                                   <!-- Cancel offer -->
-                                   @if (activeTab() === 'cancelOffer' && existingOffers().length > 0) {
-                                   <div class="form-row" style="margin-bottom: 1.2em">
-                                        <div class="form-group">
-                                             <label>Select Offers to cancel</label>
-                                             <p class="form-hint">Select existing offers to cancel for the selected account.</p>
-                                             <div class="combobox-container" (clickOutside)="closeOfferDropdown()">
-                                                  <input #offerDropdownInput type="text" [value]="offerSearchQuery()" (input)="onOfferSearchInput($event)" (focus)="openOfferDropdown()" (keydown)="onOfferKeyDown($event)" [placeholder]="selectedOfferSequences().length > 0 ? selectedOfferSequences().length + ' offer(s) selected' : 'Search offers by sequence...'" class="combobox-input" autocomplete="off" />
-                                                  <button class="combobox-toggle" (click)="toggleOfferDropdown()" type="button">
-                                                       <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                                  </button>
-                                             </div>
-                                        </div>
-                                   </div>
-
-                                   @if (selectedOffers().length > 0) {
-                                   <div class="offer-container">
-                                        <!-- List of selected offers -->
-                                        <div class="offer-list">
-                                             @for (offer of selectedOffers(); track offer.Sequence) {
-                                             <div class="offer-item">
-                                                  <span class="offer-sequence">{{ formatOfferDisplay(offer) }}</span>
-                                                  <button type="button" class="offer-remove" (click)="toggleOfferSelection(offer)" aria-label="Remove offer">
-                                                       <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
-                                                  </button>
-                                             </div>
-                                             }
-                                        </div>
-
-                                        <!-- Footer row -->
-                                        <div class="offer-footer">
-                                             <button type="button" class="clear-btn" (click)="clearAllOfferSelections()">Clear all</button>
-                                        </div>
-                                   </div>
-                                   }
-
-                                   <!-- Dropdown Template -->
-                                   <ng-template #offerDropdownTemplate>
-                                        <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                                             <div class="combobox-dropdown-overlay offer-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
-                                                  <!-- Header: Select All + Clear -->
-                                                  <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
-                                                       <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                                                            <input type="checkbox" [checked]="allOffersSelected()" (change)="toggleSelectAllOffers()" style="width: 16px; height: 16px" />
-                                                            <span>Select All</span>
-                                                       </label>
-                                                       <button class="clear-btn" (click)="clearAllOfferSelections()" [disabled]="selectedOfferSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="selectedOfferSequences().length === 0 ? 0.5 : 1">Clear</button>
-                                                  </div>
-
-                                                  <!-- Offer Items -->
-                                                  @for (offer of filteredOffers(); track offer.Sequence; let i = $index) {
-                                                  <label class="combobox-item offer-item" [class.highlighted]="highlightedOfferIndex() === i" (mouseenter)="highlightedOfferIndex.set(i)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                                                       <input type="checkbox" [checked]="selectedOfferSequences().includes(offer.Sequence)" (change)="toggleOfferSelection(offer)" style="width: 16px; height: 16px; cursor: pointer" />
-                                                       <span class="offer-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ formatOfferDisplay(offer) }} </span>
-                                                  </label>
-                                                  } @empty {
-                                                  <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No offers match your search</div>
-                                                  }
-                                             </div>
-                                        </div>
-                                   </ng-template>
-                                   }
-                              </div>
+                    <div class="tab-content-columns">
+                         <div class="tab-content-container form-fields-container">
+                              <app-offer-fields
+                                   [tab]="tab"
+                                   (weWantCurrencySelected)="onWeWantCurrencySelected($event)"
+                                   (weWantIssuerSelected)="onWeWantIssuerSelected($event)"
+                                   (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)"
+                                   (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)"
+                                   (weWantAmountChange)="handleWeWantAmountChange()"
+                                   (weSpendAmountChange)="handleWeSpendAmountChange()"
+                                   (invertOrder)="invertOrder()"
+                              />
                          </div>
-
-                         <!-- <app-transaction-options [showWhenTab]="['createOffer', 'cancelOffer']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              <!-- @if (activeTab() === 'getOffers') {
-                              <button type="button" class="btn-primary-blue" (click)="getOffers()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Offers' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
-                              } @else  -->
-                              @if(activeTab() === 'createOffer') {
-                              <button type="button" class="btn-primary-green" (click)="createOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Create Offer' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
-                              } @else if(activeTab() === 'getOrderBook') {
-                              <button type="button" class="btn-primary-blue" (click)="getOrderBook()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Get Orderbook' }}</button>
-                              <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Invert Order' }}</button>
-                              } @else if(activeTab() === 'cancelOffer') {
-                              <button type="button" class="btn-primary-red" (click)="cancelOffer()" [disabled]="txUiService.spinner()">{{ txUiService.spinner() ? 'Processing...' : 'Cancel Offer' }}</button>
-                              <button type="button" (click)="clearFields()" class="btn-secondary-clear-fields">Clear Fields</button>
-                              }
-                         </div>
-
-                         <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
                     </div>
+
+                    <app-transaction-options
+                         [showWhenTab]="['createOffer', 'cancelOffer']"
+                         [activeTab]="viewModel.activeTab"
+                         [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()"
+                         [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"
+                    />
+
+                    <div class="button-row">
+                         <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">
+                              {{ txUiService.spinner() ? 'Processing...' : offerUtilsService.actionButtonLabel() }}
+                         </button>
+
+                         @if (tab === 'createOffer' || tab === 'getOrderBook') {
+                         <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">
+                              Invert Order
+                         </button>
+                         }
+
+                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    </div>
+
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <app-transaction-preview></app-transaction-preview>
                </form>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>XRPL DEX Offers (Create / Cancel / Order Book)</h3>
-               </div>
-
-               <p class="info-subtitle">The XRPL decentralized exchange (DEX) lets you create offers to trade any two assets (XRP ↔ issued tokens or token ↔ token). Use OfferCreate to place buy/sell orders, OfferCancel to remove your own active offers, and query order books or your offers to monitor the market and your positions.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">📈 Create Offer</span>
-                              <span class="badge required-badge">OfferCreate</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Taker Gets</span>
-                                   <span class="field-status required">✅ Required (asset you want to receive)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Taker Pays</span>
-                                   <span class="field-status required">✅ Required (asset you offer to give)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Currency Code + Issuer</span>
-                                   <span class="field-status required">✅ Required for issued tokens (XRP has no issuer)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Flags</span>
-                                   <span class="field-status optional">➕ Optional (passive, immediate-or-cancel, fill-or-kill, sell)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">❌ Cancel / View Offers</span>
-                              <span class="badge optional-badge">OfferCancel or Query</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Offer Sequence / Index</span>
-                                   <span class="field-status required">✅ Required for cancel (your account's offer sequence or index)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Order Book Query</span>
-                                   <span class="field-status optional">➕ TakerGets + TakerPays pair to view bids/asks</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Your Offers</span>
-                                   <span class="field-status optional">➕ View active offers created by your account</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>Offers are limit orders on the XRPL DEX — they sit in the order book until matched, canceled, or expired (via expiration field, if set).</li>
-                              <li><strong>Taker Gets</strong>: What the counterparty receives (what you are selling / buying into).</li>
-                              <li><strong>Taker Pays</strong>: What the counterparty pays (what you are buying / selling from).</li>
-                              <li>
-                                   Common flags:
-                                   <ul>
-                                        <li><strong>tfPassive</strong> — Offer does not consume existing offers (good for market making)</li>
-                                        <li><strong>tfImmediateOrCancel</strong> — Execute only what can be filled immediately; cancel rest</li>
-                                        <li><strong>tfFillOrKill</strong> — Fill entire amount or cancel completely</li>
-                                        <li><strong>tfSell</strong> — Treat as sell offer even if amounts suggest buy (useful for IOUs)</li>
-                                   </ul>
-                              </li>
-                              <li>Each active offer consumes **owner reserve** (~0.2 XRP) until canceled, fully consumed, or expired.</li>
-                              <li>Order book queries (book_offers) show bids (buy offers) and asks (sell offers) for a given pair — useful for pricing and depth analysis.</li>
-                              <li>Cancel uses your offer's **sequence number** (from account_offers) or **OfferIndex** — only you can cancel your own offers.</li>
-                              <li>Offers auto-match when a new offer crosses the book — partial fills are possible; unmatched portion stays active.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Irreversibility & DEX Risks</h5>
-                         <p style="color: #92400e">Offers lock funds or assets until resolved — market volatility, wrong pricing, or unfilled offers can tie up reserve or cause losses.</p>
-                         <ul>
-                              <li>Once matched, trades are **permanent** — no native reversal; you receive the counterparty asset immediately.</li>
-                              <li>Passive offers do **not** consume existing offers — useful for providing liquidity, but they may sit unfilled longer.</li>
-                              <li>ImmediateOrCancel / FillOrKill prevent partial fills — but if nothing matches, the tx fails and you burn the fee.</li>
-                              <li>Wrong TakerGets/TakerPays pair or issuer causes offer to be invalid — double-check currency codes and issuers.</li>
-                              <li>Active offers consume reserve — too many unfilled offers can lock your account's XRP and prevent other actions.</li>
-                              <li>Order book can be thin or manipulated in low-liquidity pairs — large orders may slip significantly or not fill at desired price.</li>
-                              <li>Always test offer creation, matching, and cancellation on devnet or Testnet first — incorrect amounts, flags, or sequences burn fees without effect.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <app-offer-requirements-info></app-offer-requirements-info>
      </div>
 </div>
