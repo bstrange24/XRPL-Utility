@@ -12,7 +12,6 @@ import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
@@ -28,7 +27,7 @@ import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { WALLET_GENERATOR_TAB_META, WALLET_GENERATOR_TABS } from './constants/wallet-generator.ui';
 import { WALLET_GENERATOR_TAB } from './constants/wallet-generator.constants';
-import { ButtonLoadingState, WalletGeneratorActionTypes } from './constants/wallet-generator.types';
+import { WalletGeneratorActionTypes } from './constants/wallet-generator.types';
 import { WalletsViewModelService } from '../../services/wallets/wallets-view-model/wallets-view-model.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
@@ -39,6 +38,7 @@ import { WalletDeriveSecretNumbersComponent } from './tab/wallet-derive-secret-n
 import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wallet/wallet-remove-custom-wallet.component';
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
 import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -54,10 +54,10 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
-     public readonly walletGenerator = inject(WalletGeneratorService);
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
+     public readonly walletConfiguratorOrchestrator = inject(WalletConfiguratorOrchestratorService);
 
      readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;
@@ -97,18 +97,21 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           }
      }
 
-     async generateNewAccount() {
-          await this.executeWalletFlow({
+     async generateNewAccount(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'generateNewAccount',
                loadingKey: 'generateNewWalletFromSeed',
                walletType: 'familySeed',
                mode: 'generate',
                successMessage: addr => `Generated ${addr} wallet successfully!`,
           });
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
+          }
      }
 
-     async deriveWalletFromFamilySeed() {
-          await this.executeWalletFlow({
+     async deriveWalletFromFamilySeed(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'deriveWalletFromFamilySeed',
                loadingKey: 'deriveWalletFromFamilySeed',
                walletType: 'familySeed',
@@ -117,20 +120,26 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                validate: () => (xrpl.isValidSecret(this.walletsStoreService.seed()) ? null : 'Invalid seed value.'),
                successMessage: addr => `Successfully added ${addr}`,
           });
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
+          }
      }
 
-     async generateNewWalletFromMnemonic() {
-          await this.executeWalletFlow({
+     async generateNewWalletFromMnemonic(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'generateNewWalletFromMnemonic',
                loadingKey: 'generateNewWalletFromMnemonic',
                walletType: 'mnemonic',
                mode: 'generate',
                successMessage: addr => `Generated ${addr} wallet from a mnemonic successfully!`,
           });
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
+          }
      }
 
-     async deriveWalletFromMnemonic() {
-          await this.executeWalletFlow({
+     async deriveWalletFromMnemonic(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'deriveWalletFromMnemonic',
                loadingKey: 'deriveWalletFromMnemonic',
                walletType: 'mnemonic',
@@ -139,20 +148,26 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                validate: () => (this.utilsService.isValidMnemonic(this.walletsStoreService.mnemonic()) ? null : this.walletsStoreService.errorMessage()),
                successMessage: addr => `Successfully added ${addr}`,
           });
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
+          }
      }
 
-     async generateNewWalletFromSecretNumbers() {
-          await this.executeWalletFlow({
+     async generateNewWalletFromSecretNumbers(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'generateNewWalletFromSecretNumbers',
                loadingKey: 'generateNewWalletFromSecretNumbers',
                walletType: 'secretNumbers',
                mode: 'generate',
                successMessage: addr => `Generated ${addr} wallet from secret numbers successfully!`,
           });
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
+          }
      }
 
-     async deriveWalletFromSecretNumbers() {
-          await this.executeWalletFlow({
+     async deriveWalletFromSecretNumbers(): Promise<void> {
+          const result = await this.walletConfiguratorOrchestrator.executeWalletFlow({
                perfLabel: 'deriveWalletFromSecretNumbers',
                loadingKey: 'deriveWalletFromSecretNumbers',
                walletType: 'secretNumbers',
@@ -160,80 +175,17 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                input: () => this.walletsStoreService.secretNumbers(),
                validate: () => {
                     const converted = this.utilsService.convertSecretNumberStringToArray(this.walletsStoreService.secretNumbers());
-
                     return this.utilsService.isValidSecret(converted) ? null : 'Invalid Secret Number.';
                },
                successMessage: addr => `Successfully added ${addr}`,
           });
-     }
-
-     private async executeWalletFlow(config: {
-          perfLabel: string;
-          loadingKey: keyof ButtonLoadingState;
-          walletType: 'familySeed' | 'mnemonic' | 'secretNumbers';
-          mode: 'generate' | 'import';
-          input?: () => any;
-          validate?: () => string | null; // return error message or null
-          successMessage: (address: string) => string;
-     }) {
-          await this.withPerf(config.perfLabel, async () => {
-               this.txUiService.clearTxResultsHash();
-               this.txUiService.resetCurrentStepToIdle();
-
-               this.walletsStoreService.updateField('buttonLoading', s => ({
-                    ...s,
-                    [config.loadingKey]: true,
-               }));
-
-               try {
-                    this.txUiService.currentStep.set('waiting_for_wallet_creation');
-
-                    const encryption = this.walletsUtilService.getEncryptionType();
-
-                    // Validation (if provided)
-                    if (config.validate) {
-                         const errorMsg = config.validate();
-                         if (errorMsg) {
-                              this.toastService.error(errorMsg, AppConstants.TOAST.ERROR);
-                              return;
-                         }
-                    }
-
-                    // Execute wallet op
-                    const wallet = config.mode === 'generate' ? await this.walletGenerator.generateWallet(config.walletType, this.environment(), encryption) : await this.walletGenerator.importWallet(config.walletType, config.input?.(), encryption);
-
-                    await this.refreshWallets(await this.xrplService.getClient(), [wallet.address]);
-
-                    this.txUiService.setTxResultSignal(wallet);
-
-                    this.toastService.success(config.successMessage(wallet.address), AppConstants.TOAST.SUCCESS, false);
-               } catch (error: any) {
-                    this.handleWalletError(error);
-               } finally {
-                    this.walletsStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         [config.loadingKey]: false,
-                    }));
-
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     private handleWalletError(error: any) {
-          console.error(error);
-
-          if (error?.message?.includes('Account not found')) {
-               this.toastService.error(`${error.message} Are you using the correct encryption?`, AppConstants.TOAST.ERROR);
-          } else {
-               this.toastService.error(error?.message || 'Unknown error', AppConstants.TOAST.ERROR);
+          if (result.success && result.wallet) {
+               await this.refreshWallets(await this.xrplService.getClient(), [result.wallet.address]);
           }
      }
 
      removeCustomWallet(): void {
           const address = this.walletsStoreService.selectedAddress();
-
-          console.log('[REMOVE PARENT] Reading from store:', address);
 
           if (!address) {
                this.toastService.error('Please select a custom wallet first', AppConstants.TOAST.ERROR);
@@ -245,21 +197,15 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                return;
           }
 
-          const currentCustoms = this.transactionDropdownService.customDestinations();
-          if (!currentCustoms.some(w => w.address === address)) {
-               this.toastService.error('Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
+          const result = this.walletConfiguratorOrchestrator.removeCustomWallet(address);
+
+          if (!result.success) {
+               this.toastService.error(result.error ?? 'Failed to remove custom wallet', AppConstants.TOAST.ERROR);
                return;
           }
 
-          const custDest = this.transactionDropdownService.customDestinations.update(list => list.filter(w => w.address !== address));
-          this.storageService.set('customDestinations', JSON.stringify(custDest));
-
           this.updateDestinations();
-
-          // Reset
           this.walletsStoreService.setField('selectedAddress', '');
-
-          this.toastService.success(`Custom wallet ${address} removed successfully`);
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -284,3 +230,4 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.walletsStoreService.resetAll();
      }
 }
+

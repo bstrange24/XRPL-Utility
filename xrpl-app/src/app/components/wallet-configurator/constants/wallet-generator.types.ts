@@ -13,3 +13,13 @@ export type ButtonLoadingState = {
      deriveWalletFromMnemonic: boolean;
      deriveWalletFromSecretNumbers: boolean;
 };
+
+export interface WalletFlowConfig {
+     perfLabel: string;
+     loadingKey: keyof ButtonLoadingState;
+     walletType: 'familySeed' | 'mnemonic' | 'secretNumbers';
+     mode: 'generate' | 'import';
+     input?: () => any;
+     validate?: () => string | null;
+     successMessage: (address: string) => string;
+}
