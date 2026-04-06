@@ -1,0 +1,8 @@
+@if (viewModel.infoData(); as info) {
+<div class="info-only-card">
+     <div class="info-panel-content">
+          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
+          <div class="info-text" [innerHTML]="info"></div>
+     </div>
+</div>
+}

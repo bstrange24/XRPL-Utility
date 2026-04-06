@@ -1,0 +1,66 @@
+<div class="controls-container">
+     <!-- Row 1: Search + Date -->
+     <div class="form-row filters-row">
+          <!-- Search -->
+          <div class="form-group search-group">
+               <label>Search hash, type, amount…</label>
+               <div class="search-bar">
+                    <mat-icon class="search-icon">search</mat-icon>
+                    <input
+                         type="text"
+                         [ngModel]="store.filterValue()"
+                         (ngModelChange)="onSearchInput($event)"
+                         placeholder="Search transactions…" />
+                    @if (store.filterValue()) {
+                    <button mat-icon-button class="clear-icon" (click)="clearFilter()" aria-label="Clear filter">
+                         <mat-icon>close</mat-icon>
+                    </button>
+                    }
+               </div>
+          </div>
+
+          <!-- Date range -->
+          <div class="form-group date-filter-group">
+               <label>Date range</label>
+               <div class="date-filter-container">
+                    <div class="date-input-wrapper">
+                         <span class="date-label">From</span>
+                         <input
+                              type="date"
+                              [ngModel]="store.dateRange().start ? (store.dateRange().start | date:'yyyy-MM-dd') : null"
+                              (ngModelChange)="setStartDate($event)"
+                              class="date-input" />
+                    </div>
+
+                    <div class="date-input-wrapper">
+                         <span class="date-label">To</span>
+                         <input
+                              type="date"
+                              [ngModel]="store.dateRange().end ? (store.dateRange().end | date:'yyyy-MM-dd') : null"
+                              (ngModelChange)="setEndDate($event)"
+                              class="date-input" />
+                    </div>
+
+                    <button mat-icon-button (click)="clearDateFilter()" matTooltip="Clear date filter" class="clear-date-btn">
+                         <lucide-icon name="eraser" size="20"></lucide-icon>
+                    </button>
+               </div>
+          </div>
+     </div>
+
+     <!-- Row 2: Action buttons -->
+     <div class="form-row">
+          <div class="form-group">
+               <div class="button-row">
+                    <button
+                         type="button"
+                         class="btn-primary-blue"
+                         (click)="onRefresh()"
+                         [disabled]="store.loadingInitial()">
+                         {{ store.loadingInitial() ? 'Loading…' : 'Refresh' }}
+                    </button>
+                    <button type="button" class="btn-secondary-clear-fields" (click)="clearAll()">Clear Fields</button>
+               </div>
+          </div>
+     </div>
+</div>
