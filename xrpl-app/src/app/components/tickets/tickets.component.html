@@ -42,79 +42,12 @@
                <form #theForm="ngForm" class="main-form">
                     <!-- Create tickets -->
                     @if (tab === 'createTicket') {
-                    <div class="form-row">
-                         <div class="form-group">
-                              <label for="ticketCountField">Number of Tickets to create</label>
-                              <p class="form-hint">Number of Tickets to create for the selected account.</p>
-                              <input type="text" [(ngModel)]="xrplTxOptionsStore.ticketCountField" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
-                         </div>
-                    </div>
+                    <app-tickets-create></app-tickets-create>
                     }
 
                     <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
                     @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
-                    <div class="form-row" style="margin-bottom: 1.2em">
-                         <div class="form-group">
-                              <label for="ticketDropdownField">Select Tickets to Delete</label>
-                              <p class="form-hint">Select available tickets to delete for the selected account.</p>
-                              <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeTicketDropdown()">
-                                   <input #ticketDropdownInput type="text" [value]="ticketStore.ticketSearchQuery()" (input)="onTicketSearchInput($event)" (focus)="openTicketDropdown()" (keydown)="onTicketKeyDown($event)" [placeholder]="xrplTxOptionsStore.selectedTicketSequences().length > 0 ? xrplTxOptionsStore.selectedTicketSequences().length + ' ticket(s) selected' : 'Search tickets by sequence...'" [value]="ticketStore.ticketSearchQuery()" class="combobox-input" autocomplete="off" />
-                                   <button class="combobox-toggle" (click)="toggleTicketDropdown()" type="button">
-                                        <lucide-icon name="chevron-down" size="18"></lucide-icon>
-                                   </button>
-                              </div>
-                         </div>
-                    </div>
-
-                    <!-- NEW: Selected Tickets Chips -->
-                    @if (xrplTxOptionsStore.selectedTicketSequences().length > 0) {
-                    <div class="ticket-container">
-                         <!-- List of selected tickets -->
-                         <div class="ticket-list">
-                              @for (ticketSeq of xrplTxOptionsStore.selectedTicketSequences(); track ticketSeq) {
-                              <div class="ticket-item">
-                                   <span class="ticket-number">{{ ticketSeq }}</span>
-
-                                   <button type="button" class="ticket-remove" (click)="toggleTicketSelection(ticketSeq)" aria-label="Remove ticket">
-                                        <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
-                                   </button>
-                              </div>
-                              }
-                         </div>
-
-                         <!-- Footer row -->
-                         <div class="ticket-footer">
-                              <button type="button" class="clear-btn" (click)="clearAllSelections()">Clear all</button>
-                         </div>
-                    </div>
-                    }
-
-                    <!-- Dropdown Template -->
-                    <ng-template #ticketDropdownTemplate>
-                         <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-                              <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
-                                   <!-- Header: Select All + Clear -->
-                                   <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
-                                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                                             <input type="checkbox" [checked]="viewModel.allTicketsSelected()" (change)="toggleSelectAllTickets()" style="width: 16px; height: 16px" />
-                                             <span>Select All</span>
-                                        </label>
-                                        <button class="clear-btn" (click)="clearAllSelections()" [disabled]="xrplTxOptionsStore.selectedTicketSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="xrplTxOptionsStore.selectedTicketSequences().length === 0 ? 0.5 : 1">Clear</button>
-                                   </div>
-
-                                   <!-- Ticket Items -->
-                                   @for (ticket of filteredTickets(); track ticket) {
-                                   <label class="combobox-item ticket-item" [class.highlighted]="ticketStore.highlightedTicketIndex() === $index" (mouseenter)="ticketStore.setField('highlightedTicketIndex' ,$index)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                                        <input type="checkbox" [checked]="xrplTxOptionsStore.selectedTicketSequences().includes(ticketsUtilService.convertToString(ticket))" (change)="toggleTicketSelection(ticket)" style="width: 16px; height: 16px; cursor: pointer" />
-
-                                        <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937"> {{ ticket }} </span>
-                                   </label>
-                                   } @empty {
-                                   <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No tickets match your search</div>
-                                   }
-                              </div>
-                         </div>
-                    </ng-template>
+                    <app-tickets-delete></app-tickets-delete>
                     }
 
                     <app-transaction-options [showWhenTab]="['createTicket','deleteTicket']" [activeTab]="ticketsViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
