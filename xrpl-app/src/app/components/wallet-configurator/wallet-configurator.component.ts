@@ -200,7 +200,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           const result = this.walletConfiguratorOrchestrator.removeCustomWallet(address);
 
           if (!result.success) {
-               this.toastService.error(result.error ?? 'Failed to remove custom wallet', AppConstants.TOAST.ERROR);
+               this.toastService.error(result.error ?? 'Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
                return;
           }
 

@@ -46,7 +46,7 @@ export class WalletConfiguratorOrchestratorService extends PerformanceBaseCompon
                     const wallet =
                          config.mode === 'generate'
                               ? await this.walletGenerator.generateWallet(config.walletType, this.environment(), encryption)
-                              : await this.walletGenerator.importWallet(config.walletType, config.input?.(), encryption);
+                              : await this.walletGenerator.importWallet(config.walletType, config.input!(), encryption);
 
                     this.txUiService.setTxResultSignal(wallet);
                     this.toastService.success(config.successMessage(wallet.address), AppConstants.TOAST.SUCCESS, false);
