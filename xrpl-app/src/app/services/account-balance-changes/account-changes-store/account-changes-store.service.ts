@@ -51,17 +51,17 @@ export const AccountChangesStoreService = signalStore(
           },
 
           getAll(): AccountChangesState {
-               const snapshot: any = {};
+               const snapshot: Record<string, unknown> = {};
                for (const [key, value] of Object.entries(store)) {
                     if (typeof value === 'function') {
                          try {
-                              snapshot[key] = value();
+                              snapshot[key] = (value as () => unknown)();
                          } catch {
                               // ignore non-signal methods
                          }
                     }
                }
-               return snapshot as AccountChangesState;
+               return snapshot as unknown as AccountChangesState;
           },
      }))
 );

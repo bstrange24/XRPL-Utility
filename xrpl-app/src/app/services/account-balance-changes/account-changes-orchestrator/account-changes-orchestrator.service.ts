@@ -22,7 +22,7 @@ export class AccountChangesOrchestratorService {
 
      private readonly PAGE_SIZE = 25;
      private readonly seenHashes = new Set<string>();
-     private marker: any = undefined;
+     private marker: unknown = undefined;
 
      async loadBalanceChanges(reset = true): Promise<void> {
           if (reset && this.store.loadingInitial()) return;
@@ -44,7 +44,7 @@ export class AccountChangesOrchestratorService {
 
                if (!this.store.hasMoreData()) return;
 
-               const txResponse = await this.xrplService.getAccountTransactions(env.client, env.wallet.classicAddress, this.PAGE_SIZE, this.marker);
+               const txResponse = await this.xrplService.getAccountTransactions(env.client, env.wallet.classicAddress, this.PAGE_SIZE, this.marker as string);
 
                const txs = txResponse?.result?.transactions ?? [];
 
