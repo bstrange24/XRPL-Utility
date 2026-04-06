@@ -9,7 +9,7 @@ import { AccountChangesStoreService } from '../../../../services/account-balance
 import { AccountChangesViewModelService } from '../../../../services/account-balance-changes/account-changes-view-model/account-changes-view-model.service';
 import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { BalanceChange } from '../../../../models/interface-items.model';
+import { BalanceChange } from '../../constants/account-balance.types';
 
 @Component({
      selector: 'app-account-changes-table',

@@ -19,17 +19,7 @@ import { AccountChangesTableComponent } from './ui-components/account-changes-ta
      selector: 'app-account-changes',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [
-          CommonModule,
-          LucideAngularModule,
-          NgIcon,
-          NavbarComponent,
-          WalletPanelComponent,
-          WarningMessageComponent,
-          AccountChangesSummaryComponent,
-          AccountChangesFiltersComponent,
-          AccountChangesTableComponent,
-     ],
+     imports: [CommonModule, LucideAngularModule, NgIcon, NavbarComponent, WalletPanelComponent, WarningMessageComponent, AccountChangesSummaryComponent, AccountChangesFiltersComponent, AccountChangesTableComponent],
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
 })

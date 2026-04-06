@@ -25,19 +25,6 @@ export class TicketsUtilService {
           return this.txUiService.stepMessage();
      });
 
-     getTransactionValues() {
-          const amount = this.txUiService.amountField();
-          const isSimulate = this.xrplTxOptionsStore.isSimulateEnabled();
-          const useMultiSign = this.xrplTxOptionsStore.useMultiSign();
-          // const isRegularKeyAddress = this.txUiService.isRegularKeyAddress();
-          const isRegularKeyAddress = this.accountConfiguratorStoreService.isRegularKeyAddress();
-          const regularKeyAddress = this.txUiService.regularKeyAddress();
-          const regularKeySeed = this.txUiService.regularKeySeed();
-          const multiSignAddress = this.txUiService.multiSignAddress();
-          const multiSignSeeds = this.txUiService.multiSignSeeds();
-          return { amount, isSimulate, useMultiSign, isRegularKeyAddress, regularKeyAddress, regularKeySeed, multiSignAddress, multiSignSeeds };
-     }
-
      getAllTicketsSelected(ticketArray: any, selectedTicketSequences: any) {
           return computed(() => {
                const all = ticketArray;

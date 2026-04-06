@@ -1,104 +1,76 @@
 <div class="navbar-container">
-  <div class="navbar-links">
-    <a routerLink="/wallet-configurator" routerLinkActive="active">Wallets</a>
+     <div class="navbar-links">
+          <a routerLink="/wallet-configurator" routerLinkActive="active">Wallets</a>
 
-    <div class="dropdown accounts-dropdown"
-     routerLinkActive="active"
-     [routerLinkActiveOptions]="{ exact: false }">
+          <div class="dropdown accounts-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('accounts'); $event.preventDefault()"> Accounts ▾ </a>
 
-  <a href="#"
-     class="dropdown-toggle"
-     (click)="store.toggleDropdown('accounts'); $event.preventDefault()">
-    Accounts ▾
-  </a>
+               <div class="dropdown-menu">
+                    <a routerLink="/account-balance-changes" routerLinkActive="active">Balance Changes</a>
+                    <a routerLink="/account-configurator" routerLinkActive="active">Configurator</a>
+                    <a routerLink="/delete-account" routerLinkActive="active">Account Delete</a>
+                    <a routerLink="/create-credentials" routerLinkActive="active">Create Credentials</a>
+                    <a routerLink="/create-did" routerLinkActive="active">Create DID</a>
+                    <a routerLink="/permissioned-domain" routerLinkActive="active">Permissioned Domain</a>
+               </div>
+          </div>
+          <!-- <a routerLink="/set-hook" routerLinkActive="active" (click)="setActiveLink('/set-hook')">Set Hook</a> -->
+          <a routerLink="/send-xrp" routerLinkActive="active">Send XRP</a>
+          <a routerLink="/sign-transactions" routerLinkActive="active">Sign Transactions</a>
+          <a routerLink="/trustlines" routerLinkActive="active">Trustlines</a>
+          <a routerLink="/payment-channel" routerLinkActive="active">Payment Channel</a>
 
-  <div class="dropdown-menu">
-    <a routerLink="/account-balance-changes" routerLinkActive="active">Balance Changes</a>
-    <a routerLink="/account-configurator" routerLinkActive="active">Configurator</a>
-    <a routerLink="/delete-account" routerLinkActive="active">Account Delete</a>
-    <a routerLink="/create-credentials" routerLinkActive="active">Create Credentials</a>
-    <a routerLink="/create-did" routerLinkActive="active">Create DID</a>
-    <a routerLink="/permissioned-domain" routerLinkActive="active">Permissioned Domain</a>
-  </div>
-</div>
-     <!-- <a routerLink="/set-hook" routerLinkActive="active" (click)="setActiveLink('/set-hook')">Set Hook</a> -->
-    <a routerLink="/send-xrp" routerLinkActive="active">Send XRP</a>
-<a routerLink="/sign-transactions" routerLinkActive="active">Sign Transactions</a>
-<a routerLink="/trustlines" routerLinkActive="active">Trustlines</a>
-<a routerLink="/payment-channel" routerLinkActive="active">Payment Channel</a>
+          <div class="dropdown escrows-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('escrows'); $event.preventDefault()"> Escrows ▾ </a>
 
-    <div class="dropdown escrows-dropdown"
-     routerLinkActive="active"
-     [routerLinkActiveOptions]="{ exact: false }">
+               <div class="dropdown-menu">
+                    <a routerLink="/time-escrow" routerLinkActive="active">Time Escrow</a>
+                    <a routerLink="/conditional-escrow" routerLinkActive="active">Conditional Escrow</a>
+               </div>
+          </div>
 
-  <a href="#"
-     class="dropdown-toggle"
-     (click)="store.toggleDropdown('escrows'); $event.preventDefault()">
-    Escrows ▾
-  </a>
+          <a routerLink="/checks" routerLinkActive="active">Checks</a>
+          <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
+          <a routerLink="/create-offer" routerLinkActive="active">Offers</a>
+          <a routerLink="/create-amm" routerLinkActive="active">AMM</a>
 
-  <div class="dropdown-menu">
-    <a routerLink="/time-escrow" routerLinkActive="active">Time Escrow</a>
-    <a routerLink="/conditional-escrow" routerLinkActive="active">Conditional Escrow</a>
-  </div>
-</div>
+          <div class="dropdown escrows-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
+               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('nft'); $event.preventDefault()"> NFTs ▾ </a>
 
-    <a routerLink="/checks" routerLinkActive="active">Checks</a>
-<a routerLink="/tickets" routerLinkActive="active">Tickets</a>
-<a routerLink="/create-offer" routerLinkActive="active">Offers</a>
-<a routerLink="/create-amm" routerLinkActive="active">AMM</a>
+               <div class="dropdown-menu">
+                    <a routerLink="/create-nft" routerLinkActive="active">NFT Create</a>
+                    <a routerLink="/nft-offers" routerLinkActive="active">NFT Offers</a>
+               </div>
+          </div>
 
-<div class="dropdown escrows-dropdown"
-     routerLinkActive="active"
-     [routerLinkActiveOptions]="{ exact: false }">
+          <a routerLink="/mpt" routerLinkActive="active">MPT</a>
+     </div>
 
-  <a href="#"
-     class="dropdown-toggle"
-     (click)="store.toggleDropdown('nft'); $event.preventDefault()">
-    NFTs ▾
-  </a>
+     <div class="network-dropdown network network-{{ store.selectedNetwork().toLowerCase() }}" style="padding-left: 2.5em">
+          <button class="btn dropdown-toggle" (click)="store.toggleDropdown('network')" [style.backgroundColor]="store.networkColor()">
+               <div class="dropdown-toggle-text">{{ store.selectedNetwork() }}</div>
 
-  <div class="dropdown-menu">
-    <a routerLink="/create-nft" routerLinkActive="active">NFT Create</a>
-    <a routerLink="/nft-offers" routerLinkActive="active">NFT Offers</a>
-  </div>
-</div>
+               <svg class="arrow" [ngClass]="{ open: store.dropdowns().network }" viewBox="0 0 12 12" width="12" height="12">
+                    <path fill="black" d="M2 4l4 4 4-4H2z" />
+               </svg>
+          </button>
 
-    <a routerLink="/mpt" routerLinkActive="active">MPT</a>
-  </div>
+          <div class="dropdown-menu" [ngStyle]="{ display: store.dropdowns().network ? '-webkit-box' : 'none' }">
+               <a class="dropdown-item devnet" href="#" (click)="store.selectNetwork('Devnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Devnet' }"> Devnet </a>
+               <a class="dropdown-item testnet" href="#" (click)="store.selectNetwork('Testnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Testnet' }"> Testnet </a>
+               <a class="dropdown-item mainnet" href="#" (click)="store.selectNetwork('Mainnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Mainnet' }"> Mainnet </a>
+          </div>
 
-  <div class="network-dropdown network network-{{ store.selectedNetwork().toLowerCase() }}" style="padding-left: 2.5em">
-    <button class="btn dropdown-toggle" (click)="store.toggleDropdown('network')" [style.backgroundColor]="store.networkColor()">
-      <div class="dropdown-toggle-text">{{ store.selectedNetwork() }}</div>
+          <app-connection-status></app-connection-status>
+     </div>
 
-      <svg class="arrow" [ngClass]="{ open: store.dropdowns().network }" viewBox="0 0 12 12" width="12" height="12">
-        <path fill="black" d="M2 4l4 4 4-4H2z" />
-      </svg>
-    </button>
-
-    <div class="dropdown-menu" [ngStyle]="{ display: store.dropdowns().network ? '-webkit-box' : 'none' }">
-      <a class="dropdown-item devnet" href="#" (click)="store.selectNetwork('devnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Devnet' }">
-        Devnet
-      </a>
-      <a class="dropdown-item testnet" href="#" (click)="store.selectNetwork('testnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Testnet' }">
-        Testnet
-      </a>
-      <a class="dropdown-item mainnet" href="#" (click)="store.selectNetwork('mainnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Mainnet' }">
-        Mainnet
-      </a>
-    </div>
-
-    <app-connection-status></app-connection-status>
-  </div>
-
-  <div class="toggleLightDark">
-    <button class="toggleLightDarkButton" (click)="themeService.toggle()">
-      @if (!isDark()) {
-        <ng-icon name="heroMoon" size="28"></ng-icon>
-      }
-      @if (isDark()) {
-        <ng-icon name="heroSun" size="28"></ng-icon>
-      }
-    </button>
-  </div>
+     <div class="toggleLightDark">
+          <button class="toggleLightDarkButton" (click)="themeService.toggle()">
+               @if (!isDark()) {
+               <ng-icon name="heroMoon" size="28"></ng-icon>
+               } @if (isDark()) {
+               <ng-icon name="heroSun" size="28"></ng-icon>
+               }
+          </button>
+     </div>
 </div>

@@ -1,5 +1,4 @@
-import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { StorageService } from '../../local-storage/storage.service';
 import { NetworkService } from '../../network/network-service';
@@ -8,129 +7,100 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({ providedIn: 'root' })
 export class NavbarStore {
-  private storage = inject(StorageService);
-  private xrpl = inject(XrplService);
-  private networkService = inject(NetworkService);
-  private utils = inject(UtilsService);
+     private storage = inject(StorageService);
+     private xrpl = inject(XrplService);
+     private networkService = inject(NetworkService);
+     private utils = inject(UtilsService);
 
-  // -------------------
-  // STATE
-  // -------------------
-  selectedNetwork = signal('Devnet');
-  networkColor = signal('#1a1c21');
+     selectedNetwork = signal('Devnet');
+     networkColor = signal('rgb(56, 113, 69)');
 
-  dropdowns = signal({
-    network: false,
-    accounts: false,
-    escrows: false,
-    nft: false,
-    mpt: false,
-  });
+     dropdowns = signal({
+          network: false,
+          accounts: false,
+          escrows: false,
+          nft: false,
+          mpt: false,
+     });
 
-  transactionInput = signal('');
-  loading = signal(false);
+     transactionInput = signal('');
+     loading = signal(false);
 
-  // -------------------
-  // DERIVED STATE
-  // -------------------
-  connectionStatus = computed(() => this.xrpl.connectionStatus$());
-  connectionMessage = computed(() => this.xrpl.connectionMessage$());
+     connectionStatus = computed(() => this.xrpl.connectionStatus$());
+     connectionMessage = computed(() => this.xrpl.connectionMessage$());
 
-  // -------------------
-  // EFFECTS
-  // -------------------
-  constructor() {
-  }
+     constructor() {}
 
-  // -------------------
-  // ACTIONS
-  // -------------------
-  toggleDropdown(name: keyof ReturnType<typeof this.dropdowns>) {
-    this.dropdowns.update(d => ({
-      ...d,
-      [name]: !d[name],
-      // close others
-      network: name === 'network' ? !d.network : false,
-      accounts: name === 'accounts' ? !d.accounts : false,
-      escrows: name === 'escrows' ? !d.escrows : false,
-      nft: name === 'nft' ? !d.nft : false,
-      mpt: name === 'mpt' ? !d.mpt : false,
-    }));
-  }
+     toggleDropdown(name: keyof ReturnType<typeof this.dropdowns>) {
+          this.dropdowns.update(d => ({
+               ...d,
+               [name]: !d[name],
+               // close others
+               network: name === 'network' ? !d.network : false,
+               accounts: name === 'accounts' ? !d.accounts : false,
+               escrows: name === 'escrows' ? !d.escrows : false,
+               nft: name === 'nft' ? !d.nft : false,
+               mpt: name === 'mpt' ? !d.mpt : false,
+          }));
+     }
 
-  async selectNetwork(network: string) {
-    const normalized = network.toLowerCase();
+     async selectNetwork(network: string) {
+          const normalized = network.toLowerCase();
 
-    this.selectedNetwork.set(network);
-    this.networkColor.set(this.storage.getNetworkColor(normalized));
+          this.selectedNetwork.set(network);
+          this.networkColor.set(this.storage.getNetworkColor(normalized));
 
-    this.storage.setNet(this.storage['networkServers'][normalized], normalized);
+          this.storage.setNet(this.storage['networkServers'][normalized], normalized);
 
-    await this.xrpl.disconnect();
-    this.xrpl.getClient().catch(() => {});
+          await this.xrpl.disconnect();
+          this.xrpl.getClient().catch(() => {});
 
-    this.networkService.announceNetworkChange(normalized);
+          this.networkService.announceNetworkChange(normalized);
 
-    this.closeAllDropdowns();
-  }
+          this.closeAllDropdowns();
+     }
 
-  closeAllDropdowns() {
-    this.dropdowns.set({
-      network: false,
-      accounts: false,
-      escrows: false,
-      nft: false,
-      mpt: false,
-    });
-  }
+     closeAllDropdowns() {
+          this.dropdowns.set({
+               network: false,
+               accounts: false,
+               escrows: false,
+               nft: false,
+               mpt: false,
+          });
+     }
 
-  // private handleRoute(url: string) {
-  //   const clean = url.split('?')[0];
+     async searchTransaction() {
+          const input = this.transactionInput().trim();
 
-  //   this.active.set({
-  //     accounts: clean.startsWith('/account'),
-  //     escrows: clean.includes('escrow'),
-  //     nft: clean.includes('nft'),
-  //     mpt: clean.includes('mpt'),
-  //   });
-  // }
+          if (!input) return { error: 'Empty input' };
 
-  async searchTransaction() {
-    const input = this.transactionInput().trim();
+          if (!this.utils.isValidTransactionHash(input) && !this.utils.isValidCTID(input) && !xrpl.isValidAddress(input)) {
+               return { error: 'Invalid input' };
+          }
 
-    if (!input) return { error: 'Empty input' };
+          this.loading.set(true);
 
-    if (
-      !this.utils.isValidTransactionHash(input) &&
-      !this.utils.isValidCTID(input) &&
-      !xrpl.isValidAddress(input)
-    ) {
-      return { error: 'Invalid input' };
-    }
+          try {
+               const client = await this.xrpl.getClient();
 
-    this.loading.set(true);
+               if (this.utils.isValidTransactionHash(input)) {
+                    return await client.request({ command: 'tx', transaction: input });
+               }
 
-    try {
-      const client = await this.xrpl.getClient();
+               if (this.utils.isValidCTID(input)) {
+                    return await client.request({ command: 'tx', ctid: input });
+               }
 
-      if (this.utils.isValidTransactionHash(input)) {
-        return await client.request({ command: 'tx', transaction: input });
-      }
-
-      if (this.utils.isValidCTID(input)) {
-        return await client.request({ command: 'tx', ctid: input });
-      }
-
-      return await client.request({
-        command: 'account_tx',
-        account: input,
-        ledger_index_min: -1,
-        ledger_index_max: -1,
-        limit: 10,
-      });
-
-    } finally {
-      this.loading.set(false);
-    }
-  }
+               return await client.request({
+                    command: 'account_tx',
+                    account: input,
+                    ledger_index_min: -1,
+                    ledger_index_max: -1,
+                    limit: 10,
+               });
+          } finally {
+               this.loading.set(false);
+          }
+     }
 }

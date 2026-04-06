@@ -12,41 +12,39 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TemplatePortal } from '@angular/cdk/portal';
 
 @Component({
-  selector: 'app-tickets-delete',
-  standalone: true,
-  imports: [FormsModule, NgIcon, LucideAngularModule],
-  templateUrl: './tickets-delete.component.html',
-  styleUrl: './tickets-delete.component.css',
+     selector: 'app-tickets-delete',
+     standalone: true,
+     imports: [FormsModule, NgIcon, LucideAngularModule],
+     templateUrl: './tickets-delete.component.html',
+     styleUrl: './tickets-delete.component.css',
 })
 export class TicketsDeleteComponent {
-      private ticketOverlayRef: OverlayRef | null = null;
-       private readonly overlay = inject(Overlay);
-       private readonly viewContainerRef = inject(ViewContainerRef);
-       private readonly destroyRef = inject(DestroyRef);
-  public xrplTxOptionsStore = inject(XrplTxOptionsStore);
-  public ticketStore = inject(TicketStore);
-  public ticketsUtilService = inject(TicketsUtilService);
-  public ticketsViewModelService = inject(TicketsViewModelService);
-  public txUiService = inject(TransactionUiService);
+     private ticketOverlayRef: OverlayRef | null = null;
+     private readonly overlay = inject(Overlay);
+     private readonly viewContainerRef = inject(ViewContainerRef);
+     private readonly destroyRef = inject(DestroyRef);
+     public xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public ticketStore = inject(TicketStore);
+     public ticketsUtilService = inject(TicketsUtilService);
+     public ticketsViewModelService = inject(TicketsViewModelService);
+     public txUiService = inject(TransactionUiService);
 
-  @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
-       @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
-       @ViewChild('ticketDropdownInput') ticketDropdownInput!: ElementRef<HTMLInputElement>;
-       @ViewChild('ticketDropdownTemplate') ticketDropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
+     @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
+     @ViewChild('ticketDropdownInput') ticketDropdownInput!: ElementRef<HTMLInputElement>;
+     @ViewChild('ticketDropdownTemplate') ticketDropdownTemplate!: TemplateRef<any>;
 
-  // 👇 MOVE these methods from parent
-  toggleTicketSelection(seq: string): void {
+     toggleTicketSelection(seq: string): void {
           this.xrplTxOptionsStore.updateField('selectedTicketSequences', list => (list.includes(seq) ? list.filter(t => t !== seq) : [...list, seq]));
      }
 
-  
      clearAllSelections(): void {
           this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           this.xrplTxOptionsStore.setField('ticketCountField', '');
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-   toggleSelectAllTickets(): void {
+     toggleSelectAllTickets(): void {
           if (this.ticketsViewModelService.allTicketsSelected()) {
                this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           } else {
@@ -54,7 +52,7 @@ export class TicketsDeleteComponent {
           }
      }
 
-  openTicketDropdown(): void {
+     openTicketDropdown(): void {
           if (!this.ticketOverlayRef) {
                this.ticketOverlayRef = this.overlay.create({
                     hasBackdrop: true,
@@ -97,24 +95,23 @@ export class TicketsDeleteComponent {
           // this.highlightedTicketIndex.set(-1);
      }
 
-  closeTicketDropdown(): void {
+     closeTicketDropdown(): void {
           this.ticketOverlayRef?.dispose();
           this.ticketOverlayRef = null;
           this.ticketStore.setField('isTicketDropdownOpen', false);
           // this.isTicketDropdownOpen.set(false);
      }
 
-  toggleTicketDropdown(): void {
+     toggleTicketDropdown(): void {
           this.ticketOverlayRef?.hasAttached() ? this.closeTicketDropdown() : this.openTicketDropdown();
      }
 
-
-  onTicketSearchInput(event: Event): void {
+     onTicketSearchInput(event: Event): void {
           const value = (event.target as HTMLInputElement).value;
           this.ticketStore.setField('ticketSearchQuery', value);
      }
 
-   onTicketKeyDown(event: KeyboardEvent): void {
+     onTicketKeyDown(event: KeyboardEvent): void {
           const items = this.filteredTickets();
           if (items.length === 0) return;
 
@@ -146,7 +143,7 @@ export class TicketsDeleteComponent {
           });
      }
 
-  filteredTickets = computed(() => {
+     filteredTickets = computed(() => {
           const tickets = this.xrplTxOptionsStore.ticketArray(); // string[]
           const q = this.ticketStore.ticketSearchQuery().trim().toLowerCase();
           if (!q) return tickets;
@@ -154,5 +151,4 @@ export class TicketsDeleteComponent {
                (ticket: string) => ticket.toLowerCase().includes(q) // String comparison
           );
      });
-
 }

@@ -42,7 +42,7 @@ import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.com
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent,TicketsDeleteComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,8 +57,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      public readonly ticketsViewModelService = inject(TicketsViewModelService);
      public readonly ticketStore = inject(TicketStore);
      public readonly cdr = inject(ChangeDetectorRef);
-
-     
 
      readonly menuTabs: TabConfig[] = TICKET_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = TICKET_TAB_META;

@@ -1,13 +1,13 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../../core/app.constants';
-import { BalanceChange } from '../../../models/interface-items.model';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AccountChangesStoreService } from '../account-changes-store/account-changes-store.service';
+import { BalanceChange } from '../../../components/account-balance-changes/constants/account-balance.types';
+import { XrplDateService } from '../../../core/xrpl-date.service';
 
 @Injectable({
      providedIn: 'root',
@@ -19,6 +19,7 @@ export class AccountChangesOrchestratorService {
      private readonly utilsService = inject(UtilsService);
      private readonly xrplService = inject(XrplService);
      private readonly xrplCache = inject(XrplCacheService);
+     private readonly xrplDateService = inject(XrplDateService);
 
      private readonly PAGE_SIZE = 25;
      private readonly seenHashes = new Set<string>();
@@ -93,10 +94,6 @@ export class AccountChangesOrchestratorService {
                const meta = txWrapper.meta;
                if (!meta?.AffectedNodes) continue;
 
-               const timestamp = (tx.date + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
-               const date = new Date(timestamp);
-               const utcDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-
                const hash = txWrapper.hash;
                const feeXrp = xrpl.dropsToXrp(tx.Fee);
                const type = tx.TransactionType;
@@ -115,7 +112,7 @@ export class AccountChangesOrchestratorService {
                          const delta = this.utilsService.roundToEightDecimals(finalXrp - prevXrp);
 
                          processed.push({
-                              date: utcDate,
+                              date: this.xrplDateService.fromRippleTime(tx.date),
                               hash,
                               type,
                               fees: Number(feeXrp),

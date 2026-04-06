@@ -12,48 +12,26 @@
      <!-- Virtual scroll body -->
      <div class="virtual-table-container">
           <cdk-virtual-scroll-viewport itemSize="52" class="viewport" (scroll)="onScroll($event)">
-
-               <div
-                    *cdkVirtualFor="let change of viewModel.filteredBalanceChanges(); trackBy: trackByHash"
-                    class="data-row row">
-
-                    <div class="col date" [matTooltip]="(change.date | date:'medium') ?? ''">
-                         {{ change.date | date:'MMM d, y HH:mm' }}
-                    </div>
+               <div *cdkVirtualFor="let change of viewModel.filteredBalanceChanges(); trackBy: trackByHash" class="data-row row">
+                    <div class="col date" [matTooltip]="change.date | date:'medium':'UTC'">{{ change.date | date:'MMM d, y HH:mm':'UTC' }}</div>
 
                     <div class="col hash">
-                         <a
-                              [href]="txUiService.explorerUrl() + 'tx/' + change.hash"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              class="tx-link">
-                              {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }}
-                         </a>
-                         <button
-                              mat-icon-button
-                              class="copy-btn"
-                              (click)="copyToClipboard(change.hash)"
-                              matTooltip="Copy hash">
+                         <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="tx-link"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
+                         <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
                               <lucide-icon name="copy" size="15"></lucide-icon>
                          </button>
                     </div>
 
-                    <div class="col type" [style.color]="viewModel.getTypeColor(change.type)">
-                         {{ change.type }}
-                    </div>
+                    <div class="col type" [style.color]="viewModel.getTypeColor(change.type)">{{ change.type }}</div>
 
                     <div class="col change" [class.positive]="change.change > 0" [class.negative]="change.change < 0">
                          <strong>{{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }}</strong>
                          <span class="currency">{{ change.currency }}</span>
                     </div>
 
-                    <div class="col fees">
-                         -{{ change.fees | number:'1.6-6' }} XRP
-                    </div>
+                    <div class="col fees">-{{ change.fees | number:'1.6-6' }} XRP</div>
 
-                    <div class="col counterparty" [matTooltip]="change.counterparty">
-                         {{ change.counterparty }}
-                    </div>
+                    <div class="col counterparty" [matTooltip]="change.counterparty">{{ change.counterparty }}</div>
                </div>
 
                <!-- Loading more -->
@@ -75,11 +53,10 @@
                <!-- End of history -->
                @if (!store.hasMoreData() && viewModel.filteredBalanceChanges().length > 0 && !store.loadingMore()) {
                <div class="status-row end-row">
-                    <lucide-icon name="check-circle" size="18" class="status-icon"></lucide-icon>
+                    <lucide-icon name="circle-check" size="18" class="status-icon"></lucide-icon>
                     <span>End of transaction history.</span>
                </div>
                }
-
           </cdk-virtual-scroll-viewport>
      </div>
 </div>

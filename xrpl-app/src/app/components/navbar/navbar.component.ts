@@ -9,47 +9,47 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { NavbarStore } from '../../services/navbar/navbar-store/navbar-store.service';
 
 @Component({
-  selector: 'app-navbar',
-  standalone: true,
-  imports: [CommonModule, RouterModule, NgIcon, ConnectionStatusComponent],
-  templateUrl: './navbar.component.html',
+     selector: 'app-navbar',
+     standalone: true,
+     imports: [CommonModule, RouterModule, NgIcon, ConnectionStatusComponent],
+     templateUrl: './navbar.component.html',
 })
 export class NavbarComponent {
-  store = inject(NavbarStore);
-  themeService = inject(ThemeService);
-  elRef = inject(ElementRef);
+     store = inject(NavbarStore);
+     themeService = inject(ThemeService);
+     elRef = inject(ElementRef);
 
-  isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
+     isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
-  @Output() transactionResult = new EventEmitter<{
-    result: string;
-    isError: boolean;
-    isSuccess: boolean;
-  }>();
+     @Output() transactionResult = new EventEmitter<{
+          result: string;
+          isError: boolean;
+          isSuccess: boolean;
+     }>();
 
-  async onSearch() {
-    const result = await this.store.searchTransaction();
+     async onSearch() {
+          const result = await this.store.searchTransaction();
 
-    if ('error' in result) {
-      this.transactionResult.emit({
-        result: result.error,
-        isError: true,
-        isSuccess: false,
-      });
-    } else {
-      this.transactionResult.emit({
-        result: 'Transaction retrieved successfully',
-        isError: false,
-        isSuccess: true,
-      });
-    }
-  }
+          if ('error' in result) {
+               this.transactionResult.emit({
+                    result: result.error,
+                    isError: true,
+                    isSuccess: false,
+               });
+          } else {
+               this.transactionResult.emit({
+                    result: 'Transaction retrieved successfully',
+                    isError: false,
+                    isSuccess: true,
+               });
+          }
+     }
 
-  // optional: close dropdown on outside click
-  @HostListener('document:click', ['$event'])
-  onClick(event: MouseEvent) {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.store.closeAllDropdowns();
-    }
-  }
+     // optional: close dropdown on outside click
+     @HostListener('document:click', ['$event'])
+     onClick(event: MouseEvent) {
+          if (!this.elRef.nativeElement.contains(event.target)) {
+               this.store.closeAllDropdowns();
+          }
+     }
 }

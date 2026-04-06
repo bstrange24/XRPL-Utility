@@ -1,111 +1,72 @@
 .controls-container {
      display: flex;
      flex-direction: column;
-     gap: 10px;
+     gap: 12px;
      margin-bottom: 12px;
 }
 
 .filters-row {
+     display: flex;
+     gap: 16px;
      align-items: flex-end;
      flex-wrap: wrap;
-     gap: 12px;
 }
 
+/* Shared block structure */
+.filter-block {
+     display: flex;
+     flex-direction: column;
+     gap: 6px;
+}
+
+.filter-label {
+     font-size: 0.8rem;
+     font-weight: 500;
+     color: #6b7280;
+}
+
+/* Shared input row */
+.input-row {
+     height: 36px;
+     display: flex;
+     align-items: center;
+}
+
+/* Search */
 .search-group {
-     flex: 1 1 240px;
-     min-width: 200px;
-}
-
-.date-filter-group {
-     flex: 0 0 auto;
+     flex: 1 1 260px;
+     min-width: 220px;
 }
 
 .search-bar {
      position: relative;
-     height: 36px;
-     border: 1px solid #ccc;
+     height: 100%;
+     width: 100%;
+     border: 1px solid #d1d5db;
      border-radius: 6px;
      background: white;
      display: flex;
      align-items: center;
 }
 
-.search-bar input[type='text'] {
+.search-bar input {
      flex: 1;
      height: 100%;
      padding: 0 36px;
-     font-size: 14px;
      border: none;
      outline: none;
+     font-size: 14px;
      background: transparent;
 }
 
-.search-bar .search-icon {
+.search-icon {
      position: absolute;
      left: 8px;
-     color: #9ca3af;
      font-size: 18px;
-     pointer-events: none;
+     color: #9ca3af;
 }
 
-.search-bar .clear-icon {
+.clear-icon {
      position: absolute;
      right: 4px;
-     color: #9ca3af;
-}
-
-.date-filter-container {
-     display: flex;
-     align-items: flex-end;
-     gap: 8px;
-     flex-wrap: wrap;
-}
-
-.date-input-wrapper {
-     display: flex;
-     flex-direction: column;
-     gap: 4px;
-}
-
-.date-label {
-     font-size: 0.78rem;
-     color: #6b7280;
-     font-weight: 500;
-     text-transform: uppercase;
-     letter-spacing: 0.04em;
-}
-
-.date-input {
-     padding: 6px 8px;
-     border-radius: 6px;
-     border: 1px solid #d1d5db;
-     font-size: 0.875rem;
-     width: 148px;
-     color: #374151;
-     background: white;
-}
-
-.date-input:focus {
-     border-color: #3b82f6;
-     outline: none;
-     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.clear-date-btn {
-     height: 36px;
-     width: 36px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     color: #9ca3af;
-}
-
-.clear-date-btn:hover {
-     color: #6b7280;
-}
-
-.button-row {
-     display: flex;
-     gap: 0.75rem;
-     align-items: center;
 }

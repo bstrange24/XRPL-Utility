@@ -1,5 +1,5 @@
 import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
-import { BalanceChange } from '../../../models/interface-items.model';
+import { BalanceChange } from '../../../components/account-balance-changes/constants/account-balance.types';
 
 export interface AccountChangesState {
      balanceChanges: BalanceChange[];
