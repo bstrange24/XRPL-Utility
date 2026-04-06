@@ -152,13 +152,11 @@ export class TrustlineViewModelService {
                switch (tab) {
                     case 'removeTrustline':
                          emptyMessage = 'No trustlines are currently eligible for removal.';
-                         // helpHint = 'A trustline must have 0 balance, 0 limit, and no restrictions.';
                          helpHint = '';
                          break;
 
                     case 'issueCurrency':
                          emptyMessage = 'You are not an issuer of the selected currency/issuer pair. ';
-                         // helpHint = 'You can only issue tokens for currencies where this wallet is the issuer.';
                          helpHint = '';
                          break;
 
@@ -181,7 +179,7 @@ export class TrustlineViewModelService {
           return {
                walletName,
                activeTab: tab,
-               trustlineCount: filteredCount ? filteredCount : 0,
+               trustlineCount: filteredCount || 0,
                totalTrustlines: totalCount,
                trustlinesToShow: relevant.map((tl: any) => ({
                     currency: tl.currency,
@@ -238,15 +236,6 @@ export class TrustlineViewModelService {
           if (tab === 'setTrustline' || tab === 'removeTrustline') return 'split';
           if (tab === 'issueCurrency' || tab === 'clawbackTokens') return 'paired';
           return 'paired';
-     });
-
-     // New computed — only used for issue/clawback tabs
-     readonly transactionAmount = computed(() => {
-          const tab = this.activeTab();
-
-          if (tab === 'issueCurrency' || tab === 'clawbackTokens') return this.txUiService.amountField() || '0';
-
-          return this.displayedTrustLimit();
      });
 
      readonly displayedTrustLimit = computed(() => {

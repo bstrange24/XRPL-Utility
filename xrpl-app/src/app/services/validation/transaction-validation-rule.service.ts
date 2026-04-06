@@ -377,7 +377,6 @@ export class ValidationService {
                const flags = ctx.accountInfo?.result?.account_flags;
                const disableMaster = flags?.disableMasterKey === true;
 
-               // CORRECT paths based on your getValidationInputs()
                const usingRegularKey = !!ctx.inputs['regularKey']?.isRegularKey;
                const usingMultiSign = !!ctx.inputs['multiSign']?.enabled;
 
@@ -688,7 +687,8 @@ export class ValidationService {
                     if (rippleTime! <= currentLedgerTime!) {
                          return 'Expiration must be in the future';
                     }
-               } catch (e) {
+               } catch (error: any) {
+                    console.error('Error validating expiration date: ', error);
                     return 'Invalid expiration date';
                }
 
@@ -955,9 +955,6 @@ export class ValidationService {
                               if (!credential.credentialType || !credential.issuer) {
                                    return 'Each credential must have both credential Type and issuer';
                               }
-                              // if (credential.credentialID.length > 64) {
-                              //      return `Credential ID too long: ${credential.credentialID}`;
-                              // }
                          }
 
                          return null;
@@ -2186,7 +2183,7 @@ export class ValidationService {
 
                     ctx => {
                          const nftId = ctx.inputs['updateNFTMetadata']?.nftId?.trim();
-                         if (!nftId || nftId.length !== 64 || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
+                         if (nftId?.length !== 64 || !/^[0-9A-Fa-f]{64}$/.test(nftId)) {
                               return 'NFT ID must be a valid 64-character hex string';
                          }
                          return null;
@@ -2506,7 +2503,7 @@ export class ValidationService {
                     // this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
                     // },
                     ctx => {
-                         if (this.txUiService.enableEscrowCancelAfterExpirationDate() && this.txUiService.enableEscrowFinishAfterExpirationDate()) {
+                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
                               const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
                               const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
                               if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {

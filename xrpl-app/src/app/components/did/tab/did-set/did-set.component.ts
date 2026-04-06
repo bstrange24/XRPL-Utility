@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
 import { DidUtilService } from '../../../../services/did/did-util/did-util.service';
 import { DidViewModelService } from '../../../../services/did/did-view-model/did-view-model.service';
+import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-did-set',
@@ -13,6 +14,7 @@ import { DidViewModelService } from '../../../../services/did/did-view-model/did
      styleUrl: './did-set.component.css',
 })
 export class DidSetComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      didStoreService = inject(DidStoreService); // assume you have this
      didUtilService = inject(DidUtilService);
      didViewModelService = inject(DidViewModelService); // if needed for computed

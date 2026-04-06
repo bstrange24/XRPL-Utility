@@ -1,4 +1,5 @@
-import { Component, input, output } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
+import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-did-delete',
@@ -8,6 +9,7 @@ import { Component, input, output } from '@angular/core';
      styleUrl: './did-delete.component.css',
 })
 export class DidDeleteComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      view = input.required<any>();
      canSubmit = input<boolean>(false);
 

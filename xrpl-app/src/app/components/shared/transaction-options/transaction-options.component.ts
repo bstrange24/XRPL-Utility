@@ -7,6 +7,7 @@ import { UtilsService } from '../../../services/util-service/utils.service';
 import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+import { WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 
 @Component({
      selector: 'app-transaction-options',
@@ -20,6 +21,7 @@ export class TransactionOptionsComponent {
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly walletManagerService = inject(WalletManagerService);
      Array = Array;
 
      // Signals
@@ -103,7 +105,7 @@ export class TransactionOptionsComponent {
           if (!enabled) return;
 
           const store = this.accountConfiguratorStoreService;
-          this.utilsService.toggleMultiSign(this.xrplTxOptionsStore.useMultiSign(), this.accountConfiguratorStoreService.signers(), this.txUiService.currentWallet()?.classicAddress || '');
+          this.utilsService.toggleMultiSign(this.xrplTxOptionsStore.useMultiSign(), this.accountConfiguratorStoreService.signers(), this.walletManagerService.getSelectedWallet()?.classicAddress || '');
 
           store.setField(
                'multiSignAddress',

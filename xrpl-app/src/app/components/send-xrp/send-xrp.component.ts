@@ -38,6 +38,7 @@ import { SendXrpActionTypes, XrpPaymentConfig } from './constants/send-xrp.types
 import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
 import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-send-xrp',
@@ -48,6 +49,7 @@ import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summar
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -68,9 +70,6 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SEND_XRP_TAB, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
-          // this.trustlineCurrencyService.setPreferXrpAsDefault(false);
-          // this.trustlineCurrencyService.setAddMptInDropdown(false);
           this.transactionDropdownService.loadCustomDestinations();
      }
 
@@ -80,11 +79,8 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 

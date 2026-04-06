@@ -19,13 +19,9 @@ import { OfferStoreService } from '../../../../services/offer/offer-store/offer-
 export class OfferSummaryComponent {
      public readonly view = inject(OfferTransactionViewModelService);
      public readonly txUiService = inject(TransactionUiService);
-     private readonly copyUtilService = inject(CopyUtilService);
+     public readonly copyUtilService = inject(CopyUtilService);
      public readonly store = inject(OfferStoreService);
 
      readonly infoPanelExpanded = input.required<boolean>();
      readonly toggleInfoPanel = output<void>();
-
-     copyAndToast(text: string, label: string = 'Content'): void {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 }

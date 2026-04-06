@@ -34,8 +34,4 @@ export class EscrowFinishItemComponent {
      selectEscrow(escrow: any, _source: 'list') {
           this.escrowUtilService.onEscrowSelected(escrow);
      }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 }

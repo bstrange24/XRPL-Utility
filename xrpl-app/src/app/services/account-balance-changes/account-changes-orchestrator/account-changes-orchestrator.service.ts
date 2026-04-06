@@ -8,6 +8,7 @@ import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AccountChangesStoreService } from '../account-changes-store/account-changes-store.service';
 import { BalanceChange } from '../../../components/account-balance-changes/constants/account-balance.types';
 import { XrplDateService } from '../../../core/xrpl-date.service';
+import { AccountChangesViewModelService } from '../account-changes-view-model/account-changes-view-model.service';
 
 @Injectable({
      providedIn: 'root',
@@ -20,6 +21,7 @@ export class AccountChangesOrchestratorService {
      private readonly xrplService = inject(XrplService);
      private readonly xrplCache = inject(XrplCacheService);
      private readonly xrplDateService = inject(XrplDateService);
+     private readonly view = inject(AccountChangesViewModelService);
 
      private readonly PAGE_SIZE = 25;
      private readonly seenHashes = new Set<string>();
@@ -109,7 +111,7 @@ export class AccountChangesOrchestratorService {
 
                          const prevXrp = xrpl.dropsToXrp(prev);
                          const finalXrp = xrpl.dropsToXrp(final);
-                         const delta = this.utilsService.roundToEightDecimals(finalXrp - prevXrp);
+                         const delta = this.view.roundToEightDecimals(finalXrp - prevXrp);
 
                          processed.push({
                               date: this.xrplDateService.fromRippleTime(tx.date),

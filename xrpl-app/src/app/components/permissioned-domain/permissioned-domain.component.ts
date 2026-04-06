@@ -52,6 +52,7 @@ import { StorageService } from '../../services/local-storage/storage.service';
 })
 export class PermissionedDomainComponent extends WalletDestinationBase implements OnInit {
      @ViewChild('setForm') setFormComponent!: PermissionDomainSetFormComponent;
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -63,7 +64,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly credentialStore = inject(CredentialStore);
-     public readonly connectionGuard = inject(ConnectionGuardService);
      readonly menuTabs: TabConfig[] = PERMISSION_DOMAIN_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = PERMISSION_DOMAIN_TAB_META;
 
@@ -75,7 +75,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
           this.permissionedDomainUtilService.clearFields();
           this.permissionedDomainUtilService.clearFields();
@@ -87,12 +86,9 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
           this.permissionedDomainUtilService.clearFields();
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 

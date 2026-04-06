@@ -10,20 +10,6 @@
           </div>
 
           <div class="form-group">
-               <label for="destination">Destination</label>
-               <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
-               <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationChanged.emit($event)" placeholder="Enter or select destination address" />
-          </div>
-     </div>
-
-     <div class="form-row">
-          <div class="form-group">
-               <label for="createDestinationTag">Destination Tag</label>
-               <p class="form-hint">Arbitrary tag to further specify the destination for this payment channel, such as a hosted recipient at the destination address.</p>
-               <input type="text" [(ngModel)]="txUiService.destinationTagField" name="destinationTagField" />
-          </div>
-
-          <div class="form-group">
                <label for="createSettleDelay">Settle Delay</label>
                <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
                <input type="text" [(ngModel)]="paymentChannelStoreService.settleDelay" name="settleDelay" />
@@ -31,6 +17,34 @@
      </div>
 
      <div class="form-row">
+          <div class="form-group">
+               <label for="destination">Destination</label>
+               <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
+               <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationChanged.emit($event)" placeholder="Enter or select destination address" />
+          </div>
+     </div>
+
+     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.checked)">Include optional fields (Destination Tag and Expiration Date)</mat-slide-toggle>
+
+     @if (txUiService.wantsOptions()) {
+     <app-transaction-options-section [activeTab]="'createPaymentChannel'"></app-transaction-options-section>
+     }
+
+     <!-- <div class="form-row">
+          <div class="form-group">
+               <label for="createDestinationTag">Destination Tag</label>
+               <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+               <input type="text" [(ngModel)]="xrplTxOptionsStore.destinationTag" name="destinationTagField" />
+          </div>
+
+          <div class="form-group">
+               <label for="createSettleDelay">Settle Delay</label>
+               <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.settleDelay" name="settleDelay" />
+          </div>
+     </div> -->
+
+     <!-- <div class="form-row">
           <div class="form-group">
                <app-xrpl-expiration-input
                     [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
@@ -40,5 +54,5 @@
                ></app-xrpl-expiration-input>
           </div>
           <div class="form-group"></div>
-     </div>
+     </div> -->
 </div>

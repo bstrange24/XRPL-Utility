@@ -76,7 +76,7 @@
                     </div>
 
                     <!-- Copy button -->
-                    <button (click)="copyAndToast(channel.id, 'Channel ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Channel ID">
+                    <button (click)="copyUtilService.copyAndToast(channel.id, 'Channel ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Channel ID">
                          <lucide-icon name="copy" size="15" />
                     </button>
                </li>

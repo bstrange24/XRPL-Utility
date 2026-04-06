@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, effect, signal } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -38,6 +38,7 @@ import { OfferActionTypes, OfferTxConfig, OfferTxType } from './constants/offer.
 import { OfferFieldsComponent } from './tab/offer-fields/offer-fields.component';
 import { OfferSummaryComponent } from './ui-components/offer-summary/offer-summary.component';
 import { OfferRequirementsInfoComponent } from './ui-components/offer-requirements-info/offer-requirements-info.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-offer',
@@ -48,6 +49,7 @@ import { OfferRequirementsInfoComponent } from './ui-components/offer-requiremen
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateOfferComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -116,8 +118,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.transactionDropdownService.loadCustomDestinations();
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
-
-          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -126,11 +126,8 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
      async selectWallet(wallet: Wallet): Promise<void> {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
           this.offerCurrency.setWalletAddress(wallet.address);
@@ -252,7 +249,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                const wallet = env.wallet ?? this.walletManagerService.getSelectedWallet();
                this.offerUtilsService.getExistingOffers(env.accountObjects, wallet.classicAddress);
           }
-          this.txUiService.clearAllOptions();
      }
 
      onWeWantCurrencySelected(item: SelectItem | null): void {
@@ -292,6 +288,5 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
      }
 }

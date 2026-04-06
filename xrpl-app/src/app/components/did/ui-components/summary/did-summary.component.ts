@@ -22,6 +22,10 @@ export interface ExistingDid {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DidSummaryComponent {
+     public readonly copyUtilService = inject(CopyUtilService);
+     private readonly txUiService = inject(TransactionUiService);
+     public readonly utilsService = inject(UtilsService);
+
      // Inputs
      info = input.required<
           | {
@@ -39,17 +43,8 @@ export class DidSummaryComponent {
      // Outputs
      toggleInfoPanel = output<void>();
 
-     // Injected services
-     public copyUtilService = inject(CopyUtilService);
-     private readonly txUiService = inject(TransactionUiService);
-     public utilsService = inject(UtilsService);
-
      // Helpers
      explorerUrl = this.txUiService.explorerUrl;
-
-     copyAndToast(text: string, label: string) {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 
      hasDid(): boolean {
           return this.info()?.existingDid?.length === 1;

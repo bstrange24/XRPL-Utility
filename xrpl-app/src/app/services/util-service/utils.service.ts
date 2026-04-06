@@ -18,9 +18,7 @@ import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-s
 import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
-import { MptStoreService } from '../mpt/mpt-store/mpt-store.service';
 
-type FlagResult = Record<string, boolean> | string | null;
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
 type DidValidationResult = {
      success: boolean;
@@ -45,20 +43,13 @@ export class UtilsService {
      public readonly checksStoreService = inject(ChecksStoreService);
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
-     private readonly mptStoreService = inject(MptStoreService);
 
      @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
      isError: boolean = false;
      isSuccess: boolean = false;
-     // spinner: boolean = false;
 
-     constructor() {
-          // private readonly xrplService: XrplService,
-          // private readonly storageService: StorageService,
-          // private readonly walletManagerService: WalletManagerService,
-          // public readonly xrplDateService: XrplDateService
-     }
+     constructor() {}
 
      MPT_FLAGS: Record<number, string> = {
           0x00000001: 'MptLocked',
@@ -238,7 +229,6 @@ export class UtilsService {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 
           if (Number.isNaN(num) || num < 0) {
-               this.txUiService.amountField.set('');
                this.checksStoreService.setField('amount', '');
                return;
           }
@@ -249,7 +239,6 @@ export class UtilsService {
           this.checksStoreService.setField('amount', rounded.toString());
           this.escrowStoreService.setField('amount', rounded.toString());
           this.nftCreateStoreService.setField('amount', rounded.toString());
-          this.txUiService.amountField.set(rounded.toString());
      }
 
      updateTrustlineLimitAmount(value: string | number) {
@@ -257,14 +246,12 @@ export class UtilsService {
 
           if (Number.isNaN(num) || num < 0) {
                this.trustlineStoreService.setField('trustlineLimitField', 0);
-               // this.txUiService.trustlineLimitField.set(0);
                return;
           }
 
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(10));
           this.trustlineStoreService.setField('trustlineLimitField', rounded);
-          // this.txUiService.trustlineLimitField.set(rounded);
      }
 
      issuedAmount(currency: string, issuer: string, value: any) {
@@ -296,7 +283,7 @@ export class UtilsService {
           const date = new Date(dateString);
 
           if (Number.isNaN(date.getTime())) {
-               throw new Error('Invalid expiration date');
+               throw new TypeError('Invalid expiration date');
           }
 
           const rippleEpoch = Date.UTC(2000, 0, 1, 0, 0, 0);
@@ -568,7 +555,7 @@ export class UtilsService {
       * Falls back to truncated hex if not valid UTF-8.
       */
      formatInvoiceId(invoiceIdHex: string | undefined): string {
-          if (!invoiceIdHex || invoiceIdHex.length !== 64) {
+          if (invoiceIdHex?.length !== 64) {
                return '—';
           }
 
@@ -585,7 +572,8 @@ export class UtilsService {
                     const trimmed = text.trim();
                     return trimmed || invoiceIdHex.slice(0, 16) + '...';
                }
-          } catch (e) {
+          } catch (error: any) {
+               console.warn(`InvoiceID is not valid UTF-8: ${error.message}`);
                // Not valid UTF-8 → fall through
           }
 
@@ -683,12 +671,6 @@ export class UtilsService {
           return new TextDecoder().decode(trimmed);
      }
 
-     // decodeCurrencyCode(hexCode: String) {
-     //      const buffer = Buffer.from(hexCode, 'hex');
-     //      const trimmed = buffer.subarray(0, buffer.findIndex(byte => byte === 0) === -1 ? 20 : buffer.findIndex(byte => byte === 0));
-     //      return new TextDecoder().decode(trimmed);
-     // }
-
      encodeCurrencyCode(code: any) {
           const encoder = new TextEncoder();
           const codeBytes = encoder.encode(code);
@@ -742,12 +724,6 @@ export class UtilsService {
           return formatter.format(utcDate);
      }
 
-     // toLocalDateTimeString(date: Date): string {
-     //      const pad = (n: number) => n.toString().padStart(2, '0');
-
-     //      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T` + `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-     // }
-
      dateFormatter() {
           // Format the date in EST (America/New_York handles EST/EDT automatically)
           return new Intl.DateTimeFormat('en-US', {
@@ -764,83 +740,9 @@ export class UtilsService {
           });
      }
 
-     // convertDateTimeToRippleTime(dateTimeField: string) {
-     //      const date = new Date(dateTimeField); // parses as local time
-     //      const unixTimestamp = Math.floor(date.getTime() / 1000); // milliseconds ➜ seconds
-     //      const afterDate = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
-     //      console.log('XRPL CancelAfter:', afterDate);
-     //      return afterDate;
-     // }
-
-     addTime(amount: any, unit: 'seconds' | 'minutes' | 'hours' | 'days' = 'seconds', date = new Date()) {
-          const multiplierMap = {
-               seconds: 1,
-               minutes: 60,
-               hours: 3600,
-               days: 86400,
-          };
-
-          const multiplier = multiplierMap[unit];
-          if (!multiplier) {
-               throw new Error(`Invalid unit: ${unit}. Use 'seconds', 'minutes', 'hours', or 'days'.`);
-          }
-
-          const addedSeconds = amount * multiplier;
-          const unixTimestamp = Math.floor(date.getTime() / 1000) + addedSeconds;
-
-          // Convert from Unix Epoch (1970) to Ripple Epoch (2000)
-          const rippleEpoch = unixTimestamp - AppConstants.RIPPLE_EPOCH_OFFSET;
-          return rippleEpoch;
-     }
-
-     // setDateTimeFieldToNow() {
-     //      const now = new Date();
-     //      const year = now.getFullYear();
-     //      const month = String(now.getMonth() + 1).padStart(2, '0');
-     //      const day = String(now.getDate()).padStart(2, '0');
-     //      const hours = String(now.getHours()).padStart(2, '0');
-     //      const minutes = String(now.getMinutes()).padStart(2, '0');
-     //      const seconds = String(now.getSeconds()).padStart(2, '0');
-     //      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-     // }
-
-     // addToDateTimeField(fieldSignal: Signal<string>, writableSignal: WritableSignal<string>, seconds: number): void {
-     //      let currentValue = fieldSignal();
-
-     //      // If field is empty, start from now
-     //      if (!currentValue) {
-     //           const now = new Date();
-     //           currentValue = this.xrplDateService.formatDateTimeLocal(now);
-     //      }
-
-     //      const date = new Date(currentValue);
-     //      date.setSeconds(date.getSeconds() + seconds);
-
-     //      const newDateTime = this.formatDateTimeLocal(date);
-
-     //      writableSignal.set(newDateTime);
-     // }
-
      truncateAddress(address: string): string {
           return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
-
-     formatDateTimeLocal(date: Date): string {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const secs = String(date.getSeconds()).padStart(2, '0');
-
-          return `${year}-${month}-${day}T${hours}:${minutes}:${secs}`;
-     }
-
-     // getTransferRate(percentage: number): number {
-     //      // Placeholder: Implement your getTransferRate from utils.js
-     //      // Example: Convert percentage to XRPL TransferRate
-     //      return Math.round((1 + percentage / 100) * 1_000_000_000);
-     // }
 
      stripHTMLForSearch(html: string): string {
           const div = document.createElement('div');
@@ -1244,7 +1146,7 @@ export class UtilsService {
           }
 
           if (!Array.isArray((signerList as any).SignerEntries)) {
-               throw new Error('SignerList object does not have valid SignerEntries');
+               throw new TypeError('SignerList object does not have valid SignerEntries');
           }
 
           if (!('SignerEntries' in signerList) || !Array.isArray((signerList as any).SignerEntries)) {
@@ -1405,35 +1307,6 @@ export class UtilsService {
           return { setFlags, clearFlags };
      }
 
-     formatAmount(value: any): string {
-          if (typeof value === 'string' && /^\d+$/.test(value)) {
-               return (Number.parseInt(value) / 1_000_000).toFixed(6) + ' XRP';
-          } else if (typeof value === 'object' && value.currency) {
-               return `${value.value} ${value.currency}${value.issuer ? ` (<code>${value.issuer}</code>)` : ''}`;
-          }
-          return JSON.stringify(value);
-     }
-
-     formatIOUXrpAmountUI(amount: any): string {
-          if (!amount) return 'Unknown';
-
-          if (typeof amount === 'string' && amount.split(' ').length === 1) {
-               // XRP in drops
-               return `${amount} XRP`;
-          } else if (amount.split(' ').length === 2) {
-               const splitAmount = amount.split(' ');
-               return `${splitAmount[0]} ${splitAmount[1]}`;
-          }
-
-          if (typeof amount === 'object') {
-               // Issued currency
-               const { currency, issuer, value } = amount;
-               return `${value} ${currency} (issuer: ${issuer})`;
-          }
-
-          return 'Unknown';
-     }
-
      formatIOUXrpAmountOutstanding(amount: any): string {
           if (!amount) return 'Unknown';
 
@@ -1461,61 +1334,6 @@ export class UtilsService {
 
           return `${amount} XRP`;
      }
-
-     setTxAmount(type: string, formValues: any, tx: xrpl.Transaction) {
-          if (type === 'create') {
-               if (formValues.currencyValue === 'MPT') {
-                    const curr: xrpl.MPTAmount = {
-                         mpt_issuance_id: this.mptStoreService.mptIssuanceId(),
-                         value: this.txUiService.amountField(),
-                    };
-                    tx.Amount = curr;
-               } else if (formValues.currencyValue !== 'XRP' && formValues.currencyValue !== 'MPT') {
-                    const curr: xrpl.IssuedCurrencyAmount = {
-                         currency: formValues.currencyValue.length > 3 ? this.encodeCurrencyCode(formValues.currencyValue) : formValues.currencyValue,
-                         issuer: formValues.issuer,
-                         value: this.txUiService.amountField(),
-                    };
-                    tx.Amount = curr;
-               } else {
-                    tx.Amount = xrpl.xrpToDrops(this.txUiService.amountField());
-               }
-          }
-     }
-
-     // formatValue(key: string, value: any, nestedFields: string[] = []): string {
-     //      if (key === 'Account' || key.includes('PubKey') || key.includes('Signature') || key.includes('index')) {
-     //           return `<code>${value}</code>`;
-     //      }
-     //      if (key === 'Flags') {
-     //           return this.getFlagName(String(value));
-     //      }
-     //      if (typeof value === 'string' && value.length > 50) {
-     //           return `<code>${value.slice(0, 50)}...</code>`;
-     //      }
-     //      if (key === 'Memos') {
-     //           const memoData = value[0].Memo.MemoData;
-     //           const memoType = value[0].Memo.MemoType;
-     //           return this.decodeHex(memoData) + (memoType ? ` (${this.decodeHex(memoType)})` : '');
-     //      }
-     //      if (key === 'Domain' || key === 'EmailHash' || key === 'URI') {
-     //           return this.decodeHex(value);
-     //      }
-     //      if (key === 'Balance' && typeof value === 'object') {
-     //           return `${value.value} ${value.currency}${value.issuer ? ` (<code>${value.issuer}</code>)` : ''}`;
-     //      }
-     //      if (key === 'Balance' || key === 'Fee') {
-     //           return this.formatXRPLAmount(value);
-     //      }
-     //      if (key === 'date' || key === 'CancelAfter' || key === 'FinishAfter' || key === 'Expiration') {
-     //           return this.convertXRPLTime(value);
-     //      }
-     //      if (typeof value === 'object') {
-     //           return this.formatAmount(value);
-     //      }
-
-     //      return String(value);
-     // }
 
      increasesOwnerCount(tx: any): boolean {
           const type = tx.TransactionType;
@@ -1548,181 +1366,10 @@ export class UtilsService {
           }
      }
 
-     decodeAccountFlags(accountInfo: any): string[] {
-          const activeFlags: string[] = [];
-
-          if (accountInfo?.result?.account_flags) {
-               for (const [flag, enabled] of Object.entries(accountInfo.result.account_flags)) {
-                    if (enabled === true) {
-                         const match = AppConstants.FLAGS.find(f => f.xrplName === flag);
-                         activeFlags.push(match ? match.label : flag); // Use label if found, else raw name
-                    }
-               }
-          }
-
-          return activeFlags;
-     }
-
-     getMptFlagsReadable(flags: number): string[] {
-          const readable: string[] = [];
-          for (const [bit, description] of Object.entries(this.MPT_FLAGS)) {
-               if ((flags & Number(bit)) !== 0) {
-                    if (readable.length == 0) {
-                         readable.push(description);
-                    } else {
-                         readable.push(' ' + description);
-                    }
-               }
-          }
-          return readable.length > 0 ? readable : ['No MPT flags set'];
-     }
-
-     formatFlags(flags: string[]): string {
-          if (flags.length <= 1) return flags[0] || '';
-          return flags.slice(0, -1).join(', ') + ' and ' + flags[flags.length - 1];
-     }
-
-     roundToEightDecimals(value: number): number {
-          return Number.parseFloat(value.toFixed(8));
-     }
-
-     // sortByLedgerEntryType(response: any) {
-     //      if (!response?.result || !Array.isArray(response.result.account_objects)) {
-     //           return response; // nothing to sort
-     //      }
-
-     //      return {
-     //           ...response,
-     //           result: {
-     //                ...response.result,
-     //                account_objects: [...response.result.account_objects].sort((a, b) => {
-     //                     const typeA = a.LedgerEntryType || '';
-     //                     const typeB = b.LedgerEntryType || '';
-     //                     return typeA.localeCompare(typeB); // alphabetical
-     //                }),
-     //           },
-     //      };
-     // }
-
-     // isValidEmail(email: string): boolean {
-     //      // Trim whitespace
-     //      const trimmedEmail = email.trim();
-
-     //      // Basic length and empty check
-     //      if (trimmedEmail.length === 0 || trimmedEmail.length > 254) {
-     //           return false;
-     //      }
-
-     //      // Regular expression for email validation
-     //      // This follows RFC 5322 closely but avoids overly permissive edge cases
-     //      const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/i;
-
-     //      if (!emailRegex.test(trimmedEmail)) {
-     //           return false;
-     //      }
-
-     //      // Additional checks to prevent common invalid patterns
-     //      const [localPart, domainPart] = trimmedEmail.split('@');
-
-     //      // Local part should not exceed 64 characters
-     //      if (localPart.length > 64) {
-     //           return false;
-     //      }
-
-     //      // Domain part should have at least one dot and valid TLD
-     //      const domainLabels = domainPart.split('.');
-     //      if (domainLabels.some(label => label.length === 0 || label.length > 63)) {
-     //           return false;
-     //      }
-
-     //      return true;
-     // }
-
      adjustTextareaHeight(event: Event): void {
           const ta = event.target as HTMLTextAreaElement;
           ta.style.height = 'auto'; // reset
           ta.style.height = ta.scrollHeight + 'px';
-     }
-
-     validateAmmDepositBalances(xrpBalance: string, accountObjects: any[], we_want: CurrencyAmount, we_spend: CurrencyAmount): string | null {
-          // Check XRP balance for we_spend
-          if (typeof we_spend === 'string') {
-               if (BigInt(xrpBalance) < BigInt(we_spend)) {
-                    return 'Insufficient XRP balance';
-               }
-          }
-
-          // Check XRP balance for we_want
-          if (typeof we_want === 'string') {
-               if (BigInt(xrpBalance) < BigInt(we_want)) {
-                    return 'Insufficient XRP balance';
-               }
-          }
-
-          // Check token balances from trust lines
-          const trustLines = accountObjects.filter(obj => obj.LedgerEntryType === 'RippleState');
-
-          // Check we_spend if it's an issued currency
-          if (typeof we_spend !== 'string') {
-               const trustLine = trustLines.find((line: any) => line.Balance.currency === we_spend.currency && (line.LowLimit.issuer === we_spend.issuer || line.HighLimit.issuer === we_spend.issuer));
-               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < Number.parseFloat(we_spend.value)) {
-                    return `Insufficient ${we_spend.currency} balance`;
-               }
-          }
-
-          // Check we_want if it's an issued currency
-          if (typeof we_want !== 'string') {
-               const trustLine = trustLines.find((line: any) => line.Balance.currency === we_want.currency && (line.LowLimit.issuer === we_want.issuer || line.HighLimit.issuer === we_want.issuer));
-               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < Number.parseFloat(we_want.value)) {
-                    return `Insufficient ${we_want.currency} balance`;
-               }
-          }
-
-          return null; // Sufficient balances
-     }
-
-     // In utilsService.ts
-     validateAmmWithdrawBalances(xrpBalance: string, accountObjects: any[], lpTokenAmount: string, participation: any): string | null {
-          // Validate LP token balance
-          if (participation?.lpTokens?.[0]) {
-               const availableLpBalance = Number.parseFloat(participation.lpTokens[0].balance);
-               const requestedLpAmount = Number.parseFloat(lpTokenAmount);
-
-               if (requestedLpAmount > availableLpBalance) {
-                    return `Insufficient LP token balance. Available: ${availableLpBalance}`;
-               }
-          }
-
-          return null; // Sufficient balances
-     }
-
-     // In utilsService.ts
-     validateAmmCreateBalances(xrpBalance: string, accountObjects: any[], we_want: CurrencyAmount, we_spend: CurrencyAmount): string | null {
-          // Check XRP balance (for Amount field)
-          if (typeof we_spend === 'string') {
-               // we_spend is XRP (string in drops)
-               if (BigInt(xrpBalance) < BigInt(we_spend)) {
-                    const xrpAmount = xrpl.dropsToXrp(we_spend);
-                    return `Insufficient XRP balance. Required: ${xrpAmount} XRP`;
-               }
-          }
-
-          // Check token balance (for Amount2 field)
-          if (typeof we_want !== 'string') {
-               // we_want is token (IssuedCurrencyAmount object)
-               const trustLines = accountObjects.filter(obj => obj.LedgerEntryType === 'RippleState');
-
-               const trustLine = trustLines.find(line => line.Balance.currency === we_want.currency && (line.LowLimit.issuer === we_want.issuer || line.HighLimit.issuer === we_want.issuer));
-
-               const availableBalance = trustLine ? Math.abs(Number.parseFloat(trustLine.Balance.value)) : 0;
-               if (availableBalance < Number.parseFloat(we_want.value)) {
-                    return `Insufficient ${we_want.currency} balance. Required: ${we_want.value}`;
-               }
-          }
-
-          return null; // Sufficient balances
      }
 
      isInsufficientXrpBalance1(serverInfo: any, accountInfo: any, amountXrp: string, address: string, txObject: any, feeDrops: string = '10'): boolean {
@@ -1906,7 +1553,7 @@ export class UtilsService {
                return { ownerCount, totalReserveXRP };
           } catch (error: any) {
                console.error('Error in getAccountReserves:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`, undefined);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
                return undefined;
           }
      }
@@ -1925,7 +1572,7 @@ export class UtilsService {
                return { reserveBaseXRP, reserveIncrementXRP };
           } catch (error: any) {
                console.error('Error:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`, undefined);
+               this.txUiService.setError(`${error.message || 'Unknown error'}`);
                return undefined;
           }
      }
@@ -1941,13 +1588,6 @@ export class UtilsService {
           }
           return { ownerCount, totalXrpReserves };
      }
-
-     // setError(message: string, spinner: { style: { display: string } } | undefined) {
-     //      this.isError = true;
-     //      this.isSuccess = false;
-     //      this.result = `${message}`;
-     //      this.spinner = false;
-     // }
 
      public setSuccess(message: string) {
           this.result = `${message}`;
@@ -2146,7 +1786,6 @@ export class UtilsService {
           if (domain === '') {
                tx.Domain = '';
           } else {
-               // tx.Domain = Buffer.from(domain, 'utf8').toString('hex');
                tx.Domain = domain;
           }
      }

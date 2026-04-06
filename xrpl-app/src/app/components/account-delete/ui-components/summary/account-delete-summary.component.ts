@@ -20,27 +20,13 @@ export interface BlockerItem {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteSummaryComponent {
-     // ── Inputs ────────────────────────────────────────
-     info = input.required<
-          | {
-                 walletName: string;
-                 canDelete: boolean;
-                 blockers: BlockerItem[];
-                 balanceWarning: string | null;
-            }
-          | null
-          | undefined
-     >();
-
+     info = input.required<{ walletName: string; canDelete: boolean; blockers: BlockerItem[]; balanceWarning: string | null } | null | undefined>();
      infoPanelExpanded = input.required<boolean>();
 
-     // ── Outputs ───────────────────────────────────────
      toggleInfoPanel = output<void>();
 
-     // ── Injected services ─────────────────────────────
      public deleteAccountViewModelService = inject(AccountDeleteViewModelService);
 
-     // ── Helpers ───────────────────────────────────────
      hasContent(): boolean {
           const i = this.info();
           if (!i) return false;

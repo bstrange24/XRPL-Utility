@@ -9,6 +9,7 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { PoolOptions } from '../../constants/amm.types';
 import { UtilsService } from '../../../../services/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
+import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-amm-fields',
@@ -18,6 +19,7 @@ import { WalletManagerService } from '../../../../services/wallets/manager/walle
      styleUrl: './amm-fields.component.css',
 })
 export class AmmFieldsComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly ammStoreService = inject(AmmStoreService);
      public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
      public readonly ammUtilsService = inject(AmmUtilsService);

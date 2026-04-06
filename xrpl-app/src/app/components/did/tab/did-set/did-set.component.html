@@ -96,7 +96,7 @@
 <!-- Action buttons (only when no DID or on delete tab – but delete handled in its own component) -->
 @if (hasNoExistingDid()) {
 <div class="button-row">
-     <button type="button" [class]="view().actionButtonClass()" (click)="performAction.emit()" [disabled]="!canSubmit()">{{ view().actionButtonLabel() }}</button>
-     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearFields.emit()">Clear Fields</button>
+     <button type="button" [class]="view().actionButtonClass()" (click)="performAction.emit()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view().actionButtonLabel() }}</button>
+     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" (click)="clearFields.emit()">Clear Fields</button>
 </div>
 }

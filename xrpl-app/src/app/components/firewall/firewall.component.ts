@@ -40,6 +40,7 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 interface AccountFlags {
      isClawback: boolean;
@@ -65,6 +66,7 @@ interface IssuerItem {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FirewallComponent extends PerformanceBaseComponent implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      private readonly destroyRef = inject(DestroyRef);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
@@ -410,8 +412,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           // });
 
           this.currencyFieldDropDownValue.set('XRP');
-
-          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {
@@ -421,7 +421,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
+          //this.txUiService.currentWallet.set({ ...wallet });
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
@@ -594,7 +594,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     //      });
                     // }
 
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    // this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Error in getFirewallDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -620,8 +620,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     //      return this.txUiService.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
                     // }
 
-                    const timePeriod = this.utilsService.addTime(this.finishTimePeriodField(), this.finishTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
-                    const timePeriodStart = this.utilsService.addTime(this.cancelTimePeriodField(), this.cancelTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
+                    // const timePeriod = this.utilsService.addTime(this.finishTimePeriodField(), this.finishTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
+                    // const timePeriodStart = this.utilsService.addTime(this.cancelTimePeriodField(), this.cancelTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
                     console.log(`timePeriodUnit: ${this.finishTimePeriodUnit()} timePeriodStartUnit: ${this.cancelTimePeriodUnit()}`);
                     // console.log(`timePeriod: ${this.utilsService.convertXRPLTime(timePeriod)} timePeriodStart: ${this.utilsService.convertXRPLTime(timePeriodStart)}`);
                     console.log(`Total Out: `, this.totalOutField);
@@ -657,23 +657,23 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenIssuanceCreateTx, wallet, accountInfo);
 
-                    const result = await this.txExecutor.createFirewall(mPTokenIssuanceCreateTx, wallet, client, {
-                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // const result = await this.txExecutor.createFirewall(mPTokenIssuanceCreateTx, wallet, client, {
+                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
+                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
+                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                         this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    }
+                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
+                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    // }
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -717,23 +717,23 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenAuthorizeTx, wallet, accountInfo);
 
-                    const result = await this.txExecutor.modifyFirewall(mPTokenAuthorizeTx, wallet, client, {
-                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // const result = await this.txExecutor.modifyFirewall(mPTokenAuthorizeTx, wallet, client, {
+                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
+                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
+                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                         this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    }
+                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
+                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    // }
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in modifyFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -803,23 +803,23 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     // Optional fields
                     await this.setTxOptionalFields(client, sendMptPaymentTx, wallet, accountInfo);
 
-                    const result = await this.txExecutor.authorizeFlag(sendMptPaymentTx, wallet, client, {
-                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // const result = await this.txExecutor.authorizeFlag(sendMptPaymentTx, wallet, client, {
+                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
+                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
+                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                         this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    }
+                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
+                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    // }
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in authorizeFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -861,23 +861,23 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenIssuanceDestroyTx, wallet, accountInfo);
 
-                    const result = await this.txExecutor.deleteFirewall(mPTokenIssuanceDestroyTx, wallet, client, {
-                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // const result = await this.txExecutor.deleteFirewall(mPTokenIssuanceDestroyTx, wallet, client, {
+                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
+                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
+                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                         this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    }
+                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
+                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
+                    // }
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
+                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createTimeBasedEscrow:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -943,13 +943,13 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                }
           }
 
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(firewallTx, this.txUiService.memoField());
-          }
+          // if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
+          //      this.utilsService.setMemoField(firewallTx, this.txUiService.memoField());
+          // }
 
-          if (this.txUiService.destinationTagField()) {
-               this.utilsService.setDestinationTag(firewallTx, this.txUiService.destinationTagField());
-          }
+          // if (this.txUiService.destinationTagField()) {
+          //      this.utilsService.setDestinationTag(firewallTx, this.txUiService.destinationTagField());
+          // }
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
@@ -962,8 +962,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest) this.addNewDestinationFromUser(destination || '');
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
+          // this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -982,45 +981,45 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      //      });
      // }
 
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
+     // private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+     //      // Update multi-sign & regular key flags
+     //      const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+     //      this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
-          // Update service state
-          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+     //      // Update service state
+     //      // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
+     //      const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+     //      const hasSignerList = signerAccounts?.length > 0;
+     //      this.txUiService.signerQuorum.set(signerQuorum);
+     //      const checkForMultiSigner = signerAccounts?.length > 0;
+     //      checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
+     //      this.txUiService.multiSigningEnabled.set(hasSignerList);
+     //      if (hasSignerList) {
+     //           const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+     //           this.txUiService.signers.set(entries);
+     //      }
 
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+     //      const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
 
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
+     //      this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+     //      this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+     // }
 
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
+     // private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
+     //      const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+     //      this.txUiService.signers.set(signerEntries);
+     //      this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+     //      this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+     // }
 
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
-     }
+     // private clearMultiSignersConfiguration(): void {
+     //      this.txUiService.signerQuorum.set(0);
+     //      this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
+     //      this.txUiService.multiSignSeeds.set('');
+     //      this.storageService.removeValue('signerEntries');
+     // }
 
      updateDestinations() {
           // Optional: persist destinations
@@ -1127,11 +1126,11 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           return combined;
      }
 
-     copyFirewallID(id: string) {
-          navigator.clipboard.writeText(id).then(() => {
-               this.txUiService.showToastMessage('MPT Issuance ID copied!');
-          });
-     }
+     // copyFirewallID(id: string) {
+     //      navigator.clipboard.writeText(id).then(() => {
+     //           this.txUiService.showToastMessage('MPT Issuance ID copied!');
+     //      });
+     // }
 
      updateInfoMessage(): void {
           if (!this.currentWallet()?.address) {

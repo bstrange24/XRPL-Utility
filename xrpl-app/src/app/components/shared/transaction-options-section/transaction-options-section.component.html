@@ -1,12 +1,8 @@
-@let tab = activeTab(); @if (tab === 'createCredential' || tab === 'cashCheck' || tab === 'setPermissionedDomain') {
-<div class="switch-group">
-     <label class="switch">
-          <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" name="showOptionalXrp" />
-          <span class="slider"></span> Include optional fields (Destination Tag, Source Tag)
-     </label>
-</div>
-} @if(txUiService.wantsOptions()) {
-<!-- Determine what options to display based on tab -->
+@let tab = activeTab();
+
+<!-- Check options flag to conditionally show/hide options section -->
+<!-- and determine what options to display based on tab -->
+@if(txUiService.wantsOptions()) {
 <!-- Domain ID and Credential ID -->
 @if (tab === 'setPermissionedDomain') {
 <div class="form-row">
@@ -21,19 +17,57 @@
           <textarea name="credentialIDs" style="margin-top: 0" class="memo-input auto-expand-textarea" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"></textarea>
      </div>
 </div>
-} @else if (tab === 'sendXrp' || tab === 'createCredential' || tab === 'createCheck' || tab === 'cashCheck') {
+}
+<!-- Credential Expiration and URI -->
+@else if(tab === 'createCredential') {
+<div class="form-row">
+     <div class="form-group">
+          <label for="uri">URI</label>
+          <p class="form-hint">Additional data about the credential (i.e. a link to the VC document).</p>
+          <input type="text" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI" />
+     </div>
+     <div class="form-group">
+          <app-xrpl-expiration-input [expirationSignal]="credentialStore.credentialSubjectExpirationDate" [setExpiration]="credentialStore.setCredentialSubjectExpirationDate.bind(credentialStore)" label="Credential Expiration" hint="Credential expiration. Leave blank for a credential that never expires."> </app-xrpl-expiration-input>
+     </div>
+</div>
+}<!-- Destination Tag and Payment Channel Expiration -->
+@else if(tab === 'createPaymentChannel' || tab === 'fundPaymentChannel') {
+<div class="form-row">
+     @if(tab === 'createPaymentChannel') {
+     <div class="form-group">
+          <label for="destinationTag">Destination Tag</label>
+          <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+     </div>
+
+     <div class="form-group">
+          <app-xrpl-expiration-input [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField" [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)" label="Payment Channel Expiration" hint="Payment channel expiration. Leave blank for a channel that never expires."> </app-xrpl-expiration-input>
+     </div>
+     } @else if(tab === 'fundPaymentChannel') {
+     <div class="form-group">
+          <app-xrpl-expiration-input
+               [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
+               [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
+               label="New Expiration Time for the Channel"
+               hint="This must be later than either the current time plus the SettleDelay of the channel, or the existing Expiration of the channel. <br />After the Expiration time, any transaction that would access the channel <code class='highlight-code'>closes the channel</code> without taking its normal action.<br />Any unspent XRP is returned to the source address when the channel closes."
+          >
+          </app-xrpl-expiration-input>
+     </div>
+     <div class="form-group"></div>
+     }
+</div>
+}@else if (tab === 'sendXrp' || tab === 'createCheck' || tab === 'cashCheck') {
 <!-- Destination Tag & Source Tag -->
 <div class="form-row">
      <div class="form-group">
           <label for="destinationTag">Destination Tag</label>
-          <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-
+          <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
           <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
      </div>
 
      <div class="form-group">
           <label for="sourceTag">Source Tag</label>
-          <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
+          <p class="form-hint">Useful for internal accounting or tracking multiple sub-accounts you control. Most users can leave this empty.</p>
 
           <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
      </div>
@@ -63,6 +97,7 @@
      </div>
 </div>
 
+<!-- Domain ID and Credential ID (for other transactions) -->
 @if (tab !== 'createCheck' && tab !== 'cashCheck') {
 <div class="form-row">
      <div class="form-group">
@@ -83,15 +118,13 @@
 <div class="form-row">
      <div class="form-group">
           <label for="destinationTag">Destination Tag</label>
-          <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
-
+          <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
           <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', ($event))" />
      </div>
 
      <div class="form-group">
           <label for="sourceTag">Source Tag</label>
-          <p class="form-hint">Identify which internal user, wallet, or sub-account initiated a payment.</p>
-
+          <p class="form-hint">Useful for internal accounting or tracking multiple sub-accounts you control. Most users can leave this empty.</p>
           <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', ($event))" />
      </div>
 </div>

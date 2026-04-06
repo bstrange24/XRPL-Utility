@@ -33,12 +33,14 @@ import { EscrowActionTypes, EscrowConfig } from '../constants/time-escrow.types'
 import { EscrowTransactionViewModelService } from '../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { MptStoreService } from '../../../services/mpt/mpt-store/mpt-store.service';
 import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
+import { ConnectionGuardService } from '../../../services/connection-guard/connection-guard.service';
 
 @Component({
      standalone: true,
      template: '',
 })
 export abstract class EscrowBaseComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -226,12 +228,8 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
           this.trustlineCurrencyService.refreshCurrentBalance();
           this.resetInputFields();
      }
@@ -413,7 +411,6 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
-          if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
      private async syncAfterSelection(load = true) {

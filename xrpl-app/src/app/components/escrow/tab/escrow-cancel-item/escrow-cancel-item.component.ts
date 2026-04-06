@@ -1,4 +1,4 @@
-import { Component, inject, input, Input, output } from '@angular/core';
+import { Component, inject, Input, output } from '@angular/core';
 import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/util-service/utils.service';
@@ -33,9 +33,5 @@ export class EscrowCancelItemComponent {
 
      selectEscrow(escrow: any, _source: 'list') {
           this.escrowUtilService.onEscrowSelected(escrow);
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
      }
 }

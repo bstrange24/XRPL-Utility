@@ -8,7 +8,6 @@ import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/download-util/download-util.service';
 import { ToastService } from '../../services/toast/toast.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -41,6 +40,7 @@ import { CredentialActionTypes, CredentialItem, CredentialItemVm, CredentialTxCo
 import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
 import { CREDENTIAL_TAB } from './constants/credential.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-credentials',
@@ -51,8 +51,8 @@ import { StorageService } from '../../services/local-storage/storage.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateCredentialsComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
-     private readonly validationService = inject(ValidationService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      private readonly credentialTransactionOrchestratorService = inject(CredentialTransactionOrchestratorService);
      public readonly transactionUiService = inject(TransactionUiService);
@@ -71,7 +71,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CREDENTIAL_TAB, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }
 
@@ -91,10 +90,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -231,19 +227,13 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      private async handleVerifyCredential(): Promise<boolean> {
+          if (!this.walletManagerService.ensureWalletSelected()) return false;
+
           const env = await this.txEnvironmentService.prepareTxEnvironment({ includeAccountInfo: true, includeLedgerInfo: true });
-          const { accountInfo, client, ledgerInfo } = env;
-          const wallet = this.currentWallet();
+          const { client, ledgerInfo } = env;
 
-          const inputs = this.txUiService.getValidationInputs({
-               wallet: wallet,
-               network: { accountInfo },
-               credentials: { credentialId: this.credentialStore.credentialID(), credentialType: this.credentialStore.credentialType() },
-          });
-
-          const errors = await this.validationService.validate('CredentialVerify', { inputs, client, accountInfo });
-          if (errors.length > 0) {
-               this.toastService.error(errors.join('\n• '), AppConstants.TOAST.ERROR);
+          if (!this.credentialStore.credentialID() || !this.credentialStore.credentialType()) {
+               this.toastService.error('Please select a credential to verify.', AppConstants.TOAST.ERROR);
                return false;
           }
 

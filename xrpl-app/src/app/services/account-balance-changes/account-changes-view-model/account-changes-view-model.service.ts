@@ -110,4 +110,8 @@ export class AccountChangesViewModelService {
           if (end && txTime > end.getTime()) return false;
           return true;
      }
+
+     roundToEightDecimals(value: number): number {
+          return Number.parseFloat(value.toFixed(8));
+     }
 }

@@ -91,7 +91,7 @@
                          </div>
                     </div>
 
-                    <button (click)="copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn-small" title="Copy Offer Index">
+                    <button (click)="copyUtilService.copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="copy-btn-small" title="Copy Offer Index">
                          <lucide-icon name="copy" size="15"></lucide-icon>
                     </button>
                </li>

@@ -183,7 +183,7 @@
                                    </div>
 
                                    <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyFirewallID(chk.NFTokenID); $event.stopPropagation(); $event.preventDefault()" title="Copy MPT Issuance ID" type="button">
+                                        <button class="icon-btn copy-check-id" (click)="copyUtilService.copyAndToast(chk.NFTokenID, 'Firewall ID'); $event.stopPropagation(); $event.preventDefault()" title="Copy Firewall UID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                              <a [href]="`${url}mpt/` + chk.NFTokenID" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>
@@ -313,6 +313,7 @@
 
                                         <div class="form-group">
                                              <label>Destination Tag</label>
+                                             <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
                                              <input type="text" [(ngModel)]="destinationTagField" name="destinationTagField" />
                                         </div>
                                    </div>

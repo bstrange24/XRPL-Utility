@@ -32,10 +32,6 @@ export class PaymentChannelSummaryComponent {
           this.infoPanelExpanded.update(expanded => !expanded);
      }
 
-     copyAndToast(text: string, label: string = 'Content'): void {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      onPaymentChannelClick(channel: UnifiedPaymentChannel) {
           this.paymentChannelSelected.emit(channel);
      }

@@ -24,12 +24,12 @@ import { AppConstants } from '../../core/app.constants';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { SelectSearchDropdownComponent } from '../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -65,7 +65,7 @@ interface DelegateAction {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit {
-     private readonly destroyRef = inject(DestroyRef);
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly utilsService = inject(UtilsService);
      private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
@@ -221,7 +221,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           if (tab) {
                const allowedTabs = ['clear', 'delegate'] as const;
                type TabType = (typeof allowedTabs)[number];
-               if (tab && allowedTabs.includes(tab as TabType)) {
+               if (allowedTabs.includes(tab as TabType)) {
                     // Type assertion is safe because we checked includes
                     this.setTab(tab as TabType);
                }
@@ -230,7 +230,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.loadCustomDestinations();
           this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
           this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
-          this.txUiService.clearAllOptions();
      }
 
      private loadCustomDestinations(): void {
@@ -240,7 +239,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
-          this.txUiService.currentWallet.set({ ...wallet });
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
@@ -320,7 +318,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
                     this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
 
-                    this.refreshUiState(wallet, accountInfo, accountObjects);
+                    // this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -339,16 +337,16 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    const inputs = this.txUiService.getValidationInputs({
-                         wallet: this.currentWallet(),
-                         network: { accountInfo, fee, currentLedger },
-                         destination: { address: destinationAddress, tag: '' },
-                    });
+                    // const inputs = this.txUiService.getValidationInputs({
+                    //      wallet: this.currentWallet(),
+                    //      network: { accountInfo, fee, currentLedger },
+                    //      destination: { address: destinationAddress, tag: '' },
+                    // });
 
-                    const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
+                    // const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
+                    // if (errors.length > 0) {
+                    //      return this.txUiService.setError(errors.join('\n• '));
+                    // }
 
                     let permissions: { Permission: { PermissionValue: string } }[] = [];
                     if (delegate === 'clear') {
@@ -384,19 +382,19 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
                     await this.setTxOptionalFields(client, delegateSetTx, wallet, accountInfo, 'delegateActions');
 
-                    const result = await this.txExecutor.delegateActions(delegateSetTx, wallet, client, {
-                         useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                         isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                         // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                         regularKeyAddress: this.txUiService.regularKeyAddress(),
-                         regularKeySeed: this.txUiService.regularKeySeed(),
-                         multiSignAddress: this.txUiService.multiSignAddress(),
-                         multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    });
-                    if (!result.success) return this.txUiService.setError(`${result.error}`);
+                    // const result = await this.txExecutor.delegateActions(delegateSetTx, wallet, client, {
+                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
+                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
+                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
+                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
+                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
+                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
+                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
+                    // });
+                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
 
-                    // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
-                    await this.refreshAfterTx(client, wallet, null, false);
+                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Delegate action successfully!' : 'Delegate action successfully!';
+                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in delegateAction:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -439,9 +437,9 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                }
           }
 
-          if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-               this.utilsService.setMemoField(delegateSetTx, this.txUiService.memoField());
-          }
+          // if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
+          //      this.utilsService.setMemoField(delegateSetTx, this.txUiService.memoField());
+          // }
      }
 
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
@@ -449,8 +447,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           this.getExistingDelegations(accountObjects, wallet.classicAddress);
           destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
           if (addDest && destination) this.addNewDestinationFromUser(destination);
-          this.refreshUiState(wallet, accountInfo, accountObjects);
-          this.txUiService.clearAllOptions();
+          // this.refreshUiState(wallet, accountInfo, accountObjects);
      }
 
      private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
@@ -469,45 +466,45 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      //      });
      // }
 
-     private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-          // Update multi-sign & regular key flags
-          const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-          this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
+     // private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
+     //      // Update multi-sign & regular key flags
+     //      const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
+     //      this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
 
-          // Update service state
-          // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
+     //      // Update service state
+     //      // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
 
-          const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-          const hasSignerList = signerAccounts?.length > 0;
-          this.txUiService.signerQuorum.set(signerQuorum);
-          const checkForMultiSigner = signerAccounts?.length > 0;
-          checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
+     //      const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
+     //      const hasSignerList = signerAccounts?.length > 0;
+     //      this.txUiService.signerQuorum.set(signerQuorum);
+     //      const checkForMultiSigner = signerAccounts?.length > 0;
+     //      checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
 
-          this.txUiService.multiSigningEnabled.set(hasSignerList);
-          if (hasSignerList) {
-               const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-               this.txUiService.signers.set(entries);
-          }
+     //      this.txUiService.multiSigningEnabled.set(hasSignerList);
+     //      if (hasSignerList) {
+     //           const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+     //           this.txUiService.signers.set(entries);
+     //      }
 
-          const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
+     //      const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
 
-          this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-          this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     }
+     //      this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
+     //      this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
+     // }
 
-     private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-          const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-          this.txUiService.signers.set(signerEntries);
-          this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-          this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     }
+     // private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
+     //      const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
+     //      this.txUiService.signers.set(signerEntries);
+     //      this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
+     //      this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
+     // }
 
-     private clearMultiSignersConfiguration(): void {
-          this.txUiService.signerQuorum.set(0);
-          this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-          this.txUiService.multiSignSeeds.set('');
-          this.storageService.removeValue('signerEntries');
-     }
+     // private clearMultiSignersConfiguration(): void {
+     //      this.txUiService.signerQuorum.set(0);
+     //      this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
+     //      this.txUiService.multiSignSeeds.set('');
+     //      this.storageService.removeValue('signerEntries');
+     // }
 
      updateDestinations() {
           // Optional: persist destinations
@@ -533,11 +530,11 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           }
      }
 
-     copyDelegateId(checkId: string) {
-          navigator.clipboard.writeText(checkId).then(() => {
-               this.txUiService.showToastMessage('Delegate Id copied!');
-          });
-     }
+     // copyDelegateId(checkId: string) {
+     //      navigator.clipboard.writeText(checkId).then(() => {
+     //           this.txUiService.showToastMessage('Delegate Id copied!');
+     //      });
+     // }
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');

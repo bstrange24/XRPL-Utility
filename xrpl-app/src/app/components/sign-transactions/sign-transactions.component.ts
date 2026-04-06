@@ -40,6 +40,7 @@ import { SignTransationStoreService } from '../../services/sign-transactions/sig
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-sign-transactions',
@@ -50,6 +51,7 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignTransactionsComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -100,7 +102,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
+          // this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
@@ -182,7 +184,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                          currentLedger: env.currentLedger,
                          selectedTransaction: this.signTransationStoreService.selectedTransaction() as any,
                          isTicketEnabled: this.xrplTxOptionsStore.isTicket(),
-                         isMemoEnable: this.txUiService.isMemoEnabled(),
+                         isMemoEnable: this.xrplTxOptionsStore.isMemoEnabled(),
                          ticketSequence: this.xrplTxOptionsStore.selectedSingleTicket(),
                     });
 
@@ -611,7 +613,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      clearFields() {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
           this.cdr.markForCheck();
      }
 

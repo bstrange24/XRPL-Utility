@@ -46,6 +46,7 @@ import { PaymentChannelRenewComponent } from './tab/payment-channel-renew/paymen
 import { PaymentChannelFlagsComponent } from './tab/payment-channel-flags/payment-channel-flags.component';
 import { Subscription } from 'rxjs';
 import { PaymentChannelSignatureContextService } from '../../services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account',
@@ -76,6 +77,7 @@ import { PaymentChannelSignatureContextService } from '../../services/payment-ch
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreatePaymentChannelComponent extends WalletDestinationBase implements OnInit, OnDestroy {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -87,7 +89,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly paymentChannelSignatureContextService = inject(PaymentChannelSignatureContextService);
      private readonly signatureSubscription: Subscription = new Subscription();
-     private signatureEffect: any;
+     private readonly signatureEffect: any;
      readonly menuTabs: TabConfig[] = PAYMENT_CHANNEL_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = PAYMENT_CHANNEL_TAB_META;
 
@@ -106,7 +108,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, PAYMENT_CHANNEL_TAB, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
 
           const signature = this.route.snapshot.queryParams['signature'];
@@ -148,12 +149,8 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
           this.populateDefaultDateTime();
      }
 

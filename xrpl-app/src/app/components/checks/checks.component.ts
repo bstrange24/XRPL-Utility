@@ -48,6 +48,7 @@ import { ChecksCreateComponent } from './tab/checks-create/checks-create.compone
 import { XrplTransactionOrchestratorService } from '../../services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
 import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-checks',
@@ -58,6 +59,7 @@ import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-su
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendChecksComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -146,12 +148,8 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
           this.trustlineCurrencyService.refreshCurrentBalance();
           this.populateDefaultDateTime();
      }
@@ -342,7 +340,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
-          if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
      toggleExpiration(enabled: boolean): void {
@@ -379,6 +376,5 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
      }
 }

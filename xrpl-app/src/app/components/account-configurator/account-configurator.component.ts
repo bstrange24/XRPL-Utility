@@ -39,6 +39,7 @@ import { AccountFlagsComponent } from './ui-components/tabs/flags/account-flags.
 import { AccountMetadataComponent } from './ui-components/tabs/meta-data/account-metadata.component';
 import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.component';
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-configurator',
@@ -50,6 +51,7 @@ import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-ke
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountConfiguratorComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -67,7 +69,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['modifyAccountFlags', 'modifyDepositAuth', 'modifyMetaData', 'modifyMultiSigners', 'modifyRegularKey'] as const, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -76,9 +77,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
      }
 
      trackByAddress(_index: number, item: DropdownItem): string {
@@ -113,7 +112,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                     this.accountConfiguratorUtilService.setAccountFlags(currentTab, env);
 
                     this.refreshAccountObject(env);
-                    if (currentTab === 'modifyMultiSigners') this.txUiService.signerQuorum.set(1);
+                    if (currentTab === 'modifyMultiSigners') this.accountConfiguratorStoreService.setField('signerQuorum', 1);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);

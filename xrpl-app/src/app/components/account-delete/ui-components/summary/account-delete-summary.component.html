@@ -29,6 +29,7 @@
                          @for (blocker of info()!.blockers; track blocker.route) {
                          <li class="blocker-item">
                               <ng-icon name="heroXCircle" size="18" class="blocker-icon" />
+
                               <span>{{ blocker.count }} {{ blocker.label }}</span>
                               @if (blocker.route && blocker.route !== '#') {
                               <a class="resolve-link" [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}"> Go to {{ blocker.label }} </a>

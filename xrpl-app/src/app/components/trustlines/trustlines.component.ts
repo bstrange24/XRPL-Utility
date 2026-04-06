@@ -45,6 +45,7 @@ import { TrustlineIssueComponent } from './tab/trustline-issue/trustline-issue.c
 import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-clawback.component';
 import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-trustlines',
@@ -55,6 +56,7 @@ import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlinesComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -128,7 +130,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
+          // this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 

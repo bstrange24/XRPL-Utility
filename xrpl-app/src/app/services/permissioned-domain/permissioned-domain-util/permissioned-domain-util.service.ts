@@ -62,8 +62,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      }
 
      clearFields() {
-          this.txUiService.clearAllOptions();
-          this.txUiService.clearOptionalInputFields();
           this.txUiService.clearAllOptionsAndMessages();
           this.permissionedDomainStoreService.resetDomainFields();
      }
@@ -71,7 +69,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      clearInputFields() {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
           this.permissionedDomainStoreService.resetDomainFields();
      }
 }

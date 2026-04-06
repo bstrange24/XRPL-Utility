@@ -8,7 +8,6 @@ export class DownloadUtilService {
      constructor(public ui: TransactionUiService) {}
 
      downloadSignTxJson(txJson: any) {
-          // const json = JSON.stringify(txJson, null, 2);
           const blob = new Blob([txJson], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');

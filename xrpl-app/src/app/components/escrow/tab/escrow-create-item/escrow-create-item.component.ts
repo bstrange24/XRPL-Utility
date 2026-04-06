@@ -1,4 +1,4 @@
-import { Component, inject, input, Input, output } from '@angular/core';
+import { Component, inject, Input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -8,7 +8,7 @@ import { CopyUtilService } from '../../../../services/copy-util/copy-util.servic
 import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escrow-util.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
-import { EscrowActionTypes, EscrowDisplayItem } from '../../constants/time-escrow.types';
+import { EscrowDisplayItem } from '../../constants/time-escrow.types';
 
 @Component({
      selector: 'app-escrow-create-item',
@@ -34,9 +34,5 @@ export class EscrowCreateItemComponent {
 
      selectEscrow(escrow: any, _source: 'list') {
           this.escrowUtilService.onEscrowSelected(escrow);
-     }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
      }
 }

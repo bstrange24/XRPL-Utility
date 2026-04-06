@@ -37,6 +37,7 @@ import { DidDeleteComponent } from './tab/did-delete/did-delete.component';
 import { DidSetComponent } from './tab/did-set/did-set.component';
 import { DID_TAB } from './constants/did.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-did',
@@ -51,6 +52,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
 
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -72,7 +74,6 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.didViewModelService.activeTab.set('setDid');
           this.applyTabFromQueryParam(this.route, DID_TAB, tab => this.setTab(tab));
           this.didUtilService.populateDidDefaultData();
-          this.txUiService.clearAllOptions();
      }
 
      ngAfterViewInit() {
@@ -91,14 +92,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.didUtilService.populateDidDefaultData();
-     }
-
-     copyDidIndex(didIndex: string) {
-          navigator.clipboard.writeText(didIndex).then(() => {
-               this.txUiService.showToastMessage('DID Index copied!');
-          });
      }
 
      copyAndToast(text: string, label: string = 'Content') {

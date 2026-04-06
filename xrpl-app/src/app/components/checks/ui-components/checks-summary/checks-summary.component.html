@@ -51,7 +51,7 @@
                     </div>
 
                     <!-- Copy button -->
-                    <button (click)="copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
+                    <button (click)="copyUtilService.copyAndToast(check.index, 'Check ID'); $event.stopPropagation()" class="copy-btn-small" title="Copy Check ID">
                          <lucide-icon name="copy" size="15"></lucide-icon>
                     </button>
                </li>

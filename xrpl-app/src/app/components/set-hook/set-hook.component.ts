@@ -28,6 +28,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-set-hook',
@@ -38,6 +39,7 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SetHookComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      private readonly validationService = inject(ValidationService);
      private readonly dropdownService = inject(DestinationDropdownService);
@@ -93,7 +95,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
                }
           }
 
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }
 
@@ -105,7 +106,7 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
+          // this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
@@ -178,32 +179,32 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
                     }
 
                     // Construct tx (for create operation; adjust for update/delete)
-                    const setHookTx = {
-                         TransactionType: 'SetHook',
-                         Account: wallet.classicAddress,
-                         Fee: env.fee,
-                         LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-                         Hooks: [
-                              {
-                                   Hook: {
-                                        CreateCode: this.hookWasmHex().toUpperCase(),
-                                        HookOn: this.hookOn(),
-                                        HookNamespace: this.hookNamespace().toUpperCase(),
-                                        HookApiVersion: this.hookApiVersion(),
-                                        Flags: this.flags(),
-                                        // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
-                                   },
-                              },
-                         ],
-                    };
+                    // const setHookTx = {
+                    //      TransactionType: 'SetHook',
+                    //      Account: wallet.classicAddress,
+                    //      Fee: env.fee,
+                    //      LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+                    //      Hooks: [
+                    //           {
+                    //                Hook: {
+                    //                     CreateCode: this.hookWasmHex().toUpperCase(),
+                    //                     HookOn: this.hookOn(),
+                    //                     HookNamespace: this.hookNamespace().toUpperCase(),
+                    //                     HookApiVersion: this.hookApiVersion(),
+                    //                     Flags: this.flags(),
+                    //                     // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
+                    //                },
+                    //           },
+                    //      ],
+                    // };
 
-                    const result = await this.txExecutor.setHook(env, setHookTx as any, env.wallet, env.client, {});
+                    // const result = await this.txExecutor.setHook(env, setHookTx as any, env.wallet, env.client, {});
 
-                    if (!result.success) {
-                         return this.txUiService.setError(`${result.error}`);
-                    }
+                    // if (!result.success) {
+                    //      return this.txUiService.setError(`${result.error}`);
+                    // }
 
-                    this.txUiService.setSuccess(this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!');
+                    // this.txUiService.setSuccess(this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!');
                } catch (error: any) {
                     this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
                } finally {
@@ -224,9 +225,9 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      clearInputFields() {
           this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
-          this.txUiService.amountField.set('');
-          this.txUiService.destinationTagField.set('');
-          this.txUiService.invoiceIdField.set('');
-          this.txUiService.sourceTagField.set('');
+          // this.txUiService.amountField.set('');
+          // this.txUiService.destinationTagField.set('');
+          // this.txUiService.invoiceIdField.set('');
+          // this.txUiService.sourceTagField.set('');
      }
 }

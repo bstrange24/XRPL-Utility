@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
-import { XrplService } from '../../../../services/xrpl-services/xrpl.service';
+import { XrplService } from '../../../services/xrpl-services/xrpl.service';
+import { ConnectionGuardService } from '../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-connection-status',

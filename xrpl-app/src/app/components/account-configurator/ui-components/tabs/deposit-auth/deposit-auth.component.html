@@ -39,6 +39,6 @@
 </div>
 
 <div class="button-row">
-     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
-     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
 </div>

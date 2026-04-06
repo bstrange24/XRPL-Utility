@@ -37,10 +37,6 @@ export class PaymentChannelClaimComponent {
           await this.paymentChannelUtilService.generateCreatorClaimSignature(wallet);
      }
 
-     copyAndToast(text: string, label: string = 'Content'): void {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      onFocus(event: FocusEvent): void {
           // TODO: add any focus logic you had (e.g. select all text)
           const input = event.target as HTMLInputElement;

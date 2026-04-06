@@ -38,6 +38,7 @@ import { WalletDeriveMnemonicComponent } from './tab/wallet-derive-mnemonic/wall
 import { WalletDeriveSecretNumbersComponent } from './tab/wallet-derive-secret-numbers/wallet-derive-secret-numbers.component';
 import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wallet/wallet-remove-custom-wallet.component';
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-wallet-configurator',
@@ -48,6 +49,7 @@ import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.c
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletConfiguratorComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -70,7 +72,6 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      }
 
      ngOnInit(): void {
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
           this.walletsStoreService.resetAll();
           this.walletsStoreService.setField('secp256k1_encryption_type', true);
@@ -82,11 +83,8 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.xrplCache.invalidateAccountCache(wallet.address);
-
           if (this.walletsStoreService.selectedAddress() === wallet.address) this.walletsStoreService.setField('selectedAddress', '');
      }
 

@@ -56,6 +56,6 @@
 </div>
 
 <div class="button-row" style="margin-top: 0">
-     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
-     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
 </div>

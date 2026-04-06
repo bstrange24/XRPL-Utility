@@ -1,10 +1,8 @@
-import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy, computed, effect } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { Subject, takeUntil } from 'rxjs';
-import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -43,6 +41,7 @@ import { AmmTransactionOrchestratorService } from '../../services/amm/amm-transa
 import { AmmFieldsComponent } from './tab/amm-fields/amm-fields.component';
 import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.component';
 import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-amm',
@@ -53,6 +52,7 @@ import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateAmmComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -134,8 +134,6 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           // Default pool 2
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
           this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
-
-          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -144,11 +142,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
 
      async selectWallet(wallet: Wallet): Promise<void> {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
           this.offerCurrency.setWalletAddress(wallet.address);
@@ -233,7 +228,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           if (!env) throw new Error('Unable to get environment.');
 
           const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-          if (currentTab === 'swapViaAMM' && (!destination || !destination.trim())) {
+          if (currentTab === 'swapViaAMM' && !destination?.trim()) {
                this.toastService.error('Please enter a valid destination address for the swap.', AppConstants.TOAST.ERROR);
                return;
           }
@@ -275,9 +270,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
-          this.txUiService.clearAllOptions();
-     }
+     protected refreshAccountObject(env: any): void {}
 
      onPool1CurrencySelected(item: SelectItem | null): void {
           this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
@@ -311,6 +304,5 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
      }
 }

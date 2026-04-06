@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import * as xrpl from 'xrpl';
@@ -131,7 +131,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      loadFlagsFromSignature(signature: string) {
           const context = this.paymentChannelSignatureContextService.getSignatureContext(signature);
 
-          if (context && context.flags) {
+          if (context?.flags) {
                // Update the store with the flags from the signature context
                this.paymentChannelStoreService.updateField('flags', () => ({
                     renew: context.flags.renew ?? false,
@@ -162,7 +162,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      onChannelSelected(channel: any) {
           // If channel has flags, you might also want to load them
-          if (channel && channel.Flags) {
+          if (channel?.Flags) {
                const hasCloseFlag = (channel.Flags & 0x00020000) !== 0;
                this.paymentChannelStoreService.updateField('flags', () => ({
                     renew: false,
@@ -432,6 +432,5 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      clearInputFields(): void {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
      }
 }

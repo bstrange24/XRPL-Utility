@@ -105,11 +105,11 @@
                          <!-- Set Trustline -->
                          @if(tab === 'setTrustline') {
                          <!-- <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit() || trustlineStore.trustlineAlreadyExist()">{{ view.trustlineSetButtonLabel() }}</button> -->
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit()">{{ view.trustlineSetButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view.trustlineSetButtonLabel() }}</button>
                          }
                          <!-- Remove Trustline -->
                          @else if (tab === 'removeTrustline') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit() || !trustlineStore.removeTrustlineAvailable()">{{ view.trustlineRemoveButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady() || !trustlineStore.removeTrustlineAvailable()">{{ view.trustlineRemoveButtonLabel() }}</button>
                          }
                          <!-- Issue Currency -->
                          @else if (tab === 'issueCurrency') {
@@ -117,7 +117,7 @@
                          }
                          <!-- Clawback Tokens -->
                          @else if (tab === 'clawbackTokens') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit()">{{ view.clawbackButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view.clawbackButtonLabel() }}</button>
                          }
                          <!-- Add New Issuers -->
                          @if (tab !== 'addNewIssuers') {

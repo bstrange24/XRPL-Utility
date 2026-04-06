@@ -41,6 +41,7 @@ import { NftModifyComponent } from './tab/nft-modify/nft-modify.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
 import { NftFlagsComponent } from './tab/nft-flags/nft-flags.component';
 import { NftRequirementsInfoComponent } from './ui-components/nft-requirements-info/nft-requirements-info.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-nft-create',
@@ -51,6 +52,7 @@ import { NftRequirementsInfoComponent } from './ui-components/nft-requirements-i
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateNftComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -71,7 +73,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, NFT_CREATE_TAB, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -86,10 +87,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
           this.populateDefaultDateTime();
      }
@@ -240,7 +238,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
-          if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
      handleSearchQueryChange(query: string) {

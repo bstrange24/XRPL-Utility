@@ -6,6 +6,7 @@ import { AccountConfiguratorStoreService } from '../../../../../services/account
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
 import { NgIcon } from '@ng-icons/core';
+import { ConnectionGuardService } from '../../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-regular-key',
@@ -15,6 +16,7 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './regular-key.component.css',
 })
 export class RegularKeyComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);

@@ -43,5 +43,5 @@
 </div>
 
 <div class="button-row">
-     <button type="button" class="btn-primary-blue" (click)="performAction.emit('')" [disabled]="!canSubmit()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+     <button type="button" class="btn-primary-blue" (click)="performAction.emit('')" [disabled]="!canSubmit()  || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
 </div>

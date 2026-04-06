@@ -1,7 +1,7 @@
 @if (offerStoreService.existingOffers().length > 0) {
 <div class="form-row" style="margin-bottom: 1.2em">
      <div class="form-group">
-          <label>Select Offers to Cancel</label>
+          <label for="selectOffersToCancel">Select Offers to Cancel</label>
           <p class="form-hint">Select existing offers to cancel for the selected account.</p>
           <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeOfferDropdown()">
                <input #offerDropdownInput type="text" [value]="offerSearchQuery()" (input)="onOfferSearchInput($event)" (focus)="openOfferDropdown()" (keydown)="onOfferKeyDown($event)" [placeholder]="selectedOfferSequences().length > 0 ? selectedOfferSequences().length + ' offer(s) selected' : 'Search offers by sequence...'" class="combobox-input" autocomplete="off" />

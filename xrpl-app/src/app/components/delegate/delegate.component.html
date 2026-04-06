@@ -98,7 +98,7 @@
                                    </div>
 
                                    <div class="button-group">
-                                        <button class="icon-btn copy-check-id" (click)="copyDelegateId(chk.index); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
+                                        <button class="icon-btn copy-check-id" (click)="copyUtilService.copyAndToast(chk.index, 'Delegate ID'); $event.stopPropagation(); $event.preventDefault()" title="Copy Credential ID" type="button">
                                              <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
                                              <a [href]="txUiService.explorerUrl() + 'entry/' + chk.index" target="_blank" rel="noopener noreferrer" class="icon-btn" style="padding-left: 20px" title="View on XRPL Win" (click)="$event.stopPropagation()">
                                                   <ng-icon name="heroArrowTopRightOnSquare" size="20" class="text-blue-600"></ng-icon>

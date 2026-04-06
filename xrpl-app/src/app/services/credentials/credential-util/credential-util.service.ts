@@ -204,7 +204,6 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      clearInputFields(): void {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
           this.credentialStore.resetCredentailFields();
      }
 }

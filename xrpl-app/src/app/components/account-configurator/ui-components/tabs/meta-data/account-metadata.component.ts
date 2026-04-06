@@ -6,6 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import * as xrpl from 'xrpl';
+import { ConnectionGuardService } from '../../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-metadata',
@@ -15,6 +16,7 @@ import * as xrpl from 'xrpl';
      styleUrl: './account-metadata.component.css',
 })
 export class AccountMetadataComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);

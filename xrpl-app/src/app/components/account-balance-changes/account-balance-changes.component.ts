@@ -40,7 +40,6 @@ export class AccountChangesComponent extends PerformanceBaseComponent implements
      }
 
      onWalletSelected(wallet: Wallet): void {
-          this.txUiService.currentWallet.set({ ...wallet });
           this.orchestrator.invalidateCacheAndReload(wallet.address);
      }
 

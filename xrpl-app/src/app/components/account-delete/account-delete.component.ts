@@ -37,6 +37,7 @@ import { AccountDeleteFormComponent } from './tab/account-delete-form/account-de
 import { AccountDeleteSummaryComponent } from './ui-components/summary/account-delete-summary.component';
 import { AccountDeleteConfig } from './constants/account-delete.types';
 import { StorageService } from '../../services/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-delete',
@@ -47,6 +48,7 @@ import { StorageService } from '../../services/local-storage/storage.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -65,7 +67,6 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deleteAccount'] as const, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
           this.transactionDropdownService.loadCustomDestinations();
      }
 
@@ -75,10 +76,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 

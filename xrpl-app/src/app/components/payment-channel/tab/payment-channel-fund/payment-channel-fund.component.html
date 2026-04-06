@@ -23,7 +23,21 @@
                </p>
                <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
           </div>
+          <!-- <div class="form-group">
+               <label for="amount">XRP Amount</label>
+               <p class="form-hint">
+                    Amount of XRP to deduct from the sender's balance and <br />
+                    set aside in this channel.
+               </p>
+               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
+          </div> -->
      </div>
+
+     <!-- <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.checked)">Include optional fields (Destination Tag and Expiration Date)</mat-slide-toggle>
+
+     @if (txUiService.wantsOptions()) {
+     <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
+     } -->
 
      <div class="form-row">
           <div class="form-group">

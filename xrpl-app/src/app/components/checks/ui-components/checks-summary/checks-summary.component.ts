@@ -42,8 +42,4 @@ export class ChecksSummaryComponent {
      selectCheck(check: any, _source: 'list') {
           this.checkUtilService.onCheckSelected(check);
      }
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 }

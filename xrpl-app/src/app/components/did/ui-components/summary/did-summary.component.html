@@ -61,13 +61,13 @@
                <!-- Copy buttons -->
                <div class="did-copy-actions" (mouseenter)="$event.stopPropagation()" (mouseleave)="$event.stopPropagation()" (mousemove)="$event.stopPropagation()">
                     @if (getDid()!.DIDDocument && getDid()!.DIDDocument !== 'N/A') {
-                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.DIDDocument!, 'DID Document')">Copy full DID Document (JSON)</button>
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyUtilService.copyAndToast(getDid()!.DIDDocument!, 'DID Document')">Copy full DID Document (JSON)</button>
                     } @if (getDid()!.Data && getDid()!.Data !== 'N/A') {
-                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.Data!, 'DID Data')">Copy Data field (JSON)</button>
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyUtilService.copyAndToast(getDid()!.Data!, 'DID Data')">Copy Data field (JSON)</button>
                     } @if (getDid()!.URI && getDid()!.URI !== 'N/A') {
-                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.URI!, 'URI Data')">Copy URI Field</button>
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyUtilService.copyAndToast(getDid()!.URI!, 'URI Data')">Copy URI Field</button>
                     }
-                    <button type="button" class="copy-link btn btn-sm" (click)="copyAndToast(getDid()!.index, 'Index')">Copy Index</button>
+                    <button type="button" class="copy-link btn btn-sm" (click)="copyUtilService.copyAndToast(getDid()!.index, 'Index')">Copy Index</button>
                </div>
           </ul>
      </section>

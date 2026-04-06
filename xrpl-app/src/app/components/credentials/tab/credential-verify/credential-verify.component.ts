@@ -6,6 +6,7 @@ import { CredentialUtilService } from '../../../../services/credentials/credenti
 import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 import { NgIcon } from '@ng-icons/core';
+import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-credential-verify',
@@ -15,6 +16,7 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './credential-verify.component.css',
 })
 export class CredentialVerifyComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly credentialStore = inject(CredentialStore);
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly credentialViewModel = inject(CredentialViewModelService);

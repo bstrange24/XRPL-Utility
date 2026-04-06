@@ -1,31 +1,32 @@
-<li class="credential-item" [class.expired]="escrow.isExpired" [class.selected-from-list]="escrow.EscrowSequence === escrowUtilService.selectedEscrowSequenceNumber()" (click)="onEscrowClick(escrow)" (keydown.enter)="onEscrowClick(escrow)" (keydown.space)="onEscrowClick(escrow); $event.preventDefault()">
-     <div class="credential-content">
-          <app-tooltip-link [href]="txUiService.explorerUrl() + 'ledger/' + escrow.EscrowSequence" tooltipText="View Escrow on XRPL Explorer">
-               <div class="credential-title-line">
-                    <span class="check-amount" [class.expired]="escrow.isExpired"> {{ escrow.amount }} </span>
-                    @if (escrow.isExpired) {
-                    <span class="expired-badge">Expired</span>
-                    }
-               </div>
-          </app-tooltip-link>
+<ul style="padding-left: 0px">
+     <li class="credential-item" [class.expired]="escrow.isExpired" [class.selected-from-list]="escrow.EscrowSequence === escrowUtilService.selectedEscrowSequenceNumber()" (click)="onEscrowClick(escrow)" (keydown.enter)="onEscrowClick(escrow)" (keydown.space)="onEscrowClick(escrow); $event.preventDefault()">
+          <div class="credential-content">
+               <app-tooltip-link [href]="txUiService.explorerUrl() + 'ledger/' + escrow.EscrowSequence" tooltipText="View Escrow on XRPL Explorer">
+                    <div class="credential-title-line">
+                         <span class="check-amount" [class.expired]="escrow.isExpired"> {{ escrow.amount }} </span>
+                         @if (escrow.isExpired) {
+                         <span class="expired-badge">Expired</span>
+                         }
+                    </div>
+               </app-tooltip-link>
 
-          <div class="credential-meta chips" [class.expired]="escrow.isExpired">
-               <div class="cred-chip">
-                    <span class="meta-label">Sequence:</span>
-                    <span class="type">{{ escrow.EscrowSequence }}</span>
-               </div>
-               <div class="cred-chip">
-                    <span class="meta-label">{{ escrow.isExpired ? 'Finished:' : 'Finishes:' }}</span>
-                    <span class="type" [class.expired]="escrow.isExpired">{{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }}</span>
-               </div>
-               <div class="cred-chip">
-                    <span class="meta-label">Cancellable after:</span>x
-                    <span class="meta-label">{{ escrow.isExpired ? 'Finished:' : 'Cancellable after:' }}</span>
-                    <span class="type" [class.expired]="escrow.isExpired">{{ escrow.cancelAfter ? utilsService.convertXRPLTime(escrow.cancelAfter) : 'N/A' }}</span>
+               <div class="credential-meta chips" [class.expired]="escrow.isExpired">
+                    <div class="cred-chip">
+                         <span class="meta-label">Sequence:</span>
+                         <span class="type">{{ escrow.EscrowSequence }}</span>
+                    </div>
+                    <div class="cred-chip">
+                         <span class="meta-label">{{ escrow.isExpired ? 'Finished at:' : 'Finishes at or after:' }}</span>
+                         <span class="type" [class.expired]="escrow.isExpired">{{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }}</span>
+                    </div>
+                    <div class="cred-chip">
+                         <span class="meta-label">Cancellable after:</span>
+                         <span class="type" [class.expired]="escrow.isExpired">{{ escrow.cancelAfter ? utilsService.convertXRPLTime(escrow.cancelAfter) : 'N/A' }}</span>
+                    </div>
                </div>
           </div>
-     </div>
-     <button (click)="copyAndToast(escrow.EscrowSequence, 'Escrow Sequence'); $event.stopPropagation()" class="copy-btn-small" title="Copy Sequence">
-          <lucide-icon name="copy" size="15"></lucide-icon>
-     </button>
-</li>
+          <button (click)="copyUtilService.copyAndToast(escrow.EscrowSequence, 'Escrow Sequence'); $event.stopPropagation()" class="copy-btn-small" title="Copy Sequence">
+               <lucide-icon name="copy" size="15"></lucide-icon>
+          </button>
+     </li>
+</ul>

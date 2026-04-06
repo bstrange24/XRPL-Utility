@@ -159,7 +159,11 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
                if (currency?.currency !== 'XRP') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
                } else {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, check.amount);
+                    if (type !== 'createCheck') {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    } else {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, check.amount);
+                    }
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 

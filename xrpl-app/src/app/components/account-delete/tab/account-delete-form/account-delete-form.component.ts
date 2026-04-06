@@ -5,6 +5,7 @@ import { TransactionOptionsSectionComponent } from '../../../shared/transaction-
 import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
+import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-delete-form',
@@ -14,9 +15,9 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
      styleUrl: './account-delete-form.component.css',
 })
 export class AccountDeleteFormComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly txUiService = inject(TransactionUiService);
 
-     // Inputs from parent
      view = input.required<any>(); // for deleteBlockers(), deleteWalletButtonLabel()
      info = input.required<any>(); // for canDelete
      destinationItems = input.required<any[]>();
@@ -27,7 +28,6 @@ export class AccountDeleteFormComponent {
      tab = input.required<string>(); // 'deleteAccount'
      @Output() optionsToggled = new EventEmitter<boolean>();
 
-     // Outputs to parent
      performAction = output<void>();
      clearFields = output<void>();
      searchQueryChange = output<string>();

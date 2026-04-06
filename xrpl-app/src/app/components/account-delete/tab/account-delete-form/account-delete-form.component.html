@@ -20,10 +20,10 @@
 <!-- Action buttons -->
 <div class="button-row">
      @if (!info().canDelete || canSubmit()) {
-     <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || view().deleteBlockers().length > 0" (click)="performAction.emit()">{{ view().deleteWalletButtonLabel() }}</button>
+     <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" (click)="performAction.emit()">{{ view().deleteWalletButtonLabel() }}</button>
      } @else {
-     <button type="button" class="btn-primary-red" (click)="performAction.emit()" [disabled]="!canSubmit()">{{ view().deleteWalletButtonLabel() }}</button>
+     <button type="button" class="btn-primary-red" (click)="performAction.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ view().deleteWalletButtonLabel() }}</button>
      }
 
-     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()" (click)="clearFields.emit()">Clear Fields</button>
+     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" (click)="clearFields.emit()">Clear Fields</button>
 </div>

@@ -34,9 +34,6 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
      });
 
      clearInputFields(): void {
-          this.txUiService.clearAllOptions();
-          this.txUiService.clearOptionalInputFields();
           this.txUiService.wantsOptions.set(false);
-          this.txUiService.amountField.set('');
      }
 }

@@ -45,6 +45,7 @@ import { NftBuyOffersComponent } from './tab/nft-buy-offers/nft-buy-offers.compo
 import { NftCancelOffersComponent } from './tab/nft-cancel-offers/nft-cancel-offers.component';
 import { NftSellComponent } from './tab/nft-sell/nft-sell.component';
 import { NftOffersOrchestratorService } from '../../services/nft/nft-offers-orchestrator/nft-offers-orchestrator.service';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-nft-offers',
@@ -55,6 +56,7 @@ import { NftOffersOrchestratorService } from '../../services/nft/nft-offers-orch
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftOffersComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -151,7 +153,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
@@ -270,12 +271,12 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                const selectedOffer = validOffers[0];
                console.log('First sell offer:', validOffers[0]);
 
-               if (selectedOffer && selectedOffer.Destination) {
+               if (selectedOffer?.Destination) {
                     this.txUiService.setError(`This NFT is only purchasable by: ${selectedOffer.Destination}`);
                     return;
                }
 
-               if (selectedOffer && selectedOffer.owner === wallet.classicAddress) {
+               if (selectedOffer?.owner === wallet.classicAddress) {
                     this.txUiService.setError('You already own this NFT.');
                     return;
                }
@@ -371,7 +372,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
-          if (!enabled) this.txUiService.clearOptionalInputFields();
      }
 
      toggleExpiration(enabled: boolean): void {
@@ -401,12 +401,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.nftCreateStoreService.setField('expiration', '');
      }
 
-     copyNFTokenID(NFTokenID: string) {
-          navigator.clipboard.writeText(NFTokenID).then(() => {
-               this.txUiService.showToastMessage('MPT Issuance ID copied!');
-          });
-     }
-
      protected clearInputFields(): void {
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
@@ -414,6 +408,5 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
      }
 }

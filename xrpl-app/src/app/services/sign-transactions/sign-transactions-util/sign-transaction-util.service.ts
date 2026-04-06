@@ -181,11 +181,11 @@ export class SignTransactionUtilService {
           this.signTransationStoreService.setField('outputField', blob);
      }
 
-     copyCheckId(checkId: string) {
-          navigator.clipboard.writeText(checkId).then(() => {
-               this.txUiService.showToastMessage('Check ID copied!');
-          });
-     }
+     // copyCheckId(checkId: string) {
+     //      navigator.clipboard.writeText(checkId).then(() => {
+     //           this.txUiService.showToastMessage('Check ID copied!');
+     //      });
+     // }
 
      async createBatchpRequestText(options: SignTransactionOptions): Promise<string> {
           const { wallet, accountInfo } = options;
@@ -260,7 +260,7 @@ export class SignTransactionUtilService {
           });
 
           await this.applyTicket(tx, client, wallet);
-          this.applyMemo(tx);
+          // this.applyMemo(tx);
 
           return JSON.stringify(tx, null, 2);
      }
@@ -595,12 +595,12 @@ export class SignTransactionUtilService {
           }
      }
 
-     private applyMemo(tx: any): void {
-          if (this.txUiService.isMemoEnabled()) {
-               const memo = this.txUiService.memoField();
-               if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
-          } else {
-               return;
-          }
-     }
+     // private applyMemo(tx: any): void {
+     //      if (this.txUiService.isMemoEnabled()) {
+     //           const memo = this.txUiService.memoField();
+     //           if (this.txUiService.isMemoEnabled() && memo) this.utilsService.setMemoField(tx, memo);
+     //      } else {
+     //           return;
+     //      }
+     // }
 }

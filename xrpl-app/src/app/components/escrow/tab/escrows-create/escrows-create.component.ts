@@ -14,6 +14,7 @@ import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.servi
 import { UtilsService } from '../../../../services/util-service/utils.service';
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-escrows-create',
@@ -33,6 +34,7 @@ export class EscrowsCreateComponent {
      public readonly utilsService = inject(UtilsService);
      public readonly viewModel = inject(EscrowTransactionViewModelService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      @Input() isConditional = false;
 

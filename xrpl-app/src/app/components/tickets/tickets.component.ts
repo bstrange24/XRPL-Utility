@@ -1,9 +1,9 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, computed, DestroyRef, ViewContainerRef, ElementRef, TemplateRef, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -13,14 +13,12 @@ import { WalletManagerService, Wallet } from '../../services/wallets/manager/wal
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../navbar/navbar.component';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastService } from '../../services/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TicketsOrchestratorService } from '../../services/tickets/tickets-orchestrator/tickets-orchestrator.service';
-import { TemplatePortal } from '@angular/cdk/portal';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
 import { ActivatedRoute } from '@angular/router';
@@ -38,6 +36,7 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.component';
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-tickets',
@@ -48,6 +47,7 @@ import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.com
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTicketsComponent extends WalletDestinationBase implements OnInit {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
@@ -69,7 +69,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, TICKET_TAB, tab => this.setTab(tab));
-          this.txUiService.clearAllOptions();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -78,10 +77,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -205,16 +201,10 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
      }
 
-     // clearFields(): void {
-     //      this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
-     //      this.xrplTxOptionsStore.setField('ticketCountField', '');
-     // }
-
      protected clearInputFields(): void {
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.clearAllFields();
-          this.txUiService.clearAllOptions();
           this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           this.xrplTxOptionsStore.setField('ticketCountField', '');
      }

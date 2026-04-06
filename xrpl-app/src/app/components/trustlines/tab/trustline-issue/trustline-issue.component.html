@@ -13,7 +13,7 @@
 
      <div class="form-group">
           <label for="destinationTagField">Destination Tag </label>
-          <p class="form-hint">Arbitrary tag that identifies the reason for the payment.</p>
+          <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
           <input type="text" placeholder="e.g. 123456" [ngModel]="destinationTag" (ngModelChange)="destinationTagChange.emit($event)" name="destinationTagField" />
      </div>
 </div>

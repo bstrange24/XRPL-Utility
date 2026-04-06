@@ -49,6 +49,7 @@ import { MptClawbackComponent } from './tab/mpt-clawback/mpt-clawback.component'
 import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
 import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
 import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
+import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-mpt',
@@ -60,6 +61,7 @@ import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 })
 export class MptComponent extends WalletDestinationBase implements OnInit, AfterViewInit {
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly xrplCache = inject(XrplCacheService);
@@ -120,10 +122,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-          this.txUiService.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -285,7 +284,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      protected refreshAccountObject(env: any) {
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-          this.txUiService.clearAllOptions();
      }
 
      protected clearInputFields() {
