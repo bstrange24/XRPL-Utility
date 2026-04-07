@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { StorageService } from '../../../../services/shared/local-storage/storage.service';
 import { AccountConfiguratorViewModelService } from '../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
@@ -13,6 +13,7 @@ import { ACCOUNT_ACTIONS } from '../../constants/account-configurator.constants'
      imports: [NgIcon],
      templateUrl: './account-configurator-summary.component.html',
      styleUrl: './account-configurator-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountConfiguratorSummaryComponent {
      public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);

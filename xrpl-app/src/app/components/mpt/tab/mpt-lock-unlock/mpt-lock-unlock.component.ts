@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,7 @@ import { TransactionDropdownService } from '../../../../services/transaction-dro
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './mpt-lock-unlock.component.html',
      styleUrl: './mpt-lock-unlock.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptLockUnlockComponent {
      public readonly mptStoreService = inject(MptStoreService);

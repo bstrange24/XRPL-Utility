@@ -1,4 +1,4 @@
-import { Component, inject, input, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, ViewChild } from '@angular/core';
 import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
@@ -13,6 +13,7 @@ import { NgIcon } from '@ng-icons/core';
      imports: [CommonModule, FormsModule, JsonEditorComponent],
      templateUrl: './mpt-create.component.html',
      styleUrl: './mpt-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptCreateComponent {
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;

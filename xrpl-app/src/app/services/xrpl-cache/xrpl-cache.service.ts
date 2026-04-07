@@ -185,15 +185,13 @@ export class XrplCacheService {
      }
 
      async getAccountLines(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<xrpl.AccountLinesResponse> {
-          const infoKey = `account:${address}:info`;
-          const objectsKey = `account:${address}:lines`;
+          const linesKey = `account:${address}:lines`;
 
           if (forceRefresh) {
-               this.invalidate(infoKey);
-               this.invalidate(objectsKey);
+               this.invalidate(linesKey);
           }
 
-          return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), this.defaultTTL);
+          return await this.getOrFetch(linesKey, () => this.xrplService.getAccountLines(client, address, 'validated', ''), this.defaultTTL);
      }
 
      async getAccountObjectsWithType(client: xrpl.Client, address: string, forceRefresh?: boolean, type?: string): Promise<xrpl.AccountObjectsResponse> {
@@ -208,16 +206,14 @@ export class XrplCacheService {
           return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', type || ''), this.defaultTTL);
      }
 
-     async getGatewayBalance(client: xrpl.Client, address: string, forceRefresh?: boolean, type?: string): Promise<any> {
-          const infoKey = `account:${address}:info:${type}`;
-          const objectsKey = `account:${address}:objects:${type}`;
+     async getGatewayBalance(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<any> {
+          const gatewayKey = `account:${address}:gateway`;
 
           if (forceRefresh) {
-               this.invalidate(infoKey);
-               this.invalidate(objectsKey);
+               this.invalidate(gatewayKey);
           }
 
-          return await this.getOrFetch(objectsKey, () => this.xrplService.getTokenBalance(client, address, 'validated', ''), this.defaultTTL);
+          return await this.getOrFetch(gatewayKey, () => this.xrplService.getTokenBalance(client, address, 'validated', ''), this.defaultTTL);
      }
 
      /** Get current transaction fee (drops or XRP) – cached for 8 seconds (fees change slowly) */
@@ -283,16 +279,14 @@ export class XrplCacheService {
           ); // 10 seconds – server state changes slowly
      }
 
-     async getBlockingObjects(client: xrpl.Client, address: string, forceRefresh = false, type?: string): Promise<any> {
-          const infoKey = `account:${address}:info:${type}`;
-          const objectsKey = `account:${address}:objects:${type}`;
+     async getBlockingObjects(client: xrpl.Client, address: string, forceRefresh = false): Promise<any> {
+          const blockingKey = `account:${address}:blocking`;
 
           if (forceRefresh) {
-               this.invalidate(infoKey);
-               this.invalidate(objectsKey);
+               this.invalidate(blockingKey);
           }
 
-          return await this.getOrFetch(objectsKey, () => this.xrplService.checkAccountObjectsForDeletion(client, address), this.defaultTTL);
+          return await this.getOrFetch(blockingKey, () => this.xrplService.checkAccountObjectsForDeletion(client, address), this.defaultTTL);
      }
 
      /** Get current base fee in drops */

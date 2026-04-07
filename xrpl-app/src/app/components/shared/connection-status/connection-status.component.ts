@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 
@@ -8,6 +8,7 @@ import { ConnectionGuardService } from '../../../services/shared/connection-guar
      imports: [],
      templateUrl: './connection-status.component.html',
      styleUrl: './connection-status.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConnectionStatusComponent {
      private readonly xrplService = inject(XrplService);

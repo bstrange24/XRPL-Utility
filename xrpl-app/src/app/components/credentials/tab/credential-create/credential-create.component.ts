@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, input, Output, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, input, Output, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
@@ -15,6 +15,7 @@ import { TransactionOptionsSectionComponent } from '../../../shared/transaction-
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './credential-create.component.html',
      styleUrl: './credential-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialCreateComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

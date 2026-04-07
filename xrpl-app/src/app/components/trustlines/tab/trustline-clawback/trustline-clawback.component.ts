@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, input, Input, output, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TrustlineViewModelService } from '../../../../services/trustlines/trustline-view-model/trustline-view-model.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -10,6 +10,7 @@ import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-co
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './trustline-clawback.component.html',
      styleUrl: './trustline-clawback.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlineClawbackComponent {
      public readonly viewModel = inject(TrustlineViewModelService);

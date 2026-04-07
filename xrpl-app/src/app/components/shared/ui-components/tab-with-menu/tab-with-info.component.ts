@@ -1,5 +1,5 @@
 // tab-menu-with-info.component.ts
-import { Component, input, output, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, computed } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TabConfig, TabMetaInfo } from '../../../../core/app.constants';
@@ -11,6 +11,7 @@ import { JsonPipe } from '@angular/common';
      imports: [NgIcon, LucideAngularModule],
      templateUrl: './tab-with-info.component.html',
      styleUrl: './tab-with-info.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TabMenuWithInfoComponent {
      // Required inputs

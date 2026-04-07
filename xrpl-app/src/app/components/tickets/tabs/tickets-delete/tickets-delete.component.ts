@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, ElementRef, inject, ViewContainerRef, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, ViewContainerRef, TemplateRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TicketsViewModelService } from '../../../../services/tickets/tickets-view-model/tickets-view-model.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
@@ -17,6 +17,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
      imports: [FormsModule, NgIcon, LucideAngularModule],
      templateUrl: './tickets-delete.component.html',
      styleUrl: './tickets-delete.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketsDeleteComponent {
      private ticketOverlayRef: OverlayRef | null = null;

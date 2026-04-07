@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
@@ -13,6 +13,7 @@ import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.servi
      imports: [CommonModule, FormsModule, MatSlideToggleModule, LucideAngularModule],
      templateUrl: './nft-flags.component.html',
      styleUrl: './nft-flags.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftFlagsComponent {
      public readonly nftUtilService = inject(NftUtilService);

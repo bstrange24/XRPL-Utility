@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { FormsModule } from '@angular/forms';
 
@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
      imports: [FormsModule, SelectSearchDropdownComponent],
      templateUrl: './currency-amount-form.component.html',
      styleUrl: './currency-amount-form.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CurrencyAmountFormComponent {
      @Input() currencyItems: SelectItem[] = [];

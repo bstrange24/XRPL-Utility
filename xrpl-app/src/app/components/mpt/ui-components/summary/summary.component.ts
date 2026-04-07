@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { NgIcon } from '@ng-icons/core';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
@@ -13,6 +13,7 @@ import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.servi
      imports: [NgIcon, TooltipLinkComponent, LucideAngularModule],
      templateUrl: './summary.component.html',
      styleUrl: './summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

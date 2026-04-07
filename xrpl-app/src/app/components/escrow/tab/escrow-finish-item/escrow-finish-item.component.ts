@@ -1,4 +1,4 @@
-import { Component, inject, input, Input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, Input, output } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -15,6 +15,7 @@ import { EscrowDisplayItem } from '../../constants/time-escrow.types';
      imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
      templateUrl: './escrow-finish-item.component.html',
      styleUrl: './escrow-finish-item.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowFinishItemComponent {
      public readonly copyUtilService = inject(CopyUtilService);

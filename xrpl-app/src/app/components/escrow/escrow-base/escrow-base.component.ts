@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { Wallet, WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { WalletDestinationBase } from '../../../services/wallets/walletDestinationBase';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -38,6 +38,7 @@ import { ConnectionGuardService } from '../../../services/shared/connection-guar
 @Component({
      standalone: true,
      template: '',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export abstract class EscrowBaseComponent extends WalletDestinationBase implements OnInit {
      public readonly connectionGuard = inject(ConnectionGuardService);

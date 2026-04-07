@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 
 @Component({
@@ -6,6 +6,7 @@ import { XrplService } from '../../../services/xrpl-services/xrpl.service';
      imports: [],
      templateUrl: './performance-base.component.html',
      styleUrl: './performance-base.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PerformanceBaseComponent {
      public readonly xrplService = inject(XrplService);

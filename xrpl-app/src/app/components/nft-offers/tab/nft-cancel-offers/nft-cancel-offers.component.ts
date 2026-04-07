@@ -1,4 +1,4 @@
-import { Component, computed, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, Input, Output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -20,6 +20,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './nft-cancel-offers.component.html',
      styleUrl: './nft-cancel-offers.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftCancelOffersComponent {
      public readonly txUiService = inject(TransactionUiService);

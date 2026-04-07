@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -11,6 +11,7 @@ import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-co
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './trustline-issue.component.html',
      styleUrl: './trustline-issue.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlineIssueComponent {
      public readonly viewModel = inject(TrustlineViewModelService);

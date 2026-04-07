@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
-import { Router, NavigationEnd, ActivatedRoute, RouterOutlet } from '@angular/router';
+import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, ActivatedRoute, RouterOutlet } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
 import { ToastService } from './services/utils/toast/toast.service';
 import { animate, style, transition, trigger } from '@angular/animations';
@@ -14,8 +15,12 @@ import { NgIcon } from '@ng-icons/core';
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './app.component.html',
      styleUrls: ['./app.component.css'],
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
+     readonly isNavigating = signal(false);
+     private readonly destroyRef = inject(DestroyRef);
+
      constructor(
           private readonly titleService: Title,
           private readonly router: Router,
@@ -24,6 +29,14 @@ export class AppComponent implements OnInit {
      ) {}
 
      ngOnInit() {
+          this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
+               if (event instanceof NavigationStart) {
+                    this.isNavigating.set(true);
+               } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+                    this.isNavigating.set(false);
+               }
+          });
+
           this.router.events
                .pipe(
                     filter(event => event instanceof NavigationEnd),
@@ -32,7 +45,8 @@ export class AppComponent implements OnInit {
                          while (route.firstChild) route = route.firstChild;
                          return route;
                     }),
-                    mergeMap(route => route.data)
+                    mergeMap(route => route.data),
+                    takeUntilDestroyed(this.destroyRef)
                )
                .subscribe(data => {
                     if (data['title']) {

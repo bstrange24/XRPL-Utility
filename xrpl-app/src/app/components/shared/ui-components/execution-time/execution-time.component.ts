@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { PerformanceBaseComponent } from '../../performance-base/performance-base.component';
 
 @Component({
@@ -6,6 +6,7 @@ import { PerformanceBaseComponent } from '../../performance-base/performance-bas
      imports: [],
      templateUrl: './execution-time.component.html',
      styleUrl: './execution-time.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExecutionTimeDisplayComponent extends PerformanceBaseComponent {
      @Input() time: string = '';

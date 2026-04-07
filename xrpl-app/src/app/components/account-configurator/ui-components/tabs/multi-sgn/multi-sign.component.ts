@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
@@ -14,6 +14,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
      imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon],
      templateUrl: './multi-sign.component.html',
      styleUrl: './multi-sign.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultiSignComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

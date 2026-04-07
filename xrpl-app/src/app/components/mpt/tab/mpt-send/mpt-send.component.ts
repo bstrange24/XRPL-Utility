@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './mpt-send.component.html',
      styleUrl: './mpt-send.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptSendComponent {
      public readonly mptStoreService = inject(MptStoreService);

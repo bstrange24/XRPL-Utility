@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -13,6 +13,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './credential-accept.component.html',
      styleUrl: './credential-accept.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialAcceptComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

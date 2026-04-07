@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -13,6 +13,7 @@ import { PaymentChannelUtilService } from '../../../../services/payment-channel/
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './payment-channel-close.component.html',
      styleUrl: './payment-channel-close.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChannelCloseComponent {
      public readonly viewModel = inject(PaymentChannelViewModelService);

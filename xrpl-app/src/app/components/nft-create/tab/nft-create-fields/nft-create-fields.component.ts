@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { DownloadUtilService } from '../../../../services/utils/download-util/download-util.service';
 import { NftTransactionOrchestrator } from '../../../../services/nft/nft-orchestrator/nft-orchestrator.service';
@@ -23,6 +23,7 @@ import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-in
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule],
      templateUrl: './nft-create-fields.component.html',
      styleUrl: './nft-create-fields.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftCreateFieldsComponent {
      public readonly txUiService = inject(TransactionUiService);

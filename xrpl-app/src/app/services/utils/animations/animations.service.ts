@@ -1,4 +1,3 @@
-import { Injectable } from '@angular/core';
 import { trigger, style, animate, transition } from '@angular/animations';
 
 export const animation = trigger('tabTransition', [
@@ -39,8 +38,3 @@ export const toastAnimation = trigger('toastAnimation', [
           ),
      ]),
 ]);
-
-@Injectable({
-     providedIn: 'root',
-})
-export class AnimationsService {}

@@ -1,4 +1,4 @@
-import { Component, inject, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,6 +15,7 @@ import { WalletManagerService } from '../../../../services/wallets/manager/walle
      imports: [CommonModule, FormsModule, MatSlideToggleModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './escrows-cancel.component.html',
      styleUrl: './escrows-cancel.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowsCancelComponent {
      public readonly escrowStoreService = inject(EscrowStoreService);

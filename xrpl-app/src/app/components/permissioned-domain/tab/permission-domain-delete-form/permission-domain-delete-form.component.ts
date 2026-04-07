@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
@@ -11,6 +11,7 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './permission-domain-delete-form.component.html',
      styleUrl: './permission-domain-delete-form.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionDomainDeleteFormComponent {
      permissionedDomainStoreService = inject(PermissionedDomainStoreService);

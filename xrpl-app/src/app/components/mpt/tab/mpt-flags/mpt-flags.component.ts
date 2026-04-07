@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
 import { LucideAngularModule } from 'lucide-angular';
 
@@ -7,6 +7,7 @@ import { LucideAngularModule } from 'lucide-angular';
      imports: [LucideAngularModule],
      templateUrl: './mpt-flags.component.html',
      styleUrl: './mpt-flags.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptFlagsComponent {
      readonly mptUtilService = inject(MptUtilService);

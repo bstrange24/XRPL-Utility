@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionDropdownService } from '../../../../services/transaction-dropdown/transaction-dropdown.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptAuthorizeUnauthorizeComponent {
      private readonly mptStoreService = inject(MptStoreService);

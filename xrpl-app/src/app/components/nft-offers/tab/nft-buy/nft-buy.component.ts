@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
@@ -18,6 +18,7 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
      imports: [CommonModule, FormsModule],
      templateUrl: './nft-buy.component.html',
      styleUrl: './nft-buy.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftBuyComponent {
      public readonly txUiService = inject(TransactionUiService);

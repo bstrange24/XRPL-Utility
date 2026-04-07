@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, input, Output, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Output, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -13,6 +13,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './account-delete-form.component.html',
      styleUrl: './account-delete-form.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteFormComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

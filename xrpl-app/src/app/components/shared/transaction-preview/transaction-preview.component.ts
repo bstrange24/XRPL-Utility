@@ -1,4 +1,4 @@
-import { Component, ViewChild, ElementRef, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, ElementRef, effect, signal } from '@angular/core';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -7,7 +7,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../performance-base/performance-base.component';
-declare var Prism: any;
+import * as Prism from 'prismjs';
+import 'prismjs/components/prism-json';
 
 @Component({
      selector: 'app-transaction-preview',
@@ -16,6 +17,7 @@ declare var Prism: any;
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './transaction-preview.component.html',
      styleUrl: './transaction-preview.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionPreviewComponent extends PerformanceBaseComponent {
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;

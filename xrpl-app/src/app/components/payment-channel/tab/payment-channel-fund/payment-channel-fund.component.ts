@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
@@ -17,6 +17,7 @@ import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-in
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, XrplExpirationInputComponent],
      templateUrl: './payment-channel-fund.component.html',
      styleUrl: './payment-channel-fund.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChannelFundComponent {
      public readonly txUiService = inject(TransactionUiService);

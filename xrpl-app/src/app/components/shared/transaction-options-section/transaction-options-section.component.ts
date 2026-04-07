@@ -1,4 +1,4 @@
-import { Component, computed, inject, Input, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, Input, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
@@ -18,6 +18,7 @@ import { PaymentChannelStoreService } from '../../../services/payment-channel/pa
      imports: [CommonModule, FormsModule, XrplExpirationInputComponent],
      templateUrl: './transaction-options-section.component.html',
      styleUrl: './transaction-options-section.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionOptionsSectionComponent {
      public readonly txUiService = inject(TransactionUiService);

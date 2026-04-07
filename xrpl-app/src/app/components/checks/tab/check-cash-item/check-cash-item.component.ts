@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -14,6 +14,7 @@ import { CashCheckItem } from '../../constants/checks.types';
      imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
      templateUrl: './check-cash-item.component.html',
      styleUrl: './check-cash-item.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckCashItemComponent {
      @Input({ required: true }) check!: CashCheckItem;

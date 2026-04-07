@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ElementRef, ViewChild, signal, AfterViewInit, OnDestroy, SimpleChanges, OnChanges } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, ElementRef, ViewChild, signal, AfterViewInit, OnDestroy, SimpleChanges, OnChanges } from '@angular/core';
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, ViewUpdate } from '@codemirror/view';
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
@@ -11,6 +11,7 @@ import { linter, lintGutter } from '@codemirror/lint';
      imports: [],
      templateUrl: './json-editor.component.html',
      styleUrl: './json-editor.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JsonEditorComponent implements AfterViewInit, OnDestroy, OnChanges {
      @Input() value = '';

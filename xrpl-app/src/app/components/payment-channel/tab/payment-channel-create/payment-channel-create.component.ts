@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, output, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, output, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -14,6 +14,7 @@ import { TransactionOptionsSectionComponent } from '../../../shared/transaction-
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './payment-channel-create.component.html',
      styleUrl: './payment-channel-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChannelCreateComponent {
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { FormsModule } from '@angular/forms';
 
@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
      imports: [FormsModule],
      templateUrl: './tickets-create.component.html',
      styleUrl: './tickets-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketsCreateComponent {
      public xrplTxOptionsStore = inject(XrplTxOptionsStore);

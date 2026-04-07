@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -17,6 +17,7 @@ import { LucideAngularModule } from 'lucide-angular';
      imports: [NgIcon, EscrowCreateItemComponent, EscrowCancelItemComponent, EscrowFinishItemComponent, LucideAngularModule, EscrowCreateItemComponent, EscrowFinishItemComponent, EscrowCancelItemComponent],
      templateUrl: './escrow-summary.component.html',
      styleUrl: './escrow-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

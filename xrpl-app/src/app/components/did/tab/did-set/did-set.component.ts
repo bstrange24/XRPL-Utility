@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
@@ -12,6 +12,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, JsonEditorComponent],
      templateUrl: './did-set.component.html',
      styleUrl: './did-set.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DidSetComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

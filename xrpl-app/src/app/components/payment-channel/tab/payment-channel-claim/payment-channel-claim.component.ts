@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -16,6 +16,7 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './payment-channel-claim.component.html',
      styleUrl: './payment-channel-claim.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChannelClaimComponent {
      public readonly viewModel = inject(PaymentChannelViewModelService);

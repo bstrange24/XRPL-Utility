@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletsStoreService } from '../../../../services/wallets/wallets-store/wallets-store.service';
@@ -14,6 +14,7 @@ import { WalletConfiguratorComponent } from '../../wallet-configurator.component
      imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule],
      templateUrl: './wallet-derive-mnemonic.component.html',
      styleUrl: './wallet-derive-mnemonic.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletDeriveMnemonicComponent {
      public readonly walletConfiguratorComponent = inject(WalletConfiguratorComponent);

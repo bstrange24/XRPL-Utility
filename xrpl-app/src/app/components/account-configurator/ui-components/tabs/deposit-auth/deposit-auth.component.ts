@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
@@ -14,6 +14,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
      imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon],
      templateUrl: './deposit-auth.component.html',
      styleUrl: './deposit-auth.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DepositAuthComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

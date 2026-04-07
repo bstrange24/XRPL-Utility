@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
@@ -16,6 +16,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
      imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './checks-cash.component.html',
      styleUrl: './checks-cash.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecksCashComponent {
      readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);

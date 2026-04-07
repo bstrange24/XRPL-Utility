@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, input, output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, ViewChild } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainUtilService } from '../../../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
@@ -15,6 +15,7 @@ import console from 'node:console';
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule, WarningMessageComponent],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionDomainSetFormComponent {
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);

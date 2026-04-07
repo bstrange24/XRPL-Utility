@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -7,5 +7,6 @@ import { NgIcon } from '@ng-icons/core';
      imports: [NgIcon],
      templateUrl: './sign-transaction-requirements-info.component.html',
      styleUrl: './sign-transaction-requirements-info.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignTransactionRequirementsInfoComponent {}
