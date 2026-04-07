@@ -84,7 +84,7 @@ export class TxEnvironmentService {
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
      private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
      private readonly lastRefreshTime = signal(0);
-     private readonly CACHE_MS = 5000; // 5 seconds – wide enough to cover sequential async ops on slow connections
+     private readonly CACHE_MS = 5000; // 5 seconds -- wide enough to cover sequential async ops on slow connections
 
      async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
           const now = Date.now();

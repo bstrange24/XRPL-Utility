@@ -3,7 +3,7 @@ import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { StorageService } from '../../shared/local-storage/storage.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TxEnvironmentService, PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';
 import { IssuerItem } from '../../../models/interface-items.model';
@@ -248,7 +248,7 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
       * Update the displayed balance using an already-fetched env object (avoids an extra network round-trip).
       * Requires `env.accountInfo` (for XRP) or `env.gatewayBalanceObject` (for tokens) to be present.
       */
-     public async refreshCurrentBalanceFromEnv(env: any): Promise<void> {
+     public async refreshCurrentBalanceFromEnv(env: PrepareTxEnvironmentResult): Promise<void> {
           const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
           const currency = this.currencyStore.currency();
           const issuer = this.currencyStore.issuer();
