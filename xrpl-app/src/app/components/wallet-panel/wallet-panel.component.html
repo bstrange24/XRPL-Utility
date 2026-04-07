@@ -4,7 +4,7 @@
      <h2 class="panel-title">
           <lucide-icon name="wallet" size="25" style="padding-top: 5px"></lucide-icon>
           Accounts
-          <button class="generate-btn" (click)="generateNewAccount()">+ Generate</button>
+          <button type="button" class="generate-btn" (click)="generateNewAccount()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : '+ Generate' }}</button>
      </h2>
 
      <p class="panel-subtitle">Generate {{environment()}} accounts with XRP from the faucet. You can also generate or derive accounts in the 'Wallets' Menu.</p>
@@ -79,4 +79,7 @@
           <p>Click "Generate" to create your first {{environment()}} account</p>
      </div>
      }
+
+     <!-- Execution time -->
+     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
 </div>

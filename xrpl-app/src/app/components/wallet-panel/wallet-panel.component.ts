@@ -13,11 +13,13 @@ import { ToastService } from '../../services/toast/toast.service';
 import { UtilsService } from '../../services/util-service/utils.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 
 @Component({
      selector: 'app-wallet-panel',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule, ExecutionTimeDisplayComponent],
      templateUrl: './wallet-panel.component.html',
      styleUrl: './wallet-panel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +34,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      private readonly cdr = inject(ChangeDetectorRef);
      private readonly utilsService = inject(UtilsService);
      public readonly walletsStoreService = inject(WalletsStoreService);
+     public readonly walletsUtilService = inject(WalletsUtilService);
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
 
      @Output() walletSelected = new EventEmitter<Wallet>();
@@ -208,6 +211,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
+
+          // executionTime signal was updated by withPerf — notify OnPush
+          this.cdr.detectChanges();
      }
 
      dropWallet(event: CdkDragDrop<Wallet[]>) {
