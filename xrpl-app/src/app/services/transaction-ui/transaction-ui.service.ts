@@ -77,6 +77,7 @@ export class TransactionUiService {
      spinnerMessageSignal = signal<string>('');
      wantsOptions = signal<boolean>(false);
      infoPanelExpanded = signal<boolean>(false);
+     suppressTxClear = signal<boolean>(false);
 
      currentStep = signal<TxStep>('idle');
      detailedStatus = signal<string>('');
@@ -326,8 +327,11 @@ export class TransactionUiService {
 
      clearAllOptionsAndMessages() {
           this.errorMessageSignal.set(null);
-          // Keep the txJson and txResult displayed when deleting an account.
-          if (this.accountDeleteStoreService.savedTxJson().length <= 0 && this.accountDeleteStoreService.savedTxResult().length <= 0) {
+          // Keep the txJson and txResult displayed when deleting an account,
+          // or when a background wallet refresh is in progress after a transaction.
+          if (!this.suppressTxClear() &&
+               this.accountDeleteStoreService.savedTxJson().length <= 0 &&
+               this.accountDeleteStoreService.savedTxResult().length <= 0) {
                this.clearTxResultsHash();
           }
           this.clearMessages();

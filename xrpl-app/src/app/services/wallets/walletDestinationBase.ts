@@ -129,7 +129,14 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           if (destination) addresses.push(destination);
           if (issuer) addresses.push(issuer);
 
-          await this.refreshWallets(client, addresses);
+          // Prevent the wallet-change effect from wiping txSignal/txResultSignal
+          // that were just set by the completed transaction.
+          this.txUiService.suppressTxClear.set(true);
+          try {
+               await this.refreshWallets(client, addresses);
+          } finally {
+               this.txUiService.suppressTxClear.set(false);
+          }
 
           this.addCustomDestination(destination ?? issuer);
           this.acccountDataService.refreshUiState(wallet, env.accountInfo!, env.accountObjects);
