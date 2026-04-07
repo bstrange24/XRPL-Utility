@@ -64,7 +64,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly xrplCache = inject(XrplCacheService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactionService = inject(XrplTransactionService);

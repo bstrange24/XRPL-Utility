@@ -41,6 +41,10 @@ import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 
 interface AccountFlags {
      isClawback: boolean;
@@ -65,40 +69,23 @@ interface IssuerItem {
      styleUrl: './firewall.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FirewallComponent extends PerformanceBaseComponent implements OnInit {
+export class FirewallComponent extends WalletDestinationBase implements OnInit {
      public readonly connectionGuard = inject(ConnectionGuardService);
      private readonly destroyRef = inject(DestroyRef);
-     public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
      private readonly validationService = inject(ValidationService);
      private readonly dropdownService = inject(DestinationDropdownService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     public readonly route = inject(ActivatedRoute);
-     private readonly cdr = inject(ChangeDetectorRef);
 
      // Destination Dropdown
      typedDestination = signal<string>('');
      customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
      checkIdSearchQuery = signal<string>('');
 
      // Reactive State (Signals)
      activeTab = signal<'create' | 'modify' | 'authorize' | 'unauthorize' | 'delete'>('create');
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-     infoPanelExpanded = signal<boolean>(false);
      amountField = signal<string>('');
      destinationField = signal<string>('');
      destinationTagField = signal<string>('');
@@ -213,6 +200,12 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      existingChecks: any = [];
      outstandingChecksCollapsed = true;
 
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
+          this.txUiService.clearAllOptionsAndMessages();
+     }
+
      // Effect 1: Has wallets → warning handling
      private readonly hasWalletsEffect = effect(() => {
           if (this.walletManager.hasWallets()) {
@@ -239,33 +232,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
           // Fire-and-forget refresh
           void this.getFirewallDetails(true);
-     });
-
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
-
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-
-          const all = [
-               ...this.wallets().map(w => ({
-                    address: w.address,
-                    name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               })),
-               ...this.customDestinations(),
-          ];
-
-          return all.map(d => ({
-               id: d.address,
-               display: d.name || 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-               isCurrentCode: false,
-               isCurrentToken: false,
-          }));
      });
 
      currencyItems = computed(() => {
@@ -308,29 +274,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           ...this.customDestinations(),
      ]);
 
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
-
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-
-          return this.dropdownService.formatDisplay(dest);
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          const list = this.destinations();
-
-          if (q === '') {
-               return list;
-          }
-
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
-     });
-
      // issuerItems = computed(() => {
      //      const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
      //      return this.issuers().map((iss, i) => ({
@@ -367,13 +310,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           const unit = this.cancelTimePeriodUnit();
           return this.timeUnitItems().find(i => i.id === unit) || null;
      });
-
-     hasWallets = computed(() => this.wallets().length > 0);
-
-     constructor() {
-          super();
-          this.txUiService.clearAllOptionsAndMessages();
-     }
 
      ngOnInit(): void {
           const tab = this.route.snapshot.queryParamMap.get('tab');
@@ -414,6 +350,10 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           this.currencyFieldDropDownValue.set('XRP');
      }
 
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getFirewallDetails(false);
+     }
+
      private loadCustomDestinations(): void {
           const stored = this.storageService.get('customDestinations');
           if (stored) this.customDestinations.set(JSON.parse(stored));
@@ -432,14 +372,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
 
      trackByAddress(index: number, item: DropdownItem): string {
           return item.address;
-     }
-
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
-
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -954,28 +886,28 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           // }
      }
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          // this.getExistingEscrows(accountObjects, wallet.classicAddress);
-          // this.getExistingMpts(accountObjects, wallet.classicAddress);
-          // this.getExistingIOUs(accountObjects, wallet.classicAddress);
-          // this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
-          // this.loadAllEscrows(accountObjects, wallet.classicAddress);
+     // private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
+     //      const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+     //      // this.getExistingEscrows(accountObjects, wallet.classicAddress);
+     //      // this.getExistingMpts(accountObjects, wallet.classicAddress);
+     //      // this.getExistingIOUs(accountObjects, wallet.classicAddress);
+     //      // this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
+     //      // this.loadAllEscrows(accountObjects, wallet.classicAddress);
 
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest) this.addNewDestinationFromUser(destination || '');
-          // this.refreshUiState(wallet, accountInfo, accountObjects);
-     }
+     //      destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+     //      if (addDest) this.addNewDestinationFromUser(destination || '');
+     //      // this.refreshUiState(wallet, accountInfo, accountObjects);
+     // }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(
+     //           client,
+     //           addresses, // only the addresses to target
+     //           (updatedList, newCurrent) => {
+     //                this.currentWallet.set({ ...newCurrent });
+     //           }
+     //      );
+     // }
 
      // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
      //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
@@ -1022,19 +954,6 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      //      this.txUiService.multiSignSeeds.set('');
      //      this.storageService.removeValue('signerEntries');
      // }
-
-     updateDestinations() {
-          // Optional: persist destinations
-          const allItems = [
-               ...this.wallets().map(wallet => ({
-                    name: wallet.name ?? this.truncateAddress(wallet.address),
-                    address: wallet.address,
-               })),
-               ...this.customDestinations(),
-          ];
-          this.storageService.set('destinations', allItems);
-          this.ensureDefaultNotSelected();
-     }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet().address;
@@ -1155,9 +1074,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           this.txUiService.setInfoMessage(message);
      }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
+     protected refreshAccountObject(env: any): void {}
 
      private loadKnownIssuers() {
           const data = this.storageService.getKnownIssuers('knownIssuers');
@@ -1166,6 +1083,8 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                this.updateCurrencies();
           }
      }
+
+     protected clearInputFields(): void {}
 
      clearFields(all = true) {
           if (all) {

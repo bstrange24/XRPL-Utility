@@ -302,7 +302,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
-          this.isSummaryLoading.set(true);
+          // this.isSummaryLoading.set(true);
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
@@ -324,7 +324,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     console.error('Error in getAccountDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.isSummaryLoading.set(false);
+                    // this.isSummaryLoading.set(false);
                     this.txUiService.spinner.set(false);
                }
           });

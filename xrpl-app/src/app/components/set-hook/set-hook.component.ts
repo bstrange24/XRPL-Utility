@@ -43,7 +43,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      public readonly walletManagerService = inject(WalletManagerService);
      private readonly validationService = inject(ValidationService);
      private readonly dropdownService = inject(DestinationDropdownService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
 

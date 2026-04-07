@@ -6977,6 +6977,7 @@ button.flag-item-account-flags {
      color: #d32f2f;
      font-weight: 500;
 }
+
 /* ── Summary skeleton loading (items #1) ─────────────────────────────────── */
 .summary-skeleton-line {
      height: 18px;
@@ -6997,6 +6998,7 @@ button.flag-item-account-flags {
      0% {
           background-position: 200% 0;
      }
+
      100% {
           background-position: -200% 0;
      }
