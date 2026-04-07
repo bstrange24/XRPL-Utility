@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -21,6 +21,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecksCreateComponent {
      public readonly txUiService = inject(TransactionUiService);

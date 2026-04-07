@@ -1,4 +1,4 @@
-import { Component, input, output, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, inject } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -13,6 +13,7 @@ import { CredentialActionTypes, CredentialItemVm } from '../../constants/credent
      imports: [NgIcon, LucideAngularModule, TooltipLinkComponent],
      templateUrl: './credentials-summary.component.html',
      styleUrl: './credentials-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialsSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

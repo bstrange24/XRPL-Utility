@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -17,6 +17,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './amm-fields.component.html',
      styleUrl: './amm-fields.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AmmFieldsComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

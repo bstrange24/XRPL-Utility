@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -15,6 +15,7 @@ import { WalletManagerService } from '../../../services/wallets/manager/wallet-m
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './transaction-options.component.html',
      styleUrl: './transaction-options.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionOptionsComponent {
      public readonly txUiService = inject(TransactionUiService);

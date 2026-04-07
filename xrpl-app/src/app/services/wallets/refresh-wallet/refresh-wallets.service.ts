@@ -1,4 +1,4 @@
-import { inject, Injectable, NgZone } from '@angular/core';
+import { effect, inject, Injectable, NgZone } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { Subject, from } from 'rxjs';
 import { debounceTime, exhaustMap } from 'rxjs/operators';
@@ -8,6 +8,7 @@ import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { NetworkService } from '../../utils/network/network-service';
 
 interface RefreshPayload {
      client: xrpl.Client;
@@ -30,6 +31,7 @@ export class WalletDataService extends PerformanceBaseComponent {
      public readonly ngZone = inject(NgZone);
      public readonly txUiService = inject(TransactionUiService);
      public readonly toastService = inject(ToastService);
+     private readonly networkService = inject(NetworkService);
 
      constructor() {
           super();
@@ -40,6 +42,13 @@ export class WalletDataService extends PerformanceBaseComponent {
                     exhaustMap(payload => from(this.performRefreshWallets(payload.client, payload.wallets, payload.selectedWalletIndex, payload.addressesToRefresh, payload.onUpdate, payload.resolve)))
                )
                .subscribe();
+
+          // Invalidate cached reserves when switching networks
+          // (reserves differ between mainnet, testnet, and devnet)
+          effect(() => {
+               const _ = this.networkService.networkChanged();
+               this.cachedReserves = null;
+          });
      }
 
      //  This only queues a refresh request.

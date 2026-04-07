@@ -1,4 +1,4 @@
-import { Component, Input, ElementRef, Renderer2, HostListener, ViewEncapsulation, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, ElementRef, Renderer2, HostListener, ViewEncapsulation, OnDestroy } from '@angular/core';
 
 @Component({
      selector: 'app-tooltip-link',
@@ -6,6 +6,7 @@ import { Component, Input, ElementRef, Renderer2, HostListener, ViewEncapsulatio
      templateUrl: './tooltip-link.component.html',
      styleUrl: './tooltip-link.component.css',
      encapsulation: ViewEncapsulation.None,
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TooltipLinkComponent implements OnDestroy {
      @Input() href = '';

@@ -79,13 +79,6 @@ export class XrplService {
                     console.log(`Connected to ${net}`);
                });
 
-               client.on('disconnected', code => {
-                    console.warn(`Disconnected from ${net}: Code ${code}`);
-                    this.setStatus('disconnected', `Connection lost to ${this.getNetworkName()}`);
-                    this.client.set(null);
-                    this.scheduleReconnect();
-               });
-
                client.on('error', error => {
                     console.error(`Client error on ${net}:`, error);
                });
@@ -196,19 +189,11 @@ export class XrplService {
      async ensureConnection(): Promise<Client> {
           const client = await this.getClient();
 
-          // Double-check connection is actually working
           if (!client?.isConnected()) {
                throw new Error('No active connection to XRPL network. Please wait for connection to establish.');
           }
 
-          // Optional: Verify with a quick ping
-          try {
-               await client.request({ command: 'ping' });
-               return client;
-          } catch (error: any) {
-               console.error(`Connection is not responding. Please check your network connection: ${error.message}`);
-               throw new Error('Connection is not responding. Please check your network connection.');
-          }
+          return client;
      }
 
      isConnectionReady(): boolean {

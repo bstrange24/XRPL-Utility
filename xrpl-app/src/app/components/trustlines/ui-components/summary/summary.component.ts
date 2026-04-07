@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -13,6 +13,7 @@ import { ToastService } from '../../../../services/utils/toast/toast.service';
      imports: [CommonModule, NgIcon, LucideAngularModule, TooltipLinkComponent],
      templateUrl: './summary.component.html',
      styleUrl: './summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

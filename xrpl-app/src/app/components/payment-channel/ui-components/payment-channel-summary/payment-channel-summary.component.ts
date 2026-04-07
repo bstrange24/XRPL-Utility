@@ -1,4 +1,4 @@
-import { Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { NgIcon } from '@ng-icons/core';
@@ -14,6 +14,7 @@ import { PaymentChannelActionTypes, UnifiedPaymentChannel } from '../../constant
      imports: [NgIcon, LucideAngularModule, TooltipLinkComponent],
      templateUrl: './payment-channel-summary.component.html',
      styleUrl: './payment-channel-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChannelSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

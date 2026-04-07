@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './mpt-clawback.component.html',
      styleUrl: './mpt-clawback.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptClawbackComponent {
      public readonly mptStoreService = inject(MptStoreService);

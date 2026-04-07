@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
@@ -14,6 +14,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './credential-verify.component.html',
      styleUrl: './credential-verify.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialVerifyComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

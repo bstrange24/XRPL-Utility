@@ -1,4 +1,4 @@
-import { Component, Input, Signal, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 
@@ -8,6 +8,7 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
      imports: [CommonModule],
      templateUrl: './xrpl-expiration-input.component.html',
      styleUrl: './xrpl-expiration-input.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class XrplExpirationInputComponent {
      private readonly xrplDateService = inject(XrplDateService);

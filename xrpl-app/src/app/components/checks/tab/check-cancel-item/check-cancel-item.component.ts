@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -14,6 +14,7 @@ import { CancelCheckItem } from '../../constants/checks.types';
      imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
      templateUrl: './check-cancel-item.component.html',
      styleUrl: './check-cancel-item.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckCancelItemComponent {
      @Input({ required: true }) check!: CancelCheckItem;

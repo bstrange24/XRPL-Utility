@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -6,6 +6,7 @@ import { NgIcon } from '@ng-icons/core';
      imports: [NgIcon],
      templateUrl: './send-xrp-requirements-info.component.html',
      styleUrl: './send-xrp-requirements-info.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpRequirementsInfoComponent {
      activeTab = input.required<'sendXrp'>();

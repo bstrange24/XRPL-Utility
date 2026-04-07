@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
@@ -22,6 +22,7 @@ import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store
      imports: [CommonModule, FormsModule, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
      templateUrl: './escrows-create.component.html',
      styleUrl: './escrows-create.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowsCreateComponent {
      public readonly escrowStoreService = inject(EscrowStoreService);

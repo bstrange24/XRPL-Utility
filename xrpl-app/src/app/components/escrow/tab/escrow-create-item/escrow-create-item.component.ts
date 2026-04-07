@@ -1,4 +1,4 @@
-import { Component, inject, Input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -16,6 +16,7 @@ import { EscrowDisplayItem } from '../../constants/time-escrow.types';
      imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
      templateUrl: './escrow-create-item.component.html',
      styleUrl: './escrow-create-item.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowCreateItemComponent {
      public readonly copyUtilService = inject(CopyUtilService);

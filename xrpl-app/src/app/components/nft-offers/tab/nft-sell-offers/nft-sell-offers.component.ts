@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
@@ -22,6 +22,7 @@ import { CurrencyAmountFormComponent } from '../../../shared/currency-amount-for
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
      templateUrl: './nft-sell-offers.component.html',
      styleUrl: './nft-sell-offers.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftSellOffersComponent {
      public readonly txUiService = inject(TransactionUiService);

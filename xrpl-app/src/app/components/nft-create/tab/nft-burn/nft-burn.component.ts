@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -22,6 +22,7 @@ import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-co
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './nft-burn.component.html',
      styleUrl: './nft-burn.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftBurnComponent {
      public readonly txUiService = inject(TransactionUiService);

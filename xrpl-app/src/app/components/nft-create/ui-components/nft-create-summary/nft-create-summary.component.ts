@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
@@ -13,6 +13,7 @@ import { NftTransactionViewModelService } from '../../../../services/nft/nft-tra
      imports: [NgIcon, TooltipLinkComponent, LucideAngularModule],
      templateUrl: './nft-create-summary.component.html',
      styleUrl: './nft-create-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftCreateSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
@@ -7,6 +7,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [],
      templateUrl: './did-delete.component.html',
      styleUrl: './did-delete.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DidDeleteComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

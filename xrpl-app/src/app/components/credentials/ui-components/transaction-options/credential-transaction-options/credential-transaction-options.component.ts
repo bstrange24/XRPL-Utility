@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, input, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../../services/credentials/credential-store/credential-store.service';
 import { PermissionedDomainStoreService } from '../../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
@@ -13,6 +13,7 @@ import { XrplTxOptionsStore } from '../../../../shared/stores/xrpl-tx-options.st
      imports: [CommonModule, FormsModule],
      templateUrl: './credential-transaction-options.component.html',
      styleUrl: './credential-transaction-options.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialTransactionOptionsComponent {
      public readonly txUiService = inject(TransactionUiService);

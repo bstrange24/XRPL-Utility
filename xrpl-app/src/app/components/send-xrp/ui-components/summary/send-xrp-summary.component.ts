@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -7,6 +7,7 @@ import { NgIcon } from '@ng-icons/core';
      imports: [NgIcon],
      templateUrl: './send-xrp-summary.component.html',
      styleUrl: './send-xrp-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpSummaryComponent {
      info = input.required<string | null>();

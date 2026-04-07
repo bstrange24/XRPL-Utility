@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
@@ -17,6 +17,7 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
      imports: [NgIcon, LucideAngularModule, CheckCancelItemComponent, CheckCashItemComponent, CheckCreateItemComponent],
      templateUrl: './checks-summary.component.html',
      styleUrl: './checks-summary.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChecksSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);

@@ -1,4 +1,4 @@
-import { Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
@@ -14,6 +14,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './credential-delete.component.html',
      styleUrl: './credential-delete.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CredentialDeleteComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

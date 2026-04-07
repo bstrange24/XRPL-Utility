@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -25,6 +25,7 @@ import { WalletsViewModelService } from '../../../../services/wallets/wallets-vi
      imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, SelectSearchDropdownComponent],
      templateUrl: './wallet-remove-custom-wallet.component.html',
      styleUrl: './wallet-remove-custom-wallet.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      public readonly walletsStoreService = inject(WalletsStoreService);

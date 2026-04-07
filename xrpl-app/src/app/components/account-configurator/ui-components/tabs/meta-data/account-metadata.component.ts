@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
@@ -14,6 +14,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
      imports: [CommonModule, FormsModule, LucideAngularModule],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountMetadataComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);

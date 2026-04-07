@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, HostListener, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
@@ -13,6 +13,7 @@ import { ConnectionStatusComponent } from '../../connection-status/connection-st
      standalone: true,
      imports: [CommonModule, RouterModule, NgIcon, ConnectionStatusComponent],
      templateUrl: './navbar.component.html',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
      store = inject(NavbarStore);

@@ -1,4 +1,7 @@
 <div class="main-container">
+     @if (isNavigating()) {
+     <div class="route-loading-bar"></div>
+     }
      <router-outlet></router-outlet>
 </div>
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component'; // ← adjust path if needed
@@ -13,6 +13,7 @@ import { CurrencyStoreService } from '../../../../services/currency/currency-sto
      imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './trustline-issuers.component.html',
      styleUrl: './trustline-issuers.component.css',
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlineIssuersComponent {
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
