@@ -10,11 +10,11 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../../services/toast/toast.service';
-import { UtilsService } from '../../services/util-service/utils.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
+import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 
 @Component({
      selector: 'app-wallet-panel',
@@ -32,10 +32,15 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly toastService = inject(ToastService);
      private readonly cdr = inject(ChangeDetectorRef);
-     private readonly utilsService = inject(UtilsService);
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
+     public readonly walletConfiguratorOrchestratorService = inject(WalletConfiguratorOrchestratorService);
+
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
+
+     // Prefer the panel's own execution time; fall back to the orchestrator's
+     // so that wallet generation triggered from the Wallets page also shows a time.
+     readonly displayExecutionTime = computed(() => this.executionTime() || this.walletConfiguratorOrchestratorService.executionTimeValue());
 
      @Output() walletSelected = new EventEmitter<Wallet>();
      @ViewChild('nameInput') nameInput!: ElementRef<HTMLInputElement>;
@@ -174,6 +179,11 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      // Called by the all pages except the Wallet Configurator page
      async generateNewAccount() {
+          this.walletsStoreService.updateField('buttonLoading', state => ({
+               ...state,
+               generateNewWalletFromSeed: true,
+          }));
+
           await this.withPerf('generateNewAccount', async () => {
                console.log('NOT on Wallet Configurator page');
                this.txUiService.clearTxResultsHash();
@@ -209,11 +219,15 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                     this.toastService.error(error.message || 'Unknown error', AppConstants.TOAST.ERROR);
                } finally {
                     this.txUiService.resetCurrentStepToIdle();
+                    this.walletsStoreService.updateField('buttonLoading', state => ({
+                         ...state,
+                         generateNewWalletFromSeed: false,
+                    }));
+
+                    // executionTime signal was updated by withPerf — notify OnPush
+                    this.cdr.detectChanges();
                }
           });
-
-          // executionTime signal was updated by withPerf — notify OnPush
-          this.cdr.detectChanges();
      }
 
      dropWallet(event: CdkDragDrop<Wallet[]>) {

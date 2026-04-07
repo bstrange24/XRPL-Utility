@@ -62,6 +62,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: string;
           desc: string;
           color: string;
+          iconType: IconType;
           iconSize: string;
      }
 > = {
@@ -71,6 +72,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: 'New Wallet Generator',
           desc: `Generate a new XRPL Wallet.`,
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      [WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_SEED]: {
@@ -79,6 +81,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: 'Derive Wallet from Seed',
           desc: `Derive an existing XRPL Wallet from a seed.`,
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      [WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_MNEMONIC]: {
@@ -87,6 +90,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: 'Derive Wallet from Mnemonic',
           desc: `Derive an existing XRPL Wallet from a mnemonic.`,
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      [WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_SECRET_NUMBERS]: {
@@ -95,6 +99,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: 'Derive Wallet from Secret Numbers',
           desc: `Derive an existing XRPL Wallet from secret numbers.`,
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      [WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.REMOVE_CUSTOM_WALLETS]: {
@@ -103,6 +108,7 @@ export const WALLET_GENERATOR_TAB_META: Record<
           title: 'Remove Custom Wallets',
           desc: `Remove custom wallets entered in the destination dropdown menu.`,
           color: '',
+          iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
 };
