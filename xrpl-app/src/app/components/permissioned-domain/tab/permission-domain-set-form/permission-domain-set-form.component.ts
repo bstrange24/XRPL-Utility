@@ -3,10 +3,10 @@ import { Component, computed, effect, inject, input, output, ViewChild } from '@
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainUtilService } from '../../../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { LucideAngularModule } from 'lucide-angular';
-import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message.component';
 import console from 'node:console';
 
 @Component({

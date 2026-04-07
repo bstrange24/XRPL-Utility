@@ -1,8 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { AppConstants } from '../../core/app.constants';
-import { ToastService } from '../toast/toast.service';
+import { ToastService } from '../utils/toast/toast.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
 import { CredentialStore } from '../credentials/credential-store/credential-store.service';

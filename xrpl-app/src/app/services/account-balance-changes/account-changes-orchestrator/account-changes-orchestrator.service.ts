@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AccountChangesStoreService } from '../account-changes-store/account-changes-store.service';

@@ -1,14 +1,14 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { CopyUtilService } from '../../copy-util/copy-util.service';
-import { DownloadUtilService } from '../../download-util/download-util.service';
-import { ToastService } from '../../toast/toast.service';
+import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
+import { DownloadUtilService } from '../../utils/download-util/download-util.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 
-import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainViewModelService } from '../permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';

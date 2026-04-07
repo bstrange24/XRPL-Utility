@@ -1,11 +1,13 @@
-import { Injectable } from '@angular/core';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
+import { inject, Injectable } from '@angular/core';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class DownloadUtilService {
-     constructor(public ui: TransactionUiService) {}
+     public readonly ui = inject(TransactionUiService);
+
+     constructor() {}
 
      downloadSignTxJson(txJson: any) {
           const blob = new Blob([txJson], { type: 'application/json' });

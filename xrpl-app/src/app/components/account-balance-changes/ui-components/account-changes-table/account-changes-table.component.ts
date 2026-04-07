@@ -7,7 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountChangesStoreService } from '../../../../services/account-balance-changes/account-changes-store/account-changes-store.service';
 import { AccountChangesViewModelService } from '../../../../services/account-balance-changes/account-changes-view-model/account-changes-view-model.service';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { BalanceChange } from '../../constants/account-balance.types';
 

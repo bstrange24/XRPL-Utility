@@ -1,10 +1,10 @@
 import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 
 export interface PermissionedDomainItem {

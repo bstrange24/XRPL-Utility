@@ -2,7 +2,7 @@ import { computed, inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { SignTransationStoreService } from '../sign-transaction-store/sign-transation-store.service';
 
 type TxBuilder = (ctx: { wallet: xrpl.Wallet; accountInfo: any; currentLedger: number; fee: any; selectedTransaction?: string }) => any;

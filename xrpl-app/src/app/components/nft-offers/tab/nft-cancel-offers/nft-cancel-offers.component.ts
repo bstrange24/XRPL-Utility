@@ -1,5 +1,5 @@
 import { Component, computed, EventEmitter, inject, Input, Output } from '@angular/core';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
@@ -8,7 +8,7 @@ import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.servi
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { NftOffersTransactionViewModelService } from '../../../../services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

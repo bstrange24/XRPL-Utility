@@ -3,7 +3,7 @@ import { Component, EventEmitter, inject, Input, input, Output, output } from '@
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';

@@ -4,7 +4,7 @@ import { WalletGeneratorService } from '../generator/wallet-generator.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletsStoreService } from '../wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../wallets-util/wallets-util.service';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionDropdownService } from '../../transaction-dropdown/transaction-dropdown.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { AppConstants } from '../../../core/app.constants';

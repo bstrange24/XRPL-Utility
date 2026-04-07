@@ -3,7 +3,7 @@ import { Component, EventEmitter, inject, Input, output, Output } from '@angular
 import { FormsModule } from '@angular/forms';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { SelectSearchDropdownComponent, SelectItem } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';

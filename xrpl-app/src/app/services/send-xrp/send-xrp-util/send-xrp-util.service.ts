@@ -1,11 +1,11 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
-import { CopyUtilService } from '../../copy-util/copy-util.service';
+import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
 import { DidStoreService } from '../../did/did-store/did-store.service';
-import { DownloadUtilService } from '../../download-util/download-util.service';
-import { ToastService } from '../../toast/toast.service';
+import { DownloadUtilService } from '../../utils/download-util/download-util.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 

@@ -6,8 +6,8 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import * as xrpl from 'xrpl';
 import { TrustlineActionTypes, TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';
-import { UtilsService } from '../../util-service/utils.service';
-import { ToastService } from '../../toast/toast.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';

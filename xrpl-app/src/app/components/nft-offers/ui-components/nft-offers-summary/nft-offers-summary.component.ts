@@ -1,13 +1,13 @@
 import { Component, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { NftOffersTransactionViewModelService } from '../../../../services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-nft-offers-summary',

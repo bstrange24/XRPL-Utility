@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { AmmStoreService } from '../amm-store/amm-store.service';
 import { PoolOptions } from '../../../components/amm/constants/amm.types';

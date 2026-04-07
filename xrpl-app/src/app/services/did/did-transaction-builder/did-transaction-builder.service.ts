@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { AppConstants } from '../../../core/app.constants';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import * as xrpl from 'xrpl';
 import didSchema from '../../../components/did/did-schema.json';
 

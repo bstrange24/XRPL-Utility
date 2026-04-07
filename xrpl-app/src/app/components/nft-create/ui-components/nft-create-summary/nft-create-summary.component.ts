@@ -3,7 +3,7 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { NftTransactionViewModelService } from '../../../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
 

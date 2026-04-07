@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { StorageService } from '../../local-storage/storage.service';
 import { WalletManagerService } from '../manager/wallet-manager.service';
 import { firstValueFrom } from 'rxjs';

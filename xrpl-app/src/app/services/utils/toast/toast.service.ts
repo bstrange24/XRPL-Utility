@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants } from '../../../core/app.constants';
 
 type ToastMode = 'stack' | 'replace' | 'single';
 

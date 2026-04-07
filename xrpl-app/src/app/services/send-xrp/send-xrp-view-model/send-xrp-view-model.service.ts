@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',

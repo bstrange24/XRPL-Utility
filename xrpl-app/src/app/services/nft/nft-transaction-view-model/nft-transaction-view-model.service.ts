@@ -4,7 +4,7 @@ import { CurrencyStoreService } from '../../currency/currency-store/currency-sto
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { CreateNftStoreService } from '../nft-store/nft-store.service';
 import { NftCreateActionTypes } from '../../../components/nft-create/constants/nft-create.types';

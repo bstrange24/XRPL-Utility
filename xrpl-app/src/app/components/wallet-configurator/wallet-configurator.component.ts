@@ -7,15 +7,15 @@ import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
+import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../navbar/navbar.component';
-import { ToastService } from '../../services/toast/toast.service';
+import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
+import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -24,13 +24,13 @@ import { ActivatedRoute } from '@angular/router';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
-import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WALLET_GENERATOR_TAB_META, WALLET_GENERATOR_TABS } from './constants/wallet-generator.ui';
 import { WALLET_GENERATOR_TAB } from './constants/wallet-generator.constants';
 import { WalletGeneratorActionTypes } from './constants/wallet-generator.types';
 import { WalletsViewModelService } from '../../services/wallets/wallets-view-model/wallets-view-model.service';
-import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
-import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { WalletGeneratorRequirementsInfoComponent } from './ui-components/wallet-generator-requirements-info/wallet-generator-requirements-info.component';
 import { WalletDeriveSeedComponent } from './tab/wallet-derive-seed/wallet-derive-seed.component';
 import { WalletDeriveMnemonicComponent } from './tab/wallet-derive-mnemonic/wallet-derive-mnemonic.component';
@@ -230,4 +230,3 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.walletsStoreService.resetAll();
      }
 }
-

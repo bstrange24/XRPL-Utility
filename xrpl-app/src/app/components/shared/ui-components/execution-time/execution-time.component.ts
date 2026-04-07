@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PerformanceBaseComponent } from '../../../performance-base/performance-base.component';
+import { PerformanceBaseComponent } from '../../performance-base/performance-base.component';
 
 @Component({
      selector: 'app-execution-time-display',

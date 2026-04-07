@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, input, Output, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
-import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';

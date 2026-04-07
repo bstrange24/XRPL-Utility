@@ -3,7 +3,7 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { TrustlineUtilService } from '../../trustlines/trustline-utils/trustline-util.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 
 @Injectable({

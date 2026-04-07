@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
-import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { NgIcon } from '@ng-icons/core';
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';

@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { StorageService } from '../../local-storage/storage.service';
 import { NetworkService } from '../../network/network-service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({ providedIn: 'root' })

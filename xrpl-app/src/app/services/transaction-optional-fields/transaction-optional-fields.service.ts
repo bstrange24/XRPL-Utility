@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { Wallet } from '../wallets/manager/wallet-manager.service';

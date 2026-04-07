@@ -1,13 +1,13 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { AmmStoreService } from '../../../../services/amm/amm-store/amm-store.service';
 import { AmmTransactionViewModelService } from '../../../../services/amm/amm-transaction-view-model/amm-transaction-view-model.service';
 import { AmmUtilsService } from '../../../../services/amm/amm-utils/amm-utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { PoolOptions } from '../../constants/amm.types';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
 

@@ -2,14 +2,14 @@ import { Component, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { CheckCreateItemComponent } from '../../tab/check-create-item/check-create-item.component';
 import { CheckCashItemComponent } from '../../tab/check-cash-item/check-cash-item.component';
 import { CheckCancelItemComponent } from '../../tab/check-cancel-item/check-cancel-item.component';
 import { CheckActionTypes } from '../../constants/checks.types';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-checks-summary',

@@ -1,10 +1,10 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configurator/constants/account-configurator.flags';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';

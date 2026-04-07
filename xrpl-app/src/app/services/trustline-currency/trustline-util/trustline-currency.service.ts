@@ -2,7 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { StorageService } from '../../local-storage/storage.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';

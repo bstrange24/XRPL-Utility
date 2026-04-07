@@ -1,12 +1,12 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { DownloadUtilService } from '../utils/download-util/download-util.service';
+import { CopyUtilService } from '../utils/copy-util/copy-util.service';
 import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { ToastService } from '../../services/toast/toast.service';
+import { ToastService } from '../utils/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import * as xrpl from 'xrpl';
 import { TrustlineCurrencyService } from '../trustline-currency/trustline-util/trustline-currency.service';

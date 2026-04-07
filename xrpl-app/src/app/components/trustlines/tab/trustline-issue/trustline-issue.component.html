@@ -5,7 +5,10 @@
           <p class="form-hint dynamic-hint">{{ viewModel.hintText() }}</p>
           } @else {
           <label for="formTitle">Destination</label>
-          <p class="form-hint">Tokens will be sent or issued to this address.</p>
+          <p class="form-hint">
+               The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new <br />
+               destination.
+          </p>
           }
 
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />

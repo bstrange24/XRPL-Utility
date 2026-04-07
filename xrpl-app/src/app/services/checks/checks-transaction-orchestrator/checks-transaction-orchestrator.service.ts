@@ -2,9 +2,9 @@ import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
-import { ValidationService } from '../../validation/transaction-validation-rule.service';
+import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
@@ -13,7 +13,7 @@ import { CheckTxConfig, CheckTxType } from '../../../components/checks/constants
 import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
 import { ChecksTransactionBuilderService } from '../checks-transaction-builder/checks-transaction-builder.service';
 import { AppConstants } from '../../../core/app.constants';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 
 type CheckMeta = {

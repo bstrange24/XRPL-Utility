@@ -2,7 +2,7 @@
      <!-- Destination -->
      <div class="form-group">
           <label for="destination">Destination</label>
-          <p class="form-hint">Destination account to send remaining XRP to.</p>
+          <p class="form-hint">The unique address of the account receiving the XRP. Select destination from the dropdown or manually enter a new destination.</p>
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
      </div>
 </div>

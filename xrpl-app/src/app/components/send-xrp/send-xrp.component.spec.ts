@@ -5,20 +5,20 @@ import * as xrpl from 'xrpl';
 
 import { SendXrpComponent } from './send-xrp.component';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../../services/utils/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService, TxStep } from '../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { ToastService } from '../../services/toast/toast.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { NavbarComponent } from '../navbar/navbar.component';
+import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 
 // ────────────────────────────────────────────────
 // ToastService Mock

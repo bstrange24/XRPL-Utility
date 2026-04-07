@@ -19,7 +19,7 @@
      <div class="form-row">
           <div class="form-group">
                <label for="destination">Destination</label>
-               <p class="form-hint">Address to receive XRP claims against this channel. This is also known as the "destination address" for the channel.</p>
+               <p class="form-hint">The unique address to receive XRP claims against this channel. Select destination from the dropdown or manually enter a new destination.</p>
                <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationChanged.emit($event)" placeholder="Enter or select destination address" />
           </div>
      </div>

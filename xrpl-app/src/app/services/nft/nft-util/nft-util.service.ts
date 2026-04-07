@@ -4,7 +4,7 @@ import { AccountFlags, NftFlags } from '../../../components/nft-create/constants
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',

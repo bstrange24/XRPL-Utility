@@ -3,15 +3,15 @@ import { BehaviorSubject } from 'rxjs';
 import * as xrpl from 'xrpl';
 
 import { TrustlinesComponent } from './trustlines.component';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../../services/utils/util-service/utils.service';
 import { StorageService } from '../../services/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
-import { ToastService } from '../../services/toast/toast.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { ValidationService } from '../../services/validation/transaction-validation-rule.service';
+import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';

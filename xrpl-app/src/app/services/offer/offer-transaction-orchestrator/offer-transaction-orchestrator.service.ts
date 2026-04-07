@@ -3,7 +3,7 @@ import * as xrpl from 'xrpl';
 import { OfferTxType, OfferTxConfig } from '../../../components/offer/constants/offer.types';
 import { AppConstants } from '../../../core/app.constants';
 import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';

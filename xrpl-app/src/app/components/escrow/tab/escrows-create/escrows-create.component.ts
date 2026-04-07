@@ -3,7 +3,7 @@ import { Component, inject, Input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
-import { SelectSearchDropdownComponent, SelectItem } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { EscrowStoreService } from '../../../../services/escrow/escrow-store/escrow-store.service';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
@@ -11,7 +11,7 @@ import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.se
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TransactionDropdownService } from '../../../../services/transaction-dropdown/transaction-dropdown.service';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';

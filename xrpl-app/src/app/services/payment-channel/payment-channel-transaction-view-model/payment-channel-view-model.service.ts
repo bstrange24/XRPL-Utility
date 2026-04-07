@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { DownloadUtilService } from '../../download-util/download-util.service';
+import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';

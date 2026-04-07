@@ -1,13 +1,16 @@
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { UtilsService } from '../../services/util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class BatchService {
-     constructor(private xrplService: XrplService, private utilsService: UtilsService) {}
+     constructor(
+          private xrplService: XrplService,
+          private utilsService: UtilsService
+     ) {}
 
      async submitBatchTransaction(
           client: xrpl.Client,

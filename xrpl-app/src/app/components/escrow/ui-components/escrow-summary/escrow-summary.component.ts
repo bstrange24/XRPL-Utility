@@ -1,7 +1,7 @@
 import { Component, inject, input, output } from '@angular/core';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { NgIcon } from '@ng-icons/core';
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { EscrowCreateItemComponent } from '../../tab/escrow-create-item/escrow-create-item.component';

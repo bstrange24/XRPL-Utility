@@ -1,16 +1,16 @@
 import { inject, Injectable } from '@angular/core';
-import { XrplService } from '../xrpl-services/xrpl.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 import { UtilsService } from '../util-service/utils.service';
 import * as xrpl from 'xrpl';
-import didSchema from '../../components/did/did-schema.json';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
+import didSchema from '../../../components/did/did-schema.json';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { percentToTransferRate } from 'xrpl';
-import { XrplDateService } from '../../core/xrpl-date.service';
-import { AppConstants } from '../../core/app.constants';
-import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
-import { PaymentChannelObject } from '../../components/payment-channel/constants/payment-channel.types';
-import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
-import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
+import { XrplDateService } from '../../../core/xrpl-date.service';
+import { AppConstants } from '../../../core/app.constants';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+import { PaymentChannelObject } from '../../../components/payment-channel/constants/payment-channel.types';
+import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
+import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;

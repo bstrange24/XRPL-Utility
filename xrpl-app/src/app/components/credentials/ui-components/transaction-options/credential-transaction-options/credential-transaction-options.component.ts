@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../../services/credentials/credential-store/credential-store.service';
 import { PermissionedDomainStoreService } from '../../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
 import { XrplTxOptionsStore } from '../../../../shared/stores/xrpl-tx-options.store';
 
 @Component({

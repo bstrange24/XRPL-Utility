@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';

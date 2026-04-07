@@ -2,11 +2,11 @@ import { inject, Injectable, NgZone } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { Subject, from } from 'rxjs';
 import { debounceTime, exhaustMap } from 'rxjs/operators';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { Wallet, WalletManagerService } from '../manager/wallet-manager.service';
 import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 
 interface RefreshPayload {

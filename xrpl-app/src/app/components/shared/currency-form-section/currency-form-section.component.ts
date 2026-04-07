@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, SimpleChanges, OnChanges, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TrustlinesComponent } from '../../trustlines/trustlines.component';
 import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
 

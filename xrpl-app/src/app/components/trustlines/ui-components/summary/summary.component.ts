@@ -2,10 +2,10 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { ToastService } from '../../../../services/toast/toast.service';
+import { ToastService } from '../../../../services/utils/toast/toast.service';
 
 @Component({
      selector: 'app-summary',

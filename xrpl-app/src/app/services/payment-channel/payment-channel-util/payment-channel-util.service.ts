@@ -1,9 +1,9 @@
 import { computed, inject, Injectable } from '@angular/core';
-import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import * as xrpl from 'xrpl';
 import { sign, verify } from 'ripple-keypairs';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import BigNumber from 'bignumber.js';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';

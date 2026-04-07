@@ -1,13 +1,13 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AppConstants } from '../../../core/app.constants';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import * as xrpl from 'xrpl';
 import { CredentialStore } from '../credential-store/credential-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { SelectItem } from '../../../components/ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CredentialActionTypes, CredentialItem } from '../../../components/credentials/constants/credential.types';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 

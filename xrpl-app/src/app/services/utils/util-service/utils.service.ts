@@ -1,23 +1,23 @@
 import { Injectable, ElementRef, ViewChild, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
-import { XrplService } from '../xrpl-services/xrpl.service';
-import { AppConstants } from '../../core/app.constants';
+import { XrplService } from '../../xrpl-services/xrpl.service';
+import { AppConstants } from '../../../core/app.constants';
 import { sha256 } from 'js-sha256';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { StorageService } from '../local-storage/storage.service';
-import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { MPToken, RippleState } from '../../models/interface-items.model';
+import { StorageService } from '../../local-storage/storage.service';
+import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { MPToken, RippleState } from '../../../models/interface-items.model';
 import * as bip39 from 'bip39';
-import { XrplDateService } from '../../core/xrpl-date.service';
-import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
-import { CurrencyStoreService } from '../currency/currency-store/currency-store.service';
-import { TrustlineStoreService } from '../trustlines/trustline-store/trustline-store.service';
-import { ChecksStoreService } from '../checks/checks-store/checks-store.service';
-import { EscrowStoreService } from '../escrow/escrow-store/escrow-store.service';
-import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
+import { XrplDateService } from '../../../core/xrpl-date.service';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
+import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
+import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
+import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
 
 type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
 type DidValidationResult = {

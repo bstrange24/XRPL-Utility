@@ -1,5 +1,5 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { JsonEditorComponent } from '../../../json-editor/json-editor.component';
+import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
 import { DidUtilService } from '../../../../services/did/did-util/did-util.service';

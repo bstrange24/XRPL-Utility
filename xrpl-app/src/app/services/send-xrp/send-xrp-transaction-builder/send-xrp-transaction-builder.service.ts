@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { ToastService } from '../toast/toast.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 
 @Injectable({ providedIn: 'root' })
 export class CopyUtilService {

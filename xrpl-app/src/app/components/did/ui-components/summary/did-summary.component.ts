@@ -2,9 +2,9 @@ import { Component, input, output, inject, ChangeDetectionStrategy } from '@angu
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 
 export interface ExistingDid {
      index: string;

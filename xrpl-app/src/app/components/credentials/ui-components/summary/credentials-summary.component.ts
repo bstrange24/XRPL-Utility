@@ -1,7 +1,7 @@
 import { Component, input, output, inject } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';

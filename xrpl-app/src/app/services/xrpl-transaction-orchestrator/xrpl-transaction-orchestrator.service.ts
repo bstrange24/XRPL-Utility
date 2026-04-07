@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
 import { ExecuteTxParams, TxOrchestratorContext, TxOrchestratorResult } from './xrpl-transaction-orchestrator.types';
 

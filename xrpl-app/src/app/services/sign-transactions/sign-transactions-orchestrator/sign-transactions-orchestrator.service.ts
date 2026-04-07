@@ -1,11 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
-import { ValidationService } from '../../validation/transaction-validation-rule.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
+import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';

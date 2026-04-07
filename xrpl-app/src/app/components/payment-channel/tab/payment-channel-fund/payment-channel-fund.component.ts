@@ -5,7 +5,7 @@ import { NgIcon } from '@ng-icons/core';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { PaymentChannelViewModelService } from '../../../../services/payment-channel/payment-channel-transaction-view-model/payment-channel-view-model.service';
 import { PaymentChannelUtilService } from '../../../../services/payment-channel/payment-channel-util/payment-channel-util.service';
-import { SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';

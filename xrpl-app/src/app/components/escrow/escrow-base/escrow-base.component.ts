@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Wallet, WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { WalletDestinationBase } from '../../../services/wallets/walletDestinationBase';
-import { DownloadUtilService } from '../../../services/download-util/download-util.service';
+import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
 import * as xrpl from 'xrpl';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { CurrencyStoreService } from '../../../services/currency/currency-store/currency-store.service';
@@ -9,15 +9,15 @@ import { MptUtilService } from '../../../services/mpt/mpt-util/mpt-util.service'
 import { TrustlineCurrencyService } from '../../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineStoreService } from '../../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineUtilService } from '../../../services/trustlines/trustline-utils/trustline-util.service';
-import { ValidationService } from '../../../services/validation/transaction-validation-rule.service';
+import { ValidationService } from '../../../services/utils/validation/transaction-validation-rule.service';
 import { XrplTransactionExecutorService } from '../../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionOrchestratorService } from '../../../services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../../services/xrpl-transactions/xrpl-transaction.service';
 import { ActivatedRoute } from '@angular/router';
 import { AcccountDataService } from '../../../services/account-data/acccount-data.service';
-import { CopyUtilService } from '../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
 import { StorageService } from '../../../services/local-storage/storage.service';
-import { ToastService } from '../../../services/toast/toast.service';
+import { ToastService } from '../../../services/utils/toast/toast.service';
 import { TransactionDropdownService } from '../../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../../services/transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
@@ -26,7 +26,7 @@ import { AppConstants, TabConfig, TabMetaInfo } from '../../../core/app.constant
 import { CONDITIONAL_ESCROW_TAB_META, CONDITIONAL_ESCROW_TABS, TIME_ESCROW_TAB_META, TIME_ESCROW_TABS } from '../constants/time-escrow.ui';
 import { ESCROW_TAB } from '../constants/time-escrow.constants';
 import { DropdownItem } from '../../../models/dropdown-item.model';
-import { SelectItem } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { EscrowUtilService } from '../../../services/escrow/escrow-util/escrow-util.service';
 import { EscrowStoreService } from '../../../services/escrow/escrow-store/escrow-store.service';
 import { EscrowActionTypes, EscrowConfig } from '../constants/time-escrow.types';

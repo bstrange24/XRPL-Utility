@@ -56,7 +56,7 @@
 <div class="form-row">
      <div class="form-group">
           <label for="destination">Destination</label>
-          <p class="form-hint">The unique address of the account receiving the payment. Select destination from the dropdown or manually enter a new destination.</p>
+          <p class="form-hint">The unique address of the account receiving the NFT. Select destination from the dropdown or manually enter a new destination.</p>
           <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
      </div>
 </div>

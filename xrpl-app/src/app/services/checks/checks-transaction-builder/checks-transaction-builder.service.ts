@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import * as xrpl from 'xrpl';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { AppConstants } from '../../../core/app.constants';

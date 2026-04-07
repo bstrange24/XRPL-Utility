@@ -5,14 +5,14 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DragDropModule, CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { AppConstants } from '../../core/app.constants';
-import { ToastService } from '../../services/toast/toast.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
-import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 

@@ -3,8 +3,8 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { DidStoreService } from '../did-store/did-store.service';
 import didSchema from '../../../components/did/did-schema.json';
 import * as xrpl from 'xrpl';
-import { UtilsService } from '../../util-service/utils.service';
-import { JsonEditorComponent } from '../../../components/json-editor/json-editor.component';
+import { UtilsService } from '../../utils/util-service/utils.service';
+import { JsonEditorComponent } from '../../../components/shared/json-editor/json-editor.component';
 import { DidInfoData, DidTab } from '../../../components/did/constants/did.types';
 
 @Injectable({ providedIn: 'root' })

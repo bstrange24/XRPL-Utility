@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { OfferTransactionViewModelService } from '../../../../services/offer/offer-transaction-view-model/offer-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { CopyUtilService } from '../../../../services/copy-util/copy-util.service';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { LucideAngularModule } from 'lucide-angular';
 import { OfferStoreService } from '../../../../services/offer/offer-store/offer-store.service';

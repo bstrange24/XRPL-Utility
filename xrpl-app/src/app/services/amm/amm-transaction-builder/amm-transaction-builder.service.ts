@@ -3,7 +3,7 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { PoolOptions } from '../../../components/amm/constants/amm.types';
 import { AmmState } from '../amm-store/amm-store.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 
 @Injectable({
      providedIn: 'root',

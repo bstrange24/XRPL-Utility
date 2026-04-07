@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 
 export type AccountDeleteTxType = 'deleteAccount';
 

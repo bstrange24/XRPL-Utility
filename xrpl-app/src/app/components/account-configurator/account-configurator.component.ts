@@ -6,16 +6,16 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
+import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
+import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../navbar/navbar.component';
-import { ToastService } from '../../services/toast/toast.service';
+import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { TransactionPreviewComponent } from '../transaction-preview/transaction-preview.component';
+import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { AccountConfiguratorUtilService } from '../../services/account-configurator/account-configurator-util/account-configurator-util.service';
@@ -23,15 +23,14 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { AccountConfiguratorOrchestratorService } from '../../services/account-configurator/account-configurator-orchestrator/account-configurator-orchestrator.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { StorageService } from '../../services/local-storage/storage.service';
-import { animation, toastAnimation } from '../../services/animations/animations.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time/execution-time.component';
-import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message/warning-message.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { AccountConfiguratorRequirementsInfoComponent } from './ui-components/account-configurator-requirements-info/account-configurator-requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
-import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info/tab-with-info.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from './constants/account-configurator.types';
 import { AccountConfiguratorSummaryComponent } from './ui-components/summary/account-configurator-summary.component';
 import { DepositAuthComponent } from './ui-components/tabs/deposit-auth/deposit-auth.component';
@@ -40,6 +39,7 @@ import { AccountMetadataComponent } from './ui-components/tabs/meta-data/account
 import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.component';
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
 import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { animation, toastAnimation } from '../../services/utils/animations/animations.service';
 
 @Component({
      selector: 'app-account-configurator',

@@ -1,6 +1,6 @@
 import { Component, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SelectItem } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { OfferTransactionViewModelService } from '../../../../services/offer/offer-transaction-view-model/offer-transaction-view-model.service';
 import { CreateOfferTabComponent } from '../create-offer/create-offer.component';
 import { GetOrderBookTabComponent } from '../get-order-book/get-order-book.component';

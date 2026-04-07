@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { Router, NavigationEnd, ActivatedRoute, RouterOutlet } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
-import { ToastService } from './services/toast/toast.service';
+import { ToastService } from './services/utils/toast/toast.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';

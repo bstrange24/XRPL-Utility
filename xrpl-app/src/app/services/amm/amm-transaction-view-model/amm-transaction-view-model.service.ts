@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AmmActionTypes } from '../../../components/amm/constants/amm.types';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AmmStoreService } from '../amm-store/amm-store.service';

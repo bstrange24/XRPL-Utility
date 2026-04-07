@@ -3,10 +3,10 @@ import { PerformanceBaseComponent } from '../../components/shared/performance-ba
 import { TransactionDropdownService } from '../transaction-dropdown/transaction-dropdown.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from './manager/wallet-manager.service';
-import { CopyUtilService } from '../copy-util/copy-util.service';
+import { CopyUtilService } from '../utils/copy-util/copy-util.service';
 import { TxEnvironmentService } from '../transaction-environment/tx-environment.service';
 import { WalletDataService } from './refresh-wallet/refresh-wallets.service';
-import { ToastService } from '../toast/toast.service';
+import { ToastService } from '../utils/toast/toast.service';
 import { AppConstants } from '../../core/app.constants';
 import { AcccountDataService } from '../account-data/acccount-data.service';
 import * as xrpl from 'xrpl';
@@ -14,7 +14,7 @@ import { ActivatedRoute } from '@angular/router';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { StorageService } from '../local-storage/storage.service';
-import { UtilsService } from '../util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);

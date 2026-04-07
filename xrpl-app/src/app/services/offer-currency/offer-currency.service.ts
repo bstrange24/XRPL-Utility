@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { StorageService } from '../local-storage/storage.service';
 import { XrplService } from '../xrpl-services/xrpl.service';
-import { UtilsService } from '../util-service/utils.service';
+import { UtilsService } from '../utils/util-service/utils.service';
 import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 
 export interface IssuerItem {

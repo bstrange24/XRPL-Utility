@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { SelectItem, SelectSearchDropdownComponent } from '../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({

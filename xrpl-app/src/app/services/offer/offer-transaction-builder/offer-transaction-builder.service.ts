@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 import { OfferState } from '../offer-store/offer-store.service';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { OfferCreateFlags } from 'xrpl';
 
 @Injectable({

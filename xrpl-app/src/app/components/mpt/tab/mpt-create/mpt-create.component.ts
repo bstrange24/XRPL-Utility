@@ -1,5 +1,5 @@
 import { Component, inject, input, ViewChild } from '@angular/core';
-import { JsonEditorComponent } from '../../../json-editor/json-editor.component';
+import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';

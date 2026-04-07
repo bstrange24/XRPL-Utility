@@ -1,11 +1,11 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { WalletsStoreService } from '../wallets-store/wallets-store.service';
 import { AppConstants } from '../../../core/app.constants';
-import { UtilsService } from '../../util-service/utils.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { StorageService } from '../../local-storage/storage.service';
 import * as xrpl from 'xrpl';
 import * as bip39 from 'bip39';
-import { ToastService } from '../../toast/toast.service';
+import { ToastService } from '../../utils/toast/toast.service';
 
 @Injectable({
      providedIn: 'root',

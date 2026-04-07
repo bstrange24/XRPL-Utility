@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';

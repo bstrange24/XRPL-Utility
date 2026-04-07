@@ -1,12 +1,12 @@
 import { Component, ViewChild, ElementRef, effect, signal } from '@angular/core';
-import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { CopyUtilService } from '../../services/copy-util/copy-util.service';
-import { DownloadUtilService } from '../../services/download-util/download-util.service';
+import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
+import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
+import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { AppConstants } from '../../core/app.constants';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
+import { AppConstants } from '../../../core/app.constants';
+import { PerformanceBaseComponent } from '../performance-base/performance-base.component';
 declare var Prism: any;
 
 @Component({

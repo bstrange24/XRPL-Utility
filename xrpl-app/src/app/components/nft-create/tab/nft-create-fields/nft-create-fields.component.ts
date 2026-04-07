@@ -1,6 +1,6 @@
 import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
-import { DownloadUtilService } from '../../../../services/download-util/download-util.service';
+import { DownloadUtilService } from '../../../../services/utils/download-util/download-util.service';
 import { NftTransactionOrchestrator } from '../../../../services/nft/nft-orchestrator/nft-orchestrator.service';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { NftTransactionViewModelService } from '../../../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
@@ -8,10 +8,10 @@ import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.servi
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
-import { UtilsService } from '../../../../services/util-service/utils.service';
+import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { XrplTransactionExecutorService } from '../../../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../ui-dropdowns/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';

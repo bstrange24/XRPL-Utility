@@ -2,7 +2,7 @@ import { Component, computed, inject, Input, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
-import { UtilsService } from '../../../services/util-service/utils.service';
+import { UtilsService } from '../../../services/utils/util-service/utils.service';
 import { CredentialStore } from '../../../services/credentials/credential-store/credential-store.service';
 import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 import { PermissionedDomainStoreService } from '../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
