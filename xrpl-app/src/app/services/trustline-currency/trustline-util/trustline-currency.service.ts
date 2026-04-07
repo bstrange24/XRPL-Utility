@@ -3,7 +3,7 @@ import * as xrpl from 'xrpl';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { StorageService } from '../../shared/local-storage/storage.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
+import { TxEnvironmentService, PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';
 import { IssuerItem } from '../../../models/interface-items.model';
@@ -242,6 +242,44 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
 
      public async refreshCurrentBalance(): Promise<void> {
           await this.updateBalanceForCurrentCombo();
+     }
+
+     /**
+      * Update the displayed balance using an already-fetched env object (avoids an extra network round-trip).
+      * Requires `env.accountInfo` (for XRP) or `env.gatewayBalanceObject` (for tokens) to be present.
+      */
+     public async refreshCurrentBalanceFromEnv(env: PrepareTxEnvironmentResult): Promise<void> {
+          const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
+          const currency = this.currencyStore.currency();
+          const issuer = this.currencyStore.issuer();
+
+          if (!walletAddress || !currency) {
+               this.currencyStore.setField('balance', '0');
+               return;
+          }
+
+          if (currency === 'XRP') {
+               try {
+                    const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
+                    this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
+               } catch {
+                    this.currencyStore.setField('balance', '0');
+               }
+               return;
+          }
+
+          if (!issuer) {
+               this.currencyStore.setField('balance', '0');
+               return;
+          }
+
+          try {
+               const balance = this.extractBalance(env.gatewayBalanceObject, walletAddress, currency, issuer);
+               this.currencyStore.setField('balance', balance);
+          } catch (err) {
+               console.warn('Failed to extract token balance from env:', err);
+               this.currencyStore.setField('balance', '0');
+          }
      }
 
      private async updateBalanceForCurrentCombo(): Promise<void> {

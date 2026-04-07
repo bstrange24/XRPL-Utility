@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
+import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -113,7 +114,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
           await this.trustlineUtilService.loadTrustlines(false);
-          await this.trustlineCurrencyService.refreshCurrentBalance();
+          // balance is now refreshed inside loadTrustlines via refreshCurrentBalanceFromEnv
      }
 
      async onIssuerSelected(item: SelectItem | null) {
@@ -130,11 +131,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          // this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
-          this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      trackByAddress(_index: number, item: DropdownItem): string {
@@ -173,9 +171,16 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
-               this.trustlineStoreService.reset();
+
+               // Keep existingIOUs intact for stale-while-revalidate; only reset loading/error state.
+               this.trustlineStoreService.setField('isLoading', true);
+               this.trustlineStoreService.setField('error', '');
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
+
+               // Pre-populate summary from cache so the UI is never blank during the fetch.
+               const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
+               this.tryPrePopulateFromCache(address);
 
                try {
                     await this.trustlineUtilService.loadTrustlines(forceRefresh);
@@ -331,9 +336,15 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
      }
 
+     /** Stale-while-revalidate: populate existingIOUs from cached account objects instantly. */
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          const ious = this.trustlineCurrencyService.getExistingIOUs(accountObjects, address);
+          this.trustlineStoreService.setField('existingIOUs', ious);
+     }
+
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
-          await this.trustlineCurrencyService.refreshCurrentBalance();
+          // balance is now refreshed inside loadTrustlines via refreshCurrentBalanceFromEnv
      }
 
      handleSearchQueryChange(query: string) {
