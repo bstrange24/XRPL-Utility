@@ -82,6 +82,8 @@ npm install five-bells-condition@5.0.1
 npm install @ng-icons/core @ng-icons/feather-icons
 npm install @ngrx/signals@19 --legacy-peer-deps
 npm i -g @xahau/hooks-cli
+npm install prismjs
+npm install @types/prismjs --save-dev
 
 # Rebuild the image
 
