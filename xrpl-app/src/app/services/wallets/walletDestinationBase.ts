@@ -1,4 +1,4 @@
-import { signal, computed, effect, inject } from '@angular/core';
+import { signal, computed, effect, inject, untracked } from '@angular/core';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { TransactionDropdownService } from '../transaction-dropdown/transaction-dropdown.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
@@ -85,8 +85,14 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
 
           effect(() => {
                this.walletManager.selectedIndex();
-               this.txUiService.clearAllOptionsAndMessages();
-               void this.onSelectedWalletIndexChange();
+               // Use untracked() so that signal reads inside clearAllOptionsAndMessages()
+               // (e.g. suppressTxClear, savedTxJson) do NOT create reactive dependencies
+               // on this effect. The effect should ONLY re-run when selectedIndex changes —
+               // not when suppressTxClear is toggled during a post-tx wallet refresh.
+               untracked(() => {
+                    this.txUiService.clearAllOptionsAndMessages();
+                    void this.onSelectedWalletIndexChange();
+               });
           });
      }
 
