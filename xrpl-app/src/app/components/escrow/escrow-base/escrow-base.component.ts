@@ -275,6 +275,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
 
                     await this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
+                    const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
                          await this.trustlineUtilService.loadTrustlines(forceRefresh);
                          this.trustlineCurrencyService.selectCurrency(currencyValue);
@@ -285,6 +286,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                     console.error('Failed to get escrows:', error);
                     this.toastService.error(error.message || 'Failed to get escrows', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

@@ -95,6 +95,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      }
 
      async getTickets(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getTickets', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -109,10 +110,12 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                     this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                } catch (error: any) {
                     console.error('Error in getTickets:', error);
                     this.toastService.error(error.message || 'Failed to get tickets account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

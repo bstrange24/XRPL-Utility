@@ -125,6 +125,8 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
+               } catch (error: any) {
+                    console.error('Error in getDidForAccount:', error);
                     this.toastService.error(error.message || 'Error getting did detail', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);

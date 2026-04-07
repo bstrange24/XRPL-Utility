@@ -173,6 +173,9 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      }
 
      async getPaymentChannels(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getPaymentChannels', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -193,12 +196,14 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.paymentChannelUtilService.clearInputFields();
                } catch (error: any) {
                     console.error('Error in getPaymentChannels:', error);
                     this.toastService.error(error.message || 'Error getting payment channel detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -321,6 +326,13 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress, this.paymentChannelStoreService.destination(), '', { includePaymentChannelObjects: true });
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+          if (accountObjects?.result?.account_objects) {
+               this.paymentChannelUtilService.processPaymentChannels(accountObjects.result.account_objects as PaymentChannelObject[], address);
+               this.paymentChannelStoreService.setField('walletPaymentChannelCount', accountObjects.result.account_objects.length);
+          }
      }
 
      protected refreshAccountObject(env: any): void {

@@ -146,6 +146,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('onAccountChange', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
@@ -165,6 +168,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     if (env.accountObjects) this.offerUtilsService.getExistingOffers(env.accountObjects, env.wallet.classicAddress);
+                    this.updateSharedObjectsStore(env);
 
                     if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
                          await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
@@ -173,6 +177,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -242,6 +247,10 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.trustlineCurrencyService.refreshCurrentBalance();
           await this.offerCurrency.refreshBothBalances(wallet);
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+          if (accountObjects) this.offerUtilsService.getExistingOffers(accountObjects, address);
      }
 
      protected refreshAccountObject(env: any): void {

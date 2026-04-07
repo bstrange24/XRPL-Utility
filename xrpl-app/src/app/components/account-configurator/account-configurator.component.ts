@@ -93,6 +93,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -112,11 +113,13 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                     this.accountConfiguratorUtilService.setAccountFlags(currentTab, env);
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     if (currentTab === 'modifyMultiSigners') this.accountConfiguratorStoreService.setField('signerQuorum', 1);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

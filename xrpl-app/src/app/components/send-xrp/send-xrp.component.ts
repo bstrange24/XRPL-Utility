@@ -94,6 +94,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('onAccountChange', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -107,12 +108,14 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.sendXrpUtilService.clearInputFields();
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

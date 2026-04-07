@@ -184,6 +184,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
 
           this.refreshAccountObject(env);
           this.updateSharedObjectsStore(env);
+          const addresses = [wallet.classicAddress];
           if (destination) addresses.push(destination);
           if (issuer) addresses.push(issuer);
 

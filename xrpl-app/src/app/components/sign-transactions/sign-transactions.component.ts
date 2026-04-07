@@ -122,6 +122,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -135,6 +136,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.signTransationStoreService.setField('accountInfo', env.accountInfo);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     await this.generateTransactionJson();
@@ -142,6 +144,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

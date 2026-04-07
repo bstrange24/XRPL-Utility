@@ -197,6 +197,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
+                    const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
                          await this.trustlineUtilService.loadTrustlines(forceRefresh);
                          this.trustlineCurrencyService.selectCurrency(currencyValue);
@@ -209,6 +210,11 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                } finally {
                     this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async performAction(): Promise<void> {
           const currentTab = this.checksTransactionViewModelService.activeTab();
           const wallet = this.currentWallet();
 
