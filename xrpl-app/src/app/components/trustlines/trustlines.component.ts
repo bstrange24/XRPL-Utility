@@ -94,7 +94,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
-          await this.getTrustlinesForAccount(false);
+          await this.getTrustlinesForAccount(true);
      }
 
      async onCurrencyChange(item: any) {

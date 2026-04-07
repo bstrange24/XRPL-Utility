@@ -11,6 +11,7 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';
+import { AcccountDataService } from '../../account-data/acccount-data.service';
 
 @Injectable({
      providedIn: 'root',
@@ -24,6 +25,7 @@ export class TrustlineUtilService {
      public readonly toastService = inject(ToastService);
      public readonly txEnvironmentService = inject(TxEnvironmentService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly acccountDataService = inject(AcccountDataService);
 
      readonly activeTab = signal<TrustlineActionTypes>('setTrustline');
 
@@ -55,40 +57,9 @@ export class TrustlineUtilService {
                if (activeTab === 'removeTrustline') {
                     this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
                }
-          } finally {
-               this.trustlineStoreService.setField('isLoading', false);
-          }
-     }
 
-     async loadTrustlines1(forceRefresh = false): Promise<void> {
-          // Show loading in the summary panel while we fetch
-          this.trustlineStoreService.setField('isLoading', true);
-
-          try {
-               const env = await this.txEnvironmentService.refreshEnvironment({
-                    includeAccountInfo: true,
-                    includeAccountObject: true,
-                    includeTrustlines: true,
-                    forceRefresh,
-               });
-
-               // Update data only after successful fetch (no flicker)
-               this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects!, this.walletManager.getSelectedWallet()!.classicAddress));
-
-               const activeTab = this.activeTab();
-               const trustLineExists = this.checkForExistingTrustline(env);
-
-               if (trustLineExists) {
-                    if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects!);
-                    this.trustlineStoreService.setField('trustlineAlreadyExist', true);
-               } else {
-                    if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
-                    this.trustlineStoreService.setField('trustlineAlreadyExist', false);
-               }
-
-               if (activeTab === 'removeTrustline') {
-                    this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
-               }
+               this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+               this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
           } finally {
                this.trustlineStoreService.setField('isLoading', false);
           }
