@@ -24,8 +24,4 @@ export class CheckCreateItemComponent {
      constructor() {}
 
      @Input({ required: true }) check!: CreateCheckItem;
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 }

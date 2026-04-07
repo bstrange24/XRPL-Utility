@@ -95,10 +95,6 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.didUtilService.populateDidDefaultData();
      }
 
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      async setTab(tab: string): Promise<void> {
           if (DID_TAB.includes(tab as any)) {
                this.didViewModelService.activeTab.set(tab as DidTxType);

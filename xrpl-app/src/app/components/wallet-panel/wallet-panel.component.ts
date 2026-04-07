@@ -51,8 +51,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      hasWallets = false;
      tempName = '';
 
-     readonly isEditing = this.walletManagerService.isEditing.bind(this.walletManagerService);
-
      private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManagerService.hasWallets()) {
                this.txUiService.clearWarning?.();
@@ -185,7 +183,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           }));
 
           await this.withPerf('generateNewAccount', async () => {
-               console.log('NOT on Wallet Configurator page');
                this.txUiService.clearTxResultsHash();
                this.txUiService.resetCurrentStepToIdle();
 
