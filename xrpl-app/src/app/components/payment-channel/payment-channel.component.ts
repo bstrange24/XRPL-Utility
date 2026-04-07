@@ -363,6 +363,5 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
      protected clearInputFields(): void {
           this.selectedDestinationAddress.set('');
-          this.txUiService.clearAllOptionsAndMessages();
      }
 }

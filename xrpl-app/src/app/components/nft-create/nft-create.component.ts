@@ -263,6 +263,5 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.nftCreateStoreService.resetNftFields();
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
-          this.txUiService.clearAllOptionsAndMessages();
      }
 }
