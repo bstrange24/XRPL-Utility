@@ -109,6 +109,9 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getDidForAccount', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
@@ -121,11 +124,10 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-               } catch (error: any) {
-                    console.error('Error in getDidForAccount:', error);
+                    this.updateSharedObjectsStore(env);
                     this.toastService.error(error.message || 'Error getting did detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -182,6 +184,10 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           await this.handleTxResult(txResult, env.client, env.wallet, '');
 
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, _address: string): void {
+          this.didUtilService.getExistingDid(accountObjects);
      }
 
      protected refreshAccountObject(env: any): void {

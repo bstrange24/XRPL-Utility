@@ -29,6 +29,24 @@ export class MptTransactionViewModelService {
 
      readonly activeTab = signal<MptActionTypes>('createMpt');
 
+     /** Memoize decoded MPT metadata by issuance ID to avoid repeated decoding. */
+     private readonly _metadataCache = new Map<string, any>();
+
+     private _decodeMetadata(mpt: any): any {
+          const key = mpt.mpt_issuance_id || mpt.id || '';
+          if (this._metadataCache.has(key)) return this._metadataCache.get(key);
+          let decoded: any;
+          try {
+               if (mpt.MPTokenMetadata) {
+                    decoded = xrpl.decodeMPTokenMetadata(mpt.MPTokenMetadata);
+               }
+          } catch {
+               // leave decoded undefined
+          }
+          this._metadataCache.set(key, decoded);
+          return decoded;
+     }
+
      loadXls89Template() {
           this.mptStoreService.setField('metaData', JSON.stringify(this.mptStoreService.XLS89_TEMPLATE, null, 2));
      }
@@ -49,16 +67,7 @@ export class MptTransactionViewModelService {
           // const mptsToShow = this.infoPanelExpanded();
           const mptsToShow = true
                ? this.mptStoreService.existingMpts().map(m => {
-                      // Safely decode the metadata (handle cases where it's missing/invalid)
-                      let decodedMetadata;
-
-                      try {
-                           if (m.MPTokenMetadata) {
-                                decodedMetadata = xrpl.decodeMPTokenMetadata(m.MPTokenMetadata) as any; // ← quick & dirty
-                           }
-                      } catch (error) {
-                           console.warn('Failed to decode MPTokenMetadata:', error);
-                      }
+                      const decodedMetadata = this._decodeMetadata(m);
 
                       return {
                            mpt_issuance_id: m.mpt_issuance_id || 'We have issues',

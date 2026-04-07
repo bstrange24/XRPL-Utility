@@ -148,6 +148,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async getMptDetails(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getMptDetails', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
@@ -160,11 +163,12 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.updateSharedObjectsStore(env);
                } catch (error: any) {
                     console.error('Error in getMptDetails:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -279,6 +283,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
 
           await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+          this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(accountObjects, address));
      }
 
      protected refreshAccountObject(env: any) {
