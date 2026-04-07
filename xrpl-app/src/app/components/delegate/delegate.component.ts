@@ -445,7 +445,12 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
           const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
           this.getExistingDelegations(accountObjects, wallet.classicAddress);
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          this.txUiService.suppressTxClear.set(true);
+          try {
+               destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          } finally {
+               this.txUiService.suppressTxClear.set(false);
+          }
           if (addDest && destination) this.addNewDestinationFromUser(destination);
           // this.refreshUiState(wallet, accountInfo, accountObjects);
      }

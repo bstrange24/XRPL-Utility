@@ -960,7 +960,12 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
           // this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
           // this.loadAllEscrows(accountObjects, wallet.classicAddress);
 
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          this.txUiService.suppressTxClear.set(true);
+          try {
+               destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+          } finally {
+               this.txUiService.suppressTxClear.set(false);
+          }
           if (addDest) this.addNewDestinationFromUser(destination || '');
           // this.refreshUiState(wallet, accountInfo, accountObjects);
      }
