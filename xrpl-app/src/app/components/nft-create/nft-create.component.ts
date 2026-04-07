@@ -115,6 +115,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      }
 
      async getNFT(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getNFT', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -127,11 +128,13 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getNFT:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.spinner.set(false);
                }
           });

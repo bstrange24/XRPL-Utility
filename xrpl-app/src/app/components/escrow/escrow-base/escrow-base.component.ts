@@ -260,6 +260,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      async getEscrows(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getEscrows', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -273,7 +274,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                     if (!env) throw new Error('Unable to get environment.');
 
                     await this.refreshAccountObject(env);
-
+                    this.updateSharedObjectsStore(env);
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
                          await this.trustlineUtilService.loadTrustlines(forceRefresh);
@@ -285,6 +286,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                     console.error('Failed to get escrows:', error);
                     this.toastService.error(error.message || 'Failed to get escrows', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

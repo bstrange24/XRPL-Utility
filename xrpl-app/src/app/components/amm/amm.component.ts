@@ -162,6 +162,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('onAccountChange', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
@@ -195,12 +196,14 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                          if (!env) throw new Error('Unable to get environment.');
 
                          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                         this.updateSharedObjectsStore(env);
                          this.ammUtilsService.clearInputFields();
                     }
                } catch (error: any) {
                     console.error('Failed to load account:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

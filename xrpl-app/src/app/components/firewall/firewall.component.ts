@@ -509,6 +509,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
      }
 
      async getFirewallDetails(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.withPerf('getFirewallDetails', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
@@ -599,6 +600,7 @@ export class FirewallComponent extends PerformanceBaseComponent implements OnIni
                     console.error('Error in getFirewallDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.spinner.set(false);
                }
           });

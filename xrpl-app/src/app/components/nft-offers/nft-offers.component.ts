@@ -191,6 +191,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      async getNFTOffers(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getNFTOffers', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -213,6 +214,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     this.nftUtilService.getExistingSellOffers(env.accountObjects, ledgerInfo);
                     this.nftUtilService.getExistingBuyOffers(env.accountObjects, ledgerInfo);
                     this.nftUtilService.getExistingNfts(env.accountObjects, this.currentWallet().address);
+                    this.updateSharedObjectsStore(env);
 
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
@@ -223,6 +225,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     console.error('Error in getNFT:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

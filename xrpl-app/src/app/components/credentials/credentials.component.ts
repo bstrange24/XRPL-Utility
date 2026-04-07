@@ -108,6 +108,9 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getCredentialsForAccount', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -122,12 +125,12 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                    this.credentialUtilService.clearInputFields();
+                    this.updateSharedObjectsStore(env);
                } catch (error: any) {
                     console.error('Error in getCredentialsForAccount:', error);
                     this.toastService.error(error.message || 'Error getting credential detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -310,6 +313,11 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);
 
           return true;
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+          this.credentialStore.setField('existingCredentials', this.credentialUtilService.parseIssuedCredentials(accountObjects, address));
+          this.credentialStore.setField('subjectCredentials', this.credentialUtilService.parseSubjectCredentials(accountObjects, address));
      }
 
      protected refreshAccountObject(env: any): void {

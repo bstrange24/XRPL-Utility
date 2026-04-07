@@ -180,6 +180,9 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      }
 
      async getChecks(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
+          this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getChecks', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -193,7 +196,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
-
+                    this.updateSharedObjectsStore(env);
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
                          await this.trustlineUtilService.loadTrustlines(forceRefresh);
@@ -205,6 +208,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                     console.error('Failed to load checks:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -328,6 +332,13 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
           await this.handleTxResult(txResult, env.client, env.wallet, checkState.checkCreator, this.checksStoreService.destination(), '', { includeCheckObjects: true });
           this.txUiService.resetCurrentStepToIdle();
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+          this.checksStoreService.setField('existingChecks', this.checkUtilService.getExistingChecks(accountObjects, address));
+          this.checksStoreService.setField('cashableChecks', this.checkUtilService.getCashableChecks(accountObjects, address));
+          this.checksStoreService.setField('cancellableChecks', this.checkUtilService.getCancelableChecks(accountObjects, address));
+          this.checksStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 
      protected refreshAccountObject(env: any): void {

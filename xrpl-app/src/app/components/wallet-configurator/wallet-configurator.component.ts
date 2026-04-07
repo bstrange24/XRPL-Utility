@@ -51,7 +51,7 @@ import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wa
 export class WalletConfiguratorComponent extends WalletDestinationBase implements OnInit {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
-     private readonly xrplCache = inject(XrplCacheService);
+     protected override readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly walletsStoreService = inject(WalletsStoreService);

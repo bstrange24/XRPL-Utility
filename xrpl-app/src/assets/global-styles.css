@@ -6977,3 +6977,27 @@ button.flag-item-account-flags {
      color: #d32f2f;
      font-weight: 500;
 }
+/* ── Summary skeleton loading (items #1) ─────────────────────────────────── */
+.summary-skeleton-line {
+     height: 18px;
+     width: 55%;
+     border-radius: 6px;
+     background: linear-gradient(90deg, #e0f2fe 25%, #bae6fd 50%, #e0f2fe 75%);
+     background-size: 200% 100%;
+     animation: summary-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.dark .summary-skeleton-line {
+     background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+     background-size: 200% 100%;
+     animation: summary-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes summary-skeleton-shimmer {
+     0% {
+          background-position: 200% 0;
+     }
+     100% {
+          background-position: -200% 0;
+     }
+}

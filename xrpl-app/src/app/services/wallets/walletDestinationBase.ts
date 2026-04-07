@@ -15,16 +15,23 @@ import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-optio
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { StorageService } from '../shared/local-storage/storage.service';
 import { UtilsService } from '../utils/util-service/utils.service';
+import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
+import { AccountObjectsStoreService } from '../shared/account-objects-store/account-objects-store.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly utilsService = inject(UtilsService);
+     protected readonly xrplCache = inject(XrplCacheService);
+     protected readonly sharedObjectsStore = inject(AccountObjectsStoreService);
      // Signals
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
+     /** True while the page-level account-objects fetch is in-flight.
+      *  Summary components show a skeleton row while this is true. */
+     isSummaryLoading = signal<boolean>(false);
      wallets = signal<Wallet[]>([]);
      isAccountDelete = signal<boolean>(false);
      isAccountConfig = signal<boolean>(false);
@@ -105,6 +112,52 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      /** Optional override in subclass to handle refresh on selected index change */
      protected abstract onSelectedWalletIndexChange(): Promise<void>;
 
+     // ── Stale-while-revalidate helpers ─────────────────────────────────────────
+
+     /**
+      * Populate the store immediately from in-memory cache (XrplCache or the
+      * cross-page AccountObjectsStore) so the summary renders without waiting for
+      * the network.  The real fetch still runs and overwrites with fresh data.
+      *
+      * Call this at the very start of each page's main data-fetch method, before
+      * the async `await` begins.
+      */
+     protected tryPrePopulateFromCache(address: string): void {
+          if (!address) return;
+
+          // 1. Try the short-lived XrplCache (valid for up to 15 s after last fetch)
+          const cached = this.xrplCache.get<xrpl.AccountObjectsResponse>(`account:${address}:objects`);
+          if (cached) {
+               this.handleCachedAccountObjects(cached, address);
+               return;
+          }
+
+          // 2. Fall back to the cross-page shared store (populated by any prior page)
+          if (this.sharedObjectsStore.address() === address) {
+               const shared = this.sharedObjectsStore.accountObjects();
+               if (shared) this.handleCachedAccountObjects(shared, address);
+          }
+     }
+
+     /**
+      * Override in pages whose `refreshAccountObject` only needs `accountObjects`
+      * and `wallet.classicAddress` (i.e. all-synchronous implementations).  The
+      * default is a no-op; async pages (NFT, Escrow) simply leave it as-is.
+      */
+     protected handleCachedAccountObjects(_accountObjects: xrpl.AccountObjectsResponse, _address: string): void {
+          // no-op by default
+     }
+
+     /**
+      * Write the freshly-fetched env data to the shared singleton store so that
+      * the next page the user visits can pre-populate instantly without a fetch.
+      * Call this right after every successful `refreshAccountObject(env)`.
+      */
+     protected updateSharedObjectsStore(env: any): void {
+          if (!env?.accountObjects || !env?.wallet?.classicAddress) return;
+          this.sharedObjectsStore.update(env.wallet.classicAddress, env.accountObjects, env.accountInfo ?? null);
+     }
+
      /** Generic TX / Refresh Helpers */
      protected async handleTxResult(result: { success: boolean; error?: string }, client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null = null, issuer: string | null = null, errorMessage: string = '', extraEnvOptions: any = {}): Promise<boolean> {
           if (!result.success) {
@@ -130,7 +183,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           });
 
           this.refreshAccountObject(env);
-
+          this.updateSharedObjectsStore(env);
           const addresses = [wallet.classicAddress];
           if (destination) addresses.push(destination);
           if (issuer) addresses.push(issuer);

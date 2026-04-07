@@ -122,6 +122,7 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.withPerf('onAccountChange', async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -135,11 +136,13 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in onAccountChange:', error);
                     this.toastService.error(error.message || 'Error getting credential detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

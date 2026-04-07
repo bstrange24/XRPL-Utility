@@ -168,6 +168,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      }
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getTrustlinesForAccount', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -176,7 +177,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
-               await this.trustlineUtilService.loadTrustlines(forceRefresh);
+               try {
+                    await this.trustlineUtilService.loadTrustlines(forceRefresh);
+               } finally {
+                    this.isSummaryLoading.set(false);
+               }
           });
      }
 
