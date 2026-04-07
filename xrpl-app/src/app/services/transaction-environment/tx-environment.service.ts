@@ -5,7 +5,6 @@ import { XrplService } from '../xrpl-services/xrpl.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { UtilsService } from '../utils/util-service/utils.service';
 import { ToastService } from '../utils/toast/toast.service';
-import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
 import { AmmUtilsService } from '../amm/amm-utils/amm-utils.service';
 
@@ -80,13 +79,12 @@ export class TxEnvironmentService {
      private readonly walletManager = inject(WalletManagerService);
      private readonly utilsService = inject(UtilsService);
      public readonly toastService = inject(ToastService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly nftCreateStoreService = inject(CreateNftStoreService);
      private readonly ammUtilsService = inject(AmmUtilsService);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
      private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
      private readonly lastRefreshTime = signal(0);
-     private readonly CACHE_MS = 1500; // 1.5 seconds – adjustable
+     private readonly CACHE_MS = 5000; // 5 seconds – wide enough to cover sequential async ops on slow connections
 
      async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
           const now = Date.now();
@@ -107,7 +105,6 @@ export class TxEnvironmentService {
 
      async prepareTxEnvironment(options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           const selectedWallet = this.getSelectedWallet();
-          this.xrplTxOptionsStore.resetOptions();
           return this.buildEnvironment(selectedWallet, options);
      }
 

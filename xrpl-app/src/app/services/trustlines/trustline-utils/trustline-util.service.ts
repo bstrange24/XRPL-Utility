@@ -38,6 +38,7 @@ export class TrustlineUtilService {
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeTrustlines: true,
+                    includeGatewayBalance: true,
                     forceRefresh,
                });
 
@@ -58,6 +59,9 @@ export class TrustlineUtilService {
                     this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
                }
 
+               // Update the balance from the already-fetched env (no extra network call)
+               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+
                this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
           } finally {
@@ -68,7 +72,7 @@ export class TrustlineUtilService {
      async onCurrencyChange(currency: string) {
           this.trustlineCurrencyService.selectCurrency(currency);
 
-          const env = await this.txEnvironmentService.prepareTxEnvironment({
+          const env = await this.txEnvironmentService.refreshEnvironment({
                includeTrustlines: true,
           });
 
