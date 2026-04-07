@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError, ActivatedRoute, RouterOutlet } from '@angular/router';
 import { filter, map, mergeMap } from 'rxjs/operators';
@@ -18,6 +19,7 @@ import { NgIcon } from '@ng-icons/core';
 })
 export class AppComponent implements OnInit {
      readonly isNavigating = signal(false);
+     private readonly destroyRef = inject(DestroyRef);
 
      constructor(
           private readonly titleService: Title,
@@ -27,7 +29,7 @@ export class AppComponent implements OnInit {
      ) {}
 
      ngOnInit() {
-          this.router.events.subscribe(event => {
+          this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
                if (event instanceof NavigationStart) {
                     this.isNavigating.set(true);
                } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
@@ -43,7 +45,8 @@ export class AppComponent implements OnInit {
                          while (route.firstChild) route = route.firstChild;
                          return route;
                     }),
-                    mergeMap(route => route.data)
+                    mergeMap(route => route.data),
+                    takeUntilDestroyed(this.destroyRef)
                )
                .subscribe(data => {
                     if (data['title']) {
