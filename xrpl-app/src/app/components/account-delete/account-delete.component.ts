@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -97,6 +97,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -120,6 +121,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                     console.error('Error in getting account details:', error);
                     this.toastService.error(error.message || 'Error getting account detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

@@ -103,6 +103,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
+          this.isSummaryLoading.set(true);
           await this.measure('getPermissionedDomainForAccount', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -123,6 +124,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     console.error('Error in getPermissionedDomainForAccount:', error);
                     this.toastService.error(error.message || 'Error getting permissioned domain detail', AppConstants.TOAST.ERROR);
                } finally {
+                    this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
