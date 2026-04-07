@@ -7,7 +7,8 @@ import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { AppConstants } from '../../../core/app.constants';
 import { PerformanceBaseComponent } from '../performance-base/performance-base.component';
-declare var Prism: any;
+import * as Prism from 'prismjs';
+import 'prismjs/components/prism-json';
 
 @Component({
      selector: 'app-transaction-preview',
