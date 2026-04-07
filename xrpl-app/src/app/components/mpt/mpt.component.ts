@@ -290,7 +290,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
           this.mptUtilService.resetFlags();
           this.selectedDestinationAddress.set('');
           this.mptStoreService.resetMptFields();
-          this.txUiService.clearAllOptionsAndMessages();
      }
 
      clearFields(clearAllFields: boolean) {
