@@ -10,7 +10,7 @@ import { TransactionOptionalFieldsService } from '../../transaction-optional-fie
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CHECK_TX_TYPES, CHECK_VALIDATION_RULES } from '../../../components/checks/constants/checks.constants';
 import { CheckTxConfig, CheckTxType } from '../../../components/checks/constants/checks.types';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ChecksTransactionBuilderService } from '../checks-transaction-builder/checks-transaction-builder.service';
 import { AppConstants } from '../../../core/app.constants';
 import { ToastService } from '../../utils/toast/toast.service';

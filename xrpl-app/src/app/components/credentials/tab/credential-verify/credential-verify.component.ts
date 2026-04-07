@@ -6,7 +6,7 @@ import { CredentialUtilService } from '../../../../services/credentials/credenti
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 import { NgIcon } from '@ng-icons/core';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-credential-verify',

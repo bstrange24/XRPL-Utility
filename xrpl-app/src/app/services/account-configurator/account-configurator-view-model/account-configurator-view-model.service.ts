@@ -2,7 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
-import { StorageService } from '../../local-storage/storage.service';
+import { StorageService } from '../../shared/local-storage/storage.service';
 import { FLAG_LABELS } from '../../../components/account-configurator/constants/account-configurator.flags';
 
 @Injectable({

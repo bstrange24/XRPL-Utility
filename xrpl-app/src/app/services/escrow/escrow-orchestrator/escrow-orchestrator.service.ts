@@ -15,7 +15,7 @@ import { AppConstants } from '../../../core/app.constants';
 import { ESCROW_TX_TYPES, ESCROW_VALIDATION_RULES, EscrowTxType } from '../../../components/escrow/constants/time-escrow.constants';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { EscrowConfig } from '../../../components/escrow/constants/time-escrow.types';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { EscrowTransactionBuilderService } from '../escrow-transaction-builder/escrow-transaction-builder.service';
 
 type EscrowTxMeta = {

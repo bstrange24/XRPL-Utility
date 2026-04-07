@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../utils/util-service/utils.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../utils/download-util/download-util.service';
 import { CopyUtilService } from '../utils/copy-util/copy-util.service';

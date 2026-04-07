@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { DropdownItem } from '../../models/dropdown-item.model';
+import { DropdownItem } from '../../../models/dropdown-item.model';
 
 export interface SelectItem {
      id: string;

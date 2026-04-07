@@ -26,7 +26,7 @@ import { CurrencyFormSectionComponent } from '../shared/currency-form-section/cu
 import { ActivatedRoute } from '@angular/router';
 import { TrustlineRequirementsInfoComponent } from './ui-components/trustline-requirements-info/trustline-requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TRUSTLINE_TAB_META, TRUSTLINE_TABS, SET_FLAGS, CLEAR_FLAGS } from './constants/trustline.ui';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
@@ -45,7 +45,7 @@ import { TrustlineIssueComponent } from './tab/trustline-issue/trustline-issue.c
 import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-clawback.component';
 import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-trustlines',

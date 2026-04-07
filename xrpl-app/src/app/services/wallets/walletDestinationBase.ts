@@ -13,7 +13,7 @@ import * as xrpl from 'xrpl';
 import { ActivatedRoute } from '@angular/router';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
-import { StorageService } from '../local-storage/storage.service';
+import { StorageService } from '../shared/local-storage/storage.service';
 import { UtilsService } from '../utils/util-service/utils.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {

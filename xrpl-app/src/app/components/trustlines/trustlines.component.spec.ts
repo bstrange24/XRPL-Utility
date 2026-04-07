@@ -4,10 +4,10 @@ import * as xrpl from 'xrpl';
 
 import { TrustlinesComponent } from './trustlines.component';
 import { UtilsService } from '../../services/utils/util-service/utils.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DestinationDropdownService } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';

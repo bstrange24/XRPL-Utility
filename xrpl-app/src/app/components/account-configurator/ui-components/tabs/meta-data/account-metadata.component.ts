@@ -6,7 +6,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import * as xrpl from 'xrpl';
-import { ConnectionGuardService } from '../../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-metadata',

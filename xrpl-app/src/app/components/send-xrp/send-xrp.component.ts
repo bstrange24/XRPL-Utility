@@ -33,12 +33,12 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { SendXrpViewModelService } from '../../services/send-xrp/send-xrp-view-model/send-xrp-view-model.service';
 import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-xrp-util.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { SendXrpActionTypes, XrpPaymentConfig } from './constants/send-xrp.types';
 import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
 import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-send-xrp',

@@ -23,7 +23,7 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { TicketsUtilService } from '../../services/tickets/tickets-util/tickets-util.service';
 import { ActivatedRoute } from '@angular/router';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TICKET_TAB_META, TICKET_TABS } from './constants/tickets.ui';
 import { TICKET_TAB } from './constants/tickets.constants';
 import { TicketsViewModelService } from '../../services/tickets/tickets-view-model/tickets-view-model.service';
@@ -36,7 +36,7 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.component';
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-tickets',

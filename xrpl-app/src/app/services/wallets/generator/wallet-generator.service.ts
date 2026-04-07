@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { StorageService } from '../../local-storage/storage.service';
+import { StorageService } from '../../shared/local-storage/storage.service';
 import { WalletManagerService } from '../manager/wallet-manager.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpClient } from '@angular/common/http';

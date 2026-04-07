@@ -36,7 +36,7 @@ import { PAYMENT_CHANNEL_TAB_META, PAYMENT_CHANNEL_TABS } from './constants/paym
 import { PAYMENT_CHANNEL_TAB } from './constants/payment-channel.constants';
 import { PaymentChannelActionTypes, PaymentChannelObject, PaymentChannelTxConfig, UnifiedPaymentChannel } from './constants/payment-channel.types';
 import { PaymentChannelStoreService } from '../../services/payment-channel/payment-channel-store/payment-channel-store.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { PaymentChannelSummaryComponent } from './ui-components/payment-channel-summary/payment-channel-summary.component';
 import { PaymentChannelCreateComponent } from './tab/payment-channel-create/payment-channel-create.component';
 import { PaymentChannelFundComponent } from './tab/payment-channel-fund/payment-channel-fund.component';
@@ -46,7 +46,7 @@ import { PaymentChannelRenewComponent } from './tab/payment-channel-renew/paymen
 import { PaymentChannelFlagsComponent } from './tab/payment-channel-flags/payment-channel-flags.component';
 import { Subscription } from 'rxjs';
 import { PaymentChannelSignatureContextService } from '../../services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account',

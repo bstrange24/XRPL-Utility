@@ -5,7 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -41,7 +41,7 @@ import { NftModifyComponent } from './tab/nft-modify/nft-modify.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { NftFlagsComponent } from './tab/nft-flags/nft-flags.component';
 import { NftRequirementsInfoComponent } from './ui-components/nft-requirements-info/nft-requirements-info.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-nft-create',

@@ -5,7 +5,7 @@ import { CredentialStore } from '../../../../services/credentials/credential-sto
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { NgIcon } from '@ng-icons/core';
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-credential-accept',

@@ -6,7 +6,7 @@ import * as xrpl from 'xrpl';
 import { SendXrpComponent } from './send-xrp.component';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { UtilsService } from '../../services/utils/util-service/utils.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService, TxStep } from '../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { ToastService } from '../../services/utils/toast/toast.service';

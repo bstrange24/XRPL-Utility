@@ -5,7 +5,7 @@ import { TransactionOptionsSectionComponent } from '../../../shared/transaction-
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-delete-form',

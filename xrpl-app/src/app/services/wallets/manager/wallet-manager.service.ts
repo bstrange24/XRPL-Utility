@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
-import { StorageService } from '../../local-storage/storage.service';
-import { NetworkService } from '../../network/network-service';
+import { StorageService } from '../../shared/local-storage/storage.service';
+import { NetworkService } from '../../utils/network/network-service';
 
 export interface Wallet {
      name?: string;

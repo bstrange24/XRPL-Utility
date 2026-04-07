@@ -18,7 +18,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule } from '@angular/forms';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
 import { UtilsService } from '../../services/utils/util-service/utils.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';

@@ -14,7 +14,7 @@ import { TICKET_TX_TYPES, TICKET_VALIDATION_RULES, TicketTxType } from '../../..
 import { TicketTxConfig } from '../../../components/tickets/constants/tickets.types';
 import { TicketsTransactionBuilderService } from '../tickets-transaction-builder/tickets-transaction-builder.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 
 type TicketMeta = {

@@ -9,7 +9,7 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { PoolOptions } from '../../constants/amm.types';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-amm-fields',

@@ -5,7 +5,7 @@ import { NgIcon } from '@ng-icons/core';
 
 import { ThemeService } from '../../../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavbarStore } from '../../../../services/navbar/navbar-store/navbar-store.service';
+import { NavbarStore } from '../../../../services/shared/navbar/navbar-store.service';
 import { ConnectionStatusComponent } from '../../connection-status/connection-status.component';
 
 @Component({

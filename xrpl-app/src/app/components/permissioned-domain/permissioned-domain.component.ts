@@ -39,8 +39,8 @@ import { PermissionDomainDeleteFormComponent } from './tab/permission-domain-del
 import { PermissionDomainSetFormComponent } from './tab/permission-domain-set-form/permission-domain-set-form.component';
 import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/permissioned-domain.constants';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 
 @Component({
      selector: 'app-permissioned-domain',

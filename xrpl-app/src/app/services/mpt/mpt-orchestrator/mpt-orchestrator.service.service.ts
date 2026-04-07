@@ -16,7 +16,7 @@ import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-op
 import { MPT_TX_TYPES, MPT_VALIDATION_RULES } from '../../../components/mpt/constants/mpt.constants';
 import { MptTransactionBuilderService } from '../mpt-transaction-builder/mpt-transaction-builder.service';
 import { MptTxConfig, MptTxType } from '../../../components/mpt/constants/mpt.types';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 
 type MptMeta = {

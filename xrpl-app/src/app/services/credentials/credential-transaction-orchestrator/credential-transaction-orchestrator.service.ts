@@ -7,7 +7,7 @@ import { ValidationService } from '../../utils/validation/transaction-validation
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { CredentialTransactionBuilderService } from '../credential-transaction-builder/credential-transaction-builder.service';

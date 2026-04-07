@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
 import { DidUtilService } from '../../../../services/did/did-util/did-util.service';
 import { DidViewModelService } from '../../../../services/did/did-view-model/did-view-model.service';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-did-set',

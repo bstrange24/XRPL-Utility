@@ -37,7 +37,7 @@ import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/
 import { MPT_TAB } from './constants/mpt.constants';
 import { MptActionTypes, MptTxConfig, MptTxType } from './constants/mpt.types';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -49,7 +49,7 @@ import { MptClawbackComponent } from './tab/mpt-clawback/mpt-clawback.component'
 import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
 import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
 import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-mpt',

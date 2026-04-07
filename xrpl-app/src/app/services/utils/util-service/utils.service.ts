@@ -6,7 +6,7 @@ import { AppConstants } from '../../../core/app.constants';
 import { sha256 } from 'js-sha256';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { StorageService } from '../../local-storage/storage.service';
+import { StorageService } from '../../shared/local-storage/storage.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { MPToken, RippleState } from '../../../models/interface-items.model';

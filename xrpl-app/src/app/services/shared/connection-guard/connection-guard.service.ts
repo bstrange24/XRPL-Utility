@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { XrplService } from '../xrpl-services/xrpl.service';
-import { ToastService } from '../utils/toast/toast.service';
-import { AppConstants } from '../../core/app.constants';
+import { XrplService } from '../../xrpl-services/xrpl.service';
+import { ToastService } from '../../utils/toast/toast.service';
+import { AppConstants } from '../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',

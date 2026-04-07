@@ -13,7 +13,7 @@ import { TxEnvironmentService } from '../../../../services/transaction-environme
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { ToastService } from '../../../../services/utils/toast/toast.service';
 import { AcccountDataService } from '../../../../services/account-data/acccount-data.service';
-import { StorageService } from '../../../../services/local-storage/storage.service';
+import { StorageService } from '../../../../services/shared/local-storage/storage.service';
 import { ActivatedRoute } from '@angular/router';
 import { WalletsStoreService } from '../../../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../../../../services/wallets/wallets-util/wallets-util.service';

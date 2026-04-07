@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -45,7 +45,7 @@ import { NftBuyOffersComponent } from './tab/nft-buy-offers/nft-buy-offers.compo
 import { NftCancelOffersComponent } from './tab/nft-cancel-offers/nft-cancel-offers.component';
 import { NftSellComponent } from './tab/nft-sell/nft-sell.component';
 import { NftOffersOrchestratorService } from '../../services/nft/nft-offers-orchestrator/nft-offers-orchestrator.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-nft-offers',

@@ -1,25 +1,6 @@
 <div class="main-container">
-     <!-- <div class="app-scale"> -->
      <router-outlet></router-outlet>
 </div>
-
-<!-- <div class="toast-container">
-     <div class="toast-stack">
-          @for (toast of toastService.toasts(); track toast.id) {
-          <div class="toast" [ngClass]="toast.type" [@toastAnimation] (click)="toastService.removeToast(toast.id)">
-               @if(toast.type === 'success') {
-               <ng-icon name="heroCheckCircle" size="20" class="text-red-600"></ng-icon>
-               } @else if(toast.type === 'error') {
-               <ng-icon name="heroXCircle" size="20" class="text-red-600"></ng-icon>
-               }
-
-               <div class="message" [innerHTML]="toast.message"></div>
-
-               <button class="close" (click)=" $event.stopPropagation(); toastService.removeToast(toast.id);">×</button>
-          </div>
-          }
-     </div>
-</div> -->
 
 <div class="toast-container">
      <div class="toast-stack">
@@ -46,24 +27,3 @@
           }
      </div>
 </div>
-
-<!-- TOAST CONTAINER – put this as the VERY LAST thing in app.component.html -->
-<!-- <div class="fixed inset-0 pointer-events-none z-[9999]">
-     <div class="toast-wrap">
-          <div class="toast-stack">
-               @for (toast of toastService.toasts(); track toast.id) {
-               <div class="toast" [ngClass]="toast.type" [@toastAnimation] (click)="toastService.removeToast(toast.id)">
-                    @if(toast.type === 'success') {
-                    <ng-icon name="heroCheckCircle" size="20" class="text-red-600"></ng-icon>
-                    } @else if(toast.type === 'error') {
-                    <ng-icon name="heroXCircle" size="20" class="text-red-600"></ng-icon>
-                    }
-
-                    <div class="message" [innerHTML]="toast.message"></div>
-
-                    <button class="close" (click)="toastService.removeToast(toast.id); $event.stopPropagation()">×</button>
-               </div>
-               }
-          </div>
-     </div>
-</div> -->

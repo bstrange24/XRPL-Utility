@@ -36,8 +36,8 @@ import { AccountDeleteRequirementsInfoComponent } from './ui-components/account-
 import { AccountDeleteFormComponent } from './tab/account-delete-form/account-delete-form.component';
 import { AccountDeleteSummaryComponent } from './ui-components/summary/account-delete-summary.component';
 import { AccountDeleteConfig } from './constants/account-delete.types';
-import { StorageService } from '../../services/local-storage/storage.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-delete',

@@ -19,7 +19,7 @@ import { DownloadUtilService } from '../../services/utils/download-util/download
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { SelectItem } from '../../services/destination-dropdown/destination-dropdown.service';
+import { SelectItem } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -34,13 +34,13 @@ import { SignTransactionsOrchestratorService } from '../../services/sign-transac
 import { JsonEditorComponent } from '../shared/json-editor/json-editor.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { ActivatedRoute } from '@angular/router';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { SignTransactionRequirementsInfoComponent } from './ui-components/sign-transaction-requirements-info/sign-transaction-requirements-info.component';
 import { SignTransationStoreService } from '../../services/sign-transactions/sign-transaction-store/sign-transation-store.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-sign-transactions',

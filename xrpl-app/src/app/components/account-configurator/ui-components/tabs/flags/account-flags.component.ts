@@ -5,7 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
-import { ConnectionGuardService } from '../../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-account-flags',

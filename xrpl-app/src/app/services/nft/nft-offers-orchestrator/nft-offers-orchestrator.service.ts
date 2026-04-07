@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { NftOfferTxConfig, NftOfferTxType } from '../../../components/nft-offers/constants/nft-offers.types';
 import { ChecksTransactionBuilderService } from '../../checks/checks-transaction-builder/checks-transaction-builder.service';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';

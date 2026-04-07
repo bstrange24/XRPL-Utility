@@ -7,14 +7,14 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { UtilsService } from '../../services/utils/util-service/utils.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DestinationDropdownService } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
@@ -29,7 +29,7 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 interface XRPLPermissionEntry {
      Permission: {

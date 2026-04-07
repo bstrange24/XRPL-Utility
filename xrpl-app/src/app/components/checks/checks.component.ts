@@ -31,7 +31,7 @@ import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { CHECK_TAB } from './constants/checks.constants';
 import { CheckActionTypes, CheckTxConfig } from './constants/checks.types';
 import { ChecksTransactionViewModelService } from '../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
@@ -48,7 +48,7 @@ import { ChecksCreateComponent } from './tab/checks-create/checks-create.compone
 import { XrplTransactionOrchestratorService } from '../../services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-checks',

@@ -10,7 +10,7 @@ import { XRPL_ACCOUNT_FLAGS_CONFIG } from '../../../components/account-configura
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from '../../../components/account-configurator/constants/account-configurator.ui';
 import { AccountConfig, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 import { AccountConfiguratorStoreService } from '../account-configurator-store/account-configurator-store.service';
-import { StorageService } from '../../local-storage/storage.service';
+import { StorageService } from '../../shared/local-storage/storage.service';
 import { AccountConfiguratorOrchestratorService } from '../account-configurator-orchestrator/account-configurator-orchestrator.service';
 
 @Injectable({

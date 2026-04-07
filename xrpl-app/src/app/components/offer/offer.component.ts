@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -38,7 +38,7 @@ import { OfferActionTypes, OfferTxConfig, OfferTxType } from './constants/offer.
 import { OfferFieldsComponent } from './tab/offer-fields/offer-fields.component';
 import { OfferSummaryComponent } from './ui-components/offer-summary/offer-summary.component';
 import { OfferRequirementsInfoComponent } from './ui-components/offer-requirements-info/offer-requirements-info.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-offer',

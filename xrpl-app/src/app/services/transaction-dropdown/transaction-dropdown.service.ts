@@ -1,8 +1,8 @@
 import { Injectable, computed, inject, Signal, signal, effect, WritableSignal } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { StorageService } from '../local-storage/storage.service';
+import { StorageService } from '../shared/local-storage/storage.service';
 import { Wallet, WalletManagerService } from '../wallets/manager/wallet-manager.service';
-import { DestinationDropdownService } from '../../services/destination-dropdown/destination-dropdown.service';
+import { DestinationDropdownService } from '../shared/destination-dropdown/destination-dropdown.service';
 import { Destination, DestinationItem } from '../../models/interface-items.model';
 
 @Injectable({ providedIn: 'root' })

@@ -22,7 +22,7 @@ import { AccountConfiguratorUtilService } from '../../services/account-configura
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AccountConfiguratorOrchestratorService } from '../../services/account-configurator/account-configurator-orchestrator/account-configurator-orchestrator.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
@@ -38,7 +38,7 @@ import { AccountFlagsComponent } from './ui-components/tabs/flags/account-flags.
 import { AccountMetadataComponent } from './ui-components/tabs/meta-data/account-metadata.component';
 import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.component';
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { animation, toastAnimation } from '../../services/utils/animations/animations.service';
 
 @Component({

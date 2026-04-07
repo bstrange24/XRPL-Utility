@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { ConnectionGuardService } from '../../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-did-delete',

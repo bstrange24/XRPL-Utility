@@ -39,8 +39,8 @@ import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui'
 import { CredentialActionTypes, CredentialItem, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
 import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
 import { CREDENTIAL_TAB } from './constants/credential.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-credentials',

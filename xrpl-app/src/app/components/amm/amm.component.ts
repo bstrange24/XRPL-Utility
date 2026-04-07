@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -41,7 +41,7 @@ import { AmmTransactionOrchestratorService } from '../../services/amm/amm-transa
 import { AmmFieldsComponent } from './tab/amm-fields/amm-fields.component';
 import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.component';
 import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-amm',

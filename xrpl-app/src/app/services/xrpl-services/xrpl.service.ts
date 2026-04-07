@@ -2,7 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Client, GatewayBalancesResponse } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { StorageService } from '../local-storage/storage.service';
+import { StorageService } from '../shared/local-storage/storage.service';
 import { ConnectionStatus, MptInfoResponse, Token } from '../../models/interface-items.model';
 import { ToastService } from '../utils/toast/toast.service';
 

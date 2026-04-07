@@ -16,7 +16,7 @@ import { XrplTransactionService } from '../../../services/xrpl-transactions/xrpl
 import { ActivatedRoute } from '@angular/router';
 import { AcccountDataService } from '../../../services/account-data/acccount-data.service';
 import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
-import { StorageService } from '../../../services/local-storage/storage.service';
+import { StorageService } from '../../../services/shared/local-storage/storage.service';
 import { ToastService } from '../../../services/utils/toast/toast.service';
 import { TransactionDropdownService } from '../../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../../services/transaction-environment/tx-environment.service';
@@ -33,7 +33,7 @@ import { EscrowActionTypes, EscrowConfig } from '../constants/time-escrow.types'
 import { EscrowTransactionViewModelService } from '../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { MptStoreService } from '../../../services/mpt/mpt-store/mpt-store.service';
 import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
-import { ConnectionGuardService } from '../../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      standalone: true,

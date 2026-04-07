@@ -1,6 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
-import { StorageService } from '../../../../services/local-storage/storage.service';
+import { StorageService } from '../../../../services/shared/local-storage/storage.service';
 import { AccountConfiguratorViewModelService } from '../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { AccountConfiguratorOrchestratorService } from '../../../../services/account-configurator/account-configurator-orchestrator/account-configurator-orchestrator.service';
 import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';

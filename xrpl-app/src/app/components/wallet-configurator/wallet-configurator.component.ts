@@ -5,7 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
-import { StorageService } from '../../services/local-storage/storage.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -37,7 +37,7 @@ import { WalletDeriveMnemonicComponent } from './tab/wallet-derive-mnemonic/wall
 import { WalletDeriveSecretNumbersComponent } from './tab/wallet-derive-secret-numbers/wallet-derive-secret-numbers.component';
 import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wallet/wallet-remove-custom-wallet.component';
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
-import { ConnectionGuardService } from '../../services/connection-guard/connection-guard.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 
 @Component({

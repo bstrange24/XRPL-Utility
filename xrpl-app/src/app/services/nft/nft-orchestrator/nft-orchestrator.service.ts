@@ -7,7 +7,7 @@ import { PerformanceBaseComponent } from '../../../components/shared/performance
 import { AppConstants } from '../../../core/app.constants';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { ChecksTransactionBuilderService } from '../../checks/checks-transaction-builder/checks-transaction-builder.service';
-import { SufficentAccountBalanceService } from '../../sufficent-account-balance/sufficent-account-balance.service';
+import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';

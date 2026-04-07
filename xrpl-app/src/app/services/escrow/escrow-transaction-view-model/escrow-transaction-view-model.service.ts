@@ -5,7 +5,7 @@ import { AcccountDataService } from '../../account-data/acccount-data.service';
 import { CheckUtilService } from '../../checks/checks-util/check-util.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
-import { SelectItem } from '../../destination-dropdown/destination-dropdown.service';
+import { SelectItem } from '../../shared/destination-dropdown/destination-dropdown.service';
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { MptUtilService } from '../../mpt/mpt-util/mpt-util.service';
 import { ToastService } from '../../utils/toast/toast.service';
