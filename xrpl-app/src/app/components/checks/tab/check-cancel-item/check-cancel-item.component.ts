@@ -24,8 +24,4 @@ export class CheckCancelItemComponent {
           public utilsService: UtilsService,
           public copyUtilService: CopyUtilService
      ) {}
-
-     copyAndToast(text: string, label: string = 'Content') {
-          this.copyUtilService.copyAndToast(text, label);
-     }
 }

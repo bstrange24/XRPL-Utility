@@ -1,7 +1,6 @@
-import { Component, Input, Output, EventEmitter, SimpleChanges, OnChanges, ChangeDetectorRef, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
-import { TrustlinesComponent } from '../../trustlines/trustlines.component';
 import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
 
 @Component({
@@ -10,12 +9,10 @@ import { TrustlineViewModelService } from '../../../services/trustlines/trustlin
      imports: [CommonModule, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
-     changeDetection: ChangeDetectionStrategy.Default,
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CurrencyFormSectionComponent implements OnChanges {
+export class CurrencyFormSectionComponent {
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
-     public readonly cdr = inject(ChangeDetectorRef);
-     public readonly trustlinesComponent = inject(TrustlinesComponent);
 
      @Input() layout: 'split' | 'paired' = 'paired';
      @Input() currencyItems: any[] = [];
@@ -47,11 +44,6 @@ export class CurrencyFormSectionComponent implements OnChanges {
           }
 
           return 'Token Amount';
-     }
-
-     ngOnChanges(_changes: SimpleChanges) {
-          // Always mark when any tracked input changes
-          this.cdr.markForCheck();
      }
 
      onAmountInput(event: Event) {

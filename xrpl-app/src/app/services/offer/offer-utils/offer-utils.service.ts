@@ -54,10 +54,6 @@ export class OfferUtilsService {
           this.offerStoreService.resetOfferFields();
      }
 
-     copyAndToast(text: string, label: string = 'Content'): void {
-          this.copyUtilService.copyAndToast(text, label);
-     }
-
      invertOrder(): void {
           const tempCurr = this.offerStoreService.weWantCurrency();
           const tempIss = this.offerStoreService.weWantIssuer();

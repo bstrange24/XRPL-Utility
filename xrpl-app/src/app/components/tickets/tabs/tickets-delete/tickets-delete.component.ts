@@ -93,14 +93,12 @@ export class TicketsDeleteComponent {
           }
 
           this.ticketStore.setField('highlightedTicketIndex', -1);
-          // this.highlightedTicketIndex.set(-1);
      }
 
      closeTicketDropdown(): void {
           this.ticketOverlayRef?.dispose();
           this.ticketOverlayRef = null;
           this.ticketStore.setField('isTicketDropdownOpen', false);
-          // this.isTicketDropdownOpen.set(false);
      }
 
      toggleTicketDropdown(): void {

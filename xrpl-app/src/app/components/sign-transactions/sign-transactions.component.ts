@@ -1,18 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, ViewContainerRef, computed, ChangeDetectionStrategy } from '@angular/core';
-import { MatSortModule } from '@angular/material/sort';
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatTableModule } from '@angular/material/table';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { DragDropModule } from '@angular/cdk/drag-drop';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, Overlay } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -25,7 +17,6 @@ import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component
 import { SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -38,14 +29,13 @@ import { StorageService } from '../../services/shared/local-storage/storage.serv
 import { SignTransactionRequirementsInfoComponent } from './ui-components/sign-transaction-requirements-info/sign-transaction-requirements-info.component';
 import { SignTransationStoreService } from '../../services/sign-transactions/sign-transaction-store/sign-transation-store.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, DragDropModule, OverlayModule, MatAutocompleteModule, MatTableModule, MatSortModule, MatPaginatorModule, MatInputModule, MatFormFieldModule, WalletPanelComponent, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, SignTransactionRequirementsInfoComponent, WarningMessageComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, WalletPanelComponent, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, SignTransactionRequirementsInfoComponent, WarningMessageComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,20 +44,13 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly signTransactionUtilService = inject(SignTransactionUtilService);
-     public readonly viewContainerRef = inject(ViewContainerRef);
-     public readonly overlay = inject(Overlay);
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
      public readonly signTransationStoreService = inject(SignTransationStoreService);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
-
-     infoData = computed(() => {
-          return null;
-     });
 
      selectedTransactionItem = computed(() => {
           const id = this.signTransationStoreService.selectedTransaction();
@@ -192,7 +175,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     });
 
                     this.signTransationStoreService.setField('txJson', jsonStr);
-                    console.log('Generated JSON:', this.signTransationStoreService.txJson());
                     this.cdr.detectChanges();
                } catch (err: any) {
                     if (err.message === 'No wallets exist. Create a new wallet before continuing.') {
@@ -221,12 +203,9 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     const editedString = this.signTransationStoreService.txJson().trim();
                     let editedJson = JSON.parse(editedString);
                     let cleanedJson = this.cleanTx(editedJson);
-                    console.log('Edited JSON:', editedJson);
-                    console.log('Cleaned JSON:', cleanedJson);
 
                     const serialized = xrpl.encode(cleanedJson);
                     const unsignedHash = xrpl.hashes.hashTx(serialized);
-                    console.log('Unsigned Transaction hash (hex):', unsignedHash);
 
                     this.signTransationStoreService.setField('outputField', unsignedHash);
                     this.txUiService.isError.set(false);
@@ -263,24 +242,13 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     const editedString = this.signTransationStoreService.txJson().trim();
                     let editedJson = JSON.parse(editedString);
                     txToSign = this.cleanTx(editedJson);
-                    console.log('Pre txToSign', txToSign);
 
-                    console.log('currentLedger: ', env.currentLedger);
                     txToSign.LastLedgerSequence = env.currentLedger! + AppConstants.SIGN_TX_LAST_LEDGER_ADD_TIME;
-
-                    console.log('Post txToSign', txToSign);
 
                     const signed = env.wallet.sign(txToSign);
                     // Use tx_blob instead of signedTransaction
                     this.signTransationStoreService.setField('outputField', signed.tx_blob);
                     this.signTransactionUtilService.setSigned(this.signTransationStoreService.outputField());
-
-                    console.log('Signed TX blob:', signed.tx_blob);
-                    console.log('Transaction ID (hash):', signed.hash);
-
-                    // decode blob to JSON
-                    const decodedTx = xrpl.decode(signed.tx_blob);
-                    console.log(decodedTx);
                } catch (error: any) {
                     console.error('Error in signedTransaction:', error);
                     this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
@@ -334,8 +302,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          const txToSign = this.cleanTx(JSON.parse(this.signTransationStoreService.txJson().trim()));
-                         console.log('Pre txToSign', txToSign);
-                         console.log('currentLedger: ', env.currentLedger);
                          txToSign.LastLedgerSequence = env.currentLedger! + 5;
                          response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
                     } else {
@@ -409,7 +375,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     });
 
                     const multiSignedTxBlob = this.signTransationStoreService.outputField().trim();
-                    console.log('multiSignedTxBlob', multiSignedTxBlob);
 
                     const txType = this.getTransactionLabel(this.signTransationStoreService.selectedTransaction() ?? '');
 
@@ -417,8 +382,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          const txToSign = this.cleanTx(JSON.parse(this.signTransationStoreService.txJson().trim()));
-                         console.log('Pre txToSign', txToSign);
-                         console.log('currentLedger: ', env.currentLedger);
                          txToSign.LastLedgerSequence = env.currentLedger! + 5;
                          response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
                     } else {
@@ -488,12 +451,8 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     const editedString = this.signTransationStoreService.txJson().trim();
                     let editedJson = JSON.parse(editedString);
                     txToSign = this.cleanTx(editedJson);
-                    console.log('Pre txToSign', txToSign);
 
-                    console.log('currentLedger: ', env.currentLedger);
                     txToSign.LastLedgerSequence = env.currentLedger! + AppConstants.SIGN_TX_LAST_LEDGER_ADD_TIME;
-
-                    console.log('Post txToSign', txToSign);
 
                     // Get selected signer wallets
                     const selectedSigners = this.signTransationStoreService.availableSigners().filter((w: { isSelectedSigner: any }) => w.isSelectedSigner);
@@ -504,14 +463,11 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     const addresses = selectedSigners.map((acc: { address: any }) => acc.address).join(',');
                     const seeds = selectedSigners.map((acc: { seed: any }) => acc.seed).join(',');
-                    console.log('Addresses:', addresses);
-                    console.log('Seeds:', seeds);
 
                     const fee = await this.xrplService.calculateTransactionFee(env.client);
                     const signerAddresses = this.utilsService.getMultiSignAddress(addresses);
                     const signerSeeds = this.utilsService.getMultiSignSeeds(seeds);
                     const result = await this.utilsService.handleMultiSignTransaction({ client: env.client, wallet: env.wallet, tx: txToSign, signerAddresses, signerSeeds, fee });
-                    console.info(`result`, result);
                     this.signTransationStoreService.setField('outputField', result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error');
                } catch (error: any) {
                     console.error('Error in signForMultiSign:', error);
@@ -573,7 +529,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      populateTxDetails() {
           if (!this.signTransationStoreService.outputField().trim()) return;
           const decodedTx = xrpl.decode(this.signTransationStoreService.outputField().trim());
-          console.log(decodedTx);
 
           this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
      }
