@@ -5,6 +5,9 @@
      "compilerOptions": {
           "outDir": "./dist/out-tsc",
           "strict": true,
+          "types": [
+               "jasmine"
+          ],
           "noImplicitOverride": true,
           "noPropertyAccessFromIndexSignature": true,
           "noImplicitReturns": true,
