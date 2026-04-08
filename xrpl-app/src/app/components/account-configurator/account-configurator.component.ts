@@ -86,10 +86,9 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
      async setTab(tab: string): Promise<void> {
           const isValidTab = (t: string): t is AccountConfigAction => Object.values(ACCOUNT_CONFIG_ACTIONS).includes(t as AccountConfigAction);
-          if (isValidTab(tab)) {
-               this.accountConfiguratorViewModelService.activeTab.set(tab);
-               if (this.hasWallets()) await this.getAccountDetails(true);
-          }
+          if (!isValidTab(tab)) return;
+          this.accountConfiguratorViewModelService.activeTab.set(tab);
+          if (this.hasWallets()) await this.getAccountDetails(true);
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {

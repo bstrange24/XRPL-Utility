@@ -105,13 +105,11 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      }
 
      async setTab(tab: string): Promise<void> {
-          if (NFT_CREATE_TAB.includes(tab as any)) {
-               this.nftCreateTransactionViewModelService.activeTab.set(tab as NftCreateActionTypes);
-               this.clearInputFields();
-               this.nftUtilService.resetFlags();
-
-               if (this.hasWallets()) await this.getNFT();
-          }
+          if (!NFT_CREATE_TAB.includes(tab as any)) return;
+          this.nftCreateTransactionViewModelService.activeTab.set(tab as NftCreateActionTypes);
+          this.clearInputFields();
+          this.nftUtilService.resetFlags();
+          if (this.hasWallets()) await this.getNFT();
      }
 
      async getNFT(forceRefresh = false): Promise<void> {

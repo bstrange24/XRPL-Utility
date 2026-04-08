@@ -182,12 +182,10 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      async setTab(tab: string): Promise<void> {
-          if (NFT_OFFERS_TAB.includes(tab as any)) {
-               this.nftOffersTransactionViewModelService.activeTab.set(tab as NftOfferActionTypes);
-               this.clearInputFields();
-
-               if (this.hasWallets()) await this.getNFTOffers(false);
-          }
+          if (!NFT_OFFERS_TAB.includes(tab as any)) return;
+          this.nftOffersTransactionViewModelService.activeTab.set(tab as NftOfferActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getNFTOffers(false);
      }
 
      async getNFTOffers(forceRefresh = false): Promise<void> {

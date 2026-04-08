@@ -138,12 +138,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async setTab(tab: string): Promise<void> {
-          if (MPT_TAB.includes(tab as any)) {
-               this.mptTransactionViewModelService.activeTab.set(tab as MptActionTypes);
-               this.clearInputFields();
-
-               if (this.hasWallets()) await this.getMptDetails(false);
-          }
+          if (!MPT_TAB.includes(tab as any)) return;
+          this.mptTransactionViewModelService.activeTab.set(tab as MptActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getMptDetails(false);
      }
 
      async getMptDetails(forceRefresh = false): Promise<void> {

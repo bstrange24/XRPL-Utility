@@ -89,12 +89,11 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      }
 
      async setTab(tab: string): Promise<void> {
-          if (WALLET_GENERATOR_TAB.includes(tab as any)) {
-               this.walletsViewModelService.activeTab.set(tab as WalletGeneratorActionTypes);
-               this.destinationSearchQuery.set('');
-               this.walletsStoreService.resetAll();
-               this.walletsStoreService.setField('secp256k1_encryption_type', true);
-          }
+          if (!WALLET_GENERATOR_TAB.includes(tab as any)) return;
+          this.walletsViewModelService.activeTab.set(tab as WalletGeneratorActionTypes);
+          this.clearInputFields();
+          this.walletsStoreService.resetAll();
+          this.walletsStoreService.setField('secp256k1_encryption_type', true);
      }
 
      async generateNewAccount(): Promise<void> {

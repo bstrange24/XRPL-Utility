@@ -86,14 +86,11 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
      async setTab(tab: string): Promise<void> {
           const validTabs = ['deleteAccount'] as const;
-          if (validTabs.includes(tab as any)) {
-               this.deleteAccountViewModelService.activeTab.set(tab as 'deleteAccount');
-               this.destinationSearchQuery.set('');
-
-               this.txUiService.clearAllOptionsAndMessages();
-
-               if (this.hasWallets()) await this.getAccountDetails(true);
-          }
+          if (!validTabs.includes(tab as any)) return;
+          this.deleteAccountViewModelService.activeTab.set(tab as 'deleteAccount');
+          this.clearInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) await this.getAccountDetails(true);
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {

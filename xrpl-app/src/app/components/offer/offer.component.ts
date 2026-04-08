@@ -137,12 +137,11 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
      async setTab(tab: string): Promise<void> {
           const allowed = Object.values(OFFER_TX_TYPES) as string[];
-          if (allowed.includes(tab)) {
-               this.offerTransactionViewModelService.activeTab.set(tab as OfferActionTypes);
-               this.offerUtilsService.clearInputFields();
-               this.txUiService.clearAllOptionsAndMessages();
-               if (this.hasWallets()) await this.onAccountChange(false);
-          }
+          if (!allowed.includes(tab)) return;
+          this.offerTransactionViewModelService.activeTab.set(tab as OfferActionTypes);
+          this.offerUtilsService.clearInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) await this.onAccountChange(false);
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {

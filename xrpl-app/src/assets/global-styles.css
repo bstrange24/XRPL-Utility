@@ -6979,6 +6979,22 @@ button.flag-item-account-flags {
 }
 
 /* ── Summary skeleton loading (items #1) ─────────────────────────────────── */
+.summary-skeleton {
+     display: flex;
+     align-items: center;
+     padding: 8px 12px;
+     gap: 8px;
+}
+
+.skeleton-text {
+     height: 16px;
+     width: 220px;
+     border-radius: 4px;
+     background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+     background-size: 200% 100%;
+     animation: shimmer 1.2s infinite;
+}
+
 .summary-skeleton-line {
      height: 18px;
      width: 55%;
@@ -6992,6 +7008,16 @@ button.flag-item-account-flags {
      background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
      background-size: 200% 100%;
      animation: summary-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+     0% {
+          background-position: 200% 0;
+     }
+
+     100% {
+          background-position: -200% 0;
+     }
 }
 
 @keyframes summary-skeleton-shimmer {

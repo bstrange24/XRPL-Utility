@@ -96,12 +96,11 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      async setTab(tab: string): Promise<void> {
-          if (DID_TAB.includes(tab as any)) {
-               this.didViewModelService.activeTab.set(tab as DidTxType);
-               this.didUtilService.populateDidDefaultData();
-               this.txUiService.clearAllOptionsAndMessages();
-               if (this.hasWallets()) await this.getDidForAccount();
-          }
+          if (!DID_TAB.includes(tab as any)) return;
+          this.didViewModelService.activeTab.set(tab as DidTxType);
+          this.didUtilService.populateDidDefaultData();
+          this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) await this.getDidForAccount();
      }
 
      async getDidForAccount(forceRefresh = false): Promise<void> {

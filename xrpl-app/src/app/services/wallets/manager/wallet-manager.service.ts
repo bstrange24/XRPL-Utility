@@ -225,6 +225,11 @@ export class WalletManagerService {
           return wallets[index];
      }
 
+     readonly selectedWallet = computed(() => {
+          const idx = this.selectedIndex(); // signal — tracked
+          return this.wallets()[idx] ?? null; // signal — tracked
+     });
+
      // Utility
      getDestinationFromDisplay(displayString: string, destinations: any) {
           const match = new RegExp(/\((.+)\)/).exec(displayString);

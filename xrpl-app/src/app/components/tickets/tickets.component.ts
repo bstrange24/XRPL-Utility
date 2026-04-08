@@ -86,12 +86,10 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      }
 
      async setTab(tab: string): Promise<void> {
-          if (TICKET_TAB.includes(tab as any)) {
-               this.ticketsViewModelService.activeTab.set(tab as TicketActionTypes);
-               this.clearInputFields();
-
-               if (this.hasWallets()) await this.getTickets(false);
-          }
+          if (!TICKET_TAB.includes(tab as any)) return;
+          this.ticketsViewModelService.activeTab.set(tab as TicketActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getTickets(false);
      }
 
      async getTickets(forceRefresh = false): Promise<void> {

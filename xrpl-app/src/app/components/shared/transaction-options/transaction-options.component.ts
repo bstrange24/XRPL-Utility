@@ -26,18 +26,24 @@ export class TransactionOptionsComponent {
      Array = Array;
 
      // Signals
-     activeTab = input<() => string>();
-     showWhenTab = input<string | string[]>('*');
+     readonly activeTab = input<() => string>();
+     readonly showWhenTab = input<string | string[]>('*');
 
-     multiSigningEnabled = input.required<boolean>();
-     regularKeySigningEnabled = input.required<boolean>();
+     readonly multiSigningEnabled = input.required<boolean>();
+     readonly regularKeySigningEnabled = input.required<boolean>();
 
-     showMemo = input(true);
-     showMultiSign = input(true);
-     showRegularKey = input(true);
-     showTicket = input(true);
-     showSimulate = input(true);
-     showEnableTrustline = input<boolean>(false);
+     readonly showMemo = input<boolean>(true);
+     readonly showMultiSign = input<boolean>(true);
+     readonly showRegularKey = input<boolean>(true);
+     readonly showTicket = input<boolean>(true);
+     readonly showSimulate = input<boolean>(true);
+
+     // showMemo = input(true);
+     // showMultiSign = input(true);
+     // showRegularKey = input(true);
+     // showTicket = input(true);
+     // showSimulate = input(true);
+     // showEnableTrustline = input<boolean>(false);
 
      // Computed
      showPanel = computed(() => {

@@ -99,12 +99,10 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      async setTab(tab: string): Promise<void> {
-          if (CREDENTIAL_TAB.includes(tab as any)) {
-               this.credentialViewModelService.activeTab.set(tab as CredentialActionTypes);
-               this.destinationSearchQuery.set('');
-
-               if (this.hasWallets()) await this.getCredentialsForAccount();
-          }
+          if (!CREDENTIAL_TAB.includes(tab as any)) return;
+          this.credentialViewModelService.activeTab.set(tab as CredentialActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getCredentialsForAccount();
      }
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {

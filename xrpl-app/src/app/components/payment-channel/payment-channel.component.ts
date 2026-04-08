@@ -159,16 +159,15 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      }
 
      async setTab(tab: string): Promise<void> {
-          if (PAYMENT_CHANNEL_TAB.includes(tab as any)) {
-               this.paymentChannelViewModelService.activeTab.set(tab as PaymentChannelActionTypes);
-               this.destinationSearchQuery.set('');
-               this.paymentChannelStoreService.setField('isCreatorMode', false);
-               this.paymentChannelUtilService.clearFlagsValue();
+          if (!PAYMENT_CHANNEL_TAB.includes(tab as any)) return;
+          this.paymentChannelViewModelService.activeTab.set(tab as PaymentChannelActionTypes);
+          this.clearInputFields();
+          this.paymentChannelStoreService.setField('isCreatorMode', false);
+          this.paymentChannelUtilService.clearFlagsValue();
 
-               if (this.hasWallets()) {
-                    await this.getPaymentChannels(false);
-                    this.populateDefaultDateTime();
-               }
+          if (this.hasWallets()) {
+               await this.getPaymentChannels(false);
+               this.populateDefaultDateTime();
           }
      }
 
@@ -375,5 +374,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
      protected clearInputFields(): void {
           this.selectedDestinationAddress.set('');
+          this.destinationSearchQuery.set('');
      }
 }

@@ -117,7 +117,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
           await this.trustlineUtilService.loadTrustlines(false);
-          await this.trustlineCurrencyService.refreshCurrentBalance();
+          // await this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      async onIssuerSelected(item: SelectItem | null) {
@@ -127,7 +127,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           // Add this: If both currency and issuer are set, fetch env and update flags
           if (this.currencyStoreService.currency() && address) {
                await this.trustlineUtilService.loadTrustlines(false);
-               await this.trustlineCurrencyService.refreshCurrentBalance();
+               // await this.trustlineCurrencyService.refreshCurrentBalance();
           }
      }
 
@@ -171,12 +171,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      }
 
      async setTab(tab: string): Promise<void> {
-          if (CHECK_TAB.includes(tab as any)) {
-               this.checksTransactionViewModelService.activeTab.set(tab as CheckActionTypes);
-               this.clearInputFields();
-
-               if (this.hasWallets()) await this.getChecks();
-          }
+          if (!CHECK_TAB.includes(tab as any)) return;
+          this.checksTransactionViewModelService.activeTab.set(tab as CheckActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getChecks();
      }
 
      async getChecks(forceRefresh = false): Promise<void> {

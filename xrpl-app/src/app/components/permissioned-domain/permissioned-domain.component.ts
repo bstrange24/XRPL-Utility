@@ -93,13 +93,11 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      async setTab(tab: string): Promise<void> {
-          if (PERMISSION_DOMAIN_TAB.includes(tab as any)) {
-               this.permissionedDomainUtilService.clearFields();
-               this.permissionedDomainViewModelService.activeTab.set(tab as PermissionDomainActionTypes);
-               this.destinationSearchQuery.set('');
-
-               if (this.hasWallets()) await this.getPermissionedDomainForAccount();
-          }
+          if (!PERMISSION_DOMAIN_TAB.includes(tab as any)) return;
+          this.permissionedDomainUtilService.clearFields();
+          this.permissionedDomainViewModelService.activeTab.set(tab as PermissionDomainActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getPermissionedDomainForAccount();
      }
 
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {

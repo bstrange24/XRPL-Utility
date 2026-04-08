@@ -252,11 +252,10 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      async setTab(tab: string): Promise<void> {
-          if (ESCROW_TAB.includes(tab as any)) {
-               this.escrowTransactionViewModelService.activeTab.set(tab as EscrowActionTypes);
-               this.resetInputFields();
-               if (this.hasWallets()) await this.getEscrows(false);
-          }
+          if (!ESCROW_TAB.includes(tab as any)) return;
+          this.escrowTransactionViewModelService.activeTab.set(tab as EscrowActionTypes);
+          this.resetInputFields();
+          if (this.hasWallets()) await this.getEscrows(false);
      }
 
      async getEscrows(forceRefresh = false): Promise<void> {

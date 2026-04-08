@@ -153,12 +153,11 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
 
      async setTab(tab: string): Promise<void> {
           const allowed = Object.values(AMM_TX_TYPES) as string[];
-          if (allowed.includes(tab)) {
-               this.ammTransactionViewModelService.activeTab.set(tab as AmmActionTypes);
-               this.ammUtilsService.clearInputFields();
-               this.txUiService.clearAllOptionsAndMessages();
-               if (this.hasWallets()) await this.onAccountChange(false);
-          }
+          if (!allowed.includes(tab)) return;
+          this.ammTransactionViewModelService.activeTab.set(tab as AmmActionTypes);
+          this.ammUtilsService.clearInputFields();
+          this.txUiService.clearAllOptionsAndMessages();
+          if (this.hasWallets()) await this.onAccountChange(false);
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {

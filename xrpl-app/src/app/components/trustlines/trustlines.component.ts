@@ -129,9 +129,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -157,16 +155,15 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      async setTab(tab: string): Promise<void> {
           if (!TRUSTLINE_TAB.includes(tab as any)) return;
-
           this.trustlineViewModelService.activeTab.set(tab as TrustlineActionTypes);
-          this.destinationSearchQuery.set('');
-
-          // await this.trustlineUtilService.loadTrustlines();
           this.clearInputFields();
+          if (this.hasWallets()) await this.getTrustlinesForAccount();
      }
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.selectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getTrustlinesForAccount', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -178,14 +175,20 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
-               // Pre-populate summary from cache so the UI is never blank during the fetch.
-               const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
-               this.tryPrePopulateFromCache(address);
-
                try {
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) throw new Error('Unable to get environment.');
+
+                    this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     await this.trustlineUtilService.loadTrustlines(forceRefresh);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+               } catch (error: any) {
+                    console.error('Failed to load trustlines:', error);
+                    this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -193,7 +196,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      async performAction(): Promise<void> {
           const currentTab = this.trustlineViewModelService.activeTab();
           const wallet = this.currentWallet();
-          let destination = '';
+
+          let destinationAddress = '';
 
           // Special case for non-TX tab
           if (currentTab === 'addNewIssuers') {
@@ -221,12 +225,12 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
 
           if (currentTab === 'issueCurrency' || currentTab === 'clawbackTokens') {
-               destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-               if (!destination) {
+               destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               if (!destinationAddress) {
                     this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
                     return;
                }
-               this.currencyStoreService.setField('destination', destination);
+               this.currencyStoreService.setField('destination', destinationAddress);
           }
 
           let env: any = null;
@@ -238,7 +242,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     includeFee: true,
                     includeLedgerInfo: true,
                     includeServerInfo: true,
-                    ...(currentTab === 'issueCurrency' || currentTab === 'clawbackTokens' ? { destination: destination } : {}),
+                    ...(currentTab === 'issueCurrency' || currentTab === 'clawbackTokens' ? { destination: destinationAddress } : {}),
                });
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
@@ -327,7 +331,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
           if (!txResult) throw new Error('Unexpected error when submitting transaction.');
 
-          await this.handleTxResult(txResult, env.client, env.wallet, destination);
+          await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress);
           await this.trustlineCurrencyService.refreshCurrentBalance();
           this.txUiService.resetCurrentStepToIdle();
      }
@@ -338,13 +342,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      /** Stale-while-revalidate: populate existingIOUs from cached account objects instantly. */
      protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
-          const ious = this.trustlineCurrencyService.getExistingIOUs(accountObjects, address);
-          this.trustlineStoreService.setField('existingIOUs', ious);
+          this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
-          // balance is now refreshed inside loadTrustlines via refreshCurrentBalanceFromEnv
      }
 
      handleSearchQueryChange(query: string) {
@@ -360,5 +362,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.trustlineCurrencyService.clearFlagsValue(this.trustlineViewModelService.activeTab());
           this.selectedDestinationAddress.set('');
+          this.destinationSearchQuery.set('');
      }
 }

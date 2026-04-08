@@ -24,28 +24,23 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      public readonly utilsService = inject(UtilsService);
      protected readonly xrplCache = inject(XrplCacheService);
      protected readonly sharedObjectsStore = inject(AccountObjectsStoreService);
-     // Signals
+
      selectedDestinationAddress = signal<string>('');
      destinationSearchQuery = signal<string>('');
      currentWallet = signal<Wallet>({} as Wallet);
      infoPanelExpanded = signal<boolean>(false);
-     /** True while the page-level account-objects fetch is in-flight.
-      *  Summary components show a skeleton row while this is true. */
      isSummaryLoading = signal<boolean>(false);
      wallets = signal<Wallet[]>([]);
      isAccountDelete = signal<boolean>(false);
      isAccountConfig = signal<boolean>(false);
 
-     // Derived / computed (wallet-related)
      readonly walletName = computed(() => this.currentWallet()?.name || 'Selected wallet');
      readonly currentAddress = computed(() => this.currentWallet().address);
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
      readonly canSubmit = computed(() => this.isIdle() && this.hasWallets());
-     // readonly canSubmit = computed(() => this.isIdle());
      readonly safeWarningMessage = computed(() => this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;') ?? '');
 
-     // Destinations (initialized in constructor)
      allDestinations!: ReturnType<TransactionDropdownService['allDestinations']>;
      destinationMap!: ReturnType<TransactionDropdownService['destinationMap']>;
      destinationItems!: ReturnType<TransactionDropdownService['destinationItems']>;
@@ -111,8 +106,6 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
 
      /** Optional override in subclass to handle refresh on selected index change */
      protected abstract onSelectedWalletIndexChange(): Promise<void>;
-
-     // ── Stale-while-revalidate helpers ─────────────────────────────────────────
 
      /**
       * Populate the store immediately from in-memory cache (XrplCache or the
