@@ -338,7 +338,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      protected refreshAccountObject(env: any): void {
           this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
-          this.storageService.setAccountObjects(env.wallet.classicAddress, env.accountObjects);
      }
 
      /** Stale-while-revalidate: populate existingIOUs from cached account objects instantly. */
