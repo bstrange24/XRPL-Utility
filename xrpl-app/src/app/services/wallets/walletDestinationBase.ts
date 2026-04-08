@@ -128,7 +128,16 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           // 2. Fall back to the cross-page shared store (populated by any prior page)
           if (this.sharedObjectsStore.address() === address) {
                const shared = this.sharedObjectsStore.accountObjects();
-               if (shared) this.handleCachedAccountObjects(shared, address);
+               if (shared) {
+                    this.handleCachedAccountObjects(shared, address);
+                    return;
+               }
+          }
+
+          // 3. Fall back to localStorage (survives page reloads; TTL-guarded to 5 min)
+          const persisted = this.storageService.getAccountObjects(address);
+          if (persisted) {
+               this.handleCachedAccountObjects(persisted, address);
           }
      }
 
