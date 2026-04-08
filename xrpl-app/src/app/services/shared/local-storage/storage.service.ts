@@ -198,4 +198,30 @@ export class StorageService {
           localStorage.removeItem('activeNavLink');
           localStorage.removeItem('activeEscrowLink');
      }
+
+     private readonly ACCOUNT_OBJECTS_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+     setAccountObjects(address: string, data: any): void {
+          if (!address || !data) return;
+          const entry = { data, timestamp: Date.now() };
+          localStorage.setItem(`accountObjects:${address}`, JSON.stringify(entry));
+     }
+
+     getAccountObjects(address: string): any | null {
+          if (!address) return null;
+          const raw = localStorage.getItem(`accountObjects:${address}`);
+          if (!raw) return null;
+          try {
+               const entry = JSON.parse(raw);
+               if (!entry?.data || !entry?.timestamp) return null;
+               if (Date.now() - entry.timestamp > this.ACCOUNT_OBJECTS_TTL_MS) {
+                    localStorage.removeItem(`accountObjects:${address}`);
+                    return null;
+               }
+               return entry.data;
+          } catch (err) {
+               console.error('Error reading account objects from localStorage:', err);
+               return null;
+          }
+     }
 }
