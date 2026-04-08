@@ -31,21 +31,17 @@ export class TrustlineViewModelService {
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
           const tab = this.activeTab();
           const isIssuer = this.isIssuerForSelected();
-          // Only pull the single flag we actually need for filtering — avoids re-running on every flag change
-          const clearNoRipple = this.trustlineCurrencyService.flags().tfClearNoRipple;
 
           switch (tab) {
                case 'setTrustline':
                case 'addNewIssuers':
                     return allTrustlines;
-
                case 'removeTrustline':
                     return this.removableTrustlines();
                case 'issueCurrency':
                     return isIssuer ? allTrustlines.filter((tl: any) => Number(tl.balance) < 0) : allTrustlines.filter((tl: any) => Number(tl.balance) > 0);
-
                case 'clawbackTokens':
-                    return !isIssuer ? [] : allTrustlines.filter((tl: any) => Number(tl.balance) < 0);
+                    return isIssuer ? allTrustlines.filter((tl: any) => Number(tl.balance) < 0) : [];
 
                default:
                     return allTrustlines;
@@ -126,11 +122,7 @@ export class TrustlineViewModelService {
                     }
                     break;
                case 'clawbackTokens':
-                    if (!isIssuer) {
-                         countText = 'clawback-eligible currencies';
-                         emptyMessage = 'Clawback is only available to the issuer of a currency.';
-                         helpHint = 'Switch to the issuing wallet to claw back tokens.';
-                    } else {
+                    if (isIssuer) {
                          countText = 'currencies you can clawback';
                          if (allTrustlines.length === 0) {
                               emptyMessage = 'No trustlines found for this wallet.';
@@ -139,6 +131,10 @@ export class TrustlineViewModelService {
                               emptyMessage = 'No issued tokens available to claw back.';
                               helpHint = 'Clawback applies only to tokens you have issued.';
                          }
+                    } else {
+                         countText = 'clawback-eligible currencies';
+                         emptyMessage = 'Clawback is only available to the issuer of a currency.';
+                         helpHint = 'Switch to the issuing wallet to claw back tokens.';
                     }
                     break;
                case 'addNewIssuers':
@@ -198,177 +194,6 @@ export class TrustlineViewModelService {
                isLoading: false,
           };
      });
-
-     // readonly infoData = computed(() => {
-     //      const wallet = this.walletManager.getSelectedWallet();
-     //      if (!wallet?.address) return '';
-
-     //      const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-     //      const explorerBase = this.txUiService.explorerUrl();
-     //      const address = wallet.address;
-     //      const isIssuer = this.isIssuerForSelected();
-
-     //      const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
-     //      const tab = this.activeTab();
-
-     //      if (this.trustlineStoreService.isLoading()) {
-     //           return {
-     //                walletName,
-     //                activeTab: tab,
-     //                trustlineCount: 0,
-     //                totalTrustlines: allTrustlines.length,
-     //                trustlinesToShow: [],
-     //                links: '',
-     //                countText: 'trustlines',
-     //                emptyMessage: 'Loading trustlines...',
-     //                helpHint: null,
-     //                isEmpty: true,
-     //                isLoading: true,
-     //           };
-     //      }
-
-     //      // ── Normal filtering (exactly the same as before) ──
-     //      let relevant: typeof allTrustlines = [];
-     //      let countText = '';
-     //      let emptyMessage = '';
-     //      let helpHint: string | null = null;
-
-     //      switch (tab) {
-     //           case 'setTrustline': {
-     //                relevant = allTrustlines;
-     //                countText = 'existing trustlines';
-     //                break;
-     //           }
-     //           case 'removeTrustline': {
-     //                relevant = allTrustlines.filter((tl: { balance: any; limit: any; flags: string[] }) => {
-     //                     const bal = Number(tl.balance);
-     //                     const lim = Number(tl.limit);
-     //                     const frozen = tl.flags?.some((f: string) => f.includes('Freeze'));
-     //                     const needsClearNoRipple = tl.flags?.includes('NoRipple') && !this.trustlineCurrencyService.flags().tfClearNoRipple;
-
-     //                     return bal === 0 && lim === 0 && !frozen && !needsClearNoRipple;
-     //                });
-     //                countText = 'removable trustlines';
-     //                break;
-     //           }
-     //           case 'issueCurrency': {
-     //                if (isIssuer) {
-     //                     // Issuer → show obligations (negative balances)
-     //                     relevant = allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) < 0);
-     //                     countText = isIssuer ? 'issuable currencies' : 'sendable balances';
-
-     //                     if (allTrustlines.length === 0) {
-     //                          emptyMessage = 'No trustlines found for this wallet.';
-     //                          helpHint = 'You must have trustlines before issuing tokens.';
-     //                     } else if (relevant.length === 0) {
-     //                          emptyMessage = 'You are not currently issuing any tokens.';
-     //                          helpHint = 'Issue tokens to a destination to create supply.';
-     //                     }
-     //                } else {
-     //                     // Holder → show positive balances (what you can send)
-     //                     relevant = allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) > 0);
-     //                     countText = 'currencies you can send';
-
-     //                     if (allTrustlines.length === 0) {
-     //                          emptyMessage = 'No trustlines found for this wallet.';
-     //                          helpHint = 'You need a trustline and balance to send tokens.';
-     //                     } else if (relevant.length === 0) {
-     //                          emptyMessage = 'You do not hold any tokens to send.';
-     //                          helpHint = 'Receive tokens first or check another currency.';
-     //                     }
-     //                }
-
-     //                break;
-     //           }
-     //           case 'clawbackTokens': {
-     //                if (!isIssuer) {
-     //                     // Not issuer → cannot use clawback at all
-     //                     relevant = [];
-     //                     countText = 'clawback-eligible currencies';
-     //                     emptyMessage = 'Clawback is only available to the issuer of a currency.';
-     //                     helpHint = 'Switch to the issuing wallet to claw back tokens.';
-     //                     break;
-     //                }
-
-     //                // Issuer → show negative balances (issued tokens)
-     //                relevant = allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) < 0);
-     //                countText = 'currencies you can clawback';
-
-     //                if (allTrustlines.length === 0) {
-     //                     emptyMessage = 'No trustlines found for this wallet.';
-     //                     helpHint = 'You must issue tokens before they can be clawed back.';
-     //                } else if (relevant.length === 0) {
-     //                     emptyMessage = 'No issued tokens available to claw back.';
-     //                     helpHint = 'Clawback applies only to tokens you have issued.';
-     //                }
-
-     //                break;
-     //           }
-     //           case 'addNewIssuers': {
-     //                relevant = allTrustlines;
-     //                countText = 'saved trustlines';
-     //                break;
-     //           }
-     //           default:
-     //                relevant = allTrustlines;
-     //                countText = 'trustlines';
-     //      }
-
-     //      const totalCount = allTrustlines.length;
-     //      const filteredCount = relevant.length;
-
-     //      // Empty messages (your existing logic)
-     //      if (totalCount === 0) {
-     //           emptyMessage = 'No trustlines found for this wallet.';
-     //           helpHint = 'Start by adding or setting a trustline.';
-     //      } else if (filteredCount === 0) {
-     //           switch (tab) {
-     //                case 'removeTrustline':
-     //                     emptyMessage = 'No trustlines are currently eligible for removal.';
-     //                     helpHint = '';
-     //                     break;
-
-     //                case 'issueCurrency':
-     //                     emptyMessage = 'You are not an issuer of the selected currency/issuer pair. ';
-     //                     helpHint = '';
-     //                     break;
-
-     //                case 'clawbackTokens':
-     //                     emptyMessage = 'No clawback-enabled currencies found.';
-     //                     helpHint = '';
-     //                     break;
-
-     //                case 'setTrustline':
-     //                     emptyMessage = 'No existing trustlines.';
-     //                     helpHint = 'You can create a new trustline below.';
-     //                     break;
-
-     //                default:
-     //                     emptyMessage = 'No matching trustlines found.';
-     //           }
-     //      }
-     //      const links = totalCount > 0 ? `<a href="${explorerBase}account/${address}/tokens" target="_blank" class="xrpl-win-link">View on explorer</a>` : '';
-
-     //      return {
-     //           walletName,
-     //           activeTab: tab,
-     //           trustlineCount: filteredCount || 0,
-     //           totalTrustlines: totalCount,
-     //           trustlinesToShow: relevant.map((tl: any) => ({
-     //                currency: tl.currency,
-     //                issuer: tl.issuer,
-     //                balance: tl.balance,
-     //                limit: tl.limit,
-     //                flags: tl.flags || [],
-     //           })),
-     //           links,
-     //           countText,
-     //           emptyMessage,
-     //           helpHint,
-     //           isEmpty: filteredCount === 0,
-     //           isLoading: false,
-     //      };
-     // });
 
      readonly isIssuerForSelected = computed(() => {
           const walletAddr = this.walletManager.getSelectedWallet()?.address?.toLowerCase().trim();

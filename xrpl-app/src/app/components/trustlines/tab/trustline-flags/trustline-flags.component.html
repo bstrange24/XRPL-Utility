@@ -16,12 +16,7 @@
 
           <button type="button" class="flag-item-account-flags" [class.enabled]="isEnabled" [class.required]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
                <div class="flag-header-account">
-                    <input type="checkbox" class="flag-checkbox" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
-
-                    <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                         <path d="M9 12l2 2 4-4" />
-                         <circle cx="12" cy="12" r="10" />
-                    </svg>
+                    <input type="checkbox" class="flag-checkbox" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" (keypress)="$event.stopPropagation()" />
 
                     <span class="flag-title">{{ flag.title }}</span>
 

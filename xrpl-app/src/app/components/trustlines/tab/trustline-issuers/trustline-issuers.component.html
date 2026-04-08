@@ -15,7 +15,6 @@
 
 <div class="form-row">
      <button type="button" class="btn-primary-blue" (click)="trustlineUtilService.addNewCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isAddValid()">{{ trustlineViewModelService.addCurrencyIssuerButtonLabel() }}</button>
-     <!-- <button type="button" class="btn-primary-blue" (click)="trustlineUtilService.addNewCurrencyIssuer()" [disabled]="!isIdle() || !trustlineUtilService.isAddValid()">{{ trustlineViewModelService.addCurrencyIssuerButtonLabel() }}</button> -->
 </div>
 
 <div class="form-row">
@@ -45,5 +44,4 @@
 
 <div class="form-row">
      <button type="button" class="btn-primary-red" (click)="trustlineUtilService.removeCurrentCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isRemoveValid()">{{ trustlineViewModelService.removeSelectedIssuerButtonLabel() }}</button>
-     <!-- <button type="button" class="btn-primary-red" (click)="trustlineUtilService.removeCurrentCurrencyIssuer()" [disabled]="!isIdle() || !trustlineUtilService.isRemoveValid()">{{ trustlineViewModelService.removeSelectedIssuerButtonLabel() }}</button> -->
 </div>

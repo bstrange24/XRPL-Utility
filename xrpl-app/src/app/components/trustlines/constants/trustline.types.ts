@@ -36,7 +36,7 @@ export interface TrustlineTxConfig {
 export interface TrustlineState {
      isLoaded: boolean;
      isLoading: boolean;
-     error: string | null; // 👈 ADD THIS
+     error: string | null;
      trustlineAlreadyExist: boolean;
      removeTrustlineAvailable: boolean;
      removeTrustlineMessage: string[];

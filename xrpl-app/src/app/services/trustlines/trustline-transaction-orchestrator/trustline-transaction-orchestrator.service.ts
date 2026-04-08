@@ -203,10 +203,10 @@ export class TrustlineTransactionOrchestratorService extends PerformanceBaseComp
 
                // Balance checks (token vs xrp)
                let isInsufficientBalance;
-               if (currency?.currency !== 'XRP') {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
-               } else {
+               if (currency?.currency === 'XRP') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, currency.amount.toString());
+               } else {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 

@@ -99,22 +99,18 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      }
 
      async onCurrencyChange(item: any) {
-          const currency = item?.id ?? item ?? 'XRP';
-          this.trustlineCurrencyService.selectCurrency(currency);
+          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
           await this.syncAfterSelection();
      }
 
      async onIssuerChange(item: any) {
-          const issuer = item?.id ?? item ?? 'XRP';
-          this.trustlineCurrencyService.selectIssuer(issuer);
+          this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? 'XRP');
           await this.syncAfterSelection();
      }
 
      async onCurrencySelected(item: SelectItem | null) {
-          const currency = item?.id ?? 'XRP';
-          this.trustlineCurrencyService.selectCurrency(currency);
+          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
           await this.trustlineUtilService.loadTrustlines(false);
-          // balance is now refreshed inside loadTrustlines via refreshCurrentBalanceFromEnv
      }
 
      async onIssuerSelected(item: SelectItem | null) {

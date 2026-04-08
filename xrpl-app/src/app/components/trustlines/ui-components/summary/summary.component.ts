@@ -25,10 +25,10 @@ export class SummaryComponent {
      @Input() isExpanded: boolean = false;
      @Input() explorerUrl: string = '';
 
-     @Output() toggle = new EventEmitter<void>();
+     @Output() toggleExpandedEvent = new EventEmitter<void>();
 
      toggleExpanded(): void {
-          this.toggle.emit();
+          this.toggleExpandedEvent.emit();
      }
 
      copyIssuer(address: string): void {

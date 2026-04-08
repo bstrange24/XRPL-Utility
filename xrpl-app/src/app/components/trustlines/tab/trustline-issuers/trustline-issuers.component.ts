@@ -21,7 +21,6 @@ export class TrustlineIssuersComponent {
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
 
-     // Receives boolean from parent (isIdle() call)
      @Input() isIdle: boolean = false;
 
      @Output() currencySelected = new EventEmitter<SelectItem | null>();

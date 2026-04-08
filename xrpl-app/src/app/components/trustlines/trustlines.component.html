@@ -31,7 +31,6 @@
 
                @if (tab !== 'addNewIssuers') {
                <!-- Dynamic info panel -->
-               <!-- <app-summary [info]="view.infoData()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" /> -->
                <app-summary [info]="view.infoData()" [trustlinesToShow]="view.trustlinesToShow()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" />
                }
 
@@ -105,8 +104,7 @@
                     <div class="button-row">
                          <!-- Set Trustline -->
                          @if(tab === 'setTrustline') {
-                         <!-- <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit() || trustlineStore.trustlineAlreadyExist()">{{ view.trustlineSetButtonLabel() }}</button> -->
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view.trustlineSetButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || trustlineStore.trustlineAlreadyExist()">{{ view.trustlineSetButtonLabel() }}</button>
                          }
                          <!-- Remove Trustline -->
                          @else if (tab === 'removeTrustline') {
@@ -118,7 +116,7 @@
                          }
                          <!-- Clawback Tokens -->
                          @else if (tab === 'clawbackTokens') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view.clawbackButtonLabel() }}</button>
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || !view.isIssuerForSelected()">{{ view.clawbackButtonLabel() }}</button>
                          }
                          <!-- Add New Issuers -->
                          @if (tab !== 'addNewIssuers') {

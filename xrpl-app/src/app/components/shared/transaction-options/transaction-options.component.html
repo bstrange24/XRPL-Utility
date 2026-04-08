@@ -2,23 +2,23 @@
 @if (showPanel()) {
 <div class="switch-group">
      @if (showMemo()) {
-     <label class="switch">
+     <label class="switch" for="memoToggle">
           <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isMemoEnabled()" (change)="onMemoToggled($event.checked)">Add Memo</mat-slide-toggle>
      </label>
      } @if (showMultiSign() && multiSigningEnabled()) {
-     <label class="switch">
+     <label class="switch" for="multiSignToggle">
           <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.useMultiSign()" (change)="onMultiSignToggled($event.checked)">Use Multi-Sign</mat-slide-toggle>
      </label>
      } @if (showRegularKey() && regularKeySigningEnabled()) {
-     <label class="switch">
+     <label class="switch" for="regularKeyToggle">
           <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isRegularKeyAddress()" (change)="onRegularKeyToggled($event.checked)">Use Regular Key</mat-slide-toggle>
      </label>
      } @if (showTicket() && this.xrplTxOptionsStore.ticketArray().length > 0) {
-     <label class="switch">
+     <label class="switch" for="ticketToggle">
           <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isTicket()" (change)="this.xrplTxOptionsStore.setField('isTicket', ($event.checked))" name="isTicket">Use Ticket</mat-slide-toggle>
      </label>
      } @if (showSimulate()) {
-     <label class="switch">
+     <label class="switch" for="simulateToggle">
           <mat-slide-toggle class="mini-toggle" [checked]="this.xrplTxOptionsStore.isSimulateEnabled()" (change)="toggleSimulate($event.checked)" name="isSimulateEnabled">Simulate</mat-slide-toggle>
      </label>
      }

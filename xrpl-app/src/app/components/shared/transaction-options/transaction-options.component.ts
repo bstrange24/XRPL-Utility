@@ -38,13 +38,6 @@ export class TransactionOptionsComponent {
      readonly showTicket = input<boolean>(true);
      readonly showSimulate = input<boolean>(true);
 
-     // showMemo = input(true);
-     // showMultiSign = input(true);
-     // showRegularKey = input(true);
-     // showTicket = input(true);
-     // showSimulate = input(true);
-     // showEnableTrustline = input<boolean>(false);
-
      // Computed
      showPanel = computed(() => {
           const tab = this.activeTab()?.() ?? '';

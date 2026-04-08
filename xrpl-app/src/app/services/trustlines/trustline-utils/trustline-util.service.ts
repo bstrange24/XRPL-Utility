@@ -1,5 +1,4 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { AppConstants } from '../../../core/app.constants';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
@@ -109,9 +108,7 @@ export class TrustlineUtilService {
           } else {
                this.trustlineStoreService.setField('trustlineAlreadyExist', false);
 
-               if (this.activeTab() === 'setTrustline') {
-                    this.currencyStoreService.setField('amount', 0);
-               } else if (this.activeTab() === 'removeTrustline') {
+               if (this.activeTab() === 'setTrustline' || this.activeTab() === 'removeTrustline') {
                     this.currencyStoreService.setField('amount', 0);
                }
 
