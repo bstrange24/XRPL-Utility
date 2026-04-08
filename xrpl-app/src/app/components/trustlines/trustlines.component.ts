@@ -130,6 +130,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
           this.currentWallet.set(wallet);
+          this.infoPanelExpanded.set(false);
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -156,8 +157,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      async setTab(tab: string): Promise<void> {
           if (!TRUSTLINE_TAB.includes(tab as any)) return;
           this.trustlineViewModelService.activeTab.set(tab as TrustlineActionTypes);
+          this.trustlineUtilService.activeTab.set(tab as TrustlineActionTypes);
           this.clearInputFields();
-          if (this.hasWallets()) await this.getTrustlinesForAccount();
+          if (this.hasWallets() && this.trustlineStoreService.isLoaded()) {
+               await this.getTrustlinesForAccount();
+          }
      }
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {

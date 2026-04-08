@@ -40,14 +40,7 @@ export class TrustlineViewModelService {
                     return allTrustlines;
 
                case 'removeTrustline':
-                    return allTrustlines.filter((tl: any) => {
-                         const bal = Number(tl.balance);
-                         const lim = Number(tl.limit);
-                         const frozen = tl.flags?.some((f: string) => f.includes('Freeze'));
-                         const needsClearNoRipple = tl.flags?.includes('NoRipple') && !clearNoRipple;
-                         return bal === 0 && lim === 0 && !frozen && !needsClearNoRipple;
-                    });
-
+                    return this.removableTrustlines();
                case 'issueCurrency':
                     return isIssuer ? allTrustlines.filter((tl: any) => Number(tl.balance) < 0) : allTrustlines.filter((tl: any) => Number(tl.balance) > 0);
 
@@ -57,6 +50,28 @@ export class TrustlineViewModelService {
                default:
                     return allTrustlines;
           }
+     });
+
+     readonly trustlinesToShow = computed(() =>
+          this.filteredTrustlines().map((tl: any) => ({
+               currency: tl.currency,
+               issuer: tl.issuer,
+               balance: tl.balance,
+               limit: tl.limit,
+               flags: tl.flags || [],
+          }))
+     );
+
+     private readonly removableTrustlines = computed(() => {
+          const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
+          const clearNoRipple = this.trustlineCurrencyService.flags().tfClearNoRipple;
+          return allTrustlines.filter((tl: any) => {
+               const bal = Number(tl.balance);
+               const lim = Number(tl.limit);
+               const frozen = tl.flags?.some((f: string) => f.includes('Freeze'));
+               const needsClearNoRipple = tl.flags?.includes('NoRipple') && !clearNoRipple;
+               return bal === 0 && lim === 0 && !frozen && !needsClearNoRipple;
+          });
      });
 
      readonly infoData = computed(() => {

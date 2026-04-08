@@ -20,6 +20,7 @@ export class SummaryComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly toastService = inject(ToastService);
 
+     @Input() trustlinesToShow: any[] = [];
      @Input() info: any = null;
      @Input() isExpanded: boolean = false;
      @Input() explorerUrl: string = '';

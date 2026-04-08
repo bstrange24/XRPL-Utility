@@ -31,7 +31,8 @@
 
                @if (tab !== 'addNewIssuers') {
                <!-- Dynamic info panel -->
-               <app-summary [info]="view.infoData()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" />
+               <!-- <app-summary [info]="view.infoData()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" /> -->
+               <app-summary [info]="view.infoData()" [trustlinesToShow]="view.trustlinesToShow()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" />
                }
 
                <!-- Warning Message -->
