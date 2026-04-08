@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "include": [
+    "src/app/components/escrow/**/*.spec.ts",
+    "src/app/components/checks/**/*.spec.ts",
+    "src/app/services/escrow/**/*.spec.ts",
+    "src/app/services/checks/**/*.spec.ts"
+  ]
+}
