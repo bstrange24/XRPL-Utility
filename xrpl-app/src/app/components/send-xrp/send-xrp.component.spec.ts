@@ -132,7 +132,7 @@ class TxEnvironmentServiceMock implements Partial<TxEnvironmentService> {
      });
 }
 
-fdescribe('SendXrpComponent', () => {
+describe('SendXrpComponent', () => {
      let component: SendXrpComponent;
      let fixture: ComponentFixture<SendXrpComponent>;
 
@@ -288,5 +288,73 @@ fdescribe('SendXrpComponent', () => {
           await component.performAction();
 
           expect(toast.success).toHaveBeenCalled();
+     });
+
+     describe('handleSearchQueryChange', () => {
+          it('should update destinationSearchQuery', () => {
+               component.handleSearchQueryChange('rTest123');
+               expect(component.destinationSearchQuery()).toBe('rTest123');
+          });
+
+          it('should clear destinationSearchQuery when empty string is passed', () => {
+               component.destinationSearchQuery.set('rOldValue');
+               component.handleSearchQueryChange('');
+               expect(component.destinationSearchQuery()).toBe('');
+          });
+     });
+
+     describe('handleDestinationChange', () => {
+          it('should update selectedDestinationAddress from item id', () => {
+               component.handleDestinationChange({ id: 'rDEST123', display: 'rDEST123', isCurrentAccount: false, secondary: '' });
+               expect(component.selectedDestinationAddress()).toBe('rDEST123');
+          });
+
+          it('should clear selectedDestinationAddress when item is null', () => {
+               component.selectedDestinationAddress.set('rOldDest');
+               component.handleDestinationChange(null);
+               expect(component.selectedDestinationAddress()).toBe('');
+          });
+
+          it('should clear selectedDestinationAddress when item id is empty', () => {
+               component.selectedDestinationAddress.set('rOldDest');
+               component.handleDestinationChange({ id: '', display: '', isCurrentAccount: false, secondary: '' });
+               expect(component.selectedDestinationAddress()).toBe('');
+          });
+     });
+
+     describe('selectWallet', () => {
+          it('should update currentWallet when a different wallet is selected', () => {
+               const newWallet = { address: 'rNEW', classicAddress: 'rNEW', seed: 'sseedNEW', encryptionAlgorithm: 'ed25519' } as any;
+               component.currentWallet.set({ address: 'rOLD', classicAddress: 'rOLD' } as any);
+               component.selectWallet(newWallet);
+               expect(component.currentWallet().address).toBe('rNEW');
+          });
+
+          it('should not change currentWallet when same wallet is selected', () => {
+               const wallet = { address: 'rSAME', classicAddress: 'rSAME', seed: 'sseed', encryptionAlgorithm: 'ed25519' } as any;
+               component.currentWallet.set(wallet);
+               component.selectWallet(wallet);
+               expect(component.currentWallet().address).toBe('rSAME');
+          });
+
+          it('should clear selectedDestinationAddress if it matches newly selected wallet address', () => {
+               const wallet = { address: 'rMATCH', classicAddress: 'rMATCH', seed: 'sseed', encryptionAlgorithm: 'ed25519' } as any;
+               component.selectedDestinationAddress.set('rMATCH');
+               component.currentWallet.set({ address: 'rOTHER', classicAddress: 'rOTHER' } as any);
+               component.selectWallet(wallet);
+               expect(component.selectedDestinationAddress()).toBe('');
+          });
+     });
+
+     describe('performAction – invalid destination', () => {
+          it('should show error toast when destination address is invalid', async () => {
+               spyOn(xrpl, 'isValidAddress').and.returnValue(false);
+               component.selectedDestinationAddress.set('');
+               component.destinationSearchQuery.set('');
+
+               await component.performAction();
+
+               expect(toast.error).toHaveBeenCalledWith('Please enter a valid destination address.', jasmine.any(String));
+          });
      });
 });
