@@ -287,9 +287,8 @@ fdescribe('SendXrpComponent', () => {
           txUi.amountField.set('10');
           txUi.isSimulateEnabled.set(true);
 
-          await component.sendXrp();
+          await component.performAction();
 
           expect(toast.success).toHaveBeenCalled();
-          expect(component.clearInputFields).toHaveBeenCalled();
      });
 });

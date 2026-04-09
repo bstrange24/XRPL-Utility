@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { CurrencyStoreService } from './currency-store.service';
 
 describe('CurrencyStoreService', () => {
-  let service: CurrencyStoreService;
+     let service: InstanceType<typeof CurrencyStoreService>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(CurrencyStoreService);
-  });
+     beforeEach(() => {
+          TestBed.configureTestingModule({});
+          service = TestBed.inject(CurrencyStoreService);
+     });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+     it('should be created', () => {
+          expect(service).toBeTruthy();
+     });
 });

@@ -117,7 +117,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
           await this.trustlineUtilService.loadTrustlines(false);
-          // await this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      async onIssuerSelected(item: SelectItem | null) {
@@ -127,7 +126,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           // Add this: If both currency and issuer are set, fetch env and update flags
           if (this.currencyStoreService.currency() && address) {
                await this.trustlineUtilService.loadTrustlines(false);
-               // await this.trustlineCurrencyService.refreshCurrentBalance();
           }
      }
 
@@ -343,7 +341,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.checksStoreService.setField('existingChecks', this.checkUtilService.getExistingChecks(env.accountObjects, env.wallet.classicAddress));
           this.checksStoreService.setField('cashableChecks', this.checkUtilService.getCashableChecks(env.accountObjects, env.wallet.classicAddress));
           this.checksStoreService.setField('cancellableChecks', this.checkUtilService.getCancelableChecks(env.accountObjects, env.wallet.classicAddress));
-          // this.existingMpts.set(this.mptUtilService.getExistingMpts(accountObjects, address));
           this.checksStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
      }
 

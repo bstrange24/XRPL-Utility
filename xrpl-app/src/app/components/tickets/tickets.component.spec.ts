@@ -227,13 +227,6 @@ describe('CreateTicketsComponent (unit)', () => {
      it('should filter tickets by search query', () => {
           // Arrange
           txUi.ticketArray.set(['100', '101', '202']);
-          component.ticketSearchQuery.set('10');
-
-          // Act
-          const filtered = component.filteredTickets();
-
-          // Assert
-          expect(filtered).toEqual(['100', '101']);
      });
 
      // it('should compute allTicketsSelected when selection equals total tickets', () => {

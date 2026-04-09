@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-
-import { NavbarStoreService } from './navbar-store.service';
+import { NavbarStore } from './navbar-store.service';
 
 describe('NavbarStoreService', () => {
-  let service: NavbarStoreService;
+     let service: InstanceType<typeof NavbarStore>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(NavbarStoreService);
-  });
+     beforeEach(() => {
+          TestBed.configureTestingModule({});
+          service = TestBed.inject(NavbarStore);
+     });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+     it('should be created', () => {
+          expect(service).toBeTruthy();
+     });
 });

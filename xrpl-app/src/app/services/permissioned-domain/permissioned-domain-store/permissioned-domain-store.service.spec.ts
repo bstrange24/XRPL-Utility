@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { PermissionedDomainStoreService } from './permissioned-domain-store.service';
 
 describe('PermissionDomainStoreService', () => {
-     let service: PermissionedDomainStoreService;
+     let service: InstanceType<typeof PermissionedDomainStoreService>;
 
      beforeEach(() => {
           TestBed.configureTestingModule({});

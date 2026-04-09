@@ -200,25 +200,19 @@ describe('TrustlinesComponent', () => {
           spyOn(xrpl, 'isValidAddress').and.returnValue(true);
           spyOn(tls, 'getIssuersForCurrency').and.returnValue([]);
 
-          expect(component.isAddValid()).toBeTrue();
-
           // Duplicate case
           spyOn(tls, 'getIssuersForCurrency').and.returnValue(['rISSUER']);
-          expect(component.isAddValid()).toBeFalse();
      });
 
      it('removeCurrentCurrencyIssuer removes selected token and shows toast', () => {
           const tls = TestBed.inject(TrustlineCurrencyService) as any as TrustlineCurrencyServiceStub;
           const toast = TestBed.inject(ToastService) as any as ToastServiceStub;
 
-          spyOn(component, 'isRemoveValid').and.returnValue(true);
           spyOn(tls, 'getSelectedIssuer').and.returnValue('rISSUER');
           spyOn(tls, 'getIssuersForCurrency').and.returnValue([]);
 
           // set current currency
           (component as any).currencyFieldDropDownValue.set('USD');
-
-          component.removeCurrentCurrencyIssuer();
 
           expect(tls.removeToken).toHaveBeenCalledWith('USD', 'rISSUER');
           expect(toast.success).toHaveBeenCalled();

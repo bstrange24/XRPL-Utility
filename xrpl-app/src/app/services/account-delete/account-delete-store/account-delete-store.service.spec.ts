@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { AccountDeleteStoreService } from './account-delete-store.service';
 
 describe('AccountDeleteStoreService', () => {
-     let service: AccountDeleteStoreService;
+     let service: InstanceType<typeof AccountDeleteStoreService>;
 
      beforeEach(() => {
           TestBed.configureTestingModule({});

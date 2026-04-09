@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-
-import { CredentialStoreService } from './credential-store.service';
+import { CredentialStore } from './credential-store.service';
 
 describe('CredentialStoreService', () => {
-  let service: CredentialStoreService;
+     let service: InstanceType<typeof CredentialStore>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(CredentialStoreService);
-  });
+     beforeEach(() => {
+          TestBed.configureTestingModule({});
+          service = TestBed.inject(CredentialStore);
+     });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+     it('should be created', () => {
+          expect(service).toBeTruthy();
+     });
 });

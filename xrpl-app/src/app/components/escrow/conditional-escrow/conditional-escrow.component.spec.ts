@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
 import { of } from 'rxjs';
-import { provideRouter } from '@angular/router';
-import { ActivatedRoute } from '@angular/router';
+import { convertToParamMap, provideRouter, ActivatedRoute } from '@angular/router';
 import { ConditionalEscrowComponent } from './conditional-escrow.component';
 import { EscrowStoreService } from '../../../services/escrow/escrow-store/escrow-store.service';
 import { EscrowTransactionViewModelService } from '../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
@@ -31,6 +30,10 @@ import { ToastService } from '../../../services/utils/toast/toast.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 import { NavbarComponent } from '../../shared/ui-components/navbar/navbar.component';
+import { provideHttpClient } from '@angular/common/http';
+import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
+import { WalletPanelComponent } from '../../wallet-panel/wallet-panel.component';
+import { TransactionPreviewComponent } from '../../shared/transaction-preview/transaction-preview.component';
 
 describe('ConditionalEscrowComponent', () => {
      let component: ConditionalEscrowComponent;
@@ -43,10 +46,22 @@ describe('ConditionalEscrowComponent', () => {
           wallets$: of([mockWallet]),
           hasWallets$: of(true),
           hasWalletsFromWallets$: of(true),
+          hasWallets: signal(true),
           selectedIndex$: of(0),
+          selectedIndex: signal(0),
+
+          // ← UPDATED: always return a wallet with classicAddress
           getSelectedWallet: jasmine.createSpy('getSelectedWallet').and.returnValue(mockWallet),
+
           getSelectedIndex: jasmine.createSpy('getSelectedIndex').and.returnValue(0),
           ensureWalletSelected: jasmine.createSpy('ensureWalletSelected').and.returnValue(true),
+          isEditing: { bind: jasmine.createSpy('bind').and.returnValue(() => false) },
+          setSelectedIndex: jasmine.createSpy('setSelectedIndex'),
+          setWallets: jasmine.createSpy('setWallets'),
+          startEdit: jasmine.createSpy('startEdit'),
+          saveEdit: jasmine.createSpy('saveEdit'),
+          cancelEdit: jasmine.createSpy('cancelEdit'),
+          deleteWallet: jasmine.createSpy('deleteWallet'),
      };
 
      const txUiMock = {
@@ -65,6 +80,7 @@ describe('ConditionalEscrowComponent', () => {
           errorMessageSignal: signal(null),
           isSummaryLoading: signal(false),
           isSummaryLoadingSignal: signal(false),
+          txSignal: signal(null),
           warningMessage: null,
           clearWarning: jasmine.createSpy('clearWarning'),
           setWarning: jasmine.createSpy('setWarning'),
@@ -73,30 +89,35 @@ describe('ConditionalEscrowComponent', () => {
           suppressTxClear: signal(false),
      };
 
-     const activeTabSignal = signal<string>('createEscrow');
-
      const vmMock = {
-          activeTab: activeTabSignal,
+          activeTab: signal('createEscrow'),
           escrowCount: signal(0),
           escrowsToShow: signal([]),
           explorerLinks: signal(null),
           infoData: signal(null),
           selectedEscrowIsExpired: signal(false),
           destinationSearchQuery: signal(''),
+          currencyItems: signal([]),
+          issuerItems: signal([]),
+          selectedCurrencyItem: signal(null),
+          selectedIssuerItem: signal(null),
           selectedDestinationAddress: signal(''),
           destinationItems: jasmine.createSpy('destinationItems').and.returnValue([]),
           selectedDestinationItem: jasmine.createSpy('selectedDestinationItem').and.returnValue(null),
      };
 
      const dropdownMock = {
-          setupAutoSelectOnValidTypedAddress: jasmine.createSpy('setupAutoSelectOnValidTypedAddress'),
-          loadCustomDestinations: jasmine.createSpy('loadCustomDestinations'),
-          destinationItems: signal([]),
+          customDestinations: signal([]),
           allDestinations: jasmine.createSpy('allDestinations').and.returnValue(signal([])),
           destinationMap: jasmine.createSpy('destinationMap').and.returnValue(signal(new Map())),
+          destinationItems: jasmine.createSpy('destinationItems').and.returnValue(signal([])),
           selectedDestinationItem: jasmine.createSpy('selectedDestinationItem').and.returnValue(signal(null)),
+          filteredDestinations: jasmine.createSpy('filteredDestinations').and.returnValue(signal([])),
+          destinationDisplay: jasmine.createSpy('destinationDisplay').and.returnValue(signal('')),
+          setupAutoSelectOnValidTypedAddress: jasmine.createSpy('setupAutoSelectOnValidTypedAddress'),
+          loadCustomDestinations: jasmine.createSpy('loadCustomDestinations'),
           getFinalDestinationAddress: jasmine.createSpy('getFinalDestinationAddress').and.returnValue(''),
-          customDestinations: signal([]),
+          addCustomIfNewAndSelect: jasmine.createSpy('addCustomIfNewAndSelect'),
      };
 
      const trustlineCurrencyMock = {
@@ -113,7 +134,6 @@ describe('ConditionalEscrowComponent', () => {
      };
 
      const toastMock = { error: jasmine.createSpy('error'), success: jasmine.createSpy('success') };
-
      const storeMock = {
           get: jasmine.createSpy('get').and.returnValue(null),
           set: jasmine.createSpy('set'),
@@ -123,13 +143,17 @@ describe('ConditionalEscrowComponent', () => {
      };
 
      beforeEach(async () => {
-          activeTabSignal.set('createEscrow');
+          spyOn(console, 'error');
 
           await TestBed.configureTestingModule({
                imports: [ConditionalEscrowComponent],
+               schemas: [NO_ERRORS_SCHEMA], // ← this finally skips Lucide
                providers: [
                     provideRouter([]),
-                    EscrowStoreService,
+                    provideHttpClient(),
+
+                    { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
+
                     { provide: WalletManagerService, useValue: walletManagerMock },
                     { provide: TransactionUiService, useValue: txUiMock },
                     { provide: EscrowTransactionViewModelService, useValue: vmMock },
@@ -137,8 +161,9 @@ describe('ConditionalEscrowComponent', () => {
                     { provide: StorageService, useValue: storeMock },
                     {
                          provide: EscrowOrchestratorService,
-                         useValue: { executeEscrowTx: jasmine.createSpy().and.resolveTo({ success: true }), handleSimulationSuccess: jasmine.createSpy().and.returnValue({ success: true }) },
+                         useValue: { executeEscrowTx: jasmine.createSpy().and.resolveTo({ success: true }) },
                     },
+
                     {
                          provide: EscrowUtilService,
                          useValue: {
@@ -188,16 +213,38 @@ describe('ConditionalEscrowComponent', () => {
                     { provide: ConnectionGuardService, useValue: { isConnected: signal(true) } },
                     {
                          provide: ActivatedRoute,
-                         useValue: { params: of({}), queryParams: of({}), fragment: of(null), data: of({}), snapshot: { params: {}, queryParams: {}, data: {} } },
+                         useValue: {
+                              params: of({}),
+                              queryParams: of({}),
+                              fragment: of(null),
+                              data: of({}),
+                              paramMap: of(convertToParamMap({})),
+                              queryParamMap: of(convertToParamMap({})),
+                              snapshot: {
+                                   params: {},
+                                   queryParams: {},
+                                   data: {},
+                                   paramMap: convertToParamMap({}),
+                                   queryParamMap: convertToParamMap({}),
+                              },
+                         },
                     },
                ],
           })
                .overrideComponent(ConditionalEscrowComponent, { set: { template: '<div></div>' } })
                .overrideComponent(NavbarComponent, { set: { template: '<div></div>' } })
+               .overrideComponent(WalletPanelComponent, { set: { template: '<div></div>' } })
+               .overrideComponent(TransactionPreviewComponent, { set: { template: '<div></div>' } })
                .compileComponents();
 
           fixture = TestBed.createComponent(ConditionalEscrowComponent);
           component = fixture.componentInstance;
+
+          spyOn(component, 'generateCondition').and.returnValue({
+               condition: 'A1B2C3D4E5F67890',
+               fulfillment: 'F6E5D4C3B2A1098765',
+          });
+
           fixture.detectChanges();
           await fixture.whenStable();
      });

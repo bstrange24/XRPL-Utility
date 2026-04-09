@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
+import { TicketStore } from './tickets-store.service';
 
-import { TicketsStoreService } from './tickets-store.service';
+describe('TicketStore', () => {
+     let service: InstanceType<typeof TicketStore>;
 
-describe('TicketsStoreService', () => {
-  let service: TicketsStoreService;
+     beforeEach(() => {
+          TestBed.configureTestingModule({});
+          service = TestBed.inject(TicketStore);
+     });
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(TicketsStoreService);
-  });
-
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
+     it('should be created', () => {
+          expect(service).toBeTruthy();
+     });
 });
