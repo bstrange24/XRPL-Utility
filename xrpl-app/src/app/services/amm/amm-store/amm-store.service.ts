@@ -68,9 +68,9 @@ export const AmmStoreService = signalStore(
 
      withState(initialState),
 
-     withComputed(store => ({
-          expiration: computed(() => store.expiration()),
-     })),
+     // withComputed(store => ({
+     //      expiration: computed(() => store.expiration()),
+     // })),
 
      withMethods(store => ({
           /** Generic setter */

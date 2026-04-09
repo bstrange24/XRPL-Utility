@@ -5,6 +5,7 @@ import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { vscodeLight } from '@uiw/codemirror-theme-vscode';
 import { linter, lintGutter } from '@codemirror/lint';
+import { basicSetup } from 'codemirror';
 
 @Component({
      selector: 'app-json-editor',
@@ -44,6 +45,7 @@ export class JsonEditorComponent implements AfterViewInit, OnDestroy, OnChanges 
                     state: EditorState.create({
                          doc: this.value,
                          extensions: [
+                              basicSetup,
                               // oneDark,
                               vscodeLight,
                               json(),
@@ -51,7 +53,7 @@ export class JsonEditorComponent implements AfterViewInit, OnDestroy, OnChanges 
                               linter(jsonParseLinter()), // Basic JSON syntax linting
                               lineNumbers(),
                               keymap.of([...defaultKeymap, indentWithTab]),
-                              this.languageConf.of([]),
+                              // this.languageConf.of([]),
                               // This removes extra bottom padding and makes content fill the height
                               EditorView.theme({
                                    '&': {

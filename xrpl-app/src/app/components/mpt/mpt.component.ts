@@ -57,7 +57,7 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MptComponent extends WalletDestinationBase implements OnInit, AfterViewInit {
+export class MptComponent extends WalletDestinationBase implements OnInit {
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
@@ -72,6 +72,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      public readonly mptStoreService = inject(MptStoreService);
      readonly menuTabs: TabConfig[] = MPT_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = MPT_TAB_META;
+     private _jsonEditor?: JsonEditorComponent;
 
      monacoOptions = {
           theme: 'vs',
@@ -99,11 +100,13 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
           await this.getMptDetails(false);
      }
 
-     ngAfterViewInit(): void {
-          // Small delay to ensure the editor is fully initialized
-          setTimeout(() => {
-               this.jsonEditor.format();
-          }, 0);
+     @ViewChild('jsonEditor')
+     set jsonEditorSetter(editor: JsonEditorComponent | undefined) {
+          if (editor) {
+               this._jsonEditor = editor;
+               // Safe to call here
+               queueMicrotask(() => editor.format());
+          }
      }
 
      onMptSelected(item: SelectItem | null) {

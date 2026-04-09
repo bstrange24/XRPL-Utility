@@ -60,10 +60,10 @@ export const EscrowStoreService = signalStore(
 
      withState(initialState),
 
-     withComputed(store => ({
-          escrowCancelAfterExpirationDate: computed(() => store.escrowCancelAfterExpirationDate()),
-          escrowFinishAfterExpirationDate: computed(() => store.escrowFinishAfterExpirationDate()),
-     })),
+     // withComputed(store => ({
+     //      escrowCancelAfterExpirationDate: computed(() => store.escrowCancelAfterExpirationDate()),
+     //      escrowFinishAfterExpirationDate: computed(() => store.escrowFinishAfterExpirationDate()),
+     // })),
 
      withMethods(store => ({
           /** Generic setter */

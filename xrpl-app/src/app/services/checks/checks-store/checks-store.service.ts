@@ -48,9 +48,9 @@ export const ChecksStoreService = signalStore(
 
      withState(initialState),
 
-     withComputed(store => ({
-          checkExpirationDate: computed(() => store.checkExpirationDate()),
-     })),
+     // withComputed(store => ({
+     //      checkExpirationDate: computed(() => store.checkExpirationDate()),
+     // })),
 
      withMethods(store => ({
           /** Generic setter */
@@ -58,7 +58,7 @@ export const ChecksStoreService = signalStore(
                patchState(store, { [field]: value });
           },
 
-          setPaymentChannelCancelAfterTime(value: string) {
+          setCheckExpirationDate(value: string) {
                patchState(store, { checkExpirationDate: value });
           },
 
