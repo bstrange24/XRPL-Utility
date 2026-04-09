@@ -1,5 +1,4 @@
-import { Component, OnInit, inject, signal, computed, DestroyRef, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +22,6 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
@@ -77,7 +75,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      private readonly walletManager = inject(WalletManagerService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);

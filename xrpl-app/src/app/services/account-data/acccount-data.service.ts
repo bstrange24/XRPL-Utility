@@ -1,15 +1,14 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { XrplTransactionService } from '../xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../utils/util-service/utils.service';
 import { StorageService } from '../shared/local-storage/storage.service';
-import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../utils/download-util/download-util.service';
 import { CopyUtilService } from '../utils/copy-util/copy-util.service';
-import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletManagerService } from '../wallets/manager/wallet-manager.service';
 import { ToastService } from '../utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import * as xrpl from 'xrpl';
-import { TrustlineCurrencyService } from '../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../trustlines/trustline-currency/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
@@ -25,7 +24,6 @@ export class AcccountDataService extends PerformanceBaseComponent {
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);

@@ -14,7 +14,6 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
@@ -80,7 +79,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);

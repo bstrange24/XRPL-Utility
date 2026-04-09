@@ -11,7 +11,6 @@ import { TransactionUiService, TxStep } from '../../services/transaction-ui/tran
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -165,7 +164,6 @@ fdescribe('SendXrpComponent', () => {
                     { provide: WalletDataService, useValue: { refreshWallets: jasmine.createSpy().and.resolveTo() } },
                     { provide: ToastService, useClass: ToastServiceMock },
                     { provide: XrplCacheService, useClass: XrplCacheServiceMock },
-                    { provide: XrplTransactionExecutorService, useValue: { sendXrpPayment: jasmine.createSpy().and.resolveTo({ success: true, hash: 'testhash' }) } },
                     {
                          provide: XrplTransactionService,
                          useValue: {

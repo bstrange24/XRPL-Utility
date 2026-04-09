@@ -19,7 +19,6 @@ import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ActivatedRoute } from '@angular/router';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -44,7 +43,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      private readonly validationService = inject(ValidationService);
      private readonly dropdownService = inject(DestinationDropdownService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

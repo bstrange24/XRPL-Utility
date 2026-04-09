@@ -6,11 +6,10 @@ import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-st
 import { NftTransactionViewModelService } from '../../../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../../../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +31,6 @@ export class NftCreateFieldsComponent {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly nftCreateTransactionViewModelService = inject(NftTransactionViewModelService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);

@@ -4,7 +4,7 @@ import { EscrowTransactionViewModelService } from './escrow-transaction-view-mod
 import { EscrowStoreService } from '../escrow-store/escrow-store.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { EscrowUtilService } from '../escrow-util/escrow-util.service';
@@ -17,7 +17,6 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { WalletDataService } from '../../wallets/refresh-wallet/refresh-wallets.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
@@ -136,7 +135,6 @@ describe('EscrowTransactionViewModelService', () => {
                     { provide: XrplDateService, useValue: { rippleToISO: () => '', isExpired: () => false } },
                     { provide: WalletDataService, useValue: { refreshWallets: jasmine.createSpy().and.resolveTo() } },
                     { provide: XrplCacheService, useValue: { getTxCached: jasmine.createSpy().and.resolveTo({}) } },
-                    { provide: XrplTransactionExecutorService, useValue: {} },
                     { provide: XrplTransactionService, useValue: { waitForFinalOutcome: jasmine.createSpy().and.resolveTo({}), processTxFinalResult: jasmine.createSpy(), processTxError: jasmine.createSpy() } },
                     { provide: TxEnvironmentService, useValue: { prepareTxEnvironment: jasmine.createSpy().and.resolveTo(null) } },
                     { provide: CopyUtilService, useValue: {} },
@@ -216,9 +214,7 @@ describe('EscrowTransactionViewModelService', () => {
           });
 
           it('should return allEscrowsRaw filtered by Destination for finishEscrow tab', () => {
-               escrowStore.setField('allEscrowsRaw', [
-                    { Destination: 'rTEST', EscrowSequence: 10, Amount: '1000000', Sender: 'rSENDER' },
-               ]);
+               escrowStore.setField('allEscrowsRaw', [{ Destination: 'rTEST', EscrowSequence: 10, Amount: '1000000', Sender: 'rSENDER' }]);
                service.activeTab.set('finishEscrow');
                const items = service.escrowsToShow();
                expect(items.length).toBe(1);
@@ -226,9 +222,7 @@ describe('EscrowTransactionViewModelService', () => {
           });
 
           it('should return expiredOrFulfilledEscrows mapped for cancelEscrow tab', () => {
-               escrowStore.setField('expiredOrFulfilledEscrows', [
-                    { EscrowSequence: 5, Amount: '2000000', Destination: 'rDEST2', Sender: 'rTEST' },
-               ]);
+               escrowStore.setField('expiredOrFulfilledEscrows', [{ EscrowSequence: 5, Amount: '2000000', Destination: 'rDEST2', Sender: 'rTEST' }]);
                service.activeTab.set('cancelEscrow');
                const items = service.escrowsToShow();
                expect(items.length).toBe(1);

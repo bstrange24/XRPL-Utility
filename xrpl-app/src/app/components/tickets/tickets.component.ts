@@ -14,7 +14,6 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
@@ -50,7 +49,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly ticketsOrchestratorService = inject(TicketsOrchestratorService);
      public readonly ticketsUtilService = inject(TicketsUtilService);

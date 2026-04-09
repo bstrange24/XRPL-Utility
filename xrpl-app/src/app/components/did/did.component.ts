@@ -14,7 +14,6 @@ import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { JsonEditorComponent } from '../shared/json-editor/json-editor.component';
 import { DidUtilService } from '../../services/did/did-util/did-util.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -55,7 +54,6 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      private readonly didTransactionOrchestratorService = inject(DidTransactionOrchestratorService);
      public readonly didUtilService = inject(DidUtilService);

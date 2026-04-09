@@ -2,7 +2,6 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { PaymentChannelOrchestratorService } from '../payment-channel-orchestrator/payment-channel-orchestrator.service';
 import { PaymentChannelUtilService } from '../payment-channel-util/payment-channel-util.service';
@@ -16,7 +15,6 @@ import { PaymentChannelStoreService } from '../payment-channel-store/payment-cha
 export class PaymentChannelViewModelService {
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly paymentChannelOrchestratorService = inject(PaymentChannelOrchestratorService);

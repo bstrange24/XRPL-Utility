@@ -1,6 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../trustline-currency/trustline-currency.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import * as xrpl from 'xrpl';

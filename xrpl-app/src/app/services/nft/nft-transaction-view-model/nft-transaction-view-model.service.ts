@@ -2,7 +2,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { CheckUtilService } from '../../checks/checks-util/check-util.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';

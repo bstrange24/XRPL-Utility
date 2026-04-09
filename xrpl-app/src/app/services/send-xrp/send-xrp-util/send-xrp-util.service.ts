@@ -7,7 +7,6 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 
 @Injectable({
      providedIn: 'root',
@@ -19,7 +18,6 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly didStoreService = inject(DidStoreService);
 
      constructor() {

@@ -1,5 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../trustline-currency/trustline-currency.service';
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineActionTypes } from '../../../components/trustlines/constants/trustline.types';

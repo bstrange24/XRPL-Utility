@@ -12,13 +12,11 @@ import { WalletManagerService, Wallet } from '../../services/wallets/manager/wal
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
-import { OfferCurrencyService } from '../../services/offer-currency/offer-currency.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AmmRequirementsInfoComponent } from './ui-components/amm-requirements-info/amm-requirements-info.component';
@@ -42,6 +40,7 @@ import { AmmFieldsComponent } from './tab/amm-fields/amm-fields.component';
 import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.component';
 import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
 
 @Component({
      selector: 'app-amm',
@@ -55,7 +54,6 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
@@ -272,7 +270,9 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {}
+     protected refreshAccountObject(_env: any): void {
+          return;
+     }
 
      onPool1CurrencySelected(item: SelectItem | null): void {
           this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());

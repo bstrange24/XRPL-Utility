@@ -13,7 +13,6 @@ import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import * as xrpl from 'xrpl';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -22,7 +21,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { SendXrpRequirementsInfoComponent } from './ui-components/send-xrp-requirements-info/send-xrp-requirements-info.component';
@@ -52,7 +51,6 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly sendXrpTransactionOrchestratorService = inject(SendXrpTransactionOrchestratorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);

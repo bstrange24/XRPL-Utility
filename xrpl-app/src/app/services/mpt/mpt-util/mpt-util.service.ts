@@ -6,11 +6,10 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
 import { MPTokenIssuanceCreate, MPTokenIssuanceCreateFlags } from 'xrpl';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { MptStoreService } from '../mpt-store/mpt-store.service';
 import { MptFlagKey } from '../../../components/mpt/constants/mpt.types';
@@ -25,7 +24,6 @@ export class MptUtilService extends PerformanceBaseComponent {
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly mptStoreService = inject(MptStoreService);
 

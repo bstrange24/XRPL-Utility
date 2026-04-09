@@ -7,9 +7,8 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
 import { ToastService } from '../../utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
@@ -21,8 +20,7 @@ describe('CheckUtilService', () => {
      let service: CheckUtilService;
      let checksStore: InstanceType<typeof ChecksStoreService>;
 
-     const makeAccountObjects = (objs: any[]): xrpl.AccountObjectsResponse =>
-          ({ result: { account_objects: objs } } as any);
+     const makeAccountObjects = (objs: any[]): xrpl.AccountObjectsResponse => ({ result: { account_objects: objs } }) as any;
 
      const xrpCheck = (account: string, destination: string, index: string, drops = '1000000') => ({
           LedgerEntryType: 'Check',
@@ -68,7 +66,6 @@ describe('CheckUtilService', () => {
                     { provide: DownloadUtilService, useValue: {} },
                     { provide: CopyUtilService, useValue: {} },
                     { provide: ToastService, useValue: {} },
-                    { provide: XrplTransactionExecutorService, useValue: {} },
                     { provide: XrplTransactionService, useValue: {} },
                     { provide: TrustlineCurrencyService, useValue: { currencyItems: signal([]), issuerItems: signal([]) } },
                     { provide: XrplDateService, useValue: {} },
@@ -88,10 +85,7 @@ describe('CheckUtilService', () => {
 
      describe('getExistingChecks', () => {
           it('should return only checks owned by classicAddress', () => {
-               const objs = makeAccountObjects([
-                    xrpCheck('rOWNER', 'rDEST1', 'IDX1'),
-                    xrpCheck('rOTHER', 'rDEST2', 'IDX2'),
-               ]);
+               const objs = makeAccountObjects([xrpCheck('rOWNER', 'rDEST1', 'IDX1'), xrpCheck('rOTHER', 'rDEST2', 'IDX2')]);
                const result = service.getExistingChecks(objs, 'rOWNER');
                expect(result.length).toBe(1);
                expect(result[0].id).toBe('IDX1');
@@ -117,10 +111,7 @@ describe('CheckUtilService', () => {
 
      describe('getCashableChecks', () => {
           it('should return only checks destined to classicAddress', () => {
-               const objs = makeAccountObjects([
-                    xrpCheck('rSENDER', 'rMYADDR', 'IDX1'),
-                    xrpCheck('rSENDER2', 'rOTHER', 'IDX2'),
-               ]);
+               const objs = makeAccountObjects([xrpCheck('rSENDER', 'rMYADDR', 'IDX1'), xrpCheck('rSENDER2', 'rOTHER', 'IDX2')]);
                const result = service.getCashableChecks(objs, 'rMYADDR');
                expect(result.length).toBe(1);
                expect(result[0].id).toBe('IDX1');
@@ -129,14 +120,16 @@ describe('CheckUtilService', () => {
 
           it('should mark expired cashable checks', () => {
                const pastExpiry = 100; // well in the past relative to ripple epoch
-               const objs = makeAccountObjects([{
-                    LedgerEntryType: 'Check',
-                    Account: 'rSENDER',
-                    Destination: 'rMYADDR',
-                    index: 'IDX1',
-                    SendMax: '1000000',
-                    Expiration: pastExpiry,
-               }]);
+               const objs = makeAccountObjects([
+                    {
+                         LedgerEntryType: 'Check',
+                         Account: 'rSENDER',
+                         Destination: 'rMYADDR',
+                         index: 'IDX1',
+                         SendMax: '1000000',
+                         Expiration: pastExpiry,
+                    },
+               ]);
                const result = service.getCashableChecks(objs, 'rMYADDR');
                expect(result[0].isExpired).toBeTrue();
           });
@@ -144,10 +137,7 @@ describe('CheckUtilService', () => {
 
      describe('getCancelableChecks', () => {
           it('should return only checks sent by sender', () => {
-               const objs = makeAccountObjects([
-                    xrpCheck('rSENDER', 'rDEST1', 'IDX1'),
-                    xrpCheck('rOTHER', 'rDEST2', 'IDX2'),
-               ]);
+               const objs = makeAccountObjects([xrpCheck('rSENDER', 'rDEST1', 'IDX1'), xrpCheck('rOTHER', 'rDEST2', 'IDX2')]);
                const result = service.getCancelableChecks(objs, 'rSENDER');
                expect(result.length).toBe(1);
                expect(result[0].id).toBe('IDX1');
@@ -210,7 +200,7 @@ describe('CheckUtilService', () => {
           });
 
           it('should return false when expiration is far in the future', () => {
-               const farFuture = Math.floor((Date.now() / 1000) - 946684800 + 99999999);
+               const farFuture = Math.floor(Date.now() / 1000 - 946684800 + 99999999);
                expect(service.isCheckExpired(farFuture)).toBeFalse();
           });
      });
@@ -266,9 +256,7 @@ describe('CheckUtilService', () => {
 
      describe('mapCheckItems', () => {
           it('should map cashable checks with ← arrow', () => {
-               const checks = signal([
-                    { id: 'IDX1', sender: 'rSENDER123456', sendMax: '1000000', destination: 'rDEST' },
-               ]);
+               const checks = signal([{ id: 'IDX1', sender: 'rSENDER123456', sendMax: '1000000', destination: 'rDEST' }]);
                const mode = signal<'cashCheck' | 'cancelCheck' | 'createCheck'>('cashCheck');
                const result = service.mapCheckItems(checks, mode, () => '1 XRP');
                const items = result();
@@ -277,9 +265,7 @@ describe('CheckUtilService', () => {
           });
 
           it('should map cancellable checks with → arrow', () => {
-               const checks = signal([
-                    { id: 'IDX2', destination: 'rDEST7890', sender: undefined, sendMax: '500000' },
-               ]);
+               const checks = signal([{ id: 'IDX2', destination: 'rDEST7890', sender: undefined, sendMax: '500000' }]);
                const mode = signal<'cashCheck' | 'cancelCheck' | 'createCheck'>('cancelCheck');
                const result = service.mapCheckItems(checks, mode, () => '0.5 XRP');
                const items = result();

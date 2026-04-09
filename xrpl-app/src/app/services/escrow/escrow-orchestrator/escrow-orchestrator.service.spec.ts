@@ -16,12 +16,11 @@ import { EscrowStoreService } from '../escrow-store/escrow-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 
 describe('EscrowOrchestratorService', () => {
      let service: EscrowOrchestratorService;
@@ -111,7 +110,6 @@ describe('EscrowOrchestratorService', () => {
                     { provide: XrplCacheService, useValue: { getTxCached: jasmine.createSpy().and.resolveTo({}) } },
                     { provide: DownloadUtilService, useValue: {} },
                     { provide: CopyUtilService, useValue: {} },
-                    { provide: XrplTransactionExecutorService, useValue: {} },
                ],
           });
           service = TestBed.inject(EscrowOrchestratorService);

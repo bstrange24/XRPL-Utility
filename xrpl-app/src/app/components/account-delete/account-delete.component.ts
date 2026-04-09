@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -15,7 +15,6 @@ import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { AppConstants, TabMetaInfo } from '../../core/app.constants';
 import * as xrpl from 'xrpl';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
@@ -51,7 +50,6 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      private readonly deleteAccountOrchestratorService = inject(AccountDeleteOrchestratorService);
      public readonly deleteAccountUtilService = inject(AccountDeleteUtilService);

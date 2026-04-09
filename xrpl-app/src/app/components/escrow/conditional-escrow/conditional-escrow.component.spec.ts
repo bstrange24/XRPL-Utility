@@ -9,7 +9,7 @@ import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orche
 import { EscrowUtilService } from '../../../services/escrow/escrow-util/escrow-util.service';
 import { WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { CurrencyStoreService } from '../../../services/currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineUtilService } from '../../../services/trustlines/trustline-utils/trustline-util.service';
@@ -22,7 +22,6 @@ import { MptStoreService } from '../../../services/mpt/mpt-store/mpt-store.servi
 import { MptUtilService } from '../../../services/mpt/mpt-util/mpt-util.service';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
-import { XrplTransactionExecutorService } from '../../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { WalletDataService } from '../../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { AcccountDataService } from '../../../services/account-data/acccount-data.service';
 import { StorageService } from '../../../services/shared/local-storage/storage.service';
@@ -203,7 +202,6 @@ describe('ConditionalEscrowComponent', () => {
                     { provide: TxEnvironmentService, useValue: { getValidatedEnvironment: jasmine.createSpy().and.resolveTo(null), prepareTxEnvironment: jasmine.createSpy().and.resolveTo(null) } },
                     { provide: DownloadUtilService, useValue: {} },
                     { provide: CopyUtilService, useValue: { copy: jasmine.createSpy() } },
-                    { provide: XrplTransactionExecutorService, useValue: {} },
                     { provide: WalletDataService, useValue: { refreshWallets: jasmine.createSpy().and.resolveTo() } },
                     { provide: AcccountDataService, useValue: { refreshUiState: jasmine.createSpy(), loadAccountData: jasmine.createSpy() } },
                     { provide: TransactionDropdownService, useValue: dropdownMock },

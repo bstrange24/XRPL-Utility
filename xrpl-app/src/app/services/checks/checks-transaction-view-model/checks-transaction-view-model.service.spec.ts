@@ -4,7 +4,7 @@ import { ChecksTransactionViewModelService } from './checks-transaction-view-mod
 import { ChecksStoreService } from '../checks-store/checks-store.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { CheckUtilService } from '../checks-util/check-util.service';
@@ -116,10 +116,16 @@ describe('ChecksTransactionViewModelService', () => {
           });
 
           it('should return existingChecks mapped for createCheck tab', () => {
-               checksStore.setField('existingChecks', [{
-                    id: 'IDX1', destination: 'rDEST', sendMax: '1000000',
-                    expiration: undefined, destinationTag: undefined, invoiceId: undefined,
-               }]);
+               checksStore.setField('existingChecks', [
+                    {
+                         id: 'IDX1',
+                         destination: 'rDEST',
+                         sendMax: '1000000',
+                         expiration: undefined,
+                         destinationTag: undefined,
+                         invoiceId: undefined,
+                    },
+               ]);
                service.activeTab.set('createCheck');
                const items = service.checksToShow();
                expect(items.length).toBe(1);
@@ -128,9 +134,15 @@ describe('ChecksTransactionViewModelService', () => {
           });
 
           it('should return cashableChecks mapped for cashCheck tab', () => {
-               checksStore.setField('cashableChecks', [{
-                    id: 'CASH1', destination: 'rDEST', sender: 'rSND', sendMax: '1000000', expiration: undefined,
-               }]);
+               checksStore.setField('cashableChecks', [
+                    {
+                         id: 'CASH1',
+                         destination: 'rDEST',
+                         sender: 'rSND',
+                         sendMax: '1000000',
+                         expiration: undefined,
+                    },
+               ]);
                service.activeTab.set('cashCheck');
                const items = service.checksToShow();
                expect(items.length).toBe(1);
@@ -139,9 +151,14 @@ describe('ChecksTransactionViewModelService', () => {
           });
 
           it('should return cancellableChecks mapped for cancelCheck tab', () => {
-               checksStore.setField('cancellableChecks', [{
-                    id: 'CNCL1', destination: 'rDEST', sendMax: '500000', expiration: undefined,
-               }]);
+               checksStore.setField('cancellableChecks', [
+                    {
+                         id: 'CNCL1',
+                         destination: 'rDEST',
+                         sendMax: '500000',
+                         expiration: undefined,
+                    },
+               ]);
                service.activeTab.set('cancelCheck');
                const items = service.checksToShow();
                expect(items.length).toBe(1);

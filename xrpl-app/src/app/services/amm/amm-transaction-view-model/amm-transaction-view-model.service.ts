@@ -5,7 +5,7 @@ import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { AmmStoreService } from '../amm-store/amm-store.service';
-import { OfferCurrencyService } from '../../offer-currency/offer-currency.service';
+import { OfferCurrencyService } from '../../offer/offer-currency/offer-currency.service';
 
 @Injectable({
      providedIn: 'root',

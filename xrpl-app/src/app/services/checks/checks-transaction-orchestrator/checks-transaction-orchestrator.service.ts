@@ -49,7 +49,8 @@ const CHECK_META: Record<CheckTxType, CheckMeta> = {
                const code = orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP';
                const dest = check.destination;
                const shortDest = dest ? `${dest.slice(0, 7)}…${dest.slice(-7)}` : '';
-               return `Successfully Sent Check of ${check.amount} ${code}${shortDest ? ` to ${shortDest}` : ''}`;
+               const destSuffix = shortDest ? ` to ${shortDest}` : '';
+               return `Successfully Sent Check of ${check.amount} ${code}${destSuffix}`;
           },
      },
 
@@ -116,7 +117,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
      public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
 
-     async executeCredentialTx(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
+     async executeCheckTx(type: CheckTxType, config: CheckTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { check, account, txOptions, trustline, currency, preFetchedEnv, wallet } = config;
           let env: any;
           let client: xrpl.Client;
@@ -156,14 +157,14 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
 
                // Balance checks (token vs xrp)
                let isInsufficientBalance;
-               if (currency?.currency !== 'XRP') {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
-               } else {
-                    if (type !== 'createCheck') {
-                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-                    } else {
+               if (currency?.currency === 'XRP') {
+                    if (type === 'createCheck') {
                          isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, check.amount);
+                    } else {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                     }
+               } else {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
@@ -210,7 +211,7 @@ export class CheckTransactionOrchestrator extends PerformanceBaseComponent {
 
                return { success: true, hash: txHash };
           } catch (err: any) {
-               console.error(`[${type}] executeCredentialTx failed:`, err);
+               console.error(`[${type}] executeCheckTx failed:`, err);
                this.xrplTransactionService.processTxError(err);
                return { success: false, error: err.message || 'Unexpected error', validationError: false };
           } finally {

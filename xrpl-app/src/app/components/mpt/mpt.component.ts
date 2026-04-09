@@ -14,8 +14,6 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { JsonEditorComponent } from '../shared/json-editor/json-editor.component';
@@ -25,7 +23,7 @@ import { CheckTransactionOrchestrator } from '../../services/checks/checks-trans
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { ActivatedRoute } from '@angular/router';
 import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
@@ -64,7 +62,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly checkUtilService = inject(CheckUtilService);
@@ -200,7 +197,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
                     includeFee: true,
                     includeLedgerInfo: true,
                     includeServerInfo: true,
-                    includeDestinationAccountInfo: true,
+                    includeDestinationAccountObject: true,
                     destinationAddress,
                });
           } catch (err: any) {
@@ -213,13 +210,17 @@ export class MptComponent extends WalletDestinationBase implements OnInit, After
 
           if (currentTab === 'sendMpt') {
                if (!this.mptUtilService.isDestinationAuthorizedForMpt(env.accountObjects.result.account_objects, env.destinationAccountObject.result.account_objects, this.mptStoreService.mptIssuanceId())) {
-                    return this.toastService.error(`Destination ${destinationAddress} is not authorized to receive this MPT. Please ensure authorization has been completed.`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(`Destination ${destinationAddress} is not authorized to receive this MPT. Please ensure authorization has been completed.`, AppConstants.TOAST.ERROR);
+                    return;
                }
           }
 
           if (currentTab === 'lockMpt' || currentTab === 'unlockMpt') {
                const accountIssuerToken = this.mptUtilService.getAllMptTokens(env.accountObjects);
-               if (!accountIssuerToken) return this.toastService.error(`MPT issuance ID ${this.mptStoreService.mptIssuanceId()} was not issued by ${wallet.classicAddress}.`, AppConstants.TOAST.ERROR);
+               if (!accountIssuerToken) {
+                    this.toastService.error(`MPT issuance ID ${this.mptStoreService.mptIssuanceId()} was not issued by ${wallet.classicAddress}.`, AppConstants.TOAST.ERROR);
+                    return;
+               }
           }
 
           const mptState = this.mptStoreService.getAll();

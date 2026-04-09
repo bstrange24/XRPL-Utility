@@ -179,10 +179,12 @@ export class XrplService {
           // Show toast for connection status changes
           if (status === 'connected') {
                this.toastService.success(`${message}`, AppConstants.TOAST.CONNECTION, false);
+               console.warn('XRPL connection status:', message);
           } else if (status === 'disconnected') {
-               // this.toastService.error(`${message}`, 5000, false);
+               console.warn('XRPL connection status:', message);
           } else if (status === 'connecting') {
                this.toastService.info(`${message}`, AppConstants.TOAST.INFO);
+               console.warn('XRPL connection status:', message);
           }
      }
 
@@ -278,175 +280,6 @@ export class XrplService {
           }
      }
 
-     async monitorNewTokens() {
-          // const client = await this.getClient();
-          // try {
-          //      // await this.delay(2000);
-          //      // Subscribe to ledger updates
-          //      await client.request({
-          //           command: 'subscribe',
-          //           streams: ['ledger'],
-          //      });
-          //      client.on('ledgerClosed', async ledger => {
-          //           try {
-          //                // Fetch recent transactions
-          //                const response = await client.request({
-          //                     command: 'ledger',
-          //                     ledger_index: ledger.ledger_index,
-          //                     transactions: true,
-          //                     expand: true,
-          //                });
-          //                // Type assertion for response structure with tx_json
-          //                const ledgerData = response as {
-          //                     result: {
-          //                          ledger: {
-          //                               transactions?: Array<{
-          //                                    hash: string; // Transaction hash at top level
-          //                                    close_time_iso: number; // Closed time in Ripple time
-          //                                    meta?: { delivered_amount?: string | { currency: string; issuer: string; value: string }; TransactionResult?: string };
-          //                                    tx_json: {
-          //                                         TransactionType: string;
-          //                                         LimitAmount?: { currency: string; issuer: string; value: string };
-          //                                         Amount?: { currency: string; issuer: string; value: string } | string;
-          //                                         SendMax?: { currency: string; issuer: string; value: string } | string;
-          //                                         DeliverMax?: { currency: string; issuer: string; value: string } | string;
-          //                                         TakerPays?: { currency: string; issuer: string; value: string } | string;
-          //                                         TakerGets?: { currency: string; issuer: string; value: string } | string;
-          //                                    };
-          //                               }>;
-          //                          };
-          //                     };
-          //                };
-          //                // Check if transactions exist
-          //                if (!ledgerData.result.ledger.transactions || ledgerData.result.ledger.transactions.length === 0) {
-          //                     console.log('No transactions found in ledger:', ledger.ledger_index);
-          //                     return;
-          //                }
-          //                const newTokens: Token[] = [];
-          //                for (const tx of ledgerData.result.ledger.transactions) {
-          //                     let currency: string | undefined;
-          //                     let issuer: string | undefined;
-          //                     let action: string = 'Unknown';
-          //                     let amountToken: string = '0';
-          //                     let amountXrp: string = '0';
-          //                     const txTimestamp = new Date(); // Convert Ripple time to JS Date
-          //                     const transactionType = tx.tx_json.TransactionType;
-          //                     if (tx.meta?.TransactionResult !== 'tesSUCCESS') {
-          //                          continue; // Skip failed transactions
-          //                     }
-          //                     if (transactionType === 'TrustSet' && tx.tx_json.LimitAmount) {
-          //                          currency = tx.tx_json.LimitAmount.currency;
-          //                          issuer = tx.tx_json.LimitAmount.issuer;
-          //                          action = 'TrustSet';
-          //                          amountToken = tx.tx_json.LimitAmount.value || '0';
-          //                     } else if (transactionType === 'Payment') {
-          //                          // Handle token-based DeliverMax (Buy: receiving token)
-          //                          if (typeof tx.tx_json.DeliverMax === 'object' && tx.tx_json.DeliverMax) {
-          //                               currency = tx.tx_json.DeliverMax.currency;
-          //                               issuer = tx.tx_json.DeliverMax.issuer;
-          //                               action = 'Buy';
-          //                               amountToken = tx.tx_json.DeliverMax.value;
-          //                               amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
-          //                          }
-          //                          // Handle token-based Amount (Buy: receiving token)
-          //                          else if (typeof tx.tx_json.Amount === 'object' && tx.tx_json.Amount) {
-          //                               currency = tx.tx_json.Amount.currency;
-          //                               issuer = tx.tx_json.Amount.issuer;
-          //                               action = 'Buy';
-          //                               amountToken = tx.tx_json.Amount.value;
-          //                               amountXrp = typeof tx.tx_json.SendMax === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.SendMax)).toFixed(6) : '0';
-          //                          }
-          //                          // Handle token-based SendMax (Sell: sending token)
-          //                          else if (typeof tx.tx_json.SendMax === 'object' && tx.tx_json.SendMax) {
-          //                               currency = tx.tx_json.SendMax.currency;
-          //                               issuer = tx.tx_json.SendMax.issuer;
-          //                               action = 'Sell';
-          //                               amountToken = tx.tx_json.SendMax.value;
-          //                               const delivered = tx.meta?.delivered_amount;
-          //                               if (typeof delivered === 'string') {
-          //                                    // Native XRP payment
-          //                                    amountXrp = Number(xrpl.dropsToXrp(delivered)).toFixed(6);
-          //                               } else if (typeof delivered === 'object') {
-          //                                    // IOU payment (probably not XRP)
-          //                                    if (delivered.currency === 'XRP') {
-          //                                         amountXrp = Number(xrpl.dropsToXrp(delivered.value)).toFixed(6);
-          //                                    } else {
-          //                                         amountToken = delivered.value;
-          //                                         currency = delivered.currency;
-          //                                         issuer = delivered.issuer;
-          //                                    }
-          //                               }
-          //                          } else {
-          //                               // Skip XRP-only payments
-          //                               continue;
-          //                          }
-          //                     } else if (transactionType === 'OfferCreate') {
-          //                          if (typeof tx.tx_json.TakerGets === 'object' && tx.tx_json.TakerGets) {
-          //                               currency = tx.tx_json.TakerGets.currency;
-          //                               issuer = tx.tx_json.TakerGets.issuer;
-          //                               action = 'Buy';
-          //                               amountToken = tx.tx_json.TakerGets.value;
-          //                               amountXrp = typeof tx.tx_json.TakerPays === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerPays)).toFixed(6) : '0';
-          //                          } else if (typeof tx.tx_json.TakerPays === 'object' && tx.tx_json.TakerPays) {
-          //                               currency = tx.tx_json.TakerPays.currency;
-          //                               issuer = tx.tx_json.TakerPays.issuer;
-          //                               action = 'Sell';
-          //                               amountToken = tx.tx_json.TakerPays.value;
-          //                               amountXrp = typeof tx.tx_json.TakerGets === 'string' ? Number(xrpl.dropsToXrp(tx.tx_json.TakerGets)).toFixed(6) : '0';
-          //                          }
-          //                     }
-          //                     if (currency && issuer && this.isMemeCoin(currency, issuer)) {
-          //                          continue; // Skip non-meme tokens
-          //                     }
-          //                     let skip = false;
-          //                     if (currency && issuer) {
-          //                          let createdDate: Date | null = null;
-          //                          try {
-          //                               createdDate = await this.getTokenCreationDateService(currency, issuer, client);
-          //                               await this.delay(2000); // Delay to avoid rate limiting
-          //                               const createdLessThanTime = 3000; // 2 hours in minutes
-          //                               const isNewToken = createdDate ? Date.now() - createdDate.getTime() < createdLessThanTime * 60 * 1000 : false;
-          //                               if (!isNewToken) {
-          //                                    // Skip this token
-          //                                    console.debug(`Old tokens skipped: ${currency}:${issuer}`);
-          //                                    skip = true;
-          //                               }
-          //                          } catch (error) {
-          //                               console.error(`Error fetching token creation date for ${currency}:${issuer}:`, error);
-          //                          }
-          //                          if (skip) continue;
-          //                          let creationAge = '';
-          //                          if (createdDate !== null) {
-          //                               creationAge = this.formatTokenAge(createdDate);
-          //                          } else {
-          //                               createdDate = new Date();
-          //                          }
-          //                          newTokens.push({
-          //                               currency,
-          //                               issuer,
-          //                               transactionHash: tx.hash,
-          //                               timestamp: txTimestamp,
-          //                               createdDate,
-          //                               transactionType,
-          //                               creationAge,
-          //                               action,
-          //                               amountToken,
-          //                               amountXrp,
-          //                          });
-          //                     }
-          //                }
-          //                if (newTokens.length > 0) {
-          //                     this.tokensSubject.next([...this.tokensSubject.value, ...newTokens]);
-          //                }
-          //           } catch (error) {
-          //                console.error('Error processing ledger:', error);
-          //           }
-          //      });
-          // } catch (error) {
-          //      console.error('Error subscribing to ledger:', error);
-          // }
-     }
-
      async getLastLedgerIndex(client: Client): Promise<number> {
           try {
                const response = await client.request({
@@ -531,14 +364,14 @@ export class XrplService {
           try {
                const feeResponse = await this.getTransactionFee(client);
                const baseFee = feeResponse || AppConstants.MIN_FEE;
-               const fee = Math.min(parseInt(baseFee) * 1.5, parseInt(AppConstants.MAX_FEE)).toString();
+               const fee = Math.min(Number.parseInt(baseFee) * 1.5, Number.parseInt(AppConstants.MAX_FEE)).toString();
                if (fee === '1.5') {
                     return AppConstants.MIN_FEE;
                }
                console.log(`Calculated transaction fee: ${fee} drops`);
                return fee;
           } catch (error: any) {
-               console.error('Error calculating transaciton fee:', error);
+               console.error('Error calculating transaction fee:', error);
                return AppConstants.MIN_FEE; // Fallback to minimum fee in case of error
           }
      }
@@ -620,8 +453,8 @@ export class XrplService {
                });
                return response;
           } catch (error: any) {
-               console.error('Error fetching account nft info:', error);
-               throw new Error(`Failed to fetch account nft info: ${error.message || 'Unknown error'}`);
+               console.error('Error fetching account nft offers:', error);
+               throw new Error(`Failed to fetch account nft offers: ${error.message || 'Unknown error'}`);
           }
      }
 
@@ -633,7 +466,7 @@ export class XrplService {
                });
                return response;
           } catch (error: any) {
-               if (error.data && error.data.error === 'objectNotFound') {
+               if (error.data?.error === 'objectNotFound') {
                     return []; // no offers exist
                }
                throw error;
@@ -648,7 +481,7 @@ export class XrplService {
                });
                return response;
           } catch (error: any) {
-               if (error.data && error.data.error === 'objectNotFound') {
+               if (error.data?.error === 'objectNotFound') {
                     return []; // no offers exist
                }
                throw error;
@@ -670,7 +503,7 @@ export class XrplService {
                     marker = resp.result.marker;
                } while (marker);
           } catch (err: any) {
-               if (err.data && err.data.error === 'objectNotFound') {
+               if (err.data?.error === 'objectNotFound') {
                     return []; // no offers exist
                }
                throw err;
@@ -831,7 +664,7 @@ export class XrplService {
                     } as GatewayBalancesResponse;
                }
 
-               return response as GatewayBalancesResponse;
+               return response;
           } catch (error: any) {
                console.warn('Error fetching gateway_balances:', error);
                // Still return a valid empty GatewayBalancesResponse
@@ -909,11 +742,11 @@ export class XrplService {
      async getMptByIssuanceId(client: Client, issuanceId: string, ledgerIndex: xrpl.LedgerIndex): Promise<MptInfoResponse> {
           try {
                // Cast to any to bypass xrpl's strict Request constraint
-               const response = (await client.request({
+               const response = await client.request({
                     command: 'mpt_holders',
                     mpt_issuance_id: issuanceId,
                     ledger_index: ledgerIndex,
-               } as any)) as MptInfoResponse;
+               } as any);
 
                return response;
           } catch (error: any) {

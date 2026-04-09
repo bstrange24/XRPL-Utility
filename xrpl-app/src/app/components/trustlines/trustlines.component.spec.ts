@@ -10,11 +10,10 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { DestinationDropdownService } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 
 // Minimal stubs mirroring style from send-xrp tests
 class ToastServiceStub {
@@ -138,7 +137,6 @@ describe('TrustlinesComponent', () => {
                     { provide: DestinationDropdownService, useClass: DestinationDropdownServiceStub },
                     { provide: ToastService, useClass: ToastServiceStub },
                     { provide: XrplCacheService, useClass: XrplCacheServiceStub },
-                    { provide: XrplTransactionExecutorService, useClass: XrplTransactionExecutorServiceStub },
                     { provide: ValidationService, useValue: { validate: () => Promise.resolve([]) } },
                     { provide: TrustlineCurrencyService, useClass: TrustlineCurrencyServiceStub },
                     { provide: XrplService, useClass: XrplServiceStub },

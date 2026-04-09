@@ -3,11 +3,11 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { OfferStoreService } from '../offer-store/offer-store.service';
 import { OfferTransactionViewModelService } from '../offer-transaction-view-model/offer-transaction-view-model.service';
-import { OfferCurrencyService } from '../../offer-currency/offer-currency.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
 import * as xrpl from 'xrpl';
 import BigNumber from 'bignumber.js';
 import { AppConstants } from '../../../core/app.constants';
+import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
 
 @Injectable({
      providedIn: 'root',

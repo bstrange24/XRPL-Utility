@@ -3,7 +3,6 @@ import * as xrpl from 'xrpl';
 import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
@@ -78,7 +77,6 @@ const TICKET_META: Record<TicketTxType, TicketMeta> = {
 export class TicketsOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
      private readonly toastService = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);

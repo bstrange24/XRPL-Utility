@@ -14,7 +14,6 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
@@ -22,7 +21,7 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
-import { TrustlineCurrencyService } from '../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { ActivatedRoute } from '@angular/router';
 import { XrplDateService } from '../../core/xrpl-date.service';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
@@ -62,7 +61,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly checkUtilService = inject(CheckUtilService);
@@ -308,13 +306,13 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                try {
                     switch (currentTab) {
                          case 'createCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('createCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCheckTx('createCheck', config);
                               break;
                          case 'cashCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('cashCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCheckTx('cashCheck', config);
                               break;
                          case 'cancelCheck':
-                              txResult = await this.checkTransactionOrchestrator.executeCredentialTx('cancelCheck', config);
+                              txResult = await this.checkTransactionOrchestrator.executeCheckTx('cancelCheck', config);
                               break;
                     }
                } catch (error: any) {

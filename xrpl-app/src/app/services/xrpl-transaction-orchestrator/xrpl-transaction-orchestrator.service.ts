@@ -112,7 +112,7 @@ export class XrplTransactionOrchestratorService {
                     console.error(`Transaction ${mode} failed: ${resultMsg}`, response);
 
                     if (response?.result) {
-                         (response.result as any).errorMessage = userMessage;
+                         response.result.errorMessage = userMessage;
                          this.txUiService.addTxResultSignal(response.result);
                     }
 

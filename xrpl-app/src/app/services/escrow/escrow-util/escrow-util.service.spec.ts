@@ -8,8 +8,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
-import { TrustlineCurrencyService } from '../../trustline-currency/trustline-util/trustline-currency.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
+import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
@@ -61,7 +60,6 @@ describe('EscrowUtilService', () => {
                     { provide: XrplDateService, useValue: mockXrplDateService },
                     { provide: XrplCacheService, useValue: { getTxCached: jasmine.createSpy().and.resolveTo({ result: { tx_json: { Sequence: 1 } } }) } },
                     { provide: TrustlineCurrencyService, useValue: { currencyItems: signal([]), issuerItems: signal([]) } },
-                    { provide: XrplTransactionExecutorService, useValue: {} },
                     { provide: XrplTransactionService, useValue: {} },
                     { provide: DownloadUtilService, useValue: {} },
                     { provide: CopyUtilService, useValue: {} },

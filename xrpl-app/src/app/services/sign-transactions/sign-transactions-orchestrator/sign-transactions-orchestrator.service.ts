@@ -6,7 +6,6 @@ import { TxEnvironmentService } from '../../transaction-environment/tx-environme
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
@@ -46,7 +45,6 @@ interface SignTransactionsConfig {
 export class SignTransactionsOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnv = inject(TxEnvironmentService);
      private readonly validator = inject(ValidationService);
-     private readonly executor = inject(XrplTransactionExecutorService);
      private readonly toast = inject(ToastService);
      private readonly utilsService = inject(UtilsService);
      private readonly txUiService = inject(TransactionUiService);

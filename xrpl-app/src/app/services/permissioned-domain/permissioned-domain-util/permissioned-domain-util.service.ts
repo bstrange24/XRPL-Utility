@@ -6,7 +6,6 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { XrplTransactionExecutorService } from '../../xrpl-transaction-executor/xrpl-transaction-executor.service';
 
 import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainStoreService } from '../permissioned-domain-store/permissioned-domain-store.service';
@@ -23,7 +22,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);

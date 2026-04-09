@@ -9,7 +9,6 @@ import { DownloadUtilService } from '../../services/utils/download-util/download
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { XrplTransactionExecutorService } from '../../services/xrpl-transaction-executor/xrpl-transaction-executor.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
@@ -55,7 +54,6 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly txExecutor = inject(XrplTransactionExecutorService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly permissionedDomainOrchestratorService = inject(PermissionedDomainOrchestratorService);

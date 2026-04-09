@@ -6,7 +6,7 @@ import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-in
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { EscrowStoreService } from '../../../../services/escrow/escrow-store/escrow-store.service';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
-import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TransactionDropdownService } from '../../../../services/transaction-dropdown/transaction-dropdown.service';

@@ -9,7 +9,7 @@ import { CurrencyStoreService } from '../../../../services/currency/currency-sto
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
-import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';

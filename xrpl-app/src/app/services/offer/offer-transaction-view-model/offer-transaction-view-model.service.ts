@@ -3,7 +3,7 @@ import { OfferActionTypes } from '../../../components/offer/constants/offer.type
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { OfferStoreService } from '../offer-store/offer-store.service';
-import { OfferCurrencyService } from '../../offer-currency/offer-currency.service';
+import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
 
 @Injectable({
      providedIn: 'root',

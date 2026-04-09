@@ -263,7 +263,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                const ops = operations as Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }>;
 
                // Parallel submission
-               const submissionResults = await this.xrplTransactionService.runWithConcurrencyLimit(ops, 3, async (op, index) => {
+               const submissionResults = await this.runWithConcurrencyLimit(ops, 3, async (op, index) => {
                     try {
                          config.flagValue = op.flagValue;
                          config.operation = op.operation;
@@ -381,7 +381,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Parallel submission
-               const submissionResults = await this.xrplTransactionService.runWithConcurrencyLimit<{ account: string }>(account.depositAuthAddresses, 3, async (entry, index) => {
+               const submissionResults = await this.runWithConcurrencyLimit<{ account: string }>(account.depositAuthAddresses, 3, async (entry, index) => {
                     const address = entry.account;
 
                     try {
@@ -471,6 +471,25 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
+     }
+
+     async runWithConcurrencyLimit<T>(items: T[], limit: number, handler: (item: T, index: number) => Promise<any>): Promise<any[]> {
+          const results: any[] = new Array(items.length);
+          let index = 0;
+
+          const workers = new Array(Math.min(limit, items.length)).fill(0).map(async () => {
+               while (index < items.length) {
+                    const currentIndex = index++;
+                    try {
+                         results[currentIndex] = await handler(items[currentIndex], currentIndex);
+                    } catch (err) {
+                         results[currentIndex] = { success: false, error: err };
+                    }
+               }
+          });
+
+          await Promise.all(workers);
+          return results;
      }
 
      handleSimulationSuccess(type: AccountConfigAction, config: any, hash?: string) {

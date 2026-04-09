@@ -6,7 +6,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../../../services/trustline-currency/trustline-util/trustline-currency.service';
+import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
