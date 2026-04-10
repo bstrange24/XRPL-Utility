@@ -53,7 +53,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
 
      hookWasmHex = signal<string>(''); // User pastes WASM hex here
      hookNamespace = signal<string>(''); // e.g., SHA-256 hex of a string like 'myHookNamespace'
-     // hookOn = signal<string>('0000000000000000'); // Default: trigger on all txns
      hookOn = signal<string>('0000000000000002');
      hookApiVersion = signal<number>(0); // Usually 0
      flags = signal<number>(0); // e.g., 1 for override
@@ -71,11 +70,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
           })),
           ...this.customDestinations(),
      ]);
-
-     // generateNamespace(seed: string) {
-     //      const hash = xrpl.sha256(seed);
-     //      this.hookNamespace.set(hash.toUpperCase());
-     // }
 
      isXahauNetwork(): boolean {
           // Logic to check current network URL contains 'xahau' or 'hooks-testnet'
@@ -104,7 +98,6 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
           if (wallet?.address === this.currentWallet()?.address) return;
 
           this.currentWallet.set(wallet);
-          // this.txUiService.currentWallet.set(wallet);
 
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
@@ -180,36 +173,11 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
                     }
 
                     // Construct tx (for create operation; adjust for update/delete)
-                    // const setHookTx = {
-                    //      TransactionType: 'SetHook',
-                    //      Account: wallet.classicAddress,
-                    //      Fee: env.fee,
-                    //      LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-                    //      Hooks: [
-                    //           {
-                    //                Hook: {
-                    //                     CreateCode: this.hookWasmHex().toUpperCase(),
-                    //                     HookOn: this.hookOn(),
-                    //                     HookNamespace: this.hookNamespace().toUpperCase(),
-                    //                     HookApiVersion: this.hookApiVersion(),
-                    //                     Flags: this.flags(),
-                    //                     // Add HookParameters/HookGrants if user inputs them (e.g., as array signals)
-                    //                },
-                    //           },
                     //      ],
-                    // };
 
-                    // const result = await this.txExecutor.setHook(env, setHookTx as any, env.wallet, env.client, {});
-
-                    // if (!result.success) {
-                    //      return this.txUiService.setError(`${result.error}`);
-                    // }
-
-                    // this.txUiService.setSuccess(this.xrplTxOptionsStore.isSimulateEnabled() ? 'Simulated hook set successfully!' : 'Hook set successfully!');
                } catch (error: any) {
                     this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
                } finally {
-                    // this.txUiService.spinner.set(false);
                }
           });
      }
@@ -226,9 +194,5 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      clearInputFields() {
           this.typedDestination.set('');
           this.selectedDestinationAddress.set('');
-          // this.txUiService.amountField.set('');
-          // this.txUiService.destinationTagField.set('');
-          // this.txUiService.invoiceIdField.set('');
-          // this.txUiService.sourceTagField.set('');
      }
 }

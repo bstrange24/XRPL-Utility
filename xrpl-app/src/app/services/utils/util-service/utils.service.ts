@@ -214,12 +214,10 @@ export class UtilsService {
           let regularKeyWalletSignTx: any = '';
           let useRegularKeyWalletSignTx = false;
           if (isRegularKeyAddress && !isMultiSign) {
-               console.log('Using Regular Key Seed for transaction signing');
                regularKeyWalletSignTx = await this.getWalletWithEncryptionAlgorithm(regularKeySeed, 'ed25519');
                if (regularKeyAddress !== regularKeyWalletSignTx.classicAddress) {
                     regularKeyWalletSignTx = await this.getWalletWithEncryptionAlgorithm(regularKeySeed, 'secp256k1');
                }
-               console.log('Wallet:', regularKeyWalletSignTx);
                useRegularKeyWalletSignTx = true;
           }
           return { useRegularKeyWalletSignTx, regularKeyWalletSignTx };
@@ -812,11 +810,6 @@ export class UtilsService {
                throw new Error(`Signer weight (${totalWeight}) is less than required quorum (${quorum})`);
           }
 
-          console.log('SignerList:', signerList);
-          console.log('Valid Signers:', validSigners);
-          console.log('Provided Signers:', signerAddresses);
-          console.log('Quorum:', quorum);
-
           // Adjust fee based on number of signers
           const feeDrops = Number(fee) * (1 + signerAddresses.length);
           tx.Fee = String(feeDrops);
@@ -830,15 +823,12 @@ export class UtilsService {
           delete preparedTx.Signers;
           delete preparedTx.TxnSignature;
 
-          console.log('PreparedTx before signing:', preparedTx);
-
           const signerBlobs: string[] = [];
 
           for (let i = 0; i < signerAddresses.length; i++) {
                let signerWallet = await this.getWalletWithEncryptionAlgorithm(signerSeeds[i], 'secp256k1');
 
                if (signerWallet.classicAddress !== signerAddresses[i]) {
-                    console.log('Seed mismatch with secp256k1. Trying ed25519');
                     signerWallet = await this.getWalletWithEncryptionAlgorithm(signerSeeds[i], 'ed25519');
                     if (signerWallet.classicAddress !== signerAddresses[i]) {
                          throw new Error(`Seed mismatch for signer ${signerAddresses[i]}`);
@@ -846,7 +836,6 @@ export class UtilsService {
                }
 
                const signed = signerWallet.sign(preparedTx, true); // true = multisign
-               console.log('Signed Transaction:', signed);
 
                if (signed.tx_blob) {
                     signerBlobs.push(signed.tx_blob);
@@ -857,13 +846,8 @@ export class UtilsService {
                throw new Error('No valid signatures collected for multisign transaction');
           }
 
-          console.log('PreparedTx after signing:', preparedTx);
-          console.log('signerBlobs:', signerBlobs);
-
           // Combine all signatures into one final multisigned transaction
           const multisignedTxBlob = xrpl.multisign(signerBlobs);
-
-          console.log('Final multisignedTxBlob:', multisignedTxBlob);
 
           // Decode the multisigned transaction to get signers
           const decodedMultisigned = xrpl.decode(multisignedTxBlob) as any;

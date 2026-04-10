@@ -137,7 +137,6 @@ export class XrplCacheService {
           const client = await this.getClient(() => this.xrplService.getClient());
 
           if (forceRefresh) {
-               console.log('Invalidating cache for account data');
                this.invalidate(infoKey);
                this.invalidate(objectsKey);
           }
@@ -326,7 +325,6 @@ export class XrplCacheService {
      /** Pretty-print the entire cache – call it anywhere! */
      debug(): void {
           if (this.cache.size === 0) {
-               console.log('XrplCacheService -> cache is empty');
                return;
           }
 
@@ -336,9 +334,6 @@ export class XrplCacheService {
                const ageMs = Date.now() - entry.timestamp;
                const ageSec = (ageMs / 1000).toFixed(1);
 
-               console.log(`Key: ${key}`);
-               console.log(`   Age: ${ageSec}s ago`);
-               console.log(`   Data:`, entry.data);
                console.groupEnd();
           }
 

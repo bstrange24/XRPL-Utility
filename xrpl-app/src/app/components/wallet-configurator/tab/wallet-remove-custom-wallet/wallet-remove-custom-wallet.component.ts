@@ -38,7 +38,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      }
 
      onCustomWalletSelected(event: any) {
-          console.log('[REMOVE DROPDOWN] Selection event:', event);
 
           let address: string | undefined;
 
@@ -51,9 +50,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           if (address?.trim()) {
                const trimmed = address.trim();
                this.walletsStoreService.setField('selectedAddress', trimmed);
-               console.log('[REMOVE CHILD] Stored address:', trimmed);
           } else {
-               console.warn('[REMOVE] No valid address extracted from event');
           }
      }
 
@@ -64,7 +61,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
                name: dest.name,
                address: dest.address,
           }));
-          console.log('customWallets', customWallets);
           return customWallets;
      });
 
@@ -77,8 +73,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
 
           const label = custom?.name || this.walletsUtilService.truncateAddress(addr);
 
-          console.log('addr: ', addr);
-          console.log('label: ', label);
           return {
                id: addr,
                name: label, // ✅ satisfies base

@@ -1,4 +1,4 @@
-import { Component, inject, effect, signal, computed, ViewContainerRef, ChangeDetectionStrategy, ChangeDetectorRef, TemplateRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, effect, signal, computed, ViewContainerRef, ChangeDetectionStrategy, TemplateRef, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -23,7 +23,6 @@ export class CancelOfferTabComponent {
      public readonly txUiService = inject(TransactionUiService);
      private readonly overlay = inject(Overlay);
      private readonly viewContainerRef = inject(ViewContainerRef);
-     private readonly cdr = inject(ChangeDetectorRef);
 
      private offerOverlayRef: OverlayRef | null = null;
 

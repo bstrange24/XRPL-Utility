@@ -320,7 +320,6 @@ export class EscrowUtilService {
      validateEscrowCreate(input: EscrowValidationInput): EscrowValidationResult {
           const { finishAfter, cancelAfter, condition, currentRippleTime } = input;
           const errors: string[] = [];
-          console.log('input: ', input);
 
           const hasFinish = finishAfter !== null && finishAfter !== undefined;
           const hasCancel = cancelAfter !== null && cancelAfter !== undefined;

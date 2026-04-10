@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -54,7 +54,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      public readonly ticketsUtilService = inject(TicketsUtilService);
      public readonly ticketsViewModelService = inject(TicketsViewModelService);
      public readonly ticketStore = inject(TicketStore);
-     public readonly cdr = inject(ChangeDetectorRef);
 
      readonly menuTabs: TabConfig[] = TICKET_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = TICKET_TAB_META;

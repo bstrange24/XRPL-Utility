@@ -772,7 +772,6 @@ export class ValidationService {
                validators: [
                     this.walletCredentialRequired(),
                     ctx => {
-                         console.log('ctx: ', ctx['inputs']['destination']);
                          this.isValidAddress(ctx['inputs']['destination']);
                          return null;
                     },
@@ -941,7 +940,6 @@ export class ValidationService {
 
                     ctx => {
                          const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
-                         console.log('Credentials: ', credentials);
 
                          if (credentials.length === 0 || credentials.length > 10) {
                               return `Exactly 1–10 credentials required (got ${credentials.length})`;

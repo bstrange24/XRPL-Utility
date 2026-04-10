@@ -44,10 +44,8 @@ export class XrplTransactionService extends PerformanceBaseComponent {
                const multiSignFee = String((signerAddresses.length + 1) * Number(fee));
                tx.Fee = multiSignFee;
 
-               console.info(`tx`, tx);
                return result.signedTx;
           } else {
-               console.info(`tx`, tx);
                const preparedTx = await client.autofill(tx);
                return useRegularKeyWalletSignTx ? regularKeyWalletSignTx.sign(preparedTx) : wallet.sign(preparedTx);
           }
@@ -73,10 +71,8 @@ export class XrplTransactionService extends PerformanceBaseComponent {
                const multiSignFee = String((signerAddresses.length + 1) * Number(fee));
                tx.Fee = multiSignFee;
 
-               console.info(`tx`, tx);
                return result.signedTx;
           } else {
-               console.info(`tx`, tx);
                const txToSign = noAutofill ? tx : await client.autofill(tx);
                return useRegularKeyWalletSignTx ? regularKeyWalletSignTx.sign(txToSign) : wallet.sign(txToSign);
           }
@@ -84,24 +80,20 @@ export class XrplTransactionService extends PerformanceBaseComponent {
 
      // HELPER: Submit or simulate transaction
      async submitTransaction(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
-          console.log(`[REAL] Submitting transaction ${signedTx.hash} to network`);
           return await client.submitAndWait(signedTx.tx_blob);
      }
 
      async submitTransaction1(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
-          console.log(`[REAL] Submitting transaction ${signedTx.hash} to network`);
           return await client.submit(signedTx.tx_blob);
      }
 
      async simulateTransaction(client: xrpl.Client, txJson: any): Promise<any> {
-          console.log('[SIMULATE] Simulating transaction:', txJson);
           try {
                const simulation = await client.request({
                     command: 'simulate',
                     tx_json: txJson,
                });
 
-               console.log('[SIMULATE] Result:', simulation);
                return simulation;
           } catch (err) {
                console.error('[SIMULATE] Error:', err);

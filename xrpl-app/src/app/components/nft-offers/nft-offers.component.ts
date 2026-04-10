@@ -249,7 +249,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           }
 
           if (!env) throw new Error('Unable to get environment.');
-          console.log('Prepared environment:', env);
 
           if (currentTab === 'buyNft') {
                const sellOffer = env.nftSellOffersObject.result?.offers || [];
@@ -265,10 +264,8 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                }
 
                const matchingOffers = sellOffer.filter(o => o.amount && o.flags === 1); // 1 = tfSellNFToken
-               console.log('Matching Offers:', matchingOffers);
 
                const selectedOffer = validOffers[0];
-               console.log('First sell offer:', validOffers[0]);
 
                if (selectedOffer?.Destination) {
                     this.txUiService.setError(`This NFT is only purchasable by: ${selectedOffer.Destination}`);

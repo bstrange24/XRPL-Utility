@@ -1,16 +1,14 @@
-import { Component, OnInit, AfterViewInit, ChangeDetectorRef, ElementRef, ViewChild, inject, afterRenderEffect, Injector, TemplateRef, ViewContainerRef, computed, signal, ChangeDetectionStrategy, DestroyRef, effect } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, inject, Injector, TemplateRef, ViewContainerRef, computed, signal, ChangeDetectionStrategy, DestroyRef, effect } from '@angular/core';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { OverlayModule, Overlay, OverlayRef } from '@angular/cdk/overlay';
+import { OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
-import { MPTokenIssuanceCreate } from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { UtilsService } from '../../services/utils/util-service/utils.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -22,22 +20,12 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { DestinationDropdownService } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { Subject, takeUntil } from 'rxjs';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { WalletGeneratorService } from '../../services/wallets/generator/wallet-generator.service';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { TooltipLinkComponent } from '../shared/tooltip-link/tooltip-link.component';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem, SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
-import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -122,7 +110,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
      escrowConditionField = signal<string>('');
      escrowFulfillmentField = signal<string>('');
 
-     private destroy$ = new Subject<void>();
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
@@ -178,8 +165,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
      invoiceIdField = '';
      private lastPaymentTx = '';
      private lastTxResult = '';
-     private issuerFieldSubject = new Subject<void>();
-     private destinationInputSubject = new Subject<string>();
      checkExpirationTime: string = 'seconds';
      expirationTimeField: string = '';
      ticketSequence: string = '';
@@ -274,26 +259,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           ...this.customDestinations(),
      ]);
 
-     // issuerItems = computed(() => {
-     //      const currentIssuer = this.trustlineCurrency.getSelectedIssuer();
-     //      return this.issuers().map((iss, i) => ({
-     //           id: iss.address,
-     //           display: iss.name || `Issuer ${i + 1}`,
-     //           secondary: iss.address.slice(0, 7) + '...' + iss.address.slice(-7),
-     //           isCurrentAccount: false,
-     //           isCurrentCode: false,
-     //           isCurrentToken: iss.address === currentIssuer, // This one!
-     //      }));
-     // });
-
-     // selectedIssuerAddress = computed(() => this.trustlineCurrency.getSelectedIssuer());
-
-     // selectedIssuerItem = computed(() => {
-     //      const addr = this.trustlineCurrency.getSelectedIssuer(); // ← read directly from service
-     //      if (!addr) return null;
-     //      return this.issuerItems().find((item: { id: string }) => item.id === addr) || null;
-     // });
-
      timeUnitItems = computed(() => [
           { id: 'seconds', display: 'Seconds' },
           { id: 'minutes', display: 'Minutes' },
@@ -326,27 +291,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           this.refreshStoredIssuers();
           this.loadCustomDestinations();
 
-          // // Subscribe once
-          // this.trustlineCurrency.currencies$.subscribe(currencies => {
-          //      this.currencies.set(currencies);
-          //      if (currencies.length > 0 && !this.currencyFieldDropDownValue()) {
-          //           this.currencyFieldDropDownValue.set(currencies[0]);
-          //           this.trustlineCurrency.selectCurrency(this.currencyFieldDropDownValue(), this.currentWallet().address);
-          //      }
-          // });
-
-          // this.trustlineCurrency.issuers$.subscribe(issuers => {
-          //      this.issuers.set(issuers);
-          // });
-
-          // this.trustlineCurrency.selectedIssuer$.subscribe(issuer => {
-          //      this.issuerFields.set(issuer);
-          // });
-
-          // this.trustlineCurrency.balance$.subscribe(balance => {
-          //      this.currencyBalanceField.set(balance); // ← This is your live balance!
-          // });
-
           this.currencyFieldDropDownValue.set('XRP');
      }
 
@@ -361,7 +305,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
 
      private selectWallet(wallet: Wallet): void {
           this.currentWallet.set({ ...wallet });
-          //this.txUiService.currentWallet.set({ ...wallet });
           this.xrplCache.invalidateAccountCache(wallet.address);
 
           // Prevent self as destination
@@ -426,8 +369,8 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
 
-          if (Object.keys(this.knownTrustLinesIssuers).length > 0 && this.issuerFields() === '' && this.currencyFieldDropDownValue() !== 'XRP') {
-               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers)[0]);
+          if (Object.keys(this.knownTrustLinesIssuers()).length > 0 && this.issuerFields() === '' && this.currencyFieldDropDownValue() !== 'XRP') {
+               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers())[0]);
           }
 
           this.clearFields(true);
@@ -452,82 +395,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     if (errors.length > 0) {
                          return this.txUiService.setError(errors.join('\n• '));
                     }
-
-                    // const firewallTx: Firewall = {
-                    //      TransactionType: 'Firewall',
-                    //      Account: wallet.classicAddress,
-                    //      PublicKey: '',
-                    //      BackupAccount: this.destinationField,
-                    //      TimePeriod: '',
-                    //      TimePeriodStart: '',
-                    //      Amount: '',
-                    //      TotalOut: '',
-                    //      Fee: fee,
-                    //      Flags: v_flags,
-                    //      LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
-                    // };
-
-                    // const firewallWhitelistTx: FirewallWhitelist = {
-                    //      TransactionType: 'FirewallWhitelist',
-                    //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                    //      OwnerNode: '',
-                    //      PreviousTxnID: '',
-                    //      PreviousTxnLgrSeq: '',
-                    // };
-
-                    // Prepare data structure
-                    // const data = {
-                    //      sections: [{}],
-                    // };
-
-                    // // Filter MPT-related objects
-                    // const mptObjects = accountObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPTokenIssuance' || obj.LedgerEntryType === 'MPToken');
-                    // if (mptObjects.length <= 0) {
-                    //      data.sections.push({
-                    //           title: 'Firewall Details',
-                    //           openByDefault: true,
-                    //           content: [{ key: 'Status', value: `No Firewall found for <code>${wallet.classicAddress}</code>` }],
-                    //      });
-                    // } else {
-                    //      // Sort by Sequence (oldest first)
-                    //      const sortedMPT = [...mptObjects].sort((a, b) => {
-                    //           const seqA = (a as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                    //           const seqB = (b as any).Sequence ?? Number.MAX_SAFE_INTEGER;
-                    //           return seqA - seqB;
-                    //      });
-
-                    //      data.sections.push({
-                    //           title: `Firewall (${mptObjects.length})`,
-                    //           openByDefault: true,
-                    //           subItems: sortedMPT.map((mpt, counter) => {
-                    //                const { LedgerEntryType, PreviousTxnID, index } = mpt;
-                    //                // TicketSequence and Flags may not exist on all AccountObject types
-                    //                const ticketSequence = (mpt as any).TicketSequence;
-                    //                const flags = (mpt as any).Flags;
-                    //                const mptIssuanceId = (mpt as any).mpt_issuance_id || (mpt as any).MPTokenIssuanceID;
-                    //                return {
-                    //                     key: `MPT ${counter + 1} (ID: ${index.slice(0, 8)}...)`,
-                    //                     openByDefault: false,
-                    //                     content: [
-                    //                          { key: 'MPT Issuance ID', value: `<code>${mptIssuanceId}</code>` },
-                    //                          { key: 'Ledger Entry Type', value: LedgerEntryType },
-                    //                          { key: 'Previous Txn ID', value: `<code>${PreviousTxnID}</code>` },
-                    //                          ...(ticketSequence ? [{ key: 'Ticket Sequence', value: String(ticketSequence) }] : []),
-                    //                          ...(flags !== undefined ? [{ key: 'Flags', value: this.utilsService.getMptFlagsReadable(Number(flags)) }] : []),
-                    //                          // Optionally display custom fields if present
-                    //                          ...((mpt as any)['MPTAmount'] ? [{ key: 'MPTAmount', value: String((mpt as any)['MPTAmount']) }] : []),
-                    //                          ...((mpt as any)['MPTokenMetadata'] ? [{ key: 'MPTokenMetadata', value: xrpl.convertHexToString((mpt as any)['MPTokenMetadata']) }] : []),
-                    //                          ...((mpt as any)['MaximumAmount'] ? [{ key: 'MaximumAmount', value: String((mpt as any)['MaximumAmount']) }] : []),
-                    //                          ...((mpt as any)['OutstandingAmount'] ? [{ key: 'OutstandingAmount', value: String((mpt as any)['OutstandingAmount']) }] : []),
-                    //                          ...((mpt as any)['TransferFee'] ? [{ key: 'TransferFee', value: String((mpt as any)['TransferFee']) }] : []),
-                    //                          ...((mpt as any)['MPTIssuanceID'] ? [{ key: 'MPTIssuanceID', value: String((mpt as any)['MPTIssuanceID']) }] : []),
-                    //                     ],
-                    //                };
-                    //           }),
-                    //      });
-                    // }
-
-                    // this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Error in getFirewallDetails:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -545,68 +412,20 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
-
-                    // const errors = await this.validateInputs(inputs, 'createFirewall');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    // }
-
-                    // const timePeriod = this.utilsService.addTime(this.finishTimePeriodField(), this.finishTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
-                    // const timePeriodStart = this.utilsService.addTime(this.cancelTimePeriodField(), this.cancelTimePeriodField() as 'seconds' | 'minutes' | 'hours' | 'days');
-                    console.log(`timePeriodUnit: ${this.finishTimePeriodUnit()} timePeriodStartUnit: ${this.cancelTimePeriodUnit()}`);
-                    // console.log(`timePeriod: ${this.utilsService.convertXRPLTime(timePeriod)} timePeriodStart: ${this.utilsService.convertXRPLTime(timePeriodStart)}`);
-                    console.log(`Total Out: `, this.totalOutField);
-                    console.log(`Amount: `, this.amountField);
-                    console.log(`Backup account: `, this.backupAccountField);
-                    console.log(`Wallet pubkey: `, wallet.publicKey);
-
-                    if (1 == 1) {
-                         return this.txUiService.setError('Poopy');
-                    }
 
                     let v_flags = 0;
 
-                    const mPTokenIssuanceCreateTx: MPTokenIssuanceCreate = {
+                    const mPTokenIssuanceCreateTx: xrpl.MPTokenIssuanceCreate = {
                          TransactionType: 'MPTokenIssuanceCreate',
                          Account: wallet.classicAddress,
-                         // AssetClass: 'CTZMPT',
                          MaximumAmount: '0',
                          Fee: fee,
                          Flags: v_flags,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                     };
-
-                    // const firewallSetTx: FirewallSet = {
-                    //      TransactionType: 'FirewallSet',
-                    //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                    //      PublicKey: 'EDPUBLICKEY',
-                    //      BackupAccount: 'rY6CEmcZiJXp5L4LDJq3gZFujU6Wwn7xH3',
-                    //      TimePeriod: 86400,
-                    //      Amount: '1000000000',
-                    // };
-
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenIssuanceCreateTx, wallet, accountInfo);
-
-                    // const result = await this.txExecutor.createFirewall(mPTokenIssuanceCreateTx, wallet, client, {
-                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
-                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
-                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
-                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    // });
-                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    // }
-
-                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -622,14 +441,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
-
-                    // const errors = await this.validateInputs(inputs, 'modifyFirewall');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    // }
-
                     const mPTokenAuthorizeTx: xrpl.MPTokenAuthorize = {
                          TransactionType: 'MPTokenAuthorize',
                          Account: wallet.address,
@@ -637,35 +449,8 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                          Fee: fee,
                     };
-
-                    // const firewallSetUpdateTx: FirewallSet = {
-                    //      TransactionType: 'FirewallSet',
-                    //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                    //      TimePeriod: 86400,
-                    //      Amount: '1000000000',
-                    //      Signature: '',
-                    // };
-
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenAuthorizeTx, wallet, accountInfo);
-
-                    // const result = await this.txExecutor.modifyFirewall(mPTokenAuthorizeTx, wallet, client, {
-                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
-                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
-                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
-                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    // });
-                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    // }
-
-                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in modifyFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -681,27 +466,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
-
-                    // const errors = await this.validateInputs(inputs, 'authorizeFirewall');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    // }
-
-                    // Check if destination can hold the MPT
-                    // if (!destObjects || !destObjects.result || !destObjects.result.account_objects) {
-                    //      return this.txUiService.setError(`Unable to fetch account objects for destination ${this.destinationField()}`);
-                    // }
-                    // const mptTokens = destObjects.result.account_objects.filter((obj: any) => obj.LedgerEntryType === 'MPToken');
-                    // console.debug(`Destination MPT Tokens:`, mptTokens);
-
-                    // const authorized = mptTokens.some((obj: any) => obj.MPTokenIssuanceID === '');
-
-                    // if (!authorized) {
-                    //      return this.txUiService.setError(`Destination ${this.destinationField()} is not authorized to receive this MPT (issuance ID ${''}).`);
-                    // }
-
                     const sendMptPaymentTx: xrpl.Payment = {
                          TransactionType: 'Payment',
                          Account: wallet.classicAddress,
@@ -714,43 +479,12 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                          Fee: fee,
                     };
 
-                    // let firewallWhitelistSetAuthorizeTx:FirewallWhitelistSet;
                     if (authorizeFlag === 'Y') {
-                         // firewallWhitelistSetAuthorizeTx = {
-                         //      TransactionType: 'FirewallWhitelistSet',
-                         //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                         //      Authorize: '',
-                         //      Signature: '',
-                         // };
                     } else {
-                         // firewallWhitelistSetAuthorizeTx = {
-                         //      TransactionType: 'FirewallWhitelistSet',
-                         //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                         //      Unauthorize: '',
-                         //      Signature: '',
-                         // };
                     }
 
                     // Optional fields
                     await this.setTxOptionalFields(client, sendMptPaymentTx, wallet, accountInfo);
-
-                    // const result = await this.txExecutor.authorizeFlag(sendMptPaymentTx, wallet, client, {
-                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
-                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
-                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
-                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    // });
-                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    // }
-
-                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in authorizeFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -766,14 +500,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
                     const [{ accountInfo, accountObjects }, trustLines, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplService.getAccountLines(client, wallet.classicAddress, 'validated', ''), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
                     const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
-
-                    // const errors = await this.validateInputs(inputs, 'deleteFirewall');
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.length === 1 ? `Error:\n${errors.join('\n')}` : `Multiple Error's:\n${errors.join('\n')}`);
-                    // }
-
                     const mPTokenIssuanceDestroyTx: xrpl.MPTokenIssuanceDestroy = {
                          TransactionType: 'MPTokenIssuanceDestroy',
                          Account: wallet.classicAddress,
@@ -781,33 +508,8 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
                          Fee: fee,
                     };
-
-                    // const firewallDeleteTx: FirewallDelete = {
-                    //      TransactionType: 'FirewallDelete',
-                    //      Account: 'rU9XRmcZiJXp5J1LDJq8iZFujU6Wwn9cV9',
-                    //      Signature: '',
-                    // };
-
                     // Optional fields
                     await this.setTxOptionalFields(client, mPTokenIssuanceDestroyTx, wallet, accountInfo);
-
-                    // const result = await this.txExecutor.deleteFirewall(mPTokenIssuanceDestroyTx, wallet, client, {
-                    //      useMultiSign: this.xrplTxOptionsStore.useMultiSign(),
-                    //      isRegularKeyAddress: this.accountConfiguratorStoreService.isRegularKeyAddress(),
-                    //      // isRegularKeyAddress: this.txUiService.isRegularKeyAddress(),
-                    //      // regularKeyAddress: this.txUiService.regularKeyAddress(),
-                    //      // regularKeySeed: this.txUiService.regularKeySeed(),
-                    //      // multiSignAddress: this.txUiService.multiSignAddress(),
-                    //      // multiSignSeeds: this.txUiService.multiSignSeeds(),
-                    // });
-                    // if (!result.success) return this.txUiService.setError(`${result.error}`);
-
-                    // if (this.currencyFieldDropDownValue() !== 'XRP' && this.currencyFieldDropDownValue() !== 'MPT') {
-                    //      this.onCurrencyChange(this.currencyFieldDropDownValue());
-                    // }
-
-                    // // this.txUiService.successMessage = this.txUiService.isSimulateEnabled() ? 'Simulated Escrow finished successfully!' : 'Finished escrow successfully!';
-                    // await this.refreshAfterTx(client, wallet, null, false);
                } catch (error: any) {
                     console.error('Error in createTimeBasedEscrow:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
@@ -863,7 +565,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
 
      private async setTxOptionalFields(client: xrpl.Client, firewallTx: any, wallet: xrpl.Wallet, accountInfo: any) {
           if (this.xrplTxOptionsStore.isTicket()) {
-               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
                const ticket = false;
                if (ticket) {
                     const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
@@ -871,84 +572,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     this.utilsService.setTicketSequence(firewallTx, ticket, true);
                }
           }
-
-          // if (this.txUiService.isMemoEnabled() && this.txUiService.memoField()) {
-          //      this.utilsService.setMemoField(firewallTx, this.txUiService.memoField());
-          // }
-
-          // if (this.txUiService.destinationTagField()) {
-          //      this.utilsService.setDestinationTag(firewallTx, this.txUiService.destinationTagField());
-          // }
      }
-
-     // private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-     //      const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-     //      // this.getExistingEscrows(accountObjects, wallet.classicAddress);
-     //      // this.getExistingMpts(accountObjects, wallet.classicAddress);
-     //      // this.getExistingIOUs(accountObjects, wallet.classicAddress);
-     //      // this.getExpiredOrFulfilledEscrows(client, accountObjects, wallet.classicAddress);
-     //      // this.loadAllEscrows(accountObjects, wallet.classicAddress);
-
-     //      destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-     //      if (addDest) this.addNewDestinationFromUser(destination || '');
-     //      // this.refreshUiState(wallet, accountInfo, accountObjects);
-     // }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(
-     //           client,
-     //           addresses, // only the addresses to target
-     //           (updatedList, newCurrent) => {
-     //                this.currentWallet.set({ ...newCurrent });
-     //           }
-     //      );
-     // }
-
-     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-     //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
-     //           this.currentWallet.set({ ...newCurrent });
-     //      });
-     // }
-
-     // private refreshUiState(wallet: xrpl.Wallet, accountInfo: any, accountObjects: any): void {
-     //      // Update multi-sign & regular key flags
-     //      const hasRegularKey = !!accountInfo.result.account_data.RegularKey;
-     //      this.txUiService.regularKeySigningEnabled.set(hasRegularKey);
-
-     //      // Update service state
-     //      // this.txUiService.ticketArray.set(this.utilsService.getAccountTickets(accountObjects));
-
-     //      const { signerAccounts, signerQuorum } = this.utilsService.checkForSignerAccounts(accountObjects);
-     //      const hasSignerList = signerAccounts?.length > 0;
-     //      this.txUiService.signerQuorum.set(signerQuorum);
-     //      const checkForMultiSigner = signerAccounts?.length > 0;
-     //      checkForMultiSigner ? this.setupMultiSignersConfiguration(wallet) : this.clearMultiSignersConfiguration();
-
-     //      this.txUiService.multiSigningEnabled.set(hasSignerList);
-     //      if (hasSignerList) {
-     //           const entries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-     //           this.txUiService.signers.set(entries);
-     //      }
-
-     //      const rkProps = this.utilsService.setRegularKeyProperties(accountInfo.result.account_data.RegularKey, accountInfo.result.account_data.Account) || { regularKeyAddress: '', regularKeySeed: '' };
-
-     //      this.txUiService.regularKeyAddress.set(rkProps.regularKeyAddress);
-     //      this.txUiService.regularKeySeed.set(rkProps.regularKeySeed);
-     // }
-
-     // private setupMultiSignersConfiguration(wallet: xrpl.Wallet): void {
-     //      const signerEntries = this.storageService.get(`${wallet.classicAddress}signerEntries`) || [];
-     //      this.txUiService.signers.set(signerEntries);
-     //      this.txUiService.multiSignAddress.set(signerEntries.map((e: { Account: any }) => e.Account).join(',\n'));
-     //      this.txUiService.multiSignSeeds.set(signerEntries.map((e: { seed: any }) => e.seed).join(',\n'));
-     // }
-
-     // private clearMultiSignersConfiguration(): void {
-     //      this.txUiService.signerQuorum.set(0);
-     //      this.txUiService.multiSignAddress.set('No Multi-Sign address configured for account');
-     //      this.txUiService.multiSignSeeds.set('');
-     //      this.storageService.removeValue('signerEntries');
-     // }
 
      ensureDefaultNotSelected() {
           const currentAddress = this.currentWallet().address;
@@ -988,8 +612,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                knownWhitelistAddress[this.newWhitelistAddress] = this.newWhitelistAddress;
                this.storageService.setKnownWhitelistAddress('knownWhitelistAddress', knownWhitelistAddress);
 
-               // this.updateWhitelistAddress();
-               // this.txUiService.setSuccess(`Added ${this.newWhitelistAddress} to Whitelist accounts`);
                this.newWhitelistAddress = '';
           } else {
                this.txUiService.setError('Currency code and issuer address are required');
@@ -1004,22 +626,11 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     delete knownWhitelistAddress[this.whitelistAddressToRemove];
                     this.storageService.setKnownWhitelistAddress('knownWhitelistAddress', knownWhitelistAddress);
                }
-               // this.txUiService.setSuccess(`Removed ${this.whitelistAddressToRemove} from the Whitelist accounts`);
-               // this.updateWhitelistAddress();
                this.whitelistAddressToRemove = '';
           } else {
                this.txUiService.setError('Select a whitelist address to remove');
           }
      }
-
-     // private updateWhitelistAddress() {
-     //      const t = this.storageService.getKnownWhitelistAddress('knownWhitelistAddress') || {};
-     //      this.whitelistAddresses = t ? Object.keys(t) : [];
-     //      this.txUiService.setSuccess(`whitelistAddresses ${this.whitelistAddresses}`);
-
-     //      // merge whitelist into destinations
-     //      this.destinations = [...new Set([...Object.values(this.knownDestinations), ...this.whitelistAddresses])].map(address => ({ address }));
-     // }
 
      private comineWhiteListDestiationAddresses(storedDestinations: { [key: string]: string }, knownWhitelistAddress: { [key: string]: string }) {
           const convertedDestinations = Object.entries(storedDestinations)
@@ -1039,12 +650,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           };
           return combined;
      }
-
-     // copyFirewallID(id: string) {
-     //      navigator.clipboard.writeText(id).then(() => {
-     //           this.txUiService.showToastMessage('MPT Issuance ID copied!');
-     //      });
-     // }
 
      updateInfoMessage(): void {
           if (!this.currentWallet()?.address) {
@@ -1097,11 +702,9 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           this.selectedTicket = '';
           this.selectedSingleTicket = '';
           this.isTicket = false;
-          // this.isTicketEnabled = false;
      }
 
      onCurrencyChange(currency: string) {
-          // this.trustlineCurrency.selectCurrency(currency, this.currentWallet().address);
           this.currencyChangeTrigger.update(n => n + 1); // ← forces dropdown reset
      }
 
@@ -1122,16 +725,14 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     });
                }
           }
-          // Optional: sort by currency
           issuers.sort((a: IssuerItem, b: IssuerItem) => a.name.localeCompare(b.name));
           this.storedIssuers.set(issuers);
      }
 
      private updateCurrencies() {
           // Get all currencies except XRP
-          const allCurrencies = Object.keys(this.knownTrustLinesIssuers);
+          const allCurrencies = Object.keys(this.knownTrustLinesIssuers());
           const filtered = allCurrencies.filter(c => c !== 'XRP');
-          // allCurrencies.push('MPT');
 
           // Sort alphabetically
           const sorted = filtered.sort((a, b) => a.localeCompare(b));
@@ -1139,7 +740,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
 
           // AUTO-SELECT FIRST CURRENCY — SAFE WAY
           if (sorted.length > 0) {
-               // Only set if nothing is selected OR current selection is invalid/removed
                const shouldSelectFirst = !this.currencyFieldDropDownValue() || !sorted.includes(this.currencyFieldDropDownValue());
 
                if (shouldSelectFirst) {

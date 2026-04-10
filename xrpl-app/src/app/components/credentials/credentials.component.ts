@@ -246,7 +246,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           // Encode credential type
           const credentialTypeHex = xrpl.convertStringToHex(selected.CredentialType ?? '').toUpperCase();
-          console.info(`Raw credential_type: ${selected.CredentialType ?? ''}, Encoded: ${credentialTypeHex}`);
 
           if (credentialTypeHex.length % 2 !== 0 || !CREDENTIAL_REGEX.test(credentialTypeHex)) {
                this.toastService.error('Credential type must be 128 characters as hexadecimal.', AppConstants.TOAST.ERROR);
@@ -263,7 +262,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                ledger_index: 'validated',
           };
 
-          console.info('Looking up credential...', ledgerEntryRequest);
           this.txUiService.setTxResultSignal(ledgerEntryRequest);
 
           let xrplResponse;
@@ -272,7 +270,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                xrplResponse = await client.request(ledgerEntryRequest as any);
           } catch (error: any) {
                if (error.data?.error === 'entryNotFound') {
-                    console.info('Credential was not found');
                     this.txUiService.setTxResultSignal(error.data);
                     this.toastService.error('Credential not found.', AppConstants.TOAST.ERROR);
                     return false;
@@ -285,27 +282,21 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           this.txUiService.setTxResultSignal(xrplResponse.result);
 
           const credential = (xrplResponse.result as any).node;
-          console.info('Found credential:', credential);
 
           // Accepted check
           if (!(credential.Flags & AppConstants.LSF_ACCEPTED)) {
-               console.info('Credential is not accepted.');
                this.toastService.error('Credential is not accepted.', AppConstants.TOAST.ERROR);
                return false;
           }
 
           if (credential.Expiration) {
                if (this.xrplDateService.isExpired(credential.Expiration, ledgerInfo.currentRippleTime)) {
-                    console.info('CCredential is verified but has expired.');
                     this.toastService.error('Credential is verified but has expired.', AppConstants.TOAST.ERROR);
                     return false;
                }
 
                const expirationISO = this.xrplDateService.rippleToISO(credential.Expiration);
-               console.info(`Credential expires at: ${expirationISO}`);
           }
-
-          console.info('Credential is verified.');
 
           // this.txUiService.setSuccess(this.txUiService.result());
           this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);

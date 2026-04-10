@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, AfterViewInit } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';

@@ -52,7 +52,6 @@ export class ConditionalEscrowComponent extends EscrowBaseComponent {
      }
 
      generateCondition(): { condition: string; fulfillment: string } {
-          console.log('Generating a cryptographic condition and fulfillment for XRPL escrow');
 
           // Use Web Crypto API to generate 32 random bytes
           const preimage = new Uint8Array(32);
@@ -67,9 +66,6 @@ export class ConditionalEscrowComponent extends EscrowBaseComponent {
 
           // Get the fulfillment (preimage) in hexadecimal, to be kept secret
           const fulfillment_hex = fulfillment.serializeBinary().toString('hex').toUpperCase();
-
-          console.log('Condition:', condition);
-          console.log('Fulfillment (keep secret until ready to finish escrow):', fulfillment_hex);
 
           return { condition, fulfillment: fulfillment_hex };
      }
