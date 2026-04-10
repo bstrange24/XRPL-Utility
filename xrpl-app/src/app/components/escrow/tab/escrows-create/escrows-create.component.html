@@ -87,11 +87,11 @@
 
 <!-- Toggles -->
 <div class="form-row">
-     <div class="form-group">
-          <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.checked)"> Set Escrow Finish After Time </mat-slide-toggle>
+     <div class="switch-group">
+          <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.checked)">Set Escrow Finish After Time</mat-slide-toggle>
      </div>
-     <div class="form-group">
-          <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.checked)"> Set Escrow Cancel After Time </mat-slide-toggle>
+     <div class="switch-group" style="padding-left: 225px">
+          <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.checked)">Set Escrow Cancel After Time</mat-slide-toggle>
      </div>
 </div>
 

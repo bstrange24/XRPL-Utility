@@ -1,13 +1,10 @@
 <div class="tab-content-container form-fields-container" style="min-width: 600px">
      <div class="form-row" style="align-items: center; flex-wrap: wrap; gap: 16px">
-          <span class="switch-label" style="font-weight: 500; white-space: nowrap"> Normal Claim (as Destination) </span>
+          <span class="switch-label" style="font-weight: 500; white-space: nowrap; padding-right: 19px">Normal Claim (as Destination)</span>
 
-          <label class="switch" style="position: relative">
-               <input type="checkbox" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode($event.target)" />
-               <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: 0.4s; border-radius: 34px"> </span>
-          </label>
+          <mat-slide-toggle class="mini-toggle" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.checked)"></mat-slide-toggle>
 
-          <span class="switch-label" style="font-weight: 500; white-space: nowrap; margin-left: 5px"> Generate Signature (as Creator) </span>
+          <span class="switch-label" style="font-weight: 500; white-space: nowrap">Generate Signature (as Creator)</span>
      </div>
 
      <!-- Optional: visual separator -->

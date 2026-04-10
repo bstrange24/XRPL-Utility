@@ -29,30 +29,4 @@
      @if (txUiService.wantsOptions()) {
      <app-transaction-options-section [activeTab]="'createPaymentChannel'"></app-transaction-options-section>
      }
-
-     <!-- <div class="form-row">
-          <div class="form-group">
-               <label for="createDestinationTag">Destination Tag</label>
-               <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="text" [(ngModel)]="xrplTxOptionsStore.destinationTag" name="destinationTagField" />
-          </div>
-
-          <div class="form-group">
-               <label for="createSettleDelay">Settle Delay</label>
-               <p class="form-hint">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
-               <input type="text" [(ngModel)]="paymentChannelStoreService.settleDelay" name="settleDelay" />
-          </div>
-     </div> -->
-
-     <!-- <div class="form-row">
-          <div class="form-group">
-               <app-xrpl-expiration-input
-                    [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
-                    [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
-                    label="Channel Expiration Time (optional)"
-                    hint="Expiration time when the channel expires. Any transaction that would modify the channel after this time, <code class='highlight-code'>closes the channel</code>, without otherwise affecting it. <br />This value is immutable. The channel can be closed earlier than this time but cannot remain open after this time."
-               ></app-xrpl-expiration-input>
-          </div>
-          <div class="form-group"></div>
-     </div> -->
 </div>

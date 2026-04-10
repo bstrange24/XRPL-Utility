@@ -1,17 +1,8 @@
-/* .status-overlay {
-     position: fixed;
-     inset: 0;
-     background: rgba(0, 0, 0, 0.4);
+.tab-content-columns {
      display: flex;
-     flex-direction: column;
-     align-items: center;
-     justify-content: center;
-     z-index: 9999;
-     color: white;
+     gap: 1.5em;
 }
 
-.status-text {
-     margin-top: 16px;
-     font-size: 1.2rem;
-     text-align: center;
-} */
+.tab-content-columns.no-flex {
+     display: block;
+}

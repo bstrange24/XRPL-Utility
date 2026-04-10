@@ -30,33 +30,7 @@
                     } }
                </div>
           </button>
-          }
-
-          <!-- Signature Details (Creator Mode Only) -->
-          <!-- @if (paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.channelClaimSignatureField()) {
-          <div class="form-row">
-               <div class="form-group">
-                    <label>Signature Details</label>
-                    <div class="info-box">
-                         <p>
-                              <strong>Flags included:</strong>
-                              @if (paymentChannelStoreService.flags.claimAndClose()) {
-                              <span class="badge">tfClose (0x00020000)</span>
-                              <span class="info-text">- Channel will close after claim</span>
-                              } @else {
-                              <span class="badge">None</span>
-                              <span class="info-text">- Channel stays open after claim</span>
-                              }
-                         </p>
-                         <p><strong>Channel ID:</strong> {{ paymentChannelStoreService.channelIDField() }}</p>
-                         <p><strong>Authorized Amount:</strong> {{ paymentChannelStoreService.amount() }} XRP</p>
-                    </div>
-               </div>
-          </div>
-          } -->
-
-          <!-- <div class="flag-item-account-flags" style="background: #ecfdf5; border-color: #34d399"> -->
-          @if (!paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.flags.claimAndClose()) {
+          } @if (!paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.flags.claimAndClose()) {
           <div class="flag-item-account-flags" style="background: #ecfdf5; border-color: #34d399">
                <ng-icon name="heroCheckCircle" size="18"></ng-icon>
                The creator has authorized channel closure after claim. @if (paymentChannelSignatureContextService.getSignatureContext(paymentChannelStoreService.channelClaimSignatureField())) {
@@ -69,7 +43,6 @@
                This signature does not include the tfClose flag. The channel will remain open after claiming.
           </div>
           }
-          <!-- </div> -->
 
           <!-- Renew flag -->
           @if (viewModel.activeTab() === 'renewPaymentChannel') {

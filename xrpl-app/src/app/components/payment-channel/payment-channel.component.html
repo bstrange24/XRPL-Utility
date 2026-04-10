@@ -28,7 +28,7 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns">
+                    <div class="tab-content-columns" [class.no-flex]="viewModel.activeTab() === 'fundPaymentChannel'">
                          <!-- Create -->
                          @if (viewModel.activeTab() === 'createPaymentChannel') {
                          <app-payment-channel-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (destinationChanged)="selectedDestinationAddress.set($event?.id || '')" />

@@ -9,11 +9,12 @@ import { PaymentChannelUtilService } from '../../../../services/payment-channel/
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
      selector: 'app-payment-channel-claim',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './payment-channel-claim.component.html',
      styleUrl: './payment-channel-claim.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +33,10 @@ export class PaymentChannelClaimComponent {
           this.paymentChannelStoreService.setField('isCreatorMode', input.checked);
      }
 
+     toggleCreatorMode1(isChecked: boolean): void {
+          this.paymentChannelStoreService.setField('isCreatorMode', isChecked);
+     }
+
      async generateCreatorClaimSignature(): Promise<void> {
           const wallet = this.walletManagerService.getSelectedWallet();
           if (!wallet) return;
@@ -39,7 +44,6 @@ export class PaymentChannelClaimComponent {
      }
 
      onFocus(event: FocusEvent): void {
-          // TODO: add any focus logic you had (e.g. select all text)
           const input = event.target as HTMLInputElement;
           if (input) input.select();
      }

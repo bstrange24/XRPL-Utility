@@ -14,49 +14,26 @@
                }
           </div>
      </div>
+
      <div class="form-row">
           <div class="form-group">
                <label for="channelId">Channel ID</label>
-               <p class="form-hint">
-                    The unique Channel ID of the channel as a <br />
-                    64-character hexadecimal string.
-               </p>
+               <p class="form-hint">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
                <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
           </div>
-          <!-- <div class="form-group">
+          <div class="form-group">
                <label for="amount">XRP Amount</label>
                <p class="form-hint">
                     Amount of XRP to deduct from the sender's balance and <br />
                     set aside in this channel.
                </p>
                <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
-          </div> -->
+          </div>
      </div>
 
-     <!-- <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.checked)">Include optional fields (Destination Tag and Expiration Date)</mat-slide-toggle>
+     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.checked)">Include optional fields (Expiration Date)</mat-slide-toggle>
 
      @if (txUiService.wantsOptions()) {
      <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
-     } -->
-
-     <div class="form-row">
-          <div class="form-group">
-               <app-xrpl-expiration-input
-                    [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
-                    [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
-                    label="New Expiration Time for the Channel (optional)"
-                    hint="This must be later than either the current time plus the SettleDelay of the channel, or the existing Expiration of the channel. <br />After the Expiration time, any transaction that would access the channel <code class='highlight-code'>closes the channel</code> without taking its normal action.<br />
-                    Any unspent XRP is returned to the source address when the channel closes."
-               ></app-xrpl-expiration-input>
-          </div>
-
-          <div class="form-group">
-               <label for="amount">XRP Amount</label>
-               <p class="form-hint">
-                    Amount of XRP to deduct from the sender's balance and <br />
-                    set aside in this channel.
-               </p>
-               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
-          </div>
-     </div>
+     }
 </div>
