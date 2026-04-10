@@ -421,12 +421,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           );
      }
 
-     //      // Update multi-sign & regular key flags
-
-     //      // Update service state
-
-     // private clearMultiSignersConfiguration(): void {
-
      updateDestinations() {
           const allItems = [
                ...this.wallets().map(wallet => ({
@@ -449,8 +443,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                this.updateDestinations();
           }
      }
-
-     // copyDelegateId(checkId: string) {
 
      get safeWarningMessage() {
           return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');

@@ -333,8 +333,7 @@ export class XrplCacheService {
           for (const [key, entry] of this.cache.entries()) {
                const ageMs = Date.now() - entry.timestamp;
                const ageSec = (ageMs / 1000).toFixed(1);
-
-               console.groupEnd();
+               console.debug(`Key: ${key} | Age: ${ageSec}s ago`, entry.data);
           }
 
           console.groupEnd();

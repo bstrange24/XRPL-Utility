@@ -369,8 +369,9 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           this.activeTab.set(tab);
           this.destinationSearchQuery.set('');
 
-          if (Object.keys(this.knownTrustLinesIssuers()).length > 0 && this.issuerFields() === '' && this.currencyFieldDropDownValue() !== 'XRP') {
-               this.currencyFieldDropDownValue.set(Object.keys(this.knownTrustLinesIssuers())[0]);
+          const knownIssuers = this.knownTrustLinesIssuers();
+          if (Object.keys(knownIssuers).length > 0 && this.issuerFields() === '' && this.currencyFieldDropDownValue() !== 'XRP') {
+               this.currencyFieldDropDownValue.set(Object.keys(knownIssuers)[0]);
           }
 
           this.clearFields(true);
