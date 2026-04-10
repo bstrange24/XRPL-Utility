@@ -35,3 +35,11 @@ export const NFT_OFFERS_VALIDATION_RULES: Record<NftOffersTxTypes, string> = {
      [NFT_OFFERS_TX_TYPES.SELL_NFT_OFFER]: 'SellNftOffer',
      [NFT_OFFERS_TX_TYPES.CANCEL_NFT_OFFER]: 'CancelNftOffer',
 } as const;
+
+export const NFT_FLAGS = {
+     Burnable: 1,
+     OnlyXRP: 2,
+     TrustLine: 4,
+     Transferable: 8,
+     Mutable: 16,
+} as const;

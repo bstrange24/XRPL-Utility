@@ -28,6 +28,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { LogServiceService } from '../../services/shared/log-service/log-service.service';
 
 interface XRPLPermissionEntry {
      Permission: {
@@ -79,6 +80,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly route = inject(ActivatedRoute);
+     public readonly logService = inject(LogServiceService);
      private readonly cdr = inject(ChangeDetectorRef);
 
      typedDestination = signal<string>('');
@@ -322,7 +324,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     // this.isSummaryLoading.set(false);
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -398,7 +399,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     console.error('Error in delegateAction:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -416,7 +416,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
 
           // This triggers infoData() to recompute automatically
           this.existingDelegations.set(mapped);
-          this.utilsService.logObjects('existingDelegations', mapped);
+          this.logService.logObjects('existingDelegations', mapped);
      }
 
      private async getWallet(): Promise<xrpl.Wallet> {

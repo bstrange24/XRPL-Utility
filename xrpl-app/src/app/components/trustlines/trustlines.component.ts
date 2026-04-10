@@ -46,6 +46,7 @@ import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-c
 import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { UtilsService } from '../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-trustlines',

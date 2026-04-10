@@ -13,6 +13,7 @@ import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/tr
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { MptStoreService } from '../mpt-store/mpt-store.service';
 import { MptFlagKey } from '../../../components/mpt/constants/mpt.types';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -26,6 +27,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      public readonly toastService = inject(ToastService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly mptStoreService = inject(MptStoreService);
+     public readonly logService = inject(LogServiceService);
 
      totalFlagsValue = signal<number>(0);
      totalFlagsHex = signal<string>('0x0');
@@ -153,7 +155,7 @@ export class MptUtilService extends PerformanceBaseComponent {
                }
           }
 
-          this.utilsService.logObjects('existingMpts (holders + issuers)', result);
+          this.logService.logObjects('existingMpts (holders + issuers)', result);
           return result;
      }
 
@@ -173,7 +175,7 @@ export class MptUtilService extends PerformanceBaseComponent {
                     return ai.localeCompare(bi);
                });
 
-          this.utilsService.logObjects('existingMpts', mapped);
+          this.logService.logObjects('existingMpts', mapped);
           return mapped;
      }
 

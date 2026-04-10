@@ -44,6 +44,7 @@ import { WalletDestinationBase } from '../../services/wallets/walletDestinationB
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { LogServiceService } from '../../services/shared/log-service/log-service.service';
 
 interface AccountFlags {
      isClawback: boolean;
@@ -76,6 +77,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
      private readonly dropdownService = inject(DestinationDropdownService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly logService = inject(LogServiceService);
 
      // Destination Dropdown
      typedDestination = signal<string>('');
@@ -531,7 +533,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     this.isSummaryLoading.set(false);
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -610,7 +611,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     console.error('Error in createFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -670,7 +670,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     console.error('Error in modifyFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -756,7 +755,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     console.error('Error in authorizeFirewall:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -814,7 +812,6 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     console.error('Error in createTimeBasedEscrow:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -844,7 +841,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
 
           this.existingFirewalls = allNfts;
 
-          this.utilsService.logObjects('existingFirewalls', this.existingFirewalls);
+          this.logService.logObjects('existingFirewalls', this.existingFirewalls);
 
           return this.existingFirewalls;
      }
@@ -992,12 +989,11 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                this.storageService.setKnownWhitelistAddress('knownWhitelistAddress', knownWhitelistAddress);
 
                // this.updateWhitelistAddress();
-               this.txUiService.setSuccess(`Added ${this.newWhitelistAddress} to Whitelist accounts`);
+               // this.txUiService.setSuccess(`Added ${this.newWhitelistAddress} to Whitelist accounts`);
                this.newWhitelistAddress = '';
           } else {
                this.txUiService.setError('Currency code and issuer address are required');
           }
-          this.txUiService.spinner.set(false);
      }
 
      removeWhitelistAddress() {
@@ -1008,13 +1004,12 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
                     delete knownWhitelistAddress[this.whitelistAddressToRemove];
                     this.storageService.setKnownWhitelistAddress('knownWhitelistAddress', knownWhitelistAddress);
                }
-               this.txUiService.setSuccess(`Removed ${this.whitelistAddressToRemove} from the Whitelist accounts`);
+               // this.txUiService.setSuccess(`Removed ${this.whitelistAddressToRemove} from the Whitelist accounts`);
                // this.updateWhitelistAddress();
                this.whitelistAddressToRemove = '';
           } else {
                this.txUiService.setError('Select a whitelist address to remove');
           }
-          this.txUiService.spinner.set(false);
      }
 
      // private updateWhitelistAddress() {

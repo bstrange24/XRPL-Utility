@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
@@ -36,11 +35,12 @@ import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution
 import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.component';
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { TicketsSummaryComponent } from './ui-components/summary/tickets-summary.component';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent, TicketsSummaryComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,7 +102,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
-                    const ticketObjects = env.accountObjects ? this.utilsService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+                    const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
                     this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.refreshAccountObject(env);
@@ -195,7 +195,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 
           // NEW: Always refresh ticket count from the fresh account_objects
-          const ticketObjects = env.accountObjects ? this.utilsService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+          const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
           const newCount = ticketObjects?.result?.account_objects?.length ?? 0;
           this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
      }

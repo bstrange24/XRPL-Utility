@@ -29,7 +29,6 @@ import { WalletsViewModelService } from '../../../../services/wallets/wallets-vi
 })
 export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      public readonly walletsStoreService = inject(WalletsStoreService);
-     public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
 
      typedDestination = signal<string>('');
@@ -61,7 +60,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      readonly customOnlyItems = computed(() => {
           const customWallets = this.transactionDropdownService.customDestinations().map(dest => ({
                id: dest.address,
-               display: dest.name + ' (' + this.utilsService.truncateAddress(dest.address) + ')', // ← must be 'display'
+               display: dest.name + ' (' + this.walletsUtilService.truncateAddress(dest.address) + ')', // ← must be 'display'
                name: dest.name,
                address: dest.address,
           }));
@@ -76,7 +75,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
 
           const custom = this.transactionDropdownService.customDestinations().find(d => d.address === addr);
 
-          const label = custom?.name || this.utilsService.truncateAddress(addr);
+          const label = custom?.name || this.walletsUtilService.truncateAddress(addr);
 
           console.log('addr: ', addr);
           console.log('label: ', label);

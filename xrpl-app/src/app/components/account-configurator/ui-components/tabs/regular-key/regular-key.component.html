@@ -8,14 +8,14 @@
           <div class="form-row">
                <div class="form-group">
                     <label for="regularKeyAddress">Account</label>
-                    <p class="form-hint">The regular key pair to be assigned to the account.</p>
+                    <p class="form-hint">The regular key addresss to be assigned to the account.</p>
                     <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeyAddress', $event)" name="regularKeyAddress" placeholder="No Regular Key configured for account" />
                </div>
 
                <div class="form-group">
                     <label for="regularKeySeed">Seed</label>
-                    <p class="form-hint">The seed for the regular key account.</p>
-                    <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.regularKeySeed()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeySeed', $event)" name="regularKeySeed" />
+                    <p class="form-hint">The regular key seed to be assigned to the account.</p>
+                    <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.regularKeySeed()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeySeed', $event)" name="regularKeySeed" placeholder="s..." />
                </div>
           </div>
      </div>

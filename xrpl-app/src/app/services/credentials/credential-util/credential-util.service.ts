@@ -10,6 +10,7 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
 import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CredentialActionTypes, CredentialItem } from '../../../components/credentials/constants/credential.types';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -21,6 +22,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      public readonly credentialStore = inject(CredentialStore);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly logService = inject(LogServiceService);
 
      constructor() {
           super();
@@ -55,7 +57,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                .map(obj => this.mapCredential(obj))
                .sort(this.sortCredentials);
 
-          this.utilsService.logObjects(`credentials-${role}`, mapped);
+          this.logService.logObjects(`credentials-${role}`, mapped);
 
           return mapped;
      }

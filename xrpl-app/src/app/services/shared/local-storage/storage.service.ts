@@ -8,23 +8,6 @@ import { AppConstants } from '../../../core/app.constants';
 export class StorageService {
      inputsCleared = new EventEmitter<void>();
 
-     // private readonly pageTitles: { [key: string]: string } = {
-     //      'send-xrp': 'Send XRP',
-     //      checks: 'Checks',
-     //      'send-currency': 'Currency',
-     //      'time-escrow': 'Time Escrow',
-     //      'conditional-escrow': 'Conditional Escrow',
-     //      account: 'Account Info',
-     //      'create-offer': 'Create Offers',
-     //      'create-nft': 'NFTs',
-     //      tickets: 'Tickets',
-     //      'payment-channel': 'Payment Channel',
-     //      'sign-Transactions': 'Sign Transactions',
-     //      trustlines: 'Trustlines',
-     //      'create-amm': 'AMM',
-     //      'fiat-on-off-ramp': 'Fiat On/Off Ramp',
-     // };
-
      private readonly networkColors: { [key: string]: string } = {
           devnet: 'rgb(56, 113, 69)',
           testnet: '#ff6719',
@@ -70,11 +53,6 @@ export class StorageService {
      clearValues() {
           localStorage.clear();
      }
-
-     // Store a generic key-value pair
-     // set(key: string, value: any): void {
-     //      localStorage.setItem(key, JSON.stringify(value));
-     // }
 
      set(key: string, value: any): void {
           if (value === undefined) {
@@ -125,18 +103,6 @@ export class StorageService {
      }
 
      // Store knownIssuers object
-     // setKnownIssuers(key: string, knownIssuers: { [key: string]: string }): void {
-     //      knownIssuers['XRP'] = '';
-     //      localStorage.setItem(key, JSON.stringify(knownIssuers));
-     // }
-
-     // // Retrieve knownIssuers object
-     // getKnownIssuers(key: string): { [key: string]: string } | null {
-     //      const value = localStorage.getItem(key);
-     //      return value ? JSON.parse(value) : null;
-     // }
-
-     // Store knownIssuers object
      setKnownWhitelistAddress(key: string, knownWhitelistAddress: { [key: string]: string }): void {
           localStorage.setItem(key, JSON.stringify(knownWhitelistAddress));
      }
@@ -148,18 +114,8 @@ export class StorageService {
      }
 
      setInputValue(id: string, value: string) {
-          if (AppConstants.INPUT_IDS.includes(id)) {
-               localStorage.setItem(id, value);
-          }
+          localStorage.setItem(id, value);
      }
-
-     getInputIds(): string[] {
-          return [...AppConstants.INPUT_IDS];
-     }
-
-     // getPageTitle(route: string): string {
-     //      return this.pageTitles[route] || 'XRPL App';
-     // }
 
      getActiveNavLink(): string {
           return localStorage.getItem('activeNavLink') || '';

@@ -6,6 +6,7 @@ import * as xrpl from 'xrpl';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { JsonEditorComponent } from '../../../components/shared/json-editor/json-editor.component';
 import { DidInfoData, DidTab } from '../../../components/did/constants/did.types';
+import { DidUtilService } from '../did-util/did-util.service';
 
 @Injectable({ providedIn: 'root' })
 export class DidViewModelService {
@@ -15,6 +16,7 @@ export class DidViewModelService {
      public readonly didStore = inject(DidStoreService);
      public readonly walletManager = inject(WalletManagerService);
      public readonly utilsService = inject(UtilsService);
+     public readonly didUtilService = inject(DidUtilService);
 
      constructor() {}
 
@@ -120,7 +122,7 @@ export class DidViewModelService {
           const didData = this.didStore.didData();
           if (!didData.trim() || this.hasJsonSyntaxError()) return false;
 
-          const result = this.utilsService.validateAndConvertDidJson(didData, didSchema);
+          const result = this.didUtilService.validateAndConvertDidJson(didData, didSchema);
           return result.success;
      });
 

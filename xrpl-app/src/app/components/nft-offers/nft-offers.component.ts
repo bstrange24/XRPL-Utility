@@ -30,7 +30,7 @@ import { NFT_OFFERS_TAB_META, NFT_OFFERS_TABS } from './constants/nft-offers.ui'
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { NFT_OFFERS_TAB } from './constants/nft-offers.constants';
+import { NFT_FLAGS, NFT_OFFERS_TAB } from './constants/nft-offers.constants';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 import { NftUtilService } from '../../services/nft/nft-util/nft-util.service';
@@ -339,7 +339,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      decodeNftFlags(value: number): string {
           const active: string[] = [];
-          for (const [name, bit] of Object.entries(AppConstants.NFT_FLAGS)) {
+          for (const [name, bit] of Object.entries(NFT_FLAGS)) {
                if ((value & bit) !== 0) {
                     active.push(name);
                }
@@ -350,7 +350,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      decodeOfferFlags(value: number): string[] {
           const active: string[] = [];
 
-          for (const [name, bit] of Object.entries(AppConstants.NFT_FLAGS)) {
+          for (const [name, bit] of Object.entries(NFT_FLAGS)) {
                if ((value & bit) !== 0) {
                     active.push(name);
                }

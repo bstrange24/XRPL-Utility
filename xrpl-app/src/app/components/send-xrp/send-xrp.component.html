@@ -20,7 +20,9 @@
           <div class="form-panel" style="padding-top: 2em">
                <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
+               <!-- Dynamic info panel -->
                <app-send-xrp-summary [info]="view.infoData()" [tab]="'sendXrp'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-send-xrp-summary>
+
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

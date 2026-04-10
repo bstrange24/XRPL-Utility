@@ -71,15 +71,15 @@ describe('ChecksStoreService', () => {
           });
      });
 
-     describe('setPaymentChannelCancelAfterTime', () => {
+     describe('setCheckExpirationDate', () => {
           it('should set checkExpirationDate', () => {
-               service.setPaymentChannelCancelAfterTime('2025-12-31T00:00');
+               service.setCheckExpirationDate('2025-12-31T00:00');
                expect(service.checkExpirationDate()).toBe('2025-12-31T00:00');
           });
 
           it('should clear checkExpirationDate when empty string', () => {
-               service.setPaymentChannelCancelAfterTime('some-date');
-               service.setPaymentChannelCancelAfterTime('');
+               service.setCheckExpirationDate('some-date');
+               service.setCheckExpirationDate('');
                expect(service.checkExpirationDate()).toBe('');
           });
      });

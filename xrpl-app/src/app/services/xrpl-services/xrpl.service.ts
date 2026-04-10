@@ -306,6 +306,58 @@ export class XrplService {
           }
      }
 
+     async getXrplReserve(client: xrpl.Client) {
+          try {
+               const ledger_info = await this.getXrplServerState(client, 'current', '');
+               const ledgerData = ledger_info.result.state.validated_ledger;
+               if (!ledgerData) {
+                    throw new Error('validated_ledger is undefined in server_state');
+               }
+               const baseFee = ledgerData.base_fee;
+               const reserveBaseXRP = ledgerData.reserve_base;
+               const reserveIncrementXRP = ledgerData.reserve_inc;
+
+               return { reserveBaseXRP, reserveIncrementXRP };
+          } catch (error: any) {
+               console.error('Error:', error);
+               return undefined;
+          }
+     }
+
+     async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string): Promise<{ ownerCount: number; totalReserveXRP: number } | undefined> {
+          try {
+               const accountData = accountInfo.result.account_data;
+               const ownerCount = Number(accountData.OwnerCount || 0);
+
+               const reserveData = await this.getXrplReserve(client);
+               if (!reserveData) {
+                    throw new Error('Failed to fetch XRPL reserve data');
+               }
+
+               const { reserveBaseXRP, reserveIncrementXRP } = reserveData;
+
+               // Calculate total in XRP units directly
+               const totalReserveXRP = reserveBaseXRP + ownerCount * reserveIncrementXRP;
+
+               return { ownerCount, totalReserveXRP };
+          } catch (error: any) {
+               console.error('Error in getAccountReserves:', error);
+               return undefined;
+          }
+     }
+
+     async updateOwnerCountAndReserves(client: xrpl.Client, accountInfo: any, address: string): Promise<{ ownerCount: string; totalXrpReserves: string }> {
+          const reserves = await this.getAccountReserves(client, accountInfo, address);
+          let ownerCount = '0';
+          let totalXrpReserves = '0';
+          if (reserves) {
+               ownerCount = reserves.ownerCount.toString();
+               totalXrpReserves = String(xrpl.dropsToXrp(reserves.totalReserveXRP));
+               console.debug(`Owner Count: ${ownerCount} Total XRP Reserves: ${totalXrpReserves}`);
+          }
+          return { ownerCount, totalXrpReserves };
+     }
+
      async getCurrentRippleTime(client: Client): Promise<number> {
           try {
                // Fetch the latest validated ledger info

@@ -314,7 +314,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
                     console.error('Error in generateCreatorClaimSignature:', error);
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    // this.txUiService.spinner.set(false);
                }
           });
      }

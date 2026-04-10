@@ -2,7 +2,7 @@
      <div class="form-group">
           <label for="setNftMinterAddress">Set NFT Minter Address</label>
           <p class="form-hint">Authorizes another account to mint NFTs for this account.</p>
-          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" name="nfTokenMinterAddress" />
+          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." name="nfTokenMinterAddress" />
      </div>
 </div>
 
@@ -24,7 +24,7 @@
      <div class="form-group">
           <label for="tickSize">Tick Size</label>
           <p class="form-hint">Decimal precision used when trading issued currencies (3–15).</p>
-          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" name="tickSize" />
+          <input type="text" class="input-monospace" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" placeholder="e.g. 3-15" name="tickSize" />
      </div>
 </div>
 

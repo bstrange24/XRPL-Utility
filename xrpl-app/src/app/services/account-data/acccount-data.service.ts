@@ -66,7 +66,7 @@ export class AcccountDataService extends PerformanceBaseComponent {
      }
 
      private setDepositAuth(env: any) {
-          const preAuthAccounts = this.utilsService.findDepositPreauthObjects(env.accountObjects);
+          const preAuthAccounts = this.findDepositPreauthObjects(env.accountObjects);
           const hasPreAuthAccounts = preAuthAccounts?.length > 0;
           this.setDepositAuthProperties(hasPreAuthAccounts, preAuthAccounts);
      }
@@ -95,6 +95,18 @@ export class AcccountDataService extends PerformanceBaseComponent {
           store.setField('multiSignAddress', 'No Multi-Sign address configured for account');
           store.setField('multiSignSeeds', '');
           this.storageService.removeValue('signerEntries');
+     }
+
+     findDepositPreauthObjects(accountObjects: xrpl.AccountObjectsResponse) {
+          const depositPreauthAccounts: string[] = [];
+          if (accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
+               accountObjects.result.account_objects.forEach(obj => {
+                    if (obj.LedgerEntryType === 'DepositPreauth' && obj.Authorize) {
+                         depositPreauthAccounts.push(obj.Authorize);
+                    }
+               });
+          }
+          return depositPreauthAccounts;
      }
 
      setDepositAuthProperties(hasPreAuthAccounts: boolean, preAuthAccounts: string[]): void {

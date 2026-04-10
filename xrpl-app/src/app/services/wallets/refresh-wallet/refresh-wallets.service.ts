@@ -99,7 +99,7 @@ export class WalletDataService extends PerformanceBaseComponent {
 
                     // Cache reserve once per service lifecycle
                     if (!this.cachedReserves) {
-                         this.cachedReserves = await this.utilsService.getXrplReserve(client);
+                         this.cachedReserves = await this.xrplService.getXrplReserve(client);
                     }
 
                     // Heavy computation outside Angular
@@ -116,7 +116,7 @@ export class WalletDataService extends PerformanceBaseComponent {
 
                                    const balanceXrp = Number(xrpl.dropsToXrp(balanceDrops));
 
-                                   const { ownerCount, totalXrpReserves } = await this.utilsService.updateOwnerCountAndReserves(client, accountInfo, address);
+                                   const { ownerCount, totalXrpReserves } = await this.xrplService.updateOwnerCountAndReserves(client, accountInfo, address);
 
                                    const reserves = Number(totalXrpReserves || 0);
                                    const spendable = balanceXrp - reserves;

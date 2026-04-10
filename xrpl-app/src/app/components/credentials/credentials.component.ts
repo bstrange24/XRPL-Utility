@@ -38,7 +38,7 @@ import { CredentialAcceptComponent } from './tab/credential-accept/credential-ac
 import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui';
 import { CredentialActionTypes, CredentialItem, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
 import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
-import { CREDENTIAL_TAB } from './constants/credential.constants';
+import { CREDENTIAL_REGEX, CREDENTIAL_TAB } from './constants/credential.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 
@@ -248,7 +248,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           const credentialTypeHex = xrpl.convertStringToHex(selected.CredentialType ?? '').toUpperCase();
           console.info(`Raw credential_type: ${selected.CredentialType ?? ''}, Encoded: ${credentialTypeHex}`);
 
-          if (credentialTypeHex.length % 2 !== 0 || !AppConstants.CREDENTIAL_REGEX.test(credentialTypeHex)) {
+          if (credentialTypeHex.length % 2 !== 0 || !CREDENTIAL_REGEX.test(credentialTypeHex)) {
                this.toastService.error('Credential type must be 128 characters as hexadecimal.', AppConstants.TOAST.ERROR);
                return false;
           }
@@ -264,7 +264,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           };
 
           console.info('Looking up credential...', ledgerEntryRequest);
-          this.txUiService.setTxSignal(ledgerEntryRequest);
+          this.txUiService.setTxResultSignal(ledgerEntryRequest);
 
           let xrplResponse;
 
@@ -307,7 +307,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           console.info('Credential is verified.');
 
-          this.txUiService.setSuccess(this.txUiService.result());
+          // this.txUiService.setSuccess(this.txUiService.result());
           this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);
 
           return true;

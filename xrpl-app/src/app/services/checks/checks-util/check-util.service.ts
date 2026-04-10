@@ -17,6 +17,7 @@ import { CurrencyStoreService } from '../../currency/currency-store/currency-sto
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { CheckItem } from '../../../components/checks/constants/checks.types';
 import { ChecksStoreService } from '../checks-store/checks-store.service';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -35,6 +36,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly checksStoreService = inject(ChecksStoreService);
+     public readonly logService = inject(LogServiceService);
 
      readonly selectedCheckIndex = computed(() => this.checksStoreService.checkIdField());
      readonly checksLength = computed(() => this.checksStoreService.existingChecks().length);
@@ -67,7 +69,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.utilsService.logObjects('existingChecks', mapped);
+          this.logService.logObjects('existingChecks', mapped);
           return mapped;
      }
 
@@ -104,7 +106,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.sender.localeCompare(b.sender));
-          this.utilsService.logObjects('cashableChecks', mapped);
+          this.logService.logObjects('cashableChecks', mapped);
           return mapped;
      }
 
@@ -142,7 +144,7 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
-          this.utilsService.logObjects('cancellableChecks', mapped);
+          this.logService.logObjects('cancellableChecks', mapped);
           return mapped;
      }
 

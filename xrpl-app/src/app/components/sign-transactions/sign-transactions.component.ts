@@ -329,7 +329,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
 
                     this.txUiService.addTxHashSignal(hash);
-                    this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
+                    // this.txUiService.setSuccess(this.txUiService.result()); // ← Only for single tx
 
                     if (this.xrplTxOptionsStore.isSimulateEnabled()) {
                          // this.txUiService.successMessage = 'Simulated transaction successfully!';
@@ -400,7 +400,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                          (response.result as any).errorMessage = userMessage;
                          this.toastService.error(userMessage, AppConstants.TOAST.ERROR);
                     } else {
-                         this.txUiService.setSuccess(this.txUiService.result());
+                         // this.txUiService.setSuccess(this.txUiService.result());
                     }
 
                     this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);

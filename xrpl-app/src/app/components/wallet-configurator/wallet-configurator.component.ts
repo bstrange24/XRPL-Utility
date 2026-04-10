@@ -53,7 +53,6 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      protected override readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly walletsStoreService = inject(WalletsStoreService);
-     public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
      public readonly walletConfiguratorOrchestrator = inject(WalletConfiguratorOrchestratorService);
 
@@ -142,7 +141,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                walletType: 'mnemonic',
                mode: 'import',
                input: () => this.walletsStoreService.mnemonic(),
-               validate: () => (this.utilsService.isValidMnemonic(this.walletsStoreService.mnemonic()) ? null : this.walletsStoreService.errorMessage()),
+               validate: () => (this.walletsUtilService.isValidMnemonic(this.walletsStoreService.mnemonic()) ? null : this.walletsStoreService.errorMessage()),
                successMessage: addr => `Successfully added ${addr}`,
           });
           if (result.success && result.wallet) {
@@ -171,8 +170,8 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                mode: 'import',
                input: () => this.walletsStoreService.secretNumbers(),
                validate: () => {
-                    const converted = this.utilsService.convertSecretNumberStringToArray(this.walletsStoreService.secretNumbers());
-                    return this.utilsService.isValidSecret(converted) ? null : 'Invalid Secret Number.';
+                    const converted = this.walletsUtilService.convertSecretNumberStringToArray(this.walletsStoreService.secretNumbers());
+                    return this.walletsUtilService.isValidSecret(converted) ? null : 'Invalid Secret Number.';
                },
                successMessage: addr => `Successfully added ${addr}`,
           });

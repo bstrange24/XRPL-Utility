@@ -6,6 +6,7 @@ import { AmmStoreService } from '../amm-store/amm-store.service';
 import { PoolOptions } from '../../../components/amm/constants/amm.types';
 import { AmmTransactionViewModelService } from '../amm-transaction-view-model/amm-transaction-view-model.service';
 import * as xrpl from 'xrpl';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -15,6 +16,7 @@ export class AmmUtilsService {
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplService = inject(XrplService);
      public readonly utilsService = inject(UtilsService);
+     public readonly logService = inject(LogServiceService);
      public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
 
      readonly depositOptions = signal<PoolOptions>({
@@ -92,7 +94,7 @@ export class AmmUtilsService {
 
           try {
                if (ammResponse.result && ammResponse.result.amm) {
-                    this.utilsService.logObjects('checkAmmParticipation', ammResponse.result.amm);
+                    this.logService.logObjects('checkAmmParticipation', ammResponse.result.amm);
                     result.isAmmPool = true;
                     result.ammInfo = ammResponse.result.amm;
                     result.lpTokens.push({

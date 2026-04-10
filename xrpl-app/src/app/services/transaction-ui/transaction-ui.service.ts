@@ -4,45 +4,7 @@ import { AppConstants } from '../../core/app.constants';
 import { XrplService } from '../xrpl-services/xrpl.service';
 import { AccountDeleteStoreService } from '../account-delete/account-delete-store/account-delete-store.service';
 
-interface TransactionUiSignals {
-     // Base
-     isSimulateEnabled: boolean;
-     useMultiSign: boolean;
-     isRegularKeyAddress: boolean;
-     regularKeyAddress: string;
-     regularKeySeed: string;
-     multiSignAddress: string;
-     multiSignSeeds: string;
-     suppressIndividualFeedback: string;
-     submitAndWait: boolean;
-
-     // Account
-     signerQuorum: number;
-     masterKeyDisabled: boolean;
-     depositAuthEnabled: boolean;
-     isdepositAuthAddress: boolean;
-     isNFTokenMinterEnabled: boolean;
-     nfTokenMinterAddress: string;
-     isUpdateMetaData: boolean;
-     isHolderConfiguration: boolean;
-     isExchangerConfiguration: boolean;
-     isIssuerConfiguration: boolean;
-     isAuthorizedNFTokenMinter: boolean;
-     depositAuthAddress: string;
-     tickSize: string;
-     transferRate: string;
-     isMessageKey: boolean;
-     domain: string;
-     url: string;
-}
-
 export type TxStep = 'idle' | 'preparing' | 'signing' | 'submitting' | 'waiting_validation' | 'waiting_for_wallet_creation' | 'finalizing' | 'success' | 'failed';
-
-export type SignalMap = {
-     [K in keyof TransactionUiService]: TransactionUiService[K] extends (...args: any) => any ? never : TransactionUiService[K] extends () => unknown ? K : never;
-};
-
-export type SignalKey = keyof TransactionUiSignals;
 
 @Injectable({ providedIn: 'root' })
 export class TransactionUiService {
@@ -50,10 +12,7 @@ export class TransactionUiService {
      public readonly xrplService = inject(XrplService);
      public readonly accountDeleteStoreService = inject(AccountDeleteStoreService);
 
-     readonly baseTxKeys = ['isSimulateEnabled', 'useMultiSign', 'isRegularKeyAddress', 'regularKeyAddress', 'regularKeySeed', 'multiSignAddress', 'multiSignSeeds'] as const;
-     public paymentTx: any[] = [];
      public txResult: any[] = [];
-     public txErrorHashes: any[] = [];
      private _safeInfo: SafeHtml = '';
      private _safeWarning: SafeHtml = '';
      private _infoMessage: string | null = null;
@@ -67,14 +26,9 @@ export class TransactionUiService {
      suppressIndividualFeedback = signal<boolean>(false);
      submitAndWait = signal<boolean>(false);
      result = signal<string>('');
-     errorMessageSignal = signal<string | null>(null);
-     spinner = signal<boolean>(false);
-     paymentTxSignal = signal<any[]>([]);
      txSignal = signal<any[]>([]);
      txResultSignal = signal<any[]>([]);
      txHashSignal = signal<string[]>([]);
-     successMessageSignal = signal<string>('');
-     spinnerMessageSignal = signal<string>('');
      wantsOptions = signal<boolean>(false);
      infoPanelExpanded = signal<boolean>(false);
      suppressTxClear = signal<boolean>(false);
@@ -105,20 +59,6 @@ export class TransactionUiService {
           }
      });
 
-     getValues<K extends SignalKey>(keys: readonly K[]): { [P in K]: any } {
-          const result = {} as { [P in K]: any };
-
-          for (const key of keys) {
-               result[key] = (this as any)[key]();
-          }
-
-          return result;
-     }
-
-     buildTxKeys(...extra: SignalKey[]) {
-          return [...this.baseTxKeys, ...extra] as const;
-     }
-
      resetCurrentStepToIdle() {
           this.currentStep.set('idle');
           this.detailedStatus.set('');
@@ -128,10 +68,6 @@ export class TransactionUiService {
           const env = this.xrplService.getNet().environment.toUpperCase() as keyof typeof AppConstants.XRPL_WIN_URL;
           return AppConstants.XRPL_WIN_URL[env] || AppConstants.XRPL_WIN_URL.DEVNET;
      });
-
-     setPaymentTxSignal(tx: any) {
-          this.paymentTxSignal.set(Array.isArray(tx) ? tx : [tx]);
-     }
 
      setTxSignal(tx: any) {
           this.txSignal.set(Array.isArray(tx) ? tx : [tx]);
@@ -153,10 +89,6 @@ export class TransactionUiService {
           this.txSignal.update(arr => [...arr, tx]);
      }
 
-     addPaymentTxSignal(tx: any) {
-          this.paymentTxSignal.update(arr => [...arr, tx]);
-     }
-
      clearTxSignal() {
           this.txSignal.set([]);
      }
@@ -167,10 +99,6 @@ export class TransactionUiService {
 
      clearTxHashSignal() {
           this.txHashSignal.set([]);
-     }
-
-     setPaymentTx(tx: any) {
-          this.paymentTx = [...this.paymentTx, tx];
      }
 
      setTxResult(result: any) {
@@ -184,15 +112,12 @@ export class TransactionUiService {
      }
 
      // Called when user toggles the simulate slider
+     // Always clear hash when switching modes
      toggleSimulate() {
-          // Always clear hash when switching modes
           this.txHash = null;
           this.txHashes = [];
-          this.paymentTxSignal.set([]);
           this.txSignal.set([]);
           this.txResultSignal.set([]);
-          this.successMessageSignal.set('');
-          this.errorMessageSignal.set(null);
           this.clearMessages();
      }
 
@@ -203,8 +128,6 @@ export class TransactionUiService {
           this.txHash = '';
           this.txHashes = [];
           this.txResult = [];
-          this.txErrorHashes = [];
-          this.paymentTx = [];
      }
 
      private allowOnly(tags: string[], html: string): SafeHtml {
@@ -260,18 +183,6 @@ export class TransactionUiService {
           this.setWarning(null);
      }
 
-     setSuccessMultiTransactions(message: string, hash?: string) {
-          this.setSuccessMultiTransactionsProperties();
-          this.handleTransactionResult({
-               result: `${message}`,
-               isError: this.isError(),
-               isSuccess: this.isSuccess(),
-          });
-
-          this.errorMessageSignal.set(null);
-          this.txHash = hash || null;
-     }
-
      // Called when a real transaction succeeds
      setSuccess(message: string, hash?: string) {
           this.setSuccessProperties();
@@ -280,21 +191,17 @@ export class TransactionUiService {
                isError: this.isError(),
                isSuccess: this.isSuccess(),
           });
-
-          this.errorMessageSignal.set(null);
           this.txHash = hash || null;
      }
 
      setSuccessProperties() {
           this.isSuccess.set(true);
           this.isError.set(false);
-          this.spinner.set(false);
      }
 
      setSuccessMultiTransactionsProperties() {
           this.isSuccess.set(true);
           this.isError.set(false);
-          this.spinner.set(true);
      }
 
      // Called when an error occurs
@@ -305,14 +212,12 @@ export class TransactionUiService {
                isError: this.isError(),
                isSuccess: this.isSuccess(),
           });
-          this.errorMessageSignal.set(message);
           this.txHash = hash || null;
      }
 
      private setErrorProperties() {
           this.isSuccess.set(false);
           this.isError.set(true);
-          this.spinner.set(false);
      }
 
      handleTransactionResult(event: { result: string; isError: boolean; isSuccess: boolean }) {
@@ -326,12 +231,9 @@ export class TransactionUiService {
      }
 
      clearAllOptionsAndMessages() {
-          this.errorMessageSignal.set(null);
           // Keep the txJson and txResult displayed when deleting an account,
           // or when a background wallet refresh is in progress after a transaction.
-          if (!this.suppressTxClear() &&
-               this.accountDeleteStoreService.savedTxJson().length <= 0 &&
-               this.accountDeleteStoreService.savedTxResult().length <= 0) {
+          if (!this.suppressTxClear() && this.accountDeleteStoreService.savedTxJson().length <= 0 && this.accountDeleteStoreService.savedTxResult().length <= 0) {
                this.clearTxResultsHash();
           }
           this.clearMessages();

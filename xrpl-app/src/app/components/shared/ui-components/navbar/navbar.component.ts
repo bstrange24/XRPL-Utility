@@ -28,24 +28,6 @@ export class NavbarComponent {
           isSuccess: boolean;
      }>();
 
-     async onSearch() {
-          const result = await this.store.searchTransaction();
-
-          if ('error' in result) {
-               this.transactionResult.emit({
-                    result: result.error,
-                    isError: true,
-                    isSuccess: false,
-               });
-          } else {
-               this.transactionResult.emit({
-                    result: 'Transaction retrieved successfully',
-                    isError: false,
-                    isSuccess: true,
-               });
-          }
-     }
-
      // optional: close dropdown on outside click
      @HostListener('document:click', ['$event'])
      onClick(event: MouseEvent) {

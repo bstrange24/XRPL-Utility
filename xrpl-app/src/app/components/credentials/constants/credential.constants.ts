@@ -29,3 +29,5 @@ export const CREDENTIAL_VALIDATION_RULES: Record<CredentialTxType, string> = {
      [CREDENTIAL_TX_TYPES.DELETE]: 'CredentialDelete',
      [CREDENTIAL_TX_TYPES.ACCEPT]: 'CredentialAccept',
 } as const;
+
+export const CREDENTIAL_REGEX = /^[0-9A-F]{2,128}$/;

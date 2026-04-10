@@ -2,6 +2,7 @@ import { computed, inject, Injectable } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import * as xrpl from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
@@ -35,5 +36,16 @@ export class TicketsUtilService {
 
      convertToString(ticket: any) {
           return ticket.toString();
+     }
+
+     filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]): xrpl.AccountObjectsResponse {
+          const filtered = (accountObjectsResponse.result.account_objects ?? []).filter((obj: any) => types.includes(obj.LedgerEntryType));
+          return {
+               ...accountObjectsResponse,
+               result: {
+                    ...accountObjectsResponse.result,
+                    account_objects: filtered,
+               },
+          };
      }
 }

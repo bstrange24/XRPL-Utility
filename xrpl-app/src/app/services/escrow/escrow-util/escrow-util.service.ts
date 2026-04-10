@@ -7,6 +7,7 @@ import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
+import { sha256 } from 'js-sha256';
 import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
@@ -14,6 +15,7 @@ import { SelectItem } from '../../../components/shared/ui-components/select-sear
 import { EscrowStoreService } from '../escrow-store/escrow-store.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../components/escrow/constants/time-escrow.types';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -31,6 +33,7 @@ export class EscrowUtilService {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly logService = inject(LogServiceService);
 
      readonly escrowLength = computed(() => this.escrowStoreService.existingEscrow().length);
      readonly selectedEscrowSequenceNumber = computed(() => this.escrowStoreService.escrowSequenceNumber());
@@ -111,7 +114,7 @@ export class EscrowUtilService {
           );
 
           mapped.sort((a, b) => a.Destination.localeCompare(b.Destination));
-          this.utilsService.logObjects('existingEscrow', mapped);
+          this.logService.logObjects('existingEscrow', mapped);
           return mapped;
      }
 
@@ -167,7 +170,7 @@ export class EscrowUtilService {
           );
 
           const sortEscrows = processedEscrows.slice().sort((a, b) => a.Sender.localeCompare(b.Sender));
-          this.utilsService.logObjects('expiredOrFulfilledEscrows', sortEscrows);
+          this.logService.logObjects('expiredOrFulfilledEscrows', sortEscrows);
           return sortEscrows;
      }
 
@@ -421,5 +424,39 @@ export class EscrowUtilService {
                }
                this.escrowStoreService.setField('escrowOwner', item.sender || '');
           }
+     }
+
+     validateCondition(condition: string | undefined | null): string | null {
+          // Ensure condition is a valid hex string (uppercase, 0-9, A-F)
+          const hexRegex = /^[0-9A-F]+$/;
+          if (!hexRegex.test(condition!)) {
+               return 'Condition must be a valid uppercase hex string (0-9, A-F)';
+          }
+
+          // Check length for SHA-256 (32 bytes = 64 hex characters)
+          if (condition!.length !== 64) {
+               return 'Condition must be 64 hex characters (32 bytes) for SHA-256';
+          }
+
+          return null;
+     }
+
+     validateFulfillment(fulfillment: string | undefined | null, condition: string): string | null {
+          const hexRegex = /^[0-9A-F]+$/;
+          if (!hexRegex.test(fulfillment!)) {
+               return 'Fulfillment must be a valid uppercase hex string (0-9, A-F)';
+          }
+          try {
+               // Convert hex to binary and compute SHA-256 hash
+               const fulfillmentBytes = Buffer.from(fulfillment!, 'hex'); // Buffer polyfill or use Uint8Array
+               const computedHash = sha256(fulfillmentBytes).toUpperCase();
+               if (computedHash !== condition) {
+                    return 'Fulfillment does not match the condition';
+               }
+          } catch (error: any) {
+               console.error(`Error validateFulfillment ${error.message}`);
+               return 'Invalid fulfillment: unable to compute SHA-256 hash';
+          }
+          return null;
      }
 }

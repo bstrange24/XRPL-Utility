@@ -213,7 +213,7 @@ export class OfferUtilsService {
                return;
           }
 
-          this.txUiService.spinner.set(true);
+          // this.txUiService.spinner.set(true);
           // this.txUiService.showSpinnerWithDelay('Calculating best rate...', 500);
 
           try {
@@ -261,7 +261,7 @@ export class OfferUtilsService {
                this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weWantAmount', '0');
           } finally {
-               this.txUiService.spinner.set(false);
+               // this.txUiService.spinner.set(false);
           }
      }
 
@@ -272,7 +272,7 @@ export class OfferUtilsService {
                return;
           }
 
-          this.txUiService.spinner.set(true);
+          // this.txUiService.spinner.set(true);
           // this.txUiService.showSpinnerWithDelay('Calculating required amount...', 500);
 
           try {
@@ -321,7 +321,7 @@ export class OfferUtilsService {
                this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weSpendAmount', '0');
           } finally {
-               this.txUiService.spinner.set(false);
+               // this.txUiService.spinner.set(false);
           }
      }
 

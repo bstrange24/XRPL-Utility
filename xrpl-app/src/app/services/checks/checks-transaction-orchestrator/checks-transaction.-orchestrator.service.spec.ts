@@ -128,7 +128,7 @@ describe('CheckTransactionOrchestrator', () => {
 
           it('should return validationError when validator returns errors', async () => {
                validatorSpy.validate.and.resolveTo(['Amount is required']);
-               const result = await service.executeCredentialTx('createCheck', baseConfig);
+               const result = await service.executeCheckTx('createCheck', baseConfig);
                expect(result.success).toBeFalse();
                expect(result.validationError).toBeTrue();
                expect(result.error).toContain('Amount is required');
@@ -140,7 +140,7 @@ describe('CheckTransactionOrchestrator', () => {
                     preFetchedEnv: { client: {}, wallet: mockWallet, fee: '', ledgerInfo: null },
                };
                validatorSpy.validate.and.resolveTo([]);
-               const result = await service.executeCredentialTx('createCheck', configWithBadEnv);
+               const result = await service.executeCheckTx('createCheck', configWithBadEnv);
                expect(result.success).toBeFalse();
           });
 
@@ -148,7 +148,7 @@ describe('CheckTransactionOrchestrator', () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: true, hash: 'SIMHASH', mode: 'simulate' });
                const config = { ...baseConfig, txOptions: { isSimulateEnabled: true } };
-               const result = await service.executeCredentialTx('createCheck', config);
+               const result = await service.executeCheckTx('createCheck', config);
                expect(result.success).toBeTrue();
                expect(result.hash).toBe('SIMHASH');
           });
@@ -156,7 +156,7 @@ describe('CheckTransactionOrchestrator', () => {
           it('should return success on submit for createCheck', async () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: true, hash: 'SUBMITHASH', mode: 'submit' });
-               const result = await service.executeCredentialTx('createCheck', baseConfig);
+               const result = await service.executeCheckTx('createCheck', baseConfig);
                expect(result.success).toBeTrue();
                expect(result.hash).toBe('SUBMITHASH');
           });
@@ -164,21 +164,21 @@ describe('CheckTransactionOrchestrator', () => {
           it('should return success for cashCheck', async () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: true, hash: 'CASHHASH', mode: 'submit' });
-               const result = await service.executeCredentialTx('cashCheck', baseConfig);
+               const result = await service.executeCheckTx('cashCheck', baseConfig);
                expect(result.success).toBeTrue();
           });
 
           it('should return success for cancelCheck', async () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: true, hash: 'CANCELHASH', mode: 'submit' });
-               const result = await service.executeCredentialTx('cancelCheck', baseConfig);
+               const result = await service.executeCheckTx('cancelCheck', baseConfig);
                expect(result.success).toBeTrue();
           });
 
           it('should return error when executeTx returns failure', async () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: false, error: 'Ledger error' });
-               const result = await service.executeCredentialTx('createCheck', baseConfig);
+               const result = await service.executeCheckTx('createCheck', baseConfig);
                expect(result.success).toBeFalse();
                expect(result.error).toBe('Ledger error');
           });

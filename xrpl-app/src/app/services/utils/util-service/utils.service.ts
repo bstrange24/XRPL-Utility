@@ -3,7 +3,6 @@ import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { AppConstants } from '../../../core/app.constants';
-import { sha256 } from 'js-sha256';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { StorageService } from '../../shared/local-storage/storage.service';
@@ -18,13 +17,6 @@ import { TrustlineStoreService } from '../../trustlines/trustline-store/trustlin
 import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
-
-type CurrencyAmount = string | xrpl.IssuedCurrencyAmount;
-type DidValidationResult = {
-     success: boolean;
-     hexData?: string;
-     errors?: string;
-};
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -44,22 +36,11 @@ export class UtilsService {
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
 
-     @ViewChild('resultField') resultField!: ElementRef<HTMLDivElement>;
      result: string = '';
      isError: boolean = false;
      isSuccess: boolean = false;
 
      constructor() {}
-
-     MPT_FLAGS: Record<number, string> = {
-          0x00000001: 'MptLocked',
-          0x00000002: 'CanLock',
-          0x00000004: 'RequireAuth',
-          0x00000008: 'CanEscrow',
-          0x00000010: 'CanTrade',
-          0x00000020: 'CanTransfer',
-          0x00000040: 'CanClawback',
-     };
 
      sleep(ms: number): Promise<void> {
           return new Promise(resolve => {
@@ -82,64 +63,8 @@ export class UtilsService {
           return value !== 'XRP' && value.length > 3;
      }
 
-     validateCondition(condition: string | undefined | null): string | null {
-          // Check if condition is provided and non-empty
-          if (!this.validateInput(condition)) {
-               return 'Condition cannot be empty';
-          }
-
-          // Ensure condition is a valid hex string (uppercase, 0-9, A-F)
-          const hexRegex = /^[0-9A-F]+$/;
-          if (!hexRegex.test(condition!)) {
-               return 'Condition must be a valid uppercase hex string (0-9, A-F)';
-          }
-
-          // Check length for SHA-256 (32 bytes = 64 hex characters)
-          if (condition!.length !== 64) {
-               return 'Condition must be 64 hex characters (32 bytes) for SHA-256';
-          }
-
-          return null;
-     }
-
-     validateFulfillment(fulfillment: string | undefined | null, condition: string): string | null {
-          if (!this.validateInput(fulfillment)) {
-               return 'Fulfillment cannot be empty';
-          }
-          const hexRegex = /^[0-9A-F]+$/;
-          if (!hexRegex.test(fulfillment!)) {
-               return 'Fulfillment must be a valid uppercase hex string (0-9, A-F)';
-          }
-          try {
-               // Convert hex to binary and compute SHA-256 hash
-               const fulfillmentBytes = Buffer.from(fulfillment!, 'hex'); // Buffer polyfill or use Uint8Array
-               const computedHash = sha256(fulfillmentBytes).toUpperCase();
-               if (computedHash !== condition) {
-                    return 'Fulfillment does not match the condition';
-               }
-          } catch (error: any) {
-               console.error(`Error validateFulfillment ${error.message}`);
-               return 'Invalid fulfillment: unable to compute SHA-256 hash';
-          }
-          return null;
-     }
-
      validateInput(input: string | undefined | null): boolean {
           return typeof input === 'string' && !!input.trim();
-     }
-
-     isValidTransactionHash(input: string): boolean {
-          return /^[0-9A-Fa-f]{64}$/.test(input);
-     }
-
-     parseAndValidateNFTokenIDs(idsString: string): string[] {
-          const ids = idsString.split(',').map(id => id.trim());
-          const validIds = ids.filter(id => /^[0-9A-Fa-f]{64}$/.test(id));
-          return validIds;
-     }
-
-     isValidCTID(input: string): boolean {
-          return /^C[0-9A-Fa-f]+$/.test(input);
      }
 
      formatXRPLAmount = (value: any): string => {
@@ -153,77 +78,6 @@ export class UtilsService {
           }
           return `${(Number.parseInt(value) / 1000000).toFixed(6)} XRP`;
      };
-
-     isValidDate(value: any): boolean {
-          return value && !Number.isNaN(new Date(value).getTime());
-     }
-
-     isValidAddress(address: string): boolean {
-          return xrpl.isValidAddress(address);
-     }
-
-     jsonToHex(obj: string | object): string {
-          const str = typeof obj === 'string' ? obj : JSON.stringify(obj);
-          return Buffer.from(str, 'utf8').toString('hex');
-     }
-
-     hexTojson(obj: string | object): string {
-          const str = typeof obj === 'string' ? obj : JSON.stringify(obj);
-          return Buffer.from(str, 'hex').toString('utf8');
-     }
-
-     parseUiJson(object: string): any {
-          // try {
-          //      if (object === 'N/A' || !object) return null;
-          //      const parsed = JSON.parse(object);
-          //      // Check if it's an array and has at least one item
-          //      if (Array.isArray(parsed) && parsed.length > 0) {
-          //           return parsed[0].Credential; // Return just the Credential object
-          //      }
-          //      return parsed;
-          // } catch (error: any) {
-          //      console.error(`Error parsing JSON ${error.message}\n Returning original JSON.`);
-          return object;
-          // }
-     }
-
-     validateAndConvertDidJson(didJsonString: string, didSchema: object): DidValidationResult {
-          const ajv = new Ajv({ allErrors: true });
-          addFormats(ajv);
-          const validate = ajv.compile(didSchema);
-
-          try {
-               const parsed = JSON.parse(didJsonString);
-
-               // Handle array of documents or single document
-               if (Array.isArray(parsed)) {
-                    for (let i = 0; i < parsed.length; i++) {
-                         const doc = parsed[i];
-                         const valid = validate(doc);
-                         if (!valid) {
-                              console.error(`Document ${i} invalid:`, validate.errors);
-                              return { success: false, errors: `Document ${i} invalid: ${JSON.stringify(validate.errors)}` };
-                         }
-                         console.log(`Document ${i} valid!`);
-                    }
-               } else {
-                    const valid = validate(parsed);
-                    if (!valid) {
-                         console.error('DID JSON invalid:', validate.errors);
-                         return { success: false, errors: `DID JSON invalid: ${JSON.stringify(validate.errors)}` };
-                    }
-                    console.log('DID JSON valid');
-               }
-
-               // Convert JSON to hex
-               const didDataHex = this.jsonToHex(parsed as object);
-               console.log('didDataHex in json', this.hexTojson(didDataHex));
-               return { success: true, hexData: didDataHex };
-          } catch (e: any) {
-               console.error('Invalid JSON:', e.message);
-               return { success: false, errors: `Invalid JSON: ${e.message}` };
-          }
-     }
 
      updateAmount(value: string | number) {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
@@ -356,30 +210,6 @@ export class UtilsService {
           }
      };
 
-     // Helper: safely decode hex strings
-     private decodeutf8Hex(hex: string | undefined): string {
-          if (!hex) return 'N/A';
-          try {
-               return Buffer.from(hex, 'hex').toString('utf8') || 'N/A';
-          } catch {
-               return 'Invalid Hex';
-          }
-     }
-
-     formatIssuer(issuer?: string): string {
-          if (!issuer) return '';
-          return `${issuer.slice(0, 6)}...${issuer.slice(-6)}`;
-     }
-
-     getCredentialColor(credential: any): string {
-          const type = credential?.CredentialType;
-          if (type.includes('kyc') || type.includes('KYC')) return 'green';
-          if (type.includes('member')) return '#007bff';
-          if (type.includes('compliance') || type.includes('Compliance')) return 'orange';
-          if (type.includes('admin') || type.includes('Admin')) return 'red';
-          return '#333';
-     }
-
      async getRegularKeyWallet(isMultiSign: boolean, regularKeyAddress: string, isRegularKeyAddress: boolean, regularKeySeed: string) {
           let regularKeyWalletSignTx: any = '';
           let useRegularKeyWalletSignTx = false;
@@ -409,102 +239,12 @@ export class UtilsService {
                .filter((s: string) => s.length > 0 && s !== '');
      }
 
-     getNftIds(nftId: any) {
-          return nftId
-               .split(',')
-               .map((s: string) => s.trim())
-               .filter((s: string) => s.length > 0 && s !== '');
-     }
-
      formatTokenBalance(field: string, roundTo: number): string {
           return Number(field).toLocaleString(undefined, {
                minimumFractionDigits: 0,
                maximumFractionDigits: roundTo, // enough to preserve precision
                useGrouping: true,
           });
-     }
-
-     removeCommaFromAmount(field: string): string {
-          return field.replaceAll(',', '');
-     }
-
-     normalizeMnemonic(input: string): string {
-          return (
-               input
-                    // .toLowerCase()
-                    // .replaceAll(',', '') // remove commas
-                    .replaceAll(/\s+/g, ' ') // normalize spacing
-                    .trim()
-          );
-     }
-
-     normalizeMnemonic1(input: string): string {
-          const normalized = input.trim().toLowerCase();
-
-          if (!/^[a-z]+( [a-z]+)*$/.test(normalized)) {
-               return 'Invalid Mnemonic. Must contain lowercase words separated by single spaces only.';
-          }
-
-          if (!bip39.validateMnemonic(normalized)) {
-               return 'Invalid BIP39 Mnemonic.';
-          }
-
-          return normalized;
-     }
-
-     normalizeSecrets(input: string): string[] {
-          return input
-               .split(/[\s,]+/)
-               .map(s => s.trim())
-               .filter(Boolean);
-     }
-
-     normalizeFamilySeed(input: string): string {
-          if (!input) return '';
-
-          return input
-               .trim()
-               .replaceAll(/\s+/g, '') // remove all spaces (including pasted line breaks)
-               .replaceAll(/[\u200B-\u200D\uFEFF]/g, ''); // remove invisible unicode chars
-     }
-
-     isValidSecret(secrets: string[]): boolean {
-          const valid: string[] = [];
-          const invalid: string[] = [];
-
-          for (const secret of secrets) {
-               if (this.isValidSecretNumber(secret.trim())) {
-                    valid.push(secret);
-               } else {
-                    invalid.push(secret);
-               }
-          }
-
-          if (invalid.length > 0 || valid.length != 8) {
-               return false;
-          }
-          return true;
-     }
-
-     isValidMnemonic(mnemonic: string): boolean {
-          const cleaned = this.normalizeMnemonic(mnemonic);
-          const words = cleaned.split(' ');
-
-          // Basic structural validation (24 words, alphabetic only)
-          if (words.length !== 24) return false;
-
-          return words.every(word => /^[a-z]+$/.test(word));
-     }
-
-     isValidSecretNumber(secret: string): boolean {
-          return /^\d{6}$/.test(secret);
-     }
-
-     convertSecretNumberStringToArray(rawSecrets: string) {
-          return rawSecrets
-               .split(',')
-               .map(s => s.trim())
-               .filter(s => s.length > 0);
      }
 
      async getWalletFromAddress(address: string): Promise<xrpl.Wallet> {
@@ -522,32 +262,6 @@ export class UtilsService {
           }
 
           return xrpl.Wallet.fromSeed(walletData.seed, options);
-     }
-
-     formatCurrencyForDisplay(v: any): string {
-          const strV = String(v);
-          const normalizedCurrency = this.normalizeCurrencyCode(strV);
-          if (normalizedCurrency === '') {
-               return `(LP Token) ${strV}`;
-          } else {
-               return `${normalizedCurrency}`;
-          }
-     }
-
-     formatValueForKey(k: string, v: any): string {
-          const strV = String(v);
-          if (k === 'index' || k === 'Account' || k === 'issuer') {
-               return `<code>${strV}</code>`;
-          }
-          if (k === 'currency') {
-               const normalizedCurrency = this.normalizeCurrencyCode(strV);
-               if (normalizedCurrency === '') {
-                    return `(LP Token) <code>${strV}</code>`;
-               } else {
-                    return `<code>${normalizedCurrency}</code>`;
-               }
-          }
-          return strV;
      }
 
      /**
@@ -647,6 +361,10 @@ export class UtilsService {
           return '';
      }
 
+     truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
+     }
+
      normalizeAddress(addr: string): string {
           if (!addr) return '';
           // Convert X-address to classic if needed, or just trim/lowercase
@@ -692,32 +410,6 @@ export class UtilsService {
           return obj?.LedgerEntryType === 'MPToken';
      }
 
-     decodeNFTFlags(flags: any) {
-          if (typeof flags !== 'number') return '';
-
-          const flagMap = {
-               1: 'Burnable',
-               2: 'Only XRP',
-               8: 'Transferable',
-               16: 'Mutable',
-          };
-
-          const result = [];
-          for (const [bit, name] of Object.entries(flagMap)) {
-               if (flags & Number(bit)) result.push(name);
-          }
-
-          return result.length ? result.join(', ') : 'None';
-     }
-
-     parseTransferRateToPercentage(transferRate: string) {
-          const rate = Number.parseInt(transferRate, 10);
-          if (Number.isNaN(rate) || rate < 1000000000) {
-               return 0; // Default rate is 0% fee (1.0x multiplier)
-          }
-          return (rate / 1_000_000_000 - 1) * 100;
-     }
-
      convertToEstTime(UtcDataTime: string): string {
           const utcDate = new Date(UtcDataTime);
           const formatter = this.dateFormatter();
@@ -738,24 +430,6 @@ export class UtilsService {
                hour12: true, // Use 24-hour format; set to true for 12-hour with AM/PM
                // fractionalSecondDigits: 3, // Include milliseconds (3 digits)
           });
-     }
-
-     truncateAddress(address: string): string {
-          return `${address.slice(0, 8)}...${address.slice(-6)}`;
-     }
-
-     stripHTMLForSearch(html: string): string {
-          const div = document.createElement('div');
-          div.innerHTML = html;
-          const result = (div.textContent || div.innerText || '').toLowerCase().trim();
-          console.debug('stripHTMLForSearch:', { input: html, output: result });
-          return result;
-     }
-
-     stripHTML(text: string): string {
-          const div = document.createElement('div');
-          div.innerHTML = text;
-          return div.textContent || div.innerText || '';
      }
 
      async getWalletWithEncryptionAlgorithm(seed: string, algorithm: 'ed25519' | 'secp256k1'): Promise<xrpl.Wallet> {
@@ -816,37 +490,6 @@ export class UtilsService {
           } catch (error: any) {
                console.error(`Invalid seed or mnemonic format ${error.message}`);
                throw new Error('Invalid seed or mnemonic format');
-          }
-     }
-
-     validateSeed(seed: string) {
-          const savedEncryptionType = this.storageService.getInputValue('encryptionType');
-          const result = this.detectXrpInputType(seed);
-          try {
-               if (result.type === 'unknown') {
-                    return false;
-               }
-               if (savedEncryptionType === 'ed25519') {
-                    if (result.type === 'seed') {
-                         xrpl.Wallet.fromSeed(result.value, { algorithm: AppConstants.ENCRYPTION.ED25519 });
-                    } else if (result.type === 'mnemonic') {
-                         Wallet.fromMnemonic(result.value, { algorithm: AppConstants.ENCRYPTION.ED25519 });
-                    } else if (result.type === 'secret_numbers') {
-                         walletFromSecretNumbers(result.value, { algorithm: AppConstants.ENCRYPTION.ED25519 });
-                    }
-               } else {
-                    if (result.type === 'seed') {
-                         xrpl.Wallet.fromSeed(result.value, { algorithm: AppConstants.ENCRYPTION.SECP256K1 });
-                    } else if (result.type === 'mnemonic') {
-                         Wallet.fromMnemonic(result.value, { algorithm: AppConstants.ENCRYPTION.SECP256K1 });
-                    } else if (result.type === 'secret_numbers') {
-                         walletFromSecretNumbers(result.value, { algorithm: AppConstants.ENCRYPTION.SECP256K1 });
-                    }
-               }
-               return true;
-          } catch (error: any) {
-               console.error(`Error validation seed ${error.message}`);
-               return false;
           }
      }
 
@@ -942,29 +585,29 @@ export class UtilsService {
           this.storageService.removeValue(`${account}regularKeySeed`);
      }
 
-     validateQuorum(signers: any, signerQuorum: any) {
-          const totalWeight = signers.reduce((sum: any, s: { weight: any }) => sum + (s.weight || 0), 0);
-          if (signerQuorum > totalWeight) {
-               return totalWeight;
-          }
-     }
+     // validateQuorum(signers: any, signerQuorum: any) {
+     //      const totalWeight = signers.reduce((sum: any, s: { weight: any }) => sum + (s.weight || 0), 0);
+     //      if (signerQuorum > totalWeight) {
+     //           return totalWeight;
+     //      }
+     // }
 
-     async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
-          if (multiSignAddress === 'No Multi-Sign address configured for account') {
-               multiSignSeeds = '';
-               return { multiSignSeeds };
-          }
-          return null;
-     }
+     // async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
+     //      if (multiSignAddress === 'No Multi-Sign address configured for account') {
+     //           multiSignSeeds = '';
+     //           return { multiSignSeeds };
+     //      }
+     //      return null;
+     // }
 
-     onTicketToggle(event: any, ticket: string, selectedTickets: any) {
-          if (event.target.checked) {
-               selectedTickets = [...selectedTickets, ticket];
-          } else {
-               selectedTickets = selectedTickets.filter((t: string) => t !== ticket);
-          }
-          return selectedTickets;
-     }
+     // onTicketToggle(event: any, ticket: string, selectedTickets: any) {
+     //      if (event.target.checked) {
+     //           selectedTickets = [...selectedTickets, ticket];
+     //      } else {
+     //           selectedTickets = selectedTickets.filter((t: string) => t !== ticket);
+     //      }
+     //      return selectedTickets;
+     // }
 
      async toggleMultiSign(useMultiSign: boolean, signers: any, walletClassicAddress: string) {
           try {
@@ -981,10 +624,6 @@ export class UtilsService {
      cleanUpMultiSelection(selectedTickets: any, ticketArray: any) {
           // Filter out any selected tickets that no longer exist
           return selectedTickets.filter((ticket: any) => ticketArray.includes(ticket));
-     }
-
-     isTxResponse(obj: any): obj is xrpl.TxResponse<xrpl.SubmittableTransaction> {
-          return obj && typeof obj !== 'string' && 'result' in obj;
      }
 
      isTxSuccessful(response: any): boolean {
@@ -1233,80 +872,6 @@ export class UtilsService {
           return { signedTx: { tx_blob: multisignedTxBlob, hash: xrpl.hashes.hashSignedTx(multisignedTxBlob) }, signers };
      }
 
-     findDepositPreauthObjects(accountObjects: xrpl.AccountObjectsResponse) {
-          const depositPreauthAccounts: string[] = [];
-          if (accountObjects.result && Array.isArray(accountObjects.result.account_objects)) {
-               accountObjects.result.account_objects.forEach(obj => {
-                    if (obj.LedgerEntryType === 'DepositPreauth' && obj.Authorize) {
-                         depositPreauthAccounts.push(obj.Authorize);
-                    }
-               });
-          }
-          return depositPreauthAccounts;
-     }
-
-     decodeRippleStateFlags(flagValue: any) {
-          const TRUSTLINE_FLAGS = {
-               lsfAMMNode: 0x01000000, // 16777216
-               lsfLowReserve: 0x00020000, // 65536
-               lsfHighReserve: 0x00040000, // 131072
-               lsfLowAuth: 0x00010000, // 262144
-               lsfHighAuth: 0x00020000, // 524288
-               lsfLowNoRipple: 0x00100000, // 1048576
-               lsfHighNoRipple: 0x00200000, // 2097152
-               lsfLowFreeze: 0x00400000, // 4194304
-               lsfHighFreeze: 0x00800000, // 8388608
-               lsfLowDeepFreeze: 0x02000000, // 33554432
-               lsfHighDeepFreeze: 0x04000000, // 67108864
-          };
-
-          const results = [];
-
-          for (const [name, bit] of Object.entries(TRUSTLINE_FLAGS)) {
-               if ((flagValue & bit) !== 0) {
-                    results.push(name);
-               }
-          }
-
-          return results.length > 0 ? results : ['No Flags Set'];
-     }
-
-     getFlagName(value: string): string {
-          // 1. Try AppConstants.FLAGS
-          // const appFlag = AppConstants.FLAGS.find(f => f.value.toString() === value)?.name;
-          const appFlag = AppConstants.FLAGS.find(f => f.value === Number(value))?.label;
-          if (appFlag) {
-               return appFlag;
-          }
-
-          // 2. Try decodeRippleStateFlags
-          const rippleFlags = this.decodeRippleStateFlags(Number(value));
-          if (rippleFlags.length > 0) {
-               return rippleFlags.join(', ');
-          }
-
-          // 3. Fallback: return raw value
-          return `${value}`;
-     }
-
-     getFlagUpdates(currentFlags: any) {
-          const setFlags: any[] = [];
-          const clearFlags: any[] = [];
-
-          AppConstants.FLAGS.forEach(flag => {
-               const checkbox = document.getElementById(flag.name) as HTMLInputElement;
-               if (!checkbox || !flag.xrplName) return;
-
-               const desired = checkbox.checked;
-               const actual = !!currentFlags[flag.xrplName];
-
-               if (desired && !actual) setFlags.push(flag.value);
-               if (!desired && actual) clearFlags.push(flag.value);
-          });
-
-          return { setFlags, clearFlags };
-     }
-
      formatIOUXrpAmountOutstanding(amount: any): string {
           if (!amount) return 'Unknown';
 
@@ -1535,70 +1100,6 @@ export class UtilsService {
           }
      }
 
-     async getAccountReserves(client: xrpl.Client, accountInfo: any, address: string): Promise<{ ownerCount: number; totalReserveXRP: number } | undefined> {
-          try {
-               const accountData = accountInfo.result.account_data;
-               const ownerCount = Number(accountData.OwnerCount || 0);
-
-               const reserveData = await this.getXrplReserve(client);
-               if (!reserveData) {
-                    throw new Error('Failed to fetch XRPL reserve data');
-               }
-
-               const { reserveBaseXRP, reserveIncrementXRP } = reserveData;
-
-               // Calculate total in XRP units directly
-               const totalReserveXRP = reserveBaseXRP + ownerCount * reserveIncrementXRP;
-
-               return { ownerCount, totalReserveXRP };
-          } catch (error: any) {
-               console.error('Error in getAccountReserves:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`);
-               return undefined;
-          }
-     }
-
-     async getXrplReserve(client: xrpl.Client) {
-          try {
-               const ledger_info = await this.xrplService.getXrplServerState(client, 'current', '');
-               const ledgerData = ledger_info.result.state.validated_ledger;
-               if (!ledgerData) {
-                    throw new Error('validated_ledger is undefined in server_state');
-               }
-               const baseFee = ledgerData.base_fee;
-               const reserveBaseXRP = ledgerData.reserve_base;
-               const reserveIncrementXRP = ledgerData.reserve_inc;
-
-               return { reserveBaseXRP, reserveIncrementXRP };
-          } catch (error: any) {
-               console.error('Error:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`);
-               return undefined;
-          }
-     }
-
-     async updateOwnerCountAndReserves(client: xrpl.Client, accountInfo: any, address: string): Promise<{ ownerCount: string; totalXrpReserves: string }> {
-          const reserves = await this.getAccountReserves(client, accountInfo, address);
-          let ownerCount = '0';
-          let totalXrpReserves = '0';
-          if (reserves) {
-               ownerCount = reserves.ownerCount.toString();
-               totalXrpReserves = String(xrpl.dropsToXrp(reserves.totalReserveXRP));
-               console.debug(`Owner Count: ${ownerCount} Total XRP Reserves: ${totalXrpReserves}`);
-          }
-          return { ownerCount, totalXrpReserves };
-     }
-
-     public setSuccess(message: string) {
-          this.result = `${message}`;
-          this.isError = false;
-          this.isSuccess = true;
-     }
-
-     async delay(ms: number) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-     }
-
      async getValidInvoiceID(input: string): Promise<string | null> {
           if (!input) {
                return null;
@@ -1636,13 +1137,6 @@ export class UtilsService {
           signers = [{ account: '', seed: '', weight: 1 }];
      }
 
-     getUserEnteredAddress(userEnteredAddress: any) {
-          return userEnteredAddress
-               .split(',')
-               .map((address: string) => address.trim())
-               .filter((addr: string) => addr !== '');
-     }
-
      formatMemos(memos: any[]): string {
           return memos
                .map(m => {
@@ -1651,17 +1145,6 @@ export class UtilsService {
                     return `${data} (${type})`;
                })
                .join('\n');
-     }
-
-     filterAccountObjectsByTypes(accountObjectsResponse: xrpl.AccountObjectsResponse, types: string[]): xrpl.AccountObjectsResponse {
-          const filtered = (accountObjectsResponse.result.account_objects ?? []).filter((obj: any) => types.includes(obj.LedgerEntryType));
-          return {
-               ...accountObjectsResponse,
-               result: {
-                    ...accountObjectsResponse.result,
-                    account_objects: filtered,
-               },
-          };
      }
 
      async setInvoiceIdField(tx: any, invoiceIdField: string) {
@@ -1685,27 +1168,6 @@ export class UtilsService {
 
      setDestination(tx: any, destinationAddressField: string) {
           tx.Destination = destinationAddressField;
-     }
-
-     applyTicketSequence(accountInfo: any, accountObjects: any, tx: any, ticketSequence: string) {
-          if (ticketSequence) {
-               if (!this.isTicketExists(accountObjects, Number(ticketSequence))) {
-                    throw new Error(`Ticket Sequence ${ticketSequence} not found for account ${accountObjects.account}`);
-               }
-               this.setTicketSequence(tx, ticketSequence, true);
-          } else {
-               this.setTicketSequence(tx, accountInfo.result.account_data.Sequence, false);
-          }
-     }
-
-     isTicketExists(ticketObject: any, ticketSequence: number): boolean {
-          try {
-               const ticketExists = (ticketObject.result.account_objects || []).some((ticket: any) => ticket.TicketSequence === ticketSequence);
-               return ticketExists;
-          } catch (error: any) {
-               console.error('Error checking ticket: ', error);
-               return false; // Return false if there's an error fetching tickets
-          }
      }
 
      setTicketSequence(tx: any, ticketSequence: string, useTicket: boolean) {
@@ -1844,50 +1306,6 @@ export class UtilsService {
           if (typeof amount === 'object') {
                // Issued currency
                return amount.value;
-          }
-     }
-
-     logLedgerObjects(fee: string, currentLedger: number, serverInfo: xrpl.ServerInfoResponse) {
-          console.debug(`fee:`, fee);
-          console.debug(`currentLedger:`, currentLedger);
-          console.debug(`serverInfo:`, serverInfo);
-     }
-
-     logAccountInfoObjects(accountInfo: any, accountObject: any) {
-          if (accountInfo) {
-               console.debug(`accountInfo:`, accountInfo.result);
-          }
-
-          if (accountObject) {
-               console.debug(`accountObject:`, accountObject.result);
-          }
-     }
-
-     logAssets(asset: any, asset2: any) {
-          if (asset) {
-               console.debug(`asset:`, asset);
-          }
-
-          if (asset2) {
-               console.debug(`asset2:`, asset2);
-          }
-     }
-
-     logObjects(type: string, object: any) {
-          if (object.result) {
-               console.debug(`${type}`, object.result);
-          } else {
-               console.debug(`${type}`, object);
-          }
-     }
-
-     logEscrowObjects(escrowObjects: xrpl.AccountObjectsResponse, escrow: any) {
-          if (escrowObjects) {
-               console.debug(`escrowObjects:`, escrowObjects?.result);
-          }
-
-          if (escrow) {
-               console.debug(`escrow:`, escrow);
           }
      }
 }

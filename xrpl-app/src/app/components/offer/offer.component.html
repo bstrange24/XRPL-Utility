@@ -43,7 +43,7 @@
 
                     <!-- Action buttons -->
                     <div class="button-row">
-                         <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ txUiService.spinner() ? 'Processing...' : offerUtilsService.actionButtonLabel() }}</button>
+                         <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ offerUtilsService.actionButtonLabel() }}</button>
 
                          @if (tab === 'createOffer' || tab === 'getOrderBook') {
                          <button type="button" class="btn-primary-green" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">Invert Order</button>

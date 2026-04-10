@@ -17,11 +17,13 @@ import { StorageService } from '../shared/local-storage/storage.service';
 import { UtilsService } from '../utils/util-service/utils.service';
 import { XrplCacheService } from '../xrpl-cache/xrpl-cache.service';
 import { AccountObjectsStoreService } from '../shared/account-objects-store/account-objects-store.service';
+import { WalletsUtilService } from './wallets-util/wallets-util.service';
 
 export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly utilsService = inject(UtilsService);
+     public readonly walletsUtilService = inject(WalletsUtilService);
      protected readonly xrplCache = inject(XrplCacheService);
      protected readonly sharedObjectsStore = inject(AccountObjectsStoreService);
 

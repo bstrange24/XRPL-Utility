@@ -118,7 +118,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      };
 
      async handleModifyAccountFlags(config: AccountConfig) {
-          const { setFlags, clearFlags } = this.utilsService.getFlagUpdates(config.preFetchedEnv?.accountInfo.result.account_flags);
+          const { setFlags, clearFlags } = this.getFlagUpdates(config.preFetchedEnv?.accountInfo.result.account_flags);
 
           if (setFlags.length === 0 && clearFlags.length === 0) {
                this.toastService.info('No flag changes detected', AppConstants.TOAST.INFO);
@@ -131,7 +131,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                operations.push({
                     operation: 'SetFlag',
                     flagValue: f,
-                    flagName: this.utilsService.getFlagName(f),
+                    flagName: this.getFlagName(f),
                });
           });
 
@@ -139,7 +139,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                operations.push({
                     operation: 'ClearFlag',
                     flagValue: f,
-                    flagName: this.utilsService.getFlagName(f),
+                    flagName: this.getFlagName(f),
                });
           });
           config.setFlags = setFlags;
@@ -147,6 +147,68 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           config.operations = operations;
 
           return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+     }
+
+     getFlagUpdates(currentFlags: any) {
+          const setFlags: any[] = [];
+          const clearFlags: any[] = [];
+
+          AppConstants.FLAGS.forEach(flag => {
+               const checkbox = document.getElementById(flag.name) as HTMLInputElement;
+               if (!checkbox || !flag.xrplName) return;
+
+               const desired = checkbox.checked;
+               const actual = !!currentFlags[flag.xrplName];
+
+               if (desired && !actual) setFlags.push(flag.value);
+               if (!desired && actual) clearFlags.push(flag.value);
+          });
+
+          return { setFlags, clearFlags };
+     }
+
+     getFlagName(value: string): string {
+          // 1. Try AppConstants.FLAGS
+          // const appFlag = AppConstants.FLAGS.find(f => f.value.toString() === value)?.name;
+          const appFlag = AppConstants.FLAGS.find(f => f.value === Number(value))?.label;
+          if (appFlag) {
+               return appFlag;
+          }
+
+          // 2. Try decodeRippleStateFlags
+          const rippleFlags = this.decodeRippleStateFlags(Number(value));
+          if (rippleFlags.length > 0) {
+               return rippleFlags.join(', ');
+          }
+
+          // 3. Fallback: return raw value
+          return `${value}`;
+     }
+
+     decodeRippleStateFlags(flagValue: any) {
+          const TRUSTLINE_FLAGS = {
+               lsfAMMNode: 0x01000000, // 16777216
+               lsfLowReserve: 0x00020000, // 65536
+               lsfHighReserve: 0x00040000, // 131072
+               lsfLowAuth: 0x00010000, // 262144
+               lsfHighAuth: 0x00020000, // 524288
+               lsfLowNoRipple: 0x00100000, // 1048576
+               lsfHighNoRipple: 0x00200000, // 2097152
+               lsfLowFreeze: 0x00400000, // 4194304
+               lsfHighFreeze: 0x00800000, // 8388608
+               lsfLowDeepFreeze: 0x02000000, // 33554432
+               lsfHighDeepFreeze: 0x04000000, // 67108864
+          };
+
+          const results = [];
+
+          for (const [name, bit] of Object.entries(TRUSTLINE_FLAGS)) {
+               if ((flagValue & bit) !== 0) {
+                    results.push(name);
+               }
+          }
+
+          return results.length > 0 ? results : ['No Flags Set'];
      }
 
      async handleModifyDepositAuth(config: AccountConfig, enabled: string) {

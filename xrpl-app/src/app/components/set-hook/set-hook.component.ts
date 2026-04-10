@@ -28,6 +28,7 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { UtilsService } from '../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-set-hook',
@@ -208,7 +209,7 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
                } catch (error: any) {
                     this.txUiService.setError(`${error.message || 'Failed to set hook'}`);
                } finally {
-                    this.txUiService.spinner.set(false);
+                    // this.txUiService.spinner.set(false);
                }
           });
      }

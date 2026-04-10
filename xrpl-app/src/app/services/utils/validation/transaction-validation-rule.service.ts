@@ -11,6 +11,7 @@ import { AccountConfiguratorStoreService } from '../../account-configurator/acco
 import { PaymentChannelObject } from '../../../components/payment-channel/constants/payment-channel.types';
 import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
+import { DidUtilService } from '../../did/did-util/did-util.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -47,6 +48,7 @@ export class ValidationService {
      public readonly utilsService = inject(UtilsService);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
+     public readonly didUtilService = inject(DidUtilService);
 
      constructor() {
           this.registerBuiltInRules();
@@ -456,7 +458,7 @@ export class ValidationService {
      private validateDidData(data: string, documentType: string): ValidatorFn {
           return ctx => {
                if (!data) return null; // Not required
-               const result = this.utilsService.validateAndConvertDidJson(data, didSchema);
+               const result = this.didUtilService.validateAndConvertDidJson(data, didSchema);
                if (!result.success) {
                     return `${documentType} is invalid: ${result.errors || 'Unknown error'}`;
                }

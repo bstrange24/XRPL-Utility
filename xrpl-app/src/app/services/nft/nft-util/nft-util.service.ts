@@ -5,6 +5,7 @@ import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -14,6 +15,7 @@ export class NftUtilService {
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplService = inject(XrplService);
      public readonly utilsService = inject(UtilsService);
+     public readonly logService = inject(LogServiceService);
 
      nftFlagValues = {
           burnableNft: 0x00000001,
@@ -340,21 +342,21 @@ export class NftUtilService {
 
                const buyOffersResponse = this.createBuyOffersResponse(nfts, buyOffersResponses);
                const sellOffersResponse = this.createSellOffersResponse(nfts, sellOffersResponses);
-               this.utilsService.logObjects('buyOffersResponse', buyOffersResponse);
-               this.utilsService.logObjects('sellOffersResponse', sellOffersResponse);
+               this.logService.logObjects('buyOffersResponse', buyOffersResponse);
+               this.logService.logObjects('sellOffersResponse', sellOffersResponse);
 
                // Filter only sell offers (Flags = 1) and buy offers (Flags = 0)
                const s = this.filterSellOffers(nftAccountOffers, wallet);
                const b = this.filterBuyOffers(nftAccountOffers, wallet);
-               this.utilsService.logObjects('s', s);
-               this.utilsService.logObjects('b', b);
+               this.logService.logObjects('s', s);
+               this.logService.logObjects('b', b);
 
                const mergedBuyOffersResponse = this.mergeOffers(buyOffersResponse, b);
                const mergedSellOffersResponse = this.mergeOffers(sellOffersResponse, s);
                // const mergedBuyOffersResponse = this.mergeByNftId(buyOffersResponse, b, false);
                // const mergedSellOffersResponse = this.mergeByNftId(sellOffersResponse, s, true);
-               this.utilsService.logObjects('mergedBuyOffersResponse', mergedBuyOffersResponse);
-               this.utilsService.logObjects('mergedSellOffersResponse', mergedSellOffersResponse);
+               this.logService.logObjects('mergedBuyOffersResponse', mergedBuyOffersResponse);
+               this.logService.logObjects('mergedSellOffersResponse', mergedSellOffersResponse);
 
                // return { accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse };
                return { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse: mergedSellOffersResponse, buyOffersResponse: mergedBuyOffersResponse };
@@ -495,7 +497,7 @@ export class NftUtilService {
           });
 
           this.nftCreateStoreService.setField('existingNfts', allNfts);
-          this.utilsService.logObjects('existingNfts', this.nftCreateStoreService.existingNfts());
+          this.logService.logObjects('existingNfts', this.nftCreateStoreService.existingNfts());
           return this.nftCreateStoreService.existingNfts();
      }
 
@@ -514,7 +516,7 @@ export class NftUtilService {
                }));
 
           this.nftCreateStoreService.setField('existingSellOffers', offers);
-          this.utilsService.logObjects('existingSellOffers (from account_objects)', this.nftCreateStoreService.existingSellOffers());
+          this.logService.logObjects('existingSellOffers (from account_objects)', this.nftCreateStoreService.existingSellOffers());
      }
 
      getExistingBuyOffers(accountObjects: any, ledgerInfo: any) {
@@ -532,7 +534,7 @@ export class NftUtilService {
                }));
 
           this.nftCreateStoreService.setField('existingBuyOffers', offers);
-          this.utilsService.logObjects('existingBuyOffers (from account_objects)', this.nftCreateStoreService.existingBuyOffers());
+          this.logService.logObjects('existingBuyOffers (from account_objects)', this.nftCreateStoreService.existingBuyOffers());
      }
 
      getExistingSellOffers1(sellOfferData: any) {
@@ -554,7 +556,7 @@ export class NftUtilService {
 
                this.nftCreateStoreService.setField('existingSellOffers', allSellOffers);
           }
-          this.utilsService.logObjects('existingSellOffers', this.nftCreateStoreService.existingSellOffers());
+          this.logService.logObjects('existingSellOffers', this.nftCreateStoreService.existingSellOffers());
           return this.nftCreateStoreService.existingSellOffers();
      }
 
@@ -584,7 +586,7 @@ export class NftUtilService {
 
                this.nftCreateStoreService.setField('existingBuyOffers', allNfts);
           }
-          this.utilsService.logObjects('existingBuyOffers', this.nftCreateStoreService.existingBuyOffers());
+          this.logService.logObjects('existingBuyOffers', this.nftCreateStoreService.existingBuyOffers());
           return this.nftCreateStoreService.existingBuyOffers();
      }
 
@@ -603,5 +605,11 @@ export class NftUtilService {
           // Sort by lowest price
           validOffers.sort((a, b) => parseInt(a.amount) - parseInt(b.amount));
           return validOffers;
+     }
+
+     parseAndValidateNFTokenIDs(idsString: string): string[] {
+          const ids = idsString.split(',').map(id => id.trim());
+          const validIds = ids.filter(id => /^[0-9A-Fa-f]{64}$/.test(id));
+          return validIds;
      }
 }

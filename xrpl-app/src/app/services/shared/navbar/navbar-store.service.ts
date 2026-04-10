@@ -1,16 +1,13 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import * as xrpl from 'xrpl';
 import { StorageService } from '../local-storage/storage.service';
 import { NetworkService } from '../../utils/network/network-service';
-import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({ providedIn: 'root' })
 export class NavbarStore {
-     private storage = inject(StorageService);
-     private xrpl = inject(XrplService);
+     private storageService = inject(StorageService);
+     private xrplService = inject(XrplService);
      private networkService = inject(NetworkService);
-     private utils = inject(UtilsService);
 
      selectedNetwork = signal('Devnet');
      networkColor = signal('rgb(56, 113, 69)');
@@ -26,8 +23,8 @@ export class NavbarStore {
      transactionInput = signal('');
      loading = signal(false);
 
-     connectionStatus = computed(() => this.xrpl.connectionStatus$());
-     connectionMessage = computed(() => this.xrpl.connectionMessage$());
+     connectionStatus = computed(() => this.xrplService.connectionStatus$());
+     connectionMessage = computed(() => this.xrplService.connectionMessage$());
 
      constructor() {}
 
@@ -48,12 +45,12 @@ export class NavbarStore {
           const normalized = network.toLowerCase();
 
           this.selectedNetwork.set(network);
-          this.networkColor.set(this.storage.getNetworkColor(normalized));
+          this.networkColor.set(this.storageService.getNetworkColor(normalized));
 
-          this.storage.setNet(this.storage['networkServers'][normalized], normalized);
+          this.storageService.setNet(this.storageService['networkServers'][normalized], normalized);
 
-          await this.xrpl.disconnect();
-          this.xrpl.getClient().catch(() => {});
+          await this.xrplService.disconnect();
+          this.xrplService.getClient().catch(() => {});
 
           this.networkService.announceNetworkChange(normalized);
 
@@ -68,39 +65,5 @@ export class NavbarStore {
                nft: false,
                mpt: false,
           });
-     }
-
-     async searchTransaction() {
-          const input = this.transactionInput().trim();
-
-          if (!input) return { error: 'Empty input' };
-
-          if (!this.utils.isValidTransactionHash(input) && !this.utils.isValidCTID(input) && !xrpl.isValidAddress(input)) {
-               return { error: 'Invalid input' };
-          }
-
-          this.loading.set(true);
-
-          try {
-               const client = await this.xrpl.getClient();
-
-               if (this.utils.isValidTransactionHash(input)) {
-                    return await client.request({ command: 'tx', transaction: input });
-               }
-
-               if (this.utils.isValidCTID(input)) {
-                    return await client.request({ command: 'tx', ctid: input });
-               }
-
-               return await client.request({
-                    command: 'account_tx',
-                    account: input,
-                    ledger_index_min: -1,
-                    ledger_index_max: -1,
-                    limit: 10,
-               });
-          } finally {
-               this.loading.set(false);
-          }
      }
 }

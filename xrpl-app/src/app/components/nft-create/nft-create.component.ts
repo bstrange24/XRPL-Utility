@@ -131,7 +131,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                     this.txUiService.setError(`${error.message || 'Transaction failed'}`);
                } finally {
                     this.isSummaryLoading.set(false);
-                    this.txUiService.spinner.set(false);
                }
           });
      }
@@ -177,7 +176,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'burnNft') {
-               const validNFTs = this.utilsService.parseAndValidateNFTokenIDs(this.nftCreateStoreService.nftId());
+               const validNFTs = this.nftUtilService.parseAndValidateNFTokenIDs(this.nftCreateStoreService.nftId());
                if (!validNFTs) {
                     this.toastService.error('Please select a valid NFT ID', AppConstants.TOAST.ERROR);
                     return;

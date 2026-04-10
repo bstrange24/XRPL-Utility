@@ -9,6 +9,7 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { CreateNftStoreService } from '../nft-store/nft-store.service';
 import { NftCreateActionTypes } from '../../../components/nft-create/constants/nft-create.types';
 import { NftUtilService } from '../nft-util/nft-util.service';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -23,6 +24,7 @@ export class NftTransactionViewModelService {
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
+     public readonly logService = inject(LogServiceService);
      readonly activeTab = signal<NftCreateActionTypes>('createNft');
 
      infoData = computed(() => {
@@ -82,7 +84,7 @@ export class NftTransactionViewModelService {
           });
 
           this.nftCreateStoreService.setField('existingNfts', allNfts);
-          this.utilsService.logObjects('existingNfts', allNfts);
+          this.logService.logObjects('existingNfts', allNfts);
           return allNfts;
      }
 

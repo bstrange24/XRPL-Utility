@@ -1,9 +1,9 @@
-@if (info()) {
+@if (infoData()) {
 <div class="info-and-credentials-card">
      <div class="summary-header">
           <div class="summary-text">
                <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-               <div [innerHTML]="info()"></div>
+               <div class="info-text" [innerHTML]="infoData()"></div>
           </div>
      </div>
 </div>

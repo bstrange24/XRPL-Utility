@@ -41,7 +41,7 @@ export class WalletsUtilService {
      }
 
      onMnemonicInput() {
-          this.walletsStoreService.setField('mnemonicInput', this.utilsService.normalizeMnemonic(this.walletsStoreService.mnemonic()));
+          this.walletsStoreService.setField('mnemonicInput', this.normalizeMnemonic(this.walletsStoreService.mnemonic()));
 
           if (!/^[a-z]+( [a-z]+)*$/.test(this.walletsStoreService.mnemonic())) {
                this.walletsStoreService.setField('errorMessage', 'Invalid Mnemonic. Must contain lowercase words separated by single spaces only.');
@@ -51,16 +51,16 @@ export class WalletsUtilService {
                this.walletsStoreService.setField('errorMessage', 'Invalid BIP39 Mnemonic.');
           }
 
-          this.walletsStoreService.setField('mnemonicValid', this.utilsService.isValidMnemonic(this.walletsStoreService.mnemonic()));
+          this.walletsStoreService.setField('mnemonicValid', this.isValidMnemonic(this.walletsStoreService.mnemonic()));
      }
 
      onSecretNumberInput() {
-          this.walletsStoreService.setField('secretNumberInput', this.utilsService.normalizeSecrets(this.walletsStoreService.secretNumbers()));
-          this.walletsStoreService.setField('secretNumberValid', this.utilsService.isValidSecret(this.utilsService.convertSecretNumberStringToArray(this.walletsStoreService.secretNumbers())));
+          this.walletsStoreService.setField('secretNumberInput', this.normalizeSecrets(this.walletsStoreService.secretNumbers()));
+          this.walletsStoreService.setField('secretNumberValid', this.isValidSecret(this.convertSecretNumberStringToArray(this.walletsStoreService.secretNumbers())));
      }
 
      onSeedInput() {
-          this.walletsStoreService.setField('seedInput', this.utilsService.normalizeFamilySeed(this.walletsStoreService.seed()));
+          this.walletsStoreService.setField('seedInput', this.normalizeFamilySeed(this.walletsStoreService.seed()));
           this.walletsStoreService.setField('seedValid', xrpl.isValidSecret(this.walletsStoreService.seed()));
      }
 
@@ -111,5 +111,74 @@ export class WalletsUtilService {
      private saveEncryptionPreference() {
           const type = this.getEncryptionType();
           this.storageService.setInputValue('encryptionType', type);
+     }
+
+     normalizeMnemonic(input: string): string {
+          return (
+               input
+                    // .toLowerCase()
+                    // .replaceAll(',', '') // remove commas
+                    .replaceAll(/\s+/g, ' ') // normalize spacing
+                    .trim()
+          );
+     }
+
+     normalizeSecrets(input: string): string[] {
+          return input
+               .split(/[\s,]+/)
+               .map(s => s.trim())
+               .filter(Boolean);
+     }
+
+     normalizeFamilySeed(input: string): string {
+          if (!input) return '';
+
+          return input
+               .trim()
+               .replaceAll(/\s+/g, '') // remove all spaces (including pasted line breaks)
+               .replaceAll(/[\u200B-\u200D\uFEFF]/g, ''); // remove invisible unicode chars
+     }
+
+     isValidSecret(secrets: string[]): boolean {
+          const valid: string[] = [];
+          const invalid: string[] = [];
+
+          for (const secret of secrets) {
+               if (this.isValidSecretNumber(secret.trim())) {
+                    valid.push(secret);
+               } else {
+                    invalid.push(secret);
+               }
+          }
+
+          if (invalid.length > 0 || valid.length != 8) {
+               return false;
+          }
+          return true;
+     }
+
+     isValidMnemonic(mnemonic: string): boolean {
+          const cleaned = this.normalizeMnemonic(mnemonic);
+          const words = cleaned.split(' ');
+
+          // Basic structural validation (24 words, alphabetic only)
+          if (words.length !== 24) return false;
+
+          return words.every(word => /^[a-z]+$/.test(word));
+     }
+
+     isValidSecretNumber(secret: string): boolean {
+          return /^\d{6}$/.test(secret);
+     }
+
+     convertSecretNumberStringToArray(rawSecrets: string) {
+          return rawSecrets
+               .split(',')
+               .map(s => s.trim())
+               .filter(s => s.length > 0);
+     }
+
+     truncateAddress(address: string): string {
+          return `${address.slice(0, 8)}...${address.slice(-6)}`;
      }
 }

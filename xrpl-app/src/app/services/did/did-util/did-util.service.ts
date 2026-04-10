@@ -8,6 +8,10 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { DidStoreService } from '../did-store/did-store.service';
+import Ajv from 'ajv';
+import addFormats from 'ajv-formats';
+import { DidValidationResult } from '../../../components/did/constants/did.types';
+import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
      providedIn: 'root',
@@ -20,6 +24,7 @@ export class DidUtilService extends PerformanceBaseComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly didStoreService = inject(DidStoreService);
+     public readonly logService = inject(LogServiceService);
 
      constructor() {
           super();
@@ -38,7 +43,7 @@ export class DidUtilService extends PerformanceBaseComponent {
                })
                .sort((a, b) => a.index.localeCompare(b.index));
           this.didStoreService.setField('existingDid', mapped);
-          this.utilsService.logObjects('existingDid', mapped);
+          this.logService.logObjects('existingDid', mapped);
      }
 
      onDidDataChange(newValue: string) {
@@ -85,4 +90,52 @@ export class DidUtilService extends PerformanceBaseComponent {
 
      readonly setDidButtonLabel = this.buildTxLabel('Set DID');
      readonly deleteDidButtonLabel = this.buildTxLabel('Delete DID');
+
+     validateAndConvertDidJson(didJsonString: string, didSchema: object): DidValidationResult {
+          const ajv = new Ajv({ allErrors: true });
+          addFormats(ajv);
+          const validate = ajv.compile(didSchema);
+
+          try {
+               const parsed = JSON.parse(didJsonString);
+
+               // Handle array of documents or single document
+               if (Array.isArray(parsed)) {
+                    for (let i = 0; i < parsed.length; i++) {
+                         const doc = parsed[i];
+                         const valid = validate(doc);
+                         if (!valid) {
+                              console.error(`Document ${i} invalid:`, validate.errors);
+                              return { success: false, errors: `Document ${i} invalid: ${JSON.stringify(validate.errors)}` };
+                         }
+                         console.log(`Document ${i} valid!`);
+                    }
+               } else {
+                    const valid = validate(parsed);
+                    if (!valid) {
+                         console.error('DID JSON invalid:', validate.errors);
+                         return { success: false, errors: `DID JSON invalid: ${JSON.stringify(validate.errors)}` };
+                    }
+                    console.log('DID JSON valid');
+               }
+
+               // Convert JSON to hex
+               const didDataHex = this.jsonToHex(parsed as object);
+               console.log('didDataHex in json', this.hexTojson(didDataHex));
+               return { success: true, hexData: didDataHex };
+          } catch (e: any) {
+               console.error('Invalid JSON:', e.message);
+               return { success: false, errors: `Invalid JSON: ${e.message}` };
+          }
+     }
+
+     jsonToHex(obj: string | object): string {
+          const str = typeof obj === 'string' ? obj : JSON.stringify(obj);
+          return Buffer.from(str, 'utf8').toString('hex');
+     }
+
+     hexTojson(obj: string | object): string {
+          const str = typeof obj === 'string' ? obj : JSON.stringify(obj);
+          return Buffer.from(str, 'hex').toString('utf8');
+     }
 }

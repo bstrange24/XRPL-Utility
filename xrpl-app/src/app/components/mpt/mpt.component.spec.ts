@@ -43,7 +43,10 @@ describe('MptComponent', () => {
           hasWallets: signal(true),
           selectedIndex$: of(0),
           selectedIndex: signal(0),
+
+          // ← UPDATED: always return a wallet with classicAddress
           getSelectedWallet: jasmine.createSpy('getSelectedWallet').and.returnValue(mockWallet),
+
           getSelectedIndex: jasmine.createSpy('getSelectedIndex').and.returnValue(0),
           ensureWalletSelected: jasmine.createSpy('ensureWalletSelected').and.returnValue(true),
           isEditing: { bind: jasmine.createSpy('bind').and.returnValue(() => false) },
@@ -144,11 +147,14 @@ describe('MptComponent', () => {
 
           await TestBed.configureTestingModule({
                imports: [MptComponent],
-               schemas: [NO_ERRORS_SCHEMA],
+               schemas: [NO_ERRORS_SCHEMA], // ← this finally skips Lucide
+
                providers: [
                     provideRouter([]),
                     provideHttpClient(),
+
                     { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
+
                     { provide: WalletManagerService, useValue: walletManagerMock },
                     { provide: TransactionUiService, useValue: txUiMock },
                     { provide: MptTransactionViewModelService, useValue: vmMock },
@@ -169,6 +175,7 @@ describe('MptComponent', () => {
                          provide: CheckTransactionOrchestrator,
                          useValue: { executeCredentialTx: jasmine.createSpy().and.resolveTo({ success: true }) },
                     },
+
                     {
                          provide: CheckUtilService,
                          useValue: { getExistingChecks: jasmine.createSpy().and.returnValue([]) },
