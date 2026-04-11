@@ -181,12 +181,6 @@ export class SignTransactionUtilService {
           this.signTransationStoreService.setField('outputField', blob);
      }
 
-     // copyCheckId(checkId: string) {
-     //      navigator.clipboard.writeText(checkId).then(() => {
-     //           this.txUiService.showToastMessage('Check ID copied!');
-     //      });
-     // }
-
      async createBatchpRequestText(options: SignTransactionOptions): Promise<string> {
           const { wallet, accountInfo } = options;
 

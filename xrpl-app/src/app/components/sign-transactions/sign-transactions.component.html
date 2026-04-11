@@ -10,12 +10,12 @@
 <div class="main-container">
      <div class="content-wrapper">
           <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)" />
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
           <!-- Center form -->
-          <div class="form-panel">
+          <div class="form-panel" style="padding-top: 2em">
                <!-- Modify Flag Menu -->
-               <div style="padding-top: 2em">
+               <div>
                     <div class="submenu-info-text">
                          <div class="white-button-submenu">
                               <lucide-icon name="signature" size="30" style="padding-top: 15px; color: #1e40af"></lucide-icon>
@@ -29,7 +29,7 @@
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()" />
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <form #theForm="ngForm" class="main-form">
@@ -55,9 +55,7 @@
                               </div>
 
                               <!-- Execution time -->
-                              <div class="executionTimeDisplay">
-                                   <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-                              </div>
+                              <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
 
                               <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
                               <div class="tx-preview-container">

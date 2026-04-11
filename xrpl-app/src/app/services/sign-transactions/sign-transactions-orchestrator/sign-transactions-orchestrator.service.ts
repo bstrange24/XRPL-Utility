@@ -56,10 +56,7 @@ export class SignTransactionsOrchestratorService {
      private readonly signTransationStoreService = inject(SignTransationStoreService);
      private readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Generate TX JSON
-     // ──────────────────────────────────────────────────────────────────────────
-
      async generateTransactionJson(options: GenerateJsonOptions): Promise<string> {
           const { wallet, env, selectedTransaction, isTicketEnabled, ticketSequence, isMemoEnabled } = options;
 
@@ -78,10 +75,7 @@ export class SignTransactionsOrchestratorService {
           return jsonStr;
      }
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Sign Transaction (regular or regular-key)
-     // ──────────────────────────────────────────────────────────────────────────
-
      async signTransaction(options: SignTxOptions): Promise<string | null> {
           const { txJson, env, isRegularKeyAddress, regularKeyAddress, regularKeySeed } = options;
 
@@ -103,10 +97,7 @@ export class SignTransactionsOrchestratorService {
           return signed.tx_blob;
      }
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Sign for Multi-Sign
-     // ──────────────────────────────────────────────────────────────────────────
-
      async signForMultiSign(options: SignForMultiSignOptions): Promise<string | null> {
           const { txJson, env, signers } = options;
 
@@ -127,10 +118,7 @@ export class SignTransactionsOrchestratorService {
           return result.signedTx?.tx_blob ?? null;
      }
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Submit Transaction
-     // ──────────────────────────────────────────────────────────────────────────
-
      async submitTransaction(options: SubmitTxOptions): Promise<{ success: boolean; hash?: string; error?: string; response?: any }> {
           const { txJson, outputField, env, isSimulateEnabled, txType } = options;
 
@@ -158,10 +146,7 @@ export class SignTransactionsOrchestratorService {
           return { success: true, hash, response };
      }
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Ticket JSON helpers (used by component effects)
-     // ──────────────────────────────────────────────────────────────────────────
-
      applyTicketToJson(txJson: string, ticketSequence: string): string {
           try {
                const tx = JSON.parse(txJson);
@@ -184,10 +169,7 @@ export class SignTransactionsOrchestratorService {
           }
      }
 
-     // ──────────────────────────────────────────────────────────────────────────
      // Helpers
-     // ──────────────────────────────────────────────────────────────────────────
-
      cleanTx(editedJson: any): any {
           const defaults: Record<string, any[]> = {
                DestinationTag: [0],

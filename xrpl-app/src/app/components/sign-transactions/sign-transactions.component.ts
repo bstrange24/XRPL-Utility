@@ -30,11 +30,12 @@ import { SignTransationStoreService } from '../../services/sign-transactions/sig
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, WalletPanelComponent, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, SignTransactionRequirementsInfoComponent, WarningMessageComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, WalletPanelComponent, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, SignTransactionRequirementsInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -124,6 +125,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           this.isSummaryLoading.set(true);
           await this.measure('getAccountDetails', true, async () => {
+               // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
