@@ -84,6 +84,9 @@ npm install @ngrx/signals@19 --legacy-peer-deps
 npm i -g @xahau/hooks-cli
 npm install prismjs
 npm install @types/prismjs --save-dev
+npm install --save-dev eslint-plugin-simple-import-sort
+npm ls eslint-plugin-simple-import-sort
+npx eslint . --fix
 
 # Rebuild the image
 
