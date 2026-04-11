@@ -259,7 +259,7 @@ export class SignTransactionUtilService {
                selectedTransaction,
           });
 
-          await this.applyTicket(tx, client, wallet);
+          await this.applyTicket(tx, client, wallet, options.isTicketEnabled, options.ticketSequence);
           // this.applyMemo(tx);
 
           return JSON.stringify(tx, null, 2);
@@ -580,19 +580,12 @@ export class SignTransactionUtilService {
           }),
      };
 
-     private async applyTicket(tx: any, client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
-          const isTicket = false;
-          if (isTicket) {
-               // const ticket = this.txUiService.selectedSingleTicket() || this.txUiService.selectedTickets()[0];
-               const ticket = false;
-               if (ticket) {
-                    const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticket));
-                    if (!exists) throw new Error(`Ticket ${ticket} not found`);
-                    this.utilsService.setTicketSequence(tx, ticket, true);
-               }
-          } else {
-               return;
-          }
+     private async applyTicket(tx: any, client: xrpl.Client, wallet: xrpl.Wallet, isTicketEnabled?: boolean, ticketSequence?: string): Promise<void> {
+          if (!isTicketEnabled || !ticketSequence) return;
+
+          const exists = await this.xrplService.checkTicketExists(client, wallet.classicAddress, Number(ticketSequence));
+          if (!exists) throw new Error(`Ticket ${ticketSequence} not found`);
+          this.utilsService.setTicketSequence(tx, ticketSequence, true);
      }
 
      // private applyMemo(tx: any): void {
