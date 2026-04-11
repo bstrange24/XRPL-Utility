@@ -48,20 +48,26 @@
 
                               <!-- Action buttons -->
                               <div class="button-row" style="margin-top: 0.8em">
+                                   <!-- Always visible -->
                                    <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
-                                   <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+
+                                   <!-- Exactly ONE signing button -->
                                    @if (xrplTxOptionsStore.useMultiSign()) {
                                    <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
-                                   } @if (xrplTxOptionsStore.isRegularKeyAddress()) {
+                                   } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
                                    <button type="button" class="btn-primary-blue" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                   } @else {
+                                   <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                    }
+
+                                   <!-- Always visible -->
                                    <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
                               </div>
 
                               <!-- Execution time -->
                               <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
 
-                              <!-- ==== TRANSACTION JSON (EDITABLE) ==== -->
+                              <!-- Transaction JSON (Editable) -->
                               <div class="tx-preview-container">
                                    <div class="tx-header">
                                         <h5 class="tx-title">Transaction JSON</h5>
@@ -74,13 +80,9 @@
                                    <p></p>
 
                                    <app-json-editor class="json-error-banner" [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
-
-                                   <!-- @if (jsonEditorError()) { -->
-                                   <!-- <div class="json-error">{{ jsonEditorError() }}</div> -->
-                                   <!-- } -->
                               </div>
 
-                              <!-- ==== SIGNED TRANSACTION (EDITABLE) ==== -->
+                              <!-- Signed Transaction (Editable) -->
                               <div class="tx-preview-container" style="margin-top: 1rem">
                                    <div class="tx-header">
                                         <h5 class="tx-title">Signed Transaction</h5>

@@ -45,9 +45,9 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly signTransactionUtilService = inject(SignTransactionUtilService);
-     private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
      public readonly signTransationStoreService = inject(SignTransationStoreService);
+     private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
 
@@ -258,6 +258,73 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           });
      }
 
+     async signForMultiSign(): Promise<void> {
+          await this.withPerf('signForMultiSign', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               try {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: true }));
+
+                    if (!this.signTransationStoreService.txJson().trim()) {
+                         return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
+                    }
+
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
+
+                    const txBlob = await this.signTransactionsOrchestratorService.signForMultiSign({
+                         txJson: this.signTransationStoreService.txJson(),
+                         env,
+                         signers: this.accountConfiguratorStoreService.signers(),
+                    });
+
+                    this.signTransationStoreService.setField('outputField', txBlob ?? 'Error');
+               } catch (error: any) {
+                    console.error('Error in signForMultiSign:', error);
+                    this.toastService.error(error.message || 'Error in signForMultiSign', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: false }));
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async signWithRegularKey(): Promise<void> {
+          await this.withPerf('signWithRegularKey', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               try {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: true }));
+
+                    if (!this.signTransationStoreService.txJson().trim()) {
+                         return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
+                    }
+
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
+
+                    const txBlob = await this.signTransactionsOrchestratorService.signTransaction({
+                         txJson: this.signTransationStoreService.txJson(),
+                         env,
+                         isRegularKeyAddress: true,
+                         regularKeyAddress: this.accountConfiguratorStoreService.regularKeyAddress(),
+                         regularKeySeed: this.accountConfiguratorStoreService.regularKeySeed(),
+                    });
+
+                    if (!txBlob) throw new Error('Signing failed.');
+
+                    this.signTransationStoreService.setField('outputField', txBlob);
+                    this.signTransactionUtilService.setSigned(txBlob);
+               } catch (error: any) {
+                    console.error('Error in signWithRegularKey:', error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: false }));
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
      async submitTransaction(): Promise<void> {
           await this.withPerf('submitTransaction', async () => {
                this.txUiService.resetCurrentStepToIdle();
@@ -323,73 +390,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                } finally {
                     this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, submit: false }));
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async signForMultiSign(): Promise<void> {
-          await this.withPerf('signForMultiSign', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: true }));
-
-                    if (!this.signTransationStoreService.txJson().trim()) {
-                         return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
-                    }
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
-
-                    const txBlob = await this.signTransactionsOrchestratorService.signForMultiSign({
-                         txJson: this.signTransationStoreService.txJson(),
-                         env,
-                         signers: this.accountConfiguratorStoreService.signers(),
-                    });
-
-                    this.signTransationStoreService.setField('outputField', txBlob ?? 'Error');
-               } catch (error: any) {
-                    console.error('Error in signForMultiSign:', error);
-                    this.toastService.error(error.message || 'Error in signForMultiSign', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: false }));
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async signWithRegularKey(): Promise<void> {
-          await this.withPerf('signWithRegularKey', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: true }));
-
-                    if (!this.signTransationStoreService.txJson().trim()) {
-                         return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
-                    }
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
-
-                    const txBlob = await this.signTransactionsOrchestratorService.signTransaction({
-                         txJson: this.signTransationStoreService.txJson(),
-                         env,
-                         isRegularKeyAddress: true,
-                         regularKeyAddress: this.accountConfiguratorStoreService.regularKeyAddress(),
-                         regularKeySeed: this.accountConfiguratorStoreService.regularKeySeed(),
-                    });
-
-                    if (!txBlob) throw new Error('Signing failed.');
-
-                    this.signTransationStoreService.setField('outputField', txBlob);
-                    this.signTransactionUtilService.setSigned(txBlob);
-               } catch (error: any) {
-                    console.error('Error in signWithRegularKey:', error);
-                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: false }));
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
