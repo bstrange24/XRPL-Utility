@@ -35,6 +35,7 @@ const initialState: SignTransactionState = {
           signed: false,
           submit: false,
           multiSign: false,
+          regularKeySign: false,
      },
 };
 
@@ -79,6 +80,7 @@ export const SignTransationStoreService = signalStore(
                          signed: false,
                          submit: false,
                          multiSign: false,
+                         regularKeySign: false,
                     },
                });
           },
