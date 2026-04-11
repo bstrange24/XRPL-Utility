@@ -1,11 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
@@ -44,7 +43,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly signTransactionUtilService = inject(SignTransactionUtilService);
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
@@ -68,6 +66,29 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Reactively update TX JSON when ticket is toggled on/off or ticket selection changes
+          effect(() => {
+               const isTicket = this.xrplTxOptionsStore.isTicket();
+               const selectedTicket = this.xrplTxOptionsStore.selectedSingleTicket();
+
+               const txJson = untracked(() => this.signTransationStoreService.txJson());
+               if (!txJson.trim()) return;
+
+               let updated: string;
+               if (isTicket && selectedTicket) {
+                    updated = this.signTransactionsOrchestratorService.applyTicketToJson(txJson, selectedTicket);
+               } else if (!isTicket) {
+                    const accountInfo = untracked(() => this.signTransationStoreService.accountInfo());
+                    const originalSeq: number = accountInfo?.result?.account_data?.Sequence ?? 0;
+                    updated = this.signTransactionsOrchestratorService.removeTicketFromJson(txJson, originalSeq);
+               } else {
+                    return;
+               }
+
+               this.signTransationStoreService.setField('txJson', updated);
+               this.cdr.markForCheck();
+          });
      }
 
      ngOnInit(): void {
@@ -84,7 +105,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
           this.currentWallet.set(wallet);
-          // this.txUiService.currentWallet.set(wallet);
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
@@ -104,7 +124,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      async getAccountDetails(forceRefresh = false): Promise<void> {
           this.isSummaryLoading.set(true);
           await this.measure('getAccountDetails', true, async () => {
-               // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
@@ -135,14 +154,11 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         getJson: true,
-                    }));
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, getJson: true }));
 
                     const wallet = this.currentWallet();
-
                     let env: any = null;
+
                     try {
                          env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                               includeAccountInfo: true,
@@ -159,16 +175,13 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     if (!env) throw new Error('Unable to get environment.');
 
-                    const jsonStr = await this.signTransactionUtilService.buildTransactionText({
-                         client: env.client,
-                         wallet: env.wallet,
-                         accountInfo: env.accountInfo!,
-                         fee: env.fee,
-                         currentLedger: env.currentLedger,
-                         selectedTransaction: this.signTransationStoreService.selectedTransaction() as any,
+                    const jsonStr = await this.signTransactionsOrchestratorService.generateTransactionJson({
+                         wallet,
+                         env,
+                         selectedTransaction: this.signTransationStoreService.selectedTransaction(),
                          isTicketEnabled: this.xrplTxOptionsStore.isTicket(),
-                         isMemoEnable: this.xrplTxOptionsStore.isMemoEnabled(),
                          ticketSequence: this.xrplTxOptionsStore.selectedSingleTicket(),
+                         isMemoEnabled: this.xrplTxOptionsStore.isMemoEnabled(),
                     });
 
                     this.signTransationStoreService.setField('txJson', jsonStr);
@@ -181,97 +194,62 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     }
                     this.toastService.error(err.message, AppConstants.TOAST.ERROR);
                } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         getJson: false,
-                    }));
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, getJson: false }));
                }
           });
      }
 
-     async unsignedTransaction() {
-          await this.withPerf('unsignedTransaction', async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-
-               try {
-                    if (!this.signTransationStoreService.txJson().trim()) return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
-
-                    const editedString = this.signTransationStoreService.txJson().trim();
-                    let editedJson = JSON.parse(editedString);
-                    let cleanedJson = this.cleanTx(editedJson);
-
-                    const serialized = xrpl.encode(cleanedJson);
-                    const unsignedHash = xrpl.hashes.hashTx(serialized);
-
-                    this.signTransationStoreService.setField('outputField', unsignedHash);
-                    this.txUiService.isError.set(false);
-               } catch (error: any) {
-                    console.error('Error in unsignedTransaction:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
-               } finally {
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async signedTransaction() {
+     async signedTransaction(): Promise<void> {
           await this.withPerf('signedTransaction', async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         signed: true,
-                    }));
-
-                    let txToSign: any;
-
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeLedgerIndex: true,
-                    });
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, signed: true }));
 
                     if (!this.signTransationStoreService.txJson().trim()) {
                          return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
                     }
 
-                    const editedString = this.signTransationStoreService.txJson().trim();
-                    let editedJson = JSON.parse(editedString);
-                    txToSign = this.cleanTx(editedJson);
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
 
-                    txToSign.LastLedgerSequence = env.currentLedger! + AppConstants.SIGN_TX_LAST_LEDGER_ADD_TIME;
+                    const txBlob = await this.signTransactionsOrchestratorService.signTransaction({
+                         txJson: this.signTransationStoreService.txJson(),
+                         env,
+                         isRegularKeyAddress: this.xrplTxOptionsStore.isRegularKeyAddress(),
+                         regularKeyAddress: this.accountConfiguratorStoreService.regularKeyAddress(),
+                         regularKeySeed: this.accountConfiguratorStoreService.regularKeySeed(),
+                    });
 
-                    const signed = env.wallet.sign(txToSign);
-                    // Use tx_blob instead of signedTransaction
-                    this.signTransationStoreService.setField('outputField', signed.tx_blob);
-                    this.signTransactionUtilService.setSigned(this.signTransationStoreService.outputField());
+                    if (!txBlob) throw new Error('Signing failed.');
+
+                    this.signTransationStoreService.setField('outputField', txBlob);
+                    this.signTransactionUtilService.setSigned(txBlob);
                } catch (error: any) {
                     console.error('Error in signedTransaction:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         signed: false,
-                    }));
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, signed: false }));
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async submitTransaction() {
+     async submitTransaction(): Promise<void> {
           await this.withPerf('submitTransaction', async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         submit: true,
-                    }));
-                    const wallet = this.currentWallet();
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, submit: true }));
 
+                    if (!this.signTransationStoreService.outputField().trim()) {
+                         return this.toastService.error('Signed tx blob can not be empty', AppConstants.TOAST.ERROR);
+                    }
+
+                    const wallet = this.currentWallet();
                     let env: any = null;
+
                     try {
                          env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                               includeAccountInfo: true,
@@ -288,256 +266,86 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     if (!env) throw new Error('Unable to get environment.');
 
-                    if (!this.signTransationStoreService.outputField().trim()) {
-                         return this.toastService.error('Signed tx blob can not be empty', AppConstants.TOAST.ERROR);
-                    }
-
-                    const signedTxBlob = this.signTransationStoreService.outputField().trim();
                     const txType = this.getTransactionLabel(this.signTransationStoreService.selectedTransaction() ?? '');
+                    const result = await this.signTransactionsOrchestratorService.submitTransaction({
+                         txJson: this.signTransationStoreService.txJson(),
+                         outputField: this.signTransationStoreService.outputField(),
+                         env,
+                         isSimulateEnabled: this.xrplTxOptionsStore.isSimulateEnabled(),
+                         txType,
+                    });
 
-                    let response: any;
-
-                    if (this.xrplTxOptionsStore.isSimulateEnabled()) {
-                         const txToSign = this.cleanTx(JSON.parse(this.signTransationStoreService.txJson().trim()));
-                         txToSign.LastLedgerSequence = env.currentLedger! + 5;
-                         response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
-                    } else {
-                         this.txUiService.currentStep.set('waiting_validation');
-                         response = await env.client.submitAndWait(signedTxBlob);
-                    }
-
-                    this.txUiService.setTxResultSignal(response.result);
-
-                    const isSuccess = this.utilsService.isTxSuccessful(response);
-                    if (!isSuccess) {
-                         const resultMsg = this.utilsService.getTransactionResultMessage(response);
-                         const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-                         console.error(`Transaction ${this.xrplTxOptionsStore.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-                         if (response.result) {
-                              response.result.errorMessage = userMessage;
+                    if (!result.success) {
+                         const response = (result as any).response;
+                         if (response?.result) {
+                              this.txUiService.setTxResultSignal(response.result);
+                              this.txUiService.addTxResultSignal(response.result);
                          }
-                         this.txUiService.addTxResultSignal(response.result);
-                         this.txUiService.setError(userMessage);
-                         return this.toastService.error(userMessage, AppConstants.TOAST.ERROR);
+                         this.txUiService.setError(result.error ?? 'Transaction failed');
+                         return this.toastService.error(result.error ?? 'Transaction failed', AppConstants.TOAST.ERROR);
                     }
 
-                    const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
+                    const response = (result as any).response;
+                    if (response?.result) this.txUiService.setTxResultSignal(response.result);
+                    if (result.hash) this.txUiService.addTxHashSignal(result.hash);
 
-                    this.txUiService.addTxHashSignal(hash);
-
-                    if (this.xrplTxOptionsStore.isSimulateEnabled()) {
-                    } else {
+                    if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
                          this.txUiService.currentStep.set('success');
-
                          await this.refreshAfterTx(env.client, env.wallet, null);
                          this.clearFields();
                          this.cdr.detectChanges();
                     }
                } catch (error: any) {
                     console.error('Error in submitTransaction:', error);
-                    this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
                } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         submit: false,
-                    }));
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, submit: false }));
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     // async submitMultiSignedTransaction() {
-     //      await this.withPerf('submitMultiSignedTransaction', async () => {
-     //           this.txUiService.resetCurrentStepToIdle();
-     //           this.txUiService.clearAllOptionsAndMessages();
-
-     //           try {
-     //                this.signTransationStoreService.updateField('buttonLoading', s => ({
-     //                     ...s,
-     //                     multiSign: true,
-     //                }));
-
-     //                if (!this.signTransationStoreService.outputField().trim()) {
-     //                     return this.toastService.error('Signed tx blob can not be empty', AppConstants.TOAST.ERROR);
-     //                }
-
-     //                const env = await this.txEnvironmentService.prepareTxEnvironment({
-     //                     includeLedgerIndex: true,
-     //                });
-
-     //                const multiSignedTxBlob = this.signTransationStoreService.outputField().trim();
-
-     //                let response: any;
-
-     //                if (this.xrplTxOptionsStore.isSimulateEnabled()) {
-     //                     const txToSign = this.cleanTx(JSON.parse(this.signTransationStoreService.txJson().trim()));
-     //                     txToSign.LastLedgerSequence = env.currentLedger! + 5;
-     //                     response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
-     //                } else {
-     //                     response = await env.client.submitAndWait(multiSignedTxBlob);
-     //                }
-
-     //                this.txUiService.setTxResultSignal(response.result);
-
-     //                const isSuccess = this.utilsService.isTxSuccessful(response);
-     //                if (!isSuccess) {
-     //                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
-     //                     const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-
-     //                     console.error(`Transaction ${this.xrplTxOptionsStore.isSimulateEnabled() ? 'simulation' : 'submission'} failed: ${resultMsg}`, response);
-     //                     (response.result as any).errorMessage = userMessage;
-     //                     this.toastService.error(userMessage, AppConstants.TOAST.ERROR);
-     //                }
-
-     //                this.txUiService.addTxHashSignal(response.result.hash ? response.result.hash : response.result.tx_json.hash);
-
-     //                if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
-     //                     await this.refreshAfterTx(env.client, env.wallet, null);
-     //                     this.clearFields();
-     //                     this.cdr.detectChanges();
-     //                }
-     //           } catch (error: any) {
-     //                console.error('Error in submitMultiSignedTransaction:', error);
-     //                this.toastService.error(`${error.message || 'Transaction failed'}`, AppConstants.TOAST.ERROR);
-     //           } finally {
-     //                this.signTransationStoreService.updateField('buttonLoading', s => ({
-     //                     ...s,
-     //                     multiSign: false,
-     //                }));
-     //                this.txUiService.resetCurrentStepToIdle();
-     //           }
-     //      });
-     // }
-
-     async signForMultiSign() {
+     async signForMultiSign(): Promise<void> {
           await this.withPerf('signForMultiSign', async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         multiSign: true,
-                    }));
-
-                    let txToSign: any;
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: true }));
 
                     if (!this.signTransationStoreService.txJson().trim()) {
                          return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
                     }
 
-                    const env = await this.txEnvironmentService.prepareTxEnvironment({
-                         includeLedgerIndex: true,
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
+
+                    const txBlob = await this.signTransactionsOrchestratorService.signForMultiSign({
+                         txJson: this.signTransationStoreService.txJson(),
+                         env,
+                         signers: this.accountConfiguratorStoreService.signers(),
                     });
 
-                    const editedString = this.signTransationStoreService.txJson().trim();
-                    let editedJson = JSON.parse(editedString);
-                    txToSign = this.cleanTx(editedJson);
-
-                    txToSign.LastLedgerSequence = env.currentLedger! + AppConstants.SIGN_TX_LAST_LEDGER_ADD_TIME;
-
-                    // Get selected signer wallets
-                    const selectedSigners = this.accountConfiguratorStoreService.signers();
-
-                    if (!selectedSigners.length) {
-                         return this.toastService.error('Select at least one signer.', AppConstants.TOAST.ERROR);
-                    }
-
-                    const addresses = selectedSigners.map((acc: { Account: any }) => acc.Account).join(',');
-                    const seeds = selectedSigners.map((acc: { seed: any }) => acc.seed).join(',');
-
-                    const fee = await this.xrplService.calculateTransactionFee(env.client);
-                    const signerAddresses = this.utilsService.getMultiSignAddress(addresses);
-                    const signerSeeds = this.utilsService.getMultiSignSeeds(seeds);
-                    const result = await this.utilsService.handleMultiSignTransaction({ client: env.client, wallet: env.wallet, tx: txToSign, signerAddresses, signerSeeds, fee });
-                    this.signTransationStoreService.setField('outputField', result.signedTx?.tx_blob ? result.signedTx?.tx_blob : 'Error');
+                    this.signTransationStoreService.setField('outputField', txBlob ?? 'Error');
                } catch (error: any) {
                     console.error('Error in signForMultiSign:', error);
                     this.toastService.error(error.message || 'Error in signForMultiSign', AppConstants.TOAST.ERROR);
                } finally {
-                    this.signTransationStoreService.updateField('buttonLoading', s => ({
-                         ...s,
-                         multiSign: false,
-                    }));
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: false }));
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     cleanTx(editedJson: any) {
-          const defaults: Record<string, any[]> = {
-               DestinationTag: [0],
-               SourceTag: [0],
-               InvoiceID: [0, ''],
-          };
-
-          for (const field in defaults) {
-               if (editedJson.hasOwnProperty(field) && defaults[field].includes(editedJson[field])) {
-                    delete editedJson[field];
-               }
+     populateTxDetails(): void {
+          const output = this.signTransationStoreService.outputField().trim();
+          if (!output) return;
+          try {
+               const decodedTx = xrpl.decode(output);
+               this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
+               this.cdr.markForCheck();
+          } catch (e) {
+               // ignore decode errors
           }
-
-          if (Array.isArray(editedJson.Memos)) {
-               editedJson.Memos = editedJson.Memos.filter((memoObj: any) => {
-                    const memo = memoObj?.Memo;
-                    if (!memo) return false;
-
-                    // Check if both fields are effectively empty
-                    const memoDataEmpty = !memo.MemoData || memo.MemoData === '' || memo.MemoData === 0;
-                    const memoTypeEmpty = !memo.MemoType || memo.MemoType === '' || memo.MemoType === 0;
-
-                    // Remove if both are empty
-                    return !(memoDataEmpty || memoTypeEmpty);
-               });
-
-               if (editedJson.Memos.length === 0) {
-                    delete editedJson.Memos;
-               } else {
-                    this.encodeMemo(editedJson);
-               }
-          }
-
-          if (typeof editedJson.Amount === 'string' && this.signTransationStoreService.selectedTransaction() === 'sendXrp') {
-               editedJson.Amount = xrpl.xrpToDrops(editedJson.Amount);
-          }
-
-          if (this.xrplTxOptionsStore.isSimulateEnabled()) {
-               delete editedJson.Sequence;
-          }
-
-          return editedJson;
-     }
-
-     populateTxDetails() {
-          if (!this.signTransationStoreService.outputField().trim()) return;
-          const decodedTx = xrpl.decode(this.signTransationStoreService.outputField().trim());
-
-          this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
-     }
-
-     encodeMemo(editedJson: any) {
-          editedJson.Memos = editedJson.Memos.map((memoObj: any) => {
-               // Ensure the structure is correct
-               if (!memoObj?.Memo) {
-                    return memoObj; // Return as-is if structure is unexpected
-               }
-
-               const { MemoData, MemoType, MemoFormat, ...rest } = memoObj.Memo;
-
-               return {
-                    Memo: {
-                         ...rest,
-                         ...(MemoData && { MemoData: xrpl.convertStringToHex(MemoData) }),
-                         ...(MemoType && { MemoType: xrpl.convertStringToHex(MemoType) }),
-                         ...(MemoFormat && { MemoFormat: xrpl.convertStringToHex(MemoFormat) }),
-                    },
-               };
-          });
-     }
-
-     protected refreshAccountObject(_env: any): void {
-          return;
      }
 
      handleSearchQueryChange(query: string) {
@@ -549,7 +357,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           this.selectedDestinationAddress.set(addr);
      }
 
-     clearFields() {
+     protected clearInputFields(): void {
+          this.selectedDestinationAddress.set('');
+          this.destinationSearchQuery.set('');
+     }
+
+     private clearFields() {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.txUiService.clearAllFields();
           this.cdr.markForCheck();
@@ -562,17 +375,11 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           this.cdr.markForCheck();
      }
 
-     resetSigners() {
-          this.signTransationStoreService.availableSigners().forEach((w: { isSelectedSigner: boolean }) => (w.isSelectedSigner = false));
-          this.signTransationStoreService.setField('selectedQuorum', 0);
-     }
-
-     getTransactionLabel(key: string): string {
+     private getTransactionLabel(key: string): string {
           return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
      }
 
-     protected clearInputFields(): void {
-          this.selectedDestinationAddress.set('');
-          this.destinationSearchQuery.set('');
+     protected refreshAccountObject(_env: any): void {
+          return;
      }
 }
