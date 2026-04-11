@@ -51,6 +51,9 @@
                                    <button type="button" class="btn-primary-blue" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
                                    <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                    <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                   @if (accountConfiguratorStoreService.regularKeySigningEnabled()) {
+                                   <button type="button" class="btn-primary-blue" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                   }
                                    <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
                               </div>
 

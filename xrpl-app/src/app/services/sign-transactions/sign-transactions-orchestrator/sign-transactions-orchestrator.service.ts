@@ -146,6 +146,27 @@ export class SignTransactionsOrchestratorService {
           return { success: true, hash, response };
      }
 
+     // Memo JSON helpers (used by component effects)
+     applyMemoToJson(txJson: string, memos: string[]): string {
+          try {
+               const tx = JSON.parse(txJson);
+               this.utilsService.addMemoField(tx, memos);
+               return JSON.stringify(tx, null, 2);
+          } catch {
+               return txJson;
+          }
+     }
+
+     removeMemoFromJson(txJson: string): string {
+          try {
+               const tx = JSON.parse(txJson);
+               delete tx.Memos;
+               return JSON.stringify(tx, null, 2);
+          } catch {
+               return txJson;
+          }
+     }
+
      // Ticket JSON helpers (used by component effects)
      applyTicketToJson(txJson: string, ticketSequence: string): string {
           try {

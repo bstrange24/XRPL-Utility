@@ -162,6 +162,13 @@ export class SignTransactionUtilService {
           return this.txUiService.stepMessage();
      });
 
+     readonly signWithRegularKeyButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().regularKeySign) return 'Sign with Regular Key';
+          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          return this.txUiService.stepMessage();
+     });
+
      onTxJsonChange(value: string) {
           this.signTransationStoreService.setField('txJson', value);
 

@@ -90,6 +90,27 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                this.signTransationStoreService.setField('txJson', updated);
                this.cdr.markForCheck();
           });
+
+          // Reactively update TX JSON when memo is toggled on/off or memo content changes
+          effect(() => {
+               const isMemo = this.xrplTxOptionsStore.isMemoEnabled();
+               const memos: string[] = this.xrplTxOptionsStore.memos();
+
+               const txJson = untracked(() => this.signTransationStoreService.txJson());
+               if (!txJson.trim()) return;
+
+               let updated: string;
+               if (isMemo && memos.length > 0) {
+                    updated = this.signTransactionsOrchestratorService.applyMemoToJson(txJson, memos);
+               } else if (!isMemo) {
+                    updated = this.signTransactionsOrchestratorService.removeMemoFromJson(txJson);
+               } else {
+                    return;
+               }
+
+               this.signTransationStoreService.setField('txJson', updated);
+               this.cdr.markForCheck();
+          });
      }
 
      ngOnInit(): void {
@@ -333,6 +354,42 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     this.toastService.error(error.message || 'Error in signForMultiSign', AppConstants.TOAST.ERROR);
                } finally {
                     this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: false }));
+                    this.txUiService.resetCurrentStepToIdle();
+               }
+          });
+     }
+
+     async signWithRegularKey(): Promise<void> {
+          await this.withPerf('signWithRegularKey', async () => {
+               this.txUiService.resetCurrentStepToIdle();
+               this.txUiService.clearAllOptionsAndMessages();
+
+               try {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: true }));
+
+                    if (!this.signTransationStoreService.txJson().trim()) {
+                         return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
+                    }
+
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
+
+                    const txBlob = await this.signTransactionsOrchestratorService.signTransaction({
+                         txJson: this.signTransationStoreService.txJson(),
+                         env,
+                         isRegularKeyAddress: true,
+                         regularKeyAddress: this.accountConfiguratorStoreService.regularKeyAddress(),
+                         regularKeySeed: this.accountConfiguratorStoreService.regularKeySeed(),
+                    });
+
+                    if (!txBlob) throw new Error('Signing failed.');
+
+                    this.signTransationStoreService.setField('outputField', txBlob);
+                    this.signTransactionUtilService.setSigned(txBlob);
+               } catch (error: any) {
+                    console.error('Error in signWithRegularKey:', error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+               } finally {
+                    this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, regularKeySign: false }));
                     this.txUiService.resetCurrentStepToIdle();
                }
           });

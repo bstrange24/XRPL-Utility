@@ -28,4 +28,5 @@ export type ButtonLoadingState = {
      signed: boolean;
      submit: boolean;
      multiSign: boolean;
+     regularKeySign: boolean;
 };
