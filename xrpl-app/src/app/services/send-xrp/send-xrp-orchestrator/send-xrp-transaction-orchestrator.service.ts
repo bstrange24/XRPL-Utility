@@ -76,7 +76,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
-               // ── 1. Environment ──────────────────────────────────────────
+               // Use pre-fetched env if provided, otherwise fetch
                env =
                     preFetchedEnv ??
                     (await this.txEnvironmentService.prepareTxEnvironment({
@@ -88,9 +88,8 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                     }));
 
                client = env.client;
-               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) {
-                    throw new Error('Required network data missing');
-               }
+               if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
+
 
                // ── 2. Validation ───────────────────────────────────────────
                const meta = SEND_XRP_META[type];

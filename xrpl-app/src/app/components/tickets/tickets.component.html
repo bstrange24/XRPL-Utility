@@ -27,15 +27,6 @@
                <!-- Dynamic info panel -->
                <app-tickets-summary [infoData]="viewModel.infoData()" [tab]="'createTicket'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-tickets-summary>
 
-               <!-- @if (viewModel.infoData()) {
-               <div class="info-only-card">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                         <div class="info-text" [innerHTML]="viewModel.infoData()"></div>
-                    </div>
-               </div>
-               } -->
-
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
                <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

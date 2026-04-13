@@ -6,87 +6,48 @@
      </div>
 </div>
 
+<!-- Get view -->
+@let viewModel = delegateTransactionViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+<!-- Get tab data -->
+@let tabs = menuTabs;
+
 <!-- Main content. -->
 <div class="main-container">
      <div class="content-wrapper">
-          <!-- Left Wallet panel ==== -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+          <!-- Left Wallet panel -->
+          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
 
-          <!-- Right form -->
+          <!-- Center form -->
           <div class="form-panel">
-               <!-- Menu bar -->
-               <div class="menu-bar">
-                    <button class="menu-btn active" [class.active]="activeTab() === 'delegate'" (click)="setTab('delegate')">
-                         <ng-icon name="heroArrowUturnLeft" size="20" class="text-red-600"></ng-icon>
-                         Delegate Actions
-                    </button>
-                    <button class="menu-btn active" [class.active]="activeTab() === 'clear'" (click)="setTab('clear')">
-                         <ng-icon name="heroTrash" size="20" class="text-red-600"></ng-icon>
-                         Clear Delegate Actions
-                    </button>
-               </div>
+               <!-- Menu / Tabs -->
+               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
 
-               <!-- Delegate Actions Menu -->
-               @if (activeTab() === 'delegate') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="green-button-submenu">
-                              <ng-icon name="heroArrowUturnLeft" size="27" class="text-red-600" color="green"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Delegate Actions</h2>
-                              <p class="submenu-info-secondary-text">Delegate Actions to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               } @if (activeTab() === 'clear') {
-               <div>
-                    <div class="submenu-info-text">
-                         <div class="red-button-submenu">
-                              <ng-icon name="heroTrash" size="27" class="text-red-600"></ng-icon>
-                         </div>
-                         <div>
-                              <h2 class="submenu-info-main-text">Clear Delegate Actions</h2>
-                              <p class="submenu-info-secondary-text">Clear Delegated Actions to another XRPL address</p>
-                         </div>
-                    </div>
-               </div>
-               }
-
-               <!-- Info Message -->
-               @if (infoData(); as info) {
-               <div class="info-panel">
-                    <div class="info-panel-content">
-                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-                         <div class="info-text" [innerHTML]="info.message"></div>
-                    </div>
-               </div>
-               }
+               <!-- Dynamic info panel -->
+               <app-delegate-summary [infoData]="viewModel.infoData()" [tab]="'delegateCreate'" [infoPanelExpanded]="false"> </app-delegate-summary>
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
-               <div class="warning-panel">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-600"></ng-icon>
-                    <div class="warning-text" [innerHTML]="txUiService.safeWarning"></div>
-               </div>
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
                }
 
                <!-- Created Delegations -->
-               @if ((activeTab !== undefined) && existingDelegations.length > 0) {
+               @if ((tab !== undefined) && delegateStore.existingDelegations.length > 0) {
                <div class="outstanding-checks-panel">
                     <!-- Header – clickable to expand/collapse -->
                     <div class="panel-header" (click)="toggleCreatedDelegations()" style="cursor: pointer; user-select: none">
                          <h3 class="panel-title" style="margin: 0; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem">
                               <ng-icon name="heroQueueList" size="20" class="text-red-600"></ng-icon>
-                              Created Credentials ({{ existingDelegations().length }})
+                              Created Credentials ({{ delegateStore.existingDelegations().length }})
                          </h3>
                     </div>
 
                     <!-- Collapsible content with smooth height animation -->
-                    <div class="credential-list-container" [class.collapsed]="createdDelegations()">
-                         @if (!createdDelegations()) {
+                    <div class="credential-list-container" [class.collapsed]="delegateStore.createdDelegations()">
+                         @if (!delegateStore.createdDelegations()) {
                          <div class="checks-list">
-                              @for (chk of existingDelegations(); track chk.index) {
+                              @for (chk of delegateStore.existingDelegations(); track chk.index) {
                               <div class="check-card">
                                    <div class="check-extras">
                                         <!-- URI  -->
@@ -114,172 +75,84 @@
                }
 
                <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-container">
-                         <div [@tabTransition]="activeTab()">
-                              <!-- Left Form Fields -->
-                              @if (activeTab() === 'delegate') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Authorize Wallet</label>
-                                        <p class="form-hint">The authorized account delegated to perform actions on behalf of the selected account.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
-                                   </div>
-                              </div>
-                              } @if (activeTab() === 'clear') {
-                              <div class="form-row">
-                                   <div class="form-group">
-                                        <label for="destination">Unauthorize Wallet</label>
-                                        <p class="form-hint">Remove delegated authority on the account.</p>
-                                        <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
-                                   </div>
-                              </div>
-                              }
-
-                              <div class="flags-wrapper">
-                                   <!-- Flags header -->
-                                   <div class="token-flags-header" style="margin-top: 0.8em">
-                                        <lucide-icon name="flag" size="20"></lucide-icon>
-                                        <span class="token-flags-title">Delegate Action Flags</span>
-                                   </div>
-
-                                   <div>
-                                        <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
-                                             <div style="flex: 1; min-width: 300px">
-                                                  @for (action of leftActions; track action.id) {
-                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                       <div class="flag-header-account">
-                                                            <input type="checkbox" [id]="action.key + '-left'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                            <!-- <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                            </svg> -->
-                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
-                                                       </div>
-                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                       <div class="flag-desc">{{ action.description }}</div>
-                                                  </div>
-                                                  }
-                                             </div>
-
-                                             <div style="flex: 1; min-width: 300px">
-                                                  @for (action of rightActions; track action.id) {
-                                                  <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="selected.has(action.id)" (click)="toggleSelection(action.id, $event)">
-                                                       <div class="flag-header-account">
-                                                            <input type="checkbox" [id]="action.key + '-right'" [checked]="selected.has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
-                                                            <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                                 <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-                                                            </svg>
-                                                            <span class="flag-title-account-flags">{{ action.key }}</span>
-                                                       </div>
-                                                       <div class="flag-value">{{ action.id }} {{action.txType}}</div>
-                                                       <div class="flag-desc">{{ action.description }}</div>
-                                                  </div>
-                                                  }
-                                             </div>
-                                        </div>
-                                   </div>
-                              </div>
+                    <!-- Left Form Fields -->
+                    @if (tab === 'delegateCreate') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="destination">Authorize Wallet</label>
+                              <p class="form-hint">The authorized account delegated to perform actions on behalf of the selected account.</p>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
                          </div>
-
-                         <!-- <app-transaction-options [showWhenTab]="['clear','delete']" [activeTab]="activeTab" [multiSigningEnabled]="txUiService.multiSigningEnabled" [regularKeySigningEnabled]="txUiService.regularKeySigningEnabled" /> -->
-
-                         <!-- Action buttons -->
-                         <div class="button-row">
-                              @if (activeTab() === 'delegate') {
-                              <button type="button" class="btn-primary-blue" (click)="delegateActions('delegate')" [disabled]="!(walletManagerService.hasWallets())">{{ 'Delegate Actions' }}</button>
-                              } @else if (activeTab() === 'clear') {
-                              <button type="button" class="btn-primary-red" (click)="delegateActions('clear')" [disabled]="  !(walletManagerService.hasWallets())">{{ 'Clear Delegated Actions' }}</button>
-                              }
-                              <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button>
-                         </div>
-
-                         <!-- Execution time -->
-                         <div class="executionTimeDisplay">
-                              <input type="text" [(ngModel)]="executionTime" name="executionTime" readonly class="executionTimeDisplay" style="border: none" />
-                         </div>
-                         <app-transaction-preview></app-transaction-preview>
                     </div>
+                    } @if (tab === 'delegateClear') {
+                    <div class="form-row">
+                         <div class="form-group">
+                              <label for="destination">Unauthorize Wallet</label>
+                              <p class="form-hint">Remove delegated authority on the account.</p>
+                              <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="selectedDestinationAddress.set($event?.id || '')" placeholder="Enter or select an account." />
+                         </div>
+                    </div>
+                    }
+
+                    <div class="flags-wrapper">
+                         <!-- Flags header -->
+                         <div class="token-flags-header" style="margin-top: 0.8em">
+                              <lucide-icon name="flag" size="20"></lucide-icon>
+                              <span class="token-flags-title">Delegate Action Flags</span>
+                         </div>
+
+                         <div>
+                              <div class="form-row-account-flags" style="display: flex; gap: 20px; flex-wrap: wrap">
+                                   <div style="flex: 1; min-width: 300px">
+                                        @for (action of delegateStore.leftActions(); track action.id) {
+                                        <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="delegateStore.selected().has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [id]="action.key + '-left'" [checked]="delegateStore.selected().has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                  <span class="flag-title-account-flags">{{ action.key }}</span>
+                                             </div>
+                                             <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                             <div class="flag-desc">{{ action.description }}</div>
+                                        </div>
+                                        }
+                                   </div>
+
+                                   <div style="flex: 1; min-width: 300px">
+                                        @for (action of delegateStore.rightActions(); track action.id) {
+                                        <div class="flag-item-account-flags" style="margin-bottom: 0.5em" [class.enabled]="delegateStore.selected().has(action.id)" (click)="toggleSelection(action.id, $event)">
+                                             <div class="flag-header-account">
+                                                  <input type="checkbox" [id]="action.key + '-right'" [checked]="delegateStore.selected().has(action.id)" class="flag-checkbox" (click)="$event.stopPropagation()" />
+                                                  <span class="flag-title-account-flags">{{ action.key }}</span>
+                                             </div>
+                                             <div class="flag-value">{{ action.id }} {{action.txType}}</div>
+                                             <div class="flag-desc">{{ action.description }}</div>
+                                        </div>
+                                        }
+                                   </div>
+                              </div>
+                         </div>
+                    </div>
+
+                    <app-transaction-options [showWhenTab]="['delegateCreate','delegateClear']" [activeTab]="delegateTransactionViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+
+                    <!-- Action buttons -->
+                    <div class="button-row">
+                         @if (tab === 'delegateCreate') {
+                         <button type="button" class="btn-primary-blue" (click)="delegateActions('delegateCreate')" [disabled]="!(walletManagerService.hasWallets())">{{ 'Delegate Actions' }}</button>
+                         } @else if (tab === 'delegateClear') {
+                         <button type="button" class="btn-primary-red" (click)="delegateActions('delegateClear')" [disabled]="  !(walletManagerService.hasWallets())">{{ 'Clear Delegated Actions' }}</button>
+                         }
+                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!(walletManagerService.hasWallets())" (click)="clearFields()">Clear Fields</button>
+                    </div>
+
+                    <!-- Execution time -->
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+
+                    <!-- Transaction Preview -->
+                    <app-transaction-preview></app-transaction-preview>
                </form>
           </div>
 
-          <div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>Delegate (Permission Delegation)</h3>
-               </div>
-
-               <p class="info-subtitle">Delegate lets you grant specific, granular permissions to another XRPL account without giving them your private keys. Useful for shared control, delegated operations (e.g., signing certain tx types, managing sub-accounts), or institutional workflows. Revoke or update permissions at any time with another DelegateSet transaction.</p>
-
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🔐 Grant / Update Permissions</span>
-                              <span class="badge required-badge">DelegateSet</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Delegate</span>
-                                   <span class="field-status required">✅ Required (target account address)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Permissions</span>
-                                   <span class="field-status required">✅ Required (array of permission flags/strings)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Max 10 permissions per delegate</span>
-                                   <span class="field-status omitted">Limit per entry</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Flags / Metadata</span>
-                                   <span class="field-status optional">➕ Optional (description, expiration, etc.)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🚫 Revoke / Remove Delegate</span>
-                              <span class="badge optional-badge">DelegateSet (clear)</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Delegate</span>
-                                   <span class="field-status required">✅ Required (address to revoke)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Permissions</span>
-                                   <span class="field-status omitted">❌ Empty array or omit to remove all</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Signer</span>
-                                   <span class="field-status required">✅ Must be the delegating account (owner)</span>
-                              </div>
-                         </div>
-                    </div>
-
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>Requires the **Delegate** amendment (or related permission delegation amendment) to be enabled on the network.</li>
-                              <li>Each delegate entry creates a **Delegate** ledger object owned by your account, consuming **owner reserve** (~0.2 XRP per delegate) until removed.</li>
-                              <li><strong>Permissions</strong> is an array of specific rights (e.g., "Payment", "TrustSet", "OfferCreate", "EscrowFinish", custom strings) — only listed permissions are granted.</li>
-                              <li>Delegates cannot sign for you in general (unlike regular key or multi-sign) — they can only perform the explicitly allowed actions on your behalf.</li>
-                              <li>Only the delegating account (owner) can add, update, or remove delegates — delegates cannot delegate further unless explicitly permitted.</li>
-                              <li>Changes take effect immediately upon ledger inclusion; no approval needed from the delegate account.</li>
-                              <li>Use cases: allow a hot wallet to pay bills, let a custodian manage offers, grant limited access to a service without full control.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Security & Revocation Risks</h5>
-                         <p style="color: #92400e">Delegating permissions gives real control — a compromised delegate can misuse allowed actions until revoked.</p>
-                         <ul>
-                              <li>Once granted, permissions are **active immediately** — if the delegate account is hacked, they can perform allowed txs until you submit a revocation DelegateSet.</li>
-                              <li>Revocation is **not retroactive** — any transactions the delegate already signed and submitted before revocation are irreversible.</li>
-                              <li>Keep delegate lists small and trusted — too many delegates increase reserve cost and attack surface.</li>
-                              <li>Reserve remains locked per delegate entry — forgetting to revoke unused delegates keeps paying owner reserve indefinitely.</li>
-                              <li>Delegate permissions are **public on the ledger** — anyone can see who has what access to your account.</li>
-                              <li>Always test delegation flows (grant → use → revoke) on devnet or Testnet first — incorrect permission strings or formats cause tx failure and fee burn.</li>
-                         </ul>
-                    </div>
-               </div>
-          </div>
+          <!-- New: Right panel for info/tips -->
+          <app-delegate-requirement-info></app-delegate-requirement-info>
      </div>
 </div>

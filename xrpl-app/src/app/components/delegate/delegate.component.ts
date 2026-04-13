@@ -1,282 +1,107 @@
-import { Component, OnInit, inject, signal, computed, ChangeDetectionStrategy, effect, ChangeDetectorRef } from '@angular/core';
-import { trigger, transition, style, animate } from '@angular/animations';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { UtilsService } from '../../services/utils/util-service/utils.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
-import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { DestinationDropdownService } from '../../services/shared/destination-dropdown/destination-dropdown.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import * as xrpl from 'xrpl';
-import { AppConstants } from '../../core/app.constants';
+import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { ActivatedRoute } from '@angular/router';
-import { AccountConfiguratorStoreService } from '../../services/account-configurator/account-configurator-store/account-configurator-store.service';
-import { XrplTxOptionsStore } from '../shared/stores/xrpl-tx-options.store';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
+import { DelegateAction, DelegateActionTypes, DelegateTxConfig } from './constants/delegate.types';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
+import { DelegateTransactionViewModelService } from '../../services/delegate/delegate-transaction-view-model/delegate-transaction-view-model.service';
+import { DelegateRequirementInfoComponent } from './ui-components/delegate-requirement-info/delegate-requirement-info.component';
+import { DELEGATE_TAB_META, DELEGATE_TABS } from './constants/delegate.ui';
+import { DELEGATE_TAB } from './constants/delegate.constants';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { DelegateStoreService } from '../../services/delegate/delegate-store/delegate-store.service';
+import { DelegateUtilService } from '../../services/delegate/delegate-util/delegate-util.service';
+import { DelegateTransactionOrchestratorService } from '../../services/delegate/delegate-transaction-orchestrator/delegate-transaction-orchestrator.service';
 import { LogServiceService } from '../../services/shared/log-service/log-service.service';
-
-interface XRPLPermissionEntry {
-     Permission: {
-          PermissionValue: string;
-     };
-}
-
-interface XRPLDelegate {
-     LedgerEntryType: 'Delegate';
-     Account?: string;
-     Authorize?: string;
-     Flags?: number;
-     PreviousTxnID?: string;
-     PreviousTxnLgrSeq?: number;
-     index: string;
-     Permissions: XRPLPermissionEntry[];
-}
-
-interface DelegateAction {
-     id: number;
-     key: string;
-     txType: string;
-     description: string;
-}
+import { DelegateSummaryComponent } from './ui-components/delegate-summary/delegate-summary.component';
 
 @Component({
      selector: 'app-delegate',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent],
-     animations: [trigger('tabTransition', [transition('* => *', [style({ opacity: 0, transform: 'translateY(20px)' }), animate('500ms cubic-bezier(0.4, 0, 0.2, 1)', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, SelectSearchDropdownComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, DelegateRequirementInfoComponent, DelegateSummaryComponent],
      templateUrl: './delegate.component.html',
      styleUrl: './delegate.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountDelegateComponent extends PerformanceBaseComponent implements OnInit {
+export class AccountDelegateComponent extends WalletDestinationBase implements OnInit {
      public readonly connectionGuard = inject(ConnectionGuardService);
-     public readonly utilsService = inject(UtilsService);
-     private readonly storageService = inject(StorageService);
      public readonly walletManagerService = inject(WalletManagerService);
-     public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly validationService = inject(ValidationService);
-     private readonly dropdownService = inject(DestinationDropdownService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly copyUtilService = inject(CopyUtilService);
-     public readonly toastService = inject(ToastService);
-     private readonly walletManager = inject(WalletManagerService);
-     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
-     public readonly route = inject(ActivatedRoute);
+     public readonly xrplTransactionService = inject(XrplTransactionService);
+     public readonly delegateTransactionOrchestratorService = inject(DelegateTransactionOrchestratorService);
+     public readonly delegateUtilService = inject(DelegateUtilService);
+     public readonly delegateTransactionViewModelService = inject(DelegateTransactionViewModelService);
+     public readonly delegateStore = inject(DelegateStoreService);
      public readonly logService = inject(LogServiceService);
-     private readonly cdr = inject(ChangeDetectorRef);
+     public readonly cdr = inject(ChangeDetectorRef);
 
-     typedDestination = signal<string>('');
-     customDestinations = signal<{ name?: string; address: string }[]>([]);
-     selectedDestinationAddress = signal<string>(''); // ← Raw r-address (model)
-     destinationSearchQuery = signal<string>(''); // ← What user is typing right now
+     readonly menuTabs: TabConfig[] = DELEGATE_TABS;
+     readonly tabMeta: Record<string, TabMetaInfo> = DELEGATE_TAB_META;
 
-     // Reactive State (Signals)
-     activeTab = signal<'clear' | 'delegate'>('delegate');
-     wallets = signal<Wallet[]>([]);
-     currentWallet = signal<Wallet>({} as Wallet);
-
-     infoPanelExpanded = signal<boolean>(false);
-
-     // Dropdown
-     dropdownOpen = signal<boolean>(false);
-     actions: DelegateAction[] = AppConstants.DELEGATE_ACTIONS;
-     selected: Set<number> = new Set<number>();
-     delegateSelections: Record<string, Set<number>> = {};
-     leftActions: any;
-     rightActions: any;
-     createdDelegations = signal<boolean>(false);
-     existingDelegations = signal<XRPLDelegate[]>([]);
-     subject = signal<string>('');
-     selectedWalletIndex = signal<number>(0);
-
-     // Effect 1: Has wallets → warning handling
-     private readonly hasWalletsEffect = effect(() => {
-          if (this.walletManager.hasWallets()) {
-               this.txUiService.clearWarning?.();
-          } else {
-               this.txUiService.setWarning('No wallets exist. Create a new wallet before continuing.');
-               this.txUiService.setError('');
-               this.txUiService.setInfoMessage('');
-          }
-     });
-
-     // Effect 2: Wallets list sync
-     private readonly walletsSyncEffect = effect(() => {
-          this.wallets.set(this.walletManager.wallets());
-     });
-
-     // Effect 3: Selected index change → clear + refresh checks
-     private readonly selectedIndexEffect = effect(() => {
-          // Reading the signal is enough to trigger the effect
-          this.walletManager.selectedIndex();
-
-          this.txUiService.clearAllOptionsAndMessages();
-          this.clearFields();
-
-          // Fire-and-forget refresh
-          void this.getAccountDetails(true);
-     });
-
-     selectedDestinationItem = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return null;
-          return this.destinationItems().find(d => d.id === addr) || null;
-     });
-
-     destinationItems = computed(() => {
-          const currentAddr = this.currentWallet().address;
-
-          return this.destinations().map(d => ({
-               id: d.address,
-               display: d.name || 'Unknown Wallet',
-               secondary: d.address,
-               isCurrentAccount: d.address === currentAddr,
-          }));
-     });
-
-     destinations = computed(() => [
-          ...this.wallets().map((w: DropdownItem) => ({
-               name: w.name ?? `Wallet ${w.address.slice(0, 8)}`,
-               address: w.address,
-          })),
-          ...this.customDestinations(),
-     ]);
-
-     destinationDisplay = computed(() => {
-          const addr = this.selectedDestinationAddress();
-          if (!addr) return this.destinationSearchQuery(); // while typing → show typed text
-
-          const dest = this.destinations().find(d => d.address === addr);
-          if (!dest) return addr;
-
-          return this.dropdownService.formatDisplay(dest);
-     });
-
-     filteredDestinations = computed(() => {
-          const q = this.destinationSearchQuery().trim().toLowerCase();
-          const list = this.destinations();
-
-          if (q === '') {
-               return list;
-          }
-
-          return this.destinations()
-               .filter(d => d.address !== this.currentWallet().address)
-               .filter(d => d.address.toLowerCase().includes(q) || (d.name ?? '').toLowerCase().includes(q));
-     });
-
-     infoData = computed(() => {
-          const wallet = this.currentWallet();
-          if (!wallet?.address) return null;
-
-          const walletName = wallet.name || 'Selected wallet';
-          const delegationCount = this.existingDelegations().length;
-
-          let message: string;
-
-          if (delegationCount === 0) {
-               message = `<code>${walletName}</code> wallet has no delegations.`;
-          } else {
-               const delegationDescription = delegationCount === 1 ? 'delegation' : 'delegations';
-               message = `<code>${walletName}</code> wallet has <strong>${delegationCount}</strong> ${delegationDescription}.`;
-          }
-
-          return {
-               walletName,
-               message,
-               mode: this.activeTab(),
-               delegationCount,
-               existingDelegations: this.existingDelegations(),
-          };
-     });
-
-     hasWallets = computed(() => this.wallets().length > 0);
-
-     constructor() {
-          super();
+     constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
+          super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+          this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      ngOnInit(): void {
-          const tab = this.route.snapshot.queryParamMap.get('tab');
-          if (tab) {
-               const allowedTabs = ['clear', 'delegate'] as const;
-               type TabType = (typeof allowedTabs)[number];
-               if (allowedTabs.includes(tab as TabType)) {
-                    // Type assertion is safe because we checked includes
-                    this.setTab(tab as TabType);
-               }
-          }
-
-          this.loadCustomDestinations();
-          this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
-          this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
+          this.applyTabFromQueryParam(this.route, DELEGATE_TAB, tab => this.setTab(tab));
+          this.delegateStore.setField('leftActions', this.delegateStore.actions().slice(0, Math.ceil(this.delegateStore.actions().length / 2)));
+          this.delegateStore.setField('rightActions', this.delegateStore.actions().slice(Math.ceil(this.delegateStore.actions().length / 2)));
      }
 
-     private loadCustomDestinations(): void {
-          const stored = this.storageService.get('customDestinations');
-          if (stored) this.customDestinations.set(JSON.parse(stored));
+     protected async onSelectedWalletIndexChange(): Promise<void> {
+          await this.getAccountDetails(true);
      }
 
-     private selectWallet(wallet: Wallet): void {
-          this.currentWallet.set({ ...wallet });
-          this.xrplCache.invalidateAccountCache(wallet.address);
-
-          // Prevent self as destination
-          if (this.selectedDestinationAddress() === wallet.address) {
-               this.selectedDestinationAddress.set('');
-          }
+     selectWallet(wallet: Wallet): void {
+          if (wallet?.address === this.currentWallet()?.address) return;
+          this.currentWallet.set(wallet);
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
      }
 
-     trackByWalletAddress(index: number, wallet: any): string {
-          return wallet.address;
-     }
-
-     trackByAddress(index: number, item: DropdownItem): string {
+     trackByAddress(_index: number, item: DropdownItem): string {
           return item.address;
      }
 
-     trackByTicket(index: number, ticket: any) {
-          return ticket;
-     }
-
      toggleCreatedDelegations() {
-          this.createdDelegations.update(val => !val);
-     }
-
-     toggleInfoPanel() {
-          this.infoPanelExpanded.update(expanded => !expanded);
+          this.delegateStore.updateField('createdDelegations', val => !val);
      }
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
      }
 
-     async setTab(tab: 'clear' | 'delegate'): Promise<void> {
-          this.activeTab.set(tab);
-          this.destinationSearchQuery.set('');
-          this.txUiService.clearAllOptionsAndMessages();
-          if (this.hasWallets()) {
-               await this.getAccountDetails(true);
-          }
+     async setTab(tab: string): Promise<void> {
+          if (!DELEGATE_TAB.includes(tab as any)) return;
+          this.delegateTransactionViewModelService.activeTab.set(tab as DelegateActionTypes);
+          this.clearInputFields();
+          if (this.hasWallets()) await this.getAccountDetails(false);
      }
 
      private async getClient(): Promise<xrpl.Client> {
@@ -284,72 +109,120 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      }
 
      toggleSelection(id: number, event?: Event) {
-          // Prevent triggering twice if clicking checkbox directly
-          if (event) {
-               event.stopPropagation();
+          if (event) event.stopPropagation();
+
+          const currentSelected = this.delegateStore.selected(); // ← call the signal
+
+          if (currentSelected.has(id)) {
+               currentSelected.delete(id);
+          } else {
+               currentSelected.add(id);
           }
 
-          if (this.selected.has(id)) {
-               this.selected.delete(id);
-          } else {
-               this.selected.add(id);
-          }
+          // Update the store (important: create new Set or use updateField)
+          this.delegateStore.setField('selected', new Set(currentSelected));
      }
 
      getSelectedActions(): DelegateAction[] {
-          return this.actions.filter(a => this.selected.has(a.id));
+          return this.delegateStore.actions().filter(a => this.delegateStore.selected().has(a.id));
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
-          // this.isSummaryLoading.set(true);
+          this.isSummaryLoading.set(true);
           await this.withPerf('getAccountDetails', async () => {
+               this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
+               this.xrplTxOptionsStore.reset();
+
+               if (!this.walletManagerService.ensureWalletSelected()) return;
+
                try {
-                    const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
-                    const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, forceRefresh);
+                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!env) throw new Error('Unable to get environment.');
 
-                    const errors = await this.validationService.validate('AccountInfo', { inputs: { seed: this.currentWallet().seed, accountInfo }, client, accountInfo });
-                    if (errors.length > 0) {
-                         return this.txUiService.setError(errors.join('\n• '));
-                    }
-
-                    this.getExistingDelegations(accountObjects, wallet.classicAddress);
-
-                    this.leftActions = this.actions.slice(0, Math.ceil(this.actions.length / 2));
-                    this.rightActions = this.actions.slice(Math.ceil(this.actions.length / 2));
+                    this.delegateUtilService.getExistingDelegations(env.accountObjects);
 
                     // this.refreshUiState(wallet, accountInfo, accountObjects);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.toastService.error(error.message || 'Failed to get delegated actions', AppConstants.TOAST.ERROR);
                } finally {
-                    // this.isSummaryLoading.set(false);
+                    this.isSummaryLoading.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
 
-     async delegateActions(delegate: 'delegate' | 'clear') {
+     async performAction(): Promise<void> {
+          const currentTab = this.delegateTransactionViewModelService.activeTab();
+          const wallet = this.currentWallet();
+
+          let env: any = null;
+          try {
+               env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeFee: true,
+                    includeLedgerInfo: true,
+                    includeServerInfo: true,
+                    includeTickets: true,
+               });
+          } catch (err: any) {
+               console.error('prepareTxEnvironment failed:', err);
+               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          if (!env) throw new Error('Unable to get environment.');
+
+          const delegateState = this.delegateStore.getAll();
+          const accountState = this.accountConfiguratorStoreService.getAll();
+          const txOptionsState = this.xrplTxOptionsStore.getAll();
+
+          const config: DelegateTxConfig = {
+               delegate: delegateState,
+               account: accountState,
+               txOptions: txOptionsState,
+               wallet: wallet,
+               preFetchedEnv: env,
+               extra: {},
+          };
+
+          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+
+          await this.withPerf('performAction', async () => {
+               try {
+                    switch (currentTab) {
+                         case 'delegateCreate':
+                              txResult = await this.delegateTransactionOrchestratorService.executeDelegateTx('delegateCreate', config);
+                              break;
+                         case 'delegateClear':
+                              txResult = await this.delegateTransactionOrchestratorService.executeDelegateTx('delegateClear', config);
+                              break;
+                    }
+               } catch (error: any) {
+                    console.error(`[${currentTab}] execution failed:`, error);
+                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+                    return;
+               }
+          });
+
+          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+
+          await this.handleTxResult(txResult, env.client, env.wallet, '', '', '', { includeTicketObjects: true });
+          this.txUiService.resetCurrentStepToIdle();
+     }
+
+     async delegateActions(delegate: 'delegateCreate' | 'delegateClear') {
           await this.withPerf('delegateActions', async () => {
                this.txUiService.clearAllOptionsAndMessages();
                try {
                     const [client, wallet] = await Promise.all([this.getClient(), this.getWallet()]);
 
-                    // const destinationAddress = this.selectedDestinationAddress() ? this.selectedDestinationAddress() : this.destinationSearchQuery();
-                    const destinationAddress = this.selectedDestinationAddress() || this.typedDestination();
                     const [{ accountInfo, accountObjects }, fee, currentLedger] = await Promise.all([this.xrplCache.getAccountData(wallet.classicAddress, false), this.xrplCache.getFee(this.xrplService, false), this.xrplService.getLastLedgerIndex(client)]);
-                    // const inputs = this.txUiService.getValidationInputs({
-                    //      wallet: this.currentWallet(),
-                    //      network: { accountInfo, fee, currentLedger },
-                    //      destination: { address: destinationAddress, tag: '' },
-                    // });
-
-                    // const errors = await this.validationService.validate('DelegateActions', { inputs, client, accountInfo });
-                    // if (errors.length > 0) {
-                    //      return this.txUiService.setError(errors.join('\n• '));
-                    // }
 
                     let permissions: { Permission: { PermissionValue: string } }[] = [];
-                    if (delegate === 'clear') {
+                    if (delegate === 'delegateClear') {
                          console.log(`Clearing all delegate objects`);
                     } else {
                          const selectedActions = this.getSelectedActions();
@@ -374,7 +247,7 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
                     const delegateSetTx: xrpl.DelegateSet = {
                          TransactionType: 'DelegateSet',
                          Account: wallet.classicAddress,
-                         Authorize: destinationAddress,
+                         Authorize: '',
                          Permissions: permissions,
                          Fee: fee,
                          LastLedgerSequence: currentLedger + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -403,22 +276,6 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           });
      }
 
-     private getExistingDelegations(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
-          const mapped = (checkObjects.result.account_objects ?? [])
-               .filter((obj: any) => obj.LedgerEntryType === 'Delegate')
-               .map((obj: any) => ({
-                    LedgerEntryType: obj.LedgerEntryType,
-                    index: obj.index,
-                    Authorize: obj.Authorize,
-                    Permissions: obj.Permissions,
-                    Flags: obj.Flags,
-               }));
-
-          // This triggers infoData() to recompute automatically
-          this.existingDelegations.set(mapped);
-          this.logService.logObjects('existingDelegations', mapped);
-     }
-
      private async getWallet(): Promise<xrpl.Wallet> {
           const wallet = await this.utilsService.getWalletWithEncryptionAlgorithm(this.currentWallet().seed, this.currentWallet().encryptionAlgorithm as 'ed25519' | 'secp256k1');
           if (!wallet) throw new Error('Wallet could not be created');
@@ -441,23 +298,23 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
           // }
      }
 
-     private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
-          const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
-          this.getExistingDelegations(accountObjects, wallet.classicAddress);
-          destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
-          if (addDest && destination) this.addNewDestinationFromUser(destination);
-          // this.refreshUiState(wallet, accountInfo, accountObjects);
-     }
+     // private async refreshAfterTx(client: xrpl.Client, wallet: xrpl.Wallet, destination: string | null, addDest: boolean): Promise<void> {
+     //      const { accountInfo, accountObjects } = await this.xrplCache.getAccountData(wallet.classicAddress, true);
+     //      this.getExistingDelegations(accountObjects, wallet.classicAddress);
+     //      destination ? await this.refreshWallets(client, [wallet.classicAddress, destination]) : await this.refreshWallets(client, [wallet.classicAddress]);
+     //      if (addDest && destination) this.addNewDestinationFromUser(destination);
+     //      // this.refreshUiState(wallet, accountInfo, accountObjects);
+     // }
 
-     private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
-          await this.walletDataService.refreshWallets(
-               client,
-               addresses, // only the addresses to target
-               (updatedList, newCurrent) => {
-                    this.currentWallet.set({ ...newCurrent });
-               }
-          );
-     }
+     // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
+     //      await this.walletDataService.refreshWallets(
+     //           client,
+     //           addresses, // only the addresses to target
+     //           (updatedList, newCurrent) => {
+     //                this.currentWallet.set({ ...newCurrent });
+     //           }
+     //      );
+     // }
 
      // private async refreshWallets(client: xrpl.Client, addresses?: string[]) {
      //      await this.walletDataService.refreshWallets(client, this.wallets(), this.walletManagerService.getSelectedIndex(), addresses, (updatedList, newCurrent) => {
@@ -505,47 +362,34 @@ export class AccountDelegateComponent extends PerformanceBaseComponent implement
      //      this.storageService.removeValue('signerEntries');
      // }
 
-     updateDestinations() {
-          // Optional: persist destinations
-          const allItems = [
-               ...this.wallets().map(wallet => ({
-                    name: wallet.name ?? this.truncateAddress(wallet.address),
-                    address: wallet.address,
-               })),
-               ...this.customDestinations(),
-          ];
-          this.storageService.set('destinations', allItems);
-     }
-
-     private truncateAddress(address: string): string {
-          return `${address.slice(0, 8)}...${address.slice(-6)}`;
-     }
-
-     private addNewDestinationFromUser(destination: string): void {
-          if (destination && xrpl.isValidAddress(destination) && !this.destinations().some(d => d.address === destination)) {
-               this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: destination }]);
-               this.storageService.set('customDestinations', JSON.stringify(this.customDestinations()));
-               this.updateDestinations();
-          }
-     }
-
      // copyDelegateId(checkId: string) {
      //      navigator.clipboard.writeText(checkId).then(() => {
      //           this.txUiService.showToastMessage('Delegate Id copied!');
      //      });
      // }
 
-     get safeWarningMessage() {
-          return this.txUiService.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-     }
-
      clearFields() {
-          this.typedDestination.set('');
-          this.selectedDestinationAddress.set('');
           this.txUiService.clearAllOptionsAndMessages();
      }
 
      clearDelegateActions() {
-          this.selected.clear();
+          this.delegateStore.setField('selected', new Set<number>());
+     }
+
+     protected refreshAccountObject(env: any): void {
+          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+
+          // NEW: Always refresh ticket count from the fresh account_objects
+          // const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+          // const newCount = ticketObjects?.result?.account_objects?.length ?? 0;
+          // this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
+     }
+
+     protected clearInputFields(): void {
+          this.destinationSearchQuery.set('');
+          this.selectedDestinationAddress.set('');
+          this.txUiService.clearAllFields();
+          this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
+          this.xrplTxOptionsStore.setField('ticketCountField', '');
      }
 }

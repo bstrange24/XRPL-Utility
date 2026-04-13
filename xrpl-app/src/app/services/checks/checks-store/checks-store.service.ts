@@ -1,5 +1,4 @@
-import { computed } from '@angular/core';
-import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
+import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
 export interface CheckState {
      checkIdField: string;
@@ -47,10 +46,6 @@ export const ChecksStoreService = signalStore(
      { providedIn: 'root' },
 
      withState(initialState),
-
-     // withComputed(store => ({
-     //      checkExpirationDate: computed(() => store.checkExpirationDate()),
-     // })),
 
      withMethods(store => ({
           /** Generic setter */
