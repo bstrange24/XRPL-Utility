@@ -175,7 +175,13 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
                if (currency?.currency !== 'XRP') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
                } else {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');
+                    if (type === 'createEscrow') {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');
+                    } else {
+                         // If we are finishing or cancelling an escrow, we need to ensure the account has enough XRP to cover the fee,
+                         // since the amount is not being sent from the account but the transaction still requires a fee to be paid.
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    }
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
