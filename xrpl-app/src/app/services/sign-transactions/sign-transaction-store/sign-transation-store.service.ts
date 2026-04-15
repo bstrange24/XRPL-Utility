@@ -8,6 +8,7 @@ export interface SignTransactionState {
      account: any;
      txJson: string;
      outputField: string;
+     isAppSigned: boolean;
      editedTxJson: any;
      multiSignedTxBlob: string;
      availableSigners: any[];
@@ -24,6 +25,7 @@ const initialState: SignTransactionState = {
      account: '',
      txJson: '',
      outputField: '',
+     isAppSigned: false,
      editedTxJson: '',
      multiSignedTxBlob: '',
      availableSigners: [],
@@ -83,6 +85,10 @@ export const SignTransationStoreService = signalStore(
                          regularKeySign: false,
                     },
                });
+          },
+
+          setAppSigned(value: boolean) {
+               patchState(store, { isAppSigned: value });
           },
 
           /** Snapshot */

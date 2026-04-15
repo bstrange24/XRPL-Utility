@@ -5,6 +5,7 @@ import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-env
 import { TrustlineUtilService } from '../../trustlines/trustline-utils/trustline-util.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { NftUtilService } from '../nft-util/nft-util.service';
 
 @Injectable({
      providedIn: 'root',
@@ -13,8 +14,9 @@ export class NftTransactionBuilderService {
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly nftUtilService = inject(NftUtilService);
 
-     buildCreateNftTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, nft: any) {
+     buildCreateNftTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, nft: any, currency: any) {
           const tx: xrpl.NFTokenMint = {
                TransactionType: 'NFTokenMint',
                Account: wallet.classicAddress,
@@ -24,7 +26,12 @@ export class NftTransactionBuilderService {
           };
 
           if (nft.amount) {
-               tx.Amount = nft.amount;
+               const flags = this.nftUtilService.decodeNftFlags(nft.nftFlags);
+               if (flags.includes('tfOnlyXRP')) {
+                    tx.Amount = xrpl.xrpToDrops(nft.amount);
+               } else {
+                    tx.Amount = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, nft.nfTokenMinterAddress ? nft.nfTokenMinterAddress : wallet.classicAddress, nft.amount, false).sendMax;
+               }
           }
 
           if (nft.nftFlags) {

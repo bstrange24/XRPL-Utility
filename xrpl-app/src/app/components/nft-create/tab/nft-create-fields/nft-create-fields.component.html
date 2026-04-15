@@ -1,10 +1,7 @@
 <div class="form-row">
      <div class="form-group">
           <label>Taxon</label>
-          <p class="form-hint">
-               Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token <br />
-               and a given taxon may be used for multiple tokens.
-          </p>
+          <p class="form-hint">Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token and a given taxon may be used for multiple tokens.</p>
           <input type="text" [(ngModel)]="nftCreateStoreService.taxon" name="taxon" placeholder="" />
      </div>
 </div>
@@ -16,7 +13,7 @@
                Specifies the fee charged by the issuer for secondary sales of the Token, if such sales are allowed. <br />
                Valid values for this field are between 0 and 50000 inclusive, allowing transfer rates between 0.000% and 50.000% in increments of 0.001%.
           </p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.transferFee" name="transferFeeField" placeholder="" />
+          <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.001" min="0" [ngModel]="nftCreateStoreService.transferFee()" (ngModelChange)="utilsService.updateTransferFee($event)" (focus)="onFocus($event)" class="amount-input" />
      </div>
 </div>
 
@@ -31,9 +28,13 @@
      </div>
 </div>
 
+@if (txUiService.wantsOptions()) {
+<app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
+}
+
 <div class="form-row">
      <div class="form-group">
-          <label>Nft Token Minter (optional)</label>
+          <label>Nft Token Minter</label>
           <p class="form-hint">
                Indicates the account that should be the issuer of this token. This value is optional and should only be specified if the account <br />
                executing the transaction is not the `Issuer` of the `NFToken` object.
@@ -42,16 +43,37 @@
      </div>
 </div>
 
-<div class="form-row">
+<mat-slide-toggle class="mini-toggle" [checked]="nftCreateStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.checked)">Create Sell Offer on NFT Creation</mat-slide-toggle>
+
+@if (nftCreateStoreService.enableExpirationDate()) {
+<app-currency-amount-form
+     [currencyItems]="nftOffersTransactionViewModelService.currencyItems()"
+     [selectedCurrencyItem]="nftOffersTransactionViewModelService.selectedCurrencyItem()"
+     [amount]="nftCreateStoreService.amount()"
+     [currency]="currencyStoreService.currency()"
+     [issuerItems]="nftOffersTransactionViewModelService.issuerItems()"
+     [selectedIssuerItem]="nftOffersTransactionViewModelService.selectedIssuerItem()"
+     [balance]="currencyStoreService.balance()"
+     (currencySelected)="currencySelected.emit($event)"
+     (amountChange)="utilsService.updateAmount($event)"
+     (issuerSelected)="issuerSelected.emit($event)"
+     [disableCurrencySelection]="onlyXrpEnabled()"
+     [showXrpOnlyBadge]="onlyXrpEnabled()"
+     [amountLabel]="'Amount'"
+     [amountHint]="'Indicates the amount expected for the Token. The amount can be zero. <br />This would indicate that the account is giving the token away free, either to anyone at all, or to the account identified by the Destination field.'"
+     [amountPlaceholder]="'e.g. 10.5'"
+/>
+
+<!-- <div class="form-row">
      <div class="form-group">
           <label>Amount</label>
           <p class="form-hint">
                Indicates the amount expected for the Token. The amount can be zero. <br />
                This would indicate that the account is giving the token away free, either to anyone at all, or to the account identified by the Destination field.
           </p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.amount" name="amountField" placeholder="" />
+          <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="nftCreateStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
      </div>
-</div>
+</div> -->
 
 <div class="form-row">
      <div class="form-group">
@@ -66,3 +88,4 @@
           <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="If present, indicates that this offer may only be accepted by the specified account. Attempts by other accounts to accept this offer MUST fail."> </app-xrpl-expiration-input>
      </div>
 </div>
+}

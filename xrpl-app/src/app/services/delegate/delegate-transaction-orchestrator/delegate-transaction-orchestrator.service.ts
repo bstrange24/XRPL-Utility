@@ -124,7 +124,7 @@ export class DelegateTransactionOrchestratorService extends PerformanceBaseCompo
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.delegate, type, txOptions);
 
                // Balance checks (token vs xrp)
-               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
+               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
                //  Submit / simulate

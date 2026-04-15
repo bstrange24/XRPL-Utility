@@ -173,7 +173,7 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
                // Balance checks (token vs xrp)
                let isInsufficientBalance;
                if (currency?.currency !== 'XRP') {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env);
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
                } else {
                     if (type === 'createEscrow') {
                          isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');

@@ -53,13 +53,15 @@
 
                                    <!-- Exactly ONE signing button -->
                                    @if (xrplTxOptionsStore.useMultiSign()) {
-                                   <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                   <!-- <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button> -->
+                                   <button type="button" class="btn-primary-blue" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
                                    } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
-                                   <button type="button" class="btn-primary-blue" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                   <!-- <button type="button" class="btn-primary-blue" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button> -->
+                                   <button type="button" class="btn-primary-blue" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
                                    } @else {
-                                   <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+                                   <!-- <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button> -->
+                                   <button type="button" class="btn-primary-blue" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                    }
-
                                    <!-- Always visible -->
                                    <button type="button" class="btn-primary-blue" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
                               </div>
@@ -89,11 +91,29 @@
                                         <div class="tx-actions">
                                              <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(signTransationStoreService.outputField())" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
                                              <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.outputField())" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
+
+                                             <!-- Optional: Decode button -->
+                                             <button type="button" class="btn-secondary" (click)="populateTxDetails()" title="Decode signed tx back to JSON">Decode to JSON</button>
+                                        </div>
+                                   </div>
+
+                                   <div #signedEditable id="hashField" spellcheck="false" style="color: #669900; min-height: 120px" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" (input)="onSignedTxInput($event)" (blur)="onSignedTxBlur()" [attr.data-placeholder]="'Generate signed transaction above or paste existing signed transaction blob here (hex)...'"></div>
+                              </div>
+
+                              @if (isExternallySignedTx()) {
+                              <app-warning-message [warningMessage]="'✓ This is a signed transaction from an external source. You can submit it directly.'"></app-warning-message>
+                              }
+                              <!-- <div class="tx-preview-container" style="margin-top: 1rem">
+                                   <div class="tx-header">
+                                        <h5 class="tx-title">Signed Transaction</h5>
+                                        <div class="tx-actions">
+                                             <button type="button" class="copy-btn" (click)="copyUtilService.copySignedTx(signTransationStoreService.outputField())" title="Copy Signed TX"><ng-icon name="heroClipboardDocumentList" size="20"></ng-icon> Copy</button>
+                                             <button type="button" class="download-btn" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.outputField())" title="Download Signed TX"><ng-icon name="heroArrowDownOnSquareStack" size="20"></ng-icon> Download</button>
                                         </div>
                                    </div>
 
                                    <div #signedEditable id="hashField" spellcheck="false" style="color: #669900" class="tx-json language-json editable" contenteditable="true" [ngClass]="{ 'success': txUiService.isSuccess }" [textContent]="signTransationStoreService.outputField()"></div>
-                              </div>
+                              </div> -->
                               <app-transaction-preview></app-transaction-preview>
                          </div>
                     </div>

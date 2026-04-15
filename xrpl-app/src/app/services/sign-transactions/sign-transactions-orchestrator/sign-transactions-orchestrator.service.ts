@@ -120,30 +120,35 @@ export class SignTransactionsOrchestratorService {
 
      // Submit Transaction
      async submitTransaction(options: SubmitTxOptions): Promise<{ success: boolean; hash?: string; error?: string; response?: any }> {
-          const { txJson, outputField, env, isSimulateEnabled, txType } = options;
+          try {
+               const { txJson, outputField, env, isSimulateEnabled, txType } = options;
 
-          let response: any;
+               let response: any;
 
-          if (isSimulateEnabled) {
-               const txToSign = this.cleanTx(JSON.parse(txJson.trim()));
-               txToSign.LastLedgerSequence = env.currentLedger! + 5;
-               response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
-          } else {
-               this.txUiService.currentStep.set('waiting_validation');
-               response = await env.client.submitAndWait(outputField.trim());
-          }
+               if (isSimulateEnabled) {
+                    const txToSign = this.cleanTx(JSON.parse(txJson.trim()));
+                    txToSign.LastLedgerSequence = env.ledgerInfo.lastIndex! + 5;
+                    response = await this.xrplTransactionService.simulateTransaction(env.client, txToSign);
+               } else {
+                    this.txUiService.currentStep.set('waiting_validation');
+                    response = await env.client.submitAndWait(outputField.trim());
+               }
 
-          const isSuccess = this.utilsService.isTxSuccessful(response);
+               const isSuccess = this.utilsService.isTxSuccessful(response);
 
-          if (!isSuccess) {
-               const resultMsg = this.utilsService.getTransactionResultMessage(response);
-               const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
-               if (response.result) response.result.errorMessage = userMessage;
+               if (!isSuccess) {
+                    const resultMsg = this.utilsService.getTransactionResultMessage(response);
+                    const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
+                    if (response.result) response.result.errorMessage = userMessage;
+                    return { success: false, error: userMessage };
+               }
+
+               const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
+               return { success: true, hash, response };
+          } catch (error: any) {
+               const userMessage = '\n' + this.utilsService.processErrorMessageFromLedger(error.message);
                return { success: false, error: userMessage };
           }
-
-          const hash = response.result.hash ?? response.result.tx_json?.hash ?? 'unknown';
-          return { success: true, hash, response };
      }
 
      // Memo JSON helpers (used by component effects)
@@ -152,7 +157,7 @@ export class SignTransactionsOrchestratorService {
                const tx = JSON.parse(txJson);
                this.utilsService.addMemoField(tx, memos);
                return JSON.stringify(tx, null, 2);
-          } catch {
+          } catch (error: any) {
                return txJson;
           }
      }

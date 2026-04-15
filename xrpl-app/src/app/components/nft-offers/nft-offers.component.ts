@@ -219,7 +219,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     }
                } catch (error: any) {
                     console.error('Error in getNFT:', error);
-                    this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
+                    this.toastService.error(error.message || 'Failed to load NFT Offers', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();

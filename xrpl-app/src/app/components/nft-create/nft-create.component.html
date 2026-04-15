@@ -37,7 +37,17 @@
                          <div class="tab-content-container form-fields-container">
                               <!-- Create sections -->
                               @if(tab === 'createNft') {
-                              <app-nft-create-fields [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (optionsToggled)="toggleOptions($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
+                              <app-nft-create-fields
+                                   [destinationItems]="destinationItems()"
+                                   [selectedDestinationItem]="selectedDestinationItem()"
+                                   [destinationSearchQuery]="destinationSearchQuery()"
+                                   (currencySelected)="onCurrencySelected($event)"
+                                   (issuerSelected)="onIssuerSelected($event)"
+                                   (optionsToggled)="toggleOptions($event)"
+                                   (expirationToggled)="toggleExpiration($event)"
+                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
+                                   (destinationValueChange)="handleDestinationChange($event)"
+                              />
                               }
 
                               <!-- Burn sections -->
@@ -65,10 +75,10 @@
                     <div class="button-row">
                          @if(tab === 'createNft') {
                          <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftButtonLabel() }}</button>
-                         } @else if (tab === 'burnNft') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.burnNftButtonLabel() }}</button>
                          } @else if (tab === 'updateNFTMetadata') {
                          <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
+                         } @else if (tab === 'burnNft') {
+                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.burnNftButtonLabel() }}</button>
                          }
                          <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets" (click)="clearFields()">Clear Fields</button>
                     </div>

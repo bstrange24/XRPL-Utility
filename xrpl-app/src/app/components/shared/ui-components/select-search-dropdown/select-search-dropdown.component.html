@@ -1,7 +1,7 @@
 <div class="combobox-container">
-     <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="combobox-input" autocomplete="off" />
+     <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="combobox-input" autocomplete="off" [disabled]="isDisabled()" />
 
-     <button type="button" (click)="toggle()" class="combobox-toggle">
+     <button type="button" (click)="toggle()" class="combobox-toggle" [disabled]="isDisabled()">
           <lucide-icon name="chevron-down" size="18"></lucide-icon>
      </button>
 </div>

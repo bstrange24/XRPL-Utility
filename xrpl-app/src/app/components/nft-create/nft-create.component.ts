@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -41,6 +41,9 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { NftFlagsComponent } from './tab/nft-flags/nft-flags.component';
 import { NftRequirementsInfoComponent } from './ui-components/nft-requirements-info/nft-requirements-info.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
+import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
+import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 
 @Component({
      selector: 'app-nft-create',
@@ -54,7 +57,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
-     public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
+     public readonly currencyStoreService = inject(CurrencyStoreService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
+     public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly nftCreateTransactionViewModelService = inject(NftTransactionViewModelService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
@@ -71,10 +77,47 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, NFT_CREATE_TAB, tab => this.setTab(tab));
+          this.trustlineCurrencyService.load();
+          this.trustlineCurrencyService.preferXrpAsDefault.set(true);
+          this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(true);
+          this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
+          this.transactionDropdownService.loadCustomDestinations();
+          this.trustlineCurrencyService.selectCurrency('XRP');
+          this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getNFT(false);
+     }
+
+     async onCurrencyChange(item: any) {
+          const currency = item?.id ?? item ?? 'XRP';
+          this.trustlineCurrencyService.selectCurrency(currency);
+          await this.syncAfterSelection();
+     }
+
+     async onIssuerChange(item: any) {
+          const issuer = item?.id ?? item ?? 'XRP';
+          this.trustlineCurrencyService.selectIssuer(issuer);
+          await this.syncAfterSelection();
+     }
+
+     async onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.selectCurrency(currency);
+          await this.trustlineUtilService.loadTrustlines(false);
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     async onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrencyService.selectIssuer(address);
+
+          // Add this: If both currency and issuer are set, fetch env and update flags
+          if (this.currencyStoreService.currency() && address) {
+               await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+          }
      }
 
      onNftSelected(item: SelectItem | null) {
@@ -85,8 +128,12 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
+
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+
+          this.trustlineCurrencyService.refreshCurrentBalance();
           this.populateDefaultDateTime();
      }
 
@@ -100,6 +147,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      onWalletSelected(wallet: Wallet): void {
           this.selectWallet(wallet);
+     }
+
+     get onlyXrpEnabled(): boolean {
+          return this.nftUtilService.nftFlags().onlyXrpNft ?? false;
      }
 
      async setTab(tab: string): Promise<void> {
@@ -116,6 +167,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
+               this.trustlineStoreService.reset();
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
@@ -126,11 +178,13 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    // this.acccountDataService.setNfTokenMinter(env);
                } catch (error: any) {
                     console.error('Error in getNFT:', error);
-                    this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+                    this.toastService.error(error.message || 'Failed to load NFTs', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
+                    this.txUiService.resetCurrentStepToIdle();
                }
           });
      }
@@ -149,7 +203,8 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
           let destinationAddress = '';
           if (currentTab === 'createNft') {
-               this.nftCreateStoreService.setField('nftFlags', this.nftUtilService.getFlagsValue(this.nftUtilService.nftFlags));
+               this.nftCreateStoreService.setField('nftFlags', this.nftUtilService.getFlagsValue());
+               this.nftCreateStoreService.setField('decodedNftFlags', this.nftUtilService.decodeNftFlags(this.nftUtilService.getFlagsValue()));
                destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
                if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
                     this.selectedDestinationAddress.set(destinationAddress);
@@ -162,6 +217,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
                     includeAccountInfo: true,
                     includeAccountObject: true,
+                    includeTrustlines: true,
                     includeFee: true,
                     includeLedgerInfo: true,
                     includeServerInfo: true,
@@ -189,6 +245,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           }
 
           const nftState = this.nftCreateStoreService.getAll();
+          const currency = this.currencyStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
 
@@ -196,6 +253,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                nft: nftState,
                account: accountState,
                txOptions: txOptionsState,
+               currency: currency,
                wallet: wallet,
                preFetchedEnv: env,
                extra: {},
@@ -236,6 +294,28 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      toggleOptions(enabled: boolean): void {
           this.txUiService.wantsOptions.set(enabled);
+     }
+
+     toggleExpiration(enabled: boolean): void {
+          this.nftCreateStoreService.setField('enableExpirationDate', enabled);
+          if (!enabled) {
+               this.nftCreateStoreService.setField('expiration', '');
+          }
+     }
+
+     private async syncAfterSelection(load = true) {
+          if (load) await this.trustlineUtilService.loadTrustlines();
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     public currencyItems() {
+          return this.trustlineCurrencyService.currencyItems();
+     }
+
+     public selectedCurrencyItem() {
+          const code = this.currencyStoreService.currency();
+          if (!code) return null;
+          return this.currencyItems().find(item => item.id === code) || null;
      }
 
      handleSearchQueryChange(query: string) {

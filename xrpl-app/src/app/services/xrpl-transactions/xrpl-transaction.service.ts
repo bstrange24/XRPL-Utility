@@ -4,9 +4,6 @@ import { UtilsService } from '../utils/util-service/utils.service';
 import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../utils/toast/toast.service';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
-import { PaymentChannelUtilService } from '../payment-channel/payment-channel-util/payment-channel-util.service';
-import { CredentialStore } from '../credentials/credential-store/credential-store.service';
-import { Wallet } from '../wallets/manager/wallet-manager.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { MptStoreService } from '../mpt/mpt-store/mpt-store.service';
@@ -20,10 +17,8 @@ export class XrplTransactionService extends PerformanceBaseComponent {
      private readonly toastService = inject(ToastService);
      private readonly txUiService = inject(TransactionUiService);
      private readonly mptStoreService = inject(MptStoreService);
-     private readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
-     private readonly credentialStore = inject(CredentialStore);
 
-     // HELPER: Sign transaction (handles both single and multi-sign)
+     // Sign transaction (handles both single and multi-sign)
      async signTransaction(client: any, wallet: xrpl.Wallet, tx: any, useRegularKeyWalletSignTx: boolean, regularKeyWalletSignTx: any, fee: string, useMultiSign: boolean, multiSignAddress: any, multiSignSeeds: any): Promise<{ tx_blob: string; hash: string } | null> {
           if (useMultiSign) {
                const signerAddresses = this.utilsService.getMultiSignAddress(multiSignAddress);
@@ -53,42 +48,41 @@ export class XrplTransactionService extends PerformanceBaseComponent {
           }
      }
 
-     async signTransactionNoAutofill(client: any, wallet: xrpl.Wallet, tx: any, useRegularKeyWalletSignTx: boolean, regularKeyWalletSignTx: any, fee: string, useMultiSign: boolean, multiSignAddress: any, multiSignSeeds: any, noAutofill: boolean = false): Promise<{ tx_blob: string; hash: string } | null> {
-          if (useMultiSign) {
-               const signerAddresses = this.utilsService.getMultiSignAddress(multiSignAddress);
-               const signerSeeds = this.utilsService.getMultiSignSeeds(multiSignSeeds);
+     // async signTransactionNoAutofill(client: any, wallet: xrpl.Wallet, tx: any, useRegularKeyWalletSignTx: boolean, regularKeyWalletSignTx: any, fee: string, useMultiSign: boolean, multiSignAddress: any, multiSignSeeds: any, noAutofill: boolean = false): Promise<{ tx_blob: string; hash: string } | null> {
+     //      if (useMultiSign) {
+     //           const signerAddresses = this.utilsService.getMultiSignAddress(multiSignAddress);
+     //           const signerSeeds = this.utilsService.getMultiSignSeeds(multiSignSeeds);
 
-               if (signerAddresses.length === 0) {
-                    throw new Error('No signer addresses provided for multi-signing');
-               }
-               if (signerSeeds.length === 0) {
-                    throw new Error('No signer seeds provided for multi-signing');
-               }
+     //           if (signerAddresses.length === 0) {
+     //                throw new Error('No signer addresses provided for multi-signing');
+     //           }
+     //           if (signerSeeds.length === 0) {
+     //                throw new Error('No signer seeds provided for multi-signing');
+     //           }
 
-               const result = await this.utilsService.handleMultiSignTransaction({ client, wallet, tx: tx, signerAddresses, signerSeeds, fee });
+     //           const result = await this.utilsService.handleMultiSignTransaction({ client, wallet, tx: tx, signerAddresses, signerSeeds, fee });
 
-               tx.Signers = result.signers;
+     //           tx.Signers = result.signers;
 
-               // Recalculate fee for multisign
-               const multiSignFee = String((signerAddresses.length + 1) * Number(fee));
-               tx.Fee = multiSignFee;
+     //           // Recalculate fee for multisign
+     //           const multiSignFee = String((signerAddresses.length + 1) * Number(fee));
+     //           tx.Fee = multiSignFee;
 
-               console.info(`tx`, tx);
-               return result.signedTx;
-          } else {
-               console.info(`tx`, tx);
-               const txToSign = noAutofill ? tx : await client.autofill(tx);
-               return useRegularKeyWalletSignTx ? regularKeyWalletSignTx.sign(txToSign) : wallet.sign(txToSign);
-          }
-     }
+     //           console.info(`tx`, tx);
+     //           return result.signedTx;
+     //      } else {
+     //           console.info(`tx`, tx);
+     //           const txToSign = noAutofill ? tx : await client.autofill(tx);
+     //           return useRegularKeyWalletSignTx ? regularKeyWalletSignTx.sign(txToSign) : wallet.sign(txToSign);
+     //      }
+     // }
 
-     // HELPER: Submit or simulate transaction
-     async submitTransaction(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
+     async submitAndWaitTransaction(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
           console.log(`[REAL] Submitting transaction ${signedTx.hash} to network`);
           return await client.submitAndWait(signedTx.tx_blob);
      }
 
-     async submitTransaction1(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
+     async submitTransaction(client: any, signedTx: { tx_blob: string; hash: string }): Promise<any> {
           console.log(`[REAL] Submitting transaction ${signedTx.hash} to network`);
           return await client.submit(signedTx.tx_blob);
      }

@@ -19,8 +19,8 @@ import { NftTransactionBuilderService } from '../nft-transaction-builder/nft-tra
 
 type NftCreateMeta = {
      validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; nft: any; account: any; txOptions: any }) => any;
-     buildTx: (args: { orchestrator: NftTransactionOrchestrator; env: any; wallet: any; nft: any }) => xrpl.Transaction;
+     buildValidationInputs: (args: { wallet: Wallet; env: any; nft: any; account: any; txOptions: any; currency: any }) => any;
+     buildTx: (args: { orchestrator: NftTransactionOrchestrator; env: any; wallet: any; nft: any; currency: any }) => xrpl.Transaction;
      simulationToastMessage: (args: { orchestrator: NftTransactionOrchestrator; nft: any }) => string;
      successMessage: (args: { orchestrator: NftTransactionOrchestrator; nft: any }) => string;
 };
@@ -28,7 +28,7 @@ type NftCreateMeta = {
 const NFT_META: Record<NftCreateTxType, NftCreateMeta> = {
      createNft: {
           validationRule: NFT_CREATE_VALIDATION_RULES[NFT_CREATE_TX_TYPES.CREATE],
-          buildValidationInputs: ({ wallet, env, nft, account, txOptions }) => ({
+          buildValidationInputs: ({ wallet, env, nft, account, txOptions, currency }) => ({
                wallet,
                network: {
                     accountInfo: env.accountInfo,
@@ -42,9 +42,9 @@ const NFT_META: Record<NftCreateTxType, NftCreateMeta> = {
                     seed: account.regularKeySeed,
                },
                env,
-               createNft: { amount: nft.amount, taxon: nft.taxon, nftFlags: nft.nftFlags, URI: nft.initialURI, transferfee: nft.transferFee, issuer: nft.issuer, expiration: nft.expiration },
+               createNft: { amount: nft.amount, taxon: nft.taxon, nftFlags: nft.nftFlags, URI: nft.initialURI, transferfee: nft.transferFee, issuer: nft.issuer, expiration: nft.expiration, decodedNftFlags: nft.decodedNftFlags, currency: currency?.currency },
           }),
-          buildTx: ({ orchestrator, env, wallet, nft }) => orchestrator.nftTransactionBuilderService.buildCreateNftTx(env.wallet || wallet, env, nft),
+          buildTx: ({ orchestrator, env, wallet, nft, currency }) => orchestrator.nftTransactionBuilderService.buildCreateNftTx(env.wallet || wallet, env, nft, currency),
           simulationToastMessage: ({ orchestrator, nft }) => `Simulated Sending NFT of ${nft.amount}`,
           successMessage: ({ orchestrator, nft }) => {
                return `Successfully Sent NFT of ${nft.amount}`;
@@ -115,7 +115,7 @@ export class NftTransactionOrchestrator extends PerformanceBaseComponent {
      public readonly nftTransactionBuilderService = inject(NftTransactionBuilderService);
 
      async executeCreateNftTx(type: NftCreateTxType, config: NftCreateTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
-          const { nft, account, txOptions, preFetchedEnv, wallet } = config;
+          const { nft, currency, account, txOptions, preFetchedEnv, wallet } = config;
           let env: any;
           let client: xrpl.Client;
           let txHash: string | undefined;
@@ -141,18 +141,27 @@ export class NftTransactionOrchestrator extends PerformanceBaseComponent {
                // Validation
                const meta = NFT_META[type];
 
-               const validationInputs = meta.buildValidationInputs({ wallet, env, nft, account, txOptions });
+               const validationInputs = meta.buildValidationInputs({ wallet, env, nft, account, txOptions, currency });
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Build transaction
-               const tx = meta.buildTx({ orchestrator: this, env, wallet, nft });
+               const tx = meta.buildTx({ orchestrator: this, env, wallet, nft, currency });
 
                // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.nft, type, txOptions);
 
                // Balance checks (token vs xrp)
-               let isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+               let isInsufficientBalance;
+               if (currency?.currency === 'XRP') {
+                    if (type === 'createNft' && nft.amount) {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, nft.amount);
+                    } else {
+                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    }
+               } else {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
+               }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
                //  Submit / simulate

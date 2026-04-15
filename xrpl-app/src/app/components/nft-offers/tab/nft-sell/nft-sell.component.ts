@@ -14,6 +14,9 @@ import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-st
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
 import { CurrencyAmountFormComponent } from '../../../shared/currency-amount-form/currency-amount-form.component';
 import { NftOffersTransactionViewModelService } from '../../../../services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
+import { NftTransactionViewModelService } from '../../../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
+import { NftTransactionOrchestrator } from '../../../../services/nft/nft-orchestrator/nft-orchestrator.service';
 
 @Component({
      selector: 'app-nft-sell',
@@ -31,8 +34,12 @@ export class NftSellComponent {
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly xrplDateService = inject(XrplDateService);
+     public readonly walletManagerService = inject(WalletManagerService);
      public readonly nftUtilService = inject(NftUtilService);
+     public readonly trustlineCurrency = inject(TrustlineCurrencyService);
+     public readonly nftCreateTransactionViewModelService = inject(NftTransactionViewModelService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
+     public readonly nftTransactionOrchestrator = inject(NftTransactionOrchestrator);
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];

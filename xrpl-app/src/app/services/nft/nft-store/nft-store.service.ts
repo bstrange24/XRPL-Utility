@@ -11,6 +11,7 @@ export interface NFtState {
      taxon: string;
      nftCreator: string;
      nftFlags: number;
+     decodedNftFlags: any;
      nftIdSearchQuery: string;
      transferFee: number;
      outstandingNfts: string;
@@ -21,6 +22,7 @@ export interface NFtState {
      minterAddress: string;
      issuerAddress: string;
      enableExpirationDate: boolean;
+     enableSellOnNftCreation: boolean;
      initialURI: string;
      nftCountField: string;
      isNftOwner: boolean;
@@ -42,6 +44,7 @@ const initialState: NFtState = {
      amount: '',
      nftCreator: '',
      nftFlags: 0,
+     decodedNftFlags: [],
      taxon: '',
      nftIdSearchQuery: '',
      transferFee: 0,
@@ -55,6 +58,7 @@ const initialState: NFtState = {
      initialURI: 'https://ipfs.io/ipfs/bafybeigjro2d2tc43bgv7e4sxqg7f5jga7kjizbk7nnmmyhmq35dtz6deq',
      nftCountField: '',
      enableExpirationDate: false,
+     enableSellOnNftCreation: false,
      isNftOwner: false,
      isCollapsed: false,
      nftOwnerAddress: '',
@@ -121,6 +125,7 @@ export const CreateNftStoreService = signalStore(
                     nftCreator: '',
                     expiration: '',
                     enableExpirationDate: false,
+                    enableSellOnNftCreation: false,
                     minterAddress: '',
                     issuerAddress: '',
                     initialURI: 'https://ipfs.io/ipfs/bafybeigjro2d2tc43bgv7e4sxqg7f5jga7kjizbk7nnmmyhmq35dtz6deq',

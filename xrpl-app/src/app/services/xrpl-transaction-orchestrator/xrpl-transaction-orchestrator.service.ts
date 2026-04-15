@@ -99,6 +99,7 @@ export class XrplTransactionOrchestratorService {
                     }
 
                     this.txUiService.currentStep.set('waiting_validation');
+                    // response = await this.xrplTransactions.submitAndWaitTransaction(client, signedTx);
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 

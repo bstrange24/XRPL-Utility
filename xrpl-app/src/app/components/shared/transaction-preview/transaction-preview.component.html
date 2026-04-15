@@ -4,14 +4,14 @@
 
 <!-- Spinner / progress (shown during preparing → waiting_validation) -->
 @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
-<!-- <div class="spinner-row">
+<div class="spinner-row">
      <div class="spinner"></div>
      <span>{{ txUiService.stepMessage() }}</span>
 
      @if (txUiService.detailedStatus()) {
      <p class="detailed">{{ txUiService.detailedStatus() }}</p>
      }
-</div> -->
+</div>
 }
 
 <!-- Success message -->

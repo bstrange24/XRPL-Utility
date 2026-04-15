@@ -3,7 +3,7 @@
      <div class="form-group">
           <label for="currencyCode">Currency Code</label>
           <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" [disableCurrencySelection]="disableCurrencySelection">
                <ng-template #itemTemplate let-item>
                     <div class="flex items-center gap-2">
                          @if (item.id === 'XRP') {
@@ -15,13 +15,20 @@
                     </div>
                </ng-template>
           </app-select-search-dropdown>
+          <!-- Optional XRP-only badge -->
+          @if (showXrpOnlyBadge) {
+          <app-warning-message [warningMessage]="'Only XRP Allowed when OnlyXRP flag is set'"></app-warning-message>
+          <!-- <span class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full font-medium">Only XRP Allowed</span> -->
+          }
      </div>
 
+     @if (!showAmount) {
      <div class="form-group">
           <label for="amountField">Amount</label>
           <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
           <input type="number" id="amountField" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="amount-input" />
      </div>
+     }
 </div>
 
 <!-- Issuer (only when not XRP) -->
@@ -32,10 +39,33 @@
           <p class="form-hint">The XRPL account that issues and controls this currency.</p>
           <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
      </div>
+     <!-- <div class="form-group">
+          <label for="currencyBalance">Currency Balance</label>
+          <p class="form-hint">Total currency balance held by this account.</p>
+          <input type="text" [value]="balance" readonly name="currencyBalanceField" />
+     </div> -->
+</div>
+} @if (currency !== 'XRP') {
+<div class="form-row">
+     <!-- <div class="form-group">
+          <label for="issuer">Issuer</label>
+          <p class="form-hint">The XRPL account that issues and controls this currency.</p>
+          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+     </div> -->
      <div class="form-group">
           <label for="currencyBalance">Currency Balance</label>
           <p class="form-hint">Total currency balance held by this account.</p>
           <input type="text" [value]="balance" readonly name="currencyBalanceField" />
+     </div>
+</div>
+} @if (showAmount) {
+<div class="form-row">
+     <div class="form-group">
+          <div class="form-group">
+               <label>{{ amountLabel }}</label>
+               <p class="form-hint" [innerHTML]="amountHint"></p>
+               <input type="number" name="amountField" [placeholder]="amountPlaceholder" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="amount-input" />
+          </div>
      </div>
 </div>
 }

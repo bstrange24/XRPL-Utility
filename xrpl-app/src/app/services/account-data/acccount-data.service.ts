@@ -12,6 +12,7 @@ import { TrustlineCurrencyService } from '../trustlines/trustline-currency/trust
 import { PerformanceBaseComponent } from '../../components/shared/performance-base/performance-base.component';
 import { AccountConfiguratorStoreService } from '../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
+import { CreateNftStoreService } from '../nft/nft-store/nft-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -27,6 +28,7 @@ export class AcccountDataService extends PerformanceBaseComponent {
      public readonly trustlineCurrency = inject(TrustlineCurrencyService);
      public readonly xrplTransactions = inject(XrplTransactionService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly createNftStoreService = inject(CreateNftStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      hasSignerList = signal<boolean>(false);
@@ -129,10 +131,12 @@ export class AcccountDataService extends PerformanceBaseComponent {
 
      setNfTokenMinterProperties(nftTokenMinter: string | undefined): void {
           const store = this.accountConfiguratorStoreService;
+          const nftStore = this.createNftStoreService;
           if (nftTokenMinter) {
                store.setField('isAuthorizedNFTokenMinter', false);
                store.setField('isNFTokenMinterEnabled', true);
                store.setField('nfTokenMinterAddress', nftTokenMinter);
+               nftStore.setField('nfTokenMinterAddress', nftTokenMinter);
           } else {
                store.setField('isAuthorizedNFTokenMinter', false);
                store.setField('isNFTokenMinterEnabled', false);

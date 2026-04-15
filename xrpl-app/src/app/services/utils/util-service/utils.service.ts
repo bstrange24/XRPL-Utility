@@ -95,6 +95,18 @@ export class UtilsService {
           this.nftCreateStoreService.setField('amount', rounded.toString());
      }
 
+     updateTransferFee(value: string | number) {
+          let num = typeof value === 'string' ? Number.parseFloat(value) : value;
+
+          if (Number.isNaN(num) || num < 0) {
+               this.nftCreateStoreService.setField('transferFee', 0);
+               return;
+          }
+
+          const rounded = Number(num.toFixed(3));
+          this.nftCreateStoreService.setField('transferFee', rounded);
+     }
+
      updateTrustlineLimitAmount(value: string | number) {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 

@@ -3,6 +3,7 @@ import { AccountConfiguratorState } from '../../account-configurator/constants/a
 import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
 import * as xrpl from 'xrpl';
 import { NFtState } from '../../../services/nft/nft-store/nft-store.service';
+import { CurrencyState } from '../../../services/currency/constants/currency.types';
 
 export type NftCreateActionTypes = 'createNft' | 'burnNft' | 'updateNFTMetadata';
 export type NftCreateConfigTxDisplayType = 'createNft' | 'burnNft' | 'updateNFTMetadata';
@@ -14,6 +15,7 @@ export interface NftCreateTxConfig {
      nft: NFtState;
      account?: AccountConfiguratorState;
      txOptions?: XrplTxOptionsState;
+     currency?: CurrencyState;
      wallet: Wallet;
      preFetchedEnv?: {
           client: xrpl.Client;

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -50,6 +50,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      private readonly cdr = inject(ChangeDetectorRef);
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
+     @ViewChild('signedEditable') signedEditable!: ElementRef<HTMLDivElement>;
 
      selectedTransactionItem = computed(() => {
           const id = this.signTransationStoreService.selectedTransaction();
@@ -111,7 +112,30 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                this.signTransationStoreService.setField('txJson', updated);
                this.cdr.markForCheck();
           });
+
+          // Sync signed field display when outputField changes externally
+          effect(() => {
+               const output = this.signTransationStoreService.outputField();
+               untracked(() => this.updateSignedDisplay());
+          });
      }
+
+     isExternallySignedTx = computed(() => {
+          const output = this.signTransationStoreService.outputField().trim();
+          const isAppSigned = this.signTransationStoreService.isAppSigned(); // new
+
+          if (!output) return false;
+
+          try {
+               const decoded: any = xrpl.decode(output);
+               const hasSignature = decoded['TxnSignature'] != null || (Array.isArray(decoded['Signers']) && decoded['Signers'].length > 0);
+
+               // Show "external" only if it has signature AND was NOT signed by this app
+               return hasSignature && !isAppSigned;
+          } catch {
+               return false;
+          }
+     });
 
      ngOnInit(): void {
           this.signTransationStoreService.setField('selectedTransaction', 'sendXrp');
@@ -136,6 +160,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           this.txUiService.isError.set(false);
           this.clearMessages();
           await this.generateTransactionJson();
+          this.signTransationStoreService.setAppSigned(false);
           this.cdr.detectChanges();
      }
 
@@ -178,7 +203,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                try {
                     this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, getJson: true }));
-
+                    this.signTransationStoreService.setAppSigned(false);
                     const wallet = this.currentWallet();
                     let env: any = null;
 
@@ -248,6 +273,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     this.signTransationStoreService.setField('outputField', txBlob);
                     this.signTransactionUtilService.setSigned(txBlob);
+                    this.signTransationStoreService.setAppSigned(true); // Mark as signed by this app
                } catch (error: any) {
                     console.error('Error in signedTransaction:', error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
@@ -279,6 +305,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     });
 
                     this.signTransationStoreService.setField('outputField', txBlob ?? 'Error');
+                    this.signTransationStoreService.setAppSigned(true);
                } catch (error: any) {
                     console.error('Error in signForMultiSign:', error);
                     this.toastService.error(error.message || 'Error in signForMultiSign', AppConstants.TOAST.ERROR);
@@ -315,6 +342,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                     this.signTransationStoreService.setField('outputField', txBlob);
                     this.signTransactionUtilService.setSigned(txBlob);
+                    this.signTransationStoreService.setAppSigned(true);
                } catch (error: any) {
                     console.error('Error in signWithRegularKey:', error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
@@ -397,15 +425,70 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      populateTxDetails(): void {
           const output = this.signTransationStoreService.outputField().trim();
-          if (!output) return;
+          if (!output) {
+               this.toastService.error('Signed transaction field is empty');
+               return;
+          }
+
           try {
-               const decodedTx = xrpl.decode(output);
-               this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
+               const decoded: any = xrpl.decode(output);
+
+               // Create clean copy without signature fields
+               const cleanTx = { ...decoded };
+
+               delete cleanTx['TxnSignature'];
+               delete cleanTx['Signers'];
+               delete cleanTx['SigningPubKey']; // optional
+
+               const formattedJson = JSON.stringify(cleanTx, null, 3);
+
+               this.signTransationStoreService.setField('txJson', formattedJson);
+               this.signTransactionUtilService.onTxJsonChange(formattedJson);
+
                this.cdr.markForCheck();
+               this.toastService.success('Signed TX decoded and cleaned for re-signing');
           } catch (e) {
-               // ignore decode errors
+               console.error(e);
+               this.toastService.error('Failed to decode signed transaction. Invalid blob.', AppConstants.TOAST.ERROR);
           }
      }
+
+     populateTxDetails1(): void {
+          const output = this.signTransationStoreService.outputField().trim();
+          if (!output) {
+               this.toastService.error('Signed transaction field is empty');
+               return;
+          }
+
+          try {
+               const decodedTx = xrpl.decode(output);
+               const formattedJson = JSON.stringify(decodedTx, null, 3);
+
+               // Update the store (this will flow to the JSON editor via the [value] binding)
+               this.signTransationStoreService.setField('txJson', formattedJson);
+
+               // Also trigger the valueChange handler to clear any error state
+               this.signTransactionUtilService.onTxJsonChange(formattedJson);
+
+               this.cdr.markForCheck();
+               this.toastService.success('Signed TX successfully decoded to JSON editor');
+          } catch (e) {
+               console.error(e);
+               this.toastService.error('Failed to decode signed transaction. Invalid blob.', AppConstants.TOAST.ERROR);
+          }
+     }
+
+     // populateTxDetails(): void {
+     //      const output = this.signTransationStoreService.outputField().trim();
+     //      if (!output) return;
+     //      try {
+     //           const decodedTx = xrpl.decode(output);
+     //           this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
+     //           this.cdr.markForCheck();
+     //      } catch (e) {
+     //           // ignore decode errors
+     //      }
+     // }
 
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
@@ -440,5 +523,32 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      protected refreshAccountObject(_env: any): void {
           return;
+     }
+
+     // Update the display when the store value changes (from signing, etc.)
+     private updateSignedDisplay() {
+          if (!this.signedEditable) return;
+          const value = this.signTransationStoreService.outputField();
+          this.signedEditable.nativeElement.textContent = value || '';
+     }
+
+     // Called when user types/pastes
+     onSignedTxInput(event: Event) {
+          const target = event.target as HTMLDivElement;
+          const value = target.textContent?.trim() || '';
+
+          this.signTransationStoreService.setField('outputField', value);
+          this.signTransationStoreService.setAppSigned(false); // ← Important: User edited/pasted
+     }
+
+     // Final sync on blur (recommended for performance)
+     onSignedTxBlur() {
+          const target = this.signedEditable.nativeElement;
+          const value = target.textContent?.trim() || '';
+          this.signTransationStoreService.setField('outputField', value);
+     }
+
+     private hasProperty(obj: any, prop: string): boolean {
+          return obj && obj[prop] != null;
      }
 }

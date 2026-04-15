@@ -15,9 +15,9 @@ export class SufficentAccountBalanceService {
           return { success: true, error: '' };
      }
 
-     async checkTokenBalance(env: any) {
-          if (this.utilsService.isInsufficientIouTrustlineBalance(env.accountLines, env.tx, env.destination)) {
-               return { success: false, error: AppConstants.INSUFFICIENT_XRP_BALANCE };
+     async checkTokenBalance(env: any, tx: any) {
+          if (this.utilsService.isInsufficientIouTrustlineBalance(env.accountLines ? env.accountLines : env.trustlines, tx, env.destination)) {
+               return { success: false, error: AppConstants.INSUFFICIENT_IOU_BALANCE };
           }
           return { success: true, error: '' };
      }

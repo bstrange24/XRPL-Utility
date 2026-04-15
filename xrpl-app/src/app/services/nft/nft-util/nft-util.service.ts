@@ -24,13 +24,13 @@ export class NftUtilService {
           transferableNft: 0x00000008,
           mutableNft: 0x00000010,
      };
-     nftFlags: NftFlags = {
+     readonly nftFlags = signal<NftFlags>({
           burnableNft: false,
           onlyXrpNft: false,
           trustLine: false,
           transferableNft: false,
           mutableNft: false,
-     };
+     });
      flags: AccountFlags = {
           asfRequireDest: false,
           asfRequireAuth: false,
@@ -117,32 +117,25 @@ export class NftUtilService {
           return results;
      }
 
-     getFlagsValue(flags: NftFlags): number {
+     getFlagsValue(): number {
+          const flags = this.nftFlags();
           let v_flags = 0;
-          if (flags.burnableNft) {
-               v_flags |= xrpl.NFTokenMintFlags.tfBurnable;
-          }
-          if (flags.onlyXrpNft) {
-               v_flags |= xrpl.NFTokenMintFlags.tfOnlyXRP;
-          }
-          if (flags.transferableNft) {
-               v_flags |= xrpl.NFTokenMintFlags.tfTransferable;
-          }
-          if (flags.mutableNft) {
-               v_flags |= xrpl.NFTokenMintFlags.tfMutable;
-          }
-          if (flags.trustLine) {
-               v_flags |= xrpl.NFTokenMintFlags.tfTrustLine;
-          }
+          if (flags.burnableNft) v_flags |= xrpl.NFTokenMintFlags.tfBurnable;
+          if (flags.onlyXrpNft) v_flags |= xrpl.NFTokenMintFlags.tfOnlyXRP;
+          if (flags.transferableNft) v_flags |= xrpl.NFTokenMintFlags.tfTransferable;
+          if (flags.mutableNft) v_flags |= xrpl.NFTokenMintFlags.tfMutable;
+          if (flags.trustLine) v_flags |= xrpl.NFTokenMintFlags.tfTrustLine;
           return v_flags;
      }
 
      resetFlags() {
-          this.nftFlags.burnableNft = false;
-          this.nftFlags.onlyXrpNft = false;
-          this.nftFlags.transferableNft = false;
-          this.nftFlags.mutableNft = false;
-          this.nftFlags.trustLine = false;
+          this.nftFlags.set({
+               burnableNft: false,
+               onlyXrpNft: false,
+               trustLine: false,
+               transferableNft: false,
+               mutableNft: false,
+          });
      }
 
      selectedNftItem = computed(() => {

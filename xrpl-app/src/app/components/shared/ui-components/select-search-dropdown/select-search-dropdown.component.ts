@@ -34,10 +34,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           });
      }
 
-     // ──────────────────────────────────────────────
      // View children & registry
-     // ──────────────────────────────────────────────
-
      @ViewChild('inputEl', { static: true }) inputEl!: ElementRef<HTMLInputElement>;
      @ViewChild('dropdown') dropdownTpl!: TemplateRef<any>;
 
@@ -50,10 +47,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.openInstance = instance;
      }
 
-     // ──────────────────────────────────────────────
      // Inputs / Outputs
-     // ──────────────────────────────────────────────
-
      items = input.required<SelectItem[]>();
 
      // Parent can control the search query (e.g. clear it after selection/transaction)
@@ -71,10 +65,13 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      emptyMessage = input<string>('No items found');
      showShortAddress = input<boolean>(true);
 
-     // ──────────────────────────────────────────────
-     // Internal state
-     // ──────────────────────────────────────────────
+     disabled = input<boolean>(false);
+     // Optional: Keep backward compatibility
+     disableCurrencySelection = input<boolean>(false);
+     // Computed for internal use
+     isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
 
+     // Internal state
      private readonly overlay = inject(Overlay);
      private readonly vcr = inject(ViewContainerRef);
 
@@ -86,10 +83,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
      highlightedIndex = signal(-1);
 
-     // ──────────────────────────────────────────────
      // Computed
-     // ──────────────────────────────────────────────
-
      displayValue = computed(() => {
           const q = this.searchQuery();
           if (q) return q;
@@ -117,10 +111,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q));
      });
 
-     // ──────────────────────────────────────────────
      // Lifecycle
-     // ──────────────────────────────────────────────
-
      ngAfterViewInit() {
           this.portal = new TemplatePortal(this.dropdownTpl, this.vcr);
      }
@@ -132,11 +123,9 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.close();
      }
 
-     // ──────────────────────────────────────────────
      // Dropdown control
-     // ──────────────────────────────────────────────
-
      open() {
+          if (this.isDisabled()) return;
           SelectSearchDropdownComponent.closeAnyOther(this);
 
           if (this.overlayRef?.hasAttached()) return;
@@ -169,6 +158,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      }
 
      toggle() {
+          if (this.isDisabled()) return;
           if (this.overlayRef?.hasAttached()) {
                this.close();
           } else {
@@ -189,10 +179,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }
      }
 
-     // ──────────────────────────────────────────────
      // Event handlers
-     // ──────────────────────────────────────────────
-
      onInput(e: Event) {
           const value = (e.target as HTMLInputElement).value;
           this.searchQuery.set(value);

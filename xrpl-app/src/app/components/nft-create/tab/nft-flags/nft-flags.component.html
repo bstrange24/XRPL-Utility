@@ -5,9 +5,9 @@
      </div>
 
      <!-- burnableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags.burnableNft" (click)="toggleFlag('burnableNft')" type="button">
+     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().burnableNft" (click)="toggleFlag('burnableNft')" type="button">
           <div class="flag-header-account">
-               <input type="checkbox" id="canLock" name="canLock" [checked]="nftUtilService.nftFlags.burnableNft" class="flag-checkbox" />
+               <input type="checkbox" id="canLock" name="canLock" [checked]="nftUtilService.nftFlags().burnableNft" class="flag-checkbox" />
                <span class="flag-title">Burnable</span>
           </div>
           <div class="flag-value">0x00000001 tfBurnable</div>
@@ -15,9 +15,9 @@
      </button>
 
      <!-- onlyXrpNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags.onlyXrpNft" (click)="toggleFlag('onlyXrpNft')" type="button">
+     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().onlyXrpNft" (click)="toggleFlag('onlyXrpNft')" type="button">
           <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags.onlyXrpNft" class="flag-checkbox" disabled />
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().onlyXrpNft" class="flag-checkbox" disabled />
                <span class="flag-title">OnlyXRP</span>
           </div>
           <div class="flag-value">0x00000002 tfOnlyXRP</div>
@@ -25,9 +25,9 @@
      </button>
 
      <!-- trustLine -->
-     <!--<button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags.trustLine" (click)="toggleFlag('trustLine')" type="button">
+     <!--<button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().trustLine" (click)="toggleFlag('trustLine')" type="button">
           <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags.trustLine" class="flag-checkbox" disabled />
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().trustLine" class="flag-checkbox" disabled />
                <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
                </svg>
@@ -38,9 +38,9 @@
      </button> -->
 
      <!-- transferableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags.transferableNft" (click)="toggleFlag('transferableNft')" type="button">
+     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().transferableNft" (click)="toggleFlag('transferableNft')" type="button">
           <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags.transferableNft" class="flag-checkbox" disabled />
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().transferableNft" class="flag-checkbox" disabled />
                <span class="flag-title">Transferable</span>
           </div>
           <div class="flag-value">0x00000008 tfTransferable</div>
@@ -48,9 +48,9 @@
      </button>
 
      <!-- mutableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags.mutableNft" (click)="toggleFlag('mutableNft')" type="button">
+     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().mutableNft" (click)="toggleFlag('mutableNft')" type="button">
           <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags.mutableNft" class="flag-checkbox" disabled />
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().mutableNft" class="flag-checkbox" disabled />
                <span class="flag-title">Mutable</span>
           </div>
           <div class="flag-value">0x00000010 tfMutable</div>
