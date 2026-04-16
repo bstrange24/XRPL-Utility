@@ -4,78 +4,73 @@
           <h3>XRPL Multi-Purpose Tokens (MPTs)</h3>
      </div>
 
-     <p class="info-subtitle">Multi-Purpose Tokens are an advanced fungible token standard on the XRPL, with on-chain metadata, supply controls, transfer fees, and compliance features—ideal for real-world asset tokenization and institutional DeFi.</p>
+     <p class="info-subtitle">Multi-Purpose Tokens are an advanced fungible token standard on the XRPL with on-chain metadata, supply controls, transfer fees, and compliance features.</p>
 
      <div class="combinations-grid">
+          <!-- Existing cards... keep them as-is -->
+
+          <!-- NEW: Authorization Rules Card -->
           <div class="combination-card">
                <div class="combination-header">
-                    <span class="badge time-badge">🪙 MPT Issuance</span>
-                    <span class="badge required-badge">Core Creation</span>
+                    <span class="badge time-badge">🔐 Authorization Rules</span>
+                    <span class="badge required-badge">Critical</span>
                </div>
                <div class="combination-fields">
                     <div class="field-row">
-                         <span class="field-name">AssetScale</span>
-                         <span class="field-status required">✅ Required</span>
+                         <span class="field-name">Holder Self-Authorization</span>
+                         <span class="field-status required">✅ ALWAYS REQUIRED</span>
                     </div>
                     <div class="field-row">
-                         <span class="field-name"
-                              >Metadata /<br />
-                              MetadataPointer</span
-                         >
-                         <span class="field-status optional"
-                              >➕ Optional <br />
-                              (on-chain or link)</span
-                         >
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">MaximumAmount</span>
-                         <span class="field-status optional"
-                              >➕ Optional <br />
-                              (supply cap)</span
-                         >
+                         <span class="field-name">Issuer Authorization<br />(tfMPTRequireAuth)</span>
+                         <span class="field-status optional">Only if flag enabled</span>
                     </div>
                </div>
           </div>
+     </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🪙 MPT Features</span>
-                    <span class="badge optional-badge">Advanced Settings</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">TransferFee</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Flags</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">DomainID <br />(Permissioned access)</span>
-                         <span class="field-status optional">➕ Optional </span>
-                    </div>
-               </div>
-          </div>
+     <div class="important-notes">
+          <h5>📝 Important Notes:</h5>
+          <ul>
+               <li>Metadata is immutable once set (max 1024 bytes, XLS-89 format).</li>
+               <li>Each MPT issuance + each holder’s balance uses owner reserve.</li>
+               <li>Recipients must <strong>self-authorize</strong> before they can receive any MPT balance.</li>
+          </ul>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>MPTs require the <strong>MPTokensV1</strong> amendment to be enabled on the network.</li>
-                    <li>Metadata is immutable once set — use on-chain JSON (up to 1024 bytes) or a pointer to off-chain data for details like name, ticker, description (follows XLS-89 schema).</li>
-                    <li>Each MPT issuance and each holder's balance counts toward your account’s <strong>owner reserve</strong> — plan carefully to avoid excessive reserve lockup.</li>
-                    <li>Unlike traditional trust lines, MPTs are more efficient and support features like fixed supply caps without blackholing the issuer account.</li>
-                    <li>Recipients must authorize holding the MPT (via MPTokenAuthorize) before receiving it.</li>
-               </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversible & Compliance Considerations</h5>
-               <p style="color: #92400e">Many MPT properties are permanent after creation.</p>
-               <ul>
-                    <li>Metadata and most flags <strong>cannot be changed</strong> post-issuance (future amendments may allow limited mutability).</li>
-                    <li>If non-transferable, tokens <strong>cannot be moved</strong> — useful for credits or locked assets, but irreversible without issuer controls.</li>
-                    <li>Supply cap (if set) is hard — you cannot issue beyond MaximumAmount.</li>
-                    <li>Deletion of an MPT issuance (MPTokenIssuanceDestroy) is only possible if <strong>no holders remain</strong>.</li>
-               </ul>
-          </div>
+          <br /><br />
+          <h5>🔐 MPT Authorization Flow</h5>
+          <ul>
+               <li><strong>Always:</strong> Every recipient must submit <code>MPTokenAuthorize</code> from <strong>their own wallet</strong> (Flags = 0). This is the "opt-in".</li>
+               <li>
+                    <strong>If tfMPTRequireAuth flag was set during creation:</strong>
+                    <ul>
+                         <li>The issuer must also submit <code>MPTokenAuthorize</code> for that holder.</li>
+                    </ul>
+               </li>
+               <li>
+                    <strong>If tfMPTRequireAuth is NOT set</strong>:
+                    <ul>
+                         <li>Only the recipient’s self-authorization is needed.</li>
+                         <li>Issuer authorization is not required (but harmless if done).</li>
+                    </ul>
+               </li>
+          </ul>
+
+          <br /><br />
+          <h5 class="warning-title">⚠️ Common Gotchas</h5>
+          <ul>
+               <li>You cannot send MPTs to an account that has not self-authorized yet.</li>
+               <li>Authorization is per-issuance (one per MPT type per account).</li>
+               <li>Once authorized, the account has an <code>MPToken</code> ledger entry (even with 0 balance).</li>
+               <li>Destroying an MPT issuance is only possible if there are no holders left.</li>
+          </ul>
+
+          <br /><br />
+          <h5 class="warning-title">⚠️ Irreversible & Compliance Considerations</h5>
+          <p style="color: #92400e">Many MPT properties are permanent after creation.</p>
+          <ul>
+               <li>Metadata and most flags cannot be changed post-issuance.</li>
+               <li>Supply cap (if set) is hard — cannot issue more.</li>
+               <li>Non-transferable MPTs cannot be moved at all.</li>
+          </ul>
      </div>
 </div>

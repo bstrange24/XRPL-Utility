@@ -52,7 +52,9 @@ export class MptTransactionBuilderService {
           }
 
           if (this.mptUtilService.flags) {
-               tx.Flags = this.mptUtilService.getFlagsValue(this.mptUtilService.flags);
+               const flagsValue = this.mptUtilService.getFlagsValue(this.mptUtilService.flags);
+               console.log('Creating MPT with Flags:', flagsValue.toString(16));
+               tx.Flags = flagsValue;
           }
 
           return tx;

@@ -9,9 +9,6 @@
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canLock" (click)="mptUtilService.toggleFlag('canLock')" type="button">
           <div class="flag-header-account">
                <input type="checkbox" id="canLock" name="canLock" [checked]="mptUtilService.flags.canLock" class="flag-checkbox" />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
                <span class="flag-title">MPTCanLock</span>
           </div>
           <div class="flag-value">0x00000002 tfMPTCanLock</div>
@@ -21,11 +18,7 @@
      <!-- isRequireAuth -->
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.isRequireAuth" (click)="mptUtilService.toggleFlag('isRequireAuth')" type="button">
           <div class="flag-header">
-               <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 12l2 2 4-4" />
-                    <circle cx="12" cy="12" r="10" />
-               </svg>
+               <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="flag-checkbox" />
                <span class="flag-title">MPTRequireAuth</span>
           </div>
           <div class="flag-value">0x00000004 tfMPTRequireAuth</div>
@@ -35,10 +28,10 @@
      <!-- canEscrow -->
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canEscrow" (click)="mptUtilService.toggleFlag('canEscrow')" type="button">
           <div class="flag-header">
-               <input type="checkbox" [checked]="mptUtilService.flags.canEscrow" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <input type="checkbox" [checked]="mptUtilService.flags.canEscrow" class="flag-checkbox" />
+               <!-- <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
+               </svg> -->
                <span class="flag-title">MPTCanEscrow</span>
           </div>
           <div class="flag-value">0x00000008 tfMPTCanEscrow</div>
@@ -48,10 +41,7 @@
      <!-- canTrade -->
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTrade" (click)="mptUtilService.toggleFlag('canTrade')" type="button">
           <div class="flag-header">
-               <input type="checkbox" [checked]="mptUtilService.flags.canTrade" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
+               <input type="checkbox" [checked]="mptUtilService.flags.canTrade" class="flag-checkbox" />
                <span class="flag-title">MPTCanTrade</span>
           </div>
           <div class="flag-value">0x00000010 tfMPTCanTrade</div>
@@ -61,10 +51,7 @@
      <!-- canTransfer -->
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canTransfer" (click)="mptUtilService.toggleFlag('canTransfer')" type="button">
           <div class="flag-header">
-               <input type="checkbox" [checked]="mptUtilService.flags.canTransfer" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
+               <input type="checkbox" [checked]="mptUtilService.flags.canTransfer" class="flag-checkbox" />
                <span class="flag-title">MPTCanTransfer</span>
           </div>
           <div class="flag-value">0x00000020 tfMPTCanTransfer</div>
@@ -74,10 +61,10 @@
      <!-- canClawback -->
      <button class="flag-item-account-flags" [class.enabled]="mptUtilService.flags.canClawback" (click)="mptUtilService.toggleFlag('canClawback')" type="button">
           <div class="flag-header">
-               <input type="checkbox" [checked]="mptUtilService.flags.canClawback" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+               <input type="checkbox" [checked]="mptUtilService.flags.canClawback" class="flag-checkbox" />
+               <!-- <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
+               </svg> -->
                <span class="flag-title">MPTCanClawback</span>
           </div>
           <div class="flag-value">0x00000040 tfMPTCanClawback</div>

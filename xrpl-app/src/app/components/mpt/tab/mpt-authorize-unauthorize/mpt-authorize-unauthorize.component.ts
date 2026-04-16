@@ -6,11 +6,13 @@ import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-tra
 import { NgIcon } from '@ng-icons/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
+import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message.component';
 
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, WarningMessageComponent],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +21,7 @@ export class MptAuthorizeUnauthorizeComponent {
      private readonly mptStoreService = inject(MptStoreService);
      private readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
      private readonly transactionDropdownService = inject(TransactionDropdownService);
+     public readonly mptUtilService = inject(MptUtilService);
 
      // Inputs from parent
      readonly destinationItems = input.required<SelectItem[]>();

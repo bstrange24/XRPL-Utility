@@ -39,6 +39,7 @@ export class MptUtilService extends PerformanceBaseComponent {
           canTrade: 0x00000010,
           canTransfer: 0x00000020,
           canClawback: 0x00000040,
+          isAuthorized: 0x00000002,
      };
      flags: AccountFlags = {
           canLock: false,
@@ -276,21 +277,27 @@ export class MptUtilService extends PerformanceBaseComponent {
      }
 
      isDestinationAuthorizedForMpt(issuanceObjects: any[], holderObjects: any[], issuanceId: string): boolean {
-          const issuance = issuanceObjects.find((o): o is MPTokenIssuance => o.LedgerEntryType === 'MPTokenIssuance' && o.mpt_issuance_id === issuanceId);
+          console.log('=== MPT AUTH DEBUG START ==='); // keep for now
 
-          if (!issuance) return false;
+          const issuance = issuanceObjects.find((o: any) => o.LedgerEntryType === 'MPTokenIssuance' && o.mpt_issuance_id === issuanceId);
 
-          const requiresAuth = this.issuanceRequiresAuth(issuance.Flags);
-
-          if (!requiresAuth) {
-               return true;
+          if (!issuance) {
+               console.warn('Issuance not found in issuer account objects');
+               return false; // safety
           }
 
-          const holder = holderObjects.find((o): o is MPTokenHolder => o.LedgerEntryType === 'MPToken' && o.MPTokenIssuanceID === issuanceId);
+          const requiresAuth = this.issuanceRequiresAuth(issuance.Flags);
+          if (!requiresAuth) {
+               console.log('=== MPT AUTH DEBUG END (NO AUTH REQUIRED) ===');
+               return true; // ← this is the key line
+          }
 
-          if (!holder) return false;
+          const holder = holderObjects.find((o: any) => o.LedgerEntryType === 'MPToken' && o.MPTokenIssuanceID === issuanceId);
 
-          return this.holderIsAuthorized(holder.Flags);
+          const isAuth = holder ? this.holderIsAuthorized(holder.Flags) : false;
+
+          console.log('=== MPT AUTH DEBUG END ===');
+          return isAuth;
      }
 
      issuanceRequiresAuth(flags: number): boolean {
@@ -298,7 +305,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      }
 
      holderIsAuthorized(flags: number): boolean {
-          return (flags & this.flagValues.isRequireAuth) !== 0;
+          return (flags & this.flagValues.isAuthorized) !== 0;
      }
 
      toggleFlag(flag: MptFlagKey): void {
@@ -308,45 +315,48 @@ export class MptUtilService extends PerformanceBaseComponent {
 
      updateFlagTotal() {
           let sum = 0;
-          if (this.flags.canClawback) sum |= this.flagValues.canClawback;
           if (this.flags.canLock) sum |= this.flagValues.canLock;
           if (this.flags.isRequireAuth) sum |= this.flagValues.isRequireAuth;
           if (this.flags.canEscrow) sum |= this.flagValues.canEscrow;
           if (this.flags.canTrade) sum |= this.flagValues.canTrade;
           if (this.flags.canTransfer) sum |= this.flagValues.canTransfer;
+          if (this.flags.canClawback) sum |= this.flagValues.canClawback;
 
           this.totalFlagsValue.set(sum);
           this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
      resetFlags() {
-          this.flags.canClawback = false;
-          this.flags.canLock = false;
-          this.flags.isRequireAuth = false;
-          this.flags.canTransfer = false;
-          this.flags.canTrade = false;
-          this.flags.canEscrow = false;
+          this.flags = {
+               canLock: false,
+               isRequireAuth: false,
+               canEscrow: false,
+               canTrade: false,
+               canTransfer: false,
+               canClawback: false,
+          };
+          this.updateFlagTotal();
      }
 
      getFlagsValue(flags: AccountFlags): number {
           let v_flags = 0;
           if (flags.canLock) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanLock; // 2
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanLock; // 0x00000002
           }
           if (flags.isRequireAuth) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTRequireAuth; // 4;
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTRequireAuth; // 0x00000004
           }
           if (flags.canEscrow) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanEscrow; // 8;
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanEscrow; // 0x00000008
           }
           if (flags.canTrade) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanTrade; // 16;
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanTrade; // 0x00000010
           }
           if (flags.canTransfer) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanTransfer; // 32;
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanTransfer; // 0x00000020
           }
           if (flags.canClawback) {
-               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanClawback; // 64;
+               v_flags |= MPTokenIssuanceCreateFlags.tfMPTCanClawback; // 0x00000040;
           }
           return v_flags;
      }
@@ -354,12 +364,11 @@ export class MptUtilService extends PerformanceBaseComponent {
      decodeMPTFlags(flags: number) {
           const MPT_FLAGS = {
                tfMPTCanLock: 0x00000002,
-               tfMPTCanEscrow: 0x00000004,
-               tfMPTCanTrade: 0x00000008,
-               tfMPTCanClawback: 0x00000010,
-               tfMPTRequireAuth: 0x00000020,
-               tfMPTImmutable: 0x00000040,
-               tfMPTDisallowIncoming: 0x00000080,
+               tfMPTRequireAuth: 0x00000004,
+               tfMPTCanEscrow: 0x00000008,
+               tfMPTCanTrade: 0x00000010,
+               tfMPTCanTransfer: 0x00000020,
+               tfMPTCanClawback: 0x00000040,
           };
 
           const activeFlags = [];

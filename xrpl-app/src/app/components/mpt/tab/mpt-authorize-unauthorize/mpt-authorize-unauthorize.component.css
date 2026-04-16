@@ -1,0 +1,16 @@
+.auth-info-box {
+     background: #f0f9ff;
+     border-left: 4px solid #3b82f6;
+     padding: 12px 16px;
+     border-radius: 6px;
+     margin-bottom: 16px;
+     font-size: 0.95rem;
+}
+
+.require-auth {
+     color: #166534;
+}
+
+.no-require-auth {
+     color: #4338ca;
+}

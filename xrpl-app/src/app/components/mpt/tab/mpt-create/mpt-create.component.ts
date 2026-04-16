@@ -60,4 +60,7 @@ export class MptCreateComponent {
                this.jsonEditor.format();
           }
      }
+     onMetadataChanged(newMetadata: string) {
+          this.mptStoreService.setField('metaData', newMetadata.trim());
+     }
 }

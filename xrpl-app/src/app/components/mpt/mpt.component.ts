@@ -97,7 +97,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
-          await this.getMptDetails(false);
+          await this.getMptDetails(true);
      }
 
      @ViewChild('jsonEditor')
@@ -296,7 +296,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      }
 
      protected clearInputFields() {
-          this.mptUtilService.resetFlags();
+          if (this.mptTransactionViewModelService.activeTab() !== 'createMpt') {
+               this.mptUtilService.resetFlags();
+          }
           this.selectedDestinationAddress.set('');
           this.mptStoreService.resetMptFields();
      }

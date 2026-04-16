@@ -33,7 +33,7 @@
                </span>
                <button type="button" class="format-did-data" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
           </label>
-          <app-json-editor class="json-error-banner" [value]="mptStoreService.metaData()" #jsonEditor></app-json-editor>
+          <app-json-editor class="json-error-banner" [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor></app-json-editor>
 
           <div class="metadata-info">
                <small class="text-muted"> Metadata size: {{ viewModel.metadataByteLength() }} / 1024 bytes </small>
