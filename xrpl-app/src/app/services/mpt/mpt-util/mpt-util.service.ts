@@ -400,4 +400,22 @@ export class MptUtilService extends PerformanceBaseComponent {
 
           return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
      }
+
+     // Inside MptUtilService class
+     formatMptAmount(rawAmount: string | number, assetScale: number | string | undefined): string {
+          if (!rawAmount || rawAmount === '0') return '0';
+
+          const amountStr = rawAmount.toString();
+          const scale = typeof assetScale === 'number' ? assetScale : parseInt(assetScale || '0', 10);
+
+          if (scale === 0 || Number.isNaN(scale)) return amountStr;
+
+          // Pad with zeros if needed
+          let padded = amountStr.padStart(scale + 1, '0');
+
+          const integerPart = padded.slice(0, -scale) || '0';
+          const decimalPart = padded.slice(-scale);
+
+          return decimalPart === '0'.repeat(scale) ? integerPart : `${integerPart}.${decimalPart}`;
+     }
 }

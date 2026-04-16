@@ -36,11 +36,19 @@
                          <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
                               <div class="mpt-main-line">
                                    <strong>MPT</strong>
-                                   @if (mpt.amount && mpt.amount !== '0') {
+                                   @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
+                                   <span class="mpt-amount-badge">
+                                        {{ mpt.formattedAmount }}
+                                        <small style="opacity: 0.7">({{ mpt.isHolder ? 'held' : 'issued' }})</small>
+                                   </span>
+                                   } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
+                                   <span class="mpt-amount-badge"> {{ mpt.maxAmount }} max </span>
+                                   }
+                                   <!-- @if (mpt.amount && mpt.amount !== '0') {
                                    <span class="mpt-amount-badge"> {{ mpt.amount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
                                    } @else if (mpt.maxAmount && mpt.maxAmount !== '0') {
                                    <span class="mpt-amount-badge"> {{ mpt.maxAmount }} {{ mpt.isHolder ? 'held' : 'issued' }} </span>
-                                   }
+                                   } -->
                               </div>
                          </app-tooltip-link>
 
@@ -49,9 +57,6 @@
                                    <span class="meta-label">MPT Issuance ID:</span>
                                    <span class="type">{{ mpt.mpt_issuance_id }}</span>
                               </div>
-
-                              <!-- <div>MPT Issuance ID: <code>{{ mpt.mpt_issuance_id.slice(0,12) }}...{{ mpt.mpt_issuance_id.slice(-10) }}</code></div> -->
-                              <!-- <div>ID: <code>{{ mpt.id.slice(0,12) }}...{{ mpt.id.slice(-10) }}</code></div> -->
 
                               <!-- Only show these if flags/transferFee/ticker exist (likely issuer view) -->
                               @if (mpt.flags.length > 0 || mpt.transferFee || mpt.ticker || mpt.usefulLinks?.length || mpt.outstanding) {
@@ -62,7 +67,6 @@
                                    <span class="meta-label">Ticker:</span>
                                    <span class="type">{{ mpt.ticker }}</span>
                               </div>
-                              <!-- <div>Ticker: {{ mpt.ticker }}</div> -->
                               }
 
                               <!-- Transfer Fee -->
@@ -71,7 +75,6 @@
                                    <span class="meta-label">Transfer Fee:</span>
                                    <span class="type">{{ mpt.transferFee / 1000 }}%</span>
                               </div>
-                              <!-- <div>Transfer Fee: {{ mpt.transferFee / 1000 }}%</div> -->
                               }
                               <!-- Flags -->
                               @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
@@ -79,16 +82,30 @@
                                    <span class="meta-label">Flags:</span>
                                    <span class="type">{{ mpt.flags }}</span>
                               </div>
-                              <!-- <div>Flags: {{ mpt.flags }}</div> -->
                               }
 
-                              <!-- Outstanding MPT's -->
-                              @if (mpt.outstanding && mpt.outstanding > 0) {
+                              <!-- Outstanding Amount -->
+                              @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
                               <div class="cred-chip">
                                    <span class="meta-label">Outstanding Amount:</span>
-                                   <span class="type">{{ mpt.outstanding }}</span>
+                                   <span class="type">{{ mpt.formattedOutstanding }}</span>
                               </div>
-                              <!-- <div>Outstanding Amount: {{ mpt.outstanding }}</div> -->
+                              }
+
+                              <!-- Max Amount -->
+                              @if (mpt.formattedMaxAmount && mpt.formattedMaxAmount !== '0' && mpt.formattedMaxAmount !== 'Unlimited') {
+                              <div class="cred-chip">
+                                   <span class="meta-label">Max Amount:</span>
+                                   <span class="type">{{ mpt.formattedMaxAmount }}</span>
+                              </div>
+                              }
+
+                              <!-- Asset Scale -->
+                              @if (mpt.assetScale && mpt.assetScale > 0) {
+                              <div class="cred-chip">
+                                   <span class="meta-label">Asset Scale:</span>
+                                   <span class="type">{{ mpt.assetScale }}</span>
+                              </div>
                               } }
                          </div>
                     </div>

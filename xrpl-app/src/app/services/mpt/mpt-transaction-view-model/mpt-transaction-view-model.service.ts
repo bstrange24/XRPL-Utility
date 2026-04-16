@@ -69,12 +69,25 @@ export class MptTransactionViewModelService {
                ? this.mptStoreService.existingMpts().map(m => {
                       const decodedMetadata = this._decodeMetadata(m);
 
+                      const rawAmount = m.amount || m.MPTAmount || m.OutstandingAmount || '0';
+                      const rawOutstanding = m.OutstandingAmount || '0';
+                      const rawMaxAmount = m.MaximumAmount || '0';
+                      const assetScale = m.AssetScale ?? 0;
+
+                      const formattedAmount = this.mptUtilService.formatMptAmount(rawAmount, assetScale);
+                      const formattedOutstanding = this.mptUtilService.formatMptAmount(rawOutstanding, assetScale);
+                      const formattedMaxAmount = this.mptUtilService.formatMptAmount(rawMaxAmount, assetScale);
+
                       return {
                            mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
                            id: m.id || 'We have big issues',
                            amount: m.amount,
+                           formattedAmount,
+                           formattedOutstanding,
+                           formattedMaxAmount,
                            isHolder: m.isHolder,
                            maxAmount: m.MaximumAmount,
+                           assetScale: m.AssetScale,
                            outstanding: m.OutstandingAmount,
                            transferFee: m.TransferFee,
                            flags: this.mptUtilService.decodeMptFlagsForUi(m.Flags || 0),
@@ -114,28 +127,41 @@ export class MptTransactionViewModelService {
 
      // MPT Dropdown Items
      mptItems = computed(() => {
-          const t = this.mptStoreService.existingMpts().map(m => {
-               const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
-               let isHolder = false;
-               if (type === 'MPToken') {
-                    isHolder = true;
-               }
-               const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
-
-               const displayAmount = amount === '0' ? '0' : amount;
+          return this.mptStoreService.existingMpts().map(m => {
+               const rawAmount = m.MPTAmount || m.OutstandingAmount || '0';
+               const scale = m.AssetScale ?? 0;
+               const formatted = this.mptUtilService.formatMptAmount(rawAmount, scale);
 
                return {
-                    id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                    // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
-                    display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
-                    secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
-                    isCurrentAccount: false,
-                    isCurrentCode: false,
-                    isCurrentToken: false,
+                    id: m.mpt_issuance_id || m.id,
+                    display: `MPT • ${formatted} ${m.LedgerEntryType === 'MPToken' ? 'held' : 'issued'}`,
+                    secondary: (m.mpt_issuance_id || m.id || '').slice(0, 15) + '...' + (m.mpt_issuance_id || m.id || '').slice(-10),
                };
           });
-          return t;
      });
+     // mptItems = computed(() => {
+     //      const t = this.mptStoreService.existingMpts().map(m => {
+     //           const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
+     //           let isHolder = false;
+     //           if (type === 'MPToken') {
+     //                isHolder = true;
+     //           }
+     //           const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
+
+     //           const displayAmount = amount === '0' ? '0' : amount;
+
+     //           return {
+     //                id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
+     //                // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
+     //                display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
+     //                secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
+     //                isCurrentAccount: false,
+     //                isCurrentCode: false,
+     //                isCurrentToken: false,
+     //           };
+     //      });
+     //      return t;
+     // });
 
      selectedMptItem = computed(() => {
           const id = this.mptStoreService.mptIssuanceId();
