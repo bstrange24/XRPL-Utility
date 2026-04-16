@@ -16,6 +16,7 @@ import { EscrowStoreService } from '../escrow-store/escrow-store.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../components/escrow/constants/time-escrow.types';
 import { LogServiceService } from '../../shared/log-service/log-service.service';
+import { send } from 'node:process';
 
 @Injectable({
      providedIn: 'root',
@@ -82,6 +83,8 @@ export class EscrowUtilService {
                          } else {
                               amount = String(xrpl.dropsToXrp(sendMax));
                          }
+                    } else if (sendMax?.mpt_issuance_id) {
+                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id; // e.g. "100 MPT"
                     } else if (sendMax?.value) {
                          amount = sendMax.value;
                          currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
@@ -140,6 +143,8 @@ export class EscrowUtilService {
                          } else {
                               amount = String(xrpl.dropsToXrp(sendMax));
                          }
+                    } else if (sendMax?.mpt_issuance_id) {
+                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id; // e.g. "100 MPT"
                     } else if (sendMax?.value) {
                          // amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
                          amount = sendMax.value;

@@ -19,7 +19,7 @@ export class EscrowTransactionBuilderService {
           if (currency.currency === 'XRP') {
                amountToCash = this.xrplTransactionService.buildSendMaxAmount('XRP', '', escrow.amount, false).sendMax;
           } else if (currency.currency === 'MPT') {
-               amountToCash = this.xrplTransactionService.buildSendMaxAmount(currency.currency, currency.issuer ?? '', '', true).sendMax;
+               amountToCash = this.xrplTransactionService.buildSendMaxAmount(currency.currency, currency.issuer ?? '', escrow.amount, true).sendMax;
           } else {
                amountToCash = this.xrplTransactionService.buildAmount(currency.currencyCode, escrow.amount, currency.issuer).amountToCash;
           }

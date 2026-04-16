@@ -206,7 +206,7 @@ export class EscrowTransactionViewModelService {
           if (this.escrowStoreService.existingIOUs().length > 0) {
                links.push(`<a href="${base}account/${addr}/tokens" target="_blank" rel="noopener" class="xrpl-win-link">View IOUs</a>`);
           }
-          if (this.escrowStoreService.existingMpts().length > 0) {
+          if (this.mptStoreService.existingMpts().length > 0) {
                links.push(`<a href="${base}account/${addr}/mpts/owned" target="_blank" rel="noopener" class="xrpl-win-link">View MPTs</a>`);
           }
 
@@ -252,5 +252,19 @@ export class EscrowTransactionViewModelService {
 
      onMptSelected(item: SelectItem | null) {
           this.mptStoreService.setField('mptIssuanceId', item?.id || '');
+     }
+
+     public async refreshMpts(forceRefresh = false): Promise<void> {
+          if (!this.currentWalletData()) return;
+
+          try {
+               const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+               if (env?.accountObjects) {
+                    const mpts = this.mptUtilService.getExistingMpts(env.accountObjects, this.currentWalletData()?.address || '');
+                    this.mptStoreService.setField('existingMpts', mpts);
+               }
+          } catch (e) {
+               console.error('refreshMpts failed', e);
+          }
      }
 }

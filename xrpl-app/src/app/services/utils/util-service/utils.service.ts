@@ -891,6 +891,13 @@ export class UtilsService {
                return `${xrpl.dropsToXrp(amount)} XRP`;
           }
 
+          if (typeof amount === 'string') {
+               const splitAmount = amount.split(' ');
+               if (splitAmount.length > 1) {
+                    return splitAmount[1] + ' ' + splitAmount[0] + ' ' + splitAmount[2];
+               }
+          }
+
           if (typeof amount === 'object') {
                // Issued currency
                const { currency, issuer, value } = amount;

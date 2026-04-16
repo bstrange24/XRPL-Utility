@@ -76,7 +76,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.trustlineCurrencyService.load();
           this.trustlineCurrencyService.preferXrpAsDefault.set(true);
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(true);
-          this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
+          this.trustlineCurrencyService.addMptInCurrencyDropdown.set(true);
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
@@ -184,11 +184,13 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      public mptItems() {
-          return this.mptStoreService.existingMpts?.() || [];
+          const mpts = this.mptStoreService.existingMpts?.() || [];
+          return this.mptUtilService.computeMptItems(mpts);
      }
 
      public selectedMptItem() {
-          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), this.mptStoreService.mptIssuanceId());
+          const issuanceId = this.mptStoreService.mptIssuanceId();
+          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), issuanceId);
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -321,6 +323,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                     includeLedgerInfo: true,
                     includeServerInfo: true,
                     includeDestinationAccountInfo: true,
+                    includeTrustlines: true,
                     includeEscrows: true,
                     destinationAddress,
                });

@@ -42,8 +42,12 @@ export class EscrowsCreateComponent {
      public async onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
-          await this.trustlineUtilService.loadTrustlines(false);
-          await this.trustlineCurrencyService.refreshCurrentBalance();
+          if (currency === 'MPT') {
+               await this.viewModel.refreshMpts(); // or this.base.refreshMpts() if you expose it
+          } else {
+               await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+          }
      }
 
      public async onIssuerSelected(item: SelectItem | null) {
@@ -76,11 +80,13 @@ export class EscrowsCreateComponent {
      }
 
      public mptItems() {
-          return this.mptStoreService.existingMpts?.() || [];
+          const mpts = this.mptStoreService.existingMpts?.() || [];
+          return this.mptUtilService.computeMptItems(mpts);
      }
 
      public selectedMptItem() {
-          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), this.mptStoreService.mptIssuanceId());
+          const issuanceId = this.mptStoreService.mptIssuanceId();
+          return this.mptUtilService.computeSelectedMptItem(this.mptItems(), issuanceId);
      }
 
      public destinationItems() {
@@ -105,7 +111,17 @@ export class EscrowsCreateComponent {
           this.escrowStoreService.setField('destination', addr);
      }
 
-     public onMptSelected(_item: any) {}
+     public onMptSelected(item: any) {
+          if (!item) {
+               this.mptStoreService.setField('mptIssuanceId', '');
+               return;
+          }
+
+          this.mptStoreService.setField('mptIssuanceId', item.id || '');
+
+          // Optional: nice feedback
+          console.log('MPT Selected:', item.id);
+     }
 
      public onFocus(event: Event) {
           (event.target as HTMLInputElement).select?.();

@@ -241,6 +241,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                     includeServerInfo: true,
                     includeDestinationAccountInfo: true,
                     includeChecks: true,
+                    includeTrustlines: true,
                     destinationAddress,
                });
           } catch (err: any) {

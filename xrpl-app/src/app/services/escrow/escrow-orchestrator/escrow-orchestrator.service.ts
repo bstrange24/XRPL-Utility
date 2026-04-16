@@ -151,7 +151,9 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
                          includeFee: true,
                          includeLedgerInfo: true,
                          includeServerInfo: true,
-                         includeChecks: true,
+                         includeDestinationAccountInfo: true,
+                         includeTrustlines: true,
+                         includeEscrows: true,
                     }));
 
                client = env.client;
@@ -172,7 +174,7 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
 
                // Balance checks (token vs xrp)
                let isInsufficientBalance;
-               if (currency?.currency !== 'XRP') {
+               if (currency?.currency !== 'XRP' && currency?.currency !== 'MPT') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
                } else {
                     if (type === 'createEscrow') {
