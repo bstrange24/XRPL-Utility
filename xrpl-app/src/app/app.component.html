@@ -1,32 +1,41 @@
-<div class="main-container">
-     @if (isNavigating()) {
-     <div class="route-loading-bar"></div>
-     }
-     <router-outlet></router-outlet>
-</div>
+<div class="min-h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
+     <!-- NAVBAR (full width, fixed height) -->
+     <header class="w-full bg-white border-b shadow-sm z-50">
+          <app-navbar></app-navbar>
+     </header>
 
-<div class="toast-container">
-     <div class="toast-stack">
-          @for (toast of toastService.toasts(); track toast.id) {
+     <!-- MAIN GRID -->
+     <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 lg:p-6 min-h-0 overflow-hidden">
+          <!-- WALLET COLUMN -->
+          <aside class="lg:col-span-3 xl:col-span-3 min-h-0 overflow-hidden">
+               <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+          </aside>
 
-          <div class="toast" [ngClass]="toast.type" [@toastAnimation] (click)="toastService.removeToast(toast.id)">
-               <div class="toast-icon">
-                    @if(toast.type === 'success') {
-                    <ng-icon name="heroCheckCircle"></ng-icon>
-                    } @if(toast.type === 'error') {
-                    <ng-icon name="heroXCircle"></ng-icon>
-                    } @if(toast.type === 'info') {
-                    <ng-icon name="heroInformationCircle"></ng-icon>
-                    } @if(toast.type === 'warn') {
-                    <ng-icon name="heroExclamationTriangle"></ng-icon>
+          <!-- MAIN CONTENT -->
+          <section class="lg:col-span-6 xl:col-span-6 min-h-0 overflow-hidden bg-white rounded-2xl shadow-sm">
+               <div class="h-full overflow-y-auto p-6 lg:p-8">
+                    <router-outlet></router-outlet>
+               </div>
+          </section>
+
+          <!-- RIGHT PANEL -->
+          <aside class="hidden lg:block lg:col-span-3 xl:col-span-3 min-h-0">
+               <div class="sticky top-6 bg-white rounded-2xl shadow-sm overflow-hidden">
+                    @if (rightPanelService.component(); as comp) {
+                    <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
+                    } @else {
+                    <div class="p-6 text-sm text-gray-400">No info available</div>
                     }
                </div>
+          </aside>
+     </main>
 
+     <!-- TOASTS -->
+     <div class="fixed bottom-4 right-4 z-50 space-y-2">
+          @for (toast of toastService.toasts(); track toast.id) {
+          <div class="toast" [ngClass]="toast.type" (click)="toastService.removeToast(toast.id)">
                <div class="toast-message" [innerHTML]="toast.message"></div>
-
-               <button class="toast-close" (click)="$event.stopPropagation(); toastService.removeToast(toast.id)">×</button>
           </div>
-
           }
      </div>
 </div>

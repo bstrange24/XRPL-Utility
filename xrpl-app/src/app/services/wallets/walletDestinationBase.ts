@@ -98,6 +98,12 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
                     void this.onSelectedWalletIndexChange();
                });
           });
+
+          // === Sync with global WalletManager (Single Source of Truth) ===
+          effect(() => {
+               const managerWallet = this.walletManager.currentWallet?.() ?? ({} as Wallet);
+               this.currentWallet.set(managerWallet);
+          });
      }
 
      /** Subclass must implement to refresh credentials or permissioned domains */

@@ -1,73 +1,79 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Sending XRP (Direct Payment)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Sending XRP Requirements & Safety Info</span>
+          </div>
 
-     <p class="info-subtitle">A direct XRP Payment transfers XRP from one account to another quickly and cheaply. It can also fund a new account if sending enough XRP to meet the base reserve requirement.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">💸 Basic XRP Send</span>
-                    <span class="badge required-badge">Most Common</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Destination</span>
-                         <span class="field-status required">✅ Required</span>
+     <!-- Collapsible Content with Animation -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Sending XRP</h3>
+               <p class="text-sm text-gray-600">Direct XRP payments are fast, cheap, and irreversible.</p>
+          </div>
+
+          <!-- Requirements List -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-4">Required / Optional Fields</h4>
+
+               <div class="text-sm space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Destination</span>
+                         <span class="text-green-600 font-medium">Required</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Amount</span>
-                         <span class="field-status required">✅ Required</span>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Amount</span>
+                         <span class="text-green-600 font-medium">Required</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">DestinationTag</span>
-                         <span class="field-status omitted">❌ Optional</span>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Destination Tag</span>
+                         <span class="text-gray-500">Optional</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Source Tag</span>
+                         <span class="text-gray-500">Optional</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Invoice ID</span>
+                         <span class="text-gray-500">Optional</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-none">
+                         <span class="font-medium text-gray-700">Domain ID</span>
+                         <span class="text-gray-500">Optional</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                         <span class="font-medium text-gray-700">Credential ID</span>
+                         <span class="text-gray-500">Optional</span>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">💸 With Extras</span>
-                    <span class="badge optional-badge">Advanced Options</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">SendMax</span>
-                         <span class="field-status omitted">❌ Not needed for pure XRP</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Paths</span>
-                         <span class="field-status omitted">❌ Not needed for direct XRP</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">LastLedgerSequence</span>
-                         <span class="field-status optional">➕ Recommended (expire safely)</span>
-                    </div>
-               </div>
-          </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li><strong>Destination</strong> and <strong>Amount</strong> (in drops; 1 XRP = 1,000,000 drops) are required for a basic XRP send.</li>
-                    <li>Use <strong>DestinationTag</strong> when sending to exchanges or hosted wallets (e.g., required by Binance) to identify the recipient.</li>
-                    <li>Common fields like <strong>Fee</strong> and <strong>Sequence</strong> are usually auto-filled by clients/libraries.</li>
-                    <li>Transactions are irreversible — double-check the address and tag before signing.</li>
-                    <li>Sending at least the base reserve (~10 XRP, check current via server_info) to an unfunded address creates a new account.</li>
-                    <li>Fees are very low (typically <0.00002 XRP) and burned — no refunds.</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li><strong>Destination</strong> and <strong>Amount</strong> are always required.</li>
+                    <li>Use <strong>Destination Tag</strong> when sending to exchanges (Binance, etc.).</li>
+                    <li>Transactions are <strong>irreversible</strong> — double-check everything.</li>
+                    <li>Sending enough XRP to an unfunded address creates a new account.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversible & Safety Tips</h5>
-               <p style="color: #92400e">XRP Payments cannot be reversed or canceled once submitted.</p>
-               <ul>
-                    <li>Wrong <strong>Destination</strong> or missing <strong>DestinationTag</strong> can result in permanent loss of funds.</li>
-                    <li>Always verify the recipient address carefully — XRPL addresses are case-sensitive and checksummed.</li>
-                    <li>For time-sensitive sends, include <strong>LastLedgerSequence</strong> to prevent hanging in the queue indefinitely.</li>
-                    <li>If sending to an exchange, confirm their exact tag requirements to avoid crediting issues.</li>
-               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-red-700 mb-2">⚠️ Safety Tips</h5>
+                    <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                         <li>Wrong address or missing tag = <strong>permanent loss of funds</strong>.</li>
+                         <li>Always verify the full recipient address.</li>
+                         <li>Consider adding <strong>LastLedgerSequence</strong> for time-sensitive sends.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

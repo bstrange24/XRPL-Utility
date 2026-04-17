@@ -1,28 +1,135 @@
-@import url('./assets/global-styles.css');
-@import url('https://fonts.googleapis.com/css?family=Work+Sans');
+/* Import Angular Material Theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+/* Or use one of these instead: */
+/* @import '@angular/material/prebuilt-themes/deeppurple-amber.css'; */
+/* @import '@angular/material/prebuilt-themes/pink-bluegrey.css'; */
 
-/* Ensure page-container is applied */
-body {
-     margin: 0;
-     padding: 0;
-     font-family: 'Work Sans', sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-.page-container {
-     display: flex;
-     flex-direction: column;
-     align-items: center;
+.navbar-container {
      width: 100%;
 }
 
-html,
-body {
-     /* height: 100%; */
+.btn-primary {
+     @apply bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow disabled:opacity-50;
 }
 
-body {
-     margin: 0;
-     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-     /* font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif; */
-     /* font-family: Roboto, "Helvetica Neue", sans-serif; */
+.card {
+     @apply bg-white rounded-2xl shadow p-6;
 }
+
+.dropdown-item {
+     @apply block px-5 py-2.5 text-sm hover:bg-gray-50 transition-colors;
+}
+
+.dropdown-item:hover {
+     @apply bg-gray-50 text-gray-900;
+}
+
+/* Form Consistency */
+.form-input {
+     @apply w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all;
+}
+
+label {
+     @apply text-sm font-medium text-gray-700;
+}
+
+/* Better spacing for optional section */
+.transaction-options {
+     @apply space-y-8;
+}
+
+/* Custom Tailwind Slide Toggle */
+.toggle-switch {
+     position: relative;
+     display: inline-block;
+     width: 42px;
+     height: 24px;
+}
+
+.toggle-switch input {
+     opacity: 0;
+     width: 0;
+     height: 0;
+}
+
+.slider {
+     position: absolute;
+     cursor: pointer;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background-color: #9ca3af;
+     transition: .3s;
+     border-radius: 9999px;
+}
+
+.slider:before {
+     position: absolute;
+     content: "";
+     height: 18px;
+     width: 18px;
+     left: 3px;
+     bottom: 3px;
+     background-color: white;
+     transition: .3s;
+     border-radius: 50%;
+}
+
+input:checked+.slider {
+     background-color: #16a34a;
+     /* Green */
+}
+
+input:checked+.slider:before {
+     transform: translateX(18px);
+}
+
+.toggle-label {
+     @apply text-sm font-medium text-gray-700 ml-3 cursor-pointer select-none;
+}
+
+.menu-btn {
+     @apply text-gray-600 hover:text-gray-900;
+}
+
+.menu-btn.active {
+     @apply bg-white shadow-sm text-gray-900 font-semibold;
+}
+
+/* Combobox Styles */
+.combobox-dropdown-overlay {
+     box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+.combobox-item.highlighted {
+     background-color: #f0fdf4 !important;
+     border-left: 4px solid #16a34a;
+}
+
+.combobox-item:hover {
+     background-color: #f8fafc;
+}
+
+.combobox-group-header {
+     position: sticky;
+     top: 0;
+     z-index: 10;
+}
+
+/* Wallet Panel Action Buttons */
+/* .icon-btn {
+     @apply transition-all duration-200;
+}
+
+.icon-btn:hover {
+     @apply scale-105;
+}
+
+.icon-btn:active {
+     @apply scale-95;
+} */

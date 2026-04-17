@@ -1,42 +1,37 @@
-<div class="combobox-container">
-     <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="combobox-input" autocomplete="off" [disabled]="isDisabled()" />
+<!-- Combobox Container -->
+<div class="combobox-container relative w-full">
+     <!-- Input -->
+     <div class="relative">
+          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="w-full bg-white border border-gray-300 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all" autocomplete="off" [disabled]="isDisabled()" />
 
-     <button type="button" (click)="toggle()" class="combobox-toggle" [disabled]="isDisabled()">
-          <lucide-icon name="chevron-down" size="18"></lucide-icon>
-     </button>
-</div>
+          <button type="button" (click)="toggle()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+               <lucide-icon name="chevron-down" size="18"></lucide-icon>
+          </button>
+     </div>
 
-<!-- Register template portal -->
-<ng-template #dropdown let-data>
-     <div class="combobox-wrapper-stop">
-          <div class="combobox-dropdown-overlay">
-               @if (filteredItems().length === 0) {
-               <div class="combobox-empty">{{ emptyMessage() }}</div>
-               } @for (item of filteredItems(); track item.id + item.display; let i = $index) {
-               <!-- Group Header - only show if group changes or first item -->
-               @if (i === 0 || item.group !== (filteredItems()[i - 1]?.group ?? null)) {
-               <div class="combobox-group-header">{{ item.group || '' }}</div>
-               }
+     <!-- Animated Dropdown -->
+     <ng-template #dropdown let-data>
+          <div class="combobox-wrapper-stop mt-2 w-full">
+               <div class="combobox-dropdown-overlay bg-white border border-gray-200 rounded-3xl shadow-2xl py-2 max-h-[340px] overflow-auto z-50 w-full" [@fadeSlideDown]>
+                    @if (filteredItems().length === 0) {
+                    <div class="px-6 py-8 text-center text-gray-500">{{ emptyMessage() }}</div>
+                    } @for (item of filteredItems(); track item.id + item.display; let i = $index) { @if (i === 0 || item.group !== (filteredItems()[i - 1]?.group ?? null)) {
+                    <div class="combobox-group-header px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-500 bg-gray-50 border-t border-b border-gray-100">{{ item.group || 'Available Options' }}</div>
+                    }
 
-               <!-- Item -->
-               <div class="combobox-item" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
-                    <div class="item-name">
-                         {{ item.display }} @if (item.isCurrentAccount) {
-                         <span class="current-account-badge">Current Account</span>
-                         } @if (item.isCurrentCode) {
-                         <span class="current-code-badge">Current Code</span>
-                         } @if (item.isCurrentToken) {
-                         <span class="current-token-badge">Selected</span>
-                         } @if (item.pending) {
-                         <span class="ml-2 text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">Pending</span>
+                    <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
+                         <div class="flex items-center justify-between">
+                              <span class="font-medium text-gray-900">{{ item.display }}</span>
+                              @if (item.isCurrentAccount) { <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">Current Account</span> } @if (item.isCurrentCode) { <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full">Current Code</span> } @if (item.isCurrentToken) { <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Selected</span> } @if (item.pending) {
+                              <span class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full">Pending</span> }
+                         </div>
+
+                         @if (item.secondary) {
+                         <div class="text-xs text-gray-500 font-mono break-all">{{ item.secondary }}</div>
                          }
                     </div>
-
-                    @if (item.secondary) {
-                    <div class="item-address">{{ item.secondary }}</div>
                     }
                </div>
-               }
           </div>
-     </div>
-</ng-template>
+     </ng-template>
+</div>

@@ -1,78 +1,96 @@
-<div class="navbar-container">
-     <div class="navbar-links">
-          <a routerLink="/wallet-configurator" routerLinkActive="active">Wallets</a>
+<div class="w-full bg-white border-b border-gray-100 shadow-sm">
+     <div class="mx-auto px-6 py-5">
+          <div class="flex items-center justify-between">
+               <!-- Logo -->
+               <div class="flex items-center gap-3 flex-shrink-0" style="padding-right: 1px">
+                    <div class="w-8 h-8 bg-green-600 text-white rounded-2xl flex items-center justify-center font-bold text-xl">X</div>
+                    <span class="font-semibold text-2xl tracking-tight">XRPL Utility</span>
+               </div>
 
-          <div class="dropdown accounts-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
-               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('accounts'); $event.preventDefault()"> Accounts ▾ </a>
+               <!-- Navigation - Centered with good spacing -->
+               <nav class="flex items-center gap-8 text-sm font-medium flex-1 justify-center" style="padding-left: 50px">
+                    <a routerLink="/wallet-configurator" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Wallets</a>
 
-               <div class="dropdown-menu">
-                    <a routerLink="/account-balance-changes" routerLinkActive="active">Balance Changes</a>
-                    <a routerLink="/account-configurator" routerLinkActive="active">Configurator</a>
-                    <a routerLink="/delete-account" routerLinkActive="active">Account Delete</a>
-                    <!-- <a routerLink="/firewall" routerLinkActive="active">Firewall</a> -->
-                    <a routerLink="/create-credentials" routerLinkActive="active">Credentials</a>
-                    <!-- <a routerLink="/set-hook" routerLinkActive="active">Set Hook</a> -->
-                    <!-- <a routerLink="/account-delegate" routerLinkActive="active">Delegate</a> -->
-                    <a routerLink="/permissioned-domain" routerLinkActive="active">Permissioned Domain</a>
-                    <a routerLink="/create-did" routerLinkActive="active">DID</a>
+                    <!-- Accounts Dropdown -->
+                    <div class="relative">
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('accounts')">Accounts <span class="text-xs">▾</span></button>
+                         @if (store.dropdowns().accounts) {
+                         <div class="absolute top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                              <a routerLink="/account-balance-changes" class="dropdown-item">Balance Changes</a>
+                              <a routerLink="/account-configurator" class="dropdown-item">Configurator</a>
+                              <a routerLink="/delete-account" class="dropdown-item">Account Delete</a>
+                              <a routerLink="/create-credentials" class="dropdown-item">Credentials</a>
+                              <a routerLink="/permissioned-domain" class="dropdown-item">Permissioned Domain</a>
+                              <a routerLink="/create-did" class="dropdown-item">DID</a>
+                         </div>
+                         }
+                    </div>
+
+                    <a routerLink="/send-xrp" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Send XRP</a>
+
+                    <a routerLink="/sign-transactions" class="hover:text-gray-900 transition-colors whitespace-nowrap">Sign</a>
+                    <a routerLink="/trustlines" class="hover:text-gray-900 transition-colors whitespace-nowrap">Trustlines</a>
+                    <a routerLink="/payment-channel" class="hover:text-gray-900 transition-colors whitespace-nowrap">Payment Channel</a>
+
+                    <!-- Escrows -->
+                    <div class="relative">
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('escrows')">Escrows <span class="text-xs">▾</span></button>
+                         @if (store.dropdowns().escrows) {
+                         <div class="absolute top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                              <a routerLink="/time-escrow" class="dropdown-item">Time Escrow</a>
+                              <a routerLink="/conditional-escrow" class="dropdown-item">Conditional Escrow</a>
+                         </div>
+                         }
+                    </div>
+
+                    <a routerLink="/checks" class="hover:text-gray-900 transition-colors whitespace-nowrap">Checks</a>
+                    <a routerLink="/tickets" class="hover:text-gray-900 transition-colors whitespace-nowrap">Tickets</a>
+                    <a routerLink="/create-offer" class="hover:text-gray-900 transition-colors whitespace-nowrap">Offers</a>
+                    <a routerLink="/create-amm" class="hover:text-gray-900 transition-colors whitespace-nowrap">AMM</a>
+
+                    <!-- NFTs -->
+                    <div class="relative">
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('nft')">NFTs <span class="text-xs">▾</span></button>
+                         @if (store.dropdowns().nft) {
+                         <div class="absolute top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                              <a routerLink="/create-nft" class="dropdown-item">Create</a>
+                              <a routerLink="/nft-offers" class="dropdown-item">Offers</a>
+                         </div>
+                         }
+                    </div>
+
+                    <a routerLink="/mpt" class="hover:text-gray-900 transition-colors whitespace-nowrap">MPT</a>
+               </nav>
+
+               <!-- RIGHT SIDE -->
+               <div class="flex items-center gap-4 flex-shrink-0" style="padding-left: 30px">
+                    <!-- Network Selector - Restored Color -->
+                    <div class="relative">
+                         <button (click)="store.toggleDropdown('network')" class="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-medium border transition-all" [style.backgroundColor]="store.networkColor()">
+                              <span class="font-semibold">{{ store.selectedNetwork() }}</span>
+                              <span [class.rotate-180]="store.dropdowns().network">▾</span>
+                         </button>
+
+                         @if (store.dropdowns().network) {
+                         <div class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
+                              <a (click)="store.selectNetwork('Devnet')" class="dropdown-item">Devnet</a>
+                              <a (click)="store.selectNetwork('Testnet')" class="dropdown-item">Testnet</a>
+                              <a (click)="store.selectNetwork('Mainnet')" class="dropdown-item">Mainnet</a>
+                         </div>
+                         }
+                    </div>
+
+                    <app-connection-status></app-connection-status>
+
+                    <!-- Theme Toggle -->
+                    <button (click)="themeService.toggle()" class="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors">
+                         @if (!isDark()) {
+                         <ng-icon name="heroMoon" size="20" class="text-gray-600" />
+                         } @else {
+                         <ng-icon name="heroSun" size="20" class="text-gray-600" />
+                         }
+                    </button>
                </div>
           </div>
-          <a routerLink="/send-xrp" routerLinkActive="active">Send XRP</a>
-          <a routerLink="/sign-transactions" routerLinkActive="active">Sign Transactions</a>
-          <a routerLink="/trustlines" routerLinkActive="active">Trustlines</a>
-          <a routerLink="/payment-channel" routerLinkActive="active">Payment Channel</a>
-
-          <div class="dropdown escrows-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
-               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('escrows'); $event.preventDefault()"> Escrows ▾ </a>
-
-               <div class="dropdown-menu">
-                    <a routerLink="/time-escrow" routerLinkActive="active">Time Escrow</a>
-                    <a routerLink="/conditional-escrow" routerLinkActive="active">Conditional Escrow</a>
-               </div>
-          </div>
-
-          <a routerLink="/checks" routerLinkActive="active">Checks</a>
-          <a routerLink="/tickets" routerLinkActive="active">Tickets</a>
-          <a routerLink="/create-offer" routerLinkActive="active">Offers</a>
-          <a routerLink="/create-amm" routerLinkActive="active">AMM</a>
-
-          <div class="dropdown escrows-dropdown" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }">
-               <a href="#" class="dropdown-toggle" (click)="store.toggleDropdown('nft'); $event.preventDefault()"> NFTs ▾ </a>
-
-               <div class="dropdown-menu">
-                    <a routerLink="/create-nft" routerLinkActive="active">NFT Create</a>
-                    <a routerLink="/nft-offers" routerLinkActive="active">NFT Offers</a>
-               </div>
-          </div>
-
-          <a routerLink="/mpt" routerLinkActive="active">MPT</a>
-     </div>
-
-     <div class="network-dropdown network network-{{ store.selectedNetwork().toLowerCase() }}" style="padding-left: 2.5em">
-          <button class="btn dropdown-toggle" (click)="store.toggleDropdown('network')" [style.backgroundColor]="store.networkColor()">
-               <div class="dropdown-toggle-text">{{ store.selectedNetwork() }}</div>
-
-               <svg class="arrow" [ngClass]="{ open: store.dropdowns().network }" viewBox="0 0 12 12" width="12" height="12">
-                    <path fill="black" d="M2 4l4 4 4-4H2z" />
-               </svg>
-          </button>
-
-          <div class="dropdown-menu" [ngStyle]="{ display: store.dropdowns().network ? '-webkit-box' : 'none' }">
-               <a class="dropdown-item devnet" href="#" (click)="store.selectNetwork('Devnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Devnet' }"> Devnet </a>
-               <a class="dropdown-item testnet" href="#" (click)="store.selectNetwork('Testnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Testnet' }"> Testnet </a>
-               <a class="dropdown-item mainnet" href="#" (click)="store.selectNetwork('Mainnet'); $event.preventDefault()" [ngClass]="{ active: store.selectedNetwork() === 'Mainnet' }"> Mainnet </a>
-          </div>
-
-          <app-connection-status></app-connection-status>
-     </div>
-
-     <div class="toggleLightDark">
-          <button class="toggleLightDarkButton" (click)="themeService.toggle()">
-               @if (!isDark()) {
-               <ng-icon name="heroMoon" size="28"></ng-icon>
-               } @if (isDark()) {
-               <ng-icon name="heroSun" size="28"></ng-icon>
-               }
-          </button>
      </div>
 </div>

@@ -1,25 +1,23 @@
-<div class="form-panel-header">
-     <!-- or your wrapper class -->
-
+<div class="form-panel-header bg-white border-b border-gray-100 rounded-t-3xl px-6 py-5">
      <!-- Tabs -->
      @if (tabs().length > 0) {
-     <div class="menu-bar">
+     <div class="menu-bar flex gap-1 bg-gray-100 p-1 rounded-2xl w-fit mb-6">
           @for (tab of tabs(); track tab.key) {
-          <button class="menu-btn" [class.active]="active() === tab.key" (click)="activeChange.emit(tab.key)" type="button">
+          <button class="menu-btn px-5 py-2.5 rounded-[14px] text-sm font-medium transition-all flex items-center gap-2" [class.active]="active() === tab.key" (click)="activeChange.emit(tab.key)" type="button">
                @if (tab.iconType === 'ng-icon') {
-               <ng-icon [name]="tab.icon" [size]="tab.iconSize ?? '20'" />
+               <ng-icon [name]="tab.icon" [size]="tab.iconSize ?? '18'" />
                } @else if (tab.iconType === 'lucide-icon') {
-               <lucide-icon [name]="tab.icon" [size]="tab.iconSize ?? '20'" style="padding-top: 5px" />
+               <lucide-icon [name]="tab.icon" [size]="tab.iconSize ?? '18'" />
                } {{ tab.label }}
           </button>
           }
      </div>
      }
 
-     <!-- Metadata / Submenu info -->
+     <!-- Metadata / Submenu Info -->
      @if (currentMeta()) {
-     <div class="submenu-info-text">
-          <div [class]="currentMeta()!.colorClass">
+     <div class="submenu-info-text flex items-start gap-4">
+          <div class="flex-shrink-0 mt-1">
                @if (currentMeta()!.iconType === 'ng-icon') {
                <ng-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '32'" [color]="currentMeta()!.color" />
                } @else if (currentMeta()!.iconType === 'lucide-icon') {
@@ -27,8 +25,8 @@
                }
           </div>
           <div>
-               <h2 class="submenu-info-main-text">{{ currentMeta()!.title }}</h2>
-               <p class="submenu-info-secondary-text">{{ currentMeta()!.desc }}</p>
+               <h2 class="text-2xl font-semibold text-gray-900">{{ currentMeta()!.title }}</h2>
+               <p class="text-gray-600 mt-1 leading-relaxed">{{ currentMeta()!.desc }}</p>
           </div>
      </div>
      }

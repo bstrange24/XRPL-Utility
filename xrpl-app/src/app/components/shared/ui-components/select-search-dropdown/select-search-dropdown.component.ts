@@ -3,6 +3,7 @@ import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 export interface SelectItem {
      id: string;
@@ -24,6 +25,7 @@ export interface SelectItem {
      templateUrl: './select-search-dropdown.component.html',
      styleUrl: './select-search-dropdown.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
+     animations: [trigger('fadeSlideDown', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-8px)' }), animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))])])],
 })
 export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      constructor() {

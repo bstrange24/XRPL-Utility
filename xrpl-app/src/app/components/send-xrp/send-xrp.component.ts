@@ -8,9 +8,7 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
-import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
+import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import * as xrpl from 'xrpl';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -38,11 +36,13 @@ import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
 import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpRequirementsInfoComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, SendXrpRequirementsInfoComponent, SendXrpSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, SendXrpSummaryComponent, MatSlideToggleModule],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,6 +57,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      public readonly credentialStore = inject(CredentialStore);
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
+     private rightPanelService = inject(RightPanelService);
      readonly menuTabs: TabConfig[] = SEND_XRP_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = SEND_XRP_TAB_META;
 
@@ -69,18 +70,25 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SEND_XRP_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+          this.rightPanelService.setPanel(SendXrpRequirementsInfoComponent, {
+               activeTab: this.sendXrpViewModelService.activeTab,
+          });
+     }
+
+     ngOnDestroy() {
+          this.rightPanelService.clearPanel();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.onAccountChange();
      }
 
-     selectWallet(wallet: Wallet): void {
-          if (wallet?.address === this.currentWallet()?.address) return;
-          this.currentWallet.set(wallet);
-          this.accountConfiguratorStoreService.resetAll();
-          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-     }
+     // selectWallet(wallet: Wallet): void {
+     //      if (wallet?.address === this.currentWallet()?.address) return;
+     //      this.currentWallet.set(wallet);
+     //      this.accountConfiguratorStoreService.resetAll();
+     //      if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+     // }
 
      async setTab(tab: string): Promise<void> {
           if (!SEND_XRP_TABS.includes(tab as any)) return;

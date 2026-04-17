@@ -87,6 +87,7 @@ npm install @types/prismjs --save-dev
 npm install --save-dev eslint-plugin-simple-import-sort
 npm ls eslint-plugin-simple-import-sort
 npx eslint . --fix
+npm install -D tailwindcss@3.4.17 postcss autoprefixer
 
 # Rebuild the image
 

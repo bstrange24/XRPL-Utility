@@ -38,6 +38,12 @@ export class WalletManagerService {
      readonly selectedIndex = this._selectedIndex.asReadonly();
      readonly hasWallets = computed(() => this._wallets().length > 0);
 
+     readonly currentWallet = computed(() => {
+          const idx = this.selectedIndex();
+          const list = this.wallets();
+          return idx >= 0 && idx < list.length ? list[idx] : ({} as Wallet);
+     });
+
      // Computed values
      readonly walletVm = computed(() => {
           const wallet = this.getSelectedWallet();
