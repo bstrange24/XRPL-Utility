@@ -1,14 +1,13 @@
-import { computed, inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
-import { AccountFlags, MptDisplayItem, MPToken, MPTokenHolder, MPTokenIssuance } from '../../../models/interface-items.model';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { AccountFlags, MptDisplayItem, MPToken } from '../../../models/interface-items.model';
 import { CopyUtilService } from '../../utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../utils/download-util/download-util.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
-import { MPTokenIssuanceCreate, MPTokenIssuanceCreateFlags } from 'xrpl';
+import { MPTokenIssuanceCreateFlags } from 'xrpl';
 import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { MptStoreService } from '../mpt-store/mpt-store.service';
@@ -29,9 +28,6 @@ export class MptUtilService extends PerformanceBaseComponent {
      public readonly mptStoreService = inject(MptStoreService);
      public readonly logService = inject(LogServiceService);
 
-     totalFlagsValue = signal<number>(0);
-     totalFlagsHex = signal<string>('0x0');
-
      private readonly flagValues = {
           canLock: 0x00000002,
           isRequireAuth: 0x00000004,
@@ -41,6 +37,9 @@ export class MptUtilService extends PerformanceBaseComponent {
           canClawback: 0x00000040,
           isAuthorized: 0x00000002,
      };
+
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
      flags: AccountFlags = {
           canLock: false,
           isRequireAuth: false,
@@ -197,28 +196,25 @@ export class MptUtilService extends PerformanceBaseComponent {
 
      mptDropDownItems(existingMpts: any[]) {
           computed(() => {
-               const t = existingMpts
-                    // .filter(m => m.mpt_issuance_id) // Only show entries with a valid issuance ID
-                    .map(m => {
-                         const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
-                         let isHolder = false;
-                         if (type === 'MPToken') {
-                              isHolder = true;
-                         }
-                         const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
+               const t = existingMpts.map(m => {
+                    const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
+                    let isHolder = false;
+                    if (type === 'MPToken') {
+                         isHolder = true;
+                    }
+                    const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
 
-                         const displayAmount = amount === '0' ? '0' : amount;
+                    const displayAmount = amount === '0' ? '0' : amount;
 
-                         return {
-                              id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                              // display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'} • ${isHolder ? `${m.MaximumAmount} outstanding` : 'issued'}`,
-                              display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
-                              secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
-                              isCurrentAccount: false,
-                              isCurrentCode: false,
-                              isCurrentToken: false,
-                         };
-                    });
+                    return {
+                         id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
+                         display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
+                         secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
+                         isCurrentAccount: false,
+                         isCurrentCode: false,
+                         isCurrentToken: false,
+                    };
+               });
                return t;
           });
      }
@@ -277,26 +273,15 @@ export class MptUtilService extends PerformanceBaseComponent {
      }
 
      isDestinationAuthorizedForMpt(issuanceObjects: any[], holderObjects: any[], issuanceId: string): boolean {
-          console.log('=== MPT AUTH DEBUG START ==='); // keep for now
-
           const issuance = issuanceObjects.find((o: any) => o.LedgerEntryType === 'MPTokenIssuance' && o.mpt_issuance_id === issuanceId);
-
-          if (!issuance) {
-               console.warn('Issuance not found in issuer account objects');
-               return false; // safety
-          }
+          if (!issuance) return false;
 
           const requiresAuth = this.issuanceRequiresAuth(issuance.Flags);
-          if (!requiresAuth) {
-               console.log('=== MPT AUTH DEBUG END (NO AUTH REQUIRED) ===');
-               return true; // ← this is the key line
-          }
+          if (!requiresAuth) return true;
 
           const holder = holderObjects.find((o: any) => o.LedgerEntryType === 'MPToken' && o.MPTokenIssuanceID === issuanceId);
 
           const isAuth = holder ? this.holderIsAuthorized(holder.Flags) : false;
-
-          console.log('=== MPT AUTH DEBUG END ===');
           return isAuth;
      }
 
@@ -401,7 +386,6 @@ export class MptUtilService extends PerformanceBaseComponent {
           return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
      }
 
-     // Inside MptUtilService class
      formatMptAmount(rawAmount: string | number, assetScale: number | string | undefined): string {
           if (!rawAmount || rawAmount === '0') return '0';
 

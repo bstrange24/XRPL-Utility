@@ -20,8 +20,6 @@ export class SummaryComponent {
      public readonly viewModel = inject(MptTransactionViewModelService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly mptUtilService = inject(MptUtilService);
-
-     // Optional: expose infoData directly if you want to control it from parent
      readonly infoData = this.viewModel.infoData;
 
      infoPanelExpanded = input.required<boolean>();
