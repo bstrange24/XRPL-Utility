@@ -71,9 +71,8 @@
                <p class="text-xs mt-1">Click "Generate" above to create accounts</p>
           </div>
           }
-     </div>
 
-     <!-- Selected Summary -->
+          <!-- Selected Summary -->
      @if (hasWallets) {
      <div class="p-5 border-t border-gray-100 bg-gray-50">
           <div class="text-xs uppercase tracking-widest text-gray-500 mb-3">Currently Selected</div>
@@ -93,6 +92,7 @@
           </div>
      </div>
      }
+     </div>
 
      <app-execution-time-display [time]="executionTime()" class="p-4 border-t" />
 </div>
