@@ -14,5 +14,5 @@ export class SendXrpRequirementsInfoComponent {
      activeTab = input.required<'sendXrp'>();
 
      // Collapsible state
-     isExpanded = signal(true); // ← Fixed: Added this signal
+     isExpanded = signal(false); // ← Fixed: Added this signal
 }

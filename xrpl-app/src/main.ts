@@ -7,7 +7,7 @@ import { Buffer } from 'buffer';
 import { provideHttpClient } from '@angular/common/http';
 import process from 'process';
 import { importProvidersFrom } from '@angular/core';
-import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical, Eye, EyeOff, CircleCheck, ShieldBan, CornerUpLeft, Sun, Moon, Inbox, Plus } from 'lucide-angular';
+import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical, Eye, EyeOff, CircleCheck, ShieldBan, CornerUpLeft, Sun, Moon, Inbox, Plus, ChevronUp, Edit2, CheckCircle, X, Loader } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
      heroInformationCircle,
@@ -41,6 +41,8 @@ import {
      heroCheckCircle,
      heroMoon,
      heroSun,
+     heroChevronUp,
+     heroChevronDown,
 } from '@ng-icons/heroicons/outline';
 import { NgIconsModule } from '@ng-icons/core';
 import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
@@ -71,6 +73,7 @@ bootstrapApplication(AppComponent, {
                     Copy,
                     FileTextIcon,
                     ChevronDown,
+                    ChevronUp,
                     ChevronRight,
                     BookOpenCheck,
                     ArrowBigRight,
@@ -90,6 +93,10 @@ bootstrapApplication(AppComponent, {
                     Sun,
                     Moon,
                     Inbox,
+                    Loader,
+                    Edit2,
+                    CheckCircle,
+                    X,
                })
           ),
           importProvidersFrom(
@@ -102,6 +109,8 @@ bootstrapApplication(AppComponent, {
                })
           ),
           provideIcons({
+               heroChevronUp,
+               heroChevronDown,
                heroInformationCircle,
                heroExclamationCircle,
                heroExclamationTriangle,

@@ -1,10 +1,10 @@
-<div class="form-panel-header bg-white border-b border-gray-100 rounded-t-3xl px-6 py-5">
+<div class="form-panel-header border-b border-gray-100 rounded-t-3xl px-2 py-5">
      <!-- Tabs -->
      @if (tabs().length > 0) {
      <div class="menu-bar flex gap-1 bg-gray-100 p-1 rounded-2xl w-fit mb-6">
           @for (tab of tabs(); track tab.key) {
           <button class="menu-btn px-5 py-2.5 rounded-[14px] text-sm font-medium transition-all flex items-center gap-2" [class.active]="active() === tab.key" (click)="activeChange.emit(tab.key)" type="button">
-               @if (tab.iconType === 'ng-icon') {
+               {{tab.iconType}} @if (tab.iconType === 'ng-icon') {
                <ng-icon [name]="tab.icon" [size]="tab.iconSize ?? '18'" />
                } @else if (tab.iconType === 'lucide-icon') {
                <lucide-icon [name]="tab.icon" [size]="tab.iconSize ?? '18'" />

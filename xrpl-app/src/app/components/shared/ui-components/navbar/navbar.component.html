@@ -9,62 +9,61 @@
 
                <!-- Navigation - Centered with good spacing -->
                <nav class="flex items-center gap-8 text-sm font-medium flex-1 justify-center" style="padding-left: 50px">
-                    <a routerLink="/wallet-configurator" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Wallets</a>
+                    <a routerLink="/wallet-configurator" routerLinkActive="text-green-600 font-semibold" #walletsLink="routerLinkActive" [class.text-green-600]="walletsLink.isActive" class="hover:text-gray-900 transition-colors whitespace-nowrap">Wallets</a>
 
                     <!-- Accounts Dropdown -->
                     <div class="relative">
-                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('accounts')">Accounts <span class="text-xs">▾</span></button>
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" [class.text-green-600]="isAccountsActive()" (click)="store.toggleDropdown('accounts')">Accounts <span class="text-xs">▾</span></button>
                          @if (store.dropdowns().accounts) {
                          <div class="absolute top-full mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                              <a routerLink="/account-balance-changes" class="dropdown-item">Balance Changes</a>
-                              <a routerLink="/account-configurator" class="dropdown-item">Configurator</a>
-                              <a routerLink="/delete-account" class="dropdown-item">Account Delete</a>
-                              <a routerLink="/create-credentials" class="dropdown-item">Credentials</a>
-                              <a routerLink="/permissioned-domain" class="dropdown-item">Permissioned Domain</a>
-                              <a routerLink="/create-did" class="dropdown-item">DID</a>
+                              <a routerLink="/account-balance-changes" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Balance Changes</a>
+                              <a routerLink="/account-configurator" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Configurator</a>
+                              <a routerLink="/delete-account" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Account Delete</a>
+                              <a routerLink="/create-credentials" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Credentials</a>
+                              <a routerLink="/permissioned-domain" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Permissioned Domain</a>
+                              <a routerLink="/create-did" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">DID</a>
                          </div>
                          }
                     </div>
 
                     <a routerLink="/send-xrp" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Send XRP</a>
+                    <a routerLink="/sign-transactions" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Sign</a>
+                    <a routerLink="/trustlines" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Trustlines</a>
+                    <a routerLink="/payment-channel" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Payment Channel</a>
 
-                    <a routerLink="/sign-transactions" class="hover:text-gray-900 transition-colors whitespace-nowrap">Sign</a>
-                    <a routerLink="/trustlines" class="hover:text-gray-900 transition-colors whitespace-nowrap">Trustlines</a>
-                    <a routerLink="/payment-channel" class="hover:text-gray-900 transition-colors whitespace-nowrap">Payment Channel</a>
-
-                    <!-- Escrows -->
+                    <!-- Escrows Dropdown -->
                     <div class="relative">
-                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('escrows')">Escrows <span class="text-xs">▾</span></button>
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" [class.text-green-600]="isEscrowsActive()" (click)="store.toggleDropdown('escrows')">Escrows <span class="text-xs">▾</span></button>
                          @if (store.dropdowns().escrows) {
                          <div class="absolute top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                              <a routerLink="/time-escrow" class="dropdown-item">Time Escrow</a>
-                              <a routerLink="/conditional-escrow" class="dropdown-item">Conditional Escrow</a>
+                              <a routerLink="/time-escrow" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Time Escrow</a>
+                              <a routerLink="/conditional-escrow" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Conditional Escrow</a>
                          </div>
                          }
                     </div>
 
-                    <a routerLink="/checks" class="hover:text-gray-900 transition-colors whitespace-nowrap">Checks</a>
-                    <a routerLink="/tickets" class="hover:text-gray-900 transition-colors whitespace-nowrap">Tickets</a>
-                    <a routerLink="/create-offer" class="hover:text-gray-900 transition-colors whitespace-nowrap">Offers</a>
-                    <a routerLink="/create-amm" class="hover:text-gray-900 transition-colors whitespace-nowrap">AMM</a>
+                    <a routerLink="/checks" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Checks</a>
+                    <a routerLink="/tickets" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Tickets</a>
+                    <a routerLink="/create-offer" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">Offers</a>
+                    <a routerLink="/create-amm" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">AMM</a>
 
-                    <!-- NFTs -->
+                    <!-- NFTs Dropdown -->
                     <div class="relative">
-                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" (click)="store.toggleDropdown('nft')">NFTs <span class="text-xs">▾</span></button>
+                         <button class="hover:text-gray-900 transition-colors flex items-center gap-1 whitespace-nowrap" [class.text-green-600]="isNftsActive()" (click)="store.toggleDropdown('nft')">NFTs <span class="text-xs">▾</span></button>
                          @if (store.dropdowns().nft) {
                          <div class="absolute top-full mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                              <a routerLink="/create-nft" class="dropdown-item">Create</a>
-                              <a routerLink="/nft-offers" class="dropdown-item">Offers</a>
+                              <a routerLink="/create-nft" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Create</a>
+                              <a routerLink="/nft-offers" routerLinkActive="bg-green-50 text-green-600" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Offers</a>
                          </div>
                          }
                     </div>
 
-                    <a routerLink="/mpt" class="hover:text-gray-900 transition-colors whitespace-nowrap">MPT</a>
+                    <a routerLink="/mpt" routerLinkActive="text-green-600 font-semibold" class="hover:text-gray-900 transition-colors whitespace-nowrap">MPT</a>
                </nav>
 
                <!-- RIGHT SIDE -->
                <div class="flex items-center gap-4 flex-shrink-0" style="padding-left: 30px">
-                    <!-- Network Selector - Restored Color -->
+                    <!-- Network Selector -->
                     <div class="relative">
                          <button (click)="store.toggleDropdown('network')" class="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-sm font-medium border transition-all" [style.backgroundColor]="store.networkColor()">
                               <span class="font-semibold">{{ store.selectedNetwork() }}</span>
@@ -73,9 +72,9 @@
 
                          @if (store.dropdowns().network) {
                          <div class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                              <a (click)="store.selectNetwork('Devnet')" class="dropdown-item">Devnet</a>
-                              <a (click)="store.selectNetwork('Testnet')" class="dropdown-item">Testnet</a>
-                              <a (click)="store.selectNetwork('Mainnet')" class="dropdown-item">Mainnet</a>
+                              <a (click)="store.selectNetwork('Devnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Devnet</a>
+                              <a (click)="store.selectNetwork('Testnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Testnet</a>
+                              <a (click)="store.selectNetwork('Mainnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">Mainnet</a>
                          </div>
                          }
                     </div>

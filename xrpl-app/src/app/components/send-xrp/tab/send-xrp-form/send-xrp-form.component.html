@@ -1,24 +1,26 @@
 <!-- Tailwind Grid Layout - Clean & Consistent -->
-<div class="space-y-8">
+<div>
      <!-- Destination + Amount Row -->
      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Destination -->
           <div class="space-y-3">
                <label class="text-sm font-semibold text-gray-800">Destination</label>
                <p class="text-xs text-gray-500">The unique address receiving the XRP payment.</p>
-               <app-select-search-dropdown class="w-full" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+               <div class="h-[54px]">
+                    <app-select-search-dropdown class="w-full h-full" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+               </div>
           </div>
 
           <!-- XRP Amount -->
           <div class="space-y-3">
                <label class="text-sm font-semibold text-gray-800">XRP Amount</label>
                <p class="text-xs text-gray-500">Amount in XRP (precision up to 0.000001).</p>
-               <input type="number" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="accountConfiguratorStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" />
+               <input type="number" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all h-[50px]" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="accountConfiguratorStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" />
           </div>
      </div>
 
      <!-- Toggle Optional Fields -->
-     <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-2xl p-4">
+     <div class="flex items-center gap-3 border-gray-100 rounded-2xl pb-4 mt-2">
           <label class="flex items-center cursor-pointer">
                <div class="toggle-switch">
                     <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" />

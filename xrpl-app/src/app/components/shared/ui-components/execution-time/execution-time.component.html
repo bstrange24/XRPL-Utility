@@ -1,3 +1,37 @@
-<div class="executionTimeDisplay" aria-live="polite">
-     <input type="text" [value]="time" readonly class="executionTimeDisplay" style="border: none" />
+<!-- Card Style -->
+<!-- <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4" aria-live="polite">
+     <div class="text-xs text-gray-500 mb-1">Execution Time</div>
+     <input type="text" [value]="time" readonly class="bg-transparent w-full outline-none cursor-default font-mono text-lg font-semibold text-gray-900" />
+</div> -->
+
+<!-- Basic Clean Version -->
+<div class="text-xs text-gray-400 font-mono" aria-live="polite">
+     <input type="text" [value]="time" readonly class="bg-transparent w-full outline-none cursor-default" />
 </div>
+
+<!-- With More Styling Options -->
+<!-- <div class="inline-flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2" aria-live="polite">
+     <lucide-icon name="clock" size="14" class="text-gray-400"></lucide-icon>
+     <input type="text" [value]="time" readonly class="bg-transparent w-full outline-none cursor-default font-mono text-sm text-gray-700" />
+</div> -->
+
+<!-- Minimal Style -->
+<!-- <div class="text-xs text-gray-400 font-mono" aria-live="polite">
+     <input type="text" [value]="time" readonly class="bg-transparent w-full outline-none cursor-default" />
+</div> -->
+
+<!-- Badge Style -->
+<!-- <div class="inline-block bg-gray-100 rounded-full px-3 py-1" aria-live="polite">
+     <div class="flex items-center gap-1.5">
+          <span class="text-xs text-gray-500">⏱️</span>
+          <input type="text" [value]="time" readonly class="bg-transparent outline-none cursor-default text-xs font-mono text-gray-700" />
+     </div>
+</div> -->
+
+<!-- Full Width Panel Style (matches your app's design) -->
+<!-- <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100" aria-live="polite">
+     <div class="flex items-center justify-between">
+          <span class="text-sm font-medium text-gray-600">Execution Time</span>
+          <input type="text" [value]="time" readonly class="bg-transparent text-right outline-none cursor-default font-mono text-sm font-semibold text-gray-900" />
+     </div>
+</div> -->

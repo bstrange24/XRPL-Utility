@@ -22,7 +22,7 @@ export class PerformanceBaseComponent {
                console.log(`Entering ${name}`);
           }
 
-          this.executionTime.set(`Execution time: working...`);
+          this.executionTime.set(`Execution time: processing...`);
           const start = Date.now();
 
           try {

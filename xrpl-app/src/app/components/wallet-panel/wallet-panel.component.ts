@@ -12,14 +12,13 @@ import { AppConstants } from '../../core/app.constants';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { PerformanceBaseComponent } from '../shared/performance-base/performance-base.component';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
-import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 
 @Component({
      selector: 'app-wallet-panel',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule, ExecutionTimeDisplayComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule],
      templateUrl: './wallet-panel.component.html',
      styleUrl: './wallet-panel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,7 +35,13 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletConfiguratorOrchestratorService = inject(WalletConfiguratorOrchestratorService);
 
+     ngOnInit() {
+          // Initialize with selected wallet expanded
+          this.expandedWallets.add(this.selectedWalletIndex);
+     }
+
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
+     expandedWallets: Set<number> = new Set();
 
      // Prefer the panel's own execution time; fall back to the orchestrator's
      // so that wallet generation triggered from the Wallets page also shows a time.
@@ -128,10 +133,15 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           if (index === this.selectedWalletIndex) return;
 
           this.selectedWalletIndex = index;
+
           this.updateCurrentWallet();
 
           this.walletManagerService.setSelectedIndex(index);
           this.walletSelected.emit(this.currentWallet);
+
+          if (!this.expandedWallets.has(index)) {
+               this.expandedWallets.add(index);
+          }
      }
 
      editName(index: number) {
@@ -243,5 +253,26 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.updateCurrentWallet();
           this.walletSelected.emit(this.currentWallet);
           this.walletManagerService.setSelectedIndex(this.selectedWalletIndex);
+     }
+
+     // Toggle expansion for a specific wallet
+     toggleWalletExpansion(index: number): void {
+          if (this.expandedWallets.has(index)) {
+               this.expandedWallets.delete(index);
+          } else {
+               this.expandedWallets.add(index);
+          }
+     }
+
+     // Check if a wallet is expanded
+     isWalletExpanded(index: number): boolean {
+          return this.expandedWallets.has(index);
+     }
+
+     // Collapse all wallets
+     collapseAllWallets(): void {
+          this.expandedWallets.clear();
+          // Force change detection
+          this.cdr.detectChanges();
      }
 }

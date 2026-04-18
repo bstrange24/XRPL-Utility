@@ -12,7 +12,7 @@ import { WarningMessageComponent } from '../../../shared/ui-components/warning-m
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, WarningMessageComponent],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

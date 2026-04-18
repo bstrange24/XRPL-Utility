@@ -83,13 +83,6 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
           await this.onAccountChange();
      }
 
-     // selectWallet(wallet: Wallet): void {
-     //      if (wallet?.address === this.currentWallet()?.address) return;
-     //      this.currentWallet.set(wallet);
-     //      this.accountConfiguratorStoreService.resetAll();
-     //      if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-     // }
-
      async setTab(tab: string): Promise<void> {
           if (!SEND_XRP_TABS.includes(tab as any)) return;
           this.sendXrpViewModelService.activeTab.set(tab as SendXrpActionTypes);
@@ -98,7 +91,9 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('onAccountChange', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();

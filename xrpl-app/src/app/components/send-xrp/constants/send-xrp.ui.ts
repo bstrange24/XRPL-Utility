@@ -14,7 +14,7 @@ export const SEND_XRP_TABS: {
 }[] = [
      {
           key: 'sendXrp',
-          label: 'Create',
+          label: 'Send XRP',
           icon: 'heroPlusCircle',
           iconType: 'ng-icon',
           color: '',
@@ -37,10 +37,10 @@ export const SEND_XRP_TAB_META: Record<
 > = {
      sendXrp: {
           icon: 'heroPlusCircle',
-          colorClass: 'green-button-submenu',
+          colorClass: 'bg-green-50 text-green-600 rounded-xl p-3',
           title: 'Send XRP',
           desc: 'Send XRP to another XRPL address.',
-          color: '',
+          color: '#16a34a',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

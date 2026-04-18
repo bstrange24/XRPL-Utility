@@ -1,20 +1,23 @@
-@let view = sendXrpViewModelService; @let tab = view.activeTab();
+<!-- Get view -->
+@let view = sendXrpViewModelService;
+<!-- Get active tab -->
+@let tab = view.activeTab();
 
-<div class="p-2">
-     <div class="card space-y-6">
-          <!-- Tabs -->
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Summary -->
+          <!-- Info Message -->
           <app-send-xrp-summary [info]="view.infoData()" [tab]="'sendXrp'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-send-xrp-summary>
 
-          <!-- Warning -->
+          <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"> </app-warning-message>
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="space-y-6">
+          <form #theForm="ngForm">
                <app-send-xrp-form
                     [view]="view"
                     [info]="view.infoData()"
@@ -33,57 +36,21 @@
                </app-send-xrp-form>
 
                <!-- Buttons -->
-                <!-- COMMAND BAR -->
-<div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
+               <div class="mt-0 flex items-center justify-between gap-3">
+                    <!-- LEFT: primary action -->
+                    <div class="flex items-center gap-2">
+                         <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">{{ sendXrpUtilService.sendButtonLabel() }}</button>
+                         <!-- Optional status hint (future spinner hook) -->
+                         <span class="hidden sm:inline text-xs text-gray-400"> {{ isIdle() ? 'Ready' : 'Processing...' }} </span>
+                    </div>
 
-     <!-- LEFT: secondary / utility actions -->
-     <div class="flex items-center gap-2">
-          
-          <button
-               type="button"
-               (click)="clearInputFields()"
-               [disabled]="!isIdle() || !hasWallets()"
-               class="btn-secondary"
-          >
-               Clear Fields
-          </button>
-
-          <!-- Future-safe slot (preview, simulate, etc.) -->
-          <button
-               type="button"
-               class="btn-ghost"
-               disabled
-          >
-               Preview
-          </button>
-
-     </div>
-
-     <!-- RIGHT: primary action -->
-     <div class="flex items-center gap-2">
-
-          <!-- Optional status hint (future spinner hook) -->
-          <span class="hidden sm:inline text-xs text-gray-400">
-               {{ isIdle() ? 'Ready' : 'Processing...' }}
-          </span>
-
-          <button
-               type="button"
-               (click)="performAction()"
-               [disabled]="!isIdle() || !hasWallets()"
-               class="btn-primary"
-          >
-               {{ sendXrpUtilService.sendButtonLabel() }}
-          </button>
-
-     </div>
-
-</div>
-               <!-- <div class="flex flex-col sm:flex-row gap-3 pt-4">
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">{{ sendXrpUtilService.sendButtonLabel() }}</button>
-
-                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-5 py-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">Clear Fields</button>
-               </div> -->
+                    <!--  RIGHT: secondary / utility actions -->
+                    <div class="flex items-center gap-2">
+                         <!-- Future-safe slot (preview, simulate, etc.) -->
+                         <button type="button" class="btn-ghost" disabled>Preview</button>
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
+                    </div>
+               </div>
 
                <!-- Options -->
                <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
@@ -93,8 +60,8 @@
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 
-               <!-- Preview -->
-               <div class="pt-4 border-t">
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
                </div>
           </form>

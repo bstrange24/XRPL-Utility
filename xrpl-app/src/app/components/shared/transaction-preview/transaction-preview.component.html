@@ -1,95 +1,61 @@
-<!-- <div class="executionTimeDisplay">
-     <input type="text" [value]="executionTime()" readonly class="executionTimeDisplay" style="border: none" />
-</div> -->
-
 <!-- Spinner / progress (shown during preparing → waiting_validation) -->
 @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
-<div class="spinner-row">
-     <div class="spinner"></div>
-     <span>{{ txUiService.stepMessage() }}</span>
-
-     @if (txUiService.detailedStatus()) {
-     <p class="detailed">{{ txUiService.detailedStatus() }}</p>
-     }
+<div class="flex flex-col items-center gap-4 p-6 bg-white rounded-2xl shadow-lg border border-blue-200 mt-4 mb-5">
+     <div class="relative">
+          <div class="w-12 h-12 border-4 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
+          <lucide-icon name="loader" size="24" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"></lucide-icon>
+     </div>
+     <div class="text-center">
+          <p class="text-sm font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
+          @if (txUiService.detailedStatus()) {
+          <p class="text-xs text-blue-500 mt-1">{{ txUiService.detailedStatus() }}</p>
+          }
+     </div>
 </div>
 }
 
-<!-- Success message -->
-<!-- @if (txUiService.isSuccess() && !txUiService.isError() && !txUiService.suppressSuccessMessage()) {
-<div class="success-message">
-     <lucide-icon name="check" size="20"></lucide-icon>
-     <div class="success-text">
-          @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
-          <span>{{txUiService.successMessage}}</span>
-          <div class="tx-hashes">
-               @for (hash of txUiService.txHashSignal(); track hash; let i = $index) {
-               <div class="tx-hash-item">
-                    Transaction {{ i + 1 }} hash:
-                    <a [href]="url() + 'tx/' + hash" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ hash }} </a>
-               </div>
-               }
-          </div>
-          } @else {
-          <span>{{txUiService.successMessage}}</span>
-          }
-     </div>
-</div>
-} -->
-
-<!-- Error message -->
-<!-- @if (txUiService.isError() && txUiService.result()) {
-<div class="tx-message error">
-     <ng-icon name="heroExclamationCircle" size="20" class="text-red-600"></ng-icon>
-     <div class="tx-text">
-          @if (txUiService.txHashSignal() && !txUiService.isSimulateEnabled()) {
-          <span>{{ txUiService.result() }}</span><br />
-          @if (txUiService.txHashSignal().length > 0) {
-          <span>Transaction hash: <a [href]="`${url()}tx/` + txUiService.txHashSignal()" target="_blank" rel="noopener noreferrer" class="tx-hash-link"> {{ txUiService.txHashSignal() }} </a></span>
-          } } @else {
-          <span>{{ txUiService.result() }}</span><br />
-          }
-     </div>
-</div>
-} -->
-
 <!-- Tx Preview -->
 @if (txUiService.txSignal().length > 0) {
-<div class="tx-preview-container">
-     <div class="tx-header">
-          <h5 class="tx-title">Transaction JSON</h5>
-          <div class="tx-actions">
-               <button class="copy-btn" (click)="copyUtilService.copyTxSignal()" title="Copy JSON">
-                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+<div class="mt-2 bg-white rounded-2xl overflow-hidden border border-white-200 shadow-sm">
+     <!-- Header -->
+     <div class="flex items-center justify-between px-6 py-4 bg-white-50 border-b border-white-200">
+          <p class="text-sm font-semibold text-blue-700 p-0 m-0" style="margin: 0">Transaction JSON</p>
+          <div class="flex items-center gap-2">
+               <button (click)="copyUtilService.copyTxSignal()" title="Copy JSON" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-900 bg-white hover:bg-blue-100 border border-blue-300 rounded-xl transition-colors">
+                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon>
                     Copy
                </button>
-               <button class="download-btn" (click)="downloadUtilService.downloadTxSignal()" title="Download JSON">
-                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+               <button (click)="downloadUtilService.downloadTxSignal()" title="Download JSON" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-900 bg-white hover:bg-blue-100 border border-blue-300 rounded-xl transition-colors">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-blue-600"></ng-icon>
                     Download
                </button>
           </div>
      </div>
 
-     <pre class="tx-json language-json"><code #paymentJson class="language-json"></code></pre>
+     <!-- JSON Content - Same styling as Transaction Result -->
+     <pre class="p-6 overflow-x-auto bg-white"><code #paymentJson class="language-json text-sm font-mono text-blue-800"></code></pre>
 </div>
 }
 
 <!-- Tx Result Preview -->
 @if (txUiService.txResultSignal().length > 0) {
-<div class="tx-preview-container">
-     <div class="tx-header">
-          <h3 class="tx-title">Transaction Result</h3>
-          <div class="tx-actions">
-               <button class="copy-btn" (click)="copyUtilService.copyTxResultSignal()" title="Copy JSON">
-                    <ng-icon name="heroClipboardDocumentList" size="20" class="text-red-600"></ng-icon>
+<div class="mt-4 bg-white rounded-2xl overflow-hidden border border-white-200 shadow-sm">
+     <!-- Header -->
+     <div class="flex items-center justify-between px-6 py-4 bg-white-50 border-b border-white-200">
+          <p class="text-sm font-semibold text-blue-700 p-0 m-0" style="margin: 0">Transaction Result</p>
+          <div class="flex items-center gap-2">
+               <button (click)="copyUtilService.copyTxResultSignal()" title="Copy JSON" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-900 bg-white hover:bg-blue-100 border border-blue-300 rounded-xl transition-colors">
+                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon>
                     Copy
                </button>
-               <button class="download-btn" (click)="downloadUtilService.downloadTxResultSignal()" title="Download JSON">
-                    <ng-icon name="heroArrowDownOnSquareStack" size="20" class="text-red-600"></ng-icon>
+               <button (click)="downloadUtilService.downloadTxResultSignal()" title="Download JSON" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-900 bg-white hover:bg-blue-100 border border-blue-300 rounded-xl transition-colors">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-blue-600"></ng-icon>
                     Download
                </button>
           </div>
      </div>
 
-     <pre class="tx-json language-json"><code #txResultJson class="language-json"></code></pre>
+     <!-- JSON Content - Same styling as Transaction JSON -->
+     <pre class="p-6 overflow-x-auto bg-white"><code #txResultJson class="language-json text-sm font-mono text-blue-800"></code></pre>
 </div>
 }

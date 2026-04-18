@@ -16,7 +16,7 @@
                     @if (filteredItems().length === 0) {
                     <div class="px-6 py-8 text-center text-gray-500">{{ emptyMessage() }}</div>
                     } @for (item of filteredItems(); track item.id + item.display; let i = $index) { @if (i === 0 || item.group !== (filteredItems()[i - 1]?.group ?? null)) {
-                    <div class="combobox-group-header px-6 py-3 text-xs font-semibold uppercase tracking-widest text-gray-500 bg-gray-50 border-t border-b border-gray-100">{{ item.group || 'Available Options' }}</div>
+                    <div class="combobox-group-header px-1 py-1 text-xs font-semibold uppercase tracking-widest text-gray-500 bg-gray-50 border-t border-b border-gray-100">{{ item.group || '' }}</div>
                     }
 
                     <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">

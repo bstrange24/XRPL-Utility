@@ -6,7 +6,6 @@ import { filter, map, mergeMap } from 'rxjs/operators';
 import { ToastService } from './services/utils/toast/toast.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { CommonModule } from '@angular/common';
-import { NgIcon } from '@ng-icons/core';
 import { WalletPanelComponent } from './components/wallet-panel/wallet-panel.component';
 import { NavbarComponent } from './components/shared/ui-components/navbar/navbar.component';
 import { WalletDestinationBase } from './services/wallets/walletDestinationBase';
@@ -19,11 +18,12 @@ import { StorageService } from './services/shared/local-storage/storage.service'
 import { TxEnvironmentService } from './services/transaction-environment/tx-environment.service';
 import { CopyUtilService } from './services/utils/copy-util/copy-util.service';
 import { RightPanelService } from './services/right-panel/right-panel.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-root',
      standalone: true,
-     imports: [RouterOutlet, CommonModule, NgIcon, WalletPanelComponent, NavbarComponent],
+     imports: [RouterOutlet, CommonModule, WalletPanelComponent, NavbarComponent, LucideAngularModule],
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './app.component.html',
      styleUrls: ['./app.component.css'],
