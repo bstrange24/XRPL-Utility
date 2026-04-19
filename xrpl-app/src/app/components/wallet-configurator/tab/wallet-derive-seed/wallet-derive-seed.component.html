@@ -52,13 +52,6 @@
      <!-- LEFT: primary action -->
      <div class="flex items-center gap-2">
           <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading" class="btn-primary">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
-          <!-- <span class="hidden sm:inline text-xs text-gray-400"> {{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Ready' }} </span> -->
      </div>
-
-     <!-- RIGHT: secondary / utility actions -->
-     <!-- <div class="flex items-center gap-2">
-          <button type="button" class="btn-ghost" disabled>Preview</button>
-          <button type="button" (click)="walletConfiguratorComponent.clearFields(true)" class="btn-secondary">Clear Fields</button>
-     </div> -->
 </div>
 }

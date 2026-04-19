@@ -59,7 +59,9 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
      private rightPanelService = inject(RightPanelService);
      readonly menuTabs: TabConfig[] = SEND_XRP_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = SEND_XRP_TAB_META;
+     // readonly tabMeta: Record<string, TabMetaInfo> = SEND_XRP_TAB_META;
+     sendXrpTabs = SEND_XRP_TABS;
+     tabMeta = SEND_XRP_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

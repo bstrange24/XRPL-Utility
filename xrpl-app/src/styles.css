@@ -1,16 +1,69 @@
 /* Import Angular Material Theme */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
-/* Or use one of these instead: */
-/* @import '@angular/material/prebuilt-themes/deeppurple-amber.css'; */
-/* @import '@angular/material/prebuilt-themes/pink-bluegrey.css'; */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Add to your global styles.css or tab-with-info.component.css */
+/* ============================================
+   DARK MODE BASE STYLES
+   ============================================ */
+.dark {
+     background-color: #1a1c21;
+     color-scheme: dark;
+}
 
-/* Light theme defaults */
+.dark body {
+     background-color: #1a1c21;
+}
+
+/* Dark mode overrides for common Tailwind classes */
+.dark .bg-white {
+     background-color: #1f2937 !important;
+}
+
+.dark .border-gray-100 {
+     border-color: #374151 !important;
+}
+
+.dark .text-gray-900 {
+     color: #f3f4f6 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+     color: #9ca3af !important;
+}
+
+.dark .bg-gray-50 {
+     background-color: #111827 !important;
+}
+
+.dark .hover\:bg-gray-50:hover {
+     background-color: #1f2937 !important;
+}
+
+/* Form inputs dark mode */
+.dark input,
+.dark textarea,
+.dark select {
+     background-color: #374151;
+     border-color: #4b5563;
+     color: #f3f4f6;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+     color: #9ca3af;
+}
+
+.dark label {
+     color: #d1d5db;
+}
+
+/* ============================================
+   CSS VARIABLES FOR THEMING
+   ============================================ */
 :root {
      --color-green-600: #16a34a;
      --color-blue-600: #2563eb;
@@ -19,7 +72,6 @@
      --color-amber-600: #d97706;
 }
 
-/* Dark theme */
 .dark {
      --color-green-400: #4ade80;
      --color-blue-400: #60a5fa;
@@ -28,7 +80,7 @@
      --color-amber-400: #fbbf24;
 }
 
-/* Utility classes for text colors */
+/* Text color utilities */
 .text-green-600 {
      color: var(--color-green-600);
 }
@@ -69,20 +121,30 @@
      color: var(--color-amber-400);
 }
 
-/* Menu button styling */
+/* ============================================
+   MENU BUTTON STYLES
+   ============================================ */
+.menu-bar {
+     background-color: #f3f4f6;
+}
+
 .menu-btn {
+     background-color: transparent;
+     color: #6b7280;
      transition: all 0.2s ease;
+     padding: 0.5rem 1rem;
+     border-radius: 14px;
+     font-size: 0.875rem;
+     font-weight: 500;
+     display: flex;
+     align-items: center;
+     gap: 0.375rem;
 }
 
 .menu-btn.active {
      background-color: white;
-     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
      color: #16a34a;
-}
-
-.dark .menu-btn.active {
-     background-color: #1f2937;
-     color: #34d399;
 }
 
 .menu-btn.active lucide-icon,
@@ -90,28 +152,56 @@
      color: #16a34a;
 }
 
+/* Dark mode menu */
+.dark .menu-bar {
+     background-color: #1f2937;
+}
+
+.dark .menu-btn {
+     color: #9ca3af;
+}
+
+.dark .menu-btn.active {
+     background-color: #374151;
+     color: #34d399;
+     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
 .dark .menu-btn.active lucide-icon,
 .dark .menu-btn.active ng-icon {
      color: #34d399;
 }
 
-.navbar-container {
-     width: 100%;
+.dark .menu-btn span {
+     color: #9ca3af;
 }
 
-.card {
-     @apply bg-white rounded-2xl shadow p-3;
+.dark .menu-btn.active span {
+     color: #34d399;
 }
 
-.dropdown-item {
-     @apply block px-5 py-2.5 text-sm hover:bg-gray-50 transition-colors;
+/* ============================================
+   BUTTON STYLES
+   ============================================ */
+.btn-primary {
+     @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
 }
 
-.dropdown-item:hover {
-     @apply bg-gray-50 text-gray-900;
+.btn-primary-red {
+     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
-/* Form Consistency */
+.btn-secondary {
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
+}
+
+.btn-ghost {
+     @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-40;
+}
+
+/* ============================================
+   FORM STYLES
+   ============================================ */
 .form-input {
      @apply w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all;
 }
@@ -120,12 +210,9 @@ label {
      @apply text-sm font-medium text-gray-700;
 }
 
-/* Better spacing for optional section */
-.transaction-options {
-     @apply space-y-8;
-}
-
-/* Custom Tailwind Slide Toggle */
+/* ============================================
+   TOGGLE SWITCH
+   ============================================ */
 .toggle-switch {
      position: relative;
      display: inline-block;
@@ -165,7 +252,6 @@ label {
 
 input:checked+.slider {
      background-color: #16a34a;
-     /* Green */
 }
 
 input:checked+.slider:before {
@@ -176,15 +262,27 @@ input:checked+.slider:before {
      @apply text-sm font-medium text-gray-700 ml-3 cursor-pointer select-none;
 }
 
-.menu-btn {
-     @apply text-gray-600 hover:text-gray-900;
+/* ============================================
+   DROPDOWN STYLES
+   ============================================ */
+.dropdown-item {
+     display: block;
+     padding: 0.5rem 1rem;
+     transition: all 0.2s;
+     cursor: pointer;
 }
 
-.menu-btn.active {
-     @apply bg-white shadow-sm text-gray-900 font-semibold;
+.dropdown-item:hover {
+     background-color: rgb(249 250 251);
 }
 
-/* Combobox Styles */
+.dropdown-item.bg-green-50 {
+     background-color: rgb(240 253 244);
+}
+
+/* ============================================
+   COMBOBOX STYLES
+   ============================================ */
 .combobox-dropdown-overlay {
      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
@@ -204,38 +302,40 @@ input:checked+.slider:before {
      z-index: 10;
 }
 
-/* Add to your global styles or component styles */
+/* ============================================
+   WALLET PANEL STYLES
+   ============================================ */
+.icon-btn {
+     @apply h-8 text-sm;
+}
+
+.wallet-card {
+     transition: all 0.2s ease-in-out;
+}
+
 .rounded-b-none {
      border-bottom-right-radius: 0 !important;
      border-bottom-left-radius: 0 !important;
 }
 
-/* Smooth transition for expansion */
-.wallet-card {
-     transition: all 0.2s ease-in-out;
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.card {
+     @apply bg-white rounded-2xl shadow p-3;
 }
 
-/* Wallet Panel Action Buttons */
-.icon-btn {
-     @apply h-8 text-sm;
+.navbar-container {
+     width: 100%;
 }
 
-.btn-primary {
-     @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+.transaction-options {
+     @apply space-y-8;
 }
 
-.btn-primary-red {
-     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-secondary {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
-}
-
-.btn-ghost {
-     @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-40;
-}
-
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 @keyframes spin {
      to {
           transform: rotate(360deg);
@@ -246,13 +346,6 @@ input:checked+.slider:before {
      animation: spin 1s linear infinite;
 }
 
-code[class*="language-"],
-pre[class*="language-"] {
-     background-color: white !important;
-     text-shadow: none !important;
-}
-
-/* Toast Animations */
 @keyframes fadeIn {
      from {
           opacity: 0;
@@ -281,34 +374,11 @@ pre[class*="language-"] {
      animation: fadeIn 0.3s ease-out forwards;
 }
 
-.dropdown-item {
-     display: block;
-     padding: 0.5rem 1rem;
-     transition: all 0.2s;
-     cursor: pointer;
-}
-
-.dropdown-item:hover {
-     background-color: rgb(249 250 251);
-}
-
-/* Active state for dropdown items */
-.dropdown-item.bg-green-50 {
-     background-color: rgb(240 253 244);
-}
-
-.menu-btn {
-     transition: all 0.2s ease;
-}
-
-.menu-btn.active {
-     background-color: white;
-     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
-     color: #16a34a;
-     /* green-600 */
-}
-
-.menu-btn.active lucide-icon,
-.menu-btn.active ng-icon {
-     color: #16a34a;
+/* ============================================
+   CODE BLOCK STYLES
+   ============================================ */
+code[class*="language-"],
+pre[class*="language-"] {
+     background-color: white !important;
+     text-shadow: none !important;
 }

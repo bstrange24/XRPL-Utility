@@ -37,11 +37,6 @@
 <div class="mt-4 flex items-center justify-between gap-3">
      <div class="flex items-center gap-2">
           <button type="button" class="btn-primary" (click)="walletConfiguratorComponent.deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
-          <!-- <span class="hidden sm:inline text-xs text-gray-400"> {{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Ready' }} </span> -->
      </div>
-
-     <!-- <div class="flex items-center gap-2">
-          <button type="button" class="btn-secondary" (click)="walletConfiguratorComponent.clearFields(true)">Clear Fields</button>
-     </div> -->
 </div>
 }

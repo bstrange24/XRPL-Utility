@@ -54,8 +54,10 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      public readonly walletsViewModelService = inject(WalletsViewModelService);
      public readonly walletConfiguratorOrchestrator = inject(WalletConfiguratorOrchestratorService);
      private rightPanelService = inject(RightPanelService);
-     readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;
+     // readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
+     // readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;
+     menuTabs = WALLET_GENERATOR_TABS;
+     tabMeta = WALLET_GENERATOR_TAB_META;
 
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      destinations = computed(() => [...this.customDestinations()]);
