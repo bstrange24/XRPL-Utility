@@ -1,4 +1,3 @@
-// tab-menu-with-info.component.ts
 import { ChangeDetectionStrategy, Component, input, output, computed, inject } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';

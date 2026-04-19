@@ -6,6 +6,34 @@
 @tailwind utilities;
 
 /* ============================================
+   BASE TYPOGRAPHY & SCALING
+   ============================================ */
+
+html {
+    font-size: 14.5px;        /* ← This is the main fix */
+    /* Try 14px if still too big, or 15px if too small */
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Optional: Make it even tighter on larger screens */
+@media (min-width: 1024px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+/* Form inputs */
+.form-input {
+    @apply w-full rounded-2xl border border-gray-300 px-4 py-2.5 text-sm 
+           focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all;
+}
+
+/* ============================================
    DARK MODE BASE STYLES
    ============================================ */
 .dark {
@@ -121,19 +149,25 @@
      color: var(--color-amber-400);
 }
 
+.dark .btn-blue { @apply hover:bg-blue-500 active:bg-blue-600 focus:ring-blue-400; }
+.dark .btn-red { @apply hover:bg-red-500 active:bg-red-600 focus:ring-red-400; }
+.dark .btn-purple { @apply hover:bg-purple-500 active:bg-purple-600 focus:ring-purple-400; }
+.dark .btn-amber { @apply hover:bg-amber-500 active:bg-amber-600 focus:ring-amber-400; }
+
 /* ============================================
    MENU BUTTON STYLES
    ============================================ */
 .menu-bar {
-     background-color: #f3f4f6;
+     /* background-color: #f3f4f6; */
+     background-color: #fff;
 }
 
 .menu-btn {
      background-color: transparent;
      color: #6b7280;
      transition: all 0.2s ease;
-     padding: 0.5rem 1rem;
      border-radius: 14px;
+     padding: 0.45rem 0.9rem;
      font-size: 0.875rem;
      font-weight: 500;
      display: flex;
@@ -184,12 +218,42 @@
    BUTTON STYLES
    ============================================ */
 .btn-primary {
-     @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-green-600 text-white font-semibold 
+          hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 
+          disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
 }
 
-.btn-primary-red {
-     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+/* Blue */
+.btn-blue {
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold 
+            hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 
+            disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
 }
+
+/* Red */
+.btn-red {
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold 
+            hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md transition-all duration-200 
+            disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+}
+
+/* Purple */
+.btn-purple {
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-purple-600 text-white font-semibold 
+            hover:bg-purple-700 active:bg-purple-800 shadow-sm hover:shadow-md transition-all duration-200 
+            disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+}
+
+/* Amber / Orange */
+.btn-amber {
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-amber-600 text-white font-semibold 
+            hover:bg-amber-700 active:bg-amber-800 shadow-sm hover:shadow-md transition-all duration-200 
+            disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
+}
+
+/* .btn-primary-red {
+     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+} */
 
 .btn-secondary {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
@@ -322,7 +386,7 @@ input:checked+.slider:before {
    UTILITY CLASSES
    ============================================ */
 .card {
-     @apply bg-white rounded-2xl shadow p-3;
+    @apply bg-white rounded-2xl shadow p-4;   /* was p-3 */
 }
 
 .navbar-container {
@@ -381,4 +445,27 @@ code[class*="language-"],
 pre[class*="language-"] {
      background-color: white !important;
      text-shadow: none !important;
+}
+
+/* Add these rules */
+.wallet-item {
+    min-height: 68px;           /* prevents jumping */
+}
+
+.wallet-item p {
+    line-height: 1.25;
+}
+
+/* Make sure long wallet names don't break layout */
+.truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive wallet grid/list */
+.wallets-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
 }

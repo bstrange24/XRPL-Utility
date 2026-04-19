@@ -7,8 +7,8 @@ import { animate, style, transition, trigger } from '@angular/animations';
      imports: [NgIcon],
      templateUrl: './send-xrp-requirements-info.component.html',
      styleUrl: './send-xrp-requirements-info.component.css',
-     changeDetection: ChangeDetectionStrategy.OnPush,
      animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('300ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('250ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
+     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpRequirementsInfoComponent {
      activeTab = input.required<'sendXrp'>();
