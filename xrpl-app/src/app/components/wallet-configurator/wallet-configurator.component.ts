@@ -10,8 +10,6 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
@@ -22,7 +20,6 @@ import { TransactionDropdownService } from '../../services/transaction-dropdown/
 import { ActivatedRoute } from '@angular/router';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
-import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WALLET_GENERATOR_TAB_META, WALLET_GENERATOR_TABS } from './constants/wallet-generator.ui';
 import { WALLET_GENERATOR_TAB } from './constants/wallet-generator.constants';
@@ -38,11 +35,12 @@ import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wa
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-wallet-configurator',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, WalletGeneratorRequirementsInfoComponent, WalletDeriveSeedComponent, WalletDeriveMnemonicComponent, WalletDeriveSecretNumbersComponent, WalletRemoveCustomWalletComponent, WalletGenerateComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, WalletDeriveSeedComponent, WalletDeriveMnemonicComponent, WalletDeriveSecretNumbersComponent, WalletRemoveCustomWalletComponent, WalletGenerateComponent],
      templateUrl: './wallet-configurator.component.html',
      styleUrl: './wallet-configurator.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,7 +53,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
      public readonly walletConfiguratorOrchestrator = inject(WalletConfiguratorOrchestratorService);
-
+     private rightPanelService = inject(RightPanelService);
      readonly menuTabs: TabConfig[] = WALLET_GENERATOR_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = WALLET_GENERATOR_TAB_META;
 
@@ -72,6 +70,10 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.transactionDropdownService.loadCustomDestinations();
           this.walletsStoreService.resetAll();
           this.walletsStoreService.setField('secp256k1_encryption_type', true);
+
+          this.rightPanelService.setPanel(WalletGeneratorRequirementsInfoComponent, {
+               activeTab: this.walletsViewModelService.activeTab,
+          });
      }
 
      onWalletSelected(wallet: Wallet): void {

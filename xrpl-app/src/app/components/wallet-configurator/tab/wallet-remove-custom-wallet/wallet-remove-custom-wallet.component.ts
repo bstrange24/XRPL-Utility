@@ -18,6 +18,7 @@ import { ActivatedRoute } from '@angular/router';
 import { WalletsStoreService } from '../../../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../../../../services/wallets/wallets-util/wallets-util.service';
 import { WalletsViewModelService } from '../../../../services/wallets/wallets-view-model/wallets-view-model.service';
+import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
 
 @Component({
      selector: 'app-wallet-remove-custom-wallet',
@@ -30,7 +31,7 @@ import { WalletsViewModelService } from '../../../../services/wallets/wallets-vi
 export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
-
+     public readonly WalletConfiguratorComponent = inject(WalletConfiguratorComponent);
      typedDestination = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {

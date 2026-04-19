@@ -8,12 +8,95 @@
 @tailwind components;
 @tailwind utilities;
 
-.navbar-container {
-     width: 100%;
+/* Add to your global styles.css or tab-with-info.component.css */
+
+/* Light theme defaults */
+:root {
+     --color-green-600: #16a34a;
+     --color-blue-600: #2563eb;
+     --color-red-600: #dc2626;
+     --color-purple-600: #9333ea;
+     --color-amber-600: #d97706;
 }
 
-.btn-primary {
-     @apply bg-green-600 hover:bg-green-700 text-white font-medium px-5 py-2.5 rounded-xl shadow disabled:opacity-50;
+/* Dark theme */
+.dark {
+     --color-green-400: #4ade80;
+     --color-blue-400: #60a5fa;
+     --color-red-400: #f87171;
+     --color-purple-400: #c084fc;
+     --color-amber-400: #fbbf24;
+}
+
+/* Utility classes for text colors */
+.text-green-600 {
+     color: var(--color-green-600);
+}
+
+.text-blue-600 {
+     color: var(--color-blue-600);
+}
+
+.text-red-600 {
+     color: var(--color-red-600);
+}
+
+.text-purple-600 {
+     color: var(--color-purple-600);
+}
+
+.text-amber-600 {
+     color: var(--color-amber-600);
+}
+
+.dark .text-green-400 {
+     color: var(--color-green-400);
+}
+
+.dark .text-blue-400 {
+     color: var(--color-blue-400);
+}
+
+.dark .text-red-400 {
+     color: var(--color-red-400);
+}
+
+.dark .text-purple-400 {
+     color: var(--color-purple-400);
+}
+
+.dark .text-amber-400 {
+     color: var(--color-amber-400);
+}
+
+/* Menu button styling */
+.menu-btn {
+     transition: all 0.2s ease;
+}
+
+.menu-btn.active {
+     background-color: white;
+     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+     color: #16a34a;
+}
+
+.dark .menu-btn.active {
+     background-color: #1f2937;
+     color: #34d399;
+}
+
+.menu-btn.active lucide-icon,
+.menu-btn.active ng-icon {
+     color: #16a34a;
+}
+
+.dark .menu-btn.active lucide-icon,
+.dark .menu-btn.active ng-icon {
+     color: #34d399;
+}
+
+.navbar-container {
+     width: 100%;
 }
 
 .card {
@@ -137,20 +220,12 @@ input:checked+.slider:before {
      @apply h-8 text-sm;
 }
 
-/* .icon-btn {
-     @apply transition-all duration-200;
-}
-
-.icon-btn:hover {
-     @apply scale-105;
-}
-
-.icon-btn:active {
-     @apply scale-95;
-} */
-
 .btn-primary {
      @apply inline-flex items-center justify-center px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+}
+
+.btn-primary-red {
+     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-secondary {
@@ -220,4 +295,20 @@ pre[class*="language-"] {
 /* Active state for dropdown items */
 .dropdown-item.bg-green-50 {
      background-color: rgb(240 253 244);
+}
+
+.menu-btn {
+     transition: all 0.2s ease;
+}
+
+.menu-btn.active {
+     background-color: white;
+     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+     color: #16a34a;
+     /* green-600 */
+}
+
+.menu-btn.active lucide-icon,
+.menu-btn.active ng-icon {
+     color: #16a34a;
 }

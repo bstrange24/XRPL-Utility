@@ -21,4 +21,10 @@ export class WalletDeriveMnemonicComponent {
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
+
+     onMnemonicInput(event: Event): void {
+          const target = event.target as HTMLTextAreaElement;
+          this.walletsStoreService.setField('mnemonic', target.value);
+          this.walletsUtilService.onMnemonicInput();
+     }
 }

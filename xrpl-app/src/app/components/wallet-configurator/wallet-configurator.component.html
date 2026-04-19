@@ -1,59 +1,41 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
+<!-- Three-column layout matching Send XRP styling -->
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          @let tabs = menuTabs;
+          <app-tab-menu-with-info [tabs]="tabs" [active]="walletsViewModelService.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               @let tabs = menuTabs;
-               <app-tab-menu-with-info [tabs]="tabs" [active]="walletsViewModelService.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Derive Seed -->
+               <app-wallet-derive-seed></app-wallet-derive-seed>
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
+               <!-- Derive Mnemonic -->
+               <app-wallet-derive-mnemonic></app-wallet-derive-mnemonic>
 
-               <form #theForm="ngForm" class="main-form">
-                    <!-- Derive Seed -->
-                    <app-wallet-derive-seed></app-wallet-derive-seed>
+               <!-- Derive Secret Numbers -->
+               <app-wallet-derive-secret-numbers></app-wallet-derive-secret-numbers>
 
-                    <!-- Derive Mnemonic -->
-                    <app-wallet-derive-mnemonic></app-wallet-derive-mnemonic>
+               <!-- Remove custom wallets -->
+               <app-wallet-remove-custom-wallet></app-wallet-remove-custom-wallet>
 
-                    <!-- Derive Secret Numbers -->
-                    <app-wallet-derive-secret-numbers></app-wallet-derive-secret-numbers>
+               <!-- Generate buttons -->
+               <app-wallet-generate></app-wallet-generate>
 
-                    <!-- Remove custom wallets -->
-                    <app-wallet-remove-custom-wallet></app-wallet-remove-custom-wallet>
-
-                    <!-- Generate buttons -->
-                    <app-wallet-generate></app-wallet-generate>
-
-                    <!-- Remove custom wallets button -->
-                    @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-                    <div class="button-row" style="margin-top: 0em">
-                         <button type="button" class="btn-primary-red" (click)="removeCustomWallet()" [disabled]="!walletsStoreService.selectedAddress()">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
-                    </div>
-                    }
-               </form>
-
-               <!-- Execution time -->
-               <app-execution-time-display [time]="walletConfiguratorOrchestrator.executionTimeValue()"></app-execution-time-display>
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-4">
+                    <app-execution-time-display [time]="walletConfiguratorOrchestrator.executionTimeValue()"></app-execution-time-display>
+               </div>
 
                <!-- Transaction Preview -->
-               <app-transaction-preview></app-transaction-preview>
-          </div>
-
-          <app-wallet-generator-requirements-info></app-wallet-generator-requirements-info>
+               <div class="pt-2">
+                    <app-transaction-preview></app-transaction-preview>
+               </div>
+          </form>
      </div>
 </div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -9,4 +9,9 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './wallet-generator-requirements-info.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WalletGeneratorRequirementsInfoComponent {}
+export class WalletGeneratorRequirementsInfoComponent {
+     activeTab = input.required<'generate'>();
+
+     // Collapsible state
+     isExpanded = signal(false);
+}

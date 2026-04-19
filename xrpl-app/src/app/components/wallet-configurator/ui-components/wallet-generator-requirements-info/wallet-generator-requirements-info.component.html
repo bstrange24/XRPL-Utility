@@ -1,76 +1,100 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>XRPL Wallet Configurator</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">XRPL Wallet Configurator</span>
+          </div>
 
-     <p class="info-subtitle">Generate a fresh XRPL wallet or derive an existing one from a family seed, mnemonic phrase, or secret numbers. Choose between ed25519 (faster, modern default in many libs) or secp256k1 (Bitcoin-compatible, default in rippled & Xaman/Xumm). All operations happen client-side — never share your seed, mnemonic, or numbers.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🆕 Generate New Wallet</span>
-                    <span class="badge required-badge">Random Seed</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Algorithm</span>
-                         <span class="field-status required">✅ Required (ed25519 or secp256k1)</span>
+     <!-- Collapsible Content with Animation -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <p class="text-sm text-gray-600">Generate a fresh XRPL wallet or derive an existing one from a family seed, mnemonic phrase, or secret numbers. Choose between ed25519 (faster, modern default in many libs) or secp256k1 (Bitcoin-compatible, default in rippled & Xaman/Xumm). All operations happen client-side — never share your seed, mnemonic, or numbers.</p>
+          </div>
+
+          <!-- Generate New Wallet Card -->
+          <div class="border border-green-200 rounded-xl overflow-hidden bg-green-50/30">
+               <div class="px-4 py-3 bg-green-50 border-b border-green-200">
+                    <div class="flex flex-wrap items-center gap-2">
+                         <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-lg">🆕 Generate New Wallet</span>
+                         <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-lg">Random Seed</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Output</span>
-                         <span class="field-status optional">➕ Address + Seed (sEd... for ed25519, s... for secp256k1)</span>
+               </div>
+               <div class="p-4 space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5 border-b border-gray-100 last:border-0">
+                         <span class="text-sm font-medium text-gray-600">Algorithm</span>
+                         <span class="text-sm text-green-700">✅ Required (ed25519 or secp256k1)</span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5">
+                         <span class="text-sm font-medium text-gray-600">Output</span>
+                         <span class="text-sm text-gray-700">➕ Address + Seed (sEd... for ed25519, s... for secp256k1)</span>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔑 Derive Existing Wallet</span>
-                    <span class="badge optional-badge">From Secret Input</span>
+          <!-- Derive Existing Wallet Card -->
+          <div class="border border-purple-200 rounded-xl overflow-hidden bg-purple-50/30">
+               <div class="px-4 py-3 bg-purple-50 border-b border-purple-200">
+                    <div class="flex flex-wrap items-center gap-2">
+                         <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-lg">🔑 Derive Existing Wallet</span>
+                         <span class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-lg">From Secret Input</span>
+                    </div>
                </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Family Seed</span>
-                         <span class="field-status optional">➕ s... or sEd... format</span>
+               <div class="p-4 space-y-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5 border-b border-gray-100">
+                         <span class="text-sm font-medium text-gray-600">Family Seed</span>
+                         <span class="text-sm text-gray-700">➕ s... or sEd... format</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Mnemonic (24 words)</span>
-                         <span class="field-status optional">➕ BIP-39 style (always secp256k1)</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5 border-b border-gray-100">
+                         <span class="text-sm font-medium text-gray-600">Mnemonic (24 words)</span>
+                         <span class="text-sm text-gray-700">➕ BIP-39 style (always secp256k1)</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Secret Numbers (8×6 digits)</span>
-                         <span class="field-status optional">➕ Always secp256k1 (Xumm-compatible)</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5 border-b border-gray-100">
+                         <span class="text-sm font-medium text-gray-600">Secret Numbers (8×6 digits)</span>
+                         <span class="text-sm text-gray-700">➕ Always secp256k1 (Xumm-compatible)</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Algorithm override</span>
-                         <span class="field-status omitted">❌ Limited (mnemonic/secret nums fixed to secp256k1)</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between py-1.5">
+                         <span class="text-sm font-medium text-gray-600">Algorithm override</span>
+                         <span class="text-sm text-red-600">❌ Limited (mnemonic/secret nums fixed to secp256k1)</span>
                     </div>
                </div>
           </div>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>All derivation and generation is done **client-side** — your secrets never leave your device or get sent to any server.</li>
-                    <li><strong>ed25519</strong>: Faster signing, shorter keys (prefixed 0xED), default in many JS libs like xrpl.js — seed starts with <code>sEd</code>.</li>
-                    <li><strong>secp256k1</strong>: Bitcoin-style, default in rippled wallet_propose and Xaman/Xumm — seed starts with <code>s</code> (non-ed).</li>
-                    <li>Mnemonics (24 words) and Secret Numbers (8 groups of 6 digits) **always derive secp256k1** keys to match popular wallet standards (e.g., Xumm).</li>
+          <!-- Important Notes Section -->
+          <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+               <h4 class="font-semibold text-blue-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+
+               <ul class="text-sm text-blue-700 space-y-3 list-disc pl-5">
+                    <li>All derivation and generation is done <strong>client-side</strong> — your secrets never leave your device or get sent to any server.</li>
+                    <li><strong>ed25519</strong>: Faster signing, shorter keys (prefixed 0xED), default in many JS libs like xrpl.js — seed starts with <code class="px-1.5 py-0.5 bg-blue-100 rounded text-xs font-mono">sEd</code>.</li>
+                    <li><strong>secp256k1</strong>: Bitcoin-style, default in rippled wallet_propose and Xaman/Xumm — seed starts with <code class="px-1.5 py-0.5 bg-blue-100 rounded text-xs font-mono">s</code> (non-ed).</li>
+                    <li>Mnemonics (24 words) and Secret Numbers (8 groups of 6 digits) <strong>always derive secp256k1</strong> keys to match popular wallet standards (e.g., Xumm).</li>
                     <li>Family seeds can use either algorithm — specify explicitly to avoid address mismatches across tools.</li>
-                    <li>Generated/derived wallets show classic r... address + (for new) the secret seed — **back it up securely offline** (paper, metal, etc.).</li>
-                    <li>Removing custom wallets only clears local dropdown entries — it does **not** affect on-ledger accounts or funds.</li>
+                    <li>Generated/derived wallets show classic r... address + (for new) the secret seed — <strong>back it up securely offline</strong> (paper, metal, etc.).</li>
+                    <li>Removing custom wallets only clears local dropdown entries — it does <strong>not</strong> affect on-ledger accounts or funds.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Critical Security & Irreversibility Warnings</h5>
-               <p style="color: #92400e">Your seed, mnemonic, or secret numbers grant full control over the account — exposure = permanent fund loss.</p>
-               <ul>
+          </div>
+
+          <!-- Critical Security Warning Section -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">⚠️ Critical Security & Irreversibility Warnings</h4>
+
+               <p class="text-sm text-amber-800 mb-3 font-medium">Your seed, mnemonic, or secret numbers grant full control over the account — exposure = permanent fund loss.</p>
+
+               <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
                     <li><strong>Never share</strong> your seed/mnemonic/secret numbers — scammers impersonate support to steal them.</li>
-                    <li>Once generated or derived, the wallet is **live on the XRPL** if funded — lost secrets mean **permanent loss of access** (no recovery by anyone, including Ripple or this app).</li>
-                    <li>Algorithm mismatch (e.g., deriving secp256k1 seed as ed25519) produces a **different address** — always verify the address matches your expected one before funding or using.</li>
-                    <li>Do **not** generate wallets on untrusted/compromised devices — malware can steal secrets during generation/derivation.</li>
-                    <li>Secret Numbers and Mnemonics are **fixed to secp256k1** — you cannot force ed25519 on them.</li>
-                    <li>Test derivation on devnet/Testnet first if possible; back up secrets immediately and securely — there is **no undo** for lost keys.</li>
+                    <li>Once generated or derived, the wallet is <strong>live on the XRPL</strong> if funded — lost secrets mean <strong>permanent loss of access</strong> (no recovery by anyone, including Ripple or this app).</li>
+                    <li>Algorithm mismatch (e.g., deriving secp256k1 seed as ed25519) produces a <strong>different address</strong> — always verify the address matches your expected one before funding or using.</li>
+                    <li>Do <strong>not</strong> generate wallets on untrusted/compromised devices — malware can steal secrets during generation/derivation.</li>
+                    <li>Secret Numbers and Mnemonics are <strong>fixed to secp256k1</strong> — you cannot force ed25519 on them.</li>
+                    <li>Test derivation on devnet/Testnet first if possible; back up secrets immediately and securely — there is <strong>no undo</strong> for lost keys.</li>
                </ul>
           </div>
      </div>
+     }
 </div>

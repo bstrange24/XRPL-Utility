@@ -35,20 +35,13 @@
                >
                </app-send-xrp-form>
 
-               <!-- Buttons -->
-               <div class="mt-0 flex items-center justify-between gap-3">
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- LEFT: primary action -->
-                    <div class="flex items-center gap-2">
-                         <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">{{ sendXrpUtilService.sendButtonLabel() }}</button>
-                         <!-- Optional status hint (future spinner hook) -->
-                         <span class="hidden sm:inline text-xs text-gray-400"> {{ isIdle() ? 'Ready' : 'Processing...' }} </span>
-                    </div>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
 
-                    <!--  RIGHT: secondary / utility actions -->
-                    <div class="flex items-center gap-2">
-                         <!-- Future-safe slot (preview, simulate, etc.) -->
-                         <button type="button" class="btn-ghost" disabled>Preview</button>
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
+                    <!-- RIGHT: secondary / utility actions -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
                </div>
 

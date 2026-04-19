@@ -21,4 +21,11 @@ export class WalletDeriveSecretNumbersComponent {
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
+
+     // In WalletDeriveSecretNumbersComponent
+     onSecretNumberInput(event: Event): void {
+          const target = event.target as HTMLInputElement;
+          this.walletsStoreService.setField('secretNumbers', target.value);
+          this.walletsUtilService.onSecretNumberInput();
+     }
 }

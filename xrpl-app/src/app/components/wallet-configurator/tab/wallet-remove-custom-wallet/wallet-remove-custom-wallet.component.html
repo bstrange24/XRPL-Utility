@@ -1,9 +1,31 @@
 @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">Custom Wallets</label>
-          <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" />
+<!-- Remove Custom Wallets Section -->
+<div class="space-y-4">
+     <!-- Dropdown Label -->
+     <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Custom Wallets</label>
+          <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+     </div>
+
+     <!-- Selected Wallet Display -->
+     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <span class="text-sm text-gray-600">Selected:</span>
+          <code class="text-sm font-mono text-gray-900 break-all text-right max-w-[70%]"> {{ walletsStoreService.selectedAddress() || 'No wallet selected' }} </code>
      </div>
 </div>
-<div style="margin: 10px 0; font-size: 0.9em; color: #555">Selected: <strong>{{ walletsStoreService.selectedAddress() || '' }}</strong></div>
+
+<!-- Button Row matching Send XRP exactly -->
+<div class="mt-4 flex items-center justify-between gap-3">
+     <!-- LEFT: primary action -->
+     <div class="flex items-center gap-2">
+          <button type="button" class="btn-primary-red" (click)="WalletConfiguratorComponent.removeCustomWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+          <!-- <span class="hidden sm:inline text-xs text-gray-400"> {{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Ready' }} </span> -->
+     </div>
+
+     <!-- RIGHT: secondary / utility actions -->
+     <!-- <div class="flex items-center gap-2">
+          <button type="button" class="btn-ghost" disabled>Preview</button>
+          <button type="button" (click)="WalletConfiguratorComponent.clearFields(true)" class="btn-secondary">Clear Fields</button>
+     </div> -->
+</div>
 }

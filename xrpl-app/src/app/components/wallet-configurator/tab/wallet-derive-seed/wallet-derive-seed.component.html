@@ -1,41 +1,64 @@
 @if (walletsViewModelService.activeTab() === 'deriveSeed') {
-<div class="form-row">
-     <div class="form-group">
-          <label for="enterSeed">Enter Seed</label>
+<!-- Seed Input Section -->
+<div class="space-y-4">
+     <!-- Label Row with Validation Status -->
+     <div class="flex items-center justify-between">
+          <label class="block text-sm font-medium text-gray-700">Enter Seed</label>
           @if (walletsStoreService.seedInput().length > 0) {
-          <label for="seed">
-               <span [ngClass]="{ valid: walletsStoreService.seedValid(), invalid: !walletsStoreService.seedValid() }"> {{ walletsStoreService.seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }} </span>
-          </label>
+          <span
+               [ngClass]="{
+                         'text-green-600': walletsStoreService.seedValid(), 
+                         'text-red-600': !walletsStoreService.seedValid()
+                    }"
+               class="text-xs font-medium"
+          >
+               {{ walletsStoreService.seedValid() ? 'Seed Valid ✅' : 'Invalid Seed ❌' }}
+          </span>
           }
      </div>
-</div>
 
-<div class="form-row">
-     <div class="form-group">
-          <input type="text" [value]="walletsStoreService.seed()" (input)="walletsStoreService.setField('seed', $event.target.value); walletsUtilService.onSeedInput()" name="seed" placeholder="Paste your family seed here..." />
-          <small class="helper-text">
+     <!-- Input Field -->
+     <div>
+          <input #seedInput type="text" [value]="walletsStoreService.seed()" (input)="walletsStoreService.setField('seed', seedInput.value); walletsUtilService.onSeedInput()" name="seed" placeholder="Paste your family seed here..." class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent font-mono text-sm" />
+
+          <p class="mt-8 pt-2 text-xs text-gray-500">
                Example format:
-               <code>sEddddddddddddddddddddddddda</code>
-          </small>
+               <code class="block mt-1 p-2 bg-gray-50 rounded-lg text-gray-600 text-xs break-all"> sEddddddddddddddddddddddddda </code>
+          </p>
      </div>
 </div>
-} @if (walletsViewModelService.activeTab() === 'deriveSeed') {
-<div class="switch-group">
-     <label class="switch">
-          <input type="radio" [checked]="walletsStoreService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" />
-          <span class="slider"></span>
-          ED25519
-     </label>
 
-     <label class="switch">
-          <input type="radio" [checked]="walletsStoreService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" />
-          <span class="slider"></span>
-          SECP256K1
-     </label>
+<!-- Encryption Type Toggle - Card Style -->
+<div class="grid grid-cols-2 gap-3 mt-4">
+     <div class="border rounded-xl p-3 cursor-pointer transition-all" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.bg-green-50]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-200]="!walletsStoreService.ed25519_encryption_type()" (click)="walletsUtilService.setEncryption('ed25519')">
+          <div class="flex items-center gap-2">
+               <input type="radio" [checked]="walletsStoreService.ed25519_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('ed25519')" class="w-4 h-4 text-green-600 focus:ring-green-500" />
+               <span class="text-sm font-medium text-gray-700">ED25519</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1 ml-6">Modern encryption, faster transactions</p>
+     </div>
+
+     <div class="border rounded-xl p-3 cursor-pointer transition-all" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.bg-green-50]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-200]="!walletsStoreService.secp256k1_encryption_type()" (click)="walletsUtilService.setEncryption('secp256k1')">
+          <div class="flex items-center gap-2">
+               <input type="radio" [checked]="walletsStoreService.secp256k1_encryption_type()" name="encryptionType" (change)="walletsUtilService.setEncryption('secp256k1')" class="w-4 h-4 text-green-600 focus:ring-green-500" />
+               <span class="text-sm font-medium text-gray-700">SECP256K1</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1 ml-6">Legacy encryption, widely compatible</p>
+     </div>
 </div>
-} @if (walletsViewModelService.activeTab() === 'deriveSeed') {
-<div class="button-row" style="margin-top: 0em">
-     <button type="button" class="btn-primary-blue" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
-     <button type="button" class="btn-secondary-clear-fields" (click)="walletConfiguratorComponent.clearFields(true)">Clear Fields</button>
+
+<!-- Button Row matching Send XRP exactly -->
+<div class="mt-4 flex items-center justify-between gap-3">
+     <!-- LEFT: primary action -->
+     <div class="flex items-center gap-2">
+          <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading" class="btn-primary">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+          <!-- <span class="hidden sm:inline text-xs text-gray-400"> {{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Ready' }} </span> -->
+     </div>
+
+     <!-- RIGHT: secondary / utility actions -->
+     <!-- <div class="flex items-center gap-2">
+          <button type="button" class="btn-ghost" disabled>Preview</button>
+          <button type="button" (click)="walletConfiguratorComponent.clearFields(true)" class="btn-secondary">Clear Fields</button>
+     </div> -->
 </div>
 }
