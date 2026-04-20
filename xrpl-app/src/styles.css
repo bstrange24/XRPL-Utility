@@ -8,11 +8,8 @@
 /* ============================================
    BASE TYPOGRAPHY & SCALING
    ============================================ */
-
 html {
      font-size: 15.0px;
-     /* ← This is the main fix */
-     /* Try 14px if still too big, or 15px if too small */
 }
 
 body {
@@ -232,29 +229,21 @@ body {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
 }
 
-/* Blue */
 .btn-blue {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
 }
 
-/* Red */
 .btn-red {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
 }
 
-/* Purple */
 .btn-purple {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700 active:bg-purple-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
 }
 
-/* Amber / Orange */
 .btn-amber {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-amber-600 text-white font-semibold hover:bg-amber-700 active:bg-amber-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
 }
-
-/* .btn-primary-red {
-     @apply px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
-} */
 
 .btn-secondary {
      @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;

@@ -21,7 +21,7 @@ export const WALLET_GENERATOR_TABS: {
      },
      {
           key: WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_SEED,
-          label: 'Derive Wallet from Seed',
+          label: 'Derive from Seed',
           icon: 'heroWallet',
           iconType: 'ng-icon',
           color: '#3b82f6',
@@ -29,7 +29,7 @@ export const WALLET_GENERATOR_TABS: {
      },
      {
           key: WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_MNEMONIC,
-          label: 'Derive Wallet from Mnemonic',
+          label: 'Derive from Mnemonic',
           icon: 'heroWallet',
           iconType: 'ng-icon',
           color: '#3b82f6',
@@ -37,7 +37,7 @@ export const WALLET_GENERATOR_TABS: {
      },
      {
           key: WALLET_GENERATOR_CONFIG_TX_DISPLAY_TYPES.DERIVE_SECRET_NUMBERS,
-          label: 'Derive Wallet from Secret Numbers',
+          label: 'Derive from Secret Numbers',
           icon: 'heroWallet',
           iconType: 'ng-icon',
           color: '#3b82f6',

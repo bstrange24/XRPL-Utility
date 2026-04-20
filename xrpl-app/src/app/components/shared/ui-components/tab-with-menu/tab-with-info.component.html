@@ -1,7 +1,7 @@
-<div class="form-panel-header border-white-100 dark:border-gray-700 rounded-t-3xl px-1 py-3">
+<div class="form-panel-header border-white-100 rounded-t-3xl px-1 py-3">
      <!-- Tabs -->
      @if (tabs().length > 0) {
-     <div class="menu-bar flex gap-1 bg-white dark:bg-gray-800 p-1 rounded-2xl w-fit mb-2">
+     <div class="menu-bar flex gap-1 bg-white p-1 rounded-2xl w-fit mb-2">
           @for (tab of tabs(); track tab.key) {
           <button class="menu-btn px-4 py-2 rounded-[14px] text-sm font-medium transition-all flex items-center gap-1.5" [class.active]="active() === tab.key" (click)="activeChange.emit(tab.key)" type="button">
                @if (tab.iconType === 'ng-icon') {
@@ -26,8 +26,8 @@
                }
           </div>
           <div>
-               <h2 class="text-2xl font-semibold text-black-900 dark:text-white" style="margin-bottom: 1px">{{ currentMeta()!.title }}</h2>
-               <p class="text-black-600 dark:text-gray-400 mt-1 leading-relaxed">{{ currentMeta()!.desc }}</p>
+               <h2 class="text-2xl font-semibold text-gray-900" style="margin-bottom: 1px">{{ currentMeta()!.title }}</h2>
+               <p class="text-gray-600 mt-1 leading-relaxed">{{ currentMeta()!.desc }}</p>
           </div>
      </div>
      }
