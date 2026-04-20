@@ -2,7 +2,7 @@
 <div class="combobox-container relative w-full">
      <!-- Input -->
      <div class="relative">
-          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="w-full bg-white border border-gray-300 rounded-2xl px-4 py-3.5 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all" autocomplete="off" [disabled]="isDisabled()" />
+          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="w-full bg-white border border-gray-300 rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500 transition-all" autocomplete="off" [disabled]="isDisabled()" />
 
           <button type="button" (click)="toggle()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                <lucide-icon name="chevron-down" size="18"></lucide-icon>

@@ -133,4 +133,6 @@ export class TransactionOptionsComponent {
 
           this.xrplTxOptionsStore.setField('isRegularKeyAddress', enabled);
      }
+
+     hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket());
 }

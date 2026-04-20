@@ -1,161 +1,182 @@
 <div class="w-full h-full flex flex-col bg-white border-r border-gray-100 rounded-2xl overflow-hidden">
-     <!-- Header -->
-     <div class="p-4 border-b border-gray-100 flex flex-col gap-3">
+     <!-- Collapsible Header -->
+     <!-- Collapsible Header -->
+     <button (click)="isWalletPanelExpanded.set(!isWalletPanelExpanded())" class="w-full bg-white border-b border-gray-100 px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all text-left">
+          <!-- First Row: Icon + Title + Chevron -->
           <div class="flex items-center justify-between">
-               <h2 class="text-lg font-semibold flex items-center gap-2">
-                    <lucide-icon name="wallet" size="22" class="text-green-600"></lucide-icon>
-                    Accounts
-               </h2>
+               <div class="flex items-center gap-3">
+                    <lucide-icon name="wallet" size="22" class="text-green-600" />
+                    <span class="font-semibold text-gray-900">Accounts</span>
+               </div>
 
-               <div class="flex items-center gap-2">
-                    <!-- Collapse All button -->
-                    <button (click)="collapseAllWallets()" class="px-2 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-colors" title="Collapse all wallets">
-                         <lucide-icon name="chevron-up" size="16" />
-                    </button>
+               <ng-icon [name]="isWalletPanelExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+          </div>
 
+          <!-- Second Row: Count + Current Wallet (below the title) -->
+          @if (hasWallets) {
+          <div class="mt-2 text-xs text-gray-500 font-mono space-y-0.5">
+               <div>{{ wallets.length }} {{ wallets.length === 1 ? 'account' : 'accounts' }}</div>
+               <div class="truncate">Currently Selected Account: {{ currentWallet?.name ?? (currentWallet?.address | slice:0:12) + '...' }}</div>
+          </div>
+          }
+     </button>
+
+     @if (isWalletPanelExpanded()) {
+     <div [@expandCollapse] class="flex-1 flex flex-col overflow-hidden">
+          <!-- Header -->
+          <div class="p-4 border-b border-gray-100 flex flex-col gap-3">
+               <!-- Header Row -->
+               <div class="flex items-center justify-between">
+                    <!-- Generate Button - Left Side -->
                     <button (click)="generateNewAccount()" class="px-3 py-2 text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-2xl transition-colors disabled:opacity-50 flex items-center gap-2">
                          <lucide-icon name="plus" size="16" />
                          Generate
                     </button>
+
+                    <!-- Collapse All Button - Far Right -->
+                    <button (click)="collapseAllWallets()" class="px-2 py-2 text-sm font-medium bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-2xl transition-colors" title="Collapse all wallets">
+                         <lucide-icon name="chevron-up" size="16" />
+                    </button>
                </div>
+
+               <!-- Description Text -->
+               <p class="text-xs text-gray-500 leading-relaxed">Generate {{ environment() }} accounts with XRP from the faucet. You can also generate or derive accounts in the 'Wallets' Menu.</p>
           </div>
 
-          <p class="text-xs text-gray-500 leading-relaxed">Generate {{ environment() }} accounts with XRP from the faucet. You can also generate or derive accounts in the 'Wallets' Menu.</p>
-     </div>
-
-     <!-- Wallet List -->
-     <div class="flex-1 overflow-y-auto p-2 space-y-3">
-          @if (hasWallets) { @for (wallet of wallets; track wallet.address; let i = $index) {
-          <div class="group rounded-xl border border-gray-200 transition-all" [class.border-blue-300]="selectedWalletIndex === i && isWalletExpanded(i)" [class.bg-blue-50]="selectedWalletIndex === i && isWalletExpanded(i)">
-               <!-- Collapsible Header (always visible) -->
-               <!-- Collapsible Header (always visible) -->
-               <div class="p-4 hover:bg-gray-50 rounded-xl transition-colors" [class.rounded-b-none]="isWalletExpanded(i)" [class.cursor-pointer]="!editingIndex(i)" (click)="!editingIndex(i) && toggleWalletExpansion(i)">
-                    <!-- Wallet Name Row -->
-                    <div class="flex items-center justify-between gap-2 mb-2">
-                         <div class="flex items-center gap-2 flex-1 min-w-0">
-                              <lucide-icon [name]="isWalletExpanded(i) ? 'chevron-down' : 'chevron-right'" size="18" class="text-gray-400 flex-shrink-0" />
-
-                              @if (editingIndex(i)) {
-                              <div class="flex-1 min-w-0">
-                                   <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" (click)="$event.stopPropagation()" class="w-full border border-gray-300 rounded-xl px-2 py-1 text-sm focus:outline-none focus:border-green-500" />
-                              </div>
-                              } @else {
+          <!-- Wallet List -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-3">
+               @if (hasWallets) { @for (wallet of wallets; track wallet.address; let i = $index) {
+               <div class="group rounded-xl border border-gray-200 transition-all" [class.border-blue-300]="selectedWalletIndex === i && isWalletExpanded(i)" [class.bg-blue-50]="selectedWalletIndex === i && isWalletExpanded(i)">
+                    <!-- Collapsible Header (always visible) -->
+                    <div class="p-4 hover:bg-gray-50 rounded-xl transition-colors" [class.rounded-b-none]="isWalletExpanded(i)" [class.cursor-pointer]="!editingIndex(i)" (click)="!editingIndex(i) && toggleWalletExpansion(i)">
+                         <!-- Wallet Name Row -->
+                         <div class="flex items-center justify-between gap-2 mb-2">
                               <div class="flex items-center gap-2 flex-1 min-w-0">
-                                   <span class="font-medium truncate">
-                                        {{ wallet.name || 'Wallet ' + (i + 1) }} @if (selectedWalletIndex === i) {
-                                        <span class="ml-2 text-xs text-green-600 font-normal">(Selected)</span>
-                                        }
-                                   </span>
+                                   <lucide-icon [name]="isWalletExpanded(i) ? 'chevron-down' : 'chevron-right'" size="18" class="text-gray-400 flex-shrink-0" />
 
-                                   <!-- Edit Name Button -->
-                                   <button (click)="editName(i); $event.stopPropagation()" class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600">
-                                        <lucide-icon name="edit-2" size="14" />
+                                   @if (editingIndex(i)) {
+                                   <div class="flex-1 min-w-0">
+                                        <input #nameInput [(ngModel)]="tempName" (blur)="saveName()" (keyup.enter)="saveName()" (keyup.escape)="cancelEdit()" (click)="$event.stopPropagation()" class="w-full border border-gray-300 rounded-xl px-2 py-1 text-sm focus:outline-none focus:border-green-500" />
+                                   </div>
+                                   } @else {
+                                   <div class="flex items-center gap-2 flex-1 min-w-0">
+                                        <span class="font-medium truncate">
+                                             {{ wallet.name || 'Wallet ' + (i + 1) }} @if (selectedWalletIndex === i) {
+                                             <span class="ml-2 text-xs text-green-600 font-normal">(Selected)</span>
+                                             }
+                                        </span>
+
+                                        <!-- Edit Name Button -->
+                                        <button (click)="editName(i); $event.stopPropagation()" class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-gray-600">
+                                             <lucide-icon name="edit-2" size="14" />
+                                        </button>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+
+                         <!-- Address, Balance, and Select Button Row -->
+                         <div class="flex items-center justify-between gap-3 text-sm ml-6">
+                              <span class="font-mono text-gray-500 truncate">{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</span>
+                              <div class="flex items-center gap-2">
+                                   <span class="font-semibold whitespace-nowrap">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</span>
+
+                                   <!-- Select Button - only show if this wallet is NOT selected -->
+                                   @if (selectedWalletIndex !== i) {
+                                   <button (click)="selectWallet(i); $event.stopPropagation()" class="px-2 py-1 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1">
+                                        <lucide-icon name="check-circle" size="12" />
+                                        <span class="hidden sm:inline">Select</span>
+                                   </button>
+                                   } @else {
+                                   <!-- Optional: Show a "Selected" badge instead of button -->
+                                   <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-lg flex items-center gap-1">
+                                        <lucide-icon name="check" size="12" />
+                                        <span class="hidden sm:inline">Active</span>
+                                   </span>
+                                   }
+                              </div>
+                         </div>
+                    </div>
+
+                    <!-- Expanded Content (only shown when expanded) -->
+                    @if (isWalletExpanded(i)) {
+                    <div class="p-4 pt-0 border-t border-gray-100 mt-2">
+                         <!-- Full Address -->
+                         <div class="mb-3">
+                              <div class="text-xs text-gray-500 mb-1">Full Address</div>
+                              <div class="font-mono text-sm bg-gray-50 p-2 rounded-xl break-all">
+                                   {{ wallet.address }}
+                                   <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" class="ml-2 text-gray-400 hover:text-gray-600 inline-flex">
+                                        <lucide-icon name="copy" size="14" />
                                    </button>
                               </div>
-                              }
                          </div>
-                    </div>
 
-                    <!-- Address, Balance, and Select Button Row -->
-                    <div class="flex items-center justify-between gap-3 text-sm ml-6">
-                         <span class="font-mono text-gray-500 truncate">{{ wallet.address | slice:0:5 }}...{{ wallet.address | slice:-5 }}</span>
-                         <div class="flex items-center gap-2">
-                              <span class="font-semibold whitespace-nowrap">{{ wallet.balance || 0 | number:'1.2-2' }} XRP</span>
-
-                              <!-- Select Button - only show if this wallet is NOT selected -->
-                              @if (selectedWalletIndex !== i) {
-                              <button (click)="selectWallet(i); $event.stopPropagation()" class="px-2 py-1 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1">
-                                   <lucide-icon name="check-circle" size="12" />
-                                   <span class="hidden sm:inline">Select</span>
+                         <!-- Action Buttons -->
+                         <div class="flex gap-1.5 mb-3">
+                              <button (click)="refreshBalance(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
+                                   <lucide-icon name="refresh-ccw" size="16" />
+                                   <span class="text-xs hidden sm:inline">Refresh</span>
                               </button>
-                              } @else {
-                              <!-- Optional: Show a "Selected" badge instead of button -->
-                              <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-lg flex items-center gap-1">
-                                   <lucide-icon name="check" size="12" />
-                                   <span class="hidden sm:inline">Active</span>
-                              </span>
-                              }
-                         </div>
-                    </div>
-               </div>
-
-               <!-- Expanded Content (only shown when expanded) -->
-               @if (isWalletExpanded(i)) {
-               <div class="p-4 pt-0 border-t border-gray-100 mt-2">
-                    <!-- Full Address -->
-                    <div class="mb-3">
-                         <div class="text-xs text-gray-500 mb-1">Full Address</div>
-                         <div class="font-mono text-sm bg-gray-50 p-2 rounded-xl break-all">
-                              {{ wallet.address }}
-                              <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" class="ml-2 text-gray-400 hover:text-gray-600 inline-flex">
-                                   <lucide-icon name="copy" size="14" />
+                              <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
+                                   <lucide-icon name="copy" size="16" />
+                                   <span class="text-xs hidden sm:inline">Copy</span>
+                              </button>
+                              <button (click)="toggleSecret(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
+                                   <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" />
+                                   <span class="text-xs hidden sm:inline">{{ wallet.showSecret ? 'Hide' : 'Show' }} Seed</span>
+                              </button>
+                              <button (click)="selectWallet(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center gap-1">
+                                   <lucide-icon name="check-circle" size="16" />
+                                   <span class="text-xs hidden sm:inline">Select</span>
+                              </button>
+                              <button (click)="deleteWallet(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-red-50 text-red-500 flex items-center justify-center gap-1">
+                                   <lucide-icon name="trash-2" size="16" />
+                                   <span class="text-xs hidden sm:inline">Delete</span>
                               </button>
                          </div>
-                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-1.5 mb-3">
-                         <button (click)="refreshBalance(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
-                              <lucide-icon name="refresh-ccw" size="16" />
-                              <span class="text-xs hidden sm:inline">Refresh</span>
-                         </button>
-                         <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
-                              <lucide-icon name="copy" size="16" />
-                              <span class="text-xs hidden sm:inline">Copy</span>
-                         </button>
-                         <button (click)="toggleSecret(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-gray-100 flex items-center justify-center gap-1">
-                              <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" />
-                              <span class="text-xs hidden sm:inline">{{ wallet.showSecret ? 'Hide' : 'Show' }} Seed</span>
-                         </button>
-                         <button (click)="selectWallet(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 flex items-center justify-center gap-1">
-                              <lucide-icon name="check-circle" size="16" />
-                              <span class="text-xs hidden sm:inline">Select</span>
-                         </button>
-                         <button (click)="deleteWallet(i); $event.stopPropagation()" class="icon-btn flex-1 h-9 rounded-xl hover:bg-red-50 text-red-500 flex items-center justify-center gap-1">
-                              <lucide-icon name="trash-2" size="16" />
-                              <span class="text-xs hidden sm:inline">Delete</span>
-                         </button>
-                    </div>
-
-                    <!-- Secret / Seed Display -->
-                    @if (wallet.showSecret) {
-                    <div class="mt-3 bg-gray-900 text-green-400 font-mono text-xs rounded-2xl border border-gray-700 p-4 relative">
-                         <div class="break-all pr-10 select-all leading-relaxed">{{ wallet.seed || wallet.mnemonic }}</div>
-                         <button (click)="wallet.seed ? copyUtilService.copySeed(wallet.seed) : (wallet.mnemonic ? copyUtilService.copySeed(wallet.mnemonic) : null); $event.stopPropagation()" class="absolute top-3 right-3 bg-gray-800 hover:bg-gray-700 text-green-400 p-2 rounded-xl transition-colors">
-                              <lucide-icon name="copy" size="12" />
-                         </button>
-                    </div>
-                    }
-
-                    <!-- Additional Stats -->
-                    <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1.5">
-                         <div class="flex justify-between">
-                              <span>Owner Count:</span>
-                              <span class="font-mono">{{ wallet.ownerCount || 0 }}</span>
+                         <!-- Secret / Seed Display -->
+                         @if (wallet.showSecret) {
+                         <div class="mt-3 bg-gray-900 text-green-400 font-mono text-xs rounded-2xl border border-gray-700 p-4 relative">
+                              <div class="break-all pr-10 select-all leading-relaxed">{{ wallet.seed || wallet.mnemonic }}</div>
+                              <button (click)="wallet.seed ? copyUtilService.copySeed(wallet.seed) : (wallet.mnemonic ? copyUtilService.copySeed(wallet.mnemonic) : null); $event.stopPropagation()" class="absolute top-3 right-3 bg-gray-800 hover:bg-gray-700 text-green-400 p-2 rounded-xl transition-colors">
+                                   <lucide-icon name="copy" size="12" />
+                              </button>
                          </div>
-                         <div class="flex justify-between">
-                              <span>XRP Reserve:</span>
-                              <span class="font-mono">{{ wallet.xrpReserves || 0 | number:'1.2-2' }} XRP</span>
-                         </div>
-                         <!-- @if (wallet.spendableXrp !== undefined) {
+                         }
+
+                         <!-- Additional Stats -->
+                         <div class="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-500 space-y-1.5">
+                              <div class="flex justify-between">
+                                   <span>Owner Count:</span>
+                                   <span class="font-mono">{{ wallet.ownerCount || 0 }}</span>
+                              </div>
+                              <div class="flex justify-between">
+                                   <span>XRP Reserve:</span>
+                                   <span class="font-mono">{{ wallet.xrpReserves || 0 | number:'1.2-2' }} XRP</span>
+                              </div>
+                              <!-- @if (wallet.spendableXrp !== undefined) {
                          <div class="flex justify-between">
                               <span>Spendable XRP:</span>
                               <span class="font-mono text-green-600">{{ wallet.spendableXrp | number:'1.2-2' }} XRP</span>
                          </div>
                          } -->
+                         </div>
                     </div>
+                    }
+               </div>
+               } } @else {
+               <!-- Empty State -->
+               <div class="text-center mt-20 text-gray-400">
+                    <lucide-icon name="wallet" size="48" class="mx-auto mb-4" />
+                    <p class="text-sm">No accounts yet</p>
+                    <p class="text-xs mt-1">Click "Generate" above to create accounts</p>
                </div>
                }
           </div>
-          } } @else {
-          <!-- Empty State -->
-          <div class="text-center mt-20 text-gray-400">
-               <lucide-icon name="wallet" size="48" class="mx-auto mb-4" />
-               <p class="text-sm">No accounts yet</p>
-               <p class="text-xs mt-1">Click "Generate" above to create accounts</p>
-          </div>
-          }
-     </div>
 
-     <!-- <app-execution-time-display [time]="executionTime()" class="p-4 border-t" /> -->
+          <!-- <app-execution-time-display [time]="executionTime()" class="p-4 border-t" /> -->
+     </div>
+     }
 </div>

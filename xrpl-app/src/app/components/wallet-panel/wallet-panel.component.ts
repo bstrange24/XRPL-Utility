@@ -1,4 +1,4 @@
-import { Component, inject, effect, ChangeDetectorRef, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, inject, effect, ChangeDetectorRef, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectionStrategy, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -14,13 +14,16 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
+import { animate, style, transition, trigger } from '@angular/animations';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-wallet-panel',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule, NgIcon],
      templateUrl: './wallet-panel.component.html',
      styleUrl: './wallet-panel.component.css',
+     animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('200ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('200ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletPanelComponent extends PerformanceBaseComponent {
@@ -42,6 +45,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
      expandedWallets: Set<number> = new Set();
+     isWalletPanelExpanded = signal(true);
 
      // Prefer the panel's own execution time; fall back to the orchestrator's
      // so that wallet generation triggered from the Wallets page also shows a time.
@@ -106,6 +110,13 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      constructor() {
           super();
           this.txUiService.clearAllOptionsAndMessages();
+          const saved = localStorage.getItem('walletPanelExpanded');
+          if (saved !== null) this.isWalletPanelExpanded.set(saved === 'true');
+
+          // Save when changed
+          effect(() => {
+               localStorage.setItem('walletPanelExpanded', this.isWalletPanelExpanded().toString());
+          });
      }
 
      private getEmptyWallet(): Wallet {

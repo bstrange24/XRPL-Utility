@@ -36,6 +36,9 @@
                >
                </app-send-xrp-form>
 
+               <!-- Options -->
+               <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
                <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- LEFT: primary action -->
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
@@ -46,11 +49,8 @@
                     </div>
                </div>
 
-               <!-- Options -->
-               <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-
                <!-- Execution Time -->
-               <div class="text-sm text-gray-500">
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 

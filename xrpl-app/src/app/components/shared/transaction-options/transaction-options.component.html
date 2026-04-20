@@ -1,5 +1,5 @@
 <!-- Transaction Options -->
-<div class="bg-white border border-gray-200 rounded-3xl p-2 space-y-8 mt-4 mb-5">
+<div>
      <!-- Transaction Options Toggles -->
      <div class="flex flex-wrap gap-x-8 gap-y-5 py-4">
           @if (showMemo()) {
@@ -46,67 +46,100 @@
      </div>
 
      <!-- Memo Field -->
-     @if (xrplTxOptionsStore.isMemoEnabled()) {
-     <div class="space-y-3">
-          <label class="text-sm font-medium">Memo</label>
-          <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 resize-y min-h-[100px]" [ngModel]="xrplTxOptionsStore.memos().join(', ')" (ngModelChange)="onMemoInput($event)" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"> </textarea>
-     </div>
-     }
-
-     <!-- Multi-Sign -->
-     @if (xrplTxOptionsStore.useMultiSign()) {
-     <div class="space-y-3">
-          <h4 class="text-sm font-medium">Multi-Signature</h4>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-               <div class="space-y-2">
-                    <label class="text-sm font-medium">Signers</label>
-                    <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignAddress() }}</textarea>
+     @if (hasAnyOptionEnabled()) {
+     <div class="space-y-6 border border-gray-200 rounded-2xl p-3 mb-4 bg-white">
+          <div>
+               @if (xrplTxOptionsStore.isMemoEnabled()) {
+               <div class="space-y-3">
+                    <h4 class="text-sm font-medium text-green-600 pl-2">Memo</h4>
+                    <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 resize-y min-h-[100px]" [ngModel]="xrplTxOptionsStore.memos().join(', ')" (ngModelChange)="onMemoInput($event)" placeholder="Separate multiple memos with commas" (input)="utilsService.adjustTextareaHeight($event)"> </textarea>
                </div>
-               <div class="space-y-2">
-                    <label class="text-sm font-medium">Seeds</label>
-                    <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignSeeds() }}</textarea>
-               </div>
-               <div class="space-y-2">
-                    <label class="text-sm font-medium">Quorum</label>
-                    <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" readonly [ngModel]="accountConfiguratorStoreService.signerQuorum()" />
-               </div>
-          </div>
-     </div>
-     }
-
-     <!-- Regular Key -->
-     @if (xrplTxOptionsStore.isRegularKeyAddress()) {
-     <div class="space-y-3">
-          <h4 class="text-sm font-medium">Regular Key</h4>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div class="space-y-2">
-                    <label class="text-sm font-medium">Regular Key Address</label>
-                    <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" readonly [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" />
-               </div>
-               <div class="space-y-2">
-                    <label class="text-sm font-medium">Regular Key Seed</label>
-                    <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" readonly [ngModel]="accountConfiguratorStoreService.regularKeySeed()" />
-               </div>
-          </div>
-     </div>
-     }
-
-     <!-- Ticket -->
-     @if (xrplTxOptionsStore.isTicket() && showTicket() && xrplTxOptionsStore.ticketArray().length > 0) {
-     <div class="space-y-3">
-          <label class="text-sm font-medium">Ticket Sequence</label>
-          @if (xrplTxOptionsStore.multiSelectMode()) {
-          <select multiple class="w-full rounded-2xl border border-gray-300 px-4 py-3" [ngModel]="xrplTxOptionsStore.selectedTickets()" (ngModelChange)="xrplTxOptionsStore.setField('selectedTickets', $event)">
-               @for (ticket of xrplTxOptionsStore.ticketArray(); track ticket) {
-               <option [value]="ticket">{{ ticket }}</option>
                }
-          </select>
-          } @else {
-          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..."> </app-select-search-dropdown>
 
-          @if (xrplTxOptionsStore.selectedSingleTicket()) {
-          <div class="text-sm text-green-600 font-medium">Selected Ticket: <span class="font-mono">{{ xrplTxOptionsStore.selectedSingleTicket() }}</span></div>
-          } }
+               <!-- Multi-Sign -->
+               @if (xrplTxOptionsStore.useMultiSign()) {
+               <div class="space-y-3">
+                    <h4 class="text-sm font-medium mt-4 text-green-600 pl-2">Multi-Signature</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 pl-2">
+                         <!-- Signers -->
+                         <div class="md:col-span-5 space-y-2">
+                              <label class="text-sm font-medium">Signers</label>
+                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="5" readonly>                    {{ accountConfiguratorStoreService.multiSignAddress() }}</textarea>
+                         </div>
+
+                         <!-- Seeds -->
+                         <div class="md:col-span-5 space-y-2">
+                              <label class="text-sm font-medium">Seeds</label>
+                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="5" readonly>                    {{ accountConfiguratorStoreService.multiSignSeeds() }}</textarea>
+                         </div>
+
+                         <!-- Quorum -->
+                         <div class="md:col-span-2 space-y-2">
+                              <label class="text-sm font-medium">Quorum</label>
+                              <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono text-center" readonly [ngModel]="accountConfiguratorStoreService.signerQuorum()" />
+                         </div>
+                    </div>
+               </div>
+               }
+               <!-- @if (xrplTxOptionsStore.useMultiSign()) {
+               <div class="space-y-3">
+                    <h4 class="text-sm font-medium mt-4 text-green-600 pl-2">Multi-Signature</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pl-2">
+                         <div class="space-y-2">
+                              <label class="text-sm font-medium">Signers</label>
+                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignAddress() }}</textarea>
+                         </div>
+                         <div class="space-y-2">
+                              <label class="text-sm font-medium">Seeds</label>
+                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignSeeds() }}</textarea>
+                         </div>
+                         <div class="space-y-2">
+                              <label class="text-sm font-medium">Quorum</label>
+                              <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" readonly [ngModel]="accountConfiguratorStoreService.signerQuorum()" />
+                         </div>
+                    </div>
+               </div>
+               } -->
+
+               <!-- Regular Key -->
+               @if (xrplTxOptionsStore.isRegularKeyAddress()) {
+               <div class="space-y-3">
+                    <h4 class="text-sm font-medium mt-4 text-green-600 pl-2">Regular Key</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pl-2">
+                         <div class="space-y-2">
+                              <label class="text-sm font-medium">Regular Key Address</label>
+                              <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" readonly [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" />
+                         </div>
+                         <div class="space-y-2">
+                              <label class="text-sm font-medium">Regular Key Seed</label>
+                              <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" readonly [ngModel]="accountConfiguratorStoreService.regularKeySeed()" />
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Ticket -->
+               @if (xrplTxOptionsStore.isTicket() && showTicket() && xrplTxOptionsStore.ticketArray().length > 0) {
+               <div class="space-y-3 mt-4">
+                    <h4 class="text-sm font-medium mt-4 text-green-600 pl-2">Ticket Sequence</h4>
+                    @if (xrplTxOptionsStore.multiSelectMode()) {
+                    <select multiple class="w-full rounded-2xl border border-gray-300 px-4 py-3" [ngModel]="xrplTxOptionsStore.selectedTickets()" (ngModelChange)="xrplTxOptionsStore.setField('selectedTickets', $event)">
+                         @for (ticket of xrplTxOptionsStore.ticketArray(); track ticket) {
+                         <option [value]="ticket">{{ ticket }}</option>
+                         }
+                    </select>
+                    } @else {
+                    <div class="pl-2">
+                         <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..."> </app-select-search-dropdown>
+                    </div>
+
+                    <!-- @if (xrplTxOptionsStore.selectedSingleTicket()) {
+                    <div class="text-sm text-green-600 font-medium">Selected Ticket: <span class="font-mono">{{ xrplTxOptionsStore.selectedSingleTicket() }}</span></div>
+                    }  -->
+                    }
+               </div>
+               }
+          </div>
      </div>
      }
 </div>

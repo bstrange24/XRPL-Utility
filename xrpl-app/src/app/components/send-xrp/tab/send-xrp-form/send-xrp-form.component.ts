@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -7,6 +7,7 @@ import { TransactionOptionsSectionComponent } from '../../../shared/transaction-
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-send-xrp-form',
@@ -20,6 +21,7 @@ export class SendXrpFormComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      // Inputs from parent
      view = input.required<any>();
@@ -45,4 +47,6 @@ export class SendXrpFormComponent {
                if (!Number.isNaN(num)) input.value = num.toFixed(6);
           }
      }
+
+     hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
 }

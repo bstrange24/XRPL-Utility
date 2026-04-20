@@ -79,7 +79,7 @@
           <input class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" placeholder="64 hex chars" maxlength="64" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" />
 
           @if (xrplTxOptionsStore.invoiceId()) {
-          <div class="text-xs bg-gray-50 border border-gray-200 rounded-2xl p-4">
+          <div class="text-xs bg-gray-50 border border-gray-200 rounded-2xl p-3">
                <small class="text-gray-500">Will be sent as hex:</small>
                <code class="block font-mono text-gray-700 mt-1">{{ invoiceIdHex() || '(empty)' }}</code>
           </div>
@@ -90,12 +90,12 @@
      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
                <label class="text-sm font-medium">Domain ID</label>
-               <input class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" />
+               <input class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" />
           </div>
 
           <div class="space-y-2">
                <label class="text-sm font-medium">Credential IDs</label>
-               <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm resize-y min-h-[80px]" rows="2" placeholder="Comma separated" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"> </textarea>
+               <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm resize-y min-h-[80px] focus:outline-none focus:border-green-500" rows="2" placeholder="Comma separated" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"> </textarea>
           </div>
      </div>
 </div>
