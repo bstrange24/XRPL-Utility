@@ -3,15 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
@@ -36,11 +34,12 @@ import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.com
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { TicketsSummaryComponent } from './ui-components/summary/tickets-summary.component';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TicketsRequirementsInfoComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent, TicketsSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent, TicketsSummaryComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,10 +53,10 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      public readonly ticketsUtilService = inject(TicketsUtilService);
      public readonly ticketsViewModelService = inject(TicketsViewModelService);
      public readonly ticketStore = inject(TicketStore);
+     private readonly rightPanelService = inject(RightPanelService);
      public readonly cdr = inject(ChangeDetectorRef);
-
-     readonly menuTabs: TabConfig[] = TICKET_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = TICKET_TAB_META;
+     public readonly tabs = TICKET_TABS;
+     public readonly tabMeta = TICKET_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -67,6 +66,9 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, TICKET_TAB, tab => this.setTab(tab));
+          this.rightPanelService.setPanel(TicketsRequirementsInfoComponent, {
+               activeTab: this.ticketsViewModelService.activeTab,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {

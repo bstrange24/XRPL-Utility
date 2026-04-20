@@ -1,69 +1,57 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = ticketsViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-tickets-summary [infoData]="viewModel.infoData()" [tab]="'createTicket'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-tickets-summary>
 
-               <!-- Dynamic info panel -->
-               <app-tickets-summary [infoData]="viewModel.infoData()" [tab]="'createTicket'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-tickets-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'createTicket') {
+               <app-tickets-create></app-tickets-create>
+               } @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
+               <app-tickets-delete></app-tickets-delete>
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <!-- Create tickets -->
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createTicket', 'deleteTicket']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Button -->
                     @if (tab === 'createTicket') {
-                    <app-tickets-create></app-tickets-create>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ ticketsUtilService.createButtonLabel() }}</button>
+                    } @else if (tab === 'deleteTicket') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }
 
-                    <!-- Unified Ticket Dropdown (only shown on delete tab and if tickets exist) -->
-                    @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
-                    <app-tickets-delete></app-tickets-delete>
-                    }
-
-                    <app-transaction-options [showWhenTab]="['createTicket','deleteTicket']" [activeTab]="ticketsViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         @if (tab === 'createTicket') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ticketsUtilService.createButtonLabel() }}</button>
-                         } @if (tab === 'deleteTicket') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ticketsUtilService.deleteButtonLabel() }}</button>
-                         }
-                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    <!-- Secondary Button -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <!-- New: Right panel for info/tips -->
-          <app-tickets-requirements-info></app-tickets-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

@@ -1,7 +1,9 @@
-<div class="form-row">
-     <div class="form-group">
-          <label for="ticketCountField">Number of Tickets to create</label>
-          <p class="form-hint">Number of Tickets to create for the selected account.</p>
-          <input type="text" [ngModel]="xrplTxOptionsStore.ticketCountField()" (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)" name="ticketCountField" placeholder="Total max tickets, per account, is 250" />
+<div class="space-y-6">
+     <!-- Number of Tickets -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Number of Tickets to Create</label>
+          <p class="text-xs text-gray-500">Number of Tickets to create for the selected account.</p>
+
+          <input type="number" [ngModel]="xrplTxOptionsStore.ticketCountField()" (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)" placeholder="1 - 250 (max per account)" min="1" max="250" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
 </div>

@@ -1,63 +1,85 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>XRPL Tickets Overview</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Tickets Info</span>
+          </div>
 
-     <p class="info-subtitle">Tickets reserve sequence numbers in advance, allowing transactions to be sent out-of-order or in parallel without depending on the account's current Sequence.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🎟️ Ticket Creation</span>
-                    <span class="badge required-badge">Single Transaction</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">TicketCount</span>
-                         <span class="field-status required">✅ Required</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">XRPL Tickets</h3>
+               <p class="text-sm text-gray-600">Tickets reserve sequence numbers in advance, allowing transactions to be sent out-of-order or in parallel without depending on the account's current Sequence.</p>
+          </div>
+
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">How Tickets Work</h4>
+
+               <div class="space-y-5">
+                    <!-- Ticket Creation -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🎟️ Ticket Creation</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">TicketCount</span>
+                                   <span class="text-green-600 font-medium">Required (1-250)</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Max per account</span>
+                                   <span class="text-gray-500">250 Tickets</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Max per account</span>
-                         <span class="field-status omitted">250 Tickets</span>
+
+                    <!-- Using a Ticket -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full">🎟️ Using a Ticket</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Sequence</span>
+                                   <span class="text-gray-500">Set to 0</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">TicketSequence</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🎟️ Using a Ticket</span>
-                    <span class="badge optional-badge">In any Transaction</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Sequence</span>
-                         <span class="field-status omitted">❌ Set to 0</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">TicketSequence</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-               </div>
-          </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li><strong>TicketCount is required</strong> in a TicketCreate transaction (1 to 250).</li>
-                    <li>Each unused Ticket counts toward your account’s <strong>owner reserve</strong> (typically 0.2 XRP per Ticket) until used.</li>
-                    <li>Tickets allow out-of-order execution — use any available TicketSequence in any order, but each can only be used <strong>once</strong>.</li>
-                    <li>Maximum 250 Tickets per account at any time (creation fails if it would exceed this).</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li><strong>TicketCount</strong> is required in a TicketCreate transaction (1 to 250).</li>
+                    <li>Each unused Ticket counts toward your account’s <strong>owner reserve</strong> (typically 0.2 XRP per Ticket).</li>
+                    <li>Tickets allow out-of-order execution — you can use any available TicketSequence in any order.</li>
+                    <li>Maximum 250 Tickets per account at any time.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Reserve Cost & Cleanup</h5>
-               <p style="color: #92400e">Tickets reserve XRP until consumed.</p>
-               <ul>
-                    <li>Each Ticket increases your <strong>owner reserve</strong> — cost adds up quickly with many Tickets.</li>
-                    <li>Once used, the Ticket is removed and the reserve XRP is freed.</li>
-                    <li>Unused Tickets remain forever unless the account's Sequence surpasses them (they become invalid but still reserve XRP).</li>
-                    <li>Plan TicketCount carefully to avoid locking unnecessary XRP.</li>
-               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-2">⚠️ Reserve Cost & Cleanup</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Each Ticket increases your <strong>owner reserve</strong> — cost adds up quickly.</li>
+                         <li>Once used, the Ticket is removed and the reserved XRP is freed.</li>
+                         <li>Unused Tickets remain forever unless your account Sequence surpasses them.</li>
+                         <li>Plan your <strong>TicketCount</strong> carefully to avoid locking unnecessary XRP.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

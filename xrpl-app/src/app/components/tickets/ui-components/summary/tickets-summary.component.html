@@ -1,10 +1,8 @@
 @if (infoData()) {
-<div class="info-and-credentials-card">
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-               <div class="info-text" [innerHTML]="infoData()"></div>
-          </div>
+<div class="bg-blue-50 border border-blue-100 rounded-2xl p-2 flex gap-4 mb-4">
+     <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+     <div class="text-sm leading-relaxed text-blue-800">
+          <div [innerHTML]="infoData()"></div>
      </div>
 </div>
 }

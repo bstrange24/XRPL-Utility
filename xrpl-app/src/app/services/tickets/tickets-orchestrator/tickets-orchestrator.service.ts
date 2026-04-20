@@ -123,20 +123,29 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
+               // Build transaction
                const tx = meta.buildTx({ orchestrator: this, env, wallet, ticket, account, txOptions });
 
+               // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.ticket, type, txOptions);
 
+               // Balance check
                let isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
+               //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: env.wallet || wallet,
                     env,
+
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
-                    ui: { suppressIndividualFeedback: false },
+
+                    ui: {
+                         suppressIndividualFeedback: false,
+                    },
+
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -145,6 +154,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
+
                     buildTx: () => tx as any,
                });
 
@@ -152,10 +162,12 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
 
                txHash = submitOrSimResult.hash;
 
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     return this.handleSimulationSuccess(type, ticket, txOptions, txHash);
                }
 
+               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
