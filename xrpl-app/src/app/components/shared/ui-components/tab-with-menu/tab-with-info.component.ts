@@ -4,6 +4,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TabConfig, TabMetaInfo } from '../../../../core/app.constants';
 import { ThemeService } from '../../../../services/utils/theme/theme.service';
+import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 
 @Component({
      selector: 'app-tab-menu-with-info',
@@ -14,7 +15,8 @@ import { ThemeService } from '../../../../services/utils/theme/theme.service';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TabMenuWithInfoComponent {
-     private themeService = inject(ThemeService);
+     private readonly themeService = inject(ThemeService);
+     private readonly mptStoreService = inject(MptStoreService);
 
      // Required inputs
      tabs = input.required<TabConfig[]>();
@@ -28,10 +30,10 @@ export class TabMenuWithInfoComponent {
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
      // Reactive derived value
-     currentMeta = computed(() => {
-          const key = this.active();
-          return key === undefined ? undefined : this.metaMap()[key];
-     });
+     // currentMeta = computed(() => {
+     //      const key = this.active();
+     //      return key === undefined ? undefined : this.metaMap()[key];
+     // });
 
      // Get icon color based on theme
      getIconColor(): string {
@@ -68,4 +70,37 @@ export class TabMenuWithInfoComponent {
           const activeClass = isActive ? 'active' : '';
           return `${baseClasses} ${sizeClasses} ${activeClass}`.trim();
      }
+
+     currentMeta = computed(() => {
+          const key = this.active();
+          const base = key ? this.metaMap()[key] : undefined;
+
+          if (!base) return base;
+
+          if (key === 'authorizeMpt') {
+               const action = this.mptStoreService.authAction();
+
+               return {
+                    ...base,
+                    title: action === 'authorize' ? 'Authorize MPT Token' : 'Revoke MPT Authorization',
+                    desc: action === 'authorize' ? 'Authorize this account to hold or interact with the MPT.' : 'Remove authorization for this account to hold or interact with the MPT.',
+                    icon: action === 'authorize' ? 'shield-check' : 'shield-off',
+                    color: action === 'authorize' ? '#fbbf24' : '#ef4444',
+               };
+          }
+
+          if (key === 'lockMpt') {
+               const action = this.mptStoreService.lockAction();
+
+               return {
+                    ...base,
+                    title: action === 'lock' ? 'Lock MPT' : 'Unlock MPT',
+                    desc: action === 'lock' ? 'Prevent this account from sending the MPT.' : 'Allow this account to send the MPT again.',
+                    icon: action === 'lock' ? 'heroLockClosed' : 'heroLockOpen',
+                    color: action === 'lock' ? '#ef4444' : '#a855f7',
+               };
+          }
+
+          return base;
+     });
 }

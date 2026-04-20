@@ -1,48 +1,42 @@
-<div class="form-row">
-     <div class="form-group">
-          <label for="assetScaleField">Asset Scale</label>
-          <p class="form-hint">Decimal places for the token (0-15). 2 = 0.01 precision.</p>
-          <input type="number" (ngModel)="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" name="assetScaleField" placeholder="Value between 1 and 15" min="0" max="15" step="1" />
+<div class="space-y-8">
+     <!-- Asset Scale -->
+     <div class="space-y-2" style="margin-top: 0">
+          <label class="text-sm font-medium">Asset Scale</label>
+          <p class="text-xs text-gray-500">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
+          <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
-</div>
 
-<div class="form-row">
-     <div class="form-group">
-          <label for="maxToken">Maximum Tokens</label>
-          <p class="form-hint">Maximum tokens that can ever be issued.</p>
-          <input type="number" (ngModel)="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" name="tokenCountField" placeholder="Enter maximum tokens to create" min="1" step="1" />
+     <!-- Maximum Tokens -->
+     <div class="space-y-2" style="margin-top: 0.5rem">
+          <label class="text-sm font-medium">Maximum Tokens</label>
+          <p class="text-xs text-gray-500">Maximum tokens that can ever be issued (supply cap).</p>
+          <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
-</div>
 
-<div class="form-row">
-     <div class="form-group">
-          <label for="transferFee">Transfer Fee</label>
-          <p class="form-hint">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
-          <input type="number" (ngModel)="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" name="transferFeeField" placeholder="This will be a percentage" min="0" max="50000" step="1" />
+     <!-- Transfer Fee -->
+     <div class="space-y-2" style="margin-top: 0.5rem">
+          <label class="text-sm font-medium">Transfer Fee</label>
+          <p class="text-xs text-gray-500">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
+          <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="This will be a percentage" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
-</div>
 
-<div class="form-row">
-     <div class="form-group">
-          <label for="labelWithLink" class="label-with-link">
-               Token Meta Data
-               <br />
-               <span class="label-meta">
-                    JSON Metadata
-                    <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer">XLS-89</a>
-               </span>
-               <button type="button" class="format-did-data" style="margin-left: 1em" (click)="jsonEditor.format()">Format JSON</button>
+     <!-- Token Metadata -->
+     <div class="space-y-2" style="margin-top: 0.5rem">
+          <label class="text-sm font-medium"
+               >Token Metadata
+               <span class="text-xs text-gray-500 font-normal">(XLS-89)</span>
           </label>
-          <app-json-editor class="json-error-banner" [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor></app-json-editor>
+          <p class="text-xs text-gray-500 pb-3">JSON metadata for this MPT issuance (immutable after creation).</p>
 
-          <div class="metadata-info">
-               <small class="text-muted"> Metadata size: {{ viewModel.metadataByteLength() }} / 1024 bytes </small>
+          <app-json-editor [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
+
+          <!-- Metadata Info -->
+          <div class="flex items-center justify-between text-xs mt-2">
+               <span class="text-gray-500"> Metadata size: <strong>{{ viewModel.metadataByteLength() }} / 1024 bytes</strong> </span>
                @if (viewModel.metadataByteLength() > 1024) {
-               <small class="text-danger d-block">
-                    <strong>Exceeded limit – transaction will fail</strong>
-               </small>
+               <span class="text-red-600 font-medium">Exceeded limit – transaction will fail</span>
                } @else if (viewModel.metadataByteLength() > 900) {
-               <small class="text-warning d-block"> Approaching limit ({{ viewModel.metadataByteLength() }} bytes) </small>
+               <span class="text-amber-600 font-medium">Approaching limit ({{ viewModel.metadataByteLength() }} bytes)</span>
                }
           </div>
      </div>

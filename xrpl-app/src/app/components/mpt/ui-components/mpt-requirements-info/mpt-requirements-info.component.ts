@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -9,4 +9,9 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './mpt-requirements-info.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MptRequirementsInfoComponent {}
+export class MptRequirementsInfoComponent {
+     activeTab = input.required<'createMpt'>();
+
+     // Collapsible state
+     isExpanded = signal(false);
+}

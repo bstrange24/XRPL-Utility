@@ -1,76 +1,73 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>XRPL Multi-Purpose Tokens (MPTs)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Multi-Purpose Tokens (MPT) Info</span>
+          </div>
 
-     <p class="info-subtitle">Multi-Purpose Tokens are an advanced fungible token standard on the XRPL with on-chain metadata, supply controls, transfer fees, and compliance features.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <!-- Existing cards... keep them as-is -->
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">XRPL Multi-Purpose Tokens (MPTs)</h3>
+               <p class="text-sm text-gray-600">Multi-Purpose Tokens are an advanced fungible token standard on the XRPL with on-chain metadata, supply controls, transfer fees, and compliance features.</p>
+          </div>
 
-          <!-- NEW: Authorization Rules Card -->
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔐 Authorization Rules</span>
-                    <span class="badge required-badge">Critical</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Holder Self-Authorization</span>
-                         <span class="field-status required">✅ ALWAYS REQUIRED</span>
+          <!-- Authorization Rules -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Authorization Rules</h4>
+
+               <div class="border border-gray-100 rounded-2xl p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                         <span class="px-3.5 py-1 text-sm font-medium bg-violet-100 text-violet-700 rounded-full">🔐 Authorization Rules</span>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Issuer Authorization<br />(tfMPTRequireAuth)</span>
-                         <span class="field-status optional">Only if flag enabled</span>
+                    <div class="space-y-3 text-sm">
+                         <div class="flex justify-between items-center">
+                              <span class="text-gray-700">Holder Self-Authorization</span>
+                              <span class="text-green-600 font-medium">✅ ALWAYS REQUIRED</span>
+                         </div>
+                         <div class="flex justify-between items-center">
+                              <span class="text-gray-700">Issuer Authorization (tfMPTRequireAuth)</span>
+                              <span class="text-gray-500">Only if flag enabled</span>
+                         </div>
                     </div>
                </div>
           </div>
-     </div>
 
-     <div class="important-notes">
-          <h5>📝 Important Notes:</h5>
-          <ul>
-               <li>Metadata is immutable once set (max 1024 bytes, XLS-89 format).</li>
-               <li>Each MPT issuance + each holder’s balance uses owner reserve.</li>
-               <li>Recipients must <strong>self-authorize</strong> before they can receive any MPT balance.</li>
-          </ul>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <br /><br />
-          <h5>🔐 MPT Authorization Flow</h5>
-          <ul>
-               <li><strong>Always:</strong> Every recipient must submit <code>MPTokenAuthorize</code> from <strong>their own wallet</strong> (Flags = 0). This is the "opt-in".</li>
-               <li>
-                    <strong>If tfMPTRequireAuth flag was set during creation:</strong>
-                    <ul>
-                         <li>The issuer must also submit <code>MPTokenAuthorize</code> for that holder.</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Metadata is <strong>immutable</strong> once set (max 1024 bytes, XLS-89 format).</li>
+                    <li>Each MPT issuance + each holder’s balance uses owner reserve.</li>
+                    <li>Recipients must <strong>self-authorize</strong> before they can receive any MPT balance.</li>
+               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">🔐 MPT Authorization Flow</h5>
+                    <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                         <li><strong>Always:</strong> Every recipient must submit <code>MPTokenAuthorize</code> from their own wallet (self-opt-in).</li>
+                         <li><strong>If tfMPTRequireAuth flag was enabled:</strong> Issuer must also authorize the holder.</li>
+                         <li><strong>If tfMPTRequireAuth is NOT set:</strong> Only recipient self-authorization is needed.</li>
                     </ul>
-               </li>
-               <li>
-                    <strong>If tfMPTRequireAuth is NOT set</strong>:
-                    <ul>
-                         <li>Only the recipient’s self-authorization is needed.</li>
-                         <li>Issuer authorization is not required (but harmless if done).</li>
+               </div>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Common Gotchas</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>You cannot send MPTs to an account that has not self-authorized.</li>
+                         <li>Authorization is per-issuance (one per MPT type per account).</li>
+                         <li>Destroying an MPT is only possible if there are no holders left.</li>
+                         <li>Many properties (metadata, flags, supply cap) are permanent after creation.</li>
                     </ul>
-               </li>
-          </ul>
-
-          <br /><br />
-          <h5 class="warning-title">⚠️ Common Gotchas</h5>
-          <ul>
-               <li>You cannot send MPTs to an account that has not self-authorized yet.</li>
-               <li>Authorization is per-issuance (one per MPT type per account).</li>
-               <li>Once authorized, the account has an <code>MPToken</code> ledger entry (even with 0 balance).</li>
-               <li>Destroying an MPT issuance is only possible if there are no holders left.</li>
-          </ul>
-
-          <br /><br />
-          <h5 class="warning-title">⚠️ Irreversible & Compliance Considerations</h5>
-          <p style="color: #92400e">Many MPT properties are permanent after creation.</p>
-          <ul>
-               <li>Metadata and most flags cannot be changed post-issuance.</li>
-               <li>Supply cap (if set) is hard — cannot issue more.</li>
-               <li>Non-transferable MPTs cannot be moved at all.</li>
-          </ul>
+               </div>
+          </div>
      </div>
+     }
 </div>

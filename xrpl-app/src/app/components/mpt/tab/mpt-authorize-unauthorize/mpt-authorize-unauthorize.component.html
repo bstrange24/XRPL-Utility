@@ -1,59 +1,46 @@
-<!-- Add near the top of the authorize tab -->
-<!-- <div class="auth-info-box"> -->
-<!-- <div class="info-content"> -->
-<!-- <strong>Important Authorization Rule:</strong><br /> -->
-
-<!-- @if (mptUtilService.flags.isRequireAuth) { -->
-<!-- <span class="require-auth"> -->
-<!-- <app-warning-message [warningMessage]="'This MPT requires Issuer + Holder authorization. se this tab from the Issuer wallet to approve holders.'"></app-warning-message> -->
-<!-- ✅ This MPT requires <strong>Issuer + Holder</strong> authorization.<br /> -->
-<!-- Use this tab from the <strong>Issuer wallet</strong> to approve holders. -->
-<!-- </span> -->
-<!-- } @else { -->
-<!-- <span class="no-require-auth"> -->
-<!-- <app-warning-message [warningMessage]="'This MPT does not require Issuer authorization. Only the recipient needs to self-authorize using this tab from their own wallet.'"></app-warning-message> -->
-<!-- ℹ️ <strong>tfMPTRequireAuth is OFF</strong>.<br /> -->
-<!-- Only the <strong>recipient</strong> needs to self-authorize using this tab from <strong>their own wallet</strong>.<br /> -->
-<!-- <small>Issuer authorization is not needed.</small> -->
-<!-- </span> -->
-<!-- } -->
-<!-- </div> -->
-<!-- </div> -->
+<!-- Auth Info Box - Important Authorization Rule -->
+<!-- @if (mptUtilService.flags.isRequireAuth) {
+<div class="mb-6">
+     <app-warning-message [warningMessage]="'This MPT requires Issuer + Holder authorization. Use this tab from the Issuer wallet to approve holders.'"></app-warning-message>
+</div>
+} @else {
+<div class="mb-6">
+     <app-warning-message [warningMessage]="'This MPT does not require Issuer authorization. Only the recipient needs to self-authorize using this tab from their own wallet.'"></app-warning-message>
+</div>
+} -->
 
 <!-- Auth section - Radio Buttons -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="mptIssuanceAction">Action</label>
-          <div class="radio-group-horizontal" style="margin-top: 0.7em; display: flex; gap: 2.2rem; flex-wrap: wrap">
-               <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                    <input type="radio" name="authAction" value="authorize" [checked]="authAction === 'authorize'" (change)="setAuthAction('authorize')" />
-                    <ng-icon name="heroCheckCircle" size="22" class="text-green-600"></ng-icon>
-                    Authorize
+<div class="space-y-4">
+     <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
+          <div class="flex flex-wrap gap-6 mt-2">
+               <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="authAction" value="authorize" [checked]="authAction === 'authorize'" (change)="setAuthAction('authorize')" class="w-4 h-4 text-amber-600 focus:ring-amber-500" />
+                    <ng-icon name="heroCheckCircle" size="22" class="text-amber-600"></ng-icon>
+                    <span class="text-sm font-medium text-gray-700">Authorize</span>
                </label>
 
-               <label class="radio-label" style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer">
-                    <input type="radio" name="authAction" value="unauthorize" [checked]="authAction === 'unauthorize'" (change)="setAuthAction('unauthorize')" />
+               <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="authAction" value="unauthorize" [checked]="authAction === 'unauthorize'" (change)="setAuthAction('unauthorize')" class="w-4 h-4 text-green-600 focus:ring-green-500" />
                     <ng-icon name="heroXCircle" size="22" class="text-red-600"></ng-icon>
-                    Unauthorize
+                    <span class="text-sm font-medium text-gray-700">Unauthorize</span>
                </label>
           </div>
      </div>
-</div>
 
-<!-- MPT Issuer -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">MPT Issuer</label>
-          <p class="form-hint">Account that issued the MPT.</p>
-          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+     <!-- MPT Issuer -->
+     <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">MPT Issuer</label>
+          <p class="text-xs text-gray-500 mb-2">Account that issued the MPT.</p>
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+          </div>
      </div>
-</div>
 
-<!-- MPT Issuance ID -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="lockMptIssuanceId">MPT Issuance ID</label>
-          <p class="form-hint">Identifies the MPTokenIssuance.</p>
-          <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="" />
+     <!-- MPT Issuance ID -->
+     <div style="margin-top: 0rem">
+          <label class="block text-sm font-medium text-gray-700 mb-1">MPT Issuance ID</label>
+          <p class="text-xs text-gray-500 mb-2">Identifies the MPTokenIssuance.</p>
+          <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
      </div>
 </div>

@@ -1,12 +1,19 @@
-<div class="form-group">
-     <label for="selectMptToDestroy">Select MPT to Destroy</label>
-     <p class="form-hint">MPT to destroy.</p>
-     <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
-</div>
-<div class="form-row">
-     <div class="form-group">
-          <label for="mptIssuanceId">MPT Issuance ID</label>
-          <p class="form-hint">Identifies the MPTokenIssuance.</p>
-          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" name="mptIssuanceIdField" placeholder="" />
+<div class="space-y-8">
+     <!-- Select MPT to Destroy -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Select MPT to Destroy</label>
+          <p class="text-xs text-gray-500">MPT to destroy (must have zero holders).</p>
+
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+          </div>
+     </div>
+
+     <!-- MPT Issuance ID -->
+     <div class="space-y-2" style="margin-top: 0rem">
+          <label class="text-sm font-medium">MPT Issuance ID</label>
+          <p class="text-xs text-gray-500">Identifies the MPTokenIssuance to be destroyed.</p>
+
+          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
 </div>

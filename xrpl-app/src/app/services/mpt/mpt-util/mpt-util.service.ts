@@ -54,7 +54,7 @@ export class MptUtilService extends PerformanceBaseComponent {
      readonly createMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create MPT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Create MPT';
           return this.txUiService.stepMessage();
      });
 
@@ -63,14 +63,14 @@ export class MptUtilService extends PerformanceBaseComponent {
           if (step === 'idle') {
                return this.mptStoreService.authAction() === 'authorize' ? 'Authorize MPT' : 'Unauthorize MPT';
           }
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return this.mptStoreService.authAction() === 'authorize' ? 'Authorize MPT' : 'Unauthorize MPT';
           return this.txUiService.stepMessage();
      });
 
      readonly sendMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Send MPT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Send MPT';
           return this.txUiService.stepMessage();
      });
 
@@ -79,21 +79,21 @@ export class MptUtilService extends PerformanceBaseComponent {
           if (step === 'idle') {
                return this.mptStoreService.lockAction() === 'lock' ? 'Lock MPT' : 'Unlock MPT';
           }
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return this.mptStoreService.lockAction() === 'lock' ? 'Lock MPT' : 'Unlock MPT';
           return this.txUiService.stepMessage();
      });
 
      readonly clawbackMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Clawback MPT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Clawback MPT';
           return this.txUiService.stepMessage();
      });
 
      readonly destroyMptButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Destroy MPT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Destroy MPT';
           return this.txUiService.stepMessage();
      });
 

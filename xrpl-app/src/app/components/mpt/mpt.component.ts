@@ -1,18 +1,16 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -48,11 +46,12 @@ import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
 import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
 import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, MptRequirementsInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,8 +69,8 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
      public readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
      public readonly mptStoreService = inject(MptStoreService);
-     readonly menuTabs: TabConfig[] = MPT_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = MPT_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly tabMeta = MPT_TAB_META;
      private _jsonEditor?: JsonEditorComponent;
 
      monacoOptions = {
@@ -94,6 +93,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.applyTabFromQueryParam(this.route, MPT_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
           this.mptStoreService.setField('metaData', this.mptStoreService.XLS89_TEMPLATE());
+
+          this.rightPanelService.setPanel(MptRequirementsInfoComponent, {
+               activeTab: this.mptTransactionViewModelService.activeTab,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -108,6 +111,33 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                queueMicrotask(() => editor.format());
           }
      }
+
+     tabs = computed(() => {
+          const authAction = this.mptStoreService.authAction();
+          const lockAction = this.mptStoreService.lockAction();
+
+          return MPT_TABS.map(tab => {
+               if (tab.key === 'authorizeMpt') {
+                    return {
+                         ...tab,
+                         label: authAction === 'authorize' ? 'Authorize' : 'Unauthorize',
+                         icon: authAction === 'authorize' ? 'shield-check' : 'shield-off',
+                         color: authAction === 'authorize' ? '#fbbf24' : '#ef4444',
+                    };
+               }
+
+               if (tab.key === 'lockMpt') {
+                    return {
+                         ...tab,
+                         label: lockAction === 'lock' ? 'Lock' : 'Unlock',
+                         icon: lockAction === 'lock' ? 'heroLockClosed' : 'heroLockOpen',
+                         color: lockAction === 'lock' ? '#ef4444' : '#a855f7',
+                    };
+               }
+
+               return tab;
+          });
+     });
 
      onMptSelected(item: SelectItem | null) {
           if (!item) return;

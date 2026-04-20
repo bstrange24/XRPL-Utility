@@ -1,120 +1,84 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = mptTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (mptSelected)="onMptSelectedFromSummary($event)"> </app-summary>
 
-               <!-- Info Message -->
-               <app-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (mptSelected)="onMptSelectedFromSummary($event)"></app-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'createMpt') {
+               <!-- Two-column layout with adjusted widths -->
+               <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column: MPT Create Component - Takes 2/3 of the space -->
+                    <div class="lg:col-span-2">
+                         <app-mpt-create [metadataByteLength]="viewModel.metadataByteLength()" [metadataIsValid]="viewModel.metadataIsValid()"> </app-mpt-create>
+                    </div>
+
+                    <!-- Right Column: MPT Flags Component - Takes 1/3 of the space -->
+                    <div class="lg:col-span-1">
+                         <app-mpt-flags></app-mpt-flags>
+                    </div>
+               </div>
+               } @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
+               <app-mpt-authorize-unauthorize [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-authorize-unauthorize>
+               } @if (tab === 'lockMpt' || tab === 'unlockMpt') {
+               <app-mpt-lock-unlock [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-lock-unlock>
+               } @if (tab === 'sendMpt') {
+               <app-mpt-send [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-send>
+               } @if (tab === 'clawbackMpt') {
+               <app-mpt-clawback [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-clawback>
+               } @if (tab === 'destroyMpt') {
+               <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns">
-                         <div class="tab-content-container form-fields-container">
-                              <!-- Create sections -->
-                              @if(tab === 'createMpt') {
-                              <app-mpt-create [metadataByteLength]="viewModel.metadataByteLength()" [metadataIsValid]="viewModel.metadataIsValid()"> </app-mpt-create>
-                              }
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt', 'unauthorizeMpt', 'sendMpt', 'lockMpt', 'unlockMpt', 'clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-                              <!-- Auth section -->
-                              @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                              <app-mpt-authorize-unauthorize [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-authorize-unauthorize>
-                              }
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Action -->
+                    @if (tab === 'createMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.createMptButtonLabel() }}</button>
+                    } @else if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-amber-600 hover:bg-amber-700': mptStoreService.authAction() === 'authorize', '!bg-red-600 hover:bg-red-700': mptStoreService.authAction() === 'unauthorize'}">{{ mptUtilService.authorizeButtonLabel() }}</button>
+                    } @else if (tab === 'sendMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.sendMptButtonLabel() }}</button>
+                    } @else if (tab === 'lockMpt' || tab === 'unlockMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-red-600 hover:bg-red-700': mptStoreService.lockAction() === 'lock', '!bg-purple-600 hover:bg-purple-700': mptStoreService.lockAction() === 'unlock'}">{{ mptUtilService.lockMptButtonLabel() }}</button>
+                    } @else if (tab === 'clawbackMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue whitespace-nowrap">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
+                    } @else if (tab === 'destroyMpt') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ mptUtilService.destroyMptButtonLabel() }}</button>
+                    }
 
-                              <!-- MPT IssuanceId sections -->
-                              @if (tab === 'lockMpt' || tab === 'unlockMpt') {
-                              <app-mpt-lock-unlock [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-lock-unlock>
-                              }
-
-                              <!-- Send MPT sections -->
-                              @if (tab === 'sendMpt') {
-                              <app-mpt-send [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-send>
-                              }
-
-                              <!-- Clawback -->
-                              @if (tab === 'clawbackMpt') {
-                              <app-mpt-clawback [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-clawback>
-                              }
-
-                              <!-- Destroy -->
-                              @if (tab === 'destroyMpt') {
-                              <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
-                              }
-                         </div>
-
-                         <!-- MPT Flags -->
-                         @if (tab === 'createMpt') {
-                         <div class="tab-content-container flags-container" style="min-width: 350px">
-                              <app-mpt-flags></app-mpt-flags>
-                         </div>
-                         }
+                    <!-- Clear Fields -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearFields(true)" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt','unauthorizeMpt','sendMpt','lockMpt','unlockMpt','clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <!-- Create -->
-                         @if (tab === 'createMpt') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.createMptButtonLabel() }}</button>
-                         }
-                         <!-- Authorize / Unauthorize -->
-                         @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-orange': mptStoreService.authAction() === 'authorize','btn-primary-red': mptStoreService.authAction() === 'unauthorize'}" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.authorizeButtonLabel() }}</button>
-                         }
-                         <!-- Send -->
-                         @if (tab === 'sendMpt') {
-                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.sendMptButtonLabel() }}</button>
-                         }
-                         <!-- Lock / Unlock -->
-                         @if (tab === 'lockMpt' || tab === 'unlockMpt') {
-                         <button type="button" class="auth-btn" [ngClass]="{'btn-primary-red': mptStoreService.lockAction() === 'lock','btn-primary-green': mptStoreService.lockAction() === 'unlock'}" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.lockMptButtonLabel() }}</button>
-                         }
-                         <!-- Clawback -->
-                         @if (tab === 'clawbackMpt') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
-                         }
-
-                         <!-- Destroy -->
-                         @if (tab === 'destroyMpt') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ mptUtilService.destroyMptButtonLabel() }}</button>
-                         }
-                         <!-- CLEAR FIELDS -->
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets" (click)="clearFields(true)">Clear Fields</button>
-                    </div>
-
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-mpt-requirements-info></app-mpt-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

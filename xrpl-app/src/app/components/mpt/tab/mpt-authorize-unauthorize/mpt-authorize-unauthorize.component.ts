@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-import { TransactionDropdownService } from '../../../../services/transaction-dropdown/transaction-dropdown.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
-import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { NgIcon } from '@ng-icons/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,15 +10,13 @@ import { WarningMessageComponent } from '../../../shared/ui-components/warning-m
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, WarningMessageComponent],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MptAuthorizeUnauthorizeComponent {
      private readonly mptStoreService = inject(MptStoreService);
-     private readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
-     private readonly transactionDropdownService = inject(TransactionDropdownService);
      public readonly mptUtilService = inject(MptUtilService);
 
      // Inputs from parent
