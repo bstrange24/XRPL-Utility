@@ -7,6 +7,7 @@ export interface TabConfig {
      icon: string;
      iconType: 'ng-icon' | 'lucide-icon';
      iconSize?: string;
+     color?: string;
 }
 
 export interface TabMetaInfo {

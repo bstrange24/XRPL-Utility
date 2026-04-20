@@ -8,8 +8,11 @@
 /* ============================================
    BASE TYPOGRAPHY & SCALING
    ============================================ */
-html {
-     font-size: 15.0px;
+@layer base {
+     html {
+          font-size: 15.0px;
+          scrollbar-gutter: stable;
+     }
 }
 
 body {
@@ -160,66 +163,6 @@ body {
 
 .dark .btn-amber {
      @apply hover:bg-amber-500 active:bg-amber-600 focus:ring-amber-400;
-}
-
-/* ============================================
-   MENU BUTTON STYLES
-   ============================================ */
-.menu-bar {
-     /* background-color: #f3f4f6; */
-     background-color: #fff;
-}
-
-.menu-btn {
-     background-color: transparent;
-     color: #6b7280;
-     transition: all 0.2s ease;
-     border-radius: 14px;
-     padding: 0.45rem 0.9rem;
-     font-size: 0.875rem;
-     font-weight: 500;
-     display: flex;
-     align-items: center;
-     gap: 0.375rem;
-}
-
-.menu-btn.active {
-     background-color: white;
-     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-     color: #16a34a;
-}
-
-.menu-btn.active lucide-icon,
-.menu-btn.active ng-icon {
-     color: #16a34a;
-}
-
-/* Dark mode menu */
-.dark .menu-bar {
-     background-color: #1f2937;
-}
-
-.dark .menu-btn {
-     color: #9ca3af;
-}
-
-.dark .menu-btn.active {
-     background-color: #374151;
-     color: #34d399;
-     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
-}
-
-.dark .menu-btn.active lucide-icon,
-.dark .menu-btn.active ng-icon {
-     color: #34d399;
-}
-
-.dark .menu-btn span {
-     color: #9ca3af;
-}
-
-.dark .menu-btn.active span {
-     color: #34d399;
 }
 
 /* ============================================
@@ -464,4 +407,9 @@ pre[class*="language-"] {
 
 .scroll-container {
      scrollbar-gutter: stable;
+}
+
+pre code[class*="language-"] {
+     white-space: pre-wrap !important;
+     overflow-wrap: anywhere !important;
 }

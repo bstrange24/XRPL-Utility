@@ -1,0 +1,110 @@
+.menu-bar {
+     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+     transition: all 0.2s ease;
+}
+
+.menu-btn {
+     transition: all 0.2s ease;
+     white-space: nowrap;
+}
+
+/* Active tab styling */
+.menu-btn.active {
+     background-color: #10b981;
+     color: white;
+     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Non-active tabs */
+.menu-btn:not(.active) {
+     background-color: transparent;
+     color: #6b7280;
+}
+
+.menu-btn:not(.active):hover {
+     background-color: #f3f4f6;
+     color: #374151;
+}
+
+.tab-grid {
+     display: grid;
+     gap: 0.25rem;
+     /* default tight gap */
+}
+
+/* Single tab - full width */
+.tab-grid-single {
+     grid-template-columns: 1fr;
+}
+
+/* Multiple tabs - use auto-fill with min-width to prevent squishing */
+.tab-grid-multiple {
+     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+/* Button styling to handle long text */
+.menu-btn {
+     min-width: 0;
+     /* Allow button to shrink below content size */
+     overflow: hidden;
+     text-overflow: ellipsis;
+     white-space: nowrap;
+}
+
+/* For smaller screens, allow text to wrap */
+@media (max-width: 768px) {
+     .menu-btn {
+          white-space: normal;
+          word-break: break-word;
+          text-align: center;
+          line-height: 1.3;
+     }
+
+     .menu-btn-text {
+          display: block;
+          overflow: visible;
+     }
+}
+
+/* For 5+ tabs on desktop, make text smaller */
+.tab-grid-multiple:has(:nth-child(5):last-child) .menu-btn {
+     font-size: 0.8125rem;
+     /* 13px */
+     padding-left: 0.5rem;
+     padding-right: 0.5rem;
+}
+
+/* For very long text like "Derive from Secret Numbers" */
+.tab-grid-multiple:has(:nth-child(4):last-child) .menu-btn,
+.tab-grid-multiple:has(:nth-child(5):last-child) .menu-btn {
+     font-size: 0.75rem;
+     /* 12px */
+     padding-left: 0.5rem;
+     padding-right: 0.5rem;
+}
+
+/* Responsive behavior - horizontal scroll for many tabs on very small screens */
+@media (max-width: 640px) {
+     .menu-bar {
+          width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+     }
+
+     .menu-bar::-webkit-scrollbar {
+          height: 4px;
+     }
+
+     .tab-grid-multiple {
+          display: flex;
+          gap: 0.25rem;
+          min-width: max-content;
+     }
+
+     .tab-grid-multiple .menu-btn {
+          white-space: nowrap;
+          font-size: 0.8125rem;
+          padding-left: 0.75rem;
+          padding-right: 0.75rem;
+     }
+}

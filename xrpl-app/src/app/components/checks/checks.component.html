@@ -1,75 +1,62 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = checksTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          @let wallet = currentWallet();
+          <app-checks-summary [wallet]="wallet" [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"> </app-checks-summary>
 
-               <!-- Info Message -->
-               @let wallet = currentWallet();
-               <app-checks-summary [wallet]="wallet" [tab]="checksTransactionViewModelService.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"></app-checks-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Form Content -->
+               @if (tab === 'createCheck') {
+               <app-checks-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
+               } @else if (tab === 'cashCheck') {
+               <app-checks-cash (checkSelected)="onCheckSelected($event)"></app-checks-cash>
+               } @else if (tab === 'cancelCheck') {
+               <app-checks-cancel (checkSelected)="onCheckSelected($event)" />
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <!-- Create -->
-                    @if(tab === 'createCheck') {
-                    <app-checks-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
-                    } @if (tab === 'cashCheck') {
-                    <app-checks-cash (checkSelected)="onCheckSelected($event)"></app-checks-cash>
-                    } @if (tab === 'cancelCheck') {
-                    <app-checks-cancel (checkSelected)="onCheckSelected($event)" />
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck', 'cancelCheck']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Action -->
+                    @if (tab === 'createCheck') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ viewModel.createCheckButtonLabel() }}</button>
+                    } @else if (tab === 'cashCheck') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || viewModel.selectedCheckIsExpired()" class="btn-blue whitespace-nowrap">{{ viewModel.cashCheckButtonLabel() }}</button>
+                    } @else if (tab === 'cancelCheck') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ viewModel.cancelCheckButtonLabel() }}</button>
                     }
 
-                    <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck','cancelCheck']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <!-- Create -->
-                         @if (tab === 'createCheck') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ viewModel.createCheckButtonLabel() }}</button>
-                         }
-                         <!-- Cash -->
-                         @else if (tab === 'cashCheck') {
-                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || viewModel.selectedCheckIsExpired()">{{ viewModel.cashCheckButtonLabel() }}</button>
-                         }
-                         <!-- Cancel -->
-                         @else if (tab === 'cancelCheck') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ viewModel.cancelCheckButtonLabel() }}</button>
-                         }
-                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    <!-- Secondary Actions -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-checks-requirement-info></app-checks-requirement-info>
+               </div>
+          </form>
      </div>
 </div>

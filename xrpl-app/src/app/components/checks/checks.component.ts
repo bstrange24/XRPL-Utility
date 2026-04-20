@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -11,8 +11,6 @@ import { CopyUtilService } from '../../services/utils/copy-util/copy-util.servic
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -48,11 +46,12 @@ import { XrplTransactionOrchestratorService } from '../../services/xrpl-transact
 import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksRequirementInfoComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent, ChecksSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent, ChecksSummaryComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,9 +73,9 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      public readonly validationService = inject(ValidationService);
      public readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
      public readonly checksStoreService = inject(ChecksStoreService);
-
-     readonly menuTabs: TabConfig[] = CHECK_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = CHECK_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly tabs = CHECK_TABS;
+     public readonly tabMeta = CHECK_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -93,6 +92,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+
+          this.rightPanelService.setPanel(ChecksRequirementInfoComponent, {
+               activeTab: this.checksTransactionViewModelService.activeTab,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {

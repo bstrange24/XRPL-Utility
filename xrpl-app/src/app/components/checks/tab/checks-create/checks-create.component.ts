@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
-import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -18,7 +17,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,8 +52,4 @@ export class ChecksCreateComponent {
                if (!Number.isNaN(num)) input.value = num.toFixed(6);
           }
      }
-
-     setCheckExpirationDate = (value: string): void => {
-          this.checksStoreService.setField('checkExpirationDate', value);
-     };
 }

@@ -1,29 +1,42 @@
-<app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
-     <div class="credential-title-line">
-          <span class="check-amount" [class.expired]="check.isExpired"> {{ check.amount }} </span>
-          @if (check.isExpired) {
-          <span class="expired-badge">Expired</span>
+<!-- Check Item Content -->
+<div class="w-full">
+     <!-- Amount + Expired Badge -->
+     <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
+          <div class="flex items-center gap-3">
+               <span class="text-xl font-semibold text-gray-900" [class.line-through]="check.isExpired" [class.text-red-500]="check.isExpired"> {{ check.amount }} </span>
+
+               @if (check.isExpired) {
+               <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+               }
+          </div>
+     </app-tooltip-link>
+
+     <!-- Metadata -->
+     <div class="mt-3 space-y-2 text-sm">
+          <!-- Check ID -->
+          <div class="flex items-center gap-2">
+               <span class="text-gray-500 w-24">Check ID:</span>
+               <span class="font-mono text-gray-700 truncate">{{ check.index }}</span>
+          </div>
+
+          <!-- Destination - On its own line -->
+          <div class="flex items-center gap-2">
+               <span class="text-gray-500 w-24">Destination:</span>
+               <span class="font-mono text-gray-700 truncate">{{ check.destination }}</span>
+          </div>
+
+          <!-- Amount -->
+          <div class="flex items-center gap-2">
+               <span class="text-gray-500 w-24">Amount:</span>
+               <span class="font-medium">{{ check.amount }}</span>
+          </div>
+
+          <!-- Expiration -->
+          @if (check.expiration) {
+          <div class="flex items-center gap-2">
+               <span class="text-gray-500 w-24"> {{ check.isExpired ? 'Expired:' : 'Expires:' }} </span>
+               <span class="text-gray-600"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
+          </div>
           }
      </div>
-</app-tooltip-link>
-
-<div class="credential-meta chips" [class.expired]="check.isExpired">
-     <div class="cred-chip">
-          <span class="meta-label">Check ID:</span>
-          <span class="type">{{ check.index }}</span>
-     </div>
-     <div class="cred-chip">
-          <span class="meta-label">Destination:</span>
-          <span class="type">{{ check.destination }}</span>
-     </div>
-     <div class="cred-chip">
-          <span class="meta-label">Amount:</span>
-          <span class="type">{{ check.amount }}</span>
-     </div>
-     @if (check.expiration) {
-     <div class="cred-chip">
-          <span class="meta-label">{{ check.isExpired ? 'Expired:' : 'Expires:' }}</span>
-          <span class="type">{{ utilsService.convertXRPLTime(check.expiration) }}</span>
-     </div>
-     }
 </div>

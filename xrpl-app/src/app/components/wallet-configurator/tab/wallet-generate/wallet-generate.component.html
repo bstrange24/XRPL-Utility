@@ -1,9 +1,7 @@
 @if (walletsViewModelService.activeTab() === 'generate') {
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
      <button type="button" class="btn-primary" (click)="walletConfiguratorComponent.generateNewAccount()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate from Family Seed' }}</button>
-
      <button type="button" class="btn-primary" (click)="walletConfiguratorComponent.generateNewWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate from Mnemonic' }}</button>
-
      <button type="button" class="btn-primary" (click)="walletConfiguratorComponent.generateNewWalletFromSecretNumbers()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate from Secret Numbers' }}</button>
 </div>
 

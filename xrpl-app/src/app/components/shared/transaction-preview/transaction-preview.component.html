@@ -1,14 +1,16 @@
 <!-- Spinner / progress (shown during preparing → waiting_validation) -->
 @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
-<div class="flex flex-col items-center gap-4 p-6 bg-white rounded-2xl shadow-lg border border-blue-200 mt-4 mb-5">
+<div class="flex flex-col items-center gap-3 p-4 bg-white rounded-2xl shadow-lg border border-blue-200 mt-3 mb-5">
      <div class="relative">
-          <div class="w-12 h-12 border-4 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
-          <lucide-icon name="loader" size="24" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"></lucide-icon>
+          <div class="w-8 h-8 border-2 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
+          <lucide-icon name="loader" size="16" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"> </lucide-icon>
      </div>
+
      <div class="text-center">
-          <p class="text-sm font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
+          <p class="text-xs font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
+
           @if (txUiService.detailedStatus()) {
-          <p class="text-xs text-blue-500 mt-1">{{ txUiService.detailedStatus() }}</p>
+          <p class="text-[11px] text-blue-500 mt-0.5">{{ txUiService.detailedStatus() }}</p>
           }
      </div>
 </div>
@@ -56,6 +58,6 @@
      </div>
 
      <!-- JSON Content - Same styling as Transaction JSON -->
-     <pre class="p-6 overflow-x-auto bg-white"><code #txResultJson class="language-json text-sm font-mono text-blue-800"></code></pre>
+     <pre class="p-6 bg-white whitespace-pre-wrap break-all"><code #txResultJson class="language-json text-sm font-mono text-blue-800"></code></pre>
 </div>
 }

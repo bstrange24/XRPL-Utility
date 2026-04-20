@@ -1,83 +1,93 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Check Requirements</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Checks Info</span>
+          </div>
 
-     <p class="info-subtitle">
-          XRPL Checks allow a sender to authorize a future payment that the recipient must actively<br />
-          claim.
-     </p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge primary-badge">📝 Create Check</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Destination</span>
-                         <span class="field-status required">✅ Required</span>
+     <!-- Collapsible Content with Animation -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">XRPL Checks</h3>
+               <p class="text-sm text-gray-600">Checks allow a sender to authorize a future payment that the recipient must actively claim.</p>
+          </div>
+
+          <!-- Requirements by Action - Stacked Vertically -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements by Action</h4>
+
+               <div class="space-y-5">
+                    <!-- Create Check -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">📝 Create Check</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Destination</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">SendMax</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Expiration</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">SendMax</span>
-                         <span class="field-status required">✅ Required</span>
+
+                    <!-- Cash Check -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full">💰 Cash Check</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">CheckID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Amount OR DeliverMin</span>
+                                   <span class="text-green-600 font-medium">One Required</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Expiration</span>
-                         <span class="field-status optional">➕ Optional</span>
+
+                    <!-- Cancel Check -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">❌ Cancel Check</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">CheckID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge success-badge">💰 Cash Check</span>
-               </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">CheckID</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Amount OR DeliverMin</span>
-                         <span class="field-status required">✅ One Required</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge danger-badge">❌ Cancel Check</span>
-               </div>
-
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">CheckID</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>A Check does <strong>not</strong> move funds until it is cashed.</li>
-                    <li>Funds remain in the sender’s account until<br />the Check is cashed.</li>
-                    <li>
-                         The sender must have sufficient balance<br />
-                         at the time of cashing.
-                    </li>
-                    <li>
-                         If Expiration is set, the Check cannot<br />
-                         be cashed after that time.
-                    </li>
-                    <li>
-                         Each Check object increases the sender’s<br />
-                         <strong>owner reserve</strong> until it is cashed or canceled.
-                    </li>
+                    <li>Funds remain in the sender’s account until the Check is cashed.</li>
+                    <li>The sender must have sufficient balance at the time of cashing.</li>
+                    <li>If Expiration is set, the Check cannot be cashed after that time.</li>
+                    <li>Each Check object increases the sender’s <strong>owner reserve</strong> until it is cashed or canceled.</li>
                </ul>
           </div>
      </div>
+     }
 </div>

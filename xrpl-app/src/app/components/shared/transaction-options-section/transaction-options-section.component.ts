@@ -11,6 +11,7 @@ import * as xrpl from 'xrpl';
 import { CredentialUtilService } from '../../../services/credentials/credential-util/credential-util.service';
 import { XrplExpirationInputComponent } from '../xrpl-expiration-input/xrpl-expiration-input.component';
 import { PaymentChannelStoreService } from '../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
+import { ChecksStoreService } from '../../../services/checks/checks-store/checks-store.service';
 
 @Component({
      selector: 'app-transaction-options-section',
@@ -29,6 +30,7 @@ export class TransactionOptionsSectionComponent {
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
+     public readonly checksStoreService = inject(ChecksStoreService);
 
      activeTab = input.required<'sendXrp' | 'createCredential' | 'createPaymentChannel' | 'fundPaymentChannel' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential' | 'cashCheck' | 'cancelCheck' | 'createCheck' | 'deleteAccount' | 'set' | 'delete' | 'accept' | 'verify' | 'setPermissionedDomain' | 'deletePermissionedDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
@@ -78,4 +80,10 @@ export class TransactionOptionsSectionComponent {
           const input = event.target as HTMLInputElement;
           if (input) input.select();
      }
+
+     setCheckExpirationDate = (value: string): void => {
+          this.checksStoreService.setField('checkExpirationDate', value);
+          this.checksStoreService.setField('enableExpirationDate', true);
+          alert('Expiration date set to: ' + value);
+     };
 }

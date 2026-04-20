@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -57,11 +57,9 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit {
      public readonly credentialStore = inject(CredentialStore);
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
-     private rightPanelService = inject(RightPanelService);
-     readonly menuTabs: TabConfig[] = SEND_XRP_TABS;
-     // readonly tabMeta: Record<string, TabMetaInfo> = SEND_XRP_TAB_META;
-     sendXrpTabs = SEND_XRP_TABS;
-     tabMeta = SEND_XRP_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly sendXrpTabs = SEND_XRP_TABS;
+     public readonly tabMeta = SEND_XRP_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

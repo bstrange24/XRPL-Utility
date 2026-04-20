@@ -4,6 +4,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
      selector: 'app-send-xrp-requirements-info',
+     standalone: true,
      imports: [NgIcon],
      templateUrl: './send-xrp-requirements-info.component.html',
      styleUrl: './send-xrp-requirements-info.component.css',
@@ -14,5 +15,5 @@ export class SendXrpRequirementsInfoComponent {
      activeTab = input.required<'sendXrp'>();
 
      // Collapsible state
-     isExpanded = signal(false); // ← Fixed: Added this signal
+     isExpanded = signal(false);
 }

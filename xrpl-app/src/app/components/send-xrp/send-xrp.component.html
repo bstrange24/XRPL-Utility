@@ -6,15 +6,15 @@
 <div class="p-1">
      <div>
           <!-- Menu / Tabs -->
-          <!-- <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info> -->
-          <app-tab-menu-with-info [tabs]="sendXrpTabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+          <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+          <!-- <app-tab-menu-with-info [tabs]="sendXrpTabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info> -->
 
           <!-- Info Message -->
           <app-send-xrp-summary [info]="view.infoData()" [tab]="'sendXrp'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-send-xrp-summary>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <app-warning-message [warningMessage]="safeWarningMessage()"> </app-warning-message>
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->

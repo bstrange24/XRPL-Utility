@@ -19,7 +19,7 @@
      </div>
 
      <!-- Toggle Optional Fields -->
-     <div class="flex items-center gap-3 border-gray-100 rounded-2xl pb-4 mt-2">
+     <div class="flex flex-col gap-3 mt-2">
           <label class="flex items-center cursor-pointer">
                <div class="toggle-switch">
                     <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" />
@@ -27,10 +27,10 @@
                </div>
                <span class="toggle-label">Include optional fields</span>
           </label>
-     </div>
 
-     <!-- Optional Fields Section -->
-     @if (wantsOptions()) {
-     <app-transaction-options-section [activeTab]="'sendXrp'"></app-transaction-options-section>
-     }
+          <!-- Optional Fields Section -->
+          @if (wantsOptions()) {
+          <app-transaction-options-section [activeTab]="'sendXrp'"></app-transaction-options-section>
+          }
+     </div>
 </div>

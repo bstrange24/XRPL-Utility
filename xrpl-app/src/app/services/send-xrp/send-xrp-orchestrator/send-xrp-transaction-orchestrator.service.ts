@@ -91,33 +91,36 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
 
-               // ── 2. Validation ───────────────────────────────────────────
+               // Validation
                const meta = SEND_XRP_META[type];
 
                const validationInputs = meta.buildValidationInputs({ wallet, env, account, txOptions });
                const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // ── 3. Build transaction ────────────────────────────────────
+               // Build transaction
                const tx = meta.buildTx({ orchestrator: this, env, wallet, account });
 
-               // ── 4. Optional fields ──────────────────────────────────────
+               // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.account, type, txOptions);
 
-               // ── 5. Balance check ────────────────────────────────────────
+               // Balance check
                const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
-               // ── 6. Submit / simulate ────────────────────────────────────
+               //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
                     client,
                     wallet: env.wallet || wallet,
                     env,
+
                     mode: txOptions?.isSimulateEnabled ? 'simulate' : 'submit',
                     skipBalanceCheck: true,
+
                     ui: {
                          suppressIndividualFeedback: false,
                     },
+
                     signing: {
                          useMultiSign: txOptions?.useMultiSign,
                          multiSignAddress: account?.multiSignAddress,
@@ -126,6 +129,7 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                          regularKeySeed: account?.regularKeySeed,
                          regularKeyAddress: account?.regularKeyAddress,
                     },
+
                     buildTx: () => tx as any,
                });
 
@@ -133,12 +137,12 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
 
                txHash = submitOrSimResult.hash;
 
-               // ── 7. Simulation early return ──────────────────────────────
+               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
                     return this.handleSimulationSuccess(account, txHash);
                }
 
-               // ── 8. Wait for final outcome ───────────────────────────────
+               // Final validated outcome (preserved)
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 

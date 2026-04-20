@@ -1,19 +1,23 @@
-<div class="form-group">
-     <label for="label">{{ label }}</label>
+<!-- Expiration Section -->
+<div class="mt-0 max-w-[425px]">
+     <div class="space-y-2">
+          <label class="text-sm font-medium">{{ label }}</label>
 
-     @if (hint) {
-     <p class="form-hint" [innerHTML]="hint"></p>
-     }
+          @if (hint) {
+          <p class="text-xs text-gray-500" [innerHTML]="hint"></p>
+          }
 
-     <div class="expiration-input-group">
-          <input type="datetime-local" class="expiration-input" [value]="expirationSignal()" step="1" (input)="onInput($event)" placeholder="Never expires" />
-          <div class="expiration-buttons">
-               <button type="button" class="btn-small btn-primary-blue" (click)="setNow()">Now</button>
-               <button type="button" class="btn-small btn-primary-blue" (click)="addSeconds(10)">+10s</button>
-               <button type="button" class="btn-small btn-primary-blue" (click)="addSeconds(30)">+30s</button>
-               <button type="button" class="btn-small btn-primary-blue" (click)="addSeconds(60)">+1min</button>
-               <button type="button" class="btn-small btn-primary-blue" (click)="addSeconds(3600)">+1h</button>
-               <button type="button" class="btn-small btn-primary-red" (click)="clear()">Clear</button>
+          <!-- DateTime Input -->
+          <input type="datetime-local" [value]="expirationSignal()" step="1" (input)="onInput($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+
+          <!-- Quick Action Buttons - Compact & Colored -->
+          <div class="grid grid-cols-3 gap-2 mt-3">
+               <button type="button" (click)="setNow()" class="btn-blue text-xs py-2 font-medium">Now</button>
+               <button type="button" (click)="addSeconds(10)" class="btn-primary text-xs py-2 font-medium">+10s</button>
+               <button type="button" (click)="addSeconds(30)" class="btn-primary text-xs py-2 font-medium">+30s</button>
+               <button type="button" (click)="addSeconds(60)" class="btn-primary text-xs py-2 font-medium">+1 min</button>
+               <button type="button" (click)="addSeconds(3600)" class="btn-primary text-xs py-2 font-medium">+1 hour</button>
+               <button type="button" (click)="clear()" class="btn-red text-xs py-2 font-medium">Clear</button>
           </div>
      </div>
 </div>

@@ -1,68 +1,95 @@
-<!-- Currency + Amount -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="currencyCodeCreate">Currency Code</label>
-          <p class="form-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-          <app-select-search-dropdown [items]="checksTransactionViewModelService.currencyItems()" [value]="checksTransactionViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-               <ng-template #itemTemplate let-item>
-                    <div class="flex items-center gap-2">
-                         @if (item.id === 'XRP') {
-                         <span class="text-yellow-500 font-bold">XRP</span>
-                         } @else {
-                         <span>{{ item.display }}</span>
-                         }
-                         <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                    </div>
-               </ng-template>
-          </app-select-search-dropdown>
+<div>
+     <!-- Currency + Amount Row -->
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Currency Code -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Currency Code</label>
+               <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="checksTransactionViewModelService.currencyItems()" [value]="checksTransactionViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code...">
+                         <ng-template #itemTemplate let-item>
+                              <div class="flex items-center gap-2">
+                                   @if (item.id === 'XRP') {
+                                   <span class="text-yellow-500 font-bold">XRP</span>
+                                   } @else {
+                                   <span>{{ item.display }}</span>
+                                   }
+                                   <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                              </div>
+                         </ng-template>
+                    </app-select-search-dropdown>
+               </div>
+          </div>
+
+          <!-- Amount -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Amount</label>
+               <p class="text-xs text-gray-500">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+
+               <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checksStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
      </div>
-     <div class="form-group">
-          <label for="amountField">Amount</label>
-          <p class="form-hint">Amount, in XRP or token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-          <input type="number" id="amountFieldCreate" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checksStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
+
+     <!-- Issuer + Balance (only when not XRP) -->
+     @if (currencyStoreService.currency() !== 'XRP') {
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Issuer -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Issuer</label>
+               <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="checksTransactionViewModelService.issuerItems()" [value]="checksTransactionViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." />
+               </div>
+          </div>
+
+          <!-- Currency Balance -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Currency Balance</label>
+               <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
+
+               <input type="text" [value]="currencyStoreService.balance()" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
      </div>
-</div>
+     }
 
-<!-- Issuer (only when not XRP) -->
-@if (currencyStoreService.currency() !== 'XRP') {
-<div class="form-row">
-     <div class="form-group">
-          <label for="issuer">Issuer</label>
-          <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-          <app-select-search-dropdown [items]="checksTransactionViewModelService.issuerItems()" [value]="checksTransactionViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+     <!-- Destination -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Destination</label>
+          <p class="text-xs text-gray-500">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
+
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+          </div>
      </div>
-     <div class="form-group">
-          <label for="currencyBalance">Currency Balance</label>
-          <p class="form-hint">Total currency balance held by this account.</p>
-          <input type="text" [value]="currencyStoreService.balance()" readonly name="currencyBalanceField" />
-     </div>
-</div>
-}
 
-<!-- Destination -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">Destination</label>
-          <p class="form-hint">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
-          <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
-     </div>
-</div>
+     <!-- Toggles -->
+     <div class="flex flex-col gap-3 mt-2">
+          <!-- Optional Fields Toggle -->
+          <label class="flex items-center cursor-pointer">
+               <div class="toggle-switch">
+                    <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="optionsToggled.emit($event.target.checked)" />
+                    <span class="slider"></span>
+               </div>
+               <span class="toggle-label">Include optional fields (Expiration Date, Destination Tag, Source Tag, Invoice ID)</span>
+          </label>
 
-<div class="switch-group">
-     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="optionsToggled.emit($event.checked)">Include optional fields (Destination Tag, Source Tag, Invoice ID)</mat-slide-toggle>
-</div>
-
-@if (txUiService.wantsOptions()) {
-<app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
-}
-
-<mat-slide-toggle class="mini-toggle" [checked]="checksStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.checked)">Set Check expiration date</mat-slide-toggle>
-
-<div class="form-row">
-     <div class="form-group">
-          @if (checksStoreService.enableExpirationDate()) {
-          <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date (optional)" hint="Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
+          @if (txUiService.wantsOptions()) {
+          <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
           }
+
+          <!-- Expiration Toggle -->
+          <!-- <label class="flex items-center cursor-pointer">
+               <div class="toggle-switch">
+                    <input type="checkbox" [checked]="checksStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.target.checked)" />
+                    <span class="slider"></span>
+               </div>
+               <span class="toggle-label">Set Check expiration date</span>
+          </label>
+
+          @if (checksStoreService.enableExpirationDate()) {
+          <div class="mt-1 mb-4">
+               <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date (optional)" hint="Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
+          </div>
+          } -->
      </div>
-     <div class="form-group"></div>
 </div>

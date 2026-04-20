@@ -1,7 +1,8 @@
-<div class="form-row">
-     <div class="form-group">
-          <label for="selectCheck">Select Check to cancel</label>
-          <p class="form-hint">Check ID generated when the check was created.</p>
+<div class="space-y-2">
+     <label class="text-sm font-medium">Select Check to Cancel</label>
+     <p class="text-xs text-gray-500">Check ID generated when the check was created.</p>
+
+     <div class="h-[54px]">
           <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
      </div>
 </div>
