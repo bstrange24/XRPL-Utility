@@ -472,3 +472,7 @@ pre[class*="language-"] {
      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
      gap: 12px;
 }
+
+.scroll-container {
+     scrollbar-gutter: stable;
+}

@@ -16,7 +16,7 @@ export class XrplTransactionOrchestratorService {
 
           const mode = params.mode;
           const skipBalanceCheck = params.skipBalanceCheck ?? true;
-          if (mode !== 'simulate') this.txUiService.currentStep.set('preparing');
+          // if (mode !== 'simulate') this.txUiService.currentStep.set('preparing');
 
           const ui = params.ui ?? {};
           const { suppressIndividualFeedback = false, suppressPreview = false } = ui;
