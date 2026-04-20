@@ -1,45 +1,65 @@
 @if (escrowTransactionViewModelService.infoData(); as info) {
-<div class="info-and-credentials-card" [class.has-escrows]="info.escrowCount > 0">
-     <!-- Always-visible summary row -->
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-               <code>{{ info.walletName }}</code>
 
-               @if (info.escrowCount === 0) {
-               <span> has no outstanding escrows.</span>
-               } @else {
-               <span> has <strong class="object-count">{{ info.escrowCount }}</strong> escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (info.activeTab) { @case ('createEscrow') { created. } @case ('finishEscrow') { that can be finished. } @case ('cancelEscrow') { that can be cancelled. } } </span>
-               }
+<!-- Main Card -->
+<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
+     <!-- Summary Header -->
+     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
+          <div class="flex items-start gap-3 flex-1">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+
+               <div>
+                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
+
+                    @if (info.escrowCount === 0) {
+                    <span class="text-gray-600 text-sm"> has no active escrows.</span>
+                    } @else {
+                    <span class="text-gray-600 text-sm">
+                         has <strong class="text-gray-900">{{ info.escrowCount }}</strong>
+                         escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (tab()) { @case ('createEscrow') { created. } @case ('finishEscrow') { that can be finished. } @case ('cancelEscrow') { that can be cancelled. } }
+                    </span>
+                    }
+               </div>
           </div>
 
-          <!-- Centered links row -->
+          <!-- XRPL Win Links -->
           @if (info.links) {
-          <div class="xrpl-win-link-small"><span [innerHTML]="info.links"></span> on XRPL Win</div>
+          <div class="text-xs text-blue-600 hover:text-blue-700 pt-1" [innerHTML]="info.links"></div>
           }
 
-          <!-- Expand/Collapse toggle (only shown when there are escrows) -->
+          <!-- Expand / Collapse -->
           @if (info.escrowCount > 0) {
-          <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel.emit()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle escrow list">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} escrow{{ info.escrowCount === 1 ? '' : 's' }}</span>
-               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
+          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} escrows</span>
+               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
           </button>
           }
      </div>
 
-     <!-- Collapsible detailed list with internal scroll -->
-     @if (info.escrowCount > 0) {
-     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Credential list">
-          <ul class="credentials-list">
-               @for (escrow of info.escrowsToShow; track escrow.EscrowSequence + escrow.finishAfter) { @switch (escrow.tab) { @case ('createEscrow') {
-               <app-escrow-create-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-               } @case ('finishEscrow') {
-               <app-escrow-finish-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-               } @case ('cancelEscrow') {
-               <app-escrow-cancel-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-               } } }
+     <!-- Expandable Escrow List -->
+     @if (info.escrowCount > 0 && infoPanelExpanded()) {
+     <div class="max-h-[420px] overflow-y-auto p-2">
+          <ul class="space-y-2">
+               @for (escrow of info.escrowsToShow; track escrow.EscrowSequence + escrow.finishAfter) {
+               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 cursor-pointer transition-all" [class.border-red-200]="escrow.isExpired" (click)="onEscrowClick(escrow)">
+                    <!-- Check Content -->
+                    <div class="flex-1 min-w-0">
+                         @switch (escrow.tab) { @case ('createEscrow') {
+                         <app-escrow-create-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                         } @case ('finishEscrow') {
+                         <app-escrow-finish-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                         } @case ('cancelEscrow') {
+                         <app-escrow-cancel-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                         } }
+                    </div>
+
+                    <!-- Copy Button -->
+                    <button (click)="copyUtilService.copyAndToast(escrow.EscrowSequence, 'Escrow ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy Escrow ID">
+                         <lucide-icon name="copy" size="16" />
+                    </button>
+               </li>
+               }
           </ul>
-     </section>
+     </div>
      }
 </div>
 }

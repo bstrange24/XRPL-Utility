@@ -1,36 +1,38 @@
-<div class="form-row">
-     <div class="form-group">
-          <label for="selectEscrow">Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }}</label>
-          <p class="form-hint">Select an existing escrow to {{activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }}.</p>
-          <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available"> </app-select-search-dropdown>
-          @if (activeTab === 'cancelEscrow' && selectedEscrowIsExpired()) {
-          <div class="warning-message expired-warning">
-               <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-               This selected escrow has expired.
+<div class="space-y-8">
+     <!-- Select Escrow -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+          <p class="text-xs text-gray-500">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+          </div>
+
+          <!-- Expired Warning -->
+          @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
+          <div class="mt-3 flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4 text-sm text-red-700">
+               <ng-icon name="heroExclamationTriangle" size="20" class="flex-shrink-0 mt-0.5" />
+               <span> This selected escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished. } </span>
           </div>
           }
      </div>
-</div>
 
-@if (activeTab === 'finishEscrow' && selectedEscrowIsExpired()) {
-<div class="warning-message expired-warning">
-     <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-     This selected escrow has expired and cannot be finished.
-</div>
-} @if(activeTab === 'finishEscrow' && !selectedEscrowIsExpired()) {
-<div class="form-row">
-     <div class="form-group">
-          <label for="escrowSequenceNumberField">Escrow Sequence ID</label>
-          <p class="form-hint">Sequence ID generated when the escrow was created.</p>
-          <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" name="escrowSequenceNumberField" />
-     </div>
-</div>
+     <!-- Extra Fields for Finish Escrow (when not expired) -->
+     @if (activeTab === 'finishEscrow' && !selectedEscrowIsExpired()) {
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Escrow Sequence ID -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Escrow Sequence ID</label>
+               <p class="text-xs text-gray-500">Sequence ID generated when the escrow was created.</p>
+               <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
 
-<div class="form-row">
-     <div class="form-group">
-          <label for="escrowOwner">Escrow Owner</label>
-          <p class="form-hint">The account that orginally created the escrow.</p>
-          <input type="text" id="escrowOwnerField" [ngModel]="escrowStoreService.escrowOwner()" name="escrowOwnerField" />
+          <!-- Escrow Owner -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Escrow Owner</label>
+               <p class="text-xs text-gray-500">The account that originally created the escrow.</p>
+               <input type="text" [ngModel]="escrowStoreService.escrowOwner()" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
      </div>
+     }
 </div>
-}

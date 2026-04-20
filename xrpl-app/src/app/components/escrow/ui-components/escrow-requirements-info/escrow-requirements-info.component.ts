@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -10,4 +10,9 @@ import { NgIcon } from '@ng-icons/core';
 })
 export class EscrowRequirementsInfoComponent {
      page = input.required<boolean>();
+
+     activeTab = input.required<'createEscrow'>();
+
+     // Collapsible state
+     isExpanded = signal(false);
 }

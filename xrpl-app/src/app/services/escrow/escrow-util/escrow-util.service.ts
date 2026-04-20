@@ -42,21 +42,21 @@ export class EscrowUtilService {
      readonly createEscrowButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create Escrow';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Create Escrow';
           return this.txUiService.stepMessage();
      });
 
      readonly finishEscrowButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Finish Escrow';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Finish Escrow';
           return this.txUiService.stepMessage();
      });
 
      readonly cancelEscrowButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Cancel Escrow';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Cancel Escrow';
           return this.txUiService.stepMessage();
      });
 

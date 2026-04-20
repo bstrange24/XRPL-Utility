@@ -53,7 +53,7 @@ export const CHECK_TAB_META: Record<
 > = {
      createCheck: {
           icon: 'heroPlusCircle',
-          colorClass: 'blue-button-submenu',
+          colorClass: 'green-button-submenu',
           title: 'Create Check',
           desc: 'Create a check to another XRPL address.',
           color: '#10b981',
@@ -62,7 +62,7 @@ export const CHECK_TAB_META: Record<
      },
      cashCheck: {
           icon: 'heroCurrencyDollar',
-          colorClass: 'green-button-submenu',
+          colorClass: 'blue-button-submenu',
           title: 'Cash Check',
           desc: 'Cash check sent from another XRPL address.',
           color: '#3b82f6',

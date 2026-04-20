@@ -21,7 +21,7 @@ import { TransactionDropdownService } from '../../../services/transaction-dropdo
 import { TxEnvironmentService } from '../../../services/transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../../core/app.constants';
+import { AppConstants } from '../../../core/app.constants';
 import { CONDITIONAL_ESCROW_TAB_META, CONDITIONAL_ESCROW_TABS, TIME_ESCROW_TAB_META, TIME_ESCROW_TABS } from '../constants/time-escrow.ui';
 import { ESCROW_TAB } from '../constants/time-escrow.constants';
 import { DropdownItem } from '../../../models/dropdown-item.model';
@@ -33,6 +33,8 @@ import { EscrowTransactionViewModelService } from '../../../services/escrow/escr
 import { MptStoreService } from '../../../services/mpt/mpt-store/mpt-store.service';
 import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../../services/right-panel/right-panel.service';
+import { EscrowRequirementsInfoComponent } from '../ui-components/escrow-requirements-info/escrow-requirements-info.component';
 
 @Component({
      standalone: true,
@@ -57,12 +59,11 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly mptStoreService = inject(MptStoreService);
-
-     readonly timeMenuTabs: TabConfig[] = TIME_ESCROW_TABS;
-     readonly timeTabMeta: Record<string, TabMetaInfo> = TIME_ESCROW_TAB_META;
-     readonly conditionMenuTabs: TabConfig[] = CONDITIONAL_ESCROW_TABS;
-     readonly conditionTabMeta: Record<string, TabMetaInfo> = CONDITIONAL_ESCROW_TAB_META;
-
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly timeMenuTabs = TIME_ESCROW_TABS;
+     public readonly timeTabMeta = TIME_ESCROW_TAB_META;
+     public readonly conditionMenuTabs = CONDITIONAL_ESCROW_TABS;
+     public readonly conditionTabMeta = CONDITIONAL_ESCROW_TAB_META;
      abstract readonly isConditional: boolean;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
@@ -80,6 +81,11 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+
+          this.rightPanelService.setPanel(EscrowRequirementsInfoComponent, {
+               activeTab: this.escrowTransactionViewModelService.activeTab,
+               page: this.isConditional,
+          });
      }
 
      public get activeTab() {

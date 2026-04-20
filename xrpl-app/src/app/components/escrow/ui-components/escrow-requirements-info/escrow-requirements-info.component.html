@@ -1,111 +1,91 @@
-@if (page()) {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-          <h3>Conditional Escrow Requirements</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900"> {{ page() ? 'Conditional Escrow' : 'Time-Based Escrow' }} Info </span>
+          </div>
 
-     <p class="info-subtitle">
-          Conditional Escrows lock XRP, or an IOU, until a specified time <br />
-          A cryptographic fulfillment is required to release funds.
-     </p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge condition-badge">🔐 Condition Only</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Condition</span>
-                         <span class="field-status required">✅ Required</span>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">{{ page() ? 'Conditional Escrow' : 'Time-Based Escrow' }}</h3>
+               <p class="text-sm text-gray-600">@if (page()) { Conditional Escrows lock XRP (or an issued token) until a cryptographic fulfillment is provided. } @else { Time-based Escrows lock XRP (or an issued token) until a specified future time. }</p>
+          </div>
+
+          <!-- Requirements Section -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements</h4>
+
+               <div class="space-y-5">
+                    @if (page()) {
+                    <!-- Conditional -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-violet-100 text-violet-700 rounded-full">🔐 Condition Only</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Condition</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">FinishAfter</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">CancelAfter</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">FinishAfter</span>
-                         <span class="field-status optional">➕ Optional</span>
+                    } @else {
+                    <!-- Time-Based -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">⏱️ Time-Based</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">FinishAfter</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">CancelAfter</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">CancelAfter</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
+                    }
                </div>
           </div>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    @if (page()) {
                     <li><strong>Condition is required</strong> for conditional escrows.</li>
-                    <li>A valid <strong>cryptographic fulfillment</strong> must be providedto finish the escrow.</li>
+                    <li>A valid <strong>cryptographic fulfillment</strong> is needed to finish the escrow.</li>
                     <li>You must include at least one of <strong>FinishAfter</strong> or <strong>CancelAfter</strong>.</li>
-                    <li>If both time fields are provided, <strong>FinishAfter must be earlier than CancelAfter</strong>.</li>
-                    <li>Each escrow increases your account’s <strong>owner reserve</strong> until it is finished or canceled.</li>
-               </ul>
-          </div>
-     </div>
-</div>
-} @else {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-          <h3>Time-Based Escrow Requirements</h3>
-     </div>
-
-     <p class="info-subtitle">Time based Escrows lock XRP, or an IOU, until a specified time.</p>
-
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">⏱️ Unlock Only</span>
-                    <span class="badge optional-badge">No Expiration</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">FinishAfter</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">CancelAfter</span>
-                         <span class="field-status omitted">❌ Optional</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">⏱️ Unlock + Expiration</span>
-                    <span class="badge required-badge">With Cancel Time</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">FinishAfter</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">CancelAfter</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
+                    } @else {
                     <li><strong>FinishAfter is required</strong> for time-based escrows.</li>
-                    <li>If CancelAfter is provided, <strong>FinishAfter must be earlier than CancelAfter</strong>.</li>
-                    <li>Each escrow increases your account’s <strong>owner reserve</strong> until it is finished or canceled.</li>
+                    <li>If <strong>CancelAfter</strong> is set, it must be later than <strong>FinishAfter</strong>.</li>
+                    }
+                    <li>Each escrow increases your account’s <strong>owner reserve</strong> until finished or canceled.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ No Cancel Option (Irreversible Escrow)</h5>
-               <p style="color: #92400e">If the escrow does <strong>not</strong> include a CancelAfter time.</p>
-               <ul>
-                    <li>The escrow <strong>can never be canceled</strong> by the sender.</li>
-                    <li>Funds will remain locked until the escrow is finished.</li>
-                    <li>
-                         If the destination cannot or does not finish the escrow, <br />
-                         the XRP may remain locked permanently.
-                    </li>
-               </ul>
+
+               <!-- Warning -->
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-2">⚠️ Important Warning</h5>
+                    <p class="text-amber-700 text-sm">@if (page()) { If the fulfillment is never provided, funds may remain locked permanently unless CancelAfter is set. } @else { If no CancelAfter is set, the escrow cannot be canceled. }</p>
+               </div>
           </div>
      </div>
+     }
 </div>
-}
