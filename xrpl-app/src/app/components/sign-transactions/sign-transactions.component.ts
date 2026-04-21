@@ -1,7 +1,6 @@
 import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
@@ -11,8 +10,6 @@ import { CopyUtilService } from '../../services/utils/copy-util/copy-util.servic
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { SelectItem } from '../../services/shared/destination-dropdown/destination-dropdown.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { SelectSearchDropdownComponent } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
@@ -31,11 +28,16 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { SIGN_TRANSACTION_TAB_META, SIGN_TRANSACTION_TABS } from './constants/sign-transaction.ui';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
+import { SIGN_TRANSACTION_TAB } from './constants/sign-transaction.constants';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, NavbarComponent, LucideAngularModule, NgIcon, WalletPanelComponent, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, SignTransactionRequirementsInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,7 +49,10 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      public readonly signTransactionUtilService = inject(SignTransactionUtilService);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
      public readonly signTransationStoreService = inject(SignTransationStoreService);
+     private readonly rightPanelService = inject(RightPanelService);
      private readonly cdr = inject(ChangeDetectorRef);
+     public readonly signTxTabs = SIGN_TRANSACTION_TABS;
+     public readonly tabMeta = SIGN_TRANSACTION_TAB_META;
 
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      @ViewChild('signedEditable') signedEditable!: ElementRef<HTMLDivElement>;
@@ -118,6 +123,10 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                const output = this.signTransationStoreService.outputField();
                untracked(() => this.updateSignedDisplay());
           });
+
+          this.rightPanelService.setPanel(SignTransactionRequirementsInfoComponent, {
+               activeTab: 'sendXrp',
+          });
      }
 
      isExternallySignedTx = computed(() => {
@@ -138,10 +147,17 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      });
 
      ngOnInit(): void {
+          this.applyTabFromQueryParam(this.route, SIGN_TRANSACTION_TAB, tab => this.setTab(tab));
           this.signTransationStoreService.setField('selectedTransaction', 'sendXrp');
           this.clearMessages();
           this.txUiService.clearAllOptionsAndMessages();
           this.clearFields();
+     }
+
+     async setTab(tab: string): Promise<void> {
+          if (!SIGN_TRANSACTION_TABS.includes(tab as any)) return;
+          // this.sendXrpViewModelService.activeTab.set(tab as SendXrpActionTypes);
+          this.clearInputFields();
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -355,6 +371,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      async submitTransaction(): Promise<void> {
           await this.withPerf('submitTransaction', async () => {
+               this.txUiService.isSignedTx.set(true);
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 
@@ -408,7 +425,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                     if (result.hash) this.txUiService.addTxHashSignal(result.hash);
 
                     if (!this.xrplTxOptionsStore.isSimulateEnabled()) {
-                         this.txUiService.currentStep.set('success');
                          await this.refreshAfterTx(env.client, env.wallet, null);
                          this.clearFields();
                          this.cdr.detectChanges();
@@ -419,6 +435,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                } finally {
                     this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, submit: false }));
                     this.txUiService.resetCurrentStepToIdle();
+                    this.txUiService.isSignedTx.set(false);
                }
           });
      }
@@ -502,6 +519,11 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      protected clearInputFields(): void {
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
+          this.signTransationStoreService.setField('outputField', '');
+          this.signTransationStoreService.setAppSigned(false);
+          this.txUiService.isSignedTx.set(false);
+          this.txUiService.clearAllOptionsAndMessages();
+          this.cdr.markForCheck();
      }
 
      private clearFields() {

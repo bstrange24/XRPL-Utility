@@ -27,7 +27,9 @@
                <label class="text-sm font-medium">Select Your Created Channel</label>
                <p class="text-xs text-gray-500">Choose one of your created channels to generate a signature.</p>
 
-               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+               </div>
 
                @if (viewModel.selectedIsExpired()) {
                <div class="mt-3 flex items-center gap-2 text-red-600 text-sm">
@@ -71,7 +73,9 @@
                <label class="text-sm font-medium">Select Payment Channel to Claim</label>
                <p class="text-xs text-gray-500">Select an existing payment channel to claim funds from.</p>
 
-               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+               </div>
 
                @if (viewModel.selectedIsExpired()) {
                <div class="mt-3 flex items-center gap-2 text-red-600 text-sm">

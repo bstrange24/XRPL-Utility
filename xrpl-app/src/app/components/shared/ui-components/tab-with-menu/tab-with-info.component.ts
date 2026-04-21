@@ -29,12 +29,6 @@ export class TabMenuWithInfoComponent {
      // Convert observable to signal
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
-     // Reactive derived value
-     // currentMeta = computed(() => {
-     //      const key = this.active();
-     //      return key === undefined ? undefined : this.metaMap()[key];
-     // });
-
      // Get icon color based on theme
      getIconColor(): string {
           const meta = this.currentMeta();

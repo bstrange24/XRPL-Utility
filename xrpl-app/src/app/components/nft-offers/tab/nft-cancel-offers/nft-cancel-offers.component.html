@@ -4,7 +4,9 @@
           <label class="text-sm font-medium">Select Offer to Cancel</label>
           <p class="text-xs text-gray-500">Select an existing NFT offer to cancel.</p>
 
-          <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers" />
+          </div>
      </div>
 
      <!-- NFT Offer ID -->

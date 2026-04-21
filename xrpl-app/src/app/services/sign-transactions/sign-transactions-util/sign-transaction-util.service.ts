@@ -137,35 +137,35 @@ export class SignTransactionUtilService {
      readonly getTransactionJsonButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().getJson) return 'Get Transaction JSON';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Get Transaction JSON';
           return this.txUiService.stepMessage();
      });
 
      readonly signTransactionButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().signed) return 'Signed Transaction';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Signed Transaction';
           return this.txUiService.stepMessage();
      });
 
      readonly submitTransactionButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
-          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().submit) return 'Submit Transation';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'idle' || !this.signTransationStoreService.buttonLoading().submit) return 'Submit Transaction';
+          if (step === 'waiting_validation') return 'Submit Transaction';
           return this.txUiService.stepMessage();
      });
 
      readonly signMultiSignButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().multiSign) return 'Sign for Multi-Sign';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Sign for Multi-Sign';
           return this.txUiService.stepMessage();
      });
 
      readonly signWithRegularKeyButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle' || !this.signTransationStoreService.buttonLoading().regularKeySign) return 'Sign with Regular Key';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Sign with Regular Key';
           return this.txUiService.stepMessage();
      });
 
@@ -270,7 +270,7 @@ export class SignTransactionUtilService {
           sendXrp: ({ wallet, accountInfo, currentLedger, fee }) => ({
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
-               Destination: 'rLPxR96EiM69W2hGMsW5eg9mqYDNo5U7a8',
+               Destination: 'rKCvwruCxFM3sdqRAWKFiWR5WctQP182jr',
                Amount: xrpl.xrpToDrops('0.000001'),
                Fee: fee,
                LastLedgerSequence: currentLedger,

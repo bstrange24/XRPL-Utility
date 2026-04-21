@@ -1,91 +1,95 @@
-<div class="requirements-info">
-               <div class="info-header">
-                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-                    <h3>Sign & Submit Transactions</h3>
-               </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Sign & Submit Transactions</span>
+          </div>
 
-               <p class="info-subtitle">Prepare, sign (single, regular key, or multi-sign), preview JSON, and submit any XRPL transaction type. Supports getting unsigned/signed blobs, copying/downloading JSON, and viewing results — ideal for manual tx crafting, testing, or advanced workflows.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-               <div class="combinations-grid">
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">✍️ Prepare & Sign</span>
-                              <span class="badge required-badge">Transaction JSON</span>
-                         </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Transaction Type</span>
-                                   <span class="field-status required">✅ Required (select from dropdown)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Transaction JSON</span>
-                                   <span class="field-status required">✅ Required (editable JSON blob)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Signing Method</span>
-                                   <span class="field-status optional">➕ Single key, regular key, or multi-sign</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Output</span>
-                                   <span class="field-status optional">➕ Signed blob (hex) or full signed tx JSON</span>
-                              </div>
-                         </div>
-                    </div>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Sign & Submit Transactions</h3>
+               <p class="text-sm text-gray-600">Prepare, sign (single key, regular key, or multi-sign), preview JSON, and submit any XRPL transaction.</p>
+          </div>
 
-                    <div class="combination-card">
-                         <div class="combination-header">
-                              <span class="badge time-badge">🚀 Submit & Result</span>
-                              <span class="badge optional-badge">Broadcast & Preview</span>
+          <!-- Key Operations -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Key Operations</h4>
+
+               <div class="space-y-5">
+                    <!-- Prepare & Sign -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">✍️ Prepare & Sign</span>
                          </div>
-                         <div class="combination-fields">
-                              <div class="field-row">
-                                   <span class="field-name">Signed Transaction</span>
-                                   <span class="field-status required">✅ Required (signed hex/blob)</span>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Transaction Type</span>
+                                   <span class="text-green-600 font-medium">Required</span>
                               </div>
-                              <div class="field-row">
-                                   <span class="field-name">Submit</span>
-                                   <span class="field-status required">✅ Broadcast to network</span>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Transaction JSON</span>
+                                   <span class="text-green-600 font-medium">Required (editable)</span>
                               </div>
-                              <div class="field-row">
-                                   <span class="field-name">Transaction Result</span>
-                                   <span class="field-status optional">➕ Engine result (tesSUCCESS, tec/tef codes, etc.)</span>
-                              </div>
-                              <div class="field-row">
-                                   <span class="field-name">Actions</span>
-                                   <span class="field-status optional">➕ Copy / download JSON or signed blob</span>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Signing Method</span>
+                                   <span class="text-gray-500">Single / Regular Key / Multi-Sign</span>
                               </div>
                          </div>
                     </div>
 
-                    <div class="important-notes">
-                         <h5>📝 Important Notes:</h5>
-                         <ul>
-                              <li>All signing happens **client-side** — your secret/seed never leaves your device.</li>
-                              <li><strong>Transaction JSON</strong>: Must be valid XRPL format (TransactionType, Account, Sequence, etc.). Edit directly in the preview area.</li>
-                              <li>
-                                   Supports multiple signing modes:
-                                   <ul>
-                                        <li>Single key (master or regular)</li>
-                                        <li>Multi-sign (if SignerList set and quorum met)</li>
-                                   </ul>
-                              </li>
-                              <li><strong>Get Transaction JSON</strong>: Generates base JSON for the selected type (you fill in details).</li>
-                              <li><strong>Signed Transaction</strong>: Produces the signed blob (hex string) ready for submission or multi-sign addition.</li>
-                              <li><strong>Submit Transaction</strong>: Broadcasts to the connected XRPL node — result shows tesSUCCESS (included) or error codes (tec/tef/tem).</li>
-                              <li>Copy/download buttons let you save unsigned/signed JSON or blobs for offline use, sharing, or later submission.</li>
-                              <li>Transaction preview shows full details before signing/submitting — use to verify fields, fees, and paths.</li>
-                         </ul>
-                         <p></p>
-                         <h5 class="warning-title">⚠️ Security & Submission Risks</h5>
-                         <p style="color: #92400e">Signing exposes control — wrong JSON or compromised device can lead to fund loss or failed txs.</p>
-                         <ul>
-                              <li>Never paste real secrets/seeds into untrusted tools — this page signs locally, but verify your environment.</li>
-                              <li>Invalid JSON (missing Sequence, wrong Account, invalid fields) causes submission failure (tem/tef codes) and fee burn.</li>
-                              <li>Multi-sign requires quorum — incomplete signers cause tecNO_PERMISSION or similar errors.</li>
-                              <li>Submitting the same signed blob twice fails (tesSUCCESS only on first inclusion) — always use fresh signatures.</li>
-                              <li>High fees or malformed tx can lock funds temporarily (e.g., escrows, offers) — double-check before submit.</li>
-                              <li>Always test full flows (prepare → sign → submit) on devnet or Testnet first — mainnet mistakes are irreversible and cost real XRP.</li>
-                         </ul>
+                    <!-- Submit & Result -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full">🚀 Submit & Result</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Signed Transaction</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Submit to Network</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Transaction Result</span>
+                                   <span class="text-gray-500">tesSUCCESS or error codes</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
+
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>All signing happens <strong>client-side</strong> — your secret/seed never leaves your device.</li>
+                    <li><strong>Transaction JSON</strong> must be valid XRPL format. You can edit it directly in the preview area.</li>
+                    <li>Supports single key, regular key, and multi-sign (if SignerList is configured).</li>
+                    <li>Use <strong>Get Transaction JSON</strong> to generate a base template for the selected type.</li>
+                    <li><strong>Signed Transaction</strong> produces a signed hex blob ready for submission.</li>
+                    <li>Copy / download buttons let you save JSON or signed blobs for offline use or sharing.</li>
+               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Security & Risks</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Never paste real secrets into untrusted tools.</li>
+                         <li>Invalid JSON causes submission failure and burns the transaction fee.</li>
+                         <li>Always test full flows on Devnet or Testnet first.</li>
+                         <li>Double-check fields before submitting on mainnet — transactions are irreversible.</li>
+                    </ul>
+               </div>
+          </div>
+     </div>
+     }
+</div>

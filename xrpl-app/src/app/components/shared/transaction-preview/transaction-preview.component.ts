@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewChild, ElementRef, effect, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewChild, ElementRef, effect, signal, inject } from '@angular/core';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
 import { CopyUtilService } from '../../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -20,15 +20,14 @@ import 'prismjs/components/prism-json';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TransactionPreviewComponent extends PerformanceBaseComponent {
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly copyUtilService = inject(CopyUtilService);
+     public readonly downloadUtilService = inject(DownloadUtilService);
      @ViewChild('paymentJson') paymentJson!: ElementRef<HTMLElement>;
      @ViewChild('txResultJson') txResultJson!: ElementRef<HTMLElement>;
      url = signal<string>('');
 
-     constructor(
-          public txUiService: TransactionUiService,
-          public copyUtilService: CopyUtilService,
-          public downloadUtilService: DownloadUtilService
-     ) {
+     constructor() {
           super();
           effect(() => {
                const tx = this.txUiService.txSignal();

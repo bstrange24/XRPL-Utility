@@ -45,6 +45,7 @@ import {
      heroSun,
      heroChevronUp,
      heroChevronDown,
+     heroCodeBracket,
 } from '@ng-icons/heroicons/outline';
 import { NgIconsModule } from '@ng-icons/core';
 import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
@@ -149,6 +150,7 @@ bootstrapApplication(AppComponent, {
                heroCheckCircle,
                heroMoon,
                heroSun,
+               heroCodeBracket,
           }),
      ],
 }).catch(err => console.error(err));

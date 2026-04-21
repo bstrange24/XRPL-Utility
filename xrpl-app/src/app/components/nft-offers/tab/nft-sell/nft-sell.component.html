@@ -20,7 +20,9 @@
           <label class="text-sm font-medium">Select NFT</label>
           <p class="text-xs text-gray-500">Select an existing NFT for this offer.</p>
 
-          <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
+          </div>
      </div>
      }
 

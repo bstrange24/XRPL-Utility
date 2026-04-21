@@ -28,7 +28,9 @@
           <label class="text-sm font-medium">Currency Code</label>
           <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token.</p>
 
-          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+          </div>
      </div>
 </ng-template>
 
@@ -37,7 +39,9 @@
           <label class="text-sm font-medium">Issuer</label>
           <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
 
-          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+          </div>
      </div>
 </ng-template>
 

@@ -19,7 +19,9 @@
                     <label class="text-sm font-medium">Asset 1</label>
                     <p class="text-xs text-gray-500">First token in the liquidity pool.</p>
 
-                    <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    </div>
                </div>
 
                <!-- Asset 2 -->
@@ -27,7 +29,9 @@
                     <label class="text-sm font-medium">Asset 2</label>
                     <p class="text-xs text-gray-500">Second token in the liquidity pool.</p>
 
-                    <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    </div>
                </div>
           </div>
 
@@ -37,14 +41,18 @@
                     <label class="text-sm font-medium">Issuer (Asset 1)</label>
                     <p class="text-xs text-gray-500">Issuer of the first token (ignored for XRP).</p>
 
-                    <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    </div>
                </div>
 
                <div class="space-y-2">
                     <label class="text-sm font-medium">Issuer (Asset 2)</label>
                     <p class="text-xs text-gray-500">Issuer of the second token (ignored for XRP).</p>
 
-                    <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    </div>
                </div>
           </div>
 
@@ -286,7 +294,9 @@
           <label class="text-sm font-medium">Destination Account</label>
           <p class="text-xs text-gray-500">The account that will receive the swapped tokens.</p>
 
-          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+          </div>
      </div>
      }
 </div>

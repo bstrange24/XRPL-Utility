@@ -29,25 +29,29 @@
                     <label class="text-sm font-medium">Select Currency</label>
                     <p class="text-xs text-gray-500">Remove a unique currency code from this application.</p>
 
-                    <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
-                         <ng-template #itemTemplate let-item>
-                              <div class="flex items-center gap-2">
-                                   @if (item.id === 'XRP') {
-                                   <span class="text-yellow-500 font-bold">XRP</span>
-                                   } @else {
-                                   <span>{{ item.display }}</span>
-                                   }
-                                   <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                              </div>
-                         </ng-template>
-                    </app-select-search-dropdown>
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
+                              <ng-template #itemTemplate let-item>
+                                   <div class="flex items-center gap-2">
+                                        @if (item.id === 'XRP') {
+                                        <span class="text-yellow-500 font-bold">XRP</span>
+                                        } @else {
+                                        <span>{{ item.display }}</span>
+                                        }
+                                        <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                   </div>
+                              </ng-template>
+                         </app-select-search-dropdown>
+                    </div>
                </div>
 
                <div class="space-y-2">
                     <label class="text-sm font-medium">Select Issuer</label>
                     <p class="text-xs text-gray-500">Remove a unique issuer address from this application.</p>
 
-                    <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
+                    </div>
                </div>
           </div>
 

@@ -21,6 +21,7 @@ export class TransactionUiService {
      txHash: string | null = null;
      txHashes: string[] = [];
      isError = signal<boolean>(false);
+     isSignedTx = signal<boolean>(false);
      isSuccess = signal<boolean>(false);
      suppressSuccessMessage = signal<boolean>(false);
      suppressIndividualFeedback = signal<boolean>(false);

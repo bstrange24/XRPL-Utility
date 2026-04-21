@@ -116,7 +116,9 @@
                     </select>
                     } @else {
                     <div class="pl-2">
-                         <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..."> </app-select-search-dropdown>
+                         <div class="h-[54px]">
+                              <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..."> </app-select-search-dropdown>
+                         </div>
                     </div>
                     }
                </div>

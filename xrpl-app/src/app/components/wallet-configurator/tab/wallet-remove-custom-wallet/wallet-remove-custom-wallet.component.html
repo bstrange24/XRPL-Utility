@@ -4,7 +4,9 @@
      <!-- Dropdown Label -->
      <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">Custom Wallets</label>
-          <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+          </div>
      </div>
 
      <!-- Selected Wallet Display -->

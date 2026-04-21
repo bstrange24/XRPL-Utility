@@ -17,14 +17,18 @@
                <label class="text-sm font-medium">Currency Code</label>
                <p class="text-xs text-gray-500">The token you want to receive.</p>
 
-               <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               </div>
           </div>
 
           <div class="space-y-2">
                <label class="text-sm font-medium">Currency Code</label>
                <p class="text-xs text-gray-500">The token you want to spend.</p>
 
-               <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               </div>
           </div>
      </div>
 
@@ -34,14 +38,18 @@
                <label class="text-sm font-medium">Issuer</label>
                <p class="text-xs text-gray-500">The XRPL account that issues the token you want to receive.</p>
 
-               <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+               </div>
           </div>
 
           <div class="space-y-2">
                <label class="text-sm font-medium">Issuer</label>
                <p class="text-xs text-gray-500">The XRPL account that issues the token you want to spend.</p>
 
-               <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+               </div>
           </div>
      </div>
 </div>
