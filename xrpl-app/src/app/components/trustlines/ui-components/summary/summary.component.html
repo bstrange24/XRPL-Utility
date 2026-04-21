@@ -1,85 +1,82 @@
 @if(info.trustlineCount > 0) {
-<div class="info-and-credentials-card" [class.has-trustlines]="info.trustlineCount > 0">
+<div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-4" [class.border-blue-200]="info.trustlineCount > 0">
      @if (info?.isLoading) {
-     <div class="summary-header">Loading trustlines...</div>
+     <div class="px-4 py-6 text-center text-gray-500 dark:text-gray-400">
+          <div class="flex items-center justify-center gap-2">
+               <div class="animate-spin rounded-full h-5 w-5 border-2 border-gray-300 border-t-green-500"></div>
+               <span class="text-sm font-medium">Loading trustlines...</span>
+          </div>
+     </div>
      } @else {
      <!-- Always-visible summary row -->
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-               <code>{{ info.walletName }}</code>
+     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
+          <div class="flex items-start gap-3 flex-1">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
 
-               @if (info.trustlineCount === 0) {
-               <span> {{ info.emptyMessage }}</span>
-               <br />
-               } @else {
-               <span>
-                    has <strong class="object-count">{{ info.trustlineCount }}</strong>
-                    {{ info.countText }}.
-               </span>
-               <br />
-               } @if (info.helpHint) {
-               <br />
-               <span>({{ info.helpHint }})</span>
-               }
+               <div>
+                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
+
+                    @if (info.trustlineCount === 0) {
+                    <span class="text-gray-600 text-sm"> {{ info.emptyMessage }}</span>
+                    } @else {
+                    <span class="text-gray-600 text-sm">
+                         has <strong class="text-gray-900">{{ info.trustlineCount }}</strong>
+                         {{ info.countText }}
+                    </span>
+                    }
+               </div>
           </div>
 
-          <!-- Expand/Collapse toggle -->
+          <!-- Right-side hint -->
+          @if (info.helpHint) {
+          <div class="text-xs text-blue-600 pt-1">💡 {{ info.helpHint }}</div>
+          }
+
+          <!-- Toggle -->
           @if (info.trustlineCount > 0) {
-          <button type="button" class="expand-toggle-btn" (click)="toggleExpanded()" [attr.aria-expanded]="isExpanded" aria-label="Toggle trustlines list">
-               <span>{{ isExpanded ? 'Hide' : 'Show' }} Trustlines</span>
-               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'"> </ng-icon>
+          <button type="button" (click)="toggleExpanded()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
+               <span>{{ isExpanded ? 'Hide' : 'Show' }} trustlines</span>
+               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'" />
           </button>
           }
      </div>
 
      <!-- Collapsible detailed list -->
-     @if (info.trustlineCount > 0) {
-     <section class="credentials-list-container" [class.expanded]="isExpanded" aria-label="Credential list">
-          <ul class="credentials-list">
-               @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer + tl.balance) {
-               <li class="credential-item">
-                    <!-- Main content -->
-                    <div class="credential-content">
-                         <app-tooltip-link [href]="explorerUrl + 'account/' + tl.issuer + '/tokens'" tooltipText="View issuer tokens on XRPL Explorer">
-                              <div class="credential-title-line">
-                                   <strong class="">{{ tl.currency }}</strong>
-                                   @if (tl.balance !== '0') {
-                                   <span class="balance-badge"> {{ tl.balance }} held </span>
-                                   }
-                              </div>
-                         </app-tooltip-link>
+     @if (info.trustlineCount > 0 && isExpanded) {
+     <div class="max-h-[420px] overflow-y-auto p-2">
+          <ul class="space-y-2">
+               @for (tl of info.trustlinesToShow; track tl.currency + tl.issuer) {
+               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 cursor-pointer transition-all">
+                    <!-- Left content -->
+                    <div class="flex-1 min-w-0">
+                         <div class="flex items-center gap-2 flex-wrap">
+                              <strong class="text-sm font-semibold text-gray-900"> {{ tl.currency }} </strong>
 
-                         <div class="credential-meta chips">
-                              <div class="cred-chip">
-                                   <span class="meta-label">Issuer:</span>
-                                   <span class="type"><code>{{ tl.issuer }}</code></span>
-                              </div>
-                              <div class="cred-chip">
-                                   <span class="meta-label">Limit:</span>
-                                   <span class="type">{{ tl.limit }}</span>
-                              </div>
-                              <div class="cred-chip">
-                                   <span class="meta-label">Balance:</span>
-                                   <span class="type">{{ tl.balance }}</span>
-                              </div>
-                              @if (tl.flags && tl.flags.length > 0) {
-                              <div class="cred-chip">
-                                   <span class="meta-label">Flags:</span>
-                                   <span class="type">{{ tl.flags.join(', ') }}</span>
-                              </div>
+                              @if (tl.balance !== '0') {
+                              <span class="text-xs text-green-600"> {{ tl.balance }} held </span>
+                              }
+                         </div>
+
+                         <div class="text-xs text-gray-500 mt-1 truncate">{{ tl.issuer }}</div>
+
+                         <div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-3">
+                              <span>Limit: {{ tl.limit }}</span>
+                              <span>Balance: {{ tl.balance }}</span>
+
+                              @if (tl.flags?.length) {
+                              <span>Flags: {{ tl.flags.join(', ') }}</span>
                               }
                          </div>
                     </div>
 
                     <!-- Copy button -->
-                    <button (click)="copyUtilService.copyAndToast(tl.issuer, 'Issuer Address'); $event.stopPropagation()" class="copy-btn-small" title="Copy Issuer Address">
-                         <lucide-icon name="copy" size="15" />
+                    <button (click)="copyIssuer(tl.issuer); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy issuer">
+                         <lucide-icon name="copy" size="16" />
                     </button>
                </li>
                }
           </ul>
-     </section>
+     </div>
      } }
 </div>
 }

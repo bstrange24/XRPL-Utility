@@ -3,14 +3,13 @@ import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
-import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ToastService } from '../../../../services/utils/toast/toast.service';
 
 @Component({
      selector: 'app-summary',
      standalone: true,
-     imports: [CommonModule, NgIcon, LucideAngularModule, TooltipLinkComponent],
+     imports: [CommonModule, NgIcon, LucideAngularModule],
      templateUrl: './summary.component.html',
      styleUrl: './summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

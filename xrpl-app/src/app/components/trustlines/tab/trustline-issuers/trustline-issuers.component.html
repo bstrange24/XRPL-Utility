@@ -1,47 +1,56 @@
-<!-- Add new issuers -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="addCurrencyCode">Add Currency Code</label>
-          <p class="form-hint">Add a unique currency code to this application.</p>
-          <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" name="newCurrency" placeholder="e.g. USDC, EUR, BTC" class="input-field" />
+<div class="space-y-8">
+     <!-- Add New Currency + Issuer -->
+     <div>
+          <h4 class="text-sm font-semibold text-gray-900 mb-4">Add New Currency / Issuer</h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Currency Code</label>
+                    <p class="text-xs text-gray-500">Add a unique currency code to this application.</p>
+                    <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               </div>
+
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Issuer Address</label>
+                    <p class="text-xs text-gray-500">Add a unique issuer address to this application.</p>
+                    <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               </div>
+          </div>
+
+          <button type="button" class="mt-4 btn-primary" (click)="trustlineUtilService.addNewCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isAddValid()">{{ trustlineViewModelService.addCurrencyIssuerButtonLabel() }}</button>
      </div>
 
-     <div class="form-group">
-          <label for="addIssuerAddress">Add Issuer Address</label>
-          <p class="form-hint">Add a unique issuer address to this application.</p>
-          <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" name="newIssuer" placeholder="r..." class="input-field" />
+     <!-- Remove Existing -->
+     <div>
+          <h4 class="text-sm font-semibold text-gray-900 mb-4">Remove Currency / Issuer</h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Select Currency</label>
+                    <p class="text-xs text-gray-500">Remove a unique currency code from this application.</p>
+
+                    <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
+                         <ng-template #itemTemplate let-item>
+                              <div class="flex items-center gap-2">
+                                   @if (item.id === 'XRP') {
+                                   <span class="text-yellow-500 font-bold">XRP</span>
+                                   } @else {
+                                   <span>{{ item.display }}</span>
+                                   }
+                                   <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                              </div>
+                         </ng-template>
+                    </app-select-search-dropdown>
+               </div>
+
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Select Issuer</label>
+                    <p class="text-xs text-gray-500">Remove a unique issuer address from this application.</p>
+
+                    <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
+               </div>
+          </div>
+
+          <button type="button" class="mt-4 btn-red" (click)="trustlineUtilService.removeCurrentCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isRemoveValid()">{{ trustlineViewModelService.removeSelectedIssuerButtonLabel() }}</button>
      </div>
-</div>
-
-<div class="form-row">
-     <button type="button" class="btn-primary-blue" (click)="trustlineUtilService.addNewCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isAddValid()">{{ trustlineViewModelService.addCurrencyIssuerButtonLabel() }}</button>
-</div>
-
-<div class="form-row">
-     <div class="form-group">
-          <label for="selectCurrency">Select Currency</label>
-          <p class="form-hint">Remove a unique currency code to this application.</p>
-          <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
-               <ng-template #itemTemplate let-item>
-                    <div class="flex items-center gap-2">
-                         @if (item.id === 'XRP') {
-                         <span class="text-yellow-500 font-bold">XRP</span>
-                         } @else {
-                         <span>{{ item.display }}</span>
-                         }
-                         <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                    </div>
-               </ng-template>
-          </app-select-search-dropdown>
-     </div>
-
-     <div class="form-group">
-          <label for="selectIssuer">Select Issuer</label>
-          <p class="form-hint">Remove a unique issuer address from this application.</p>
-          <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
-     </div>
-</div>
-
-<div class="form-row">
-     <button type="button" class="btn-primary-red" (click)="trustlineUtilService.removeCurrentCurrencyIssuer()" [disabled]="!isIdle || !trustlineUtilService.isRemoveValid()">{{ trustlineViewModelService.removeSelectedIssuerButtonLabel() }}</button>
 </div>

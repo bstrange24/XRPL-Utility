@@ -1,74 +1,64 @@
-@if (layout === 'split') {
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
+<div class="space-y-8">
+     @if (layout === 'split') {
+     <!-- Split Layout (one field per row) -->
+     <div class="space-y-6">
+          <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
+     </div>
+     } @else {
+     <!-- Paired Layout (two fields per row) -->
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
+     </div>
+
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
+     </div>
+     }
 </div>
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
-</div>
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
-</div>
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
-</div>
-} @else {
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
-     <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
-</div>
-<div class="form-row">
-     <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
-     <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
-</div>
-}
+
+<!-- ==================== Templates ==================== -->
 
 <ng-template #currencyTpl>
-     <div class="form-group">
-          <label for="currencyCode">Currency Code</label>
-          <p class="form-hint">Issued asset combined with the issuer to uniquely define a token.</p>
-          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available"> </app-select-search-dropdown>
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Currency Code</label>
+          <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token.</p>
+
+          <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
      </div>
 </ng-template>
 
 <ng-template #issuerTpl>
-     <div class="form-group">
-          <label for="issuer">Issuer</label>
-          <p class="form-hint">The XRPL account that issues and controls this currency.</p>
-          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found"> </app-select-search-dropdown>
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Issuer</label>
+          <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+
+          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
      </div>
 </ng-template>
 
 <ng-template #amountTpl>
-     <div class="form-group">
-          <label for="currencyAmount">{{ limitLabel }}</label>
+     <div class="space-y-2">
+          <label class="text-sm font-medium">{{ limitLabel }}</label>
 
-          <p class="form-hint">
-               <!-- Issue Currency -->
-               @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. }
-               <!-- Clawback Tokens -->
-               @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. }
-               <!-- Set Trustline -->
-               @else if (activeTab === 'setTrustline') {Maximum amount you're willing to hold. Use arrows for precision. }
-               <!-- Trustline Already Exist -->
-               <!-- @if (trustlineAlreadyExist) { Current trustline limit (read-only here). Edit to update or set to 0. } @else { Maximum amount you're willing to hold. Use arrows for precision. } } -->
-               <!-- Remove Trustline -->
-               @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove. }
-               <!-- @else if (activeTab === 'removeTrustline') { Current trustline limit (view only). Balance must be 0 to remove. } -->
+          <p class="text-xs text-gray-500">
+               @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }
           </p>
 
-          <!-- <input type="number" step="0.000001" min="0" [value]="amount" [readonly]="isReadOnly" [disabled]="isReadOnly" (input)="onAmountInput($event)" [class.bg-gray-100]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" /> -->
-          <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" />
+          <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
      </div>
 </ng-template>
 
 <ng-template #balanceTpl>
-     <div class="form-group">
-          <label for="currencyBalance">Currency Balance</label>
-          @if (trustlineViewModelService.isIssuerForSelected()) {
-          <p class="form-hint">Total currency balance issued by this account for the selected currency code and issuer.</p>
-          } @else {
-          <p class="form-hint">Total currency balance held by this account for the selected currency code and issuer.</p>
-          }
-          <input type="text" [value]="currencyBalance" readonly />
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Currency Balance</label>
+
+          <p class="text-xs text-gray-500">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
+
+          <input type="text" [value]="currencyBalance" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
      </div>
 </ng-template>

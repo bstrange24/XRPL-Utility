@@ -1,72 +1,93 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"> </ng-icon>
-          <h3>Trust Line Requirements</h3>
-     </div>
-
-     <p class="info-subtitle">Trust Lines allow your account to hold issued currencies (IOUs) from a specific issuer.</p>
-
-     <div class="combinations-grid">
-          <!-- Create / Modify Trust Line -->
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge primary-badge">🔗 Create / Modify Trust Line</span>
-               </div>
-
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">LimitAmount.currency</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">LimitAmount.issuer</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">LimitAmount.value</span>
-                         <span class="field-status required">✅ Required</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Flags (NoRipple, Freeze, etc.)</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-               </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Trustline Info</span>
           </div>
 
-          <!-- Remove Trust Line -->
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge danger-badge">❌ Remove Trust Line</span>
-               </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">LimitAmount.value = 0</span>
-                         <span class="field-status required">✅ Required</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Trust Lines</h3>
+               <p class="text-sm text-gray-600">Trust Lines allow your account to hold and trade issued currencies (IOUs) from a specific issuer.</p>
+          </div>
+
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Key Operations</h4>
+
+               <div class="space-y-5">
+                    <!-- Create / Modify -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🔗 Create / Modify Trust Line</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Currency Code</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Issuer</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Limit Amount</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Flags (NoRipple, Freeze, etc.)</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Outstanding Balance</span>
-                         <span class="field-status required">⚠️ Must Be 0</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">No Active Freeze</span>
-                         <span class="field-status required">⚠️ Required</span>
+
+                    <!-- Remove -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">❌ Remove Trust Line</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Limit Amount = 0</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Outstanding Balance</span>
+                                   <span class="text-amber-600 font-medium">Must be 0</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
           <!-- Important Notes -->
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Trust Lines are required to hold <strong>issued tokens (IOUs)</strong>. XRP does not require a trust line.</li>
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Trust Lines are required to hold <strong>issued tokens (IOUs)</strong>. XRP does not need one.</li>
                     <li>Setting a positive limit creates a trust line if one does not already exist.</li>
-                    <li>Reducing the limit does not remove the trust line unless the balance is <strong>zero</strong>.</li>
-                    <li>To fully remove a trust line, the balance must be zero and the limit must be set to 0.</li>
-                    <li>Each trust line increases your account’s <strong>owner reserve</strong> while it exists.</li>
-                    <li>The issuer may freeze a trust line if they have the Freeze feature enabled.</li>
-                    <li><strong>Note:</strong> Setting limit to 0 removes ability to hold balance. The trustline remains in the ledger (normal XRPL behavior). This app hides zero-limit lines.</li>
+                    <li>To remove a trust line, the balance must be exactly zero and the limit set to 0.</li>
+                    <li>Each trust line consumes <strong>owner reserve</strong> (~0.2 XRP) while active.</li>
+                    <li>The issuer can freeze a trust line if they have the Freeze feature enabled.</li>
                </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Common Gotchas</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Reducing the limit does not remove the trust line if balance > 0.</li>
+                         <li>Zero-balance trust lines are hidden in this app (normal XRPL behavior).</li>
+                         <li>Always test trustline creation/removal on Devnet/Testnet first.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

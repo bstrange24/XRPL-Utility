@@ -1,39 +1,39 @@
-<!-- Trustline Flags -->
 @if (trustlineViewModelService.activeTab() === 'setTrustline' || trustlineViewModelService.activeTab() === 'removeTrustline') {
-<div class="tab-content-container flags-container" style="min-width: 350px">
-     <div class="flags-wrapper">
-          <!-- Header -->
-          <div class="token-flags-header">
-               <lucide-icon name="flag" size="20"></lucide-icon>
-               <span class="token-flags-title">Trustline Flags</span>
-          </div>
 
-          @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) {
-          <!-- Get isEnabled -->
-          @let isEnabled = trustlineCurrencyService.flags()[flag.key];
-          <!-- Get isRequired -->
-          @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
+<!-- Header -->
+<div class="flex items-center gap-2 mb-3">
+     <lucide-icon name="flag" size="18" class="text-gray-700" />
+     <span class="text-base font-semibold text-gray-900">Trustline Flags</span>
+</div>
 
-          <button type="button" class="flag-item-account-flags" [class.enabled]="isEnabled" [class.required]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
-               <div class="flag-header-account">
-                    <input type="checkbox" class="flag-checkbox" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" (keypress)="$event.stopPropagation()" />
+<div class="space-y-2">
+     @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) { @let isEnabled = trustlineCurrencyService.flags()[flag.key]; @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
 
-                    <span class="flag-title">{{ flag.title }}</span>
+     <button type="button" class="w-full flex items-start gap-3 p-3 rounded-2xl border transition-all hover:bg-gray-50" [class.border-green-300]="isEnabled" [class.bg-green-50]="isEnabled" [class.border-amber-300]="isRequired" [class.bg-amber-50]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
+          <input type="checkbox" class="mt-1 accent-green-600 cursor-pointer" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
 
+          <div class="flex-1 text-left">
+               <div class="flex items-center justify-between">
+                    <span class="font-medium">{{ flag.title }}</span>
                     @if (isRequired) {
-                    <span class="required-hint">(Required)</span>
+                    <span class="text-xs px-2.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Required</span>
                     }
                </div>
-
-               <div class="flag-value">{{ flag.hex }}</div>
-               <div class="flag-desc">{{ flag.desc }}</div>
-          </button>
-          }
-
-          <div class="flags-total" style="margin-top: 10px; padding: 12px; background: rgba(0, 0, 0, 0.05); border-radius: 8px">
-               <span class="total-label">Total Flags Value:</span>
-               <span class="total-value">{{ trustlineCurrencyService.totalFlagsValue() }} ({{ trustlineCurrencyService.totalFlagsHex() }})</span>
+               <div class="text-xs text-gray-500 font-mono mt-0.5">{{ flag.hex }}</div>
+               <div class="text-xs text-gray-600 mt-0.5">{{ flag.desc }}</div>
           </div>
+     </button>
+     }
+</div>
+
+<!-- Total Flags -->
+<div class="mt-4 pt-3 border-t border-gray-100">
+     <div class="flex justify-between items-center bg-gray-50 rounded-xl px-3 py-2">
+          <span class="text-xs font-medium text-gray-600">Total Flags Value</span>
+          <span class="font-mono font-semibold text-sm text-gray-800">
+               {{ trustlineCurrencyService.totalFlagsValue() }}
+               <span class="text-gray-400 text-xs">({{ trustlineCurrencyService.totalFlagsHex() }})</span>
+          </span>
      </div>
 </div>
 }

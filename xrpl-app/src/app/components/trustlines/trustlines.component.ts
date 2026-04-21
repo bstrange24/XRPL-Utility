@@ -5,7 +5,7 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -13,8 +13,6 @@ import { CopyUtilService } from '../../services/utils/copy-util/copy-util.servic
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -46,12 +44,12 @@ import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-c
 import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { UtilsService } from '../../services/utils/util-service/utils.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, CurrencyFormSectionComponent, TrustlineRequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, SummaryComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, SummaryComponent],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,8 +66,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
-     readonly menuTabs: TabConfig[] = TRUSTLINE_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = TRUSTLINE_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     // readonly menuTabs: TabConfig[] = TRUSTLINE_TABS;
+     // readonly tabMeta: Record<string, TabMetaInfo> = TRUSTLINE_TAB_META;
+     public readonly tabs = TRUSTLINE_TABS;
+     public readonly tabMeta = TRUSTLINE_TAB_META;
      readonly setFlags: Record<string, any> = SET_FLAGS;
      readonly clearFlags: Record<string, any> = CLEAR_FLAGS;
 
@@ -86,6 +87,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(false);
           this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
           this.transactionDropdownService.loadCustomDestinations();
+
+          this.rightPanelService.setPanel(TrustlineRequirementsInfoComponent, {
+               activeTab: this.trustlineViewModelService.activeTab,
+          });
      }
 
      readonly isCurrencyFlow = computed(() => {
