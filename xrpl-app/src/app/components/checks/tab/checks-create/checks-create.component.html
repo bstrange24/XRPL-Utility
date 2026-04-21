@@ -76,20 +76,5 @@
           @if (txUiService.wantsOptions()) {
           <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
           }
-
-          <!-- Expiration Toggle -->
-          <!-- <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="checksStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.target.checked)" />
-                    <span class="slider"></span>
-               </div>
-               <span class="toggle-label">Set Check expiration date</span>
-          </label>
-
-          @if (checksStoreService.enableExpirationDate()) {
-          <div class="mt-1 mb-4">
-               <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date (optional)" hint="Check expiration when the check will expire. Leave unchecked for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
-          </div>
-          } -->
      </div>
 </div>

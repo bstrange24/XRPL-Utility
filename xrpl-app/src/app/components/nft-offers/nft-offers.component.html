@@ -1,122 +1,72 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = nftOffersTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-nft-offers-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-offers-summary>
 
-               <!-- Info Message -->
-               <app-nft-offers-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"></app-nft-offers-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'sellNft') {
+               <app-nft-sell [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)"> </app-nft-sell>
+               } @if (tab === 'buyNft') {
+               <app-nft-buy></app-nft-buy>
+               } @if (tab === 'buyNftOffer') {
+               <app-nft-buy-offers [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)">
+               </app-nft-buy-offers>
+               } @if (tab === 'sellNftOffer') {
+               <app-nft-sell-offers [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)">
+               </app-nft-sell-offers>
+               } @if (tab === 'cancelNftOffer') {
+               <app-nft-cancel-offers [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)">
+               </app-nft-cancel-offers>
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns">
-                         <div class="tab-content-container form-fields-container">
-                              <!-- Sell -->
-                              @if(tab === 'sellNft') {
-                              <app-nft-sell [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
-                              }
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['buyNft', 'sellNft', 'buyNftOffer', 'sellNftOffer', 'cancelNftOffer']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-                              <!-- Buy -->
-                              @if(tab === 'buyNft') {
-                              <app-nft-buy></app-nft-buy>
-                              }
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Action -->
+                    @if (tab === 'buyNft') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
+                    } @else if (tab === 'sellNft') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftSellButtonLabel() }}</button>
+                    } @else if (tab === 'buyNftOffer') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
+                    } @else if (tab === 'sellNftOffer') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
+                    } @else if (tab === 'cancelNftOffer') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
+                    }
 
-                              <!-- Buy offer -->
-                              @if (tab === 'buyNftOffer') {
-                              <app-nft-buy-offers
-                                   [destinationItems]="destinationItems()"
-                                   [selectedDestinationItem]="selectedDestinationItem()"
-                                   [destinationSearchQuery]="destinationSearchQuery()"
-                                   (currencySelected)="onCurrencySelected($event)"
-                                   (issuerSelected)="onIssuerSelected($event)"
-                                   (optionsToggled)="toggleOptions($event)"
-                                   (expirationToggled)="toggleExpiration($event)"
-                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-                                   (destinationValueChange)="handleDestinationChange($event)"
-                              />
-                              }
-
-                              <!-- Sell offer -->
-                              @if (tab === 'sellNftOffer') {
-                              <app-nft-sell-offers
-                                   [destinationItems]="destinationItems()"
-                                   [selectedDestinationItem]="selectedDestinationItem()"
-                                   [destinationSearchQuery]="destinationSearchQuery()"
-                                   (currencySelected)="onCurrencySelected($event)"
-                                   (issuerSelected)="onIssuerSelected($event)"
-                                   (optionsToggled)="toggleOptions($event)"
-                                   (expirationToggled)="toggleExpiration($event)"
-                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-                                   (destinationValueChange)="handleDestinationChange($event)"
-                              />
-                              }
-                              <!-- Cancel offer -->
-                              @if (tab === 'cancelNftOffer') {
-                              <app-nft-cancel-offers
-                                   [destinationItems]="destinationItems()"
-                                   [selectedDestinationItem]="selectedDestinationItem()"
-                                   [destinationSearchQuery]="destinationSearchQuery()"
-                                   (currencySelected)="onCurrencySelected($event)"
-                                   (issuerSelected)="onIssuerSelected($event)"
-                                   (optionsToggled)="toggleOptions($event)"
-                                   (expirationToggled)="toggleExpiration($event)"
-                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-                                   (destinationValueChange)="handleDestinationChange($event)"
-                              />
-                              }
-                         </div>
+                    <!-- Clear Fields -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <app-transaction-options [showWhenTab]="['buyNft', 'sellNft','buyNftOffer','sellNftOffer','cancelNftOffer']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         @if(tab === 'buyNft') {
-                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
-                         } @else if (tab === 'sellNft') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftSellButtonLabel() }}</button>
-                         } @else if (tab === 'buyNftOffer') {
-                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
-                         }@else if (tab === 'sellNftOffer') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
-                         }@else if (tab === 'cancelNftOffer') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
-                         }
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets" (click)="clearInputFields()">Clear Fields</button>
-                    </div>
-
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-nft-offers-requirements-info></app-nft-offers-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

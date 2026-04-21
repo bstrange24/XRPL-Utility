@@ -1,94 +1,94 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>XRPL NFTs (Non-Fungible Tokens)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">NFTs (Non-Fungible Tokens) Info</span>
+          </div>
 
-     <p class="info-subtitle">Create, burn, or modify metadata for NFTs using NFTokenMint, NFTokenBurn, and related transactions. NFTs support unique digital collectibles, art, tickets, credentials, and more with flags for burnability, transferability, mutability, and transfer fees.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🎨 Mint NFT</span>
-                    <span class="badge required-badge">NFTokenMint</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">URI</span>
-                         <span class="field-status required">✅ Required (hex-encoded, max 256 bytes)</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">XRPL NFTs (Non-Fungible Tokens)</h3>
+               <p class="text-sm text-gray-600">Create, burn, or modify metadata for NFTs using NFTokenMint, NFTokenBurn, and related transactions. NFTs support unique digital collectibles, art, tickets, credentials, and more.</p>
+          </div>
+
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Key Requirements</h4>
+
+               <div class="space-y-5">
+                    <!-- Mint NFT -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-purple-100 text-purple-700 rounded-full">🎨 Mint NFT</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">URI</span>
+                                   <span class="text-green-600 font-medium">Required (hex, max 256 bytes)</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Taxon</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">TransferFee</span>
+                                   <span class="text-gray-500">Optional (0–50%)</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Flags</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Taxon</span>
-                         <span class="field-status required">✅ Required (grouping/category number)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">TransferFee</span>
-                         <span class="field-status optional">➕ Optional (0–50000 = 0–50% in 0.001% steps)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Flags</span>
-                         <span class="field-status optional">➕ Optional (burnable, mutable, transferable, onlyXRP)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">NFTokenMinter</span>
-                         <span class="field-status optional">➕ Optional (authorized minter address)</span>
+
+                    <!-- Burn / Modify -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🔥 Burn / Modify</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">NFTokenID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Owner (for burn)</span>
+                                   <span class="text-green-600 font-medium">Current holder or issuer (if burnable)</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔥 Burn / Modify NFT</span>
-                    <span class="badge optional-badge">NFTokenBurn or Metadata Update</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">NFTokenID</span>
-                         <span class="field-status required">✅ Required (32-byte hex ID)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Owner (for burn)</span>
-                         <span class="field-status required">✅ Must be current holder or issuer (if burnable)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">URI (for modify)</span>
-                         <span class="field-status optional">➕ New URI (only if tfMutable set at mint)</span>
-                    </div>
-               </div>
-          </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Requires the <strong>NonFungibleTokensV1_1</strong> (or later) amendment to be enabled on the network.</li>
-                    <li>Each minted NFT consumes **owner reserve** (~0.2 XRP) from the minter/issuer until burned or transferred (reserve follows current owner).</li>
-                    <li><strong>URI</strong>: Hex-encoded string (usually pointing to IPFS, Arweave, or HTTPS metadata JSON). Max 256 bytes after encoding. Not validated for content.</li>
-                    <li><strong>Taxon</strong>: Arbitrary number for grouping NFTs (e.g., collection ID). No uniqueness enforced — same taxon can be used across many NFTs.</li>
-                    <li><strong>TransferFee</strong>: Royalty-like fee on secondary transfers (0–50%). Only applies if tfTransferable is set and token is sold via NFTokenOffer.</li>
-                    <li>
-                         Common flags:
-                         <ul>
-                              <li><strong>tfBurnable</strong> — Issuer or current holder can burn it</li>
-                              <li><strong>tfMutable</strong> — URI can be updated post-mint</li>
-                              <li><strong>tfTransferable</strong> — Can be transferred (default true; disable for soulbound-like)</li>
-                              <li><strong>tfOnlyXRP</strong> — Can only be offered/sold for XRP</li>
-                         </ul>
-                    </li>
-                    <li>Burning requires the current owner (or issuer if burnable) — burns the NFT and frees reserve.</li>
-                    <li>Metadata modification (URI change) only possible if tfMutable was set at mint — requires owner to submit NFTokenCreateOffer or similar update mechanism.</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Requires the <strong>NonFungibleTokensV1_1</strong> (or later) amendment.</li>
+                    <li>Each minted NFT consumes <strong>owner reserve</strong> (~0.2 XRP) until burned.</li>
+                    <li><strong>URI</strong> must be hex-encoded (usually IPFS/Arweave link). Max 256 bytes.</li>
+                    <li><strong>Taxon</strong> is for grouping (no uniqueness enforced).</li>
+                    <li>Common flags: <strong>tfBurnable</strong>, <strong>tfMutable</strong>, <strong>tfTransferable</strong>, <strong>tfOnlyXRP</strong>.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversibility & Flag Considerations</h5>
-               <p style="color: #92400e">Many NFT properties are permanent after mint — choose flags and URI carefully.</p>
-               <ul>
-                    <li>Once minted, most flags (burnable, transferable, onlyXRP, etc.) <strong>cannot be changed</strong> — they are fixed forever.</li>
-                    <li>If tfMutable is **not** set at mint, the URI is **immutable** — you cannot update metadata later.</li>
-                    <li>Burning is **permanent** — the NFT ID is destroyed and cannot be recovered or reused.</li>
-                    <li>Wrong URI (e.g., broken link, invalid hex) makes the NFT effectively unusable — always test with valid IPFS/Arweave links.</li>
-                    <li>Reserve follows the current holder — transferring an NFT moves the reserve cost to the new owner.</li>
-                    <li>High TransferFee can discourage trading — values >10% often reduce liquidity.</li>
-                    <li>Test mint/burn/update flows on devnet or Testnet first — incorrect flags, URI encoding, or taxon values cause transaction failure and fee burn.</li>
-               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Irreversibility & Flag Considerations</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Most flags and metadata are <strong>permanent</strong> after minting.</li>
+                         <li>If <strong>tfMutable</strong> is not set, the URI cannot be changed later.</li>
+                         <li>Burning is permanent — the NFT ID is destroyed forever.</li>
+                         <li>Always test on Devnet/Testnet first.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

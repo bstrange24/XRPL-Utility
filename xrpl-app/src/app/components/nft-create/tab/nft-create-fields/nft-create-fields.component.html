@@ -1,91 +1,83 @@
-<div class="form-row">
-     <div class="form-group">
-          <label>Taxon</label>
-          <p class="form-hint">Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter of the token and a given taxon may be used for multiple tokens.</p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.taxon" name="taxon" placeholder="" />
+<div class="space-y-6">
+     <!-- Taxon -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Taxon</label>
+          <p class="text-xs text-gray-500">Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter.</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.taxon" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
+
+     <!-- Transfer Fee -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Transfer Fee</label>
+          <p class="text-xs text-gray-500">Specifies the fee charged by the issuer for secondary sales (0–50000 = 0%–50% in 0.001% steps).</p>
+          <input type="number" [ngModel]="nftCreateStoreService.transferFee()" (ngModelChange)="utilsService.updateTransferFee($event)" (focus)="onFocus($event)" placeholder="e.g. 5000 (5%)" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+     </div>
+
+     <!-- URI -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">URI</label>
+          <p class="text-xs text-gray-500">URI that points to the data/metadata for this NFT (hex-encoded, max 256 bytes).</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.initialURI" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+     </div>
+
+     <!-- NFT Token Minter -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">NFT Token Minter</label>
+          <p class="text-xs text-gray-500">Indicates the account that should be the issuer of this token (optional).</p>
+          <input type="text" [(ngModel)]="nftCreateStoreService.nfTokenMinterAddress" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+     </div>
+
+     <!-- Optional Fields Toggle -->
+     @if (txUiService.wantsOptions()) {
+     <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
+     }
+
+     <!-- Create Sell Offer on Mint -->
+     <div class="pt-2">
+          <label class="flex items-center cursor-pointer">
+               <div class="toggle-switch">
+                    <input type="checkbox" [checked]="nftCreateStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.target.checked)" />
+                    <span class="slider"></span>
+               </div>
+               <span class="toggle-label">Create Sell Offer on NFT Creation</span>
+          </label>
+     </div>
+
+     <!-- Sell Offer Fields -->
+     @if (nftCreateStoreService.enableExpirationDate()) {
+     <div class="space-y-5 mt-2 mb-2 border-l-2 border-green-200 pl-6" style="margin-bottom: 21px">
+          <app-currency-amount-form
+               [currencyItems]="nftOffersTransactionViewModelService.currencyItems()"
+               [selectedCurrencyItem]="nftOffersTransactionViewModelService.selectedCurrencyItem()"
+               [amount]="nftCreateStoreService.amount()"
+               [currency]="currencyStoreService.currency()"
+               [issuerItems]="nftOffersTransactionViewModelService.issuerItems()"
+               [selectedIssuerItem]="nftOffersTransactionViewModelService.selectedIssuerItem()"
+               [balance]="currencyStoreService.balance()"
+               (currencySelected)="currencySelected.emit($event)"
+               (amountChange)="utilsService.updateAmount($event)"
+               (issuerSelected)="issuerSelected.emit($event)"
+               [disableCurrencySelection]="onlyXrpEnabled()"
+               [showXrpOnlyBadge]="onlyXrpEnabled()"
+               [amountLabel]="'Amount'"
+               [amountHint]="'Indicates the amount expected for the Token.'"
+               [amountPlaceholder]="'e.g. 10.5'"
+          >
+          </app-currency-amount-form>
+
+          <!-- Destination -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Destination</label>
+               <p class="text-xs text-gray-500">The unique address of the account receiving the NFT.</p>
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+               </div>
+          </div>
+
+          <!-- Expiration -->
+          <div class="space-y-1">
+               <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="If present, indicates that this offer may only be accepted by the specified account."> </app-xrpl-expiration-input>
+          </div>
+     </div>
+     }
 </div>
-
-<div class="form-row">
-     <div class="form-group">
-          <label>Transfer Fee</label>
-          <p class="form-hint">
-               Specifies the fee charged by the issuer for secondary sales of the Token, if such sales are allowed. <br />
-               Valid values for this field are between 0 and 50000 inclusive, allowing transfer rates between 0.000% and 50.000% in increments of 0.001%.
-          </p>
-          <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.001" min="0" [ngModel]="nftCreateStoreService.transferFee()" (ngModelChange)="utilsService.updateTransferFee($event)" (focus)="onFocus($event)" class="amount-input" />
-     </div>
-</div>
-
-<div class="form-row">
-     <div class="form-group">
-          <label>URI</label>
-          <p class="form-hint">
-               URI that points to the data and/or metadata associated with the NFT. <br />
-               The URI is NOT checked for validity, but the field is limited to a maximum length of 256 bytes.
-          </p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.initialURI" name="initialURI" placeholder="" />
-     </div>
-</div>
-
-@if (txUiService.wantsOptions()) {
-<app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
-}
-
-<div class="form-row">
-     <div class="form-group">
-          <label>Nft Token Minter</label>
-          <p class="form-hint">
-               Indicates the account that should be the issuer of this token. This value is optional and should only be specified if the account <br />
-               executing the transaction is not the `Issuer` of the `NFToken` object.
-          </p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.nfTokenMinterAddress" name="nfTokenMinterAddress" placeholder="" />
-     </div>
-</div>
-
-<mat-slide-toggle class="mini-toggle" [checked]="nftCreateStoreService.enableExpirationDate()" (change)="expirationToggled.emit($event.checked)">Create Sell Offer on NFT Creation</mat-slide-toggle>
-
-@if (nftCreateStoreService.enableExpirationDate()) {
-<app-currency-amount-form
-     [currencyItems]="nftOffersTransactionViewModelService.currencyItems()"
-     [selectedCurrencyItem]="nftOffersTransactionViewModelService.selectedCurrencyItem()"
-     [amount]="nftCreateStoreService.amount()"
-     [currency]="currencyStoreService.currency()"
-     [issuerItems]="nftOffersTransactionViewModelService.issuerItems()"
-     [selectedIssuerItem]="nftOffersTransactionViewModelService.selectedIssuerItem()"
-     [balance]="currencyStoreService.balance()"
-     (currencySelected)="currencySelected.emit($event)"
-     (amountChange)="utilsService.updateAmount($event)"
-     (issuerSelected)="issuerSelected.emit($event)"
-     [disableCurrencySelection]="onlyXrpEnabled()"
-     [showXrpOnlyBadge]="onlyXrpEnabled()"
-     [amountLabel]="'Amount'"
-     [amountHint]="'Indicates the amount expected for the Token. The amount can be zero. <br />This would indicate that the account is giving the token away free, either to anyone at all, or to the account identified by the Destination field.'"
-     [amountPlaceholder]="'e.g. 10.5'"
-/>
-
-<!-- <div class="form-row">
-     <div class="form-group">
-          <label>Amount</label>
-          <p class="form-hint">
-               Indicates the amount expected for the Token. The amount can be zero. <br />
-               This would indicate that the account is giving the token away free, either to anyone at all, or to the account identified by the Destination field.
-          </p>
-          <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="nftCreateStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="amount-input" />
-     </div>
-</div> -->
-
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">Destination</label>
-          <p class="form-hint">The unique address of the account receiving the NFT. Select destination from the dropdown or manually enter a new destination.</p>
-          <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
-     </div>
-</div>
-
-<div class="form-row">
-     <div class="form-group">
-          <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="If present, indicates that this offer may only be accepted by the specified account. Attempts by other accounts to accept this offer MUST fail."> </app-xrpl-expiration-input>
-     </div>
-</div>
-}

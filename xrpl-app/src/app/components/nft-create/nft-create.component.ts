@@ -1,10 +1,10 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, effect, signal } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -12,8 +12,6 @@ import { CopyUtilService } from '../../services/utils/copy-util/copy-util.servic
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -44,11 +42,12 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-nft-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateSummaryComponent, NftRequirementsInfoComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, NftFlagsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateSummaryComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, NftFlagsComponent],
      templateUrl: './nft-create.component.html',
      styleUrl: './nft-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,9 +64,9 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftTransactionOrchestrator = inject(NftTransactionOrchestrator);
-
-     readonly menuTabs: TabConfig[] = NFT_CREATE_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = NFT_CREATE_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly tabs = NFT_CREATE_TABS;
+     public readonly tabMeta = NFT_CREATE_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -84,6 +83,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+
+          this.rightPanelService.setPanel(NftRequirementsInfoComponent, {
+               activeTab: this.nftCreateTransactionViewModelService.activeTab,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {

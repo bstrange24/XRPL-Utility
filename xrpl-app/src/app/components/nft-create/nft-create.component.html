@@ -1,96 +1,85 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = nftCreateTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-nft-create-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-create-summary>
 
-               <!-- Info Message -->
-               <app-nft-create-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"></app-nft-create-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
-
-               <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns">
-                         <div class="tab-content-container form-fields-container">
-                              <!-- Create sections -->
-                              @if(tab === 'createNft') {
-                              <app-nft-create-fields
-                                   [destinationItems]="destinationItems()"
-                                   [selectedDestinationItem]="selectedDestinationItem()"
-                                   [destinationSearchQuery]="destinationSearchQuery()"
-                                   (currencySelected)="onCurrencySelected($event)"
-                                   (issuerSelected)="onIssuerSelected($event)"
-                                   (optionsToggled)="toggleOptions($event)"
-                                   (expirationToggled)="toggleExpiration($event)"
-                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-                                   (destinationValueChange)="handleDestinationChange($event)"
-                              />
-                              }
-
-                              <!-- Burn sections -->
-                              @if(tab === 'burnNft') {
-                              <app-nft-burn></app-nft-burn>
-                              }
-
-                              <!-- Update NFT Metadata sections -->
-                              @if(tab === 'updateNFTMetadata') {
-                              <app-nft-modify></app-nft-modify>
-                              }
-                         </div>
-
-                         <!-- MPT Flags -->
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               <div class="tab-content-columns">
+                    <div class="tab-content-container form-fields-container">
                          @if (tab === 'createNft') {
-                         <div class="tab-content-container flags-container" style="min-width: 350px">
-                              <app-nft-flags></app-nft-flags>
+                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                              <div class="lg:col-span-2">
+                                   <app-nft-create-fields
+                                        [destinationItems]="destinationItems()"
+                                        [selectedDestinationItem]="selectedDestinationItem()"
+                                        [destinationSearchQuery]="destinationSearchQuery()"
+                                        (currencySelected)="onCurrencySelected($event)"
+                                        (issuerSelected)="onIssuerSelected($event)"
+                                        (optionsToggled)="toggleOptions($event)"
+                                        (expirationToggled)="toggleExpiration($event)"
+                                        (destinationSearchQueryChange)="handleSearchQueryChange($event)"
+                                        (destinationValueChange)="handleDestinationChange($event)"
+                                   >
+                                   </app-nft-create-fields>
+                              </div>
+
+                              <!-- Right Column: NFT Flags Component - Takes 1/3 of the space -->
+                              <div class="lg:col-span-1">
+                                   <app-nft-flags></app-nft-flags>
+                              </div>
                          </div>
+                         } @if (tab === 'burnNft') {
+                         <app-nft-burn></app-nft-burn>
+                         } @if (tab === 'updateNFTMetadata') {
+                         <app-nft-modify></app-nft-modify>
                          }
                     </div>
+               </div>
 
-                    <app-transaction-options [showWhenTab]="['createNft', 'burnNft','updateNFTMetadata']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createNft', 'burnNft', 'updateNFTMetadata']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         @if(tab === 'createNft') {
-                         <button type="button" class="btn-primary-blue" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.createNftButtonLabel() }}</button>
-                         } @else if (tab === 'updateNFTMetadata') {
-                         <button type="button" class="btn-primary-green" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
-                         } @else if (tab === 'burnNft') {
-                         <button type="button" class="btn-primary-red" (click)="performAction()" [disabled]="!isIdle() || !hasWallets">{{ nftUtilService.burnNftButtonLabel() }}</button>
-                         }
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle() || !hasWallets" (click)="clearFields()">Clear Fields</button>
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Button -->
+                    @if (tab === 'createNft') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftButtonLabel() }}</button>
+                    } @else if (tab === 'updateNFTMetadata') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue whitespace-nowrap">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
+                    } @else if (tab === 'burnNft') {
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ nftUtilService.burnNftButtonLabel() }}</button>
+                    }
+
+                    <!-- Clear Fields -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-nft-requirements-info></app-nft-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

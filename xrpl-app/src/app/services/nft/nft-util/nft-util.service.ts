@@ -54,52 +54,52 @@ export class NftUtilService {
      readonly createNftButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Create NFT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Create NFT';
           return this.txUiService.stepMessage();
      });
 
      readonly burnNftButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Burn NFT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Burn NFT';
           return this.txUiService.stepMessage();
      });
 
      readonly updateNftMetadataButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Update NFT Metadata';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Update NFT Metadata';
           return this.txUiService.stepMessage();
      });
 
      readonly createNftBuyButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Buy NFT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Buy NFT';
           return this.txUiService.stepMessage();
      });
      readonly createNftSellButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Sell NFT';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Sell NFT';
           return this.txUiService.stepMessage();
      });
      readonly createNftBuyOfferButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Buy NFT Offer';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Buy NFT Offer';
           return this.txUiService.stepMessage();
      });
      readonly createNftSellOfferButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Sell NFT Offer';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Sell NFT Offer';
           return this.txUiService.stepMessage();
      });
      readonly createNftCancelOfferButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Cancel NFT Offer';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          if (step === 'waiting_validation') return 'Cancel NFT Offer';
           return this.txUiService.stepMessage();
      });
 

@@ -1,64 +1,64 @@
-<div class="flags-wrapper">
-     <div class="token-flags-header">
-          <lucide-icon name="flag" size="20"></lucide-icon>
-          <span class="token-flags-title">NFT Flags</span>
+<div class="rounded-2xl bg-white pl-4 pr-2 pl-4 pt-1">
+     <!-- Header -->
+     <div class="flex items-center gap-3 mb-6">
+          <lucide-icon name="flag" size="22" class="text-gray-700" />
+          <span class="text-lg font-semibold text-gray-900">NFT Flags</span>
      </div>
 
-     <!-- burnableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().burnableNft" (click)="toggleFlag('burnableNft')" type="button">
-          <div class="flag-header-account">
-               <input type="checkbox" id="canLock" name="canLock" [checked]="nftUtilService.nftFlags().burnableNft" class="flag-checkbox" />
-               <span class="flag-title">Burnable</span>
-          </div>
-          <div class="flag-value">0x00000001 tfBurnable</div>
-          <div class="flag-desc">The minted token may be burned by the issuer even if the issuer does not currently hold the token. The current holder of the token may always burn it.</div>
-     </button>
+     <div class="space-y-3">
+          <!-- Burnable -->
+          <button type="button" class="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().burnableNft" [class.bg-green-50]="nftUtilService.nftFlags().burnableNft" (click)="toggleFlag('burnableNft')">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().burnableNft" class="mt-1 accent-green-600 cursor-pointer" />
 
-     <!-- onlyXrpNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().onlyXrpNft" (click)="toggleFlag('onlyXrpNft')" type="button">
-          <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags().onlyXrpNft" class="flag-checkbox" disabled />
-               <span class="flag-title">OnlyXRP</span>
-          </div>
-          <div class="flag-value">0x00000002 tfOnlyXRP</div>
-          <div class="flag-desc">Indicates that the token may only be offered or sold for XRP.</div>
-     </button>
+               <div class="flex-1 text-left">
+                    <div class="font-medium text-sm text-gray-900">Burnable</div>
+                    <div class="text-xs text-gray-500 font-mono">0x00000001 tfBurnable</div>
+                    <div class="text-xs text-gray-600 mt-1">The minted token may be burned by the issuer or current holder.</div>
+               </div>
+          </button>
 
-     <!-- trustLine -->
-     <!--<button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().trustLine" (click)="toggleFlag('trustLine')" type="button">
-          <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags().trustLine" class="flag-checkbox" disabled />
-               <svg class="flag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0L3 7m1.582 2H12" />
-               </svg>
-               <span class="flag-title">TrustLine</span>
-          </div>
-          <div class="flag-value">0x00000004 tfTrustLine</div>
-          <div class="flag-desc">indicates that the issuer wants a trustline to be automatically created</div>
-     </button> -->
+          <!-- OnlyXRP -->
+          <button type="button" class="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().onlyXrpNft" [class.bg-green-50]="nftUtilService.nftFlags().onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().onlyXrpNft" class="mt-1 accent-green-600 cursor-pointer" />
 
-     <!-- transferableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().transferableNft" (click)="toggleFlag('transferableNft')" type="button">
-          <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags().transferableNft" class="flag-checkbox" disabled />
-               <span class="flag-title">Transferable</span>
-          </div>
-          <div class="flag-value">0x00000008 tfTransferable</div>
-          <div class="flag-desc">Indicates that this NFT can be transferred. This flag has no effect if the token is being transferred from the issuer or to the issuer.</div>
-     </button>
+               <div class="flex-1 text-left">
+                    <div class="font-medium text-sm text-gray-900">OnlyXRP</div>
+                    <div class="text-xs text-gray-500 font-mono">0x00000002 tfOnlyXRP</div>
+                    <div class="text-xs text-gray-600 mt-1">Indicates that the token may only be offered or sold for XRP.</div>
+               </div>
+          </button>
 
-     <!-- mutableNft -->
-     <button class="flag-item-account-flags" [class.enabled]="nftUtilService.nftFlags().mutableNft" (click)="toggleFlag('mutableNft')" type="button">
-          <div class="flag-header-account">
-               <input type="checkbox" [checked]="nftUtilService.nftFlags().mutableNft" class="flag-checkbox" disabled />
-               <span class="flag-title">Mutable</span>
-          </div>
-          <div class="flag-value">0x00000010 tfMutable</div>
-          <div class="flag-desc">Indicates that this NFT's URI can be modified.</div>
-     </button>
+          <!-- Transferable -->
+          <button type="button" class="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().transferableNft" [class.bg-green-50]="nftUtilService.nftFlags().transferableNft" (click)="toggleFlag('transferableNft')">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().transferableNft" class="mt-1 accent-green-600 cursor-pointer" />
 
-     <div class="flags-total">
-          <span class="total-label">Total Flags Value:</span>
-          <span class="total-value">{{ nftUtilService.totalFlagsValue() }} ({{ nftUtilService.totalFlagsHex() }})</span>
+               <div class="flex-1 text-left">
+                    <div class="font-medium text-sm text-gray-900">Transferable</div>
+                    <div class="text-xs text-gray-500 font-mono">0x00000008 tfTransferable</div>
+                    <div class="text-xs text-gray-600 mt-1">Indicates that this NFT can be transferred.</div>
+               </div>
+          </button>
+
+          <!-- Mutable -->
+          <button type="button" class="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().mutableNft" [class.bg-green-50]="nftUtilService.nftFlags().mutableNft" (click)="toggleFlag('mutableNft')">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().mutableNft" class="mt-1 accent-green-600 cursor-pointer" />
+
+               <div class="flex-1 text-left">
+                    <div class="font-medium text-sm text-gray-900">Mutable</div>
+                    <div class="text-xs text-gray-500 font-mono">0x00000010 tfMutable</div>
+                    <div class="text-xs text-gray-600 mt-1">Indicates that this NFT's URI can be modified after minting.</div>
+               </div>
+          </button>
+     </div>
+
+     <!-- Total Flags Value -->
+     <div class="mt-6 pt-5 border-t border-gray-100">
+          <div class="flex justify-between items-center bg-gray-50 rounded-2xl px-5 py-3">
+               <span class="text-sm font-medium text-gray-600">Total Flags Value</span>
+               <span class="font-mono font-semibold text-gray-800">
+                    {{ nftUtilService.totalFlagsValue() }}
+                    <span class="text-gray-400">({{ nftUtilService.totalFlagsHex() }})</span>
+               </span>
+          </div>
      </div>
 </div>

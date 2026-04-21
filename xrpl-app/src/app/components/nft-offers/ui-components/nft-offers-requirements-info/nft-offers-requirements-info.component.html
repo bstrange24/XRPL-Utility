@@ -1,88 +1,102 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>NFT Offers (Buy / Sell / Cancel)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">NFT Offers Info</span>
+          </div>
 
-     <p class="info-subtitle">Create sell offers (list your NFT for sale), buy offers (bid on someone else's NFT), accept offers (complete a purchase), or cancel your own active offers using NFTokenCreateOffer, NFTokenAcceptOffer, and NFTokenCancelOffer transactions.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">💰 Create Offer</span>
-                    <span class="badge required-badge">NFTokenCreateOffer</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">NFTokenID</span>
-                         <span class="field-status required">✅ Required (32-byte hex ID of the NFT)</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">NFT Offers (Buy / Sell / Cancel)</h3>
+               <p class="text-sm text-gray-600">Create sell offers (list your NFT for sale), buy offers (bid on someone else's NFT), accept offers, or cancel your own active offers.</p>
+          </div>
+
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">How NFT Offers Work</h4>
+
+               <div class="space-y-5">
+                    <!-- Create Offer -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full">💰 Create Offer</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">NFTokenID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Amount</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Offer Type</span>
+                                   <span class="text-green-600 font-medium">Sell or Buy</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Expiration</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Destination</span>
+                                   <span class="text-gray-500">Optional (direct offer)</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Amount</span>
-                         <span class="field-status required">✅ Required (XRP drops or issued currency amount)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">OfferType</span>
-                         <span class="field-status required">✅ Sell (your NFT) or Buy (bid on another's)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Expiration</span>
-                         <span class="field-status optional">➕ Optional (ledger close time or relative seconds)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Destination</span>
-                         <span class="field-status optional">➕ Optional (specific buyer for direct offers)</span>
+
+                    <!-- Accept / Cancel -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">✅ Accept / Cancel</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">NFTokenOfferIndex</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">NFTokenID (for accept)</span>
+                                   <span class="text-green-600 font-medium">Required when accepting</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">BrokerFee</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">✅ Accept / Cancel Offer</span>
-                    <span class="badge optional-badge">NFTokenAcceptOffer or Cancel</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">NFTokenOfferIndex</span>
-                         <span class="field-status required">✅ Required (offer ID to accept or cancel)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">NFTokenID (for accept)</span>
-                         <span class="field-status required">✅ Required when accepting</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">BrokerFee (optional)</span>
-                         <span class="field-status optional">➕ Optional (small XRP fee to broker)</span>
-                    </div>
-               </div>
-          </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Requires the <strong>NonFungibleTokensV1_1</strong> (or later) amendment to be enabled on the network.</li>
-                    <li>Sell offer: You must own the NFT; offer locks it until accepted, canceled, or expired.</li>
-                    <li>Buy offer: You bid on an NFT you don't own; seller must accept to complete transfer.</li>
-                    <li><strong>Amount</strong>: Can be XRP (drops) or issued currency (with issuer). For sell offers, if tfOnlyXRP was set at mint, only XRP is allowed.</li>
-                    <li><strong>Expiration</strong>: Ledger close time (absolute) or relative seconds from now — expired offers auto-remove without fee.</li>
-                    <li>Accepting a sell offer transfers the NFT to you and pays the seller (minus any TransferFee royalty if set at mint).</li>
-                    <li>Accepting a buy offer transfers the NFT from you to the bidder and receives payment.</li>
-                    <li>Cancel: Only the creator of the offer can cancel it — frees the NFT (if sell offer) and removes from ledger.</li>
-                    <li>Offers consume **owner reserve** (~0.2 XRP per active offer) until accepted, canceled, or expired.</li>
-                    <li>BrokerFee: Optional small XRP amount paid to a third-party broker account on accept (useful for marketplaces).</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Sell offer: You must own the NFT; it becomes locked until accepted, canceled, or expired.</li>
+                    <li>Buy offer: You place a bid on an NFT you don't own; the seller must accept.</li>
+                    <li>Accepting a sell offer transfers the NFT to you and pays the seller (minus any TransferFee if set).</li>
+                    <li>Only the creator of an offer can cancel it.</li>
+                    <li>Offers consume <strong>owner reserve</strong> (~0.2 XRP) until resolved.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversibility & Offer Risks</h5>
-               <p style="color: #92400e">Offers lock NFTs or funds until resolved — mistakes can lead to lost opportunities or unintended transfers.</p>
-               <ul>
-                    <li>Once an offer is accepted, the transfer is **permanent** — NFT moves and payment is made; no native reversal.</li>
-                    <li>Sell offers lock your NFT — if you cancel or it expires, you regain control, but during the offer period, you cannot burn/transfer it elsewhere.</li>
-                    <li>Wrong NFTokenID or OfferIndex causes transaction failure — double-check IDs before submitting.</li>
-                    <li>If TransferFee was set at mint, seller receives less than Amount on accept — factor royalties into pricing.</li>
-                    <li>Expired offers auto-cleanup, but active offers consume reserve — too many can lock up your account's XRP unnecessarily.</li>
-                    <li>Destination (direct offer) restricts who can accept — if set incorrectly, offer may never be taken.</li>
-                    <li>Always test offer creation, acceptance, and cancellation on devnet or Testnet first — wrong amounts, expirations, or IDs burn fees without effect.</li>
-               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Important Risks</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Once accepted, the transfer is <strong>permanent</strong>.</li>
+                         <li>Sell offers lock your NFT during the offer period.</li>
+                         <li>Wrong NFTokenID or OfferIndex will cause the transaction to fail.</li>
+                         <li>Always double-check IDs and test on Devnet/Testnet first.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

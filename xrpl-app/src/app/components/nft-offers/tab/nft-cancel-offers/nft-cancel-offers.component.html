@@ -1,15 +1,17 @@
-<div class="form-row">
-     <div class="form-group">
-          <label>Select Offer to Cancel</label>
-          <p class="form-hint">Select an existing NFT to cancel.</p>
-          <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers"> </app-select-search-dropdown>
-     </div>
-</div>
+<div class="space-y-8">
+     <!-- Select Offer to Cancel -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Select Offer to Cancel</label>
+          <p class="text-xs text-gray-500">Select an existing NFT offer to cancel.</p>
 
-<div class="form-row">
-     <div class="form-group" style="padding-top: 0.8em">
-          <label>NFT Offer ID</label>
-          <p class="form-hint">NFT Offer ID generated when the offer was created.</p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftOfferIdField" placeholder="" />
+          <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers" />
+     </div>
+
+     <!-- NFT Offer ID -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">NFT Offer ID</label>
+          <p class="text-xs text-gray-500">NFT Offer ID generated when the offer was created.</p>
+
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftOfferIdField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
 </div>

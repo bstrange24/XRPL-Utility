@@ -1,15 +1,17 @@
-<div class="form-row">
-     <div class="form-group">
-          <label>NFT Offer Index</label>
-          <p class="form-hint">NFT Offer Index generated when the offer was created.</p>
-          <input type="text" id="nftIndexField" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" [placeholder]="" />
-     </div>
-</div>
+<div class="space-y-8">
+     <!-- NFT Offer Index -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">NFT Offer Index</label>
+          <p class="text-xs text-gray-500">NFT Offer Index generated when the offer was created.</p>
 
-<div class="form-row">
-     <div class="form-group" style="padding-top: 0.4em">
-          <label>NFT Token Id</label>
-          <p class="form-hint">NFT Token ID generated when the NFT was created.</p>
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" placeholder="" />
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+     </div>
+
+     <!-- NFT Token ID -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium">NFT Token ID</label>
+          <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+
+          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
      </div>
 </div>
