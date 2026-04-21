@@ -1,61 +1,68 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Main content -->
-<div class="main-container">
-     <div class="content-wrapper-balance-change">
-          <!-- Left: Wallet panel -->
-          <app-wallet-panel (walletSelected)="onWalletSelected($event)"></app-wallet-panel>
+<div class="h-full w-full flex flex-col min-h-0 overflow-hidden">
+     <!-- Root wrapper -->
+     <!-- ← changed from h-full w-full only -->
 
-          <!-- Right: Main panel -->
-          <div class="account-changes-form-panel">
-               <!-- Page header -->
-               <div class="submenu-container">
-                    <div class="submenu-info-text" style="margin-bottom: 0">
-                         <div class="blue-button-submenu">
-                              <ng-icon name="heroChartBar" size="27"></ng-icon>
+     <div class="flex flex-1 gap-4 min-h-0 overflow-hidden">
+          <!-- ← added flex-1 + min-h-0 -->
+          <!-- <div class="h-full w-full">
+     <div class="flex h-full gap-4"> -->
+          <!-- Right: Main Content Area (takes remaining space) -->
+          <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+               <!-- Page Header -->
+               <div class="bg-white border border-gray-200 rounded-2xl px-6 py-5 mb-4">
+                    <div class="flex items-center gap-4">
+                         <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                              <ng-icon name="heroChartBar" size="28" />
                          </div>
                          <div>
-                              <h2 class="submenu-info-main-text">Account Balance Changes</h2>
-                              <p class="submenu-info-secondary-text">View historical XRP balance changes for the selected account</p>
+                              <h1 class="text-2xl font-semibold text-gray-900">Account Balance Changes</h1>
+                              <p class="text-sm text-gray-600">Historical XRP and token balance changes for the selected account</p>
                          </div>
                     </div>
                </div>
 
-               <!-- Info summary (wallet balance + loaded count) -->
+               <!-- Summary -->
                <app-account-changes-summary></app-account-changes-summary>
 
-               <!-- Warning message -->
+               <!-- Warning -->
                @if (txUiService.warningMessage) {
                <app-warning-message [warningMessage]="txUiService.warningMessage"></app-warning-message>
                }
 
-               <!-- Content -->
+               <!-- Main Content -->
                @if (walletManager.getSelectedWallet()?.address) {
-               <div class="panel-body">
-                    <!-- Filters -->
-                    <app-account-changes-filters (refresh)="onRefresh()"></app-account-changes-filters>
 
-                    <!-- Loading skeleton for initial load -->
-                    @if (store.loadingInitial()) {
-                    <div class="initial-loading">
-                         <div class="loading-shimmer" *ngFor="let i of [1,2,3,4,5]"></div>
+               <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden mt-4">
+                    <!-- Filters -->
+                    <div class="border-b border-gray-100 p-4">
+                         <app-account-changes-filters (refresh)="onRefresh()"></app-account-changes-filters>
                     </div>
-                    } @else {
-                    <!-- Table -->
-                    <app-account-changes-table (scrolledToBottom)="onLoadMore()"></app-account-changes-table>
-                    }
+
+                    <!-- Table Area -->
+                    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                         @if (store.loadingInitial()) {
+                         <!-- Loading State -->
+                         <div class="flex-1 p-8 space-y-6 overflow-auto">
+                              @for (i of [1,2,3,4,5,6,7,8]; track i) {
+                              <div class="h-12 bg-gray-100 rounded-xl animate-pulse"></div>
+                              }
+                         </div>
+                         } @else {
+                         <!-- Table -->
+                         <div class="flex-1 overflow-auto">
+                              <app-account-changes-table (scrolledToBottom)="onLoadMore()"></app-account-changes-table>
+                         </div>
+                         }
+                    </div>
                </div>
+
                } @else {
-               <!-- No wallet selected -->
-               <div class="empty-state">
-                    <lucide-icon name="wallet" size="48" class="empty-icon"></lucide-icon>
-                    <p class="empty-text">Select an account from the wallet panel to view balance changes.</p>
+               <!-- Empty State -->
+               <div class="flex-1 flex flex-col items-center justify-center text-center py-20 bg-white border border-gray-200 rounded-2xl mt-4">
+                    <lucide-icon name="wallet" size="72" class="text-gray-300 mb-6" />
+                    <h3 class="text-2xl font-medium text-gray-900">No Account Selected</h3>
+                    <p class="text-gray-500 mt-3 max-w-md">Select an account from the wallet panel on the left to view its balance change history.</p>
                </div>
                }
           </div>

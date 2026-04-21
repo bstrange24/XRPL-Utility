@@ -90,4 +90,10 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
                     }
                });
      }
+
+     isBalanceChangesPage(): boolean {
+          const url = this.router.url;
+          const isBalance = url === '/account-balance-changes' || url.startsWith('/account-balance-changes');
+          return isBalance;
+     }
 }

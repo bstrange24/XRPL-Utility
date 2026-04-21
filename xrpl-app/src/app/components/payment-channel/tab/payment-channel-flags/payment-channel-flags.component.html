@@ -35,9 +35,12 @@
 
           <!-- Additional Info for Recipient -->
           @if (!paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.flags.claimAndClose()) {
-          <div class="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700">
-               <ng-icon name="heroCheckCircle" size="20" />
-               <span>The creator has authorized channel closure after claim.</span>
+          <div class="flex items-center gap-1 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700">
+               <ng-icon name="heroCheckCircle" size="18" />
+               <span class="text-sm pl-2"
+                    >The creator has authorized channel <br />
+                    closure after claim.</span
+               >
           </div>
           } @if (!paymentChannelStoreService.isCreatorMode() && !paymentChannelStoreService.flags.claimAndClose() && paymentChannelStoreService.channelClaimSignatureField()) {
           <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-700">

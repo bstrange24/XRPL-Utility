@@ -1,43 +1,44 @@
-<!-- HTML -->
-<div class="controls-container">
-     <div class="filters-row">
+<div class="bg-white border border-gray-200 rounded-2xl p-5">
+     <div class="flex flex-col lg:flex-row gap-6">
           <!-- Search -->
-          <div class="filter-block search-group">
-               <label class="filter-label">Search</label>
-               <div class="input-row">
-                    <div class="search-bar">
-                         <mat-icon class="search-icon">search</mat-icon>
-                         <input type="text" style="margin-bottom: 0px" [ngModel]="store.filterValue()" (ngModelChange)="onSearchInput($event)" placeholder="Hash, type, amount..." />
-                         @if (store.filterValue()) {
-                         <button mat-icon-button class="clear-icon" (click)="clearFilter()">
-                              <mat-icon>close</mat-icon>
-                         </button>
-                         }
+          <div class="flex-1">
+               <label class="text-sm font-medium block mb-1.5">Search</label>
+               <div class="relative">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                         <lucide-icon name="search" size="18" />
                     </div>
+
+                    <input type="text" [ngModel]="store.filterValue()" (ngModelChange)="onSearchInput($event)" placeholder="Hash, type, amount..." class="w-full pl-11 pr-10 py-3 rounded-2xl border border-gray-300 focus:outline-none focus:border-green-500 text-sm" />
+
+                    @if (store.filterValue()) {
+                    <button type="button" (click)="clearFilter()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                         <lucide-icon name="x" size="18" />
+                    </button>
+                    }
                </div>
           </div>
 
           <!-- Date Range -->
-          <div class="filter-block date-group">
-               <label class="filter-label">Date Range</label>
-               <div class="input-row date-row">
-                    <input type="date" class="date-input" [ngModel]="store.dateRange().start ? (store.dateRange().start | date:'yyyy-MM-dd') : null" (ngModelChange)="setStartDate($event)" />
+          <div class="flex-1">
+               <label class="text-sm font-medium block mb-1.5">Date Range</label>
+               <div class="flex items-center gap-3">
+                    <input type="date" class="flex-1 rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" [ngModel]="store.dateRange().start ? (store.dateRange().start | date:'yyyy-MM-dd') : null" (ngModelChange)="setStartDate($event)" />
 
-                    <span class="range-separator">–</span>
+                    <span class="text-gray-400">–</span>
 
-                    <input type="date" class="date-input" [ngModel]="store.dateRange().end ? (store.dateRange().end | date:'yyyy-MM-dd') : null" (ngModelChange)="setEndDate($event)" />
+                    <input type="date" class="flex-1 rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" [ngModel]="store.dateRange().end ? (store.dateRange().end | date:'yyyy-MM-dd') : null" (ngModelChange)="setEndDate($event)" />
 
-                    <button mat-icon-button (click)="clearDateFilter()" style="margin-bottom: 25px" matTooltip="Clear date filter">
-                         <lucide-icon name="eraser" size="12"></lucide-icon>
+                    <button type="button" (click)="clearDateFilter()" class="px-3 py-3 text-gray-400 hover:text-gray-600 transition-colors" matTooltip="Clear date filter">
+                         <lucide-icon name="eraser" size="18" />
                     </button>
                </div>
           </div>
      </div>
 
-     <!-- Buttons Row -->
-     <div class="button-row">
-          <button type="button" class="btn-primary-blue" (click)="onRefresh()" [disabled]="store.loadingInitial()">{{ store.loadingInitial() ? 'Loading…' : 'Refresh' }}</button>
+     <!-- Action Buttons -->
+     <div class="flex items-center gap-3 mt-6">
+          <button type="button" class="btn-primary flex-1 sm:flex-none" (click)="onRefresh()" [disabled]="store.loadingInitial()">{{ store.loadingInitial() ? 'Loading…' : 'Refresh' }}</button>
 
-          <button type="button" class="btn-secondary-clear-fields" (click)="clearAll()">Clear Fields</button>
+          <button type="button" class="btn-secondary flex-1 sm:flex-none" (click)="clearAll()">Clear Filters</button>
      </div>
 </div>

@@ -1,62 +1,66 @@
-<div class="table-wrapper">
-     <!-- Sticky header -->
-     <div class="table-header row">
-          <div class="col date">Date</div>
-          <div class="col hash">Transaction</div>
-          <div class="col type">Type</div>
-          <div class="col change">Change</div>
-          <div class="col fees">Fee</div>
-          <div class="col counterparty">Counterparty</div>
+<div class="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200">
+     <!-- Sticky Header -->
+     <div class="sticky top-0 z-10 bg-white border-b border-gray-200 grid grid-cols-12 gap-4 px-6 py-4 text-sm font-medium text-gray-600">
+          <div class="col-span-2">Date</div>
+          <div class="col-span-3">Transaction</div>
+          <div class="col-span-1">Type</div>
+          <div class="col-span-2 text-right">Change</div>
+          <div class="col-span-1 text-center">Fee</div>
+          <div class="col-span-3">Counterparty</div>
      </div>
 
-     <!-- Virtual scroll body -->
-     <div class="virtual-table-container">
-          <cdk-virtual-scroll-viewport itemSize="52" class="viewport" (scroll)="onScroll($event)">
-               <div *cdkVirtualFor="let change of viewModel.filteredBalanceChanges(); trackBy: trackByHash" class="data-row row">
-                    <div class="col date" [matTooltip]="change.date | date:'medium':'UTC'">{{ change.date | date:'MMM d, y HH:mm':'UTC' }}</div>
+     <!-- Virtual Scroll Container -->
+     <cdk-virtual-scroll-viewport itemSize="52" class="flex-1 overflow-auto" (scroll)="onScroll($event)">
+          <div *cdkVirtualFor="let change of viewModel.filteredBalanceChanges(); trackBy: trackByHash" class="grid grid-cols-12 gap-4 px-6 py-3.5 border-b border-gray-100 hover:bg-gray-50 transition-colors items-center text-sm">
+               <!-- Date -->
+               <div class="col-span-2 text-gray-600">{{ change.date | date:'MMM d, y HH:mm':'UTC' }}</div>
 
-                    <div class="col hash">
-                         <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="tx-link"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
-                         <button mat-icon-button class="copy-btn" (click)="copyToClipboard(change.hash)" matTooltip="Copy hash">
-                              <lucide-icon name="copy" size="15"></lucide-icon>
-                         </button>
-                    </div>
-
-                    <div class="col type" [style.color]="viewModel.getTypeColor(change.type)">{{ change.type }}</div>
-
-                    <div class="col change" [class.positive]="change.change > 0" [class.negative]="change.change < 0">
-                         <strong>{{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }}</strong>
-                         <span class="currency">{{ change.currency }}</span>
-                    </div>
-
-                    <div class="col fees">-{{ change.fees | number:'1.6-6' }} XRP</div>
-
-                    <div class="col counterparty" [matTooltip]="change.counterparty">{{ change.counterparty }}</div>
+               <!-- Transaction Hash -->
+               <div class="col-span-3 font-mono flex items-center gap-2">
+                    <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition-colors"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
+                    <button (click)="copyToClipboard(change.hash); $event.stopPropagation()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                         <lucide-icon name="copy" size="15" />
+                    </button>
                </div>
 
-               <!-- Loading more -->
-               @if (store.loadingMore()) {
-               <div class="status-row loading-row">
-                    <mat-spinner diameter="22"></mat-spinner>
-                    <span>Loading more transactions…</span>
-               </div>
-               }
+               <!-- Type - Now narrower -->
+               <div class="col-span-1 font-medium" [style.color]="viewModel.getTypeColor(change.type)">{{ change.type }}</div>
 
-               <!-- Empty state -->
-               @if (!store.loadingInitial() && viewModel.filteredBalanceChanges().length === 0) {
-               <div class="status-row empty-row">
-                    <lucide-icon name="inbox" size="24" class="status-icon"></lucide-icon>
-                    <span>No balance changes found.</span>
+               <!-- Change -->
+               <div class="col-span-2 text-right font-medium" [class.text-green-600]="change.change > 0" [class.text-red-600]="change.change < 0">
+                    <strong> {{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }} </strong>
+                    <span class="text-xs text-gray-500 ml-1">{{ change.currency }}</span>
                </div>
-               }
 
-               <!-- End of history -->
-               @if (!store.hasMoreData() && viewModel.filteredBalanceChanges().length > 0 && !store.loadingMore()) {
-               <div class="status-row end-row">
-                    <lucide-icon name="circle-check" size="18" class="status-icon"></lucide-icon>
-                    <span>End of transaction history.</span>
-               </div>
-               }
-          </cdk-virtual-scroll-viewport>
-     </div>
+               <!-- Fee -->
+               <div class="col-span-1 text-right text-gray-500">-{{ change.fees | number:'1.6-6' }} XRP</div>
+
+               <!-- Counterparty - Wider now -->
+               <div class="col-span-3 text-gray-600 truncate" [matTooltip]="change.counterparty">{{ change.counterparty }}</div>
+          </div>
+
+          <!-- Loading More -->
+          @if (store.loadingMore()) {
+          <div class="flex items-center justify-center py-8 text-sm text-gray-500">
+               <mat-spinner diameter="22" class="mr-3"></mat-spinner>
+               Loading more transactions…
+          </div>
+          }
+
+          <!-- Empty State -->
+          @if (!store.loadingInitial() && viewModel.filteredBalanceChanges().length === 0) {
+          <div class="flex flex-col items-center justify-center py-20 text-center">
+               <lucide-icon name="inbox" size="48" class="text-gray-300 mb-4" />
+               <p class="text-gray-500">No balance changes found.</p>
+          </div>
+          }
+
+          <!-- End of History -->
+          @if (!store.hasMoreData() && viewModel.filteredBalanceChanges().length > 0 && !store.loadingMore()) {
+          <div class="flex items-center justify-center py-8 text-sm text-gray-500 border-t">
+               <lucide-icon name="circle-check" size="18" class="mr-2" />
+               End of transaction history
+          </div>
+          }
+     </cdk-virtual-scroll-viewport>
 </div>
