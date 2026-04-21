@@ -111,13 +111,21 @@
      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6" style="margin-top: 1rem">
           <!-- Finish After Group -->
           <div class="transition-all duration-300">
-               <label class="flex items-center cursor-pointer mb-3">
+               <label class="flex items-center cursor-pointer group">
+                    <div class="relative inline-flex items-center">
+                         <input type="checkbox" class="sr-only peer" [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.target.checked)" />
+                         <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                         <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
+                    </div>
+                    <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Set Escrow Finish After Time</span>
+               </label>
+               <!-- <label class="flex items-center cursor-pointer mb-3">
                     <div class="toggle-switch">
                          <input type="checkbox" [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.target.checked)" />
                          <span class="slider"></span>
                     </div>
                     <span class="toggle-label">Set Escrow Finish After Time</span>
-               </label>
+               </label> -->
 
                @if (escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
                <div class="animate-slideDown" style="margin-bottom: 1rem">
@@ -128,13 +136,21 @@
 
           <!-- Cancel After Group -->
           <div class="transition-all duration-300">
-               <label class="flex items-center cursor-pointer mb-3">
+               <label class="flex items-center cursor-pointer group">
+                    <div class="relative inline-flex items-center">
+                         <input type="checkbox" class="sr-only peer" [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.target.checked)" />
+                         <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                         <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
+                    </div>
+                    <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Set Escrow Cancel After Time</span>
+               </label>
+               <!-- <label class="flex items-center cursor-pointer mb-3">
                     <div class="toggle-switch">
                          <input type="checkbox" [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.target.checked)" />
                          <span class="slider"></span>
                     </div>
                     <span class="toggle-label">Set Escrow Cancel After Time</span>
-               </label>
+               </label> -->
 
                @if (escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
                <div class="animate-slideDown" style="margin-bottom: 1rem">

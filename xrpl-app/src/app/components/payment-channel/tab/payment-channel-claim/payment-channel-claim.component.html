@@ -1,64 +1,62 @@
-<div class="tab-content-container form-fields-container" style="min-width: 600px">
-     <div class="form-row" style="align-items: center; flex-wrap: wrap; gap: 16px">
-          <span class="switch-label" style="font-weight: 500; white-space: nowrap; padding-right: 19px">Normal Claim (as Destination)</span>
+<div class="space-y-8">
+     <!-- Mode Toggle -->
+     <div class="flex items-center justify-center gap-6 bg-gray-50 border border-gray-200 rounded-3xl p-2 w-fit mx-auto">
+          <span class="text-sm font-medium px-4 py-2 transition-colors" [class.text-gray-900]="!paymentChannelStoreService.isCreatorMode()" [class.text-gray-400]="paymentChannelStoreService.isCreatorMode()"> Normal Claim (as Destination) </span>
 
-          <mat-slide-toggle class="mini-toggle" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.checked)"></mat-slide-toggle>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
+               </div>
+          </label>
 
-          <span class="switch-label" style="font-weight: 500; white-space: nowrap">Generate Signature (as Creator)</span>
+          <span class="text-sm font-medium px-4 py-2 transition-colors" [class.text-gray-900]="paymentChannelStoreService.isCreatorMode()" [class.text-gray-400]="!paymentChannelStoreService.isCreatorMode()"> Generate Signature (as Creator) </span>
      </div>
 
-     <!-- Optional: visual separator -->
-     <div class="claims-line"></div>
-
-     <!-- Creator Mode (Generate Signature) -->
+     <!-- Creator Mode -->
      @if (paymentChannelStoreService.isCreatorMode()) {
-     <div class="creator-section">
-          <div class="form-row">
-               <div class="info-and-channels-card">
-                    <div class="summary-header">
-                         <div class="summary-text" style="display: inline-block">
-                              <strong>Channel Creator Mode</strong><br />
-                              Select one of your created channels, enter the amount to authorize, and generate a signature for the destination account to use.
-                         </div>
-                    </div>
-               </div>
+     <div class="rounded-2xl border border-gray-200 bg-white p-6">
+          <div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-6">
+               <strong>Channel Creator Mode</strong><br />
+               Select one of your created channels, enter the amount to authorize, and generate a signature for the destination.
           </div>
 
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="selectCreatedChannel">Select Your Created Channel</label>
-                    <p class="form-hint">Choose one of your created channels to generate a signature.</p>
-                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
-                    @if (viewModel.selectedIsExpired()) {
-                    <div class="warning-message expired-warning">
-                         <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-                         This selected payment channel has expired.
-                    </div>
-                    }
+          <!-- Select Channel -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Select Your Created Channel</label>
+               <p class="text-xs text-gray-500">Choose one of your created channels to generate a signature.</p>
+
+               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+
+               @if (viewModel.selectedIsExpired()) {
+               <div class="mt-3 flex items-center gap-2 text-red-600 text-sm">
+                    <ng-icon name="heroExclamationTriangle" size="18" />
+                    This selected payment channel has expired.
                </div>
-          </div>
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="channelId">Channel ID</label>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly />
-               </div>
+               }
           </div>
 
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="amountToAuth">Amount to Authorize (XRP)</label>
-                    <p class="form-hint">The amount the destination is allowed to claim (must not exceed remaining in channel).</p>
-                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
-               </div>
+          <!-- Channel ID -->
+          <div class="space-y-2 mt-6">
+               <label class="text-sm font-medium">Channel ID</label>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
           </div>
 
-          <!-- Optional: show generated signature immediately -->
+          <!-- Amount -->
+          <div class="space-y-2 mt-6">
+               <label class="text-sm font-medium">Amount to Authorize (XRP)</label>
+               <p class="text-xs text-gray-500">The amount the destination is allowed to claim (must not exceed remaining balance).</p>
+               <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
+
+          <!-- Generated Signature -->
           @if (paymentChannelStoreService.channelClaimSignatureField()) {
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="generateSign">Generated Signature</label>
-                    <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly style="font-family: monospace; width: 100%" />
-                    <button class="btn-primary-blue" (click)="copyUtilService.copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
+          <div class="space-y-2 mt-6">
+               <label class="text-sm font-medium">Generated Signature</label>
+               <div class="flex gap-3">
+                    <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly class="flex-1 rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono bg-gray-50" />
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="copyUtilService.copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
                </div>
           </div>
           }
@@ -67,49 +65,40 @@
 
      <!-- Normal Claim (Destination) -->
      @if (!paymentChannelStoreService.isCreatorMode()) {
-     <div class="claim-section">
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="selectPaymentChannelClaim">Select Payment Channel to Claim</label>
-                    <p class="form-hint">Select an existing payment channel to claim.</p>
-                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
-                    <!-- Expired warning for claimPaymentChannel tab -->
-                    @if (viewModel.selectedIsExpired()) {
-                    <div class="warning-message expired-warning">
-                         <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-                         This selected payment channel has expired.
-                    </div>
-                    }
+     <div class="space-y-8">
+          <!-- Select Channel -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Select Payment Channel to Claim</label>
+               <p class="text-xs text-gray-500">Select an existing payment channel to claim funds from.</p>
+
+               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+
+               @if (viewModel.selectedIsExpired()) {
+               <div class="mt-3 flex items-center gap-2 text-red-600 text-sm">
+                    <ng-icon name="heroExclamationTriangle" size="18" />
+                    This selected payment channel has expired.
                </div>
+               }
           </div>
 
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="claimChannelId">Channel ID</label>
-                    <p class="form-hint">The unique ID of the channel as a 64-character hexadecimal string.</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" />
-               </div>
+          <!-- Channel ID -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Channel ID</label>
+               <p class="text-xs text-gray-500">The unique ID of the channel (64-character hex).</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
           </div>
 
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="xrpAmountToClaim">XRP Amount to Claim</label>
-                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
-               </div>
+          <!-- Amount to Claim -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">XRP Amount to Claim</label>
+               <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
           </div>
 
-          <div class="form-row">
-               <div class="form-group" hidden>
-                    <label for="senderPublicKey">Sender Public Key</label>
-                    <p class="form-hint">The public key used for the signature, as hexadecimal</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.publicKeyField" name="publicKeyField" />
-               </div>
-
-               <div class="form-group">
-                    <label for="claimSignature">Claim Signature</label>
-                    <p class="form-hint">The signed message contains the channel ID and the amount of the claim</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelClaimSignatureField" name="channelClaimSignatureField" />
-               </div>
+          <!-- Signature -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Claim Signature</label>
+               <p class="text-xs text-gray-500">The signed message from the channel creator.</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.channelClaimSignatureField" name="channelClaimSignatureField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
           </div>
      </div>
      }

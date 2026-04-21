@@ -3,44 +3,49 @@
      <!-- Transaction Options Toggles -->
      <div class="flex flex-wrap gap-x-8 gap-y-5 py-4">
           @if (showMemo()) {
-          <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="xrplTxOptionsStore.isMemoEnabled()" (change)="onMemoToggled($event.target.checked)" />
-                    <span class="slider"></span>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="xrplTxOptionsStore.isMemoEnabled()" (change)="onMemoToggled($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               <span class="toggle-label">Add Memo</span>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Add Memo</span>
           </label>
           } @if (showMultiSign() && multiSigningEnabled()) {
-          <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="xrplTxOptionsStore.useMultiSign()" (change)="onMultiSignToggled($event.target.checked)" />
-                    <span class="slider"></span>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="xrplTxOptionsStore.useMultiSign()" (change)="onMultiSignToggled($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               <span class="toggle-label">Use Multi-Sign</span>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Use Multi-Sign</span>
           </label>
           } @if (showRegularKey() && regularKeySigningEnabled()) {
-          <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="xrplTxOptionsStore.isRegularKeyAddress()" (change)="onRegularKeyToggled($event.target.checked)" />
-                    <span class="slider"></span>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="xrplTxOptionsStore.isRegularKeyAddress()" (change)="onRegularKeyToggled($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               <span class="toggle-label">Use Regular Key</span>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Use Regular Key</span>
           </label>
           } @if (showTicket() && xrplTxOptionsStore.ticketArray().length > 0) {
-          <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="xrplTxOptionsStore.isTicket()" (change)="xrplTxOptionsStore.setField('isTicket', $event.target.checked)" />
-                    <span class="slider"></span>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="xrplTxOptionsStore.isTicket()" (change)="xrplTxOptionsStore.setField('isTicket', $event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               <span class="toggle-label">Use Ticket</span>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Use Ticket</span>
           </label>
           } @if (showSimulate()) {
-          <label class="flex items-center cursor-pointer">
-               <div class="toggle-switch">
-                    <input type="checkbox" [checked]="xrplTxOptionsStore.isSimulateEnabled()" (change)="toggleSimulate($event.target.checked)" />
-                    <span class="slider"></span>
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="xrplTxOptionsStore.isSimulateEnabled()" (change)="toggleSimulate($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               <span class="toggle-label">Simulate Transaction</span>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Simulate Transaction</span>
           </label>
           }
      </div>
@@ -81,25 +86,6 @@
                     </div>
                </div>
                }
-               <!-- @if (xrplTxOptionsStore.useMultiSign()) {
-               <div class="space-y-3">
-                    <h4 class="text-sm font-medium mt-4 text-green-600 pl-2">Multi-Signature</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pl-2">
-                         <div class="space-y-2">
-                              <label class="text-sm font-medium">Signers</label>
-                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignAddress() }}</textarea>
-                         </div>
-                         <div class="space-y-2">
-                              <label class="text-sm font-medium">Seeds</label>
-                              <textarea class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" rows="3" readonly>{{ accountConfiguratorStoreService.multiSignSeeds() }}</textarea>
-                         </div>
-                         <div class="space-y-2">
-                              <label class="text-sm font-medium">Quorum</label>
-                              <input type="text" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500 font-mono" readonly [ngModel]="accountConfiguratorStoreService.signerQuorum()" />
-                         </div>
-                    </div>
-               </div>
-               } -->
 
                <!-- Regular Key -->
                @if (xrplTxOptionsStore.isRegularKeyAddress()) {
@@ -132,10 +118,6 @@
                     <div class="pl-2">
                          <app-select-search-dropdown [items]="ticketItems()" [value]="selectedTicketItem()" (valueChange)="xrplTxOptionsStore.setField('selectedSingleTicket', $event?.id ?? '')" placeholder="Search or select a ticket..."> </app-select-search-dropdown>
                     </div>
-
-                    <!-- @if (xrplTxOptionsStore.selectedSingleTicket()) {
-                    <div class="text-sm text-green-600 font-medium">Selected Ticket: <span class="font-mono">{{ xrplTxOptionsStore.selectedSingleTicket() }}</span></div>
-                    }  -->
                     }
                </div>
                }

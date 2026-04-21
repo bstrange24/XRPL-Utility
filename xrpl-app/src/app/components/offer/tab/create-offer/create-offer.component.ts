@@ -35,12 +35,12 @@ export class CreateOfferTabComponent {
      ] as const;
 
      selectFlag(key: 'isPassive' | 'isFillOrKill' | 'isMarketOrder'): void {
-          // Reset all flags first
+          // Reset all flags
           this.offerStoreService.setField('isPassive', false);
           this.offerStoreService.setField('isFillOrKill', false);
           this.offerStoreService.setField('isMarketOrder', false);
 
-          // Set only the selected one
+          // Set the selected flag
           this.offerStoreService.setField(key, true);
      }
 }

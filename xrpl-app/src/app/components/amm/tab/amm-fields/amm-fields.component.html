@@ -108,26 +108,71 @@
      <!-- Deposit Options -->
      @if (tab() === 'depositToAMM') {
      <div class="space-y-3">
-          <label class="text-sm font-medium">Deposit Strategy</label>
-          <p class="text-xs text-gray-500">Choose which side(s) of the pool to deposit into.</p>
+          <label class="block text-sm font-medium text-gray-900 mb-1">Deposit Strategy</label>
+          <p class="text-xs text-gray-500 mb-3">Choose which side(s) of the pool to deposit into.</p>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                <!-- Both Pools (Proportional) -->
-               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().bothPools" [class.bg-green-50]="opts.depositOptions().bothPools">
-                    <input type="checkbox" [checked]="opts.depositOptions().bothPools" (change)="depositOptionChange.emit('bothPools')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                    <span class="text-sm font-medium">Both Pools (Proportional)</span>
+               <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.depositOptions().bothPools" [class.bg-gradient-to-br]="opts.depositOptions().bothPools" [class.from-green-50]="opts.depositOptions().bothPools" [class.to-emerald-50]="opts.depositOptions().bothPools">
+                    <input type="radio" name="depositStrategy" value="bothPools" [checked]="opts.depositOptions().bothPools" (change)="depositOptionChange.emit('bothPools')" class="hidden" />
+
+                    <!-- Custom Radio Circle -->
+                    <div class="flex-shrink-0 mt-0.5">
+                         <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().bothPools" [class.border-gray-300]="!opts.depositOptions().bothPools">
+                              <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().bothPools" [class.scale-0]="!opts.depositOptions().bothPools"></div>
+                         </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroArrowsRightLeft" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.depositOptions().bothPools"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Both Pools</span>
+                         </div>
+                         <p class="text-xs text-gray-500 mt-1">Deposit proportionally to both assets</p>
+                    </div>
                </label>
 
                <!-- Asset 1 Only -->
-               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.bg-green-50]="opts.depositOptions().firstPoolOnly">
-                    <input type="checkbox" [checked]="opts.depositOptions().firstPoolOnly" (change)="depositOptionChange.emit('firstPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                    <span class="text-sm font-medium">Asset 1 Only</span>
+               <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.bg-gradient-to-br]="opts.depositOptions().firstPoolOnly" [class.from-green-50]="opts.depositOptions().firstPoolOnly" [class.to-emerald-50]="opts.depositOptions().firstPoolOnly">
+                    <input type="radio" name="depositStrategy" value="firstPoolOnly" [checked]="opts.depositOptions().firstPoolOnly" (change)="depositOptionChange.emit('firstPoolOnly')" class="hidden" />
+
+                    <!-- Custom Radio Circle -->
+                    <div class="flex-shrink-0 mt-0.5">
+                         <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.border-gray-300]="!opts.depositOptions().firstPoolOnly">
+                              <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().firstPoolOnly" [class.scale-0]="!opts.depositOptions().firstPoolOnly"></div>
+                         </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroBanknotes" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.depositOptions().firstPoolOnly"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Asset 1 Only</span>
+                         </div>
+                         <p class="text-xs text-gray-500 mt-1">Deposit only the first asset</p>
+                    </div>
                </label>
 
                <!-- Asset 2 Only -->
-               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.bg-green-50]="opts.depositOptions().secondPoolOnly">
-                    <input type="checkbox" [checked]="opts.depositOptions().secondPoolOnly" (change)="depositOptionChange.emit('secondPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                    <span class="text-sm font-medium">Asset 2 Only</span>
+               <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.bg-gradient-to-br]="opts.depositOptions().secondPoolOnly" [class.from-green-50]="opts.depositOptions().secondPoolOnly" [class.to-emerald-50]="opts.depositOptions().secondPoolOnly">
+                    <input type="radio" name="depositStrategy" value="secondPoolOnly" [checked]="opts.depositOptions().secondPoolOnly" (change)="depositOptionChange.emit('secondPoolOnly')" class="hidden" />
+
+                    <!-- Custom Radio Circle -->
+                    <div class="flex-shrink-0 mt-0.5">
+                         <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.border-gray-300]="!opts.depositOptions().secondPoolOnly">
+                              <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().secondPoolOnly" [class.scale-0]="!opts.depositOptions().secondPoolOnly"></div>
+                         </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroBanknotes" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.depositOptions().secondPoolOnly"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Asset 2 Only</span>
+                         </div>
+                         <p class="text-xs text-gray-500 mt-1">Deposit only the second asset</p>
+                    </div>
                </label>
           </div>
      </div>
@@ -138,34 +183,83 @@
      <div class="space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                <div class="space-y-2">
-                    <label class="text-sm font-medium">LP Token Balance</label>
-                    <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+                    <label class="block text-sm font-medium text-gray-900">LP Token Balance</label>
+                    <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50 text-gray-700" />
                </div>
                <div class="space-y-2">
-                    <label class="text-sm font-medium">LP Tokens to Burn</label>
-                    <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+                    <label class="block text-sm font-medium text-gray-900">LP Tokens to Burn</label>
+                    <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" placeholder="Enter amount to withdraw" />
                </div>
           </div>
 
           <div class="space-y-3">
-               <label class="text-sm font-medium">Withdrawal Strategy</label>
+               <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-1">Withdrawal Strategy</label>
+                    <p class="text-xs text-gray-500">Choose which asset(s) to receive from the pool.</p>
+               </div>
+
                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <!-- Both Pools -->
-                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.bg-green-50]="opts.withdrawOptions().bothPools">
-                         <input type="checkbox" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                         <span class="text-sm font-medium">Both Pools</span>
+                    <!-- Both Assets -->
+                    <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.bg-gradient-to-br]="opts.withdrawOptions().bothPools" [class.from-green-50]="opts.withdrawOptions().bothPools" [class.to-emerald-50]="opts.withdrawOptions().bothPools">
+                         <input type="radio" name="withdrawStrategy" value="bothPools" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" class="hidden" />
+
+                         <!-- Custom Radio Circle -->
+                         <div class="flex-shrink-0 mt-0.5">
+                              <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.border-gray-300]="!opts.withdrawOptions().bothPools">
+                                   <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().bothPools" [class.scale-0]="!opts.withdrawOptions().bothPools"></div>
+                              </div>
+                         </div>
+
+                         <!-- Content -->
+                         <div class="flex-1">
+                              <div class="flex items-center gap-2">
+                                   <ng-icon name="heroArrowsRightLeft" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.withdrawOptions().bothPools"></ng-icon>
+                                   <span class="text-sm font-medium text-gray-900">Both Assets</span>
+                              </div>
+                              <p class="text-xs text-gray-500 mt-1">Receive proportionally from both assets</p>
+                         </div>
                     </label>
 
                     <!-- Asset 1 Only -->
-                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.bg-green-50]="opts.withdrawOptions().firstPoolOnly">
-                         <input type="checkbox" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                         <span class="text-sm font-medium">Asset 1 Only</span>
+                    <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.bg-gradient-to-br]="opts.withdrawOptions().firstPoolOnly" [class.from-green-50]="opts.withdrawOptions().firstPoolOnly" [class.to-emerald-50]="opts.withdrawOptions().firstPoolOnly">
+                         <input type="radio" name="withdrawStrategy" value="firstPoolOnly" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" class="hidden" />
+
+                         <!-- Custom Radio Circle -->
+                         <div class="flex-shrink-0 mt-0.5">
+                              <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().firstPoolOnly">
+                                   <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().firstPoolOnly" [class.scale-0]="!opts.withdrawOptions().firstPoolOnly"></div>
+                              </div>
+                         </div>
+
+                         <!-- Content -->
+                         <div class="flex-1">
+                              <div class="flex items-center gap-2">
+                                   <ng-icon name="heroBanknotes" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.withdrawOptions().firstPoolOnly"></ng-icon>
+                                   <span class="text-sm font-medium text-gray-900">Asset 1 Only</span>
+                              </div>
+                              <p class="text-xs text-gray-500 mt-1">Receive only the first asset</p>
+                         </div>
                     </label>
 
                     <!-- Asset 2 Only -->
-                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.bg-green-50]="opts.withdrawOptions().secondPoolOnly">
-                         <input type="checkbox" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                         <span class="text-sm font-medium">Asset 2 Only</span>
+                    <label class="relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.bg-gradient-to-br]="opts.withdrawOptions().secondPoolOnly" [class.from-green-50]="opts.withdrawOptions().secondPoolOnly" [class.to-emerald-50]="opts.withdrawOptions().secondPoolOnly">
+                         <input type="radio" name="withdrawStrategy" value="secondPoolOnly" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" class="hidden" />
+
+                         <!-- Custom Radio Circle -->
+                         <div class="flex-shrink-0 mt-0.5">
+                              <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().secondPoolOnly">
+                                   <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().secondPoolOnly" [class.scale-0]="!opts.withdrawOptions().secondPoolOnly"></div>
+                              </div>
+                         </div>
+
+                         <!-- Content -->
+                         <div class="flex-1">
+                              <div class="flex items-center gap-2">
+                                   <ng-icon name="heroBanknotes" size="18" class="text-gray-500 group-hover:text-gray-700 transition-colors" [class.text-green-600]="opts.withdrawOptions().secondPoolOnly"></ng-icon>
+                                   <span class="text-sm font-medium text-gray-900">Asset 2 Only</span>
+                              </div>
+                              <p class="text-xs text-gray-500 mt-1">Receive only the second asset</p>
+                         </div>
                     </label>
                </div>
           </div>

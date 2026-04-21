@@ -12,25 +12,37 @@
 <!-- Auth section - Radio Buttons -->
 <div class="space-y-4">
      <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Action</label>
-          <div class="flex flex-wrap gap-6 mt-2">
-               <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="authAction" value="authorize" [checked]="authAction === 'authorize'" (change)="setAuthAction('authorize')" class="w-4 h-4 text-amber-600 focus:ring-amber-500" />
-                    <ng-icon name="heroCheckCircle" size="22" class="text-amber-600"></ng-icon>
-                    <span class="text-sm font-medium text-gray-700">Authorize</span>
+          <label class="block text-sm font-medium text-gray-900 mb-1">Action</label>
+          <div class="flex flex-wrap gap-4 mt-2">
+               <!-- Authorize Radio -->
+               <label class="relative flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="authAction" value="authorize" [checked]="authAction === 'authorize'" (change)="setAuthAction('authorize')" class="hidden" />
+
+                    <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-amber-500]="authAction === 'authorize'" [class.border-gray-300]="authAction !== 'authorize'">
+                         <div class="w-full h-full rounded-full transition-transform duration-200 bg-amber-500" [class.scale-100]="authAction === 'authorize'" [class.scale-0]="authAction !== 'authorize'"></div>
+                    </div>
+
+                    <ng-icon name="heroCheckCircle" size="20" class="text-amber-500"></ng-icon>
+                    <span class="text-sm font-medium text-gray-900 group-hover:text-gray-700 transition-colors">Authorize</span>
                </label>
 
-               <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="authAction" value="unauthorize" [checked]="authAction === 'unauthorize'" (change)="setAuthAction('unauthorize')" class="w-4 h-4 text-green-600 focus:ring-green-500" />
-                    <ng-icon name="heroXCircle" size="22" class="text-red-600"></ng-icon>
-                    <span class="text-sm font-medium text-gray-700">Unauthorize</span>
+               <!-- Unauthorize Radio -->
+               <label class="relative flex items-center gap-3 cursor-pointer group">
+                    <input type="radio" name="authAction" value="unauthorize" [checked]="authAction === 'unauthorize'" (change)="setAuthAction('unauthorize')" class="hidden" />
+
+                    <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-red-500]="authAction === 'unauthorize'" [class.border-gray-300]="authAction !== 'unauthorize'">
+                         <div class="w-full h-full rounded-full transition-transform duration-200 bg-red-500" [class.scale-100]="authAction === 'unauthorize'" [class.scale-0]="authAction !== 'unauthorize'"></div>
+                    </div>
+
+                    <ng-icon name="heroXCircle" size="20" class="text-red-500"></ng-icon>
+                    <span class="text-sm font-medium text-gray-900 group-hover:text-gray-700 transition-colors">Unauthorize</span>
                </label>
           </div>
      </div>
 
      <!-- MPT Issuer -->
      <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">MPT Issuer</label>
+          <label class="block text-sm font-medium text-gray-900 mb-1">MPT Issuer</label>
           <p class="text-xs text-gray-500 mb-2">Account that issued the MPT.</p>
           <div class="h-[54px]">
                <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
@@ -39,8 +51,8 @@
 
      <!-- MPT Issuance ID -->
      <div style="margin-top: 0rem">
-          <label class="block text-sm font-medium text-gray-700 mb-1">MPT Issuance ID</label>
+          <label class="block text-sm font-medium text-gray-900 mb-1">MPT Issuance ID</label>
           <p class="text-xs text-gray-500 mb-2">Identifies the MPTokenIssuance.</p>
-          <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+          <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-300 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all" />
      </div>
 </div>

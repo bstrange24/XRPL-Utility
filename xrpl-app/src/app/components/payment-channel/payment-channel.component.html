@@ -1,95 +1,86 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
+<!-- Get view -->
 @let viewModel = paymentChannelViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               @let tabs = menuTabs;
-               <app-tab-menu-with-info [tabs]="tabs" [active]="viewModel.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Summary -->
+          <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary>
 
-               <app-payment-channel-summary [tab]="viewModel.activeTab()" (paymentChannelSelected)="paymentChannelSelected($event)"></app-payment-channel-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
-
-               <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns" [class.no-flex]="viewModel.activeTab() === 'fundPaymentChannel'">
-                         <!-- Create -->
-                         @if (viewModel.activeTab() === 'createPaymentChannel') {
+          <!-- Main Form Area -->
+          <form #theForm="ngForm" class="mt-4">
+               <div class="flex flex-col lg:flex-row gap-6">
+                    <!-- Left / Main Content (Form Fields) -->
+                    <div class="flex-1 min-w-0">
+                         <!-- Dynamic Inner Components -->
+                         @if (tab === 'createPaymentChannel') {
                          <app-payment-channel-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (destinationChanged)="selectedDestinationAddress.set($event?.id || '')" />
-                         }
-
-                         <!-- Fund -->
-                         @if (viewModel.activeTab() === 'fundPaymentChannel') {
+                         } @if (tab === 'fundPaymentChannel') {
                          <app-payment-channel-fund />
-                         }
-
-                         <!-- Claim -->
-                         @if (viewModel.activeTab() === 'claimPaymentChannel') {
-                         <app-payment-channel-claim></app-payment-channel-claim>
-                         }
-
-                         <!-- renewPaymentChannel -->
-                         @if (viewModel.activeTab() === 'renewPaymentChannel') {
-                         <app-payment-channel-renew></app-payment-channel-renew>
-                         }
-
-                         <!-- Close -->
-                         @if (viewModel.activeTab() === 'closePaymentChannel') {
-                         <app-payment-channel-close></app-payment-channel-close>
-                         }
-
-                         <!-- Flags (only for claimPaymentChannel, renewPaymentChannel, closePaymentChannel) -->
-                         @if (viewModel.activeTab() === 'claimPaymentChannel' || viewModel.activeTab() === 'renewPaymentChannel' || viewModel.activeTab() === 'closePaymentChannel') {
-                         <app-payment-channel-flags></app-payment-channel-flags>
+                         } @if (tab === 'claimPaymentChannel') {
+                         <app-payment-channel-claim />
+                         } @if (tab === 'renewPaymentChannel') {
+                         <app-payment-channel-renew />
+                         } @if (tab === 'closePaymentChannel') {
+                         <app-payment-channel-close />
                          }
                     </div>
 
-                    <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         @switch (viewModel.activeTab()) { @case ('createPaymentChannel') {
-                         <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
-                         } @case ('fundPaymentChannel') {
-                         <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.fundChannelButtonLabel() }}</button>
-                         } @case ('claimPaymentChannel') {
-                         <!-- Claim creator mode -->
-                         @if(!paymentChannelStoreService.isCreatorMode()) {
-                         <button type="button" class="btn-primary-green" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.claimFundsButtonLabel() }}</button>
-                         } @else {
-                         <button type="button" class="btn-primary-blue" (click)="generateCreatorClaimSignature()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.generateClaimSignatureButtonLabel() }}</button>
-                         } } @case ('renewPaymentChannel') {
-                         <button type="button" class="btn-primary-blue" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.renewChannelButtonLabel() }}</button>
-                         } @case ('closePaymentChannel') {
-                         <button type="button" class="btn-primary-red" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.closeChannelButtonLabel() }}</button>
-                         } }
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!isIdle()" (click)="clearInputFields()">Clear Fields</button>
+                    <!-- Right Sidebar: Flags (only when applicable) -->
+                    @if (tab === 'claimPaymentChannel' || tab === 'renewPaymentChannel' || tab === 'closePaymentChannel') {
+                    <div class="w-full lg:w-80 flex-shrink-0">
+                         <app-payment-channel-flags />
                     </div>
+                    }
+               </div>
 
-                    <!-- Execution time -->
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    @switch (tab) { @case ('createPaymentChannel') {
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
+                    } @case ('fundPaymentChannel') {
+                    <button type="button" class="btn-blue whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.fundChannelButtonLabel() }}</button>
+                    } @case ('claimPaymentChannel') { @if (!paymentChannelStoreService.isCreatorMode()) {
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.claimFundsButtonLabel() }}</button>
+                    } @else {
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="generateCreatorClaimSignature()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.generateClaimSignatureButtonLabel() }}</button>
+                    } } @case ('renewPaymentChannel') {
+                    <button type="button" class="btn-blue whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.renewChannelButtonLabel() }}</button>
+                    } @case ('closePaymentChannel') {
+                    <button type="button" class="btn-red whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.closeChannelButtonLabel() }}</button>
+                    } }
+
+                    <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!isIdle()">Clear Fields</button>
+               </div>
+
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
+               </div>
 
-          <app-payment-channel-requirements-info [isCollapsed]="paymentChannelStoreService.isCollapsed()"></app-payment-channel-requirements-info>
+               <!-- <div class="mt-8 border-t border-gray-100 pt-6">
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+                    <div class="pt-4">
+                         <app-transaction-preview></app-transaction-preview>
+                    </div>
+               </div> -->
+          </form>
      </div>
 </div>

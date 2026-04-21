@@ -87,14 +87,22 @@
 
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                @for (flag of offerFlagsConfig; track flag.key) {
-               <button type="button" class="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="store[flag.key]()" [class.bg-green-50]="store[flag.key]()" (click)="selectFlag(flag.key)">
-                    <input type="radio" [checked]="store[flag.key]()" class="mt-1 accent-green-600 cursor-pointer" />
+               <label class="relative flex items-start gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all hover:border-gray-300 group" [class.border-green-500]="store[flag.key]()" [class.bg-gradient-to-br]="store[flag.key]()" [class.from-green-50]="store[flag.key]()" [class.to-emerald-50]="store[flag.key]()">
+                    <input type="radio" name="offerFlag" [value]="flag.key" [checked]="store[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" />
 
-                    <div class="flex-1 text-left">
-                         <div class="font-medium text-sm">{{ flag.title }}</div>
-                         <div class="text-xs text-gray-600 mt-1">{{ flag.desc }}</div>
+                    <!-- Custom Radio Circle - Using [class] binding instead of peer -->
+                    <div class="flex-shrink-0 mt-0.5">
+                         <div class="w-5 h-5 rounded-full border-2 transition-all duration-200" [class.border-green-500]="store[flag.key]()" [class.border-gray-300]="!store[flag.key]()">
+                              <div class="w-full h-full rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="store[flag.key]()" [class.scale-0]="!store[flag.key]()"></div>
+                         </div>
                     </div>
-               </button>
+
+                    <!-- Content -->
+                    <div class="flex-1">
+                         <div class="font-medium text-sm text-gray-900">{{ flag.title }}</div>
+                         <div class="text-xs text-gray-500 mt-1 leading-relaxed">{{ flag.desc }}</div>
+                    </div>
+               </label>
                }
           </div>
      </div>

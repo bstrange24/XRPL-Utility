@@ -1,24 +1,25 @@
-<div class="tab-content-container form-fields-container" style="min-width: 600px">
-     <div class="form-row">
-          <div class="form-group">
-               <label for="selectPaymentChannelRenew">Select Payment Channel to Renew</label>
-               <p class="form-hint">Select a channel you created (source account).</p>
+<div class="space-y-6">
+     <!-- Select Payment Channel to Renew -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium text-gray-700">Select Payment Channel to Renew</label>
+          <p class="text-xs text-gray-500">Select a channel you created (source account).</p>
+          <div class="h-[54px]">
                <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
-               <!-- Expired warning for renewPaymentChannel tab -->
-               @if (viewModel.selectedIsExpired()) {
-               <div class="warning-message expired-warning">
-                    <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-                    This selected payment channel has expired.
-               </div>
-               }
           </div>
+
+          <!-- Expired warning for renewPaymentChannel tab -->
+          @if (viewModel.selectedIsExpired()) {
+          <div class="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+               <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600 flex-shrink-0" />
+               <span class="text-sm text-red-700">This selected payment channel has expired.</span>
+          </div>
+          }
      </div>
 
-     <div class="form-row">
-          <div class="form-group">
-               <label for="renewChannelId">Channel ID</label>
-               <p class="form-hint">The unique ID of the channel as a 64-character hexadecimal string.</p>
-               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" />
-          </div>
+     <!-- Channel ID -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium text-gray-700">Channel ID</label>
+          <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
+          <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
      </div>
 </div>

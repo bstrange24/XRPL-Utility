@@ -54,17 +54,17 @@ export class PaymentChannelViewModelService {
 
           if (channels.length === 0) {
                if (tab === 'claimPaymentChannel') {
-                    headerMessage = this.paymentChannelStoreService.isCreatorMode() ? 'has no payment channels to generate signatures for.' : 'has no payment channels with claimable funds.';
+                    headerMessage = this.paymentChannelStoreService.isCreatorMode() ? ' has no payment channels to generate signatures for.' : ' has no payment channels with claimable funds.';
                } else if (tab === 'renewPaymentChannel') {
-                    headerMessage = 'has no payment channels to renew.';
+                    headerMessage = ' has no payment channels to renew.';
                } else if (tab === 'closePaymentChannel') {
-                    headerMessage = 'has no payment channels to close.';
+                    headerMessage = ' has no payment channels to close.';
                } else if (tab === 'fundPaymentChannel') {
-                    headerMessage = 'has no payment channels to fund.';
+                    headerMessage = ' has no payment channels to fund.';
                } else if (tab === 'createPaymentChannel') {
-                    headerMessage = 'has not created any payment channels.';
+                    headerMessage = ' has not created any payment channels.';
                } else {
-                    headerMessage = 'has no payment channels.';
+                    headerMessage = ' has no payment channels.';
                }
           } else {
                headerMessage = `has <strong class="object-count">${channels.length}</strong> payment channel${channels.length === 1 ? '' : 's'} `;

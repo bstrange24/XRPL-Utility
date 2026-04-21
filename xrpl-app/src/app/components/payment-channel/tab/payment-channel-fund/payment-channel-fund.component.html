@@ -1,39 +1,62 @@
-<div class="tab-content-container form-fields-container">
-     <div class="form-row">
-          <div class="form-group">
-               <label for="selectPaymentChannelFund">Select Payment Channel to Fund</label>
-               <p class="form-hint">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
+<div class="space-y-6">
+     <!-- Select Payment Channel to Fund -->
+     <div class="space-y-2">
+          <label class="text-sm font-medium text-gray-700">Select Payment Channel to Fund</label>
+          <p class="text-xs text-gray-500">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
+          <div class="h-[54px]">
                <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+          </div>
 
-               <!-- Expired warning for fundPaymentChannel tab -->
-               @if (viewModel.selectedIsExpired()) {
-               <div class="warning-message expired-warning">
-                    <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600"></ng-icon>
-                    This selected payment channel has expired.
+          <!-- Expired warning for fundPaymentChannel tab -->
+          @if (viewModel.selectedIsExpired()) {
+          <div class="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+               <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600 flex-shrink-0" />
+               <span class="text-sm text-red-700">This selected payment channel has expired.</span>
+          </div>
+          }
+     </div>
+
+     <!-- Channel ID and XRP Amount - Two Column Grid -->
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Channel ID -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium text-gray-700">Channel ID</label>
+               <p class="text-xs text-gray-500">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
+               <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
+          </div>
+
+          <!-- XRP Amount -->
+          <div class="space-y-2">
+               <label class="text-sm font-medium text-gray-700">XRP Amount</label>
+               <p class="text-xs text-gray-500">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
+               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
+     </div>
+
+     <!-- Optional Fields Toggle -->
+     <div class="pt-2">
+          <label class="flex items-center cursor-pointer group">
+               <div class="relative inline-flex items-center">
+                    <input type="checkbox" class="sr-only peer" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" />
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
+                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
                </div>
-               }
-          </div>
+               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Include optional field (Expiration Date)</span>
+          </label>
+
+          <!-- <label class="flex items-center cursor-pointer">
+               <div class="toggle-switch">
+                    <input type="checkbox" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" />
+                    <span class="slider"></span>
+               </div>
+               <span class="toggle-label">Include optional fields (Expiration Date)</span>
+          </label> -->
      </div>
 
-     <div class="form-row">
-          <div class="form-group">
-               <label for="channelId">Channel ID</label>
-               <p class="form-hint">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
-               <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
-          </div>
-          <div class="form-group">
-               <label for="amount">XRP Amount</label>
-               <p class="form-hint">
-                    Amount of XRP to deduct from the sender's balance and <br />
-                    set aside in this channel.
-               </p>
-               <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="amount-input" />
-          </div>
-     </div>
-
-     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.checked)">Include optional fields (Expiration Date)</mat-slide-toggle>
-
+     <!-- Optional Fields Section -->
      @if (txUiService.wantsOptions()) {
-     <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
+     <div class="pl-6 border-l-2 border-green-200">
+          <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
+     </div>
      }
 </div>

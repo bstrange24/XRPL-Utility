@@ -10,11 +10,12 @@ import { PoolOptions } from '../../constants/amm.types';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-amm-fields',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './amm-fields.component.html',
      styleUrl: './amm-fields.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
