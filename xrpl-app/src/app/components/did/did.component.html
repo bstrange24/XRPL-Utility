@@ -1,57 +1,57 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get active tab -->
 @let tab = didViewModelService.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
-<!-- Info Data -->
-@let info = didViewModelService.infoData();
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)" />
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="didTabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="didViewModelService.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)" />
+          <!-- Summary -->
+          <app-did-summary [info]="didViewModelService.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" />
 
-               <!-- Info Message -->
-               <app-did-summary [info]="info" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" />
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()" />
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()" />
-               }
+          <!-- Form -->
+          <form #theForm="ngForm" class="mt-4">
+               <div class="flex flex-col lg:flex-row gap-6">
+                    <!-- Main Content -->
+                    <div class="flex-1 min-w-0">
+                         @switch (tab) { @case ('setDid') {
+                         <app-did-set [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
+                         } @case ('deleteDid') {
+                         <app-did-delete [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
+                         } }
 
-               <form #theForm="ngForm" class="main-form">
-                    @switch (tab) { @case ('setDid') {
-                    <app-did-set [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
-                    } @case ('deleteDid') {
-                    <app-did-delete [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
-                    } }
+                         <!-- Transaction Options (conditional) -->
+                         @if ((tab === 'setDid' && didStoreService.existingDid().length <= 0) || tab === 'deleteDid') {
+                         <app-transaction-options [showWhenTab]="['setDid','deleteDid']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+                         }
+                    </div>
+               </div>
 
-                    <!-- Only show buttons and sliders if there is no DID set or we are on the delete DID tab -->
-                    @if ((tab === 'setDid' && didStoreService.existingDid().length <= 0) || tab === 'deleteDid') {
-                    <app-transaction-options [showWhenTab]="['setDid','deleteDid']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+               <!-- Action Buttons -->
+               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    @if (tab === 'setDid') {
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit()">Set DID</button>
+                    } @else if (tab === 'deleteDid') {
+                    <button type="button" class="btn-red whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit()">Delete DID</button>
                     }
 
-                    <!-- Execution time -->
-                    <app-execution-time-display [time]="executionTime()" />
+                    <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!canSubmit()">Clear Fields</button>
+               </div>
 
-                    <!-- Transaction Preview -->
-                    <app-transaction-preview />
-               </form>
-          </div>
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-          <app-requirements-info [activeTab]="tab" />
+               <!-- Transaction Preview -->
+               <div class="pt-2">
+                    <app-transaction-preview></app-transaction-preview>
+               </div>
+          </form>
      </div>
 </div>

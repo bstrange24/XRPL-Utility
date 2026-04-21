@@ -1,102 +1,83 @@
-<!-- Only show when no existing DID -->
 @if (hasNoExistingDid()) {
-<div class="form-row">
-     <div class="form-group">
-          <label for="didDocument" class="label-with-link">
-               DID Document
-               <button type="button" class="format-did-data" (click)="didDocumentEditor.format()">Format DID Document</button>
-               <div>
-                    <small class="text-muted"> Metadata size: {{ byteLengthDidDocument() }} / 256 bytes </small>
-                    @if (byteLengthDidDocument() > 256) {
-                    <small class="text-danger d-block"><strong>Exceeded limit – transaction will fail</strong></small>
-                    } @else if (byteLengthDidDocument() > 200) {
-                    <small class="text-warning d-block">Approaching limit ({{ byteLengthDidDocument() }} bytes)</small>
-                    }
-               </div>
+
+<div class="space-y-10">
+     <!-- DID Document -->
+     <div class="space-y-3">
+          <label class="text-sm font-medium flex items-center justify-between">
+               <span>DID Document</span>
+               <button type="button" class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors" (click)="didDocumentEditor.format()">Format JSON</button>
           </label>
+
+          <p class="text-xs text-gray-500">Main DID document containing context, id, verificationMethod, etc.</p>
+
           <app-json-editor [value]="didStoreService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
-          <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('document')">Clear</button>
 
-          @if (validDidSchema() && !hasJsonSyntaxError()) {
-          <div class="json-schema-success mt-2">
-               <small class="text-success">
-                    <strong>✓ DID JSON is valid and well-formed</strong>
-               </small>
-          </div>
-          }
-     </div>
-</div>
-
-<!-- URI -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="uriData" class="label-with-link">
-               URI Data
-               <button type="button" class="format-did-data" (click)="uriEditor.format()">Format URI Data</button>
-               <div>
-                    <small class="text-muted"> Metadata size: {{ byteLengthUriData() }} / 256 bytes </small>
-                    @if (byteLengthUriData() > 256) {
-                    <small class="text-danger d-block"><strong>Exceeded limit – transaction will fail</strong></small>
-                    } @else if (byteLengthUriData() > 200) {
-                    <small class="text-warning d-block">Approaching limit ({{ byteLengthUriData() }} bytes)</small>
-                    }
-               </div>
-          </label>
-          <app-json-editor [value]="didStoreService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
-          <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('uri')">Clear</button>
-
-          @if (validDidSchema() && !hasJsonSyntaxError()) {
-          <div class="json-schema-success mt-2">
-               <small class="text-success">
-                    <strong>✓ DID JSON is valid and well-formed</strong>
-               </small>
-          </div>
-          }
-     </div>
-</div>
-
-<!-- DID Data -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="didData" class="label-with-link">
-               DID Data
-               <button type="button" class="format-did-data" (click)="didDataEditor.format()">Format DID Data</button>
-               <span class="label-meta" style="padding-left: 20px"> DID Schema <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C</a> </span>
-
-               <!-- Schema warnings/success -->
-               @if (validDidSchema() && hasJsonSyntaxError()) {
-               <div class="json-schema-warning mt-2">
-                    <small class="text-warning"> <strong>⚠ Schema valid, but JSON has syntax errors:</strong><br /> </small>
-               </div>
+          <div class="flex items-center justify-between text-xs">
+               <span class="text-gray-500">Size: {{ byteLengthDidDocument() }} / 256 bytes</span>
+               @if (byteLengthDidDocument() > 256) {
+               <span class="text-red-600 font-medium">Exceeded limit – transaction will fail</span>
+               } @else if (byteLengthDidDocument() > 200) {
+               <span class="text-amber-600">Approaching limit</span>
                }
-
-               <div>
-                    <small class="text-muted"> Metadata size: {{ byteLengthDidData() }} / 256 bytes </small>
-                    @if (byteLengthDidData() > 256) {
-                    <small class="text-danger d-block"><strong>Exceeded limit – transaction will fail</strong></small>
-                    } @else if (byteLengthDidData() > 200) {
-                    <small class="text-warning d-block">Approaching limit ({{ byteLengthDidData() }} bytes)</small>
-                    }
-               </div>
-          </label>
-          <app-json-editor [value]="didStoreService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
-          <button type="button" class="btn btn-sm btn-secondary" (click)="didUtilService.clearJsonField('data')">Clear</button>
-
-          @if (validDidSchema() && !hasJsonSyntaxError()) {
-          <div class="json-schema-success mt-2">
-               <small class="text-success">
-                    <strong>✓ DID JSON is valid and well-formed</strong>
-               </small>
           </div>
-          }
-     </div>
-</div>
-}
 
-<!-- Action buttons (only when no DID or on delete tab – but delete handled in its own component) -->
-@if (hasNoExistingDid()) {
-<div class="button-row">
-     <button type="button" [class]="view().actionButtonClass()" (click)="performAction.emit()" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()">{{ view().actionButtonLabel() }}</button>
-     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" (click)="clearFields.emit()">Clear Fields</button>
+          <button type="button" class="btn-secondary text-sm" (click)="didUtilService.clearJsonField('document')">Clear DID Document</button>
+     </div>
+
+     <!-- URI Data -->
+     <div class="space-y-3">
+          <label class="text-sm font-medium flex items-center justify-between">
+               <span>URI Data</span>
+               <button type="button" class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors" (click)="uriEditor.format()">Format JSON</button>
+          </label>
+
+          <p class="text-xs text-gray-500">Additional URI-linked data for the DID.</p>
+
+          <app-json-editor [value]="didStoreService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
+
+          <div class="flex items-center justify-between text-xs">
+               <span class="text-gray-500">Size: {{ byteLengthUriData() }} / 256 bytes</span>
+               @if (byteLengthUriData() > 256) {
+               <span class="text-red-600 font-medium">Exceeded limit</span>
+               } @else if (byteLengthUriData() > 200) {
+               <span class="text-amber-600">Approaching limit</span>
+               }
+          </div>
+
+          <button type="button" class="btn-secondary text-sm" (click)="didUtilService.clearJsonField('uri')">Clear URI Data</button>
+     </div>
+
+     <!-- DID Data -->
+     <div class="space-y-3">
+          <label class="text-sm font-medium flex items-center justify-between">
+               <span>DID Data</span>
+               <button type="button" class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors" (click)="didDataEditor.format()">Format JSON</button>
+               <span class="text-xs text-blue-600">
+                    <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer">W3C DID Spec</a>
+               </span>
+          </label>
+
+          <p class="text-xs text-gray-500">Core DID data and custom properties.</p>
+
+          <app-json-editor [value]="didStoreService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
+
+          <div class="flex items-center justify-between text-xs">
+               <span class="text-gray-500">Size: {{ byteLengthDidData() }} / 256 bytes</span>
+               @if (byteLengthDidData() > 256) {
+               <span class="text-red-600 font-medium">Exceeded limit – transaction will fail</span>
+               } @else if (byteLengthDidData() > 200) {
+               <span class="text-amber-600">Approaching limit</span>
+               }
+          </div>
+
+          <button type="button" class="btn-secondary text-sm" (click)="didUtilService.clearJsonField('data')">Clear DID Data</button>
+     </div>
+
+     <!-- Action Buttons -->
+     <!-- <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t">
+          <button type="button" [class]="view().actionButtonClass()" (click)="performAction.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ view().actionButtonLabel() }}</button>
+
+          <button type="button" class="btn-secondary whitespace-nowrap" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" (click)="clearFields.emit()">Clear Fields</button>
+     </div> -->
 </div>
 }

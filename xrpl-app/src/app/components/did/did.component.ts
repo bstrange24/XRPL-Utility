@@ -7,10 +7,8 @@ import { TransactionUiService } from '../../services/transaction-ui/transaction-
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { ToastService } from '../../services/utils/toast/toast.service';
@@ -20,7 +18,6 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { DidTransactionOrchestratorService } from '../../services/did/did-transaction-orchestrator/did-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { ActivatedRoute } from '@angular/router';
@@ -37,11 +34,13 @@ import { DidSetComponent } from './tab/did-set/did-set.component';
 import { DID_TAB } from './constants/did.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent, DidDeleteComponent, DidSetComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent, DidDeleteComponent, DidSetComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -59,8 +58,9 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      public readonly didUtilService = inject(DidUtilService);
      public readonly didStoreService = inject(DidStoreService);
      public readonly didViewModelService = inject(DidViewModelService);
-     readonly menuTabs: TabConfig[] = DID_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = DID_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly didTabs = DID_TABS;
+     public readonly tabMeta = DID_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -72,6 +72,14 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.didViewModelService.activeTab.set('setDid');
           this.applyTabFromQueryParam(this.route, DID_TAB, tab => this.setTab(tab));
           this.didUtilService.populateDidDefaultData();
+
+          this.rightPanelService.setPanel(RequirementsInfoComponent, {
+               activeTab: this.didViewModelService.activeTab,
+          });
+     }
+
+     ngOnDestroy() {
+          this.rightPanelService.clearPanel();
      }
 
      ngAfterViewInit() {
@@ -79,7 +87,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
-          await this.getDidForAccount(false);
+          await this.getDidForAccount(true);
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -118,6 +126,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getDidForAccount:', error);
                     this.toastService.error(error.message || 'Error getting did detail', AppConstants.TOAST.ERROR);

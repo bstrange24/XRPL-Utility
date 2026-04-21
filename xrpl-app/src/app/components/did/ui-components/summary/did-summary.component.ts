@@ -5,6 +5,7 @@ import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 export interface ExistingDid {
      index: string;
@@ -19,6 +20,7 @@ export interface ExistingDid {
      imports: [NgIcon, LucideAngularModule, TooltipLinkComponent],
      templateUrl: './did-summary.component.html',
      styleUrl: './did-summary.component.css',
+     animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('300ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('250ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DidSummaryComponent {
