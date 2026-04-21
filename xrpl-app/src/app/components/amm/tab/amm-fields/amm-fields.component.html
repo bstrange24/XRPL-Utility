@@ -5,202 +5,194 @@
 <!-- Get view model and store for easier template access -->
 @let opts = ammUtilsService;
 
-<!-- ===== POOL ASSET FIELDS (shared across most tabs) ===== -->
-@if (tab() === 'createAMM' || tab() === 'depositToAMM' || tab() === 'withdrawalFromAMM' || tab() === 'clawbackFromAMM' || tab() === 'swapViaAMM' || tab() === 'deleteAMM') {
+<div class="space-y-10">
+     <!-- ── Pool Assets Section ── -->
+     @if (tab() === 'createAMM' || tab() === 'depositToAMM' || tab() === 'withdrawalFromAMM' || tab() === 'clawbackFromAMM' || tab() === 'swapViaAMM' || tab() === 'deleteAMM') {
 
-<!-- ── Section headers ── -->
-<div class="form-row">
-     <div class="form-group">
-          <label>Asset 1 – First Pool Token</label>
-     </div>
-     <div class="form-group">
-          <label>Asset 2 – Second Pool Token</label>
-     </div>
-</div>
+     <div>
+          <h4 class="text-sm font-semibold text-gray-900 mb-4">Pool Assets</h4>
 
-<!-- ── Currency Code ── -->
-<div class="form-row">
-     <div class="form-group">
-          <label>Currency Code</label>
-          <p class="form-hint">Select the token that represents the first side of the liquidity pair.</p>
-          <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
-     </div>
-     <div class="form-group">
-          <label>Currency Code</label>
-          <p class="form-hint">Select the token that represents the second side of the liquidity pair.</p>
-          <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
-     </div>
-</div>
+          <!-- Asset 1 + Asset 2 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <!-- Asset 1 -->
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Asset 1</label>
+                    <p class="text-xs text-gray-500">First token in the liquidity pool.</p>
 
-<!-- ── Issuer ── -->
-<div class="form-row">
-     <div class="form-group">
-          <label>Issuer</label>
-          <p class="form-hint">The XRPL account that mints/issues the first pool token (ignored for XRP).</p>
-          <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer address or name…" emptyMessage="No issuers available" />
-     </div>
-     <div class="form-group">
-          <label>Issuer</label>
-          <p class="form-hint">The XRPL account that mints/issues the second pool token (ignored for XRP).</p>
-          <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer address or name…" emptyMessage="No issuers available" />
-     </div>
-</div>
+                    <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+               </div>
 
-<!-- ── Your wallet balances (read-only) ── -->
-<div class="form-row">
-     <div class="form-group">
-          <label>Your Balance – Asset 1</label>
-          <p class="form-hint">How much of the first token your connected wallet currently holds.</p>
-          <input type="text" [value]="view.asset1UserBalance() || '0'" readonly name="asset1UserBalance" />
-     </div>
-     <div class="form-group">
-          <label>Your Balance – Asset 2</label>
-          <p class="form-hint">How much of the second token your connected wallet currently holds.</p>
-          <input type="text" [value]="view.asset2UserBalance() || '0'" readonly name="asset2UserBalance" />
-     </div>
-</div>
+               <!-- Asset 2 -->
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Asset 2</label>
+                    <p class="text-xs text-gray-500">Second token in the liquidity pool.</p>
 
-<!-- ── Amount (single block for ALL tabs that need it) ── -->
-@if (tab() !== 'deleteAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label>Amount – Asset 1</label>
-          <p class="form-hint">Amount of the first token to {{ amountHintMap[tab()]?.verb || 'use' }} {{ amountHintMap[tab()]?.preposition || 'in' }} the AMM pool.</p>
-          <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event)" name="weWantAmountField" placeholder="e.g. 10.5" />
-     </div>
-     <div class="form-group">
-          <label>Amount – Asset 2</label>
-          <p class="form-hint">Amount of the second token to {{ amountHintMap[tab()]?.verb || 'use' }} {{ amountHintMap[tab()]?.preposition || 'in' }} the AMM pool.</p>
-          <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event)" name="weSpendAmountField" placeholder="e.g. 10.5" />
-     </div>
-</div>
-}
+                    <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+               </div>
+          </div>
 
-<!-- ── Pool totals (read-only) ── -->
-<div class="form-row">
-     <div class="form-group">
-          <label>Pool Total – Asset 1</label>
-          <p class="form-hint">Aggregate amount of the first token currently held in the AMM pool.</p>
-          <input type="text" [value]="store.assetPool1Balance() || '0'" readonly name="assetPool1Balance" />
-     </div>
-     <div class="form-group">
-          <label>Pool Total – Asset 2</label>
-          <p class="form-hint">Aggregate amount of the second token currently held in the AMM pool.</p>
-          <input type="text" [value]="store.assetPool2Balance() || '0'" readonly name="assetPool2Balance" />
-     </div>
-</div>
-}
+          <!-- Issuer 1 + Issuer 2 -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Issuer (Asset 1)</label>
+                    <p class="text-xs text-gray-500">Issuer of the first token (ignored for XRP).</p>
 
-<!-- ===== CREATE: Trading Fee + LP Token Balance ===== -->
-@if (tab() === 'createAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label>Trading Fee (%)</label>
-          <p class="form-hint">Fee charged on every swap, between 0 % and 1 %. Enter as a decimal — e.g. 0.5 means 0.5 %.</p>
-          <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" name="tradingFeeField" placeholder="e.g. 0.5" />
-     </div>
-     <div class="form-group">
-          <label>LP Token Balance</label>
-          <p class="form-hint">Liquidity-provider tokens you'll receive representing your share of the pool.</p>
-          <input type="text" [value]="store.lpTokenBalance() || '0'" readonly name="lpTokenBalance" />
-     </div>
-</div>
-}
+                    <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+               </div>
 
-<!-- ===== DEPOSIT: LP Token Balance + Deposit Options ===== -->
-@if (tab() === 'depositToAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label>LP Token Balance</label>
-          <p class="form-hint">Your current LP token balance in this pool.</p>
-          <input type="text" [value]="store.lpTokenBalance() || '0'" readonly name="lpTokenBalanceDeposit" />
-     </div>
-     <div class="form-group"></div>
-</div>
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Issuer (Asset 2)</label>
+                    <p class="text-xs text-gray-500">Issuer of the second token (ignored for XRP).</p>
 
-<div style="margin-top: 0.8em">
-     <label>Deposit Strategy</label>
-     <p class="form-hint">Choose which side(s) of the pool to deposit into.</p>
-     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0.4em">
-          <span class="tooltip" tooltip-data="Deposit into both sides of the pool proportionally.">
-               <input type="checkbox" id="depositBothPools" [checked]="opts.depositOptions().bothPools" (change)="depositOptionChange.emit('bothPools')" />
-               <label for="depositBothPools">Both Pools</label>
-          </span>
-          <span class="tooltip" tooltip-data="Deposit only the first token (single-asset deposit).">
-               <input type="checkbox" id="depositFirstPoolOnly" [checked]="opts.depositOptions().firstPoolOnly" (change)="depositOptionChange.emit('firstPoolOnly')" />
-               <label for="depositFirstPoolOnly">Asset 1 Only</label>
-          </span>
-          <span class="tooltip" tooltip-data="Deposit only the second token (single-asset deposit).">
-               <input type="checkbox" id="depositSecondPoolOnly" [checked]="opts.depositOptions().secondPoolOnly" (change)="depositOptionChange.emit('secondPoolOnly')" />
-               <label for="depositSecondPoolOnly">Asset 2 Only</label>
-          </span>
-     </div>
-</div>
-}
+                    <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+               </div>
+          </div>
 
-<!-- ===== WITHDRAW: LP Token Balance + LP Input + Withdrawal Options ===== -->
-@if (tab() === 'withdrawalFromAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label>LP Token Balance</label>
-          <p class="form-hint">Your current LP token balance available for withdrawal.</p>
-          <input type="text" [value]="store.lpTokenBalance() || '0'" readonly name="lpTokenBalanceWithdraw" />
+          <!-- Your Balances -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Your Balance – Asset 1</label>
+                    <input type="text" [value]="view.asset1UserBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+               </div>
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Your Balance – Asset 2</label>
+                    <input type="text" [value]="view.asset2UserBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+               </div>
+          </div>
      </div>
-     <div class="form-group">
-          <label>LP Tokens to Burn</label>
-          <p class="form-hint">Number of LP tokens to redeem. The equivalent pool assets will be returned to your wallet.</p>
-          <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" name="withdrawalLpTokenField" placeholder="e.g. 10.5" />
-     </div>
-</div>
 
-<div style="margin-top: 0.8em">
-     <label>Withdrawal Strategy</label>
-     <p class="form-hint">Choose which side(s) of the pool to withdraw from.</p>
-     <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 0.4em">
-          <span class="tooltip" tooltip-data="Withdraw proportionally from both sides of the pool.">
-               <input type="checkbox" id="withdrawBothPools" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" />
-               <label for="withdrawBothPools">Both Pools</label>
-          </span>
-          <span class="tooltip" tooltip-data="Withdraw only the first token (single-asset withdrawal).">
-               <input type="checkbox" id="withdrawFirstPoolOnly" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" />
-               <label for="withdrawFirstPoolOnly">Asset 1 Only</label>
-          </span>
-          <span class="tooltip" tooltip-data="Withdraw only the second token (single-asset withdrawal).">
-               <input type="checkbox" id="withdrawSecondPoolOnly" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" />
-               <label for="withdrawSecondPoolOnly">Asset 2 Only</label>
-          </span>
+     <!-- Amount Fields (except Delete) -->
+     @if (tab() !== 'deleteAMM') {
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Amount – Asset 1</label>
+               <p class="text-xs text-gray-500">Amount of Asset 1 to use in the pool.</p>
+               <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Amount – Asset 2</label>
+               <p class="text-xs text-gray-500">Amount of Asset 2 to use in the pool.</p>
+               <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
      </div>
-</div>
-}
+     }
 
-<!-- ===== CLAWBACK: LP Token Balance + Holder ===== -->
-@if (tab() === 'clawbackFromAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label>LP Token Balance</label>
-          <p class="form-hint">LP tokens currently in the pool for this asset pair.</p>
-          <input type="text" [value]="store.lpTokenBalance() || '0'" readonly name="lpTokenBalanceClawback" />
+     <!-- Pool Totals -->
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Pool Total – Asset 1</label>
+               <input type="text" [value]="store.assetPool1Balance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Pool Total – Asset 2</label>
+               <input type="text" [value]="store.assetPool2Balance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
      </div>
-     <div class="form-group">
-          <label>Holder Address (optional)</label>
-          <p class="form-hint">The account whose LP tokens will be clawed back.</p>
-          <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" name="holderField" placeholder="rXXXXX…" />
-     </div>
-</div>
-}
+     }
 
-<!-- ===== SWAP: Destination + Destination Tag ===== -->
-@if (tab() === 'swapViaAMM') {
-<div class="form-row">
-     <div class="form-group">
-          <label for="destination">Destination Account</label>
-          <p class="form-hint">The XRPL account that will receive the swapped tokens.</p>
+     <!-- Create AMM Specific Fields -->
+     @if (tab() === 'createAMM') {
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Trading Fee (%)</label>
+               <p class="text-xs text-gray-500">Fee charged on every swap (0% – 1%).</p>
+               <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" placeholder="e.g. 0.3" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
+          <div class="space-y-2">
+               <label class="text-sm font-medium">LP Token Balance</label>
+               <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
+     </div>
+     }
+
+     <!-- Deposit Options -->
+     @if (tab() === 'depositToAMM') {
+     <div class="space-y-3">
+          <label class="text-sm font-medium">Deposit Strategy</label>
+          <p class="text-xs text-gray-500">Choose which side(s) of the pool to deposit into.</p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+               <!-- Both Pools (Proportional) -->
+               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().bothPools" [class.bg-green-50]="opts.depositOptions().bothPools">
+                    <input type="checkbox" [checked]="opts.depositOptions().bothPools" (change)="depositOptionChange.emit('bothPools')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                    <span class="text-sm font-medium">Both Pools (Proportional)</span>
+               </label>
+
+               <!-- Asset 1 Only -->
+               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.bg-green-50]="opts.depositOptions().firstPoolOnly">
+                    <input type="checkbox" [checked]="opts.depositOptions().firstPoolOnly" (change)="depositOptionChange.emit('firstPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                    <span class="text-sm font-medium">Asset 1 Only</span>
+               </label>
+
+               <!-- Asset 2 Only -->
+               <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.bg-green-50]="opts.depositOptions().secondPoolOnly">
+                    <input type="checkbox" [checked]="opts.depositOptions().secondPoolOnly" (change)="depositOptionChange.emit('secondPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                    <span class="text-sm font-medium">Asset 2 Only</span>
+               </label>
+          </div>
+     </div>
+     }
+
+     <!-- Withdrawal Options -->
+     @if (tab() === 'withdrawalFromAMM') {
+     <div class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">LP Token Balance</label>
+                    <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+               </div>
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">LP Tokens to Burn</label>
+                    <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               </div>
+          </div>
+
+          <div class="space-y-3">
+               <label class="text-sm font-medium">Withdrawal Strategy</label>
+               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <!-- Both Pools -->
+                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.bg-green-50]="opts.withdrawOptions().bothPools">
+                         <input type="checkbox" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                         <span class="text-sm font-medium">Both Pools</span>
+                    </label>
+
+                    <!-- Asset 1 Only -->
+                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.bg-green-50]="opts.withdrawOptions().firstPoolOnly">
+                         <input type="checkbox" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                         <span class="text-sm font-medium">Asset 1 Only</span>
+                    </label>
+
+                    <!-- Asset 2 Only -->
+                    <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all hover:bg-gray-50" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.bg-green-50]="opts.withdrawOptions().secondPoolOnly">
+                         <input type="checkbox" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" class="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                         <span class="text-sm font-medium">Asset 2 Only</span>
+                    </label>
+               </div>
+          </div>
+     </div>
+     }
+
+     <!-- Clawback -->
+     @if (tab() === 'clawbackFromAMM') {
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+               <label class="text-sm font-medium">LP Token Balance</label>
+               <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          </div>
+          <div class="space-y-2">
+               <label class="text-sm font-medium">Holder Address (optional)</label>
+               <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          </div>
+     </div>
+     }
+
+     <!-- Swap Destination -->
+     @if (tab() === 'swapViaAMM') {
+     <div class="space-y-2">
+          <label class="text-sm font-medium">Destination Account</label>
+          <p class="text-xs text-gray-500">The account that will receive the swapped tokens.</p>
+
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
      </div>
-     <div class="form-group">
-          <label>Destination Tag (Optional)</label>
-          <p class="form-hint">A numeric tag required by some exchanges and hosted wallets.</p>
-          <input type="text" name="destinationTagField" placeholder="e.g. 12345" />
-     </div>
+     }
 </div>
-}

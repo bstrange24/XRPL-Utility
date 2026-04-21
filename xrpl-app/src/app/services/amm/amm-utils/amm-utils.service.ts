@@ -55,16 +55,19 @@ export class AmmUtilsService {
           const tab = this.ammTransactionViewModelService.activeTab();
           switch (tab) {
                case 'createAMM':
-                    return 'btn-primary-blue';
+                    return 'btn-primary';
                case 'depositToAMM':
+                    return 'btn-primary';
                case 'withdrawalFromAMM':
+                    return 'btn-blue';
                case 'swapViaAMM':
-                    return 'btn-primary-green';
+                    return 'btn-primary';
                case 'clawbackFromAMM':
+                    return 'btn-blue';
                case 'deleteAMM':
-                    return 'btn-primary-red';
+                    return 'btn-red';
                default:
-                    return 'btn-primary-blue';
+                    return 'btn-blue';
           }
      });
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -9,4 +9,9 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './amm-requirements-info.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AmmRequirementsInfoComponent {}
+export class AmmRequirementsInfoComponent {
+     activeTab = input.required<'createAMM'>();
+
+     // Collapsible state
+     isExpanded = signal(false);
+}

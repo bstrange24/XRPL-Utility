@@ -1,85 +1,90 @@
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>XRPL DEX Offers (Create / Cancel / Order Book)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">DEX Offers Info</span>
+          </div>
 
-     <p class="info-subtitle">The XRPL decentralized exchange (DEX) lets you create offers to trade any two assets (XRP ↔ issued tokens or token ↔ token). Use OfferCreate to place buy/sell orders, OfferCancel to remove your own active offers, and query order books or your offers to monitor the market and your positions.</p>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">📈 Create Offer</span>
-                    <span class="badge required-badge">OfferCreate</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Taker Gets</span>
-                         <span class="field-status required">✅ Required (asset you want to receive)</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Description -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">XRPL DEX Offers</h3>
+               <p class="text-sm text-gray-600">Create, cancel, and manage offers on the XRPL decentralized exchange to trade any two assets.</p>
+          </div>
+
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Key Operations</h4>
+
+               <div class="space-y-5">
+                    <!-- Create Offer -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-emerald-100 text-emerald-700 rounded-full">📈 Create Offer</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Taker Gets</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Taker Pays</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Flags</span>
+                                   <span class="text-gray-500">Optional (Passive, ImmediateOrCancel, etc.)</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Taker Pays</span>
-                         <span class="field-status required">✅ Required (asset you offer to give)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Currency Code + Issuer</span>
-                         <span class="field-status required">✅ Required for issued tokens (XRP has no issuer)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Flags</span>
-                         <span class="field-status optional">➕ Optional (passive, immediate-or-cancel, fill-or-kill, sell)</span>
+
+                    <!-- Cancel / View -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">❌ Cancel / View Offers</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Offer Sequence / Index</span>
+                                   <span class="text-green-600 font-medium">Required for cancel</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Order Book Query</span>
+                                   <span class="text-gray-500">TakerGets + TakerPays pair</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">❌ Cancel / View Offers</span>
-                    <span class="badge optional-badge">OfferCancel or Query</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Offer Sequence / Index</span>
-                         <span class="field-status required">✅ Required for cancel (your account's offer sequence or index)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Order Book Query</span>
-                         <span class="field-status optional">➕ TakerGets + TakerPays pair to view bids/asks</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Your Offers</span>
-                         <span class="field-status optional">➕ View active offers created by your account</span>
-                    </div>
-               </div>
-          </div>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
 
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Offers are limit orders on the XRPL DEX — they sit in the order book until matched, canceled, or expired.</li>
-                    <li><strong>Taker Gets</strong>: What the counterparty receives (what you are selling / buying into).</li>
-                    <li><strong>Taker Pays</strong>: What the counterparty pays (what you are buying / selling from).</li>
-                    <li>
-                         Common flags:
-                         <ul>
-                              <li><strong>tfPassive</strong> — Offer does not consume existing offers (good for market making)</li>
-                              <li><strong>tfImmediateOrCancel</strong> — Execute only what can be filled immediately; cancel rest</li>
-                              <li><strong>tfFillOrKill</strong> — Fill entire amount or cancel completely</li>
-                              <li><strong>tfSell</strong> — Treat as sell offer even if amounts suggest buy (useful for IOUs)</li>
-                         </ul>
-                    </li>
-                    <li>Each active offer consumes owner reserve (~0.2 XRP) until canceled, fully consumed, or expired.</li>
-                    <li>Cancel uses your offer's <strong>sequence number</strong> (from account_offers) — only you can cancel your own offers.</li>
-                    <li>Offers auto-match when a new offer crosses the book — partial fills are possible; unmatched portion stays active.</li>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Offers are limit orders that sit in the order book until matched, canceled, or expired.</li>
+                    <li><strong>Taker Gets</strong>: What you receive (what you're buying into).</li>
+                    <li><strong>Taker Pays</strong>: What you give (what you're selling).</li>
+                    <li>Common flags: <strong>tfPassive</strong>, <strong>tfImmediateOrCancel</strong>, <strong>tfFillOrKill</strong>, <strong>tfSell</strong>.</li>
+                    <li>Each active offer consumes <strong>owner reserve</strong> (~0.2 XRP) until resolved.</li>
                </ul>
-               <h5 class="warning-title">⚠️ Irreversibility &amp; DEX Risks</h5>
-               <p style="color: #92400e">Offers lock funds or assets until resolved — market volatility, wrong pricing, or unfilled offers can tie up reserve or cause losses.</p>
-               <ul>
-                    <li>Once matched, trades are permanent — no native reversal.</li>
-                    <li>Wrong TakerGets/TakerPays pair or issuer causes offer to be invalid — double-check currency codes and issuers.</li>
-                    <li>Active offers consume reserve — too many unfilled offers can lock your account's XRP.</li>
-                    <li>Always test on devnet or Testnet first before submitting to mainnet.</li>
-               </ul>
+
+               <div class="mt-6 pt-5 border-t border-amber-200">
+                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Risks & Considerations</h5>
+                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
+                         <li>Once matched, trades are permanent — no native reversal.</li>
+                         <li>Active offers lock reserve — too many can freeze your account's XRP.</li>
+                         <li>Wrong asset pair or issuer leads to invalid offers.</li>
+                         <li>Always test on Devnet/Testnet first.</li>
+                    </ul>
+               </div>
           </div>
      </div>
+     }
 </div>

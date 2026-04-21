@@ -3,15 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -38,11 +36,12 @@ import { OfferSummaryComponent } from './ui-components/offer-summary/offer-summa
 import { OfferRequirementsInfoComponent } from './ui-components/offer-requirements-info/offer-requirements-info.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-offer',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent, OfferSummaryComponent, OfferRequirementsInfoComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent, OfferSummaryComponent],
      templateUrl: './offer.component.html',
      styleUrl: './offer.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -58,9 +57,12 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      public readonly accountConfiguratorStore = inject(AccountConfiguratorStoreService);
      public readonly offerTransactionOrchestratorService = inject(OfferTransactionOrchestratorService);
      public readonly offerUtilsService = inject(OfferUtilsService);
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly tabs = OFFER_TABS;
+     public readonly tabMeta = OFFER_TAB_META;
 
-     readonly menuTabs: TabConfig[] = OFFER_TABS as unknown as TabConfig[];
-     readonly tabMeta: Record<string, TabMetaInfo> = OFFER_TAB_META;
+     // readonly menuTabs: TabConfig[] = OFFER_TABS as unknown as TabConfig[];
+     // readonly tabMeta: Record<string, TabMetaInfo> = OFFER_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -108,6 +110,10 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
                     this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
                }
+          });
+
+          this.rightPanelService.setPanel(OfferRequirementsInfoComponent, {
+               activeTab: this.offerTransactionViewModelService.activeTab,
           });
      }
 

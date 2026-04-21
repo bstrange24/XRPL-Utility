@@ -3,15 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -41,11 +39,12 @@ import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.com
 import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-amm',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, AmmRequirementsInfoComponent, AmmFieldsComponent, AmmSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, AmmFieldsComponent, AmmSummaryComponent],
      templateUrl: './amm.component.html',
      styleUrl: './amm.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,11 +62,10 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
      public readonly accountConfiguratorStore = inject(AccountConfiguratorStoreService);
      public readonly ammTransactionOrchestratorService = inject(AmmTransactionOrchestratorService);
      public readonly ammTransactionBuilderService = inject(AmmTransactionBuilderService);
-
      public readonly ammUtilsService = inject(AmmUtilsService);
-
-     readonly menuTabs: TabConfig[] = AMM_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = AMM_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly tabs = AMM_TABS;
+     public readonly tabMeta = AMM_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -118,6 +116,10 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
                     this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
                }
+          });
+
+          this.rightPanelService.setPanel(AmmRequirementsInfoComponent, {
+               activeTab: this.ammTransactionViewModelService.activeTab,
           });
      }
 

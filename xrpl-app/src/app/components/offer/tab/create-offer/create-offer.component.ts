@@ -34,7 +34,13 @@ export class CreateOfferTabComponent {
           { key: 'isMarketOrder' as const, title: 'Immediate Or Cancel', desc: 'The offer never becomes a ledger object: it only tries to match existing offers in the ledger.' },
      ] as const;
 
-     toggleFlag(key: 'isPassive' | 'isFillOrKill' | 'isMarketOrder'): void {
-          this.offerStoreService.setField(key, !this.offerStoreService[key]());
+     selectFlag(key: 'isPassive' | 'isFillOrKill' | 'isMarketOrder'): void {
+          // Reset all flags first
+          this.offerStoreService.setField('isPassive', false);
+          this.offerStoreService.setField('isFillOrKill', false);
+          this.offerStoreService.setField('isMarketOrder', false);
+
+          // Set only the selected one
+          this.offerStoreService.setField(key, true);
      }
 }

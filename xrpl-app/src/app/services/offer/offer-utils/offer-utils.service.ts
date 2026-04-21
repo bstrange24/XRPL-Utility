@@ -40,13 +40,13 @@ export class OfferUtilsService {
           const tab = this.offerTransactionViewModelService.activeTab();
           switch (tab) {
                case 'createOffer':
-                    return 'btn-primary-green';
+                    return 'btn-primary';
                case 'getOrderBook':
-                    return 'btn-primary-blue';
+                    return 'btn-blue';
                case 'cancelOffer':
-                    return 'btn-primary-red';
+                    return 'btn-red';
                default:
-                    return 'btn-primary-blue';
+                    return 'btn-blue';
           }
      });
 

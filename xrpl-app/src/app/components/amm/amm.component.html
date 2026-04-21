@@ -1,74 +1,61 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let viewModel = ammTransactionViewModelService;
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-amm-summary></app-amm-summary>
 
-               <!-- Info Message -->
-               <app-amm-summary></app-amm-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Form Fields -->
+               <app-amm-fields
+                    [tab]="tab"
+                    [destinationItems]="destinationItems()"
+                    [selectedDestinationItem]="selectedDestinationItem()"
+                    [destinationSearchQuery]="destinationSearchQuery()"
+                    (pool1CurrencySelected)="onPool1CurrencySelected($event)"
+                    (pool1IssuerSelected)="onPool1IssuerSelected($event)"
+                    (pool2CurrencySelected)="onPool2CurrencySelected($event)"
+                    (pool2IssuerSelected)="onPool2IssuerSelected($event)"
+                    (depositOptionChange)="ammUtilsService.selectDepositOption($event)"
+                    (withdrawOptionChange)="ammUtilsService.selectWithdrawOption($event)"
+                    (destinationSearchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationValueChange)="handleDestinationChange($event)"
+               >
+               </app-amm-fields>
 
-               <form #theForm="ngForm" class="main-form">
-                    <div class="tab-content-columns">
-                         <div class="tab-content-container form-fields-container">
-                              <!-- AMM Form Fields -->
-                              <app-amm-fields
-                                   [tab]="tab"
-                                   [destinationItems]="destinationItems()"
-                                   [selectedDestinationItem]="selectedDestinationItem()"
-                                   [destinationSearchQuery]="destinationSearchQuery()"
-                                   (pool1CurrencySelected)="onPool1CurrencySelected($event)"
-                                   (pool1IssuerSelected)="onPool1IssuerSelected($event)"
-                                   (pool2CurrencySelected)="onPool2CurrencySelected($event)"
-                                   (pool2IssuerSelected)="onPool2IssuerSelected($event)"
-                                   (depositOptionChange)="ammUtilsService.selectDepositOption($event)"
-                                   (withdrawOptionChange)="ammUtilsService.selectWithdrawOption($event)"
-                                   (destinationSearchQueryChange)="handleSearchQueryChange($event)"
-                                   (destinationValueChange)="handleDestinationChange($event)"
-                              />
-                         </div>
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <button type="button" [class]="ammUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ammUtilsService.actionButtonLabel() }}</button>
+
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
-
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <button type="button" [class]="ammUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ammUtilsService.actionButtonLabel() }}</button>
-                         <button type="button" class="btn-secondary-clear-fields" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
-                    </div>
-
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-amm-requirements-info></app-amm-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

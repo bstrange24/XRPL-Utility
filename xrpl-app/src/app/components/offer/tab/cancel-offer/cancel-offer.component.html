@@ -1,66 +1,55 @@
 @if (offerStoreService.existingOffers().length > 0) {
-<div class="form-row" style="margin-bottom: 1.2em">
-     <div class="form-group">
-          <label for="selectOffersToCancel">Select Offers to Cancel</label>
-          <p class="form-hint">Select existing offers to cancel for the selected account.</p>
-          <div class="combobox-container" style="padding-right: 0; margin-right: 0" (clickOutside)="closeOfferDropdown()">
-               <input #offerDropdownInput type="text" [value]="offerSearchQuery()" (input)="onOfferSearchInput($event)" (focus)="openOfferDropdown()" (keydown)="onOfferKeyDown($event)" [placeholder]="selectedOfferSequences().length > 0 ? selectedOfferSequences().length + ' offer(s) selected' : 'Search offers by sequence...'" class="combobox-input" autocomplete="off" />
-               <button class="combobox-toggle" (click)="toggleOfferDropdown()" type="button">
-                    <lucide-icon name="chevron-down" size="18"></lucide-icon>
+
+<!-- Select Offers to Cancel -->
+<div class="space-y-2">
+     <label class="text-sm font-medium">Select Offers to Cancel</label>
+     <p class="text-xs text-gray-500">Select existing offers to cancel for the selected account.</p>
+
+     <!-- Multi-Select Combobox -->
+     <div class="relative">
+          <div class="relative">
+               <input
+                    #offerDropdownInput
+                    type="text"
+                    [value]="offerSearchQuery()"
+                    (input)="onOfferSearchInput($event)"
+                    (focus)="openOfferDropdown()"
+                    (keydown)="onOfferKeyDown($event)"
+                    [placeholder]="selectedOfferSequences().length > 0 ? 
+                                   selectedOfferSequences().length + ' offer(s) selected' : 
+                                   'Search offers by sequence...'"
+                    class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500"
+                    autocomplete="off"
+               />
+
+               <button type="button" (click)="toggleOfferDropdown()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <lucide-icon name="chevron-down" size="18" />
                </button>
           </div>
      </div>
 </div>
 
+<!-- Selected Offers Chips -->
 @if (selectedOffers().length > 0) {
-<div class="ticket-container">
-     <div class="ticket-list">
+<div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
+     <div class="flex items-center justify-between mb-3">
+          <span class="text-sm font-medium text-gray-700"> Selected Offers ({{ selectedOffers().length }}) </span>
+          <button type="button" (click)="clearAllOfferSelections()" class="text-red-600 hover:text-red-700 text-sm font-medium">Clear all</button>
+     </div>
+
+     <div class="flex flex-wrap gap-2">
           @for (offer of selectedOffers(); track offer.Sequence) {
-          <div class="ticket-list">
-               <span class="ticket-item">{{ formatOfferSequenceDisplay(offer) }}</span>
-               <button type="button" class="ticket-remove" (click)="toggleOfferSelection(offer)" aria-label="Remove offer">
-                    <ng-icon name="heroXCircle" size="16" color="red"></ng-icon>
+          <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
+               <span class="font-mono text-gray-800">{{ formatOfferDisplay(offer) }}</span>
+               <button type="button" (click)="toggleOfferSelection(offer)" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <ng-icon name="heroXCircle" size="18" />
                </button>
           </div>
           }
      </div>
-     <!-- Footer row -->
-     <div class="ticket-footer">
-          <button type="button" class="clear-btn" (click)="clearAllOfferSelections()">Clear all</button>
-     </div>
 </div>
-}
-
-<!-- Dropdown Template -->
-<ng-template #offerDropdownTemplate>
-     <div class="combobox-wrapper" (click)="$event.stopPropagation()">
-          <div class="combobox-dropdown-overlay ticket-dropdown" style="max-height: 340px; overflow-y: auto; padding: 8px 0">
-               <!-- Header: Select All + Clear -->
-               <div class="dropdown-header" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid #e5e7eb; background: #f9fafb">
-                    <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #374151; cursor: pointer">
-                         <input type="checkbox" [checked]="allOffersSelected()" (change)="toggleSelectAllOffers()" style="width: 16px; height: 16px" />
-                         <span>Select All</span>
-                    </label>
-                    <button class="clear-btn" (click)="clearAllOfferSelections()" [disabled]="selectedOfferSequences().length === 0" style="color: #dc2626; font-size: 0.875rem; font-weight: 500; background: none; border: none; cursor: pointer; opacity: 0.8" [style.opacity]="selectedOfferSequences().length === 0 ? 0.5 : 1">Clear</button>
-               </div>
-
-               <!-- Ticket Items -->
-               @for (offer of filteredOffers(); track offer.Sequence; let i = $index) {
-               <label class="combobox-item ticket-item" [class.highlighted]="highlightedOfferIndex() === i" (mouseenter)="highlightedOfferIndex.set(i)" style="display: flex; align-items: center; gap: 10px; padding: 10px 16px; cursor: pointer; user-select: none">
-                    <input type="checkbox" [checked]="selectedOfferSequences().includes(offer.Sequence)" (change)="toggleOfferSelection(offer)" style="width: 16px; height: 16px; cursor: pointer" />
-
-                    <span class="ticket-sequence" style="font-family: monospace; font-size: 0.95em; color: #1f2937">{{ formatOfferDisplay(offer) }}</span>
-               </label>
-               } @empty {
-               <div class="combobox-empty" style="padding: 16px; text-align: center; color: #6b7280">No offers match your search</div>
-               }
-          </div>
-     </div>
-</ng-template>
-} @else {
-<div class="form-row">
-     <div class="form-group" style="grid-column: 1 / -1">
-          <p class="form-hint" style="color: #6b7280">No outstanding offers found for this account.</p>
-     </div>
+} } @else {
+<div class="p-6 bg-gray-50 border border-gray-200 rounded-2xl text-center">
+     <p class="text-gray-500">No outstanding offers found for this account.</p>
 </div>
 }

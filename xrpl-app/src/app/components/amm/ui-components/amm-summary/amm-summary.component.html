@@ -1,17 +1,15 @@
 <!-- Get store for current AMM data and state -->
 @let store = ammStoreService;
 <!-- Get view model for display values and helper functions -->
-@let view = ammTransactionViewModelService;
+@let view = ammTransactionViewModelService; @if (store.assetPool1Balance() || store.assetPool2Balance() || store.lpTokenBalance()) {
 
-<!-- Display summary information about the AMM pool, such as current balances of each asset and LP tokens. This component is shown on all tabs related to AMM interactions, providing users with context about the pool they are interacting with. The information is read-only and serves as a reference for users as they fill out the form fields below. -->
-@if (store.assetPool1Balance() || store.assetPool2Balance() || store.lpTokenBalance()) {
-<div class="info-and-credentials-card">
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600"></ng-icon>
-               <strong>AMM Pool:</strong>
-               Pool 1 ({{ view.pool1Currency() || 'Asset 1' }}): <strong>{{ store.assetPool1Balance() || '0' }}</strong> &nbsp;|&nbsp; Pool 2 ({{ view.pool2Currency() || 'Asset 2' }}): <strong>{{ store.assetPool2Balance() || '0' }}</strong> &nbsp;|&nbsp; LP Tokens: <strong>{{ store.lpTokenBalance() || '0' }}</strong>
-          </div>
+<!-- Blue Info Box -->
+<div class="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex gap-4 mb-4">
+     <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+     <div class="text-sm leading-relaxed text-blue-800">
+          <strong>AMM Pool Status:</strong><br />
+          Pool 1 ({{ view.pool1Currency() || 'Asset 1' }}):
+          <strong>{{ store.assetPool1Balance() || '0' }}</strong> |  Pool 2 ({{ view.pool2Currency() || 'Asset 2' }}): <strong>{{ store.assetPool2Balance() || '0' }}</strong> |  LP Tokens: <strong>{{ store.lpTokenBalance() || '0' }}</strong>
      </div>
 </div>
 }
