@@ -6,11 +6,13 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { TransactionOptionsComponent } from '../../../shared/transaction-options/transaction-options.component';
+import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Component({
      selector: 'app-account-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent],
      templateUrl: './account-delete-form.component.html',
      styleUrl: './account-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,6 +20,7 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
 export class AccountDeleteFormComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      view = input.required<any>(); // for deleteBlockers(), deleteWalletButtonLabel()
      info = input.required<any>(); // for canDelete

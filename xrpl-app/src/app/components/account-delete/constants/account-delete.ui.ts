@@ -1,4 +1,5 @@
-import { AppConstants } from '../../../core/app.constants';
+import { AppConstants, IconType } from '../../../core/app.constants';
+import { AccountDeleteConfigTxDisplayType } from './account-delete.constants';
 
 export const BLOCKER_MAP: Record<string, { label: string; route: string; tab?: string }> = {
      RippleState: { label: 'Trust Lines', route: '/trustlines', tab: 'removeTrustline' },
@@ -17,13 +18,32 @@ export const BLOCKER_MAP: Record<string, { label: string; route: string; tab?: s
      MPTokenIssuance: { label: 'MPToken Issuance', route: '/mpt', tab: 'destroyMpt' },
 };
 
+// Tab configuration constants
+export const ACCOUNT_DELETE_TABS: {
+     key: AccountDeleteConfigTxDisplayType;
+     label: string;
+     icon: string;
+     iconType: IconType;
+     color: string;
+     iconSize: string;
+}[] = [
+     {
+          key: 'deleteAccount',
+          label: 'Delete Wallet',
+          icon: 'heroTrash',
+          iconType: 'ng-icon',
+          color: '',
+          iconSize: AppConstants.TAB_ICON_SIZE,
+     },
+] as const;
+
 export const ACCOUNT_DELETE_TAB_META = {
      deleteAccount: {
           icon: 'heroTrash',
           colorClass: 'red-button-submenu',
           title: 'Delete Wallet',
           desc: 'Delete currently selected wallet.',
-          color: '',
+          color: '#ef4444',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

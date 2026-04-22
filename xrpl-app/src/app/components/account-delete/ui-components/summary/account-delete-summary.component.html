@@ -1,51 +1,81 @@
-@if (info() && info()!.walletName) {
-<div class="info-and-credentials-card" [class.can-delete]="info()!.canDelete" [class.has-blockers]="info()!.blockers.length > 0">
-     <!-- Always-visible summary row -->
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" />
-               <code>{{ info()!.walletName }}</code>
-               <span [innerHTML]="deleteAccountViewModelService.summaryMessage()"></span>
+@if (info() && info()!.walletName; as infoData) {
+<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
+     <!-- Summary Header -->
+     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
+          <div class="flex items-start gap-3 flex-1">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+
+               <div>
+                    <code class="font-mono text-gray-700">{{ info()!.walletName }}</code>
+                    <span [innerHTML]="deleteAccountViewModelService.summaryMessage()"></span>
+               </div>
           </div>
 
-          <!-- Expand/Collapse toggle (shown if there's meaningful content) -->
+          <!-- Expand / Collapse Button -->
           @if (hasContent()) {
-          <button type="button" class="expand-toggle-btn" (click)="toggleInfoPanel.emit()" [attr.aria-expanded]="infoPanelExpanded()" aria-label="Toggle account deletion details">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} Blocking Objects</span>
-               <ng-icon name="featherChevronDown" size="16" stroke="currentColor" strokeWidth="2.5" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
+          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 pt-0.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
+               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} blocking objects</span>
+               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
           </button>
           }
      </div>
 
-     <!-- Collapsible detailed content -->
-     @if (hasContent()) {
-     <section class="credentials-list-container" [class.expanded]="infoPanelExpanded()" aria-label="Account deletion blockers">
-          <ul class="credentials-list">
-               <!-- Blockers list -->
-               @if (info()!.blockers.length > 0) {
-               <div class="blockers-section">
-                    <h2 class="blockers-title">Blocking configurations:</h2>
-                    <ul class="blockers-list">
-                         @for (blocker of info()!.blockers; track blocker.route) {
-                         <li class="blocker-item">
-                              <ng-icon name="heroXCircle" size="18" class="blocker-icon" />
-
-                              <span>{{ blocker.count }} {{ blocker.label }}</span>
-                              @if (blocker.route && blocker.route !== '#') {
-                              <a class="resolve-link" [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}"> Go to {{ blocker.label }} </a>
-                              }
-                         </li>
+     <!-- Collapsible Content -->
+     @if (hasContent() && infoPanelExpanded()) {
+     <div class="max-h-[420px] overflow-y-auto p-2">
+          <!-- Blocking Objects -->
+          @if (info()!.blockers.length > 0) {
+          <div class="mb-6">
+               <h4 class="font-semibold text-red-700 mb-3 flex items-center gap-2 px-2">🛑 Blocking Objects</h4>
+               <ul class="space-y-2">
+                    @for (blocker of info()!.blockers; track blocker.route) {
+                    <li class="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                         <div class="flex items-center gap-3">
+                              <ng-icon name="heroXCircle" size="20" class="text-red-500 flex-shrink-0" />
+                              <div>
+                                   <span class="font-medium">{{ blocker.count }} {{ blocker.label }}</span>
+                              </div>
+                         </div>
+                         @if (blocker.route && blocker.route !== '#') {
+                         <a [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}" class="text-sm text-red-600 hover:text-red-700 font-medium underline"> Resolve → </a>
                          }
-                    </ul>
-               </div>
-               }
+                    </li>
+                    }
+               </ul>
+          </div>
+          }
 
-               <!-- Balance warning -->
-               @if (info()!.balanceWarning) {
-               <div class="balance-warning"><strong>Warning:</strong> {{ info()!.balanceWarning }}</div>
-               }
-          </ul>
-     </section>
+          <!-- Balance Warning -->
+          @if (info()!.balanceWarning) {
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mx-2">
+               <div class="flex gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div class="text-sm text-amber-700"><strong>Warning:</strong> {{ info()!.balanceWarning }}</div>
+               </div>
+          </div>
+          }
+
+          <!-- No blockers state -->
+          @if (info()!.blockers.length === 0) {
+          <div class="p-6 text-center">
+               <div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
+                    <ng-icon name="heroCheckCircle" size="28" class="text-green-600" />
+               </div>
+               <p class="text-sm text-green-700 font-medium">No blocking objects detected</p>
+               <p class="text-xs text-gray-500 mt-1">This account appears ready for deletion</p>
+          </div>
+          }
+     </div>
      }
+
+     <!-- Empty / No Content State -->
+     <!-- @if (!hasContent()) {
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroInformationCircle" size="24" class="text-gray-400" />
+          </div>
+          <p class="text-sm text-gray-500">No additional information available.</p>
+     </div>
+     } -->
 </div>
 }

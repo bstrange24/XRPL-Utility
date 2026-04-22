@@ -8,11 +8,8 @@ import { DropdownItem } from '../../models/dropdown-item.model';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { AppConstants, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import * as xrpl from 'xrpl';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -26,7 +23,7 @@ import { WalletDestinationBase } from '../../services/wallets/walletDestinationB
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { ACCOUNT_DELETE_TAB_META } from './constants/account-delete.ui';
+import { ACCOUNT_DELETE_TAB_META, ACCOUNT_DELETE_TABS } from './constants/account-delete.ui';
 import { AccountDeleteOrchestratorService } from '../../services/account-delete/account-delete-orchestrator/account-delete-orchestrator.service';
 import { AccountDeleteUtilService } from '../../services/account-delete/account-delete-util/account-delete-util.service';
 import { AccountDeleteViewModelService } from '../../services/account-delete/account-delete-view-model/account-delete-view-model.service';
@@ -37,11 +34,12 @@ import { AccountDeleteSummaryComponent } from './ui-components/summary/account-d
 import { AccountDeleteConfig } from './constants/account-delete.types';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-account-delete',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, AccountDeleteRequirementsInfoComponent, RouterModule, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, AccountDeleteFormComponent, AccountDeleteFormComponent, AccountDeleteSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, AccountDeleteFormComponent, AccountDeleteFormComponent, AccountDeleteSummaryComponent],
      templateUrl: './account-delete.component.html',
      styleUrl: './account-delete.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,7 +53,9 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      public readonly deleteAccountUtilService = inject(AccountDeleteUtilService);
      public readonly deleteAccountViewModelService = inject(AccountDeleteViewModelService);
      public readonly deleteAccountStoreService = inject(AccountDeleteStoreService);
-     readonly tabMeta: Record<string, TabMetaInfo> = ACCOUNT_DELETE_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly accountDeleteTabs = ACCOUNT_DELETE_TABS;
+     public readonly tabMeta = ACCOUNT_DELETE_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -66,6 +66,10 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deleteAccount'] as const, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+
+          this.rightPanelService.setPanel(AccountDeleteRequirementsInfoComponent, {
+               activeTab: this.deleteAccountViewModelService.activeTab,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {

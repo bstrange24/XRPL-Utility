@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -8,4 +8,9 @@ import { NgIcon } from '@ng-icons/core';
      styleUrl: './account-delete-requirements-info.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AccountDeleteRequirementsInfoComponent {}
+export class AccountDeleteRequirementsInfoComponent {
+     activeTab = input.required<'deleteAccount'>();
+
+     // Collapsible state
+     isExpanded = signal(false);
+}

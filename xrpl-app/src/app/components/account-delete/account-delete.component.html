@@ -1,59 +1,59 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let view = deleteAccountViewModelService;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs (kept for consistency even if empty) -->
+          <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel" style="padding-top: 2em">
-               <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-account-delete-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-account-delete-summary>
 
-               <!-- Info Message -->
-               <app-account-delete-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-account-delete-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <app-account-delete-form
+                    [view]="deleteAccountViewModelService"
+                    [info]="view.infoData()"
+                    [destinationItems]="destinationItems()"
+                    [selectedDestinationItem]="selectedDestinationItem()"
+                    [destinationSearchQuery]="destinationSearchQuery()"
+                    [wantsOptions]="txUiService.wantsOptions()"
+                    [canSubmit]="canSubmit()"
+                    [tab]="view.activeTab()"
+                    (performAction)="deleteAccount()"
+                    (clearFields)="clearInputFields()"
+                    (searchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationChange)="handleDestinationChange($event)"
+                    (toggleOptions)="txUiService.toggleOptions($event)"
+               >
+               </app-account-delete-form>
 
-               <form #theForm="ngForm" class="main-form">
-                    <app-account-delete-form
-                         [view]="deleteAccountViewModelService"
-                         [info]="view.infoData()"
-                         [destinationItems]="destinationItems()"
-                         [selectedDestinationItem]="selectedDestinationItem()"
-                         [destinationSearchQuery]="destinationSearchQuery()"
-                         [wantsOptions]="txUiService.wantsOptions()"
-                         [canSubmit]="canSubmit()"
-                         [tab]="view.activeTab()"
-                         (performAction)="deleteAccount()"
-                         (clearFields)="clearInputFields()"
-                         (searchQueryChange)="handleSearchQueryChange($event)"
-                         (destinationChange)="handleDestinationChange($event)"
-                         (toggleOptions)="txUiService.toggleOptions($event)"
-                    />
+               <!-- Transaction Options -->
+               <!-- <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options> -->
 
-                    <app-transaction-options [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
+               <!-- Action Buttons -->
+               <!-- <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <button type="button" (click)="deleteAccount()" [disabled]="!canSubmit()" class="btn-red whitespace-nowrap">Delete Account</button>
 
-                    <!-- Execution time -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!canSubmit()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                    </div>
+               </div> -->
+
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-account-delete-requirements-info></app-account-delete-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

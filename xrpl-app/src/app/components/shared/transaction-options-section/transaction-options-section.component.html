@@ -164,17 +164,20 @@
 </div> -->
 } } @else if (tab === 'deleteAccount') {
 <!-- Destination Tag & Source Tag -->
-<div class="form-row">
-     <div class="form-group">
-          <label for="destinationTag">Destination Tag</label>
-          <p class="form-hint">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-          <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', ($event))" />
-     </div>
+<div class="space-y-6 border rounded-2xl p-4 mb-4">
+     <!-- Tags Row -->
+     <div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Destination Tag</label>
+                    <input class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+               </div>
 
-     <div class="form-group">
-          <label for="sourceTag">Source Tag</label>
-          <p class="form-hint">Useful for internal accounting or tracking multiple sub-accounts you control. Most users can leave this empty.</p>
-          <input type="text" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', ($event))" />
+               <div class="space-y-2">
+                    <label class="text-sm font-medium">Source Tag</label>
+                    <input class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
+               </div>
+          </div>
      </div>
 </div>
 } }

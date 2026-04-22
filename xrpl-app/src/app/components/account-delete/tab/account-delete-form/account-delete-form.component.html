@@ -1,29 +1,29 @@
-<div class="form-row">
+<div class="space-y-6">
      <!-- Destination -->
-     <div class="form-group">
-          <label for="destination">Destination</label>
-          <p class="form-hint">The unique address of the account receiving the XRP. Select destination from the dropdown or manually enter a new destination.</p>
+     <div class="rounded-2xl border border-gray-200 bg-white p-5">
+          <label class="block text-sm font-semibold text-gray-700 mb-2"> Destination </label>
+          <p class="text-sm text-gray-600 mb-3">The address that will receive the remaining XRP after deletion.</p>
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
      </div>
-</div>
 
-<div class="switch-group">
-     <mat-slide-toggle class="mini-toggle" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.checked)">Include optional fields (Destination Tag, Source Tag)</mat-slide-toggle>
-</div>
+     <!-- Optional Fields Toggle -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5">
+          <mat-slide-toggle class="modern-toggle" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.checked)"> Include optional fields (Destination Tag, Source Tag) </mat-slide-toggle>
+     </div>
 
-<!-- Optional fields section -->
-@if (wantsOptions()) {
-<!-- Fix #1: Cast or narrow the type to match the expected union -->
-<app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
-}
-
-<!-- Action buttons -->
-<div class="button-row">
-     @if (!info().canDelete || canSubmit()) {
-     <button style="width: 425px" class="btn-primary-red" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" (click)="performAction.emit()">{{ view().deleteWalletButtonLabel() }}</button>
-     } @else {
-     <button type="button" class="btn-primary-red" (click)="performAction.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ view().deleteWalletButtonLabel() }}</button>
+     <!-- Optional Fields Section -->
+     @if (wantsOptions()) {
+     <app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
      }
 
-     <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" (click)="clearFields.emit()">Clear Fields</button>
+     <app-transaction-options [activeTab]="view().activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+     <!-- Action Buttons -->
+     <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <!-- Delete Button -->
+          <button type="button" (click)="performAction.emit()" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" class="btn-red whitespace-nowrap px-8 py-3 text-base font-semibold">{{ view().deleteWalletButtonLabel() }}</button>
+
+          <!-- Clear Fields -->
+          <button type="button" (click)="clearFields.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+     </div>
 </div>
