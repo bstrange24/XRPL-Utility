@@ -39,7 +39,7 @@ export class PermissionedDomainViewModelService {
           const count = info.permissionedDomainCount;
 
           if (count === 0) {
-               return 'has no permissioned domains.';
+               return ' has no permissioned domains.';
           }
 
           return ` has issued <strong class="object-count">${count}</strong> permissioned domain${count === 1 ? '' : 's'}. `;

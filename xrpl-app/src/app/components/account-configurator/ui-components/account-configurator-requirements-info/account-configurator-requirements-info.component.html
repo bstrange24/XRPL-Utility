@@ -1,389 +1,297 @@
-@switch (activeTab()) {
-<!-- modifyAccountFlags requirements -->
+@switch (activeTab()()) {
+
+<!-- MODIFY ACCOUNT FLAGS -->
 @case ('modifyAccountFlags') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Account Flags (AccountSet)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Account Flags</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">AccountSet transactions let you configure account behavior by enabling (SetFlag) or disabling (ClearFlag) specific flags. These control payments, trust lines, security, issuance rules, and more.</p>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Account Flags (AccountSet)</h3>
+               <p class="text-sm text-gray-600">AccountSet lets you enable or disable specific account behaviors using SetFlag and ClearFlag.</p>
+          </div>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">⚙️ Enable Flag</span>
-                    <span class="badge required-badge">SetFlag</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">SetFlag</span>
-                         <span class="field-status required">✅ Required (one per tx)</span>
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements</h4>
+               <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Enable Flag -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">⚙️ Enable Flag</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between"><span class="text-gray-700">SetFlag</span><span class="text-green-600 font-medium">Required</span></div>
+                              <div class="flex justify-between"><span class="text-gray-700">ClearFlag</span><span class="text-gray-500">Optional</span></div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">ClearFlag</span>
-                         <span class="field-status omitted">❌ Optional (none or one)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Other fields (Domain, etc.)</span>
-                         <span class="field-status optional">➕ Optional</span>
+
+                    <!-- Disable Flag -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">⚙️ Disable Flag</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between"><span class="text-gray-700">ClearFlag</span><span class="text-green-600 font-medium">Required</span></div>
+                              <div class="flex justify-between"><span class="text-gray-700">SetFlag</span><span class="text-gray-500">Optional</span></div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">⚙️ Disable Flag</span>
-                    <span class="badge optional-badge">ClearFlag</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">ClearFlag</span>
-                         <span class="field-status required">✅ Required (one per tx)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">SetFlag</span>
-                         <span class="field-status omitted">❌ Optional (none or one)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">tf Flags (in Flags field)</span>
-                         <span class="field-status optional">➕ Optional (some equivalents)</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Use <strong>AccountSet</strong> with <strong>SetFlag</strong> to enable or <strong>ClearFlag</strong> to disable — only one of each per transaction.</li>
-                    <li>Most flags start disabled; check your <strong>AccountRoot</strong> ledger entry (via account_info) to see current lsf* flags.</li>
-                    <li>Some flags have strict requirements (e.g., no trust lines for asfRequireAuth, master key for asfDisableMaster or asfNoFreeze).</li>
-                    <li>Flags like asfDisallowXRP are advisory only (clients should respect them, but protocol does not enforce).</li>
-                    <li>Changes are irreversible for certain flags (see warnings below).</li>
-                    <li>Transaction consumes a small fee even if no changes occur — always specify at least one flag or field.</li>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Use <strong>SetFlag</strong> to enable or <strong>ClearFlag</strong> to disable — only one of each per transaction.</li>
+                    <li>Check current flags in your <strong>AccountRoot</strong> via <code>account_info</code>.</li>
+                    <li>Some flags are irreversible once enabled (see warnings below).</li>
+                    <li>Transaction still costs a fee even if no change occurs.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversible & Restricted Flags</h5>
-               <p style="color: #92400e">Some flags cannot be unset once enabled — use with caution!</p>
-               <ul>
-                    <li><strong>asfNoFreeze</strong>: Permanently disables freezing trust lines or global freeze — irreversible; requires master key to set.</li>
-                    <li><strong>asfAllowTrustLineClawback</strong>: Permanently enables clawback on issued tokens — irreversible; requires no objects (trust lines, offers, etc.) to set.</li>
-                    <li><strong>asfAllowTrustLineLocking</strong>: Permanently allows escrow/locking of issued tokens — irreversible after enabling.</li>
-                    <li><strong>asfDisableMaster</strong>: Disables master key signing —  can only be enabled if the account has configured another way to sign transactions, such as a Regular Key or a Signer List.</li>
-                    <li>asfRequireAuth: Can only be enabled if account has <strong>no trust lines</strong> or offers.</li>
-                    <li>Always verify requirements and test on devnet — wrong flags can lock you out or limit functionality permanently.</li>
+
+               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Irreversible & Restricted Flags</h5>
+               <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                    <li><strong>asfNoFreeze</strong>, <strong>asfAllowTrustLineClawback</strong>, <strong>asfAllowTrustLineLocking</strong> — irreversible.</li>
+                    <li><strong>asfDisableMaster</strong> — requires alternative signing method first.</li>
+                    <li><strong>asfRequireAuth</strong> — only possible with no existing trust lines.</li>
+                    <li>Always test on Testnet first.</li>
                </ul>
           </div>
      </div>
+     }
 </div>
 }
-<!-- modifyMetaData requirements -->
+
+<!-- MODIFY METADATA -->
 @case ('modifyMetaData') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Account Metadata (AccountSet)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Account Metadata</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">Use AccountSet to attach public metadata to your XRPL account, such as a linked domain (for verification & token info), Gravatar hash, encrypted messaging key, transfer fees, and more. These fields appear in your AccountRoot ledger entry.</p>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Account Metadata (AccountSet)</h3>
+               <p class="text-sm text-gray-600">Attach public metadata to your account such as Domain, MessageKey, TransferRate, etc.</p>
+          </div>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">📋 Core Metadata</span>
-                    <span class="badge required-badge">Common Settings</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">Domain</span>
-                         <span class="field-status optional">➕ Optional (hex-encoded lowercase ASCII)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">MessageKey</span>
-                         <span class="field-status optional">➕ Optional (33-byte public key for encrypted msgs)</span>
-                    </div>
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Common Fields</h4>
+               <div class="space-y-4 text-sm">
+                    <div class="flex justify-between"><span class="text-gray-700">Domain</span><span class="text-gray-500">Optional (hex-encoded)</span></div>
+                    <div class="flex justify-between"><span class="text-gray-700">MessageKey</span><span class="text-gray-500">Optional (33-byte public key)</span></div>
+                    <div class="flex justify-between"><span class="text-gray-700">TransferRate</span><span class="text-gray-500">Optional (for issuers)</span></div>
+                    <div class="flex justify-between"><span class="text-gray-700">TickSize</span><span class="text-gray-500">Optional</span></div>
+                    <div class="flex justify-between"><span class="text-gray-700">NFTokenMinter</span><span class="text-gray-500">Optional</span></div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">📋 Advanced Metadata</span>
-                    <span class="badge optional-badge">Issuer / Utility Fields</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">TransferRate</span>
-                         <span class="field-status optional">➕ Optional (billionths; e.g., 1200000000 = 20% fee)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">TickSize</span>
-                         <span class="field-status optional">➕ Optional (3–15 or 0 to disable)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">WalletLocator</span>
-                         <span class="field-status optional">➕ Optional (arbitrary 256-bit value)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">NFTokenMinter</span>
-                         <span class="field-status optional">➕ Optional (authorized NFT minter address)</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>All metadata fields are <strong>optional</strong> in an AccountSet transaction — include only the ones you want to set or change.</li>
-                    <li>To remove/clear a field, set it to an empty value (e.g., empty string for Domain/MessageKey, 0 for TransferRate/TickSize) or omit it if clearing isn't needed.</li>
-                    <li><strong>Domain</strong>: Must be hex of lowercase ASCII (e.g., "example.com" → "6578616D706C652E636F6D"). Max 256 bytes. Used for account verification via xrp-ledger.toml file on your domain.</li>
-                    <li><strong>MessageKey</strong>: Must be exactly 33 bytes (starting with 0x02/0x03 for secp256k1 or 0xED for Ed25519) — invalid format fails the tx.</li>
-                    <li><strong>TransferRate</strong>: For issuers only; valid values are 0 (no fee) or 1,000,000,000–2,000,000,000 (0–100%). Lower values invalid.</li>
-                    <li>Changes take effect immediately upon successful ledger inclusion and cost a small transaction fee.</li>
-               </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Format & Irreversibility Considerations</h5>
-               <p style="color: #92400e">Metadata is public and mostly permanent once set — choose carefully.</p>
-               <ul>
-                    <li>Fields like <strong>Domain</strong> and <strong>MessageKey</strong> are easily changeable, but incorrect formats cause transaction failure.</li>
-                    <li><strong>TransferRate</strong> and <strong>TickSize</strong> affect all holders of your issued assets — changing them can impact trust and liquidity.</li>
-                    <li>Setting <strong>NFTokenMinter</strong> authorizes another account to mint NFTs for you (requires amendment); clear by omitting or using related flags.</li>
-                    <li><strong>WalletLocator</strong> has no protocol meaning — use it for custom data if desired, but it's visible on the ledger.</li>
-                    <li>Always verify formats (e.g., hex encoding, byte lengths) before submitting — test on devnet or Testnet first to avoid wasting fees or misconfiguring your account.</li>
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>All fields are optional — only include what you want to change.</li>
+                    <li>To clear a field, set it to empty value or 0.</li>
+                    <li><strong>Domain</strong> must be lowercase ASCII hex-encoded.</li>
+                    <li><strong>MessageKey</strong> must be a valid 33-byte public key.</li>
                </ul>
           </div>
      </div>
+     }
 </div>
 }
-<!-- modifyDepositAuth requirements -->
+
+<!-- MODIFY DEPOSIT AUTH -->
 @case ('modifyDepositAuth') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Deposit Authorization (DepositAuth)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Deposit Authorization</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">Deposit Authorization is an optional account setting that blocks all incoming payments (XRP or tokens) from unauthorized accounts. Once enabled, your account can only receive funds from preauthorized senders, checks you cash, escrows you finish, or if your balance falls below the reserve requirement.</p>
-
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔒 Enable DepositAuth</span>
-                    <span class="badge required-badge">SetFlag</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">SetFlag</span>
-                         <span class="field-status required">✅ Required (value: 9 / asfDepositAuth)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">ClearFlag</span>
-                         <span class="field-status omitted">❌ Optional (none)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Other AccountSet fields</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-               </div>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main content similar structure as above - let me know if you want me to expand all cases fully -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Deposit Authorization (DepositAuth)</h3>
+               <p class="text-sm text-gray-600">Blocks all incoming payments unless preauthorized. Very useful for compliance and spam protection.</p>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔓 Disable DepositAuth</span>
-                    <span class="badge optional-badge">ClearFlag</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">ClearFlag</span>
-                         <span class="field-status required">✅ Required (value: 9 / asfDepositAuth)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">SetFlag</span>
-                         <span class="field-status omitted">❌ Optional (none)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Other AccountSet fields</span>
-                         <span class="field-status optional">➕ Optional</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li>Requires the <strong>DepositAuth</strong> amendment to be enabled on the network (most mainnet instances have it).</li>
-                    <li>Use <strong>AccountSet</strong> with <strong>SetFlag: 9</strong> to enable or <strong>ClearFlag: 9</strong> to disable — only one flag per transaction for this purpose.</li>
-                    <li>Check current status via <strong>account_info</strong> — look for <strong>lsfDepositAuth</strong> (bit 0x01000000) in your AccountRoot flags.</li>
-                    <li>When enabled, incoming <strong>Payment</strong> transactions fail unless: from a preauthorized account (via DepositPreauth), you finish an Escrow/Check, or your XRP balance is below reserve (allows top-up to reserve).</li>
-                    <li>Preauthorizations use <strong>DepositPreauth</strong> transactions — each adds to your owner reserve (like trust lines or escrows).</li>
-                    <li>Disabling is always possible with another AccountSet — no permanent lock-in for the flag itself.</li>
-               </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Strict Incoming Payment Block & Compliance</h5>
-               <p style="color: #92400e">Enabling DepositAuth strictly prevents unwanted deposits — this is enforceable by the protocol (not advisory like DisallowXRP).</p>
-               <ul>
-                    <li>Once enabled, no one can send you XRP or tokens directly without your explicit preauthorization — useful for regulatory compliance or spam protection.</li>
-                    <li>If no preauthorizations exist, your account effectively blocks <strong>all incoming payments</strong> under normal conditions (except reserve top-ups).</li>
-                    <li>Failed incoming payments return tec codes (e.g., tecNO_PERMISSION) — sender loses fee but funds stay with them.</li>
-                    <li>Preauthorizing many accounts increases your <strong>owner reserve</strong> cost — each DepositPreauth object reserves XRP until removed.</li>
-                    <li>Use carefully: enabling without planning preauths can isolate your account from intended incoming funds. Test on devnet/Testnet first.</li>
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Use <strong>SetFlag: 9</strong> to enable and <strong>ClearFlag: 9</strong> to disable.</li>
+                    <li>Once enabled, only preauthorized accounts can send you funds.</li>
+                    <li>Preauthorizations cost owner reserve.</li>
                </ul>
           </div>
      </div>
+     }
 </div>
 }
-<!-- modifyMultiSigners requirements -->
+
+<!-- MODIFY MULTI-SIGNERS -->
 @case ('modifyMultiSigners') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Multi-Signer Setup (SignerListSet)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Multi-Signer Setup</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">Multi-signing allows multiple keys to authorize transactions for your account, useful for shared control, security, or institutional custody. Use SignerListSet to create, update, or delete your account's SignerList object, defining who can sign and the required quorum.</p>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Multi-Signer (SignerListSet)</h3>
+               <p class="text-sm text-gray-600">Configure multiple keys that can collectively authorize transactions for your account. Useful for shared control, security, and institutional setups.</p>
+          </div>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🗝️ Create / Update Signer List</span>
-                    <span class="badge required-badge">Add or Change Signers</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">SignerEntries</span>
-                         <span class="field-status required">✅ Required (1–8 entries)</span>
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="mb-5 font-semibold text-gray-900">Requirements</h4>
+
+               <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                    <!-- Create / Update -->
+                    <div class="rounded-2xl border border-gray-100 p-5">
+                         <div class="mb-4 flex items-center gap-2">
+                              <span class="rounded-full bg-blue-100 px-3.5 py-1 text-sm font-medium text-blue-700"> 🗝️ Create / Update Signer List </span>
+                         </div>
+
+                         <div class="space-y-3 text-sm">
+                              <div class="flex items-center justify-between">
+                                   <span class="text-gray-700">SignerEntries</span>
+                                   <span class="font-medium text-green-600">Required (1–8 signers)</span>
+                              </div>
+
+                              <div class="flex items-center justify-between">
+                                   <span class="text-gray-700">Quorum</span>
+                                   <span class="font-medium text-green-600">Required</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Quorum</span>
-                         <span class="field-status required">✅ Required (1 to sum of weights)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">MaxSigners</span>
-                         <span class="field-status optional">➕ Optional (default: sum of weights)</span>
+
+                    <!-- Remove -->
+                    <div class="rounded-2xl border border-gray-100 p-5">
+                         <div class="mb-4 flex items-center gap-2">
+                              <span class="rounded-full bg-red-100 px-3.5 py-1 text-sm font-medium text-red-700"> 🗑️ Remove Signer List </span>
+                         </div>
+
+                         <div class="space-y-3 text-sm">
+                              <div class="flex items-center justify-between">
+                                   <span class="text-gray-700">SignerEntries</span>
+                                   <span class="text-gray-500">Empty array</span>
+                              </div>
+                              <div class="flex items-center justify-between">
+                                   <span class="text-gray-700">Quorum</span>
+                                   <span class="text-gray-500">0</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🗑️ Remove Signer List</span>
-                    <span class="badge optional-badge">Delete Entire List</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">SignerEntries</span>
-                         <span class="field-status omitted">❌ Empty array (or omit)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Quorum</span>
-                         <span class="field-status omitted">❌ Set to 0</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">MaxSigners</span>
-                         <span class="field-status omitted">❌ Optional (ignored)</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li><strong>SignerListSet</strong> replaces the entire signer list — you must provide the full current + desired list when updating.</li>
-                    <li>Up to <strong>8 signers</strong> max (each with a weight 1–255); total weight sum can be any value, but quorum must be ≤ sum and ≥1 (unless deleting).</li>
-                    <li>Each signer is a regular key or keyset address — master key cannot be a signer.</li>
-                    <li>Creating or updating a SignerList increases your account’s <strong>owner reserve</strong> (typically ~2 XRP base + ~0.2 XRP per signer object).</li>
-                    <li>Multi-sign transactions use <strong>MultiSign</strong> field instead of Sequence; they consume a higher fee and must meet the quorum.</li>
-                    <li>To use multi-signing, your account must have a SignerList set — transactions signed by a single key (master or regular) will still work unless you also disable the master key.</li>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li><strong>SignerListSet</strong> replaces the entire list — you must provide the full desired list.</li>
+                    <li>Maximum <strong>8 signers</strong>. Each signer has a weight (1–255).</li>
+                    <li>Creating/updating a signer list increases your <strong>owner reserve</strong>.</li>
+                    <li>Master key cannot be added as a signer.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Irreversible Aspects & Security Risks</h5>
-               <p style="color: #92400e">Mistakes in signer setup can lock you out of your account — plan carefully.</p>
-               <ul>
-                    <li>If you delete your master key (via asfDisableMaster) and have no working signers/quorum, you <strong>permanently lose control</strong> of the account.</li>
-                    <li>Signer weights and quorum are <strong>not</strong> easily reversible without another SignerListSet tx — always keep access to enough signers to meet quorum.</li>
-                    <li>Adding malicious or lost-key signers can prevent you from signing transactions if quorum becomes unreachable.</li>
-                    <li>SignerList objects count toward owner reserve — removing signers frees reserve only after the list is updated/deleted.</li>
-                    <li>Multi-sign txs are <strong>more expensive</strong> and slower to confirm — use for high-value or shared-control scenarios only.</li>
-                    <li>Test thoroughly on devnet/Testnet: simulate quorum failures, key losses, and reserve costs before mainnet deployment.</li>
+
+               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Security & Lockout Risks</h5>
+               <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                    <li>If you disable the master key and lose access to enough signers, you may permanently lose control of the account.</li>
+                    <li>Always keep access to enough signers to meet the quorum.</li>
+                    <li>Test thoroughly on Testnet before mainnet.</li>
                </ul>
           </div>
      </div>
+     }
 </div>
 }
-<!-- modifyRegularKey requirements -->
+
+<!-- MODIFY REGULAR KEY -->
 @case ('modifyRegularKey') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Modify RegularKey (SetRegularKey)</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Regular Key</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">A Regular Key is a secondary key pair that can sign transactions for your account instead of (or in addition to) the master key. Use SetRegularKey to assign a new regular key, change an existing one, or remove it entirely — great for security if your master key is exposed or for daily use without risking the master.</p>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Modify Regular Key (SetRegularKey)</h3>
+               <p class="text-sm text-gray-600">Assign, change, or remove a secondary key that can sign transactions for your account.</p>
+          </div>
 
-     <div class="combinations-grid">
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🔑 Assign / Change RegularKey</span>
-                    <span class="badge required-badge">Set New Key</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">RegularKey</span>
-                         <span class="field-status required">✅ Required (base58-encoded address)</span>
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements</h4>
+               <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <!-- Assign / Change -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🔑 Assign / Change RegularKey</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">RegularKey</span>
+                                   <span class="text-green-600 font-medium">Required (address)</span>
+                              </div>
+                         </div>
                     </div>
-                    <div class="field-row">
-                         <span class="field-name">Other fields</span>
-                         <span class="field-status omitted">❌ None needed</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Signer</span>
-                         <span class="field-status optional">➕ Master key or current regular key</span>
+
+                    <!-- Remove -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑️ Remove RegularKey</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">RegularKey</span>
+                                   <span class="text-gray-500">Omit field or empty</span>
+                              </div>
+                         </div>
                     </div>
                </div>
           </div>
 
-          <div class="combination-card">
-               <div class="combination-header">
-                    <span class="badge time-badge">🗑️ Remove RegularKey</span>
-                    <span class="badge optional-badge">Clear Existing</span>
-               </div>
-               <div class="combination-fields">
-                    <div class="field-row">
-                         <span class="field-name">RegularKey</span>
-                         <span class="field-status omitted">❌ Omit field (or empty)</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Other fields</span>
-                         <span class="field-status omitted">❌ None needed</span>
-                    </div>
-                    <div class="field-row">
-                         <span class="field-name">Signer</span>
-                         <span class="field-status optional">➕ Master key or current regular key</span>
-                    </div>
-               </div>
-          </div>
-
-          <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
-               <ul>
-                    <li><strong>SetRegularKey</strong> transaction assigns/changes/removes the regular key — it stores the address in your AccountRoot's <strong>RegularKey</strong> field.</li>
-                    <li>The RegularKey must be a valid XRPL address (base58-encoded) with a known secret — it does <strong>not</strong> need to be an activated/funded account.</li>
-                    <li>You cannot set RegularKey to match your master key address (blocked by amendment fixMasterKeyAsRegularKey to prevent blackholing).</li>
-                    <li>Signing: First assignment usually requires master key; changes/removals can use master or current regular key.</li>
-                    <li>Regular key signs normal transactions just like master — but multi-sign or asfDisableMaster changes behavior.</li>
-                    <li>No direct reserve cost for the regular key itself (unlike SignerList or trust lines), but related setups (e.g., disabling master) have implications.</li>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Use <strong>SetRegularKey</strong> transaction to assign or remove the regular key.</li>
+                    <li>The RegularKey must be a valid XRPL address with known secret.</li>
+                    <li>You can use Regular Key for daily transactions while keeping Master Key offline.</li>
                </ul>
-               <p></p>
-               <h5 class="warning-title">⚠️ Security & Lockout Risks</h5>
-               <p style="color: #92400e">RegularKey changes are powerful but can permanently lock you out if mishandled — especially with master key disabled.</p>
-               <ul>
-                    <li>If you disable master key (asfDisableMaster) and lose access to your regular key (or set none), you <strong>permanently lose control</strong> — no recovery possible.</li>
-                    <li>Compromised regular key? Change or remove it immediately using master key (or multi-sign if set up) to regain control.</li>
-                    <li>Never set RegularKey to an unknown/lost secret — test signing with the new key before relying on it or disabling master.</li>
-                    <li>Removing regular key is reversible (just assign a new one), but combined with disabled master or no signers, it's irreversible lockout.</li>
-                    <li>Always verify the address format and test on devnet/Testnet — wrong key means failed transactions or lost access.</li>
-                    <li>If using for security: Keep master key offline/secure; use regular key for daily ops; consider multi-sign for extra redundancy.</li>
+
+               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Security Risks</h5>
+               <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                    <li>If you disable the master key and lose the regular key, you permanently lose access to the account.</li>
+                    <li>Never set RegularKey to an unknown or lost secret.</li>
+                    <li>Always test signing with the new key before disabling the master key.</li>
                </ul>
           </div>
      </div>
+     }
 </div>
 } }

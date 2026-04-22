@@ -1,5 +1,7 @@
-import { AppConstants, IconType } from '../../../core/app.constants';
+import { AppConstants } from '../../../core/app.constants';
 import { AccountConfigAction } from './account-configurator.types';
+
+type IconType = 'ng-icon' | 'lucide-icon';
 
 export const ACCOUNT_CONFIG_TABS: {
      key: AccountConfigAction;
@@ -14,7 +16,7 @@ export const ACCOUNT_CONFIG_TABS: {
           label: 'Account Flags',
           icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: 'green',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -22,7 +24,7 @@ export const ACCOUNT_CONFIG_TABS: {
           label: 'Meta Data',
           icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: 'green',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -30,23 +32,23 @@ export const ACCOUNT_CONFIG_TABS: {
           label: 'Deposit Auth',
           icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: 'green',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
           key: 'modifyMultiSigners',
           label: 'Multi-Sign',
-          icon: 'heroPlusCircle',
+          icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: 'green',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
           key: 'modifyRegularKey',
           label: 'Regular Key',
-          icon: 'heroPlusCircle',
+          icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: 'green',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
 ];
@@ -68,7 +70,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           colorClass: 'white-button-submenu',
           title: 'Modify Account Flags',
           desc: 'Set or Clear account level flags.',
-          color: 'green',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -77,7 +79,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           colorClass: 'white-button-submenu',
           title: 'Modify Account Meta Data',
           desc: 'Modify account metadata.',
-          color: 'green',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -86,25 +88,25 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           colorClass: 'white-button-submenu',
           title: 'Modify Deposit Auth',
           desc: 'Modify Deposit Authorization addresses.',
-          color: 'green',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyMultiSigners: {
-          icon: 'heroPlusCircle',
+          icon: 'heroArrowPath',
           colorClass: 'blue-button-submenu',
           title: 'Modify Multi Sign',
           desc: 'Modify account multisigners.',
-          color: '',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      modifyRegularKey: {
-          icon: 'heroPlusCircle',
+          icon: 'heroArrowPath',
           colorClass: 'blue-button-submenu',
           title: 'Modify Regular Key',
           desc: 'Modify the account regular key.',
-          color: '',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

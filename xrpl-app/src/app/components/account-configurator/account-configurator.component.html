@@ -1,11 +1,3 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get active tab -->
 @let tab = accountConfiguratorViewModelService.activeTab();
 <!-- Get tab data -->
@@ -13,61 +5,58 @@
 <!-- Get tab meta data -->
 @let meta = accountConfiguratorUtilService.accountConfigTabsMeta;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="meta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="meta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-account-configurator-summary [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-account-configurator-summary>
 
-               <!-- Info Message -->
-               <app-account-configurator-summary [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-account-configurator-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Account Flags -->
+               @if (tab === 'modifyAccountFlags') {
+               <app-account-flags [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-account-flags>
                }
 
-               <form #theForm="ngForm" class="main-form">
-                    <!-- Account Flags-->
-                    @if (tab === 'modifyAccountFlags') {
-                    <app-account-flags [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-account-flags>
-                    }
+               <!-- Modify Deposit Auth -->
+               @if (tab === 'modifyDepositAuth') {
+               <app-deposit-auth [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-deposit-auth>
+               }
 
-                    <!-- Modify Deposit Auth -->
-                    @if (tab === 'modifyDepositAuth') {
-                    <app-deposit-auth [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-deposit-auth>
-                    }
+               <!-- Modify Meta Data -->
+               @if (tab === 'modifyMetaData') {
+               <app-account-metadata [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-account-metadata>
+               }
 
-                    <!-- Modify Meta Data -->
-                    @if (tab === 'modifyMetaData') {
-                    <app-account-metadata [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-account-metadata>
-                    }
+               <!-- Multi Sign -->
+               @if (tab === 'modifyMultiSigners') {
+               <app-multi-sign [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-multi-sign>
+               }
 
-                    <!-- Multi Sign -->
-                    @if (tab === 'modifyMultiSigners') {
-                    <app-multi-sign [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-multi-sign>
-                    }
+               <!-- Regular Key -->
+               @if (tab === 'modifyRegularKey') {
+               <app-regular-key [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-regular-key>
+               }
 
-                    <!-- Regular Key -->
-                    @if(tab === 'modifyRegularKey') {
-                    <app-regular-key [canSubmit]="canSubmit()" (performAction)="performAction($event)"></app-regular-key>
-                    }
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-                    <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-account-configurator-requirements-info [activeTab]="tab"></app-account-configurator-requirements-info>
+               </div>
+          </form>
      </div>
 </div>

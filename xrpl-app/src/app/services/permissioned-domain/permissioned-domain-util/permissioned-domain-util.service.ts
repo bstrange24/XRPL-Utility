@@ -26,7 +26,6 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
-     // in PermissionedDomainStoreService (or wherever you keep form state)
      acceptedCredentials = signal<Array<{ issuer: string; credentialType: string }>>([]);
 
      constructor() {

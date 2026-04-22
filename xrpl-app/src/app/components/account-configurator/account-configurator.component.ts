@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,8 +10,6 @@ import { DownloadUtilService } from '../../services/utils/download-util/download
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { ToastService } from '../../services/utils/toast/toast.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
@@ -39,11 +37,13 @@ import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.co
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { animation, toastAnimation } from '../../services/utils/animations/animations.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from './constants/account-configurator.ui';
 
 @Component({
      selector: 'app-account-configurator',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionOptionsComponent, TransactionPreviewComponent, AccountConfiguratorRequirementsInfoComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, AccountConfiguratorSummaryComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, AccountConfiguratorSummaryComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
      animations: [animation, toastAnimation],
      templateUrl: './account-configurator.component.html',
      styleUrl: './account-configurator.component.css',
@@ -59,14 +59,23 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      public readonly accoutDataService = inject(AcccountDataService);
      public readonly accountConfiguratorOrchestratorService = inject(AccountConfiguratorOrchestratorService);
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly credentialTabs = ACCOUNT_CONFIG_TABS;
+     public readonly tabMeta = ACCOUNT_CONFIG_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.accountConfiguratorViewModelService.activeTab());
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['modifyAccountFlags', 'modifyDepositAuth', 'modifyMetaData', 'modifyMultiSigners', 'modifyRegularKey'] as const, tab => this.setTab(tab));
+
+          this.rightPanelService.setPanel(AccountConfiguratorRequirementsInfoComponent, {
+               activeTab: this.activeTabForRequirements,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
