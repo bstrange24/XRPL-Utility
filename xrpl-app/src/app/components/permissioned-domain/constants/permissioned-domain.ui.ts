@@ -16,7 +16,7 @@ export const PERMISSION_DOMAIN_TABS: {
           label: 'Set',
           icon: 'heroPlusCircle',
           iconType: 'ng-icon',
-          color: '',
+          color: '#10b981',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -24,7 +24,7 @@ export const PERMISSION_DOMAIN_TABS: {
           label: 'Delete',
           icon: 'heroTrash',
           iconType: 'ng-icon',
-          color: '',
+          color: '#ef4444',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
 ] as const;
@@ -47,7 +47,7 @@ export const PERMISSION_DOMAIN_TAB_META: Record<
           colorClass: 'blue-button-submenu',
           title: 'Set Permissioned Domain',
           desc: 'Set Permissioned Domain for the selected account.',
-          color: '',
+          color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -56,7 +56,7 @@ export const PERMISSION_DOMAIN_TAB_META: Record<
           colorClass: 'red-button-submenu',
           title: 'Delete Permissioned Domain',
           desc: 'Delete Permissioned Domain for the selected account.',
-          color: '',
+          color: '#ef4444',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
@@ -76,6 +76,6 @@ export const PERMISSION_DOMAIN_ACTION_CONFIG: Record<
      },
      deletePermissionedDomain: {
           buttonLabel: 'Delete Domain',
-          buttonClass: 'btn-danger',
+          buttonClass: 'btn-red',
      },
 } as const;

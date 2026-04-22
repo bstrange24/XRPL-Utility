@@ -3,17 +3,15 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 import { PermissionedDomainUtilService } from '../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -40,11 +38,12 @@ import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { RightPanelService } from '../../services/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NavbarComponent, WalletPanelComponent, TransactionPreviewComponent, TransactionOptionsComponent, RequirementsInfoComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,8 +61,9 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly credentialStore = inject(CredentialStore);
-     readonly menuTabs: TabConfig[] = PERMISSION_DOMAIN_TABS;
-     readonly tabMeta: Record<string, TabMetaInfo> = PERMISSION_DOMAIN_TAB_META;
+     private readonly rightPanelService = inject(RightPanelService);
+     public readonly permisisonDoaminTabs = PERMISSION_DOMAIN_TABS;
+     public readonly tabMeta = PERMISSION_DOMAIN_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -71,11 +71,17 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.permissionedDomainViewModelService.activeTab());
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
           this.permissionedDomainUtilService.clearFields();
           this.permissionedDomainUtilService.clearFields();
+
+          this.rightPanelService.setPanel(RequirementsInfoComponent, {
+               activeTab: this.activeTabForRequirements,
+          });
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {

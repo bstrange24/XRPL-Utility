@@ -42,7 +42,7 @@ export class PermissionedDomainViewModelService {
                return 'has no permissioned domains.';
           }
 
-          return `has issued <strong class="object-count">${count}</strong> permissioned domain${count === 1 ? '' : 's'}. `;
+          return ` has issued <strong class="object-count">${count}</strong> permissioned domain${count === 1 ? '' : 's'}. `;
      });
 
      getCreatedPermissionedDomains(checkObjects: xrpl.AccountObjectsResponse, sender: string) {
@@ -94,9 +94,9 @@ export class PermissionedDomainViewModelService {
      actionButtonClass(tab: 'setPermissionedDomain' | 'deletePermissionedDomain') {
           switch (tab) {
                case 'setPermissionedDomain':
-                    return 'btn-primary-blue';
+                    return 'btn-primary';
                case 'deletePermissionedDomain':
-                    return 'btn-primary-red';
+                    return 'btn-red';
           }
      }
 
@@ -104,7 +104,7 @@ export class PermissionedDomainViewModelService {
           return computed(() => {
                const step = this.txUiService.currentStep();
                if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+               if (step === 'waiting_validation') return defaultText;
                return this.txUiService.stepMessage();
           });
      }

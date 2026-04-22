@@ -1,89 +1,116 @@
 <!-- Mode: Create New vs Update Existing -->
-<div class="domain-mode-selector">
-     <label for="domainAction">Domain Action</label>
-     <div class="radio-group horizontal">
-          <label class="radio-label">
-               <input type="radio" name="domainMode" value="create" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" />
-               Create New Domain
-          </label>
+<div class="space-y-6">
+     <!-- Domain Action Selector -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5">
+          <label class="block text-sm font-semibold text-gray-700 mb-3"> Domain Action </label>
 
-          <label class="radio-label" [class.disabled]="permissionedDomainViewModelService.domainItems().length === 0">
-               <input type="radio" name="domainMode" value="update" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" [disabled]="permissionedDomainViewModelService.domainItems().length === 0" />
-               Update Existing Domain @if (permissionedDomainViewModelService.domainItems().length === 0) {
-               <span class="hint no-domains">(No domains available)</span>
-               }
-          </label>
+          <div class="flex flex-col sm:flex-row gap-3">
+               <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="domainMode" value="create" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-all">
+                         <div class="font-medium text-gray-900">Create New Domain</div>
+                         <div class="text-sm text-gray-500 mt-1">Create a brand new Permissioned Domain</div>
+                    </div>
+               </label>
+
+               <label class="flex-1 cursor-pointer" [class.opacity-50]="permissionedDomainViewModelService.domainItems().length === 0">
+                    <input type="radio" name="domainMode" value="update" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" [disabled]="permissionedDomainViewModelService.domainItems().length === 0" class="peer sr-only" />
+                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-all">
+                         <div class="font-medium text-gray-900">Update Existing Domain</div>
+                         <div class="text-sm text-gray-500 mt-1">Replace credentials on an existing domain</div>
+                         @if (permissionedDomainViewModelService.domainItems().length === 0) {
+                         <span class="text-amber-600 text-xs font-medium mt-2 block">(No domains available)</span>
+                         }
+                    </div>
+               </label>
+          </div>
      </div>
-</div>
 
-<!-- Show Domain selector ONLY when updating -->
-@if (permissionedDomainStoreService.domainMode() === 'update') {
-<div class="form-group">
-     <label for="domainToUpdate">Select Domain to Update</label>
-     <p class="form-hint">Choose one of your existing Permissioned Domains. This will **replace** its AcceptedCredentials list.</p>
-     <app-select-search-dropdown [items]="permissionedDomainViewModelService.domainItems()" [value]="selectedUpdateDomain()" (valueChange)="onUpdateDomainSelected($event)" placeholder="Select domain to update..." emptyMessage="No permissioned domains found for this wallet"></app-select-search-dropdown>
-</div>
+     <!-- Update Mode: Domain Selector -->
+     @if (permissionedDomainStoreService.domainMode() === 'update') {
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+          <div>
+               <label class="block text-sm font-semibold text-gray-700 mb-2"> Select Domain to Update </label>
+               <p class="text-sm text-gray-600">Choose one of your existing Permissioned Domains. This will <strong>replace</strong> its AcceptedCredentials list.</p>
+          </div>
 
-<!-- Show selected Domain ID (readonly confirmation) -->
-@if (permissionedDomainStoreService.domainId()) {
-<div class="form-row">
-     <div class="form-group">
-          <label for="domainIdToUpdate">Domain ID to Update</label>
-          <input type="text" [value]="permissionedDomainStoreService.domainId()" readonly class="readonly-field" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="permissionedDomainViewModelService.domainItems()" [value]="selectedUpdateDomain()" (valueChange)="onUpdateDomainSelected($event)" placeholder="Select domain to update..." emptyMessage="No permissioned domains found for this wallet"> </app-select-search-dropdown>
+          </div>
+
+          <!-- Selected Domain ID -->
+          @if (permissionedDomainStoreService.domainId()) {
+          <div>
+               <label class="block text-sm font-semibold text-gray-700 mb-2"> Domain ID (Read-only) </label>
+               <input type="text" [value]="permissionedDomainStoreService.domainId()" readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono text-gray-500" />
+          </div>
+          }
      </div>
-</div>
-} }
+     }
 
-<div>
-     <div class="signers-list">
-          <!-- Add new credential row -->
-          <div class="form-row">
-               <div class="form-group">
-                    <label for="newIssuer">New Issuer</label>
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="newIssuerSelectedItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="onNewIssuerSelected($event)" placeholder="Select or enter issuer address" />
-               </div>
+     <!-- Credentials Management -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5">
+          <h4 class="font-semibold text-gray-900 mb-5">Accepted Credentials</h4>
 
-               <div class="form-group">
-                    <label for="newCredentialType">New Credential Type</label>
-                    <input type="text" [(ngModel)]="newCredentialType" name="newCredentialType" class="input-monospace" placeholder="e.g. KYC-Level2" required />
-               </div>
-               <div class="remove-group-dep-auth">
-                    <button class="btn-add btn-sm" type="button" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">Add</button>
+          <!-- Add New Credential -->
+          <div class="border border-dashed border-gray-300 rounded-2xl p-5 mb-6">
+               <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    <div class="md:col-span-5">
+                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Issuer</label>
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="newIssuerSelectedItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="onNewIssuerSelected($event)" placeholder="Select or enter issuer address"> </app-select-search-dropdown>
+                    </div>
+
+                    <div class="md:col-span-5">
+                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Credential Type</label>
+                         <input type="text" [(ngModel)]="newCredentialType" name="newCredentialType" class="w-full border border-gray-200 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-mono" placeholder="e.g. KYC-Level2" />
+                    </div>
+
+                    <div class="md:col-span-2">
+                         <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl py-3 transition-colors" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">Add Credential</button>
+                    </div>
                </div>
           </div>
 
-          <!-- Add new credential inputs -->
+          <!-- Existing Credentials List -->
           <form [formGroup]="form">
-               <div formArrayName="credentials">
+               <div formArrayName="credentials" class="space-y-4">
                     @for (control of credentialsArray.controls; track $index; let i = $index) {
-                    <fieldset class="signer-fieldset-dep-auth" style="margin-bottom: 10px">
-                         <legend class="signer-legend">Credential {{ i + 1 }}</legend>
-                         <div [formGroupName]="i">
-                              <div class="form-row" style="display: flex">
-                                   <div class="form-group">
-                                        <label for="issuerIndex">Credential Issuer {{ i + 1 }}</label>
-                                        <input type="text" class="input-monospace" formControlName="issuer" />
-                                   </div>
-                                   <div class="form-group">
-                                        <label for="credentialTypeIndex">Credential Type {{ i + 1 }}</label>
-                                        <input type="text" class="input-monospace" formControlName="credentialType" />
-                                   </div>
-                                   <div class="remove-group-dep-auth">
-                                        <button type="button" class="btn-remove" (click)="removeCredential(i)" class="btn-danger btn-sm"><lucide-icon name="trash-2" size="16"></lucide-icon></button>
-                                   </div>
+                    <div [formGroupName]="i" class="border border-gray-200 rounded-2xl p-5 bg-gray-50">
+                         <div class="flex items-center justify-between mb-4">
+                              <span class="font-medium text-gray-800">Credential {{ i + 1 }}</span>
+                              <button type="button" (click)="removeCredential(i)" class="text-red-500 hover:text-red-600 transition-colors">
+                                   <lucide-icon name="trash-2" size="18"></lucide-icon>
+                              </button>
+                         </div>
+
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                   <label class="block text-xs uppercase tracking-widest text-gray-500 mb-1">Issuer</label>
+                                   <input type="text" formControlName="issuer" class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono bg-white" />
+                              </div>
+                              <div>
+                                   <label class="block text-xs uppercase tracking-widest text-gray-500 mb-1">Credential Type</label>
+                                   <input type="text" formControlName="credentialType" class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono bg-white" />
                               </div>
                          </div>
-                    </fieldset>
+                    </div>
                     }
                </div>
           </form>
+
+          <!-- Count -->
+          <div class="mt-6 flex justify-between items-center text-sm">
+               <span class="text-gray-600"> Added: <strong class="font-medium text-gray-900">{{ credentialsArray.length }} / 10</strong> </span>
+               @if (credentialsArray.length >= 10) {
+               <span class="text-amber-600 text-xs font-medium">Maximum reached</span>
+               }
+          </div>
      </div>
+
+     <!-- Update Warning -->
+     @if (permissionedDomainStoreService.domainMode() === 'update') {
+     <p class="mt-1">
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+     </p>
+     }
 </div>
-
-<!-- Show count / max warning -->
-<p style="margin-top: 0">Added: {{ credentialsArray.length }} / Max 10</p>
-
-<!-- Show update warning -->
-@if (permissionedDomainStoreService.domainMode() === 'update') {
-<app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-}

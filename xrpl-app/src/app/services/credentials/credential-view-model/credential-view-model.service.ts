@@ -206,7 +206,7 @@ export class CredentialViewModelService {
           switch (tab) {
                case 'createCredential':
                     if (s.counts.issued === 0) return 'has not issued any credentials yet.';
-                    return `has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
+                    return ` has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
                case 'acceptCredential':
                     if (s.counts.pendingToAccept === 0) return 'has no pending credentials to accept.';
                     return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;

@@ -1,103 +1,148 @@
-@switch (activeTab()) {
+@switch (activeTab()()) {
 
 <!-- SET -->
 @case ('setPermissionedDomain') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Permissioned Domains</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Permissioned Domains Info</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">Permissioned Domains allow XRPL accounts to define controlled environments where access can be restricted using credentials or other verification rules. Applications can check these domains before allowing users to interact with specific features such as trading pairs, lending pools, or payment channels.</p>
-
-     <div class="combination-card">
-          <div class="combination-header">
-               <span class="badge time-badge">🌐 Create / Update Domain</span>
-               <span class="badge required-badge">PermissionedDomainSet</span>
+     <!-- Collapsible Content -->
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Permissioned Domains</h3>
+               <p class="text-sm text-gray-600">Permissioned Domains allow XRPL accounts to define controlled environments where access can be restricted using credentials or other verification rules. Applications can check these domains before allowing users to interact with specific features.</p>
           </div>
 
-          <div class="combination-fields">
-               <div class="field-row">
-                    <span class="field-name">DomainID</span>
-                    <span class="field-status required"> ✅ Required<br />(unique identifier for the domain) </span>
-               </div>
+          <!-- Requirements by Action -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements by Action</h4>
 
-               <div class="field-row">
-                    <span class="field-name">Owner</span>
-                    <span class="field-status required"> ✅ Implicit<br />(your XRPL account) </span>
-               </div>
+               <div class="space-y-5">
+                    <!-- Create / Update Domain -->
+                    <div class="border border-gray-100 rounded-2xl p-5">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🌐 Create / Update Domain</span>
+                              <span class="text-xs font-mono text-gray-500">PermissionedDomainSet</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">DomainID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Owner</span>
+                                   <span class="text-green-600 font-medium">Implicit (your account)</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">URI</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Flags / Metadata</span>
+                                   <span class="text-gray-500">Optional</span>
+                              </div>
+                         </div>
+                    </div>
 
-               <div class="field-row">
-                    <span class="field-name">URI</span>
-                    <span class="field-status optional"> ➕ Optional<br />(off-chain rules or documentation) </span>
-               </div>
-
-               <div class="field-row">
-                    <span class="field-name">Flags / Metadata</span>
-                    <span class="field-status optional"> ➕ Optional<br />(application-specific settings) </span>
+                    <!-- Delete Domain (shown in same view for completeness) -->
+                    <div class="border border-gray-100 rounded-2xl p-5 opacity-75">
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑 Delete Domain</span>
+                              <span class="text-xs font-mono text-gray-500">PermissionedDomainDelete</span>
+                         </div>
+                         <div class="space-y-3 text-sm">
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">DomainID</span>
+                                   <span class="text-green-600 font-medium">Required</span>
+                              </div>
+                         </div>
+                    </div>
                </div>
           </div>
-     </div>
 
-     <div class="important-notes">
-          <h5>📝 Important Notes</h5>
-
-          <ul>
-               <li>Requires the <strong>PermissionedDomains amendment</strong>.</li>
-               <li>Each domain object consumes an <strong>owner reserve (~0.2 XRP)</strong>.</li>
-               <li>Domains act as <strong>access control anchors</strong> for applications.</li>
-               <li>Credential requirements are usually enforced <strong>off-ledger</strong> by the application.</li>
-               <li>The <strong>URI</strong> field can point to documentation describing the domain rules.</li>
-          </ul>
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Requires the <strong>PermissionedDomains amendment</strong>.</li>
+                    <li>Each domain object consumes an <strong>owner reserve (~0.2 XRP)</strong>.</li>
+                    <li>Domains act as <strong>access control anchors</strong> for applications.</li>
+                    <li>Credential requirements are enforced <strong>off-ledger</strong> by the application.</li>
+                    <li>The <strong>URI</strong> field can point to documentation describing the domain rules.</li>
+               </ul>
+          </div>
      </div>
+     }
 </div>
 }
 
 <!-- DELETE -->
 @case ('deletePermissionedDomain') {
-<div class="requirements-info">
-     <div class="info-header">
-          <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-          <h3>Delete Permissioned Domain</h3>
-     </div>
+<div class="space-y-6 p-5">
+     <!-- Collapsible Header -->
+     <button (click)="isExpanded.set(!isExpanded())" class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all">
+          <div class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Delete Permissioned Domain</span>
+          </div>
+          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+     </button>
 
-     <p class="info-subtitle">PermissionedDomainDelete removes the domain object from the ledger and frees the owner reserve associated with it.</p>
-
-     <div class="combination-card">
-          <div class="combination-header">
-               <span class="badge time-badge">🗑 Delete Domain</span>
-               <span class="badge optional-badge">PermissionedDomainDelete</span>
+     @if (isExpanded()) {
+     <div [@expandCollapse] class="space-y-6">
+          <!-- Main Info -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h3 class="font-semibold text-gray-900 mb-2">Delete Permissioned Domain</h3>
+               <p class="text-sm text-gray-600">PermissionedDomainDelete removes the domain object from the ledger and frees the owner reserve associated with it.</p>
           </div>
 
-          <div class="combination-fields">
-               <div class="field-row">
-                    <span class="field-name">DomainID</span>
-                    <span class="field-status required"> ✅ Required </span>
-               </div>
+          <!-- Requirements -->
+          <div class="rounded-2xl border border-gray-200 bg-white p-5">
+               <h4 class="font-semibold text-gray-900 mb-5">Requirements</h4>
 
-               <div class="field-row">
-                    <span class="field-name">Authorization</span>
-                    <span class="field-status required"> ✅ Must be domain owner </span>
+               <div class="border border-gray-100 rounded-2xl p-5">
+                    <div class="flex items-center gap-2 mb-4">
+                         <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑 Delete Domain</span>
+                         <span class="text-xs font-mono text-gray-500">PermissionedDomainDelete</span>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                         <div class="flex justify-between items-center">
+                              <span class="text-gray-700">DomainID</span>
+                              <span class="text-green-600 font-medium">Required</span>
+                         </div>
+                         <div class="flex justify-between items-center">
+                              <span class="text-gray-700">Authorization</span>
+                              <span class="text-green-600 font-medium">Must be domain owner</span>
+                         </div>
+                    </div>
                </div>
           </div>
+
+          <!-- Important Notes -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
+                    <li>Only the domain owner can delete it.</li>
+                    <li>Deletion releases the <strong>owner reserve</strong>.</li>
+                    <li>Applications depending on the domain may lose access control functionality.</li>
+               </ul>
+
+               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Operational Risks</h5>
+               <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                    <li>Deleting a domain may immediately revoke access to users relying on it.</li>
+                    <li>Applications should handle domain deletion gracefully.</li>
+                    <li>Always test domain lifecycle flows on Testnet before mainnet.</li>
+               </ul>
+          </div>
      </div>
-
-     <div class="important-notes">
-          <h5>📝 Important Notes</h5>
-
-          <ul>
-               <li>Only the domain owner can delete it.</li>
-               <li>Deletion releases the <strong>owner reserve</strong>.</li>
-               <li>Applications depending on the domain may lose access control functionality.</li>
-          </ul>
-
-          <h5 class="warning-title">⚠️ Operational Risks</h5>
-
-          <ul>
-               <li>Deleting a domain may immediately revoke access to users relying on it.</li>
-               <li>Applications should handle domain deletion gracefully.</li>
-               <li>Always test domain lifecycle flows on Testnet before deploying to mainnet.</li>
-          </ul>
-     </div>
+     }
 </div>
 } }

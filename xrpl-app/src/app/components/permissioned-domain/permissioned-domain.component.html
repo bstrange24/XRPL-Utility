@@ -1,60 +1,53 @@
-<div class="banner">
-     <div class="banner-content">
-          <div id="navbar-container">
-               <app-navbar></app-navbar>
-          </div>
-     </div>
-</div>
-
 <!-- Get view -->
 @let view = permissionedDomainViewModelService;
 <!-- Get active tab -->
 @let tab = view.activeTab();
-<!-- Get tab data -->
-@let tabs = menuTabs;
 
-<!-- Main content. -->
-<div class="main-container">
-     <div class="content-wrapper">
-          <!-- Left Wallet panel -->
-          <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="permisisonDoaminTabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Center form -->
-          <div class="form-panel">
-               <!-- Menu / Tabs -->
-               <app-tab-menu-with-info [tabs]="tabs" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"></app-tab-menu-with-info>
+          <!-- Info / Summary -->
+          <app-permissioned-domains-summary [info]="view.infoData()" [tab]="tab" [summaryMessage]="view.summaryMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-permissioned-domains-summary>
 
-               <!-- Info Message -->
-               <app-permissioned-domains-summary [info]="view.infoData()" [tab]="tab" [summaryMessage]="view.summaryMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"></app-permissioned-domains-summary>
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
 
-               <!-- Warning Message -->
-               @if (txUiService.warningMessage) {
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-               }
+          <!-- Form -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Form Content -->
+               @switch (tab) { @case ('setPermissionedDomain') {
+               <app-permission-domain-set-form #setForm [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
+               } @case ('deletePermissionedDomain') {
+               <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
+               } }
 
-               <form #theForm="ngForm" class="main-form">
-                    @switch (tab) { @case ('setPermissionedDomain') {
-                    <app-permission-domain-set-form #setForm [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
-                    } @case ('deletePermissionedDomain') {
-                    <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
-                    } }
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['setPermissionedDomain', 'deletePermissionedDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-                    <app-transaction-options [showWhenTab]="['setPermissionedDomain', 'deletePermissionedDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"></app-transaction-options>
+               <!-- Action Buttons -->
+               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <!-- Primary Action -->
+                    <button type="button" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="whitespace-nowrap">{{ view.infoData()?.actionButtonLabel }}</button>
 
-                    <!-- Action buttons -->
-                    <div class="button-row">
-                         <button type="button" [class]="view.infoData()?.actionButtonClass" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ view.infoData()?.actionButtonLabel }}</button>
-                         <button type="button" class="btn-secondary-clear-fields" [disabled]="!canSubmit()|| !connectionGuard.isConnectionReady()" (click)="clearInputFields()">Clear Fields</button>
+                    <!-- Secondary Actions -->
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
+               </div>
 
-                    <!-- Execution time -->
+               <!-- Execution Time -->
+               <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
 
-                    <!-- Transaction Preview -->
+               <!-- Transaction Preview -->
+               <div class="pt-2">
                     <app-transaction-preview></app-transaction-preview>
-               </form>
-          </div>
-
-          <app-requirements-info [activeTab]="tab"></app-requirements-info>
+               </div>
+          </form>
      </div>
 </div>
