@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, Signal, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { CredentialActionTypes } from '../../constants/credential.types';
 
@@ -10,5 +10,8 @@ import { CredentialActionTypes } from '../../constants/credential.types';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RequirementsInfoComponent {
-     activeTab = input.required<CredentialActionTypes>();
+     activeTab = input.required<Signal<CredentialActionTypes>>();
+
+     // Collapsible state
+     isExpanded = signal(false);
 }
