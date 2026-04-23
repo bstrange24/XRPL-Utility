@@ -1,79 +1,112 @@
 @if (escrowTransactionViewModelService.infoData(); as info) {
 
-<!-- Main Card -->
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+<!-- ── Escrow Summary Card ── -->
+<div class="escrow-summary-card">
 
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
+  <!-- Card Header -->
+  <div class="escrow-summary-header">
 
-                    @if (info.escrowCount === 0) {
-                    <span class="text-gray-600 text-sm"> has no active escrows.</span>
-                    } @else {
-                    <span class="text-gray-600 text-sm">
-                         has <strong class="text-gray-900">{{ info.escrowCount }}</strong>
-                         escrow{{ info.escrowCount === 1 ? '' : 's' }} @switch (tab()) { @case ('createEscrow') { created. } @case ('finishEscrow') { that can be finished. } @case ('cancelEscrow') { that can be cancelled. } }
-                    </span>
-                    }
-               </div>
-          </div>
+    <!-- Left: Icon + wallet info -->
+    <div class="escrow-summary-meta">
+      <div class="escrow-summary-icon">
+        <ng-icon name="heroInformationCircle" size="20" class="text-blue-600" />
+      </div>
 
-          <!-- XRPL Win Links -->
-          @if (info.links) {
-          <div class="text-xs text-blue-600 hover:text-blue-700 pt-1" [innerHTML]="info.links"></div>
-          }
+      <div class="escrow-summary-text">
+        @if (info.escrowCount === 0) {
+          <span class="escrow-summary-wallet">
+            <code class="font-mono font-semibold text-gray-800">{{ info.walletName }}</code>
+            <span class="text-gray-500"> has no active escrows.</span>
+          </span>
+        } @else {
+          <span class="escrow-summary-wallet">
+            <code class="font-mono font-semibold text-gray-800">{{ info.walletName }}</code>
+            <span class="text-gray-500"> has </span>
+            <strong class="text-gray-900 font-bold">{{ info.escrowCount }}</strong>
+            <span class="text-gray-500">
+              {{ info.escrowCount === 1 ? ' escrow' : ' escrows' }}
+              @switch (tab()) {
+                @case ('createEscrow') { created. }
+                @case ('finishEscrow') { that can be finished. }
+                @case ('cancelEscrow') { that can be cancelled. }
+              }
+            </span>
+          </span>
+        }
+      </div>
+    </div>
 
-          <!-- Expand / Collapse -->
-          @if (info.escrowCount > 0) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} escrows</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
+    <!-- Right: Explorer link + toggle -->
+    <div class="escrow-summary-actions">
+      @if (info.links) {
+        <div class="escrow-summary-link text-xs text-blue-600 hover:text-blue-700"
+          [innerHTML]="info.links">
+        </div>
+      }
 
-     <!-- Expandable Escrow List -->
-     @if (info.escrowCount > 0 && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @for (escrow of info.escrowsToShow; track escrow.EscrowSequence + escrow.finishAfter) {
-               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 cursor-pointer transition-all" [class.border-red-200]="escrow.isExpired" (click)="onEscrowClick(escrow)">
-                    <!-- Check Content -->
-                    <div class="flex-1 min-w-0">
-                         @switch (escrow.tab) { @case ('createEscrow') {
-                         <app-escrow-create-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-                         } @case ('finishEscrow') {
-                         <app-escrow-finish-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-                         } @case ('cancelEscrow') {
-                         <app-escrow-cancel-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
-                         } }
-                    </div>
+      @if (info.escrowCount > 0) {
+        <button type="button" (click)="toggleInfoPanel.emit()"
+          class="escrow-summary-toggle">
+          <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} escrows</span>
+          <ng-icon name="heroChevronDown" size="16"
+            class="transition-transform"
+            [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
+        </button>
+      }
+    </div>
+  </div>
 
-                    <!-- Copy Button -->
-                    <button (click)="copyUtilService.copyAndToast(escrow.EscrowSequence, 'Escrow ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy Escrow ID">
-                         <lucide-icon name="copy" size="16" />
-                    </button>
-               </li>
-               }
-          </ul>
-     </div>
-     } @else { @if (info.escrowCount <= 0) {
-     <!-- Empty State (when no escrows) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
-          </div>
-          @if (escrowTransactionViewModelService.activeTab() === 'createEscrow') {
-          <p class="text-sm text-gray-500">This wallet has not created any Escrwos yet.</p>
-          } @else if(escrowTransactionViewModelService.activeTab() === 'finishEscrow') {
-          <p class="text-sm text-gray-500">This wallet has no Escrows to finish.</p>
-          }@else {
-          <p class="text-sm text-gray-500">This wallet has no Escrows to cancel.</p>
-          }
-     </div>
-     }}
+  <!-- ── Expandable Escrow List ── -->
+  @if (info.escrowCount > 0 && infoPanelExpanded()) {
+    <div class="escrow-summary-list scroll-container">
+      <ul class="space-y-2">
+        @for (escrow of info.escrowsToShow; track escrow.EscrowSequence + escrow.finishAfter) {
+          <li class="escrow-list-item"
+            [class.escrow-list-item--expired]="escrow.isExpired"
+            (click)="onEscrowClick(escrow)">
+
+            <div class="escrow-list-item-content">
+              @switch (escrow.tab) {
+                @case ('createEscrow') {
+                  <app-escrow-create-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                }
+                @case ('finishEscrow') {
+                  <app-escrow-finish-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                }
+                @case ('cancelEscrow') {
+                  <app-escrow-cancel-item [escrow]="escrow" (escrowSelected)="onEscrowClick($event)" />
+                }
+              }
+            </div>
+
+            <!-- Copy button -->
+            <button
+              (click)="copyUtilService.copyAndToast(escrow.EscrowSequence, 'Escrow ID'); $event.stopPropagation()"
+              class="escrow-list-copy-btn"
+              title="Copy Escrow ID">
+              <lucide-icon name="copy" size="15" />
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  } @else {
+    @if (info.escrowCount <= 0) {
+      <!-- Empty State -->
+      <div class="escrow-summary-empty">
+        <div class="escrow-summary-empty-icon">
+          <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
+        </div>
+        @if (escrowTransactionViewModelService.activeTab() === 'createEscrow') {
+          <p class="text-sm text-gray-500">This wallet has not created any escrows yet.</p>
+        } @else if (escrowTransactionViewModelService.activeTab() === 'finishEscrow') {
+          <p class="text-sm text-gray-500">This wallet has no escrows to finish.</p>
+        } @else {
+          <p class="text-sm text-gray-500">This wallet has no escrows to cancel.</p>
+        }
+      </div>
+    }
+  }
 </div>
+
 }

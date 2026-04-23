@@ -1,57 +1,83 @@
-<div class="space-y-6">
-     <!-- Selection Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
-          <p class="mb-3 text-sm text-gray-600">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+<div class="space-y-5">
 
-          <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+  <!-- ── Selection Card ── -->
+  <div class="escrow-card">
+    <div class="escrow-card-header">
+      <div class="escrow-card-header-icon escrow-card-header-icon--red">
+        <ng-icon name="heroTrash" size="16" />
+      </div>
+      <div>
+        <h4 class="escrow-card-title">Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }}</h4>
+        <p class="escrow-card-subtitle">Choose an existing escrow from your wallet to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+      </div>
+    </div>
 
-          <!-- Expired Warning -->
-          @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
-          <div class="my-4 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-               <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
-               <div class="text-sm text-red-700">This escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished }.</div>
-          </div>
-          }
-     </div>
+    <div class="escrow-card-body">
+      <app-select-search-dropdown
+        [items]="viewModel.escrowItems()"
+        [value]="viewModel.selectedEscrowItem()"
+        (valueChange)="onEscrowSelected($event)"
+        placeholder="Search by amount, address, or sequence..."
+        emptyMessage="No escrows available" />
 
-     <!-- Escrow Details Card -->
-     @if (viewModel.selectedFullEscrow()) {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <div class="space-y-5">
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <!-- Sequence Number -->
-                    <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Escrow Sequence</label>
-                         <p class="mb-2 text-xs text-gray-500">Sequence number of the escrow</p>
-                         <input type="text" [value]="viewModel.selectedEscrowSequence()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                    </div>
+      <!-- Expired Warning -->
+      @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
+      <div class="escrow-expired-banner">
+        <div class="escrow-expired-banner-icon">
+          <ng-icon name="heroExclamationTriangle" size="16" class="text-red-600" />
+        </div>
+        <p class="escrow-expired-banner-text">
+          This escrow has expired
+          @if (activeTab === 'finishEscrow') { and cannot be finished }.
+        </p>
+      </div>
+      }
+    </div>
+  </div>
 
-                    <!-- Amount -->
-                    <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
-                         <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
-                         <input type="text" [value]="viewModel.selectedEscrowAmount()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                    </div>
-               </div>
+  <!-- ── Escrow Details Card ── -->
+  @if (viewModel.selectedFullEscrow()) {
+  <div class="escrow-card">
+    <div class="escrow-card-header">
+      <div class="escrow-card-header-icon escrow-card-header-icon--gray">
+        <ng-icon name="heroDocumentText" size="16" />
+      </div>
+      <div>
+        <h4 class="escrow-card-title">Escrow Details</h4>
+        <p class="escrow-card-subtitle">Read-only details for the selected escrow.</p>
+      </div>
+    </div>
 
-               <!-- Creator / Destination -->
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                    <!-- Creator (Sender) -->
-                    <!-- <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Creator</label>
-                         <p class="mb-2 text-xs text-gray-500">The account that created this escrow</p>
-                         <input type="text" [value]="viewModel.selectedEscrowCreator()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                    </div> -->
+    <div class="escrow-card-body">
+      <div class="escrow-fields-grid">
 
-                    <!-- Destination -->
-                    <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Destination</label>
-                         <p class="mb-2 text-xs text-gray-500">The recipient of the escrow</p>
-                         <input type="text" [value]="viewModel.selectedEscrowDestination()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                    </div>
-               </div>
-          </div>
-     </div>
-     }
+        <!-- Sequence -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Escrow Sequence</label>
+          <p class="escrow-field-hint">Sequence number of the escrow</p>
+          <input type="text" [value]="viewModel.selectedEscrowSequence()" readonly
+            class="escrow-input escrow-input--readonly" />
+        </div>
+
+        <!-- Amount -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Amount</label>
+          <p class="escrow-field-hint">Amount held in this escrow</p>
+          <input type="text" [value]="viewModel.selectedEscrowAmount()" readonly
+            class="escrow-input escrow-input--readonly" />
+        </div>
+
+        <!-- Destination -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Destination</label>
+          <p class="escrow-field-hint">The recipient of the escrow</p>
+          <input type="text" [value]="viewModel.selectedEscrowDestination()" readonly
+            class="escrow-input escrow-input--readonly font-mono" />
+        </div>
+
+      </div>
+    </div>
+  </div>
+  }
+
 </div>

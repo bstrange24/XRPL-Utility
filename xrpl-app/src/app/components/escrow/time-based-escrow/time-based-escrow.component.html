@@ -3,60 +3,115 @@
 <!-- Get active tab -->
 @let tab = viewModel.activeTab();
 
-<div class="p-1">
-     <div>
-          <!-- Menu / Tabs -->
-          <app-tab-menu-with-info [tabs]="timeMenuTabs" [active]="tab" [metaMap]="timeTabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+<div class="time-escrow-page">
 
-          <!-- Info / Summary -->
-          @let wallet = currentWallet();
-          <app-escrow-summary [wallet]="wallet" [tab]="viewModel.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [escrowLength]="escrowUtilService.escrowLength()" (toggleInfoPanel)="toggleInfoPanel()" (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)"> </app-escrow-summary>
+  <!-- Tab Navigation + Header -->
+  <div class="time-escrow-header">
+    <app-tab-menu-with-info
+      [tabs]="timeMenuTabs"
+      [active]="tab"
+      [metaMap]="timeTabMeta"
+      (activeChange)="setTab($event)">
+    </app-tab-menu-with-info>
+  </div>
 
-          <!-- Warning Message -->
-          @if (txUiService.warningMessage) {
-          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-          }
+  <!-- Escrow Summary / Info Panel -->
+  @let wallet = currentWallet();
+  <div class="time-escrow-summary">
+    <app-escrow-summary
+      [wallet]="wallet"
+      [tab]="viewModel.activeTab()"
+      [infoPanelExpanded]="infoPanelExpanded()"
+      [escrowLength]="escrowUtilService.escrowLength()"
+      (toggleInfoPanel)="toggleInfoPanel()"
+      (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)">
+    </app-escrow-summary>
+  </div>
 
-          <!-- Form -->
-          <form #theForm="ngForm">
-               <!-- Dynamic Content -->
-               @if (tab === 'createEscrow') {
-               <app-escrows-create></app-escrows-create>
-               } @else if (tab === 'finishEscrow') {
-               <app-escrows-finish></app-escrows-finish>
-               } @else if (tab === 'cancelEscrow') {
-               <app-escrows-cancel></app-escrows-cancel>
-               }
+  <!-- Warning Message -->
+  @if (txUiService.warningMessage) {
+  <div class="time-escrow-warning">
+    <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+  </div>
+  }
 
-               <!-- Transaction Options -->
-               <app-transaction-options [showWhenTab]="['createEscrow', 'finishEscrow', 'cancelEscrow']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+  <!-- Form -->
+  <form #theForm="ngForm" class="time-escrow-form">
 
-               <!-- Action Buttons -->
-               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <!-- Primary Action -->
-                    @if (tab === 'createEscrow') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ escrowUtilService.createEscrowButtonLabel() }}</button>
-                    } @else if (tab === 'finishEscrow') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || viewModel.selectedEscrowIsExpired()" class="btn-blue whitespace-nowrap">{{ escrowUtilService.finishEscrowButtonLabel() }}</button>
-                    } @else if (tab === 'cancelEscrow') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ escrowUtilService.cancelEscrowButtonLabel() }}</button>
-                    }
+    <!-- Dynamic Tab Content -->
+    <div class="time-escrow-content">
+      @if (tab === 'createEscrow') {
+        <app-escrows-create></app-escrows-create>
+      } @else if (tab === 'finishEscrow') {
+        <app-escrows-finish></app-escrows-finish>
+      } @else if (tab === 'cancelEscrow') {
+        <app-escrows-cancel></app-escrows-cancel>
+      }
+    </div>
 
-                    <!-- Clear Fields -->
-                    <div class="flex flex-wrap items-center justify-end gap-2">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-                    </div>
-               </div>
+    <!-- Transaction Options -->
+    <div class="time-escrow-tx-options">
+      <app-transaction-options
+        [showWhenTab]="['createEscrow', 'finishEscrow', 'cancelEscrow']"
+        [activeTab]="viewModel.activeTab"
+        [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()"
+        [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()">
+      </app-transaction-options>
+    </div>
 
-               <!-- Execution Time -->
-               <div class="text-sm text-gray-500 mt-3">
-                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
-               </div>
+    <!-- Action Bar -->
+    <div class="time-escrow-action-bar">
+      <!-- Primary CTA -->
+      <div class="time-escrow-primary-action">
+        @if (tab === 'createEscrow') {
+          <button type="button" (click)="performAction()"
+            [disabled]="!isIdle() || !hasWallets()"
+            class="btn-primary btn-action">
+            <span class="btn-icon">
+              <ng-icon name="heroPlusCircle" size="18" />
+            </span>
+            {{ escrowUtilService.createEscrowButtonLabel() }}
+          </button>
+        } @else if (tab === 'finishEscrow') {
+          <button type="button" (click)="performAction()"
+            [disabled]="!isIdle() || !hasWallets() || viewModel.selectedEscrowIsExpired()"
+            class="btn-blue btn-action">
+            <span class="btn-icon">
+              <ng-icon name="heroClock" size="18" />
+            </span>
+            {{ escrowUtilService.finishEscrowButtonLabel() }}
+          </button>
+        } @else if (tab === 'cancelEscrow') {
+          <button type="button" (click)="performAction()"
+            [disabled]="!isIdle() || !hasWallets()"
+            class="btn-red btn-action">
+            <span class="btn-icon">
+              <ng-icon name="heroTrash" size="18" />
+            </span>
+            {{ escrowUtilService.cancelEscrowButtonLabel() }}
+          </button>
+        }
+      </div>
 
-               <!-- Transaction Preview -->
-               <div class="pt-2">
-                    <app-transaction-preview></app-transaction-preview>
-               </div>
-          </form>
-     </div>
+      <!-- Secondary Actions -->
+      <div class="time-escrow-secondary-actions">
+        <button type="button" (click)="clearInputFields()"
+          [disabled]="!isIdle() || !hasWallets()"
+          class="btn-secondary">
+          Clear Fields
+        </button>
+      </div>
+    </div>
+
+    <!-- Execution Time -->
+    <div class="time-escrow-exec-time">
+      <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+    </div>
+
+    <!-- Transaction Preview -->
+    <div class="time-escrow-tx-preview">
+      <app-transaction-preview></app-transaction-preview>
+    </div>
+
+  </form>
 </div>

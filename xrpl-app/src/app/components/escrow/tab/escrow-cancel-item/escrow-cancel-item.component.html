@@ -1,31 +1,40 @@
-<div class="flex-1 min-w-0">
-     <!-- Amount + Expired Badge -->
-     <app-tooltip-link [href]="txUiService.explorerUrl() + 'ledger/' + escrow.EscrowSequence" tooltipText="View Escrow on XRPL Explorer">
-          <div class="flex items-center gap-3">
-               <span class="text-xl font-semibold text-gray-900" [class.line-through]="escrow.isExpired" [class.text-red-500]="escrow.isExpired"> {{ escrow.amount }} </span>
+<div class="escrow-item-layout">
 
-               @if (escrow.isExpired) {
-               <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
-               }
-          </div>
-     </app-tooltip-link>
+  <!-- Amount + Status -->
+  <div class="escrow-item-amount-row">
+    <app-tooltip-link
+      [href]="txUiService.explorerUrl() + 'ledger/' + escrow.EscrowSequence"
+      tooltipText="View Escrow on XRPL Explorer">
+      <span class="escrow-item-amount" [class.escrow-item-amount--expired]="escrow.isExpired">
+        {{ escrow.amount }}
+      </span>
+    </app-tooltip-link>
 
-     <!-- Metadata -->
-     <!-- Metadata -->
-     <div class="mt-3 space-y-2 text-sm">
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-32">Sequence:</span>
-               <span class="font-mono text-gray-700">{{ escrow.EscrowSequence }}</span>
-          </div>
+    @if (escrow.isExpired) {
+      <span class="escrow-item-badge escrow-item-badge--expired">Expired</span>
+    }
+  </div>
 
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-32 whitespace-nowrap"> {{ escrow.isExpired ? 'Finished at:' : 'Finishes at or after:' }} </span>
-               <span class="text-gray-600" [class.text-red-600]="escrow.isExpired"> {{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }} </span>
-          </div>
+  <!-- Metadata pills -->
+  <div class="escrow-item-meta">
+    <div class="escrow-item-meta-row">
+      <span class="escrow-item-meta-label">Seq</span>
+      <span class="escrow-item-meta-value font-mono">{{ escrow.EscrowSequence }}</span>
+    </div>
 
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-32">Cancellable after:</span>
-               <span class="text-gray-600" [class.text-red-600]="escrow.isExpired"> {{ escrow.cancelAfter ? utilsService.convertXRPLTime(escrow.cancelAfter) : 'N/A' }} </span>
-          </div>
-     </div>
+    <div class="escrow-item-meta-row">
+      <span class="escrow-item-meta-label">{{ escrow.isExpired ? 'Finished' : 'Finishes after' }}</span>
+      <span class="escrow-item-meta-value" [class.escrow-item-meta-value--expired]="escrow.isExpired">
+        {{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }}
+      </span>
+    </div>
+
+    <div class="escrow-item-meta-row">
+      <span class="escrow-item-meta-label">Cancellable after</span>
+      <span class="escrow-item-meta-value" [class.escrow-item-meta-value--expired]="escrow.isExpired">
+        {{ escrow.cancelAfter ? utilsService.convertXRPLTime(escrow.cancelAfter) : 'N/A' }}
+      </span>
+    </div>
+  </div>
+
 </div>

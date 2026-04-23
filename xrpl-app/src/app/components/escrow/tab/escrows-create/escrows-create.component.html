@@ -1,123 +1,187 @@
-<div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Escrow Details</h4>
-          <!-- Currency + Amount -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <!-- Currency Code -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
-                              <ng-template #itemTemplate let-item>
-                                   <div class="flex items-center gap-2">
-                                        @if (item.id === 'XRP') {
-                                        <span class="font-bold text-yellow-500">XRP</span>
-                                        } @else {
-                                        <span>{{ item.display }}</span>
-                                        }
-                                        <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                   </div>
-                              </ng-template>
-                         </app-select-search-dropdown>
-                    </div>
-               </div>
+<div class="space-y-5">
+  <div class="escrow-card">
 
-               <!-- Amount -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Amount</label>
-                    <p class="text-xs text-gray-500">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
-               </div>
+    <!-- Card Header -->
+    <div class="escrow-card-header">
+      <div class="escrow-card-header-icon escrow-card-header-icon--green">
+        <ng-icon name="heroPlusCircle" size="16" />
+      </div>
+      <div>
+        <h4 class="escrow-card-title">Escrow Details</h4>
+        <p class="escrow-card-subtitle">Configure the parameters for your new time-based escrow.</p>
+      </div>
+    </div>
+
+    <div class="escrow-card-body">
+
+      <!-- Currency + Amount -->
+      <div class="escrow-fields-grid">
+        <!-- Currency Code -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Currency Code</label>
+          <p class="escrow-field-hint">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+          <div class="h-[54px]">
+            <app-select-search-dropdown
+              [items]="currencyItems()"
+              [value]="selectedCurrencyItem()"
+              [showShortAddress]="false"
+              (valueChange)="onCurrencySelected($event)"
+              placeholder="Search currency code..."
+              emptyMessage="No currencies available">
+              <ng-template #itemTemplate let-item>
+                <div class="flex items-center gap-2">
+                  @if (item.id === 'XRP') {
+                    <span class="font-bold text-yellow-500">XRP</span>
+                  } @else {
+                    <span>{{ item.display }}</span>
+                  }
+                  <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                </div>
+              </ng-template>
+            </app-select-search-dropdown>
           </div>
+        </div>
 
-          <!-- Issuer + Balance (non-XRP, non-MPT) -->
-          @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <!-- Issuer -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+        <!-- Amount -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Amount</label>
+          <p class="escrow-field-hint">Amount, in XRP or IOU token, to send to the destination.</p>
+          <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0"
+            [ngModel]="escrowStoreService.amount()"
+            (ngModelChange)="utilsService.updateAmount($event)"
+            (focus)="onFocus($event)"
+            class="escrow-input" />
+        </div>
+      </div>
 
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-                    </div>
-               </div>
-
-               <!-- Currency Balance -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Currency Balance</label>
-                    <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
-
-                    <input type="text" [value]="currencyStoreService.balance()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
-               </div>
+      <!-- Issuer + Balance (non-XRP, non-MPT) -->
+      @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
+      <div class="escrow-fields-grid">
+        <!-- Issuer -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Issuer</label>
+          <p class="escrow-field-hint">The XRPL account that issues and controls this currency.</p>
+          <div class="h-[54px]">
+            <app-select-search-dropdown
+              [items]="issuerItems()"
+              [value]="selectedIssuerItem()"
+              (valueChange)="onIssuerSelected($event)"
+              placeholder="Search or select issuer..."
+              emptyMessage="No issuers found" />
           </div>
-          }
+        </div>
 
-          <!-- MPT Section -->
-          @if (currencyStoreService.currency() === 'MPT') {
-          <div class="space-y-4">
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Select MPT</label>
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
-                    </div>
-               </div>
+        <!-- Currency Balance -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Currency Balance</label>
+          <p class="escrow-field-hint">Total currency balance held by this account.</p>
+          <input type="text" [value]="currencyStoreService.balance()" readonly
+            class="escrow-input escrow-input--readonly" />
+        </div>
+      </div>
+      }
 
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
-                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
-               </div>
+      <!-- MPT Section -->
+      @if (currencyStoreService.currency() === 'MPT') {
+      <div class="space-y-4">
+        <div class="escrow-field">
+          <label class="escrow-field-label">Select MPT</label>
+          <div class="h-[54px]">
+            <app-select-search-dropdown
+              [items]="mptItems()"
+              [value]="selectedMptItem()"
+              (valueChange)="onMptSelected($event)"
+              placeholder="Search by ID or amount..."
+              emptyMessage="No MPTs available" />
           </div>
-          }
+        </div>
+        <div class="escrow-field">
+          <label class="escrow-field-label">MPT Issuance ID</label>
+          <input type="text"
+            [ngModel]="mptStoreService.mptIssuanceId()"
+            class="escrow-input font-mono" />
+        </div>
+      </div>
+      }
 
-          <!-- Destination + Destination Tag -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <!-- Destination -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Destination</label>
-                    <p class="text-xs text-gray-500">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
-                    <p></p>
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address" />
-                    </div>
-               </div>
-
-               <!-- Destination Tag -->
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
-                    <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input type="text" [ngModel]="xrplTxOptionsStore.destinationTag()" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
-               </div>
+      <!-- Destination + Tag -->
+      <div class="escrow-fields-grid">
+        <!-- Destination -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Destination</label>
+          <p class="escrow-field-hint">The XRPL account that will receive the escrowed funds.</p>
+          <div class="h-[54px]">
+            <app-select-search-dropdown
+              [items]="destinationItems()"
+              [value]="selectedDestinationItem()"
+              [searchQueryInput]="destinationSearchQuery()"
+              (searchQueryChange)="handleSearchQueryChange($event)"
+              (valueChange)="handleDestinationChange($event)"
+              placeholder="Enter or select destination address" />
           </div>
+        </div>
 
-          <!-- Condition & Fulfillment (Conditional Escrow Only) -->
-          @if (isConditional) {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Condition</label>
-                    <p class="text-xs text-gray-500">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
-                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
-               </div>
+        <!-- Destination Tag -->
+        <div class="escrow-field">
+          <label class="escrow-field-label">Destination Tag</label>
+          <p class="escrow-field-hint">Identifies the recipient within a shared address (exchange or custodian).</p>
+          <input type="text"
+            [ngModel]="xrplTxOptionsStore.destinationTag()"
+            class="escrow-input" />
+        </div>
+      </div>
 
-               <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Fulfillment</label>
-                    <p class="text-xs text-gray-500">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
-               </div>
-          </div>
-          }
+      <!-- Condition & Fulfillment (Conditional Escrow Only) -->
+      @if (isConditional) {
+      <div class="escrow-fields-grid">
+        <div class="escrow-field">
+          <label class="escrow-field-label">Condition</label>
+          <p class="escrow-field-hint">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+          <input type="text"
+            [ngModel]="escrowStoreService.condition()"
+            (ngModelChange)="escrowStoreService.setField('condition', $event)"
+            class="escrow-input font-mono" />
+        </div>
+        <div class="escrow-field">
+          <label class="escrow-field-label">Fulfillment</label>
+          <p class="escrow-field-hint">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+          <input type="text"
+            [ngModel]="escrowStoreService.fulfillment()"
+            (ngModelChange)="escrowStoreService.setField('fulfillment', $event)"
+            class="escrow-input font-mono" />
+        </div>
+      </div>
+      }
 
-          <!-- Time Settings -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
-               <!-- <div class="rounded-2xl border border-gray-100 bg-gray-50 p-5 transition-shadow"></div> -->
-               <div class="rounded-2xl p-1 transition-shadow">
-                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)" label="Set Escrow Finish After Time" hint="The time when the escrowed value can be released to the recipient."> </app-xrpl-expiration-input>
-               </div>
+      <!-- Time Settings Divider -->
+      <div class="escrow-section-divider">
+        <span class="escrow-section-divider-label">
+          <ng-icon name="heroClock" size="14" class="inline-block" />
+          Time Settings
+        </span>
+      </div>
 
-               <div class="rounded-2xl p-1 transition-shadow">
-                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)" label="Set Escrow Cancel After Time" hint="The time before the escrow can be cancelled by the sender."> </app-xrpl-expiration-input>
-               </div>
-          </div>
-     </div>
+      <!-- Time Inputs -->
+      <div class="escrow-fields-grid">
+        <div class="escrow-time-input-wrapper">
+          <app-xrpl-expiration-input
+            [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate"
+            [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)"
+            label="Set Escrow Finish After Time"
+            hint="The time when the escrowed value can be released to the recipient.">
+          </app-xrpl-expiration-input>
+        </div>
+
+        <div class="escrow-time-input-wrapper">
+          <app-xrpl-expiration-input
+            [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate"
+            [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)"
+            label="Set Escrow Cancel After Time"
+            hint="The time before the escrow can be cancelled by the sender.">
+          </app-xrpl-expiration-input>
+        </div>
+      </div>
+
+    </div><!-- /escrow-card-body -->
+  </div><!-- /escrow-card -->
 </div>
