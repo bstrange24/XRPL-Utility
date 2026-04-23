@@ -546,9 +546,16 @@ pre code[class*="language-"] {
 }
 
 /* Extra breathing room when main is expanded */
-@media (min-width: 1024px) {
+/* @media (min-width: 1024px) {
      .lg\:col-span-19 {
           padding-right: 1.5rem !important;
+     }
+} */
+
+/* Make right panel a bit more compact */
+@media (min-width: 1024px) {
+     .lg\\:col-span-5:last-child {
+          padding-left: 0.5rem;
      }
 }
 

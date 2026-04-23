@@ -1,19 +1,18 @@
 <div class="min-h-screen w-full bg-gray-50 flex flex-col overflow-hidden">
-     <!-- NAVBAR (full width, fixed height) -->
+     <!-- NAVBAR (unchanged) -->
      <header class="w-full bg-white border-b shadow-sm z-50">
           <app-navbar></app-navbar>
      </header>
 
-     <!-- MAIN GRID -->
+     <!-- MAIN GRID - Updated Layout -->
      <main class="flex-1 grid grid-cols-1 lg:grid-cols-24 gap-6 p-4 lg:p-6 min-h-0 overflow-hidden">
-          <!-- WALLET -->
-          <aside class="lg:col-span-4 xl:col-span-5 min-h-0 overflow-hidden">
+          <!-- WALLET PANEL - Same width as before -->
+          <aside class="lg:col-span-5 xl:col-span-5 min-h-0 overflow-hidden">
                <app-wallet-panel (walletSelected)="selectWallet($event)"></app-wallet-panel>
           </aside>
 
-          <!-- MAIN CONTENT -->
-          <section class="min-h-0 overflow-hidden bg-white rounded-2xl shadow-sm flex flex-col" [style.grid-column]="isBalanceChangesPage() ? 'span 19 / span 19' : 'span 12 / span 12'">
-               <!-- Critical: Force strict height containment -->
+          <!-- MAIN CONTENT - Made wider -->
+          <section class="min-h-0 overflow-hidden bg-white rounded-2xl shadow-sm flex flex-col" [style.grid-column]="isBalanceChangesPage() ? 'span 19 / span 19' : 'span 14 / span 14'">
                <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
                     <div class="flex-1 min-h-0 overflow-auto pl-3 pr-3 lg:p-4" style="padding-top: 0; padding-bottom: 0">
                          <router-outlet></router-outlet>
@@ -21,9 +20,9 @@
                </div>
           </section>
 
-          <!-- RIGHT PANEL -->
+          <!-- RIGHT PANEL (Requirements) - Made smaller -->
           @if (!isBalanceChangesPage()) {
-          <aside class="hidden lg:block lg:col-span-7 xl:col-span-7 min-h-0">
+          <aside class="hidden lg:block lg:col-span-5 xl:col-span-5 min-h-0">
                <div class="h-full bg-white rounded-2xl shadow-sm overflow-hidden">
                     @if (rightPanelService.component(); as comp) {
                     <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
@@ -35,19 +34,16 @@
           }
      </main>
 
-     <!-- TOASTS -->
+     <!-- TOASTS (unchanged) -->
      <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center space-y-3 space-y-reverse">
           @for (toast of toastService.toasts(); track toast.id) {
           <div class="group relative flex items-start gap-3 w-96 bg-white rounded-xl shadow-lg border overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 animate-slide-up" [class.border-green-500]="toast.type === 'success'" [class.border-red-500]="toast.type === 'error'" [class.border-blue-500]="toast.type === 'info'" (click)="toastService.removeToast(toast.id)">
-               <!-- Colored accent bar -->
                <div class="absolute top-0 left-0 w-1 h-full" [class.bg-green-500]="toast.type === 'success'" [class.bg-red-500]="toast.type === 'error'" [class.bg-blue-500]="toast.type === 'info'"></div>
 
-               <!-- Content -->
                <div class="flex-1 pl-4 pr-3 py-3">
                     <div class="text-sm text-gray-800 break-all" [innerHTML]="toast.message"></div>
                </div>
 
-               <!-- Close indicator -->
                <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div class="text-gray-400 hover:text-gray-600">
                          <lucide-icon name="x" size="14"></lucide-icon>
