@@ -267,4 +267,24 @@ export class EscrowTransactionViewModelService {
                console.error('refreshMpts failed', e);
           }
      }
+
+     // Add these to EscrowTransactionViewModelService
+
+     selectedFullEscrow = computed(() => {
+          const seq = this.escrowStoreService.escrowSequenceNumber();
+          if (!seq) return null;
+
+          return this.escrowStoreService.allEscrowsRaw().find((e: any) => e.EscrowSequence?.toString() === seq.toString()) ?? null;
+     });
+
+     selectedEscrowSequence = computed(() => this.escrowStoreService.escrowSequenceNumber() ?? '');
+
+     selectedEscrowAmount = computed(() => {
+          const escrow = this.selectedFullEscrow();
+          return escrow?.Amount ? this.utilsService.formatIOUXrpAmountOutstanding(escrow.Amount) : '';
+     });
+
+     selectedEscrowCreator = computed(() => this.selectedFullEscrow()?.Sender ?? '');
+
+     selectedEscrowDestination = computed(() => this.selectedFullEscrow()?.Destination ?? '');
 }

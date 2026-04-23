@@ -34,7 +34,7 @@ import { DidSetComponent } from './tab/did-set/did-set.component';
 import { DID_TAB } from './constants/did.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 
 @Component({

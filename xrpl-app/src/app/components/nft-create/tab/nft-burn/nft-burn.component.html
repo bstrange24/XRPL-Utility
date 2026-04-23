@@ -1,19 +1,30 @@
-<div class="space-y-8">
-     <!-- Select NFT -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Select NFT</label>
-          <p class="text-xs text-gray-500">Select an existing NFT to burn.</p>
+<div class="space-y-6">
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+          <h4 class="mb-5 font-semibold text-gray-900">NFT Details</h4>
+          <!-- Select NFT -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Select NFT</label>
+               <p class="text-xs text-gray-500">Select an existing NFT to burn.</p>
 
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
+               </div>
           </div>
-     </div>
 
-     <!-- NFT Token ID -->
-     <div class="space-y-2" style="margin-top: 0">
-          <label class="text-sm font-medium">NFT Token ID</label>
-          <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+          <!-- NFT Token ID -->
+          <div class="space-y-2" style="margin-top: 1.5rem">
+               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
 
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
+
+          <!-- Warning for non-burnable NFTs -->
+          <!-- @if (selectedNftIsNotBurnable()) {
+          <div class="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
+               <ng-icon name="heroExclamationTriangle" size="16" class="mt-0.5 flex-shrink-0 text-red-600" />
+               <span class="text-sm text-red-700">This NFT is not burnable. Only NFTs with the Burnable flag can be burned.</span>
+          </div>
+          } -->
      </div>
 </div>

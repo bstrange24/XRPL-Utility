@@ -1,43 +1,55 @@
-<div class="space-y-8">
-     <!-- Asset Scale -->
-     <div class="space-y-2" style="margin-top: 0">
-          <label class="text-sm font-medium">Asset Scale</label>
-          <p class="text-xs text-gray-500">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
-          <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
+          <!-- Asset Scale -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Asset Scale</label>
+               <p class="text-xs text-gray-500">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
+               <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
 
-     <!-- Maximum Tokens -->
-     <div class="space-y-2" style="margin-top: 0.5rem">
-          <label class="text-sm font-medium">Maximum Tokens</label>
-          <p class="text-xs text-gray-500">Maximum tokens that can ever be issued (supply cap).</p>
-          <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
+          <!-- Maximum Tokens -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Maximum Tokens</label>
+               <p class="text-xs text-gray-500">Maximum tokens that can ever be issued (supply cap).</p>
+               <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
 
-     <!-- Transfer Fee -->
-     <div class="space-y-2" style="margin-top: 0.5rem">
-          <label class="text-sm font-medium">Transfer Fee</label>
-          <p class="text-xs text-gray-500">Fee for secondary sales (0-50,000 = 0%-50%). Only available if Can Transfer is enabled.</p>
-          <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="This will be a percentage" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
+          <!-- Transfer Fee -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">
+                    Transfer Fee
+                    <span class="ml-1 text-xs font-normal text-gray-500">(0-50,000 = 0%-50%)</span>
+               </label>
+               <p class="text-xs text-gray-500">Fee for secondary sales. Only available if Can Transfer is enabled.</p>
+               <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="Enter fee percentage (0-50000)" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
 
-     <!-- Token Metadata -->
-     <div class="space-y-2" style="margin-top: 0.5rem">
-          <label class="text-sm font-medium"
-               >Token Metadata
-               <span class="text-xs text-gray-500 font-normal">(XLS-89)</span>
-          </label>
-          <p class="text-xs text-gray-500 pb-3">JSON metadata for this MPT issuance (immutable after creation).</p>
+          <!-- Token Metadata -->
+          <div class="space-y-2">
+               <div class="flex items-center gap-1">
+                    <label class="block text-sm font-semibold text-gray-900">Token Metadata</label>
+                    <span class="text-xs text-gray-500">(XLS-89)</span>
+               </div>
+               <p class="text-xs text-gray-500">JSON metadata for this MPT issuance (immutable after creation).</p>
 
-          <app-json-editor [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
+               <app-json-editor [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
 
-          <!-- Metadata Info -->
-          <div class="flex items-center justify-between text-xs mt-2">
-               <span class="text-gray-500"> Metadata size: <strong>{{ viewModel.metadataByteLength() }} / 1024 bytes</strong> </span>
-               @if (viewModel.metadataByteLength() > 1024) {
-               <span class="text-red-600 font-medium">Exceeded limit – transaction will fail</span>
-               } @else if (viewModel.metadataByteLength() > 900) {
-               <span class="text-amber-600 font-medium">Approaching limit ({{ viewModel.metadataByteLength() }} bytes)</span>
-               }
+               <!-- Metadata Info -->
+               <div class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs">
+                    <span class="text-gray-600"> Metadata size: <strong class="font-semibold text-gray-900">{{ viewModel.metadataByteLength() }} / 1024 bytes</strong> </span>
+                    @if (viewModel.metadataByteLength() > 1024) {
+                    <span class="flex items-center gap-1 font-medium text-red-600">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         Exceeded limit – transaction will fail
+                    </span>
+                    } @else if (viewModel.metadataByteLength() > 900) {
+                    <span class="flex items-center gap-1 font-medium text-amber-600">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         Approaching limit ({{ viewModel.metadataByteLength() }} bytes)
+                    </span>
+                    }
+               </div>
           </div>
      </div>
 </div>

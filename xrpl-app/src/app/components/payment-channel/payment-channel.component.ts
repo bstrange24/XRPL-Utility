@@ -44,7 +44,7 @@ import { PaymentChannelFlagsComponent } from './tab/payment-channel-flags/paymen
 import { Subscription } from 'rxjs';
 import { PaymentChannelSignatureContextService } from '../../services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-account',

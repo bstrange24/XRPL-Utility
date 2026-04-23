@@ -28,11 +28,12 @@ import { WarningMessageComponent } from '../shared/ui-components/warning-message
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { SIGN_TRANSACTION_TAB_META, SIGN_TRANSACTION_TABS } from './constants/sign-transaction.ui';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { SIGN_TRANSACTION_TAB } from './constants/sign-transaction.constants';
 import { NgIcon } from '@ng-icons/core';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 @Component({
      selector: 'app-sign-transactions',
@@ -40,6 +41,7 @@ import { NgIcon } from '@ng-icons/core';
      imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
+     animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('300ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('250ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignTransactionsComponent extends WalletDestinationBase implements OnInit {
@@ -214,7 +216,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      }
 
      async generateTransactionJson(): Promise<void> {
-          await this.withPerf('generateTransactionJson', async () => {
+          await this.measure('generateTransactionJson', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
 
                try {
@@ -264,7 +266,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      }
 
      async signedTransaction(): Promise<void> {
-          await this.withPerf('signedTransaction', async () => {
+          await this.measure('signedTransaction', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
 

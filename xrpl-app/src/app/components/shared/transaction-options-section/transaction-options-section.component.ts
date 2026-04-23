@@ -84,6 +84,5 @@ export class TransactionOptionsSectionComponent {
      setCheckExpirationDate = (value: string): void => {
           this.checksStoreService.setField('checkExpirationDate', value);
           this.checksStoreService.setField('enableExpirationDate', true);
-          alert('Expiration date set to: ' + value);
      };
 }

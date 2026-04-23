@@ -1,23 +1,25 @@
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-     <!-- Destination -->
-     <div class="space-y-2">
-          @if (activeTab === 'issueCurrency') {
-          <label class="text-sm font-medium">{{ viewModel.formTitle() }}</label>
-          <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
-          } @else {
-          <label class="text-sm font-medium">Destination</label>
-          <p class="text-xs text-gray-500">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
-          }
+<div class="space-y-6">
+     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 transition-shadow hover:shadow-card">
+          <!-- Destination -->
+          <div class="space-y-2">
+               @if (activeTab === 'issueCurrency') {
+               <label class="block text-sm font-semibold text-gray-900">{{ viewModel.formTitle() }}</label>
+               <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
+               } @else {
+               <label class="block text-sm font-semibold text-gray-900">Destination</label>
+               <p class="text-xs text-gray-500">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
+               }
 
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
+               </div>
           </div>
-     </div>
 
-     <!-- Destination Tag -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Destination Tag</label>
-          <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-          <input type="text" placeholder="e.g. 123456" [ngModel]="destinationTag" (ngModelChange)="destinationTagChange.emit($event)" name="destinationTagField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          <!-- Destination Tag -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
+               <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+               <input type="text" placeholder="e.g. 123456" [ngModel]="destinationTag" (ngModelChange)="destinationTagChange.emit($event)" name="destinationTagField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
      </div>
 </div>

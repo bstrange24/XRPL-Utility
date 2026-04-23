@@ -37,9 +37,11 @@ export class ThemeService {
           if (this.darkMode.value) {
                document.documentElement.classList.add('dark');
                document.documentElement.style.colorScheme = 'dark';
+               console.log('Dark mode enabled'); // Debug
           } else {
                document.documentElement.classList.remove('dark');
                document.documentElement.style.colorScheme = 'light';
+               console.log('Light mode enabled'); // Debug
           }
      }
 

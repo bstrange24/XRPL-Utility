@@ -1,37 +1,39 @@
 <!-- Mode: Create New vs Update Existing -->
 <div class="space-y-6">
-     <!-- Domain Action Selector -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5">
-          <label class="block text-sm font-semibold text-gray-700 mb-3"> Domain Action </label>
+     <!-- Domain Action Selector Card -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+          <label class="mb-4 block text-sm font-semibold text-gray-900"> Domain Action </label>
 
-          <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex flex-col gap-3 sm:flex-row">
                <label class="flex-1 cursor-pointer">
                     <input type="radio" name="domainMode" value="create" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" class="peer sr-only" />
-                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-all">
-                         <div class="font-medium text-gray-900">Create New Domain</div>
-                         <div class="text-sm text-gray-500 mt-1">Create a brand new Permissioned Domain</div>
+                    <div class="rounded-2xl border border-gray-200 p-4 transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50">
+                         <div class="font-medium text-gray-900">➕ Create New Domain</div>
+                         <div class="mt-1 text-sm text-gray-500">Create a brand new Permissioned Domain</div>
                     </div>
                </label>
 
                <label class="flex-1 cursor-pointer" [class.opacity-50]="permissionedDomainViewModelService.domainItems().length === 0">
                     <input type="radio" name="domainMode" value="update" [(ngModel)]="permissionedDomainStoreService.domainMode" (ngModelChange)="onModeChange()" [disabled]="permissionedDomainViewModelService.domainItems().length === 0" class="peer sr-only" />
-                    <div class="peer-checked:border-blue-600 peer-checked:bg-blue-50 border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition-all">
-                         <div class="font-medium text-gray-900">Update Existing Domain</div>
-                         <div class="text-sm text-gray-500 mt-1">Replace credentials on an existing domain</div>
+                    <div class="rounded-2xl border border-gray-200 p-4 transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50">
+                         <div class="font-medium text-gray-900">🔄 Update Existing Domain</div>
+                         <div class="mt-1 text-sm text-gray-500">Replace credentials on an existing domain</div>
                          @if (permissionedDomainViewModelService.domainItems().length === 0) {
-                         <span class="text-amber-600 text-xs font-medium mt-2 block">(No domains available)</span>
+                         <div class="mt-2 text-xs font-medium text-amber-600">⚠️ No domains available</div>
                          }
                     </div>
                </label>
           </div>
+
+          <div class="mt-4 rounded-xl bg-blue-50 p-3 text-xs text-blue-700">@if (permissionedDomainStoreService.domainMode() === 'create') { ➕ You're creating a new Permissioned Domain } @else { 🔄 You're updating an existing domain — credentials will be replaced }</div>
      </div>
 
-     <!-- Update Mode: Domain Selector -->
+     <!-- Update Mode: Domain Selector (Conditional Card) -->
      @if (permissionedDomainStoreService.domainMode() === 'update') {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
-          <div>
-               <label class="block text-sm font-semibold text-gray-700 mb-2"> Select Domain to Update </label>
-               <p class="text-sm text-gray-600">Choose one of your existing Permissioned Domains. This will <strong>replace</strong> its AcceptedCredentials list.</p>
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+          <div class="mb-4">
+               <label class="mb-2 block text-sm font-semibold text-gray-900"> Select Domain to Update </label>
+               <p class="text-sm text-gray-600">Choose one of your existing Permissioned Domains. This will <strong class="font-semibold text-amber-600">replace</strong> its AcceptedCredentials list.</p>
           </div>
 
           <div class="h-[54px]">
@@ -40,33 +42,34 @@
 
           <!-- Selected Domain ID -->
           @if (permissionedDomainStoreService.domainId()) {
-          <div>
-               <label class="block text-sm font-semibold text-gray-700 mb-2"> Domain ID (Read-only) </label>
-               <input type="text" [value]="permissionedDomainStoreService.domainId()" readonly class="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono text-gray-500" />
+          <div class="mt-4">
+               <label class="mb-2 block text-sm font-semibold text-gray-900"> Domain ID</label>
+               <p class="text-sm text-gray-600 mb-2">Ledger hash of the Permissioned Domain to be updated.</p>
+               <input type="text" [value]="permissionedDomainStoreService.domainId()" readonly class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-500" />
           </div>
           }
      </div>
      }
 
-     <!-- Credentials Management -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5">
-          <h4 class="font-semibold text-gray-900 mb-5">Accepted Credentials</h4>
+     <!-- Credentials Management Card (The Complex One) -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+          <h4 class="mb-5 font-semibold text-gray-900">📜 Accepted Credentials</h4>
 
-          <!-- Add New Credential -->
-          <div class="border border-dashed border-gray-300 rounded-2xl p-5 mb-6">
-               <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+          <!-- Add New Credential (Dashed sub-card) -->
+          <div class="mb-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50/30 p-5">
+               <div class="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
                     <div class="md:col-span-5">
-                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Issuer</label>
+                         <label class="mb-1.5 block text-sm font-medium text-gray-700">Issuer</label>
                          <app-select-search-dropdown [items]="destinationItems()" [value]="newIssuerSelectedItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="onNewIssuerSelected($event)" placeholder="Select or enter issuer address"> </app-select-search-dropdown>
                     </div>
 
                     <div class="md:col-span-5">
-                         <label class="block text-sm font-medium text-gray-700 mb-1.5">Credential Type</label>
-                         <input type="text" [(ngModel)]="newCredentialType" name="newCredentialType" class="w-full border border-gray-200 focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-mono" placeholder="e.g. KYC-Level2" />
+                         <label class="mb-1.5 block text-sm font-medium text-gray-700">Credential Type</label>
+                         <input type="text" [(ngModel)]="newCredentialType" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. KYC-Level2" />
                     </div>
 
                     <div class="md:col-span-2">
-                         <button type="button" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-2xl py-3 transition-colors" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">Add Credential</button>
+                         <button type="button" class="w-full rounded-2xl bg-blue-600 py-3 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">+ Add Credential</button>
                     </div>
                </div>
           </div>
@@ -75,22 +78,22 @@
           <form [formGroup]="form">
                <div formArrayName="credentials" class="space-y-4">
                     @for (control of credentialsArray.controls; track $index; let i = $index) {
-                    <div [formGroupName]="i" class="border border-gray-200 rounded-2xl p-5 bg-gray-50">
-                         <div class="flex items-center justify-between mb-4">
+                    <div [formGroupName]="i" class="rounded-2xl border border-gray-200 bg-gray-50/50 p-5 transition-all hover:border-gray-300">
+                         <div class="mb-4 flex items-center justify-between">
                               <span class="font-medium text-gray-800">Credential {{ i + 1 }}</span>
-                              <button type="button" (click)="removeCredential(i)" class="text-red-500 hover:text-red-600 transition-colors">
+                              <button type="button" (click)="removeCredential(i)" class="text-red-400 transition-colors hover:text-red-600">
                                    <lucide-icon name="trash-2" size="18"></lucide-icon>
                               </button>
                          </div>
 
-                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                   <label class="block text-xs uppercase tracking-widest text-gray-500 mb-1">Issuer</label>
-                                   <input type="text" formControlName="issuer" class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono bg-white" />
+                                   <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500">Issuer</label>
+                                   <input type="text" readonly formControlName="issuer" class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                               </div>
                               <div>
-                                   <label class="block text-xs uppercase tracking-widest text-gray-500 mb-1">Credential Type</label>
-                                   <input type="text" formControlName="credentialType" class="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono bg-white" />
+                                   <label class="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500">Credential Type</label>
+                                   <input type="text" readonly formControlName="credentialType" class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                               </div>
                          </div>
                     </div>
@@ -98,19 +101,19 @@
                </div>
           </form>
 
-          <!-- Count -->
-          <div class="mt-6 flex justify-between items-center text-sm">
-               <span class="text-gray-600"> Added: <strong class="font-medium text-gray-900">{{ credentialsArray.length }} / 10</strong> </span>
+          <!-- Counter Footer -->
+          <div class="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-sm">
+               <span class="text-gray-600"> Added: <strong class="font-semibold text-gray-900">{{ credentialsArray.length }} / 10</strong> </span>
                @if (credentialsArray.length >= 10) {
-               <span class="text-amber-600 text-xs font-medium">Maximum reached</span>
+               <span class="flex items-center gap-1 text-xs font-medium text-amber-600"> ⚠️ Maximum reached </span>
                }
           </div>
      </div>
 
-     <!-- Update Warning -->
-     @if (permissionedDomainStoreService.domainMode() === 'update') {
-     <p class="mt-1">
+     <!-- Update Warning (Anchored at bottom) -->
+     <!-- @if (permissionedDomainStoreService.domainMode() === 'update') {
+     <div class="mt-2">
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-     </p>
-     }
+     </div>
+     } -->
 </div>

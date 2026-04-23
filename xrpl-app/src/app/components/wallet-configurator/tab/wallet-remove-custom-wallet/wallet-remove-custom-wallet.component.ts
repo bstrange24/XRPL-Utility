@@ -99,4 +99,11 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      protected clearInputFields(): void {
           return;
      }
+
+     confirmRemoveWallet(): void {
+          const walletAddress = this.walletsStoreService.selectedAddress();
+          if (confirm(`Are you sure you want to remove wallet ${walletAddress}? This action cannot be undone.`)) {
+               this.WalletConfiguratorComponent.removeCustomWallet();
+          }
+     }
 }

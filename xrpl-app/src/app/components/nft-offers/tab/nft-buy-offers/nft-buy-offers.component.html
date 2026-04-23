@@ -1,40 +1,42 @@
-<div class="space-y-8">
-     <!-- Currency + Amount -->
-     <app-currency-amount-form
-          [currencyItems]="checksTransactionViewModelService.currencyItems()"
-          [selectedCurrencyItem]="checksTransactionViewModelService.selectedCurrencyItem()"
-          [amount]="nftCreateStoreService.amount()"
-          [currency]="currencyStoreService.currency()"
-          [issuerItems]="checksTransactionViewModelService.issuerItems()"
-          [selectedIssuerItem]="checksTransactionViewModelService.selectedIssuerItem()"
-          [balance]="currencyStoreService.balance()"
-          (currencySelected)="currencySelected.emit($event)"
-          (amountChange)="utilsService.updateAmount($event)"
-          (issuerSelected)="issuerSelected.emit($event)"
-     >
-     </app-currency-amount-form>
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <!-- Currency + Amount -->
+          <app-currency-amount-form
+               [currencyItems]="checksTransactionViewModelService.currencyItems()"
+               [selectedCurrencyItem]="checksTransactionViewModelService.selectedCurrencyItem()"
+               [amount]="nftCreateStoreService.amount()"
+               [currency]="currencyStoreService.currency()"
+               [issuerItems]="checksTransactionViewModelService.issuerItems()"
+               [selectedIssuerItem]="checksTransactionViewModelService.selectedIssuerItem()"
+               [balance]="currencyStoreService.balance()"
+               (currencySelected)="currencySelected.emit($event)"
+               (amountChange)="utilsService.updateAmount($event)"
+               (issuerSelected)="issuerSelected.emit($event)"
+          >
+          </app-currency-amount-form>
 
-     <!-- NFT Token ID -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">NFT Token ID</label>
-          <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
-
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
-
-     <!-- Expiration + Owner -->
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Expiration -->
+          <!-- NFT Token ID -->
           <div class="space-y-2">
-               <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="NFT offer expiration when the offer will expire."> </app-xrpl-expiration-input>
+               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
           </div>
 
-          <!-- Owner -->
-          <div class="space-y-2">
-               <label class="text-sm font-medium">Owner</label>
-               <p class="text-xs text-gray-500">Owner of the NFT (usually your own address for sell offers).</p>
+          <!-- Expiration + Owner -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+               <!-- Expiration -->
+               <div class="rounded-2xl p-1 transition-shadow">
+                    <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="NFT offer expiration when the offer will expire."> </app-xrpl-expiration-input>
+               </div>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               <!-- Owner -->
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">Owner</label>
+                    <p class="text-xs text-gray-500">Owner of the NFT (usually your own address for sell offers).</p>
+
+                    <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               </div>
           </div>
      </div>
 </div>

@@ -1,9 +1,11 @@
-<div class="space-y-6">
-     <!-- Number of Tickets -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Number of Tickets to Create</label>
-          <p class="text-xs text-gray-500">Number of Tickets to create for the selected account.</p>
+<div class="space-y-2">
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+          <h4 class="mb-5 font-semibold text-gray-900">Ticket Details</h4>
 
-          <input type="number" [ngModel]="xrplTxOptionsStore.ticketCountField()" (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)" placeholder="1 - 250 (max per account)" min="1" max="250" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Number of Tickets to Create</label>
+               <p class="text-xs text-gray-500">Number of Tickets to create for the selected account.</p>
+               <input type="number" [ngModel]="xrplTxOptionsStore.ticketCountField()" (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)" placeholder="1 - 250 (max per account)" min="1" max="250" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
      </div>
 </div>

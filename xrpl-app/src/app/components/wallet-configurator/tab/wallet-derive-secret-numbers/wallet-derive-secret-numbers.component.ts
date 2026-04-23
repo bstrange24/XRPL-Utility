@@ -7,11 +7,12 @@ import { WalletsStoreService } from '../../../../services/wallets/wallets-store/
 import { WalletsUtilService } from '../../../../services/wallets/wallets-util/wallets-util.service';
 import { WalletsViewModelService } from '../../../../services/wallets/wallets-view-model/wallets-view-model.service';
 import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-wallet-derive-secret-numbers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, NgIcon],
      templateUrl: './wallet-derive-secret-numbers.component.html',
      styleUrl: './wallet-derive-secret-numbers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

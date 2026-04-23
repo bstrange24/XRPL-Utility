@@ -1,4 +1,4 @@
-import { Component, inject, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, output, ChangeDetectionStrategy, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,6 +7,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountChangesStoreService } from '../../../../services/account-balance-changes/account-changes-store/account-changes-store.service';
 import { AccountChangesOrchestratorService } from '../../../../services/account-balance-changes/account-changes-orchestrator/account-changes-orchestrator.service';
+import flatpickr from 'flatpickr';
 
 @Component({
      selector: 'app-account-changes-filters',
@@ -19,10 +20,53 @@ import { AccountChangesOrchestratorService } from '../../../../services/account-
 export class AccountChangesFiltersComponent {
      public readonly store = inject(AccountChangesStoreService);
      public readonly orchestrator = inject(AccountChangesOrchestratorService);
+     @ViewChild('rangeInput', { static: true }) rangeInput!: ElementRef;
+     private rangePicker: any;
 
      readonly refresh = output<void>();
 
      private searchTimer: any;
+
+     ngAfterViewInit() {
+          this.rangePicker = flatpickr(this.rangeInput.nativeElement, {
+               mode: 'range',
+               dateFormat: 'Y-m-d',
+               allowInput: false,
+               clickOpens: true,
+               appendTo: document.body,
+
+               onChange: (selectedDates: Date[]) => {
+                    const [start, end] = selectedDates;
+
+                    this.setStartDate(start ? this.formatDate(start) : null);
+                    this.setEndDate(end ? this.formatDate(end) : null);
+               },
+          });
+
+          // Initialize with existing store values
+          const range = this.store.dateRange();
+          if (range.start || range.end) {
+               this.rangePicker.setDate([range.start, range.end], false);
+          }
+     }
+
+     private formatDate(date: Date): string {
+          const y = date.getFullYear();
+          const m = String(date.getMonth() + 1).padStart(2, '0');
+          const d = String(date.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+     }
+
+     clearDateFilter() {
+          this.setStartDate(null);
+          this.setEndDate(null);
+
+          if (this.rangePicker) {
+               this.rangePicker.clear();
+          }
+
+          this.store.setField('dateRange', { start: null, end: null });
+     }
 
      onSearchInput(value: string): void {
           clearTimeout(this.searchTimer);
@@ -35,9 +79,9 @@ export class AccountChangesFiltersComponent {
           this.store.setField('filterValue', '');
      }
 
-     clearDateFilter(): void {
-          this.store.setField('dateRange', { start: null, end: null });
-     }
+     // clearDateFilter(): void {
+     //      this.store.setField('dateRange', { start: null, end: null });
+     // }
 
      clearAll(): void {
           this.clearFilter();

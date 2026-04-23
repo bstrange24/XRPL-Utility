@@ -33,7 +33,7 @@ import { EscrowTransactionViewModelService } from '../../../services/escrow/escr
 import { MptStoreService } from '../../../services/mpt/mpt-store/mpt-store.service';
 import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orchestrator/escrow-orchestrator.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../../services/utils/right-panel/right-panel.service';
 import { EscrowRequirementsInfoComponent } from '../ui-components/escrow-requirements-info/escrow-requirements-info.component';
 
 @Component({
@@ -286,6 +286,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                          this.trustlineCurrencyService.selectCurrency(currencyValue);
                     }
 
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Failed to get escrows:', error);

@@ -17,7 +17,7 @@ import { AcccountDataService } from './services/account-data/acccount-data.servi
 import { StorageService } from './services/shared/local-storage/storage.service';
 import { TxEnvironmentService } from './services/transaction-environment/tx-environment.service';
 import { CopyUtilService } from './services/utils/copy-util/copy-util.service';
-import { RightPanelService } from './services/right-panel/right-panel.service';
+import { RightPanelService } from './services/utils/right-panel/right-panel.service';
 import { LucideAngularModule } from 'lucide-angular';
 
 @Component({

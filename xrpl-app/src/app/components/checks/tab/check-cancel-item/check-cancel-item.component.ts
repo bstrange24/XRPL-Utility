@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -17,11 +17,10 @@ import { CancelCheckItem } from '../../constants/checks.types';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckCancelItemComponent {
+     readonly txUiService = inject(TransactionUiService);
+     readonly utilsService = inject(UtilsService);
+     readonly copyUtilService = inject(CopyUtilService);
      @Input({ required: true }) check!: CancelCheckItem;
 
-     constructor(
-          public txUiService: TransactionUiService,
-          public utilsService: UtilsService,
-          public copyUtilService: CopyUtilService
-     ) {}
+     constructor() {}
 }

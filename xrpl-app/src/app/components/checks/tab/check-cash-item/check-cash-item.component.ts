@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -17,11 +17,10 @@ import { CashCheckItem } from '../../constants/checks.types';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CheckCashItemComponent {
+     readonly txUiService = inject(TransactionUiService);
+     readonly utilsService = inject(UtilsService);
+     readonly copyUtilService = inject(CopyUtilService);
      @Input({ required: true }) check!: CashCheckItem;
 
-     constructor(
-          public txUiService: TransactionUiService,
-          public utilsService: UtilsService,
-          public copyUtilService: CopyUtilService
-     ) {}
+     constructor() {}
 }

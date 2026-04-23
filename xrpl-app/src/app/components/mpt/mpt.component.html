@@ -48,7 +48,7 @@
                <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt', 'unauthorizeMpt', 'sendMpt', 'lockMpt', 'unlockMpt', 'clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Action -->
                     @if (tab === 'createMpt') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.createMptButtonLabel() }}</button>

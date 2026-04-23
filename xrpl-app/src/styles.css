@@ -1,6 +1,6 @@
 /* Import Angular Material Theme */
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
-
+@import "flatpickr/dist/flatpickr.min.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,7 +34,52 @@ body {
 }
 
 /* ============================================
-   DARK MODE BASE STYLES
+   THEME VARIABLES
+   ============================================ */
+:root {
+     /* Light theme (default) */
+     --bg-primary: #ffffff;
+     --bg-secondary: #f9fafb;
+     --text-primary: #111827;
+     --text-secondary: #6b7280;
+     --border-color: #e5e7eb;
+     --card-bg: #ffffff;
+}
+
+.dark {
+     /* Dark theme */
+     --bg-primary: #1f2937;
+     --bg-secondary: #111827;
+     --text-primary: #f3f4f6;
+     --text-secondary: #9ca3af;
+     --border-color: #374151;
+     --card-bg: #1f2937;
+}
+
+/* Apply variables to Tailwind classes */
+.bg-white {
+     background-color: var(--bg-primary);
+}
+
+.bg-gray-50 {
+     background-color: var(--bg-secondary);
+}
+
+.text-gray-900 {
+     color: var(--text-primary);
+}
+
+.text-gray-500,
+.text-gray-600 {
+     color: var(--text-secondary);
+}
+
+.border-gray-200 {
+     border-color: var(--border-color);
+}
+
+/* ============================================
+   DARK MODE BASE STYLES - CLEAN VERSION
    ============================================ */
 .dark {
      background-color: #1a1c21;
@@ -45,33 +90,57 @@ body {
      background-color: #1a1c21;
 }
 
-/* Dark mode overrides for common Tailwind classes */
+/* Dark mode overrides - without !important for better Tailwind compatibility */
 .dark .bg-white {
      background-color: #1f2937 !important;
 }
 
+.dark .bg-gray-50 {
+     background-color: #111827;
+}
+
 .dark .border-gray-100 {
-     border-color: #374151 !important;
+     border-color: #374151;
+}
+
+.dark .border-gray-200 {
+     border-color: #374151;
+}
+
+.dark .border-gray-300 {
+     border-color: #4b5563;
 }
 
 .dark .text-gray-900 {
-     color: #f3f4f6 !important;
+     color: #f3f4f6;
+}
+
+.dark .text-gray-800 {
+     color: #e5e7eb;
+}
+
+.dark .text-gray-700 {
+     color: #d1d5db;
 }
 
 .dark .text-gray-600,
 .dark .text-gray-500 {
-     color: #9ca3af !important;
+     color: #9ca3af;
 }
 
-.dark .bg-gray-50 {
-     background-color: #111827 !important;
+.dark .text-gray-400 {
+     color: #9ca3af;
 }
 
 .dark .hover\:bg-gray-50:hover {
-     background-color: #1f2937 !important;
+     background-color: #1f2937;
 }
 
-/* Form inputs dark mode */
+.dark .hover\:bg-gray-100:hover {
+     background-color: #374151;
+}
+
+/* Form inputs dark mode - without !important */
 .dark input,
 .dark textarea,
 .dark select {
@@ -87,6 +156,27 @@ body {
 
 .dark label {
      color: #d1d5db;
+}
+
+/* Override specific text colors for green/blue/red */
+.dark .text-green-600 {
+     color: #4ade80;
+}
+
+.dark .text-blue-600 {
+     color: #60a5fa;
+}
+
+.dark .text-red-600 {
+     color: #f87171;
+}
+
+.dark .text-purple-600 {
+     color: #c084fc;
+}
+
+.dark .text-amber-600 {
+     color: #fbbf24;
 }
 
 /* ============================================
@@ -460,4 +550,35 @@ pre code[class*="language-"] {
      .lg\:col-span-19 {
           padding-right: 1.5rem !important;
      }
+}
+
+.hover\:shadow-card:hover {
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+     transition: box-shadow 0.2s ease;
+}
+
+.scroll-container::-webkit-scrollbar {
+     width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+     background: #f1f1f1;
+     border-radius: 10px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+     background: #c1c1c1;
+     border-radius: 10px;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+     background: #a8a8a8;
+}
+
+.dark .scroll-container::-webkit-scrollbar-track {
+     background: #2d2d2d;
+}
+
+.dark .scroll-container::-webkit-scrollbar-thumb {
+     background: #555;
 }

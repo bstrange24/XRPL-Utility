@@ -1,39 +1,42 @@
 @if (trustlineViewModelService.activeTab() === 'setTrustline' || trustlineViewModelService.activeTab() === 'removeTrustline') {
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <!-- Header -->
+     <div class="mb-4 flex items-center gap-2">
+          <lucide-icon name="flag" size="18" class="text-gray-700" />
+          <span class="text-sm font-semibold text-gray-900">Trustline Flags</span>
+     </div>
 
-<!-- Header -->
-<div class="flex items-center gap-2 mb-3">
-     <lucide-icon name="flag" size="18" class="text-gray-700" />
-     <span class="text-base font-semibold text-gray-900">Trustline Flags</span>
-</div>
+     <div class="space-y-3">
+          @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) { @let isEnabled = trustlineCurrencyService.flags()[flag.key]; @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
 
-<div class="space-y-2">
-     @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) { @let isEnabled = trustlineCurrencyService.flags()[flag.key]; @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
+          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="isEnabled && !isRequired" [class.bg-green-50]="isEnabled && !isRequired" [class.border-amber-300]="isRequired" [class.bg-amber-50]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
+               <div class="flex items-start gap-3">
+                    <input type="checkbox" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
 
-     <button type="button" class="w-full flex items-start gap-3 p-3 rounded-2xl border transition-all hover:bg-gray-50" [class.border-green-300]="isEnabled" [class.bg-green-50]="isEnabled" [class.border-amber-300]="isRequired" [class.bg-amber-50]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
-          <input type="checkbox" class="mt-1 accent-green-600 cursor-pointer" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
-
-          <div class="flex-1 text-left">
-               <div class="flex items-center justify-between">
-                    <span class="font-medium">{{ flag.title }}</span>
-                    @if (isRequired) {
-                    <span class="text-xs px-2.5 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">Required</span>
-                    }
+                    <div class="flex-1">
+                         <div class="flex flex-wrap items-center justify-between gap-2">
+                              <span class="text-sm font-medium text-gray-900">{{ flag.title }}</span>
+                              @if (isRequired) {
+                              <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">Required</span>
+                              }
+                         </div>
+                         <div class="mt-0.5 font-mono text-xs text-gray-500">{{ flag.hex }}</div>
+                         <div class="mt-0.5 text-xs text-gray-600">{{ flag.desc }}</div>
+                    </div>
                </div>
-               <div class="text-xs text-gray-500 font-mono mt-0.5">{{ flag.hex }}</div>
-               <div class="text-xs text-gray-600 mt-0.5">{{ flag.desc }}</div>
           </div>
-     </button>
-     }
-</div>
+          }
+     </div>
 
-<!-- Total Flags -->
-<div class="mt-4 pt-3 border-t border-gray-100">
-     <div class="flex justify-between items-center bg-gray-50 rounded-xl px-3 py-2">
-          <span class="text-xs font-medium text-gray-600">Total Flags Value</span>
-          <span class="font-mono font-semibold text-sm text-gray-800">
-               {{ trustlineCurrencyService.totalFlagsValue() }}
-               <span class="text-gray-400 text-xs">({{ trustlineCurrencyService.totalFlagsHex() }})</span>
-          </span>
+     <!-- Total Flags -->
+     <div class="mt-5 border-t border-gray-100 pt-4">
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2">
+               <span class="text-xs font-medium text-gray-600">Total Flags Value</span>
+               <span class="font-mono text-sm font-semibold text-gray-800">
+                    {{ trustlineCurrencyService.totalFlagsValue() }}
+                    <span class="text-xs text-gray-400">({{ trustlineCurrencyService.totalFlagsHex() }})</span>
+               </span>
+          </div>
      </div>
 </div>
 }

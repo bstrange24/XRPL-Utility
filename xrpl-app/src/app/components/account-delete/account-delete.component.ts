@@ -34,7 +34,7 @@ import { AccountDeleteSummaryComponent } from './ui-components/summary/account-d
 import { AccountDeleteConfig } from './constants/account-delete.types';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-account-delete',
@@ -115,6 +115,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getting account details:', error);

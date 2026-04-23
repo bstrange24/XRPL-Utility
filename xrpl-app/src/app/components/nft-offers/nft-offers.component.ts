@@ -43,7 +43,7 @@ import { NftCancelOffersComponent } from './tab/nft-cancel-offers/nft-cancel-off
 import { NftSellComponent } from './tab/nft-sell/nft-sell.component';
 import { NftOffersOrchestratorService } from '../../services/nft/nft-offers-orchestrator/nft-offers-orchestrator.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-nft-offers',

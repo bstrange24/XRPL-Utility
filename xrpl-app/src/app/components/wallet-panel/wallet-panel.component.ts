@@ -16,6 +16,8 @@ import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { NgIcon } from '@ng-icons/core';
+import { ThemeService } from '../../services/utils/theme/theme.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
      selector: 'app-wallet-panel',
@@ -37,6 +39,8 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletConfiguratorOrchestratorService = inject(WalletConfiguratorOrchestratorService);
+     public readonly themeService = inject(ThemeService);
+     isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
      ngOnInit() {
           // Initialize with selected wallet expanded

@@ -1,13 +1,15 @@
-<div class="space-y-2">
-     @if (activeTab === 'issueCurrency') {
-     <label class="text-sm font-medium">{{ viewModel.formTitle() }}</label>
-     <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
-     } @else {
-     <label class="text-sm font-medium">Token Holder</label>
-     <p class="text-xs text-gray-500">The unique address of the account holding the tokens. Select destination from the dropdown or manually enter a new destination.</p>
-     }
+<div class="rounded-2xl bg-white p-1 transition-shadow hover:shadow-card">
+     <div class="space-y-2">
+          @if (activeTab === 'issueCurrency') {
+          <label class="block text-sm font-semibold text-gray-900">{{ viewModel.formTitle() }}</label>
+          <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
+          } @else {
+          <label class="block text-sm font-semibold text-gray-900">Token Holder</label>
+          <p class="text-xs text-gray-500">The unique address of the account holding the tokens. Select destination from the dropdown or manually enter a new destination.</p>
+          }
 
-     <div class="h-[54px]">
-          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
+          <div class="h-[54px]">
+               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
+          </div>
      </div>
 </div>

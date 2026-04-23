@@ -45,9 +45,6 @@
                <app-regular-key [canSubmit]="canSubmit()" (performAction)="performAction($event)"> </app-regular-key>
                }
 
-               <!-- Transaction Options -->
-               <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-
                <!-- Execution Time -->
                <div class="text-sm text-gray-500 mt-3">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>

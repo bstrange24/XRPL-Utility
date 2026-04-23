@@ -9,15 +9,19 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <app-amm-summary></app-amm-summary>
+          <div class="mt-4">
+               <app-amm-summary></app-amm-summary>
+          </div>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          <div class="mt-4">
+               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          </div>
           }
 
           <!-- Form -->
-          <form #theForm="ngForm">
+          <form #theForm="ngForm" class="mt-4">
                <!-- Dynamic Form Fields -->
                <app-amm-fields
                     [tab]="tab"
@@ -36,19 +40,19 @@
                </app-amm-fields>
 
                <!-- Transaction Options -->
-               <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+               <div class="mt-6">
+                    <app-transaction-options [showWhenTab]="['createAMM', 'depositToAMM', 'withdrawalFromAMM', 'clawbackFromAMM', 'swapViaAMM', 'deleteAMM']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+               </div>
 
                <!-- Action Buttons -->
-               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button type="button" [class]="ammUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ammUtilsService.actionButtonLabel() }}</button>
 
-                    <div class="flex flex-wrap items-center justify-end gap-2">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-                    </div>
+                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                </div>
 
                <!-- Execution Time -->
-               <div class="text-sm text-gray-500 mt-3">
+               <div class="mt-3 text-sm text-gray-500">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 

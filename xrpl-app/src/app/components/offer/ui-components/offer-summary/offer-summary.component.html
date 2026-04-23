@@ -102,6 +102,18 @@
                }
           </ul>
      </div>
-     }
+     }@else {@if (info.offerCount <= 0) { @if (view.activeTab() === 'createOffer' || view.activeTab() === 'cancelOffer') {
+     <!-- Empty State (when no offers) -->
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
+          </div>
+          @if (view.activeTab() === 'createOffer') {
+          <p class="text-sm text-gray-500">This wallet has not created any Offers yet.</p>
+          } @else if(view.activeTab() === 'cancelOffer') {
+          <p class="text-sm text-gray-500">This wallet has no Offers to cancel.</p>
+          }
+     </div>
+     } }}
 </div>
 }

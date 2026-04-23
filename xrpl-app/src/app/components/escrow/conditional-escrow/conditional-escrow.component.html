@@ -32,7 +32,7 @@
                <app-transaction-options [showWhenTab]="['createEscrow', 'finishEscrow', 'cancelEscrow']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Actions -->
                     @if (tab === 'createEscrow') {
                     <div class="flex flex-col sm:flex-row gap-3">

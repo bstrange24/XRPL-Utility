@@ -85,6 +85,24 @@
                }
           </ul>
      </div>
-     }
+     }@else { @if (info.channelCount <= 0) {
+     <!-- Empty State (when no payment channels) -->
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
+          </div>
+          @if (viewModel.activeTab() === 'createPaymentChannel') {
+          <p class="text-sm text-gray-500">This wallet has not created any Payment Channels yet.</p>
+          } @else if(viewModel.activeTab() === 'fundPaymentChannel') {
+          <p class="text-sm text-gray-500">This wallet has no Payment Channels to fund.</p>
+          } @else if(viewModel.activeTab() === 'claimPaymentChannel') {
+          <p class="text-sm text-gray-500">This wallet has no Payment Channels to claim.</p>
+          } @else if(viewModel.activeTab() === 'renewPaymentChannel') {
+          <p class="text-sm text-gray-500">This wallet has no Payment Channels to renew.</p>
+          }@else {
+          <p class="text-sm text-gray-500">This wallet has no Payment Channels to close.</p>
+          }
+     </div>
+     }}
 </div>
 }

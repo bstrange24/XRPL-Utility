@@ -23,6 +23,9 @@ import { AccountChangesOrchestratorService } from '../../services/account-balanc
 import { AccountChangesStoreService } from '../../services/account-balance-changes/account-changes-store/account-changes-store.service';
 import { AccountChangesViewModelService } from '../../services/account-balance-changes/account-changes-view-model/account-changes-view-model.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
+import { ThemeService } from '../../services/utils/theme/theme.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
      selector: 'app-account-changes',
@@ -37,6 +40,8 @@ export class AccountChangesComponent extends WalletDestinationBase implements On
      public readonly store = inject(AccountChangesStoreService);
      public readonly orchestrator = inject(AccountChangesOrchestratorService);
      public readonly viewModel = inject(AccountChangesViewModelService);
+     public readonly themeService = inject(ThemeService);
+     isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

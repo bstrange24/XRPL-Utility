@@ -1,4 +1,4 @@
-<div class="space-y-8">
+<div class="space-y-6">
      @if (layout === 'split') {
      <!-- Split Layout (one field per row) -->
      <div class="space-y-6">
@@ -9,12 +9,12 @@
      </div>
      } @else {
      <!-- Paired Layout (two fields per row) -->
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
           <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
      </div>
 
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
           <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
      </div>
@@ -22,10 +22,10 @@
 </div>
 
 <!-- ==================== Templates ==================== -->
-
 <ng-template #currencyTpl>
      <div class="space-y-2">
-          <label class="text-sm font-medium">Currency Code</label>
+          <h4 class="mb-5 font-semibold text-gray-900">Trustline Details</h4>
+          <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
           <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token.</p>
 
           <div class="h-[54px]">
@@ -36,7 +36,8 @@
 
 <ng-template #issuerTpl>
      <div class="space-y-2">
-          <label class="text-sm font-medium">Issuer</label>
+          <h4 class="mb-5 font-semibold text-gray-900">Issuer Details</h4>
+          <label class="block text-sm font-semibold text-gray-900">Issuer</label>
           <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
 
           <div class="h-[54px]">
@@ -47,22 +48,22 @@
 
 <ng-template #amountTpl>
      <div class="space-y-2">
-          <label class="text-sm font-medium">{{ limitLabel }}</label>
+          <label class="block text-sm font-semibold text-gray-900">{{ limitLabel }}</label>
 
           <p class="text-xs text-gray-500">
                @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }
           </p>
 
-          <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
+          <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" [class.focus:border-green-500]="!isReadOnly" />
      </div>
 </ng-template>
 
 <ng-template #balanceTpl>
      <div class="space-y-2">
-          <label class="text-sm font-medium">Currency Balance</label>
+          <label class="block text-sm font-semibold text-gray-900">Currency Balance</label>
 
           <p class="text-xs text-gray-500">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
 
-          <input type="text" [value]="currencyBalance" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+          <input type="text" [value]="currencyBalance" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
      </div>
 </ng-template>

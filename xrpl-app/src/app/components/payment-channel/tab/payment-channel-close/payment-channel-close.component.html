@@ -1,25 +1,29 @@
 <div class="space-y-6">
-     <!-- Select Payment Channel to Close -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium text-gray-700">Select Payment Channel to Close</label>
-          <p class="text-xs text-gray-500">Select an existing payment channel to close.</p>
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+          <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
+          <!-- Select Payment Channel to Close -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Select Payment Channel to Close</label>
+               <p class="text-xs text-gray-500">Select an existing payment channel to close.</p>
+
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+               </div>
           </div>
-     </div>
 
-     <!-- Expired Warning -->
-     @if ((viewModel.activeTab() === 'claimPaymentChannel' && viewModel.selectedIsExpired()) || (viewModel.activeTab() === 'closePaymentChannel' && viewModel.selectedIsExpired())) {
-     <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
-          <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600 flex-shrink-0" />
-          <span class="text-sm text-red-700">This selected payment channel has expired.</span>
-     </div>
-     }
+          <!-- Expired Warning -->
+          @if ((viewModel.activeTab() === 'claimPaymentChannel' && viewModel.selectedIsExpired()) || (viewModel.activeTab() === 'closePaymentChannel' && viewModel.selectedIsExpired())) {
+          <div class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+               <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-red-600" />
+               <span class="text-sm text-red-700">This selected payment channel has expired.</span>
+          </div>
+          }
 
-     <!-- Channel ID -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium text-gray-700">Channel ID</label>
-          <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
-          <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
+          <!-- Channel ID -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Channel ID</label>
+               <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
+               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
      </div>
 </div>

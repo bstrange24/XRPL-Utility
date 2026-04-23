@@ -1,86 +1,86 @@
-<div class="space-y-6">
-     <!-- Header -->
-     <div class="flex items-center gap-3">
-          <lucide-icon name="flag" size="20" class="text-gray-700" />
-          <span class="text-base font-semibold text-gray-900">Payment Channel Flags</span>
-     </div>
-
-     <div class="space-y-3">
-          <!-- Claim & Close Flag -->
-          @if (viewModel.activeTab() === 'claimPaymentChannel') {
-          <button type="button" class="w-full flex items-start gap-4 p-5 rounded-2xl border border-gray-200 transition-all hover:bg-gray-50" [class.border-green-300]="paymentChannelStoreService.flags.claimAndClose()" [class.bg-green-50]="paymentChannelStoreService.flags.claimAndClose()" [disabled]="!paymentChannelStoreService.isCreatorMode()" (click)="paymentChannelUtilService.toggleFlag('claimAndClose')">
-               <input type="checkbox" [checked]="paymentChannelStoreService.flags.claimAndClose()" class="mt-1 accent-green-600 cursor-pointer" [disabled]="!paymentChannelStoreService.isCreatorMode()" />
-
-               <div class="flex-1 text-left">
-                    <div class="flex items-center justify-between">
-                         <span class="font-medium">Claim and Close (tfClose)</span>
-                         @if (!paymentChannelStoreService.isCreatorMode()) {
-                         <span class="text-xs px-2.5 py-0.5 bg-gray-200 text-gray-500 rounded-full">Locked</span>
-                         }
-                    </div>
-                    <div class="text-xs text-gray-500 font-mono mt-0.5">0x00020000</div>
-
-                    <div class="text-sm text-gray-600 mt-3">
-                         @if (paymentChannelStoreService.isCreatorMode()) { Include this flag to allow the recipient to close the channel immediately after claiming.
-                         <strong class="block mt-1">Only enable if you want the channel to close after claim.</strong>
-                         } @else { @if (paymentChannelStoreService.flags.claimAndClose()) { The creator has authorized you to close this channel after claiming.
-                         <strong class="block mt-1 text-green-600">The channel will close automatically when you claim.</strong>
-                         } @else { This channel will remain open after claiming.
-                         <strong class="block mt-1">Ask the creator to include tfClose if you want it to close.</strong>
-                         } }
-                    </div>
-               </div>
-          </button>
-          }
-
-          <!-- Additional Info for Recipient -->
-          @if (!paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.flags.claimAndClose()) {
-          <div class="flex items-center gap-1 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-700">
-               <ng-icon name="heroCheckCircle" size="18" />
-               <span class="text-sm pl-2"
-                    >The creator has authorized channel <br />
-                    closure after claim.</span
-               >
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-5">
+          <!-- Header -->
+          <div class="flex items-center gap-2">
+               <lucide-icon name="flag" size="18" class="text-gray-700" />
+               <span class="text-sm font-semibold text-gray-900">Payment Channel Flags</span>
           </div>
-          } @if (!paymentChannelStoreService.isCreatorMode() && !paymentChannelStoreService.flags.claimAndClose() && paymentChannelStoreService.channelClaimSignatureField()) {
-          <div class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-amber-700">
-               <ng-icon name="heroInformationCircle" size="20" />
-               <span>This signature does not include the tfClose flag. The channel will remain open after claiming.</span>
-          </div>
-          }
 
-          <!-- Renew Flag -->
-          @if (viewModel.activeTab() === 'renewPaymentChannel') {
-          <div class="p-5 rounded-2xl border border-gray-200 bg-gray-50">
-               <div class="flex items-center justify-between">
-                    <div>
-                         <div class="font-medium">Renew (reset expiration)</div>
-                         <div class="text-xs text-gray-500 font-mono">0x00010000</div>
-                    </div>
-                    <span class="text-xs px-3 py-1 bg-gray-200 text-gray-500 rounded-full">Locked</span>
-               </div>
-               <div class="text-sm text-gray-600 mt-3">
-                    Resets the channel expiration to (current ledger close time + settle delay).
-                    <strong>Only available as the channel creator.</strong>
-               </div>
-          </div>
-          }
+          <div class="space-y-3">
+               <!-- Claim & Close Flag -->
+               @if (viewModel.activeTab() === 'claimPaymentChannel') {
+               <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="paymentChannelStoreService.flags.claimAndClose()" [class.bg-green-50]="paymentChannelStoreService.flags.claimAndClose()" [class.opacity-60]="!paymentChannelStoreService.isCreatorMode()" (click)="paymentChannelStoreService.isCreatorMode() && paymentChannelUtilService.toggleFlag('claimAndClose')">
+                    <div class="flex items-start gap-3">
+                         <input type="checkbox" [checked]="paymentChannelStoreService.flags.claimAndClose()" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" [disabled]="!paymentChannelStoreService.isCreatorMode()" (click)="$event.stopPropagation()" />
 
-          <!-- Close Flag -->
-          @if (viewModel.activeTab() === 'closePaymentChannel') {
-          <div class="p-5 rounded-2xl border border-gray-200 bg-gray-50">
-               <div class="flex items-center justify-between">
-                    <div>
-                         <div class="font-medium">Close Channel</div>
-                         <div class="text-xs text-gray-500 font-mono">0x00020000</div>
+                         <div class="flex-1">
+                              <div class="flex flex-wrap items-center justify-between gap-2">
+                                   <span class="text-sm font-medium text-gray-900">Claim and Close (tfClose)</span>
+                                   @if (!paymentChannelStoreService.isCreatorMode()) {
+                                   <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-500">Locked</span>
+                                   }
+                              </div>
+                              <div class="mt-0.5 font-mono text-xs text-gray-500">0x00020000</div>
+
+                              <div class="mt-2 text-xs text-gray-600">
+                                   @if (paymentChannelStoreService.isCreatorMode()) { Include this flag to allow the recipient to close the channel immediately after claiming.
+                                   <p class="mt-1 font-medium text-amber-600">Only enable if you want the channel to close after claim.</p>
+                                   } @else { @if (paymentChannelStoreService.flags.claimAndClose()) { The creator has authorized you to close this channel after claiming.
+                                   <p class="mt-1 font-medium text-green-600">The channel will close automatically when you claim.</p>
+                                   } @else { This channel will remain open after claiming.
+                                   <p class="mt-1 font-medium text-gray-500">Ask the creator to include tfClose if you want it to close.</p>
+                                   } }
+                              </div>
+                         </div>
                     </div>
-                    <span class="text-xs px-3 py-1 bg-gray-200 text-gray-500 rounded-full">Locked</span>
                </div>
-               <div class="text-sm text-gray-600 mt-3">
-                    Closes the payment channel after the final claim.
-                    <strong>Only available as the channel creator.</strong>
+
+               <!-- Additional Info for Recipient -->
+               @if (!paymentChannelStoreService.isCreatorMode() && paymentChannelStoreService.flags.claimAndClose()) {
+               <div class="flex items-center gap-2 rounded-2xl border border-green-200 bg-green-50 p-3">
+                    <ng-icon name="heroCheckCircle" size="16" class="flex-shrink-0 text-green-600" />
+                    <p class="text-sm text-green-800">The creator has authorized channel closure after claim.</p>
                </div>
+               } @if (!paymentChannelStoreService.isCreatorMode() && !paymentChannelStoreService.flags.claimAndClose() && paymentChannelStoreService.channelClaimSignatureField()) {
+               <div class="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
+                    <ng-icon name="heroInformationCircle" size="16" class="flex-shrink-0 text-amber-600" />
+                    <p class="text-sm text-amber-800">This signature does not include the tfClose flag. The channel will remain open after claiming.</p>
+               </div>
+               } }
+
+               <!-- Renew Flag -->
+               @if (viewModel.activeTab() === 'renewPaymentChannel') {
+               <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                         <div>
+                              <span class="text-sm font-medium text-gray-900">Renew (reset expiration)</span>
+                              <div class="mt-0.5 font-mono text-xs text-gray-500">0x00010000</div>
+                         </div>
+                         <span class="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600">Locked</span>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-600">
+                         Resets the channel expiration to (current ledger close time + settle delay).
+                         <strong class="mt-1 block font-medium text-gray-700">Only available as the channel creator.</strong>
+                    </p>
+               </div>
+               }
+
+               <!-- Close Flag -->
+               @if (viewModel.activeTab() === 'closePaymentChannel') {
+               <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 opacity-60">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                         <div>
+                              <span class="text-sm font-medium text-gray-900">Close Channel</span>
+                              <div class="mt-0.5 font-mono text-xs text-gray-500">0x00020000</div>
+                         </div>
+                         <span class="rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-600">Locked</span>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-600">
+                         Closes the payment channel after the final claim.
+                         <strong class="mt-1 block font-medium text-gray-700">Only available as the channel creator.</strong>
+                    </p>
+               </div>
+               }
           </div>
-          }
      </div>
 </div>

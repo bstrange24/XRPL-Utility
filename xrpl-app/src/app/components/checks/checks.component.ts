@@ -46,7 +46,7 @@ import { XrplTransactionOrchestratorService } from '../../services/xrpl-transact
 import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
 import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-checks',
@@ -200,6 +200,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                          this.trustlineCurrencyService.selectCurrency(currencyValue);
                     }
 
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Failed to load checks:', error);

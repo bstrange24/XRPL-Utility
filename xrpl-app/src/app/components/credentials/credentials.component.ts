@@ -35,16 +35,15 @@ import { CredentialCreateComponent } from './tab/credential-create/credential-cr
 import { CredentialAcceptComponent } from './tab/credential-accept/credential-accept.component';
 import { CREDENTIAL_TAB_META, CREDENTIAL_TABS } from './constants/credential.ui';
 import { CredentialActionTypes, CredentialItem, CredentialItemVm, CredentialTxConfig } from './constants/credential.types';
-import { CredentialTransactionOptionsComponent } from './ui-components/transaction-options/credential-transaction-options/credential-transaction-options.component';
 import { CREDENTIAL_REGEX, CREDENTIAL_TAB } from './constants/credential.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent, CredentialTransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,6 +129,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Error in getCredentialsForAccount:', error);
                     this.toastService.error(error.message || 'Error getting credential detail', AppConstants.TOAST.ERROR);

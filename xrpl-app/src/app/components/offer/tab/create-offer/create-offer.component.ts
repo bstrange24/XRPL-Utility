@@ -6,12 +6,13 @@ import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-co
 import { OfferStoreService } from '../../../../services/offer/offer-store/offer-store.service';
 import { OfferTransactionViewModelService } from '../../../../services/offer/offer-transaction-view-model/offer-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-create-offer',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './create-offer.component.html',
      styleUrl: './create-offer.component.css',
 })

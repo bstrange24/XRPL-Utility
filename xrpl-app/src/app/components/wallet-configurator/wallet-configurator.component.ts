@@ -35,7 +35,7 @@ import { WalletRemoveCustomWalletComponent } from './tab/wallet-remove-custom-wa
 import { WalletGenerateComponent } from './tab/wallet-generate/wallet-generate.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-wallet-configurator',

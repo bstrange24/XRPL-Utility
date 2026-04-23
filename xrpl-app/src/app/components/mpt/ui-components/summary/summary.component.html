@@ -96,6 +96,30 @@
                }
           </ul>
      </div>
-     }
+     }@else { @if (info.mptCount <= 0) {
+     <!-- Empty State (when no payment channels) -->
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
+          </div>
+          @if (viewModel.activeTab() === 'createMpt') {
+          <p class="text-sm text-gray-500">This wallet has not created any MPT's yet.</p>
+          } @else if(viewModel.activeTab() === 'authorizeMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to authorize.</p>
+          } @else if(viewModel.activeTab() === 'unauthorizeMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to unauthorize.</p>
+          } @else if(viewModel.activeTab() === 'sendMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's avilable to send.</p>
+          } @else if(viewModel.activeTab() === 'lockMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to lock.</p>
+          } @else if(viewModel.activeTab() === 'unlockMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to unlock.</p>
+          } @else if(viewModel.activeTab() === 'clawbackMpt') {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to clawback.</p>
+          }@else {
+          <p class="text-sm text-gray-500">This wallet has no MPT's to destroy.</p>
+          }
+     </div>
+     }}
 </div>
 }

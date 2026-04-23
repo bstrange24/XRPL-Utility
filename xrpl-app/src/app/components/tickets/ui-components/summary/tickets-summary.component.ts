@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-tickets-summary',
@@ -10,6 +11,7 @@ import { NgIcon } from '@ng-icons/core';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketsSummaryComponent {
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      infoData = input.required<string | null>();
 
      tab = input<'createTicket'>('createTicket');

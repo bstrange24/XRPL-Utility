@@ -173,10 +173,78 @@ export class ChecksTransactionViewModelService {
 
      filteredCheckIds = this.checkUtilService.filteredCheckItems(this.checkItems, this.checksStoreService.checkIdSearchQuery);
 
+     // selectedFullCheck = computed(() => {
+     //      const selectedId = this.checksStoreService.checkIdField();
+     //      if (!selectedId) return null;
+
+     //      return this.checksStoreService.cancellableChecks().find(c => c.id === selectedId) ?? null;
+     // });
+
      selectedFullCheck = computed(() => {
           const selectedId = this.checksStoreService.checkIdField();
           if (!selectedId) return null;
-          return this.checksStoreService.cashableChecks().find(check => check.id === selectedId) ?? null;
+
+          const tab = this.activeTab();
+
+          if (tab === 'cashCheck') {
+               return this.checksStoreService.cashableChecks().find(c => c.id === selectedId) ?? null;
+          } else if (tab === 'cancelCheck') {
+               return this.checksStoreService.cancellableChecks().find(c => c.id === selectedId) ?? null;
+          }
+          return null;
+     });
+
+     // selectedCheckIndex = computed(() => this.selectedFullCheck()?.id ?? '');
+     selectedCheckDestination = computed(() => this.selectedFullCheck()?.destination ?? '');
+     // selectedCheckAmount = computed(() => (this.selectedFullCheck()?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(this.selectedFullCheck()!.sendMax) : ''));
+
+     // For IOU checks
+     // isIOUCheck = computed(() => {
+     //      const check = this.selectedFullCheck();
+     //      if (!check) return false;
+     //      return check.sendMax && typeof check.sendMax === 'object' && 'currency' in check.sendMax;
+     // });
+
+     // selectedCheckIssuer = computed(() => {
+     //      const check = this.selectedFullCheck();
+     //      if (!check?.sendMax || typeof check.sendMax !== 'object') return '';
+     //      return (check.sendMax as any).issuer ?? '';
+     // });
+
+     selectedFullCheckForCash = computed(() => {
+          const selectedId = this.checksStoreService.checkIdField();
+          if (!selectedId) return null;
+
+          return this.checksStoreService.cashableChecks().find(c => c.id === selectedId) ?? null;
+     });
+
+     selectedCheckCreator = computed(() => this.selectedFullCheckForCash()?.sender ?? '');
+
+     // Update these to be more flexible
+     selectedCheckIndex = computed(() => {
+          return this.selectedFullCheckForCash()?.id ?? this.selectedFullCheck()?.id ?? '';
+     });
+
+     selectedCheckAmount = computed(() => {
+          const check = this.selectedFullCheck();
+          return check?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(check.sendMax) : '';
+     });
+
+     // selectedCheckAmount = computed(() => {
+     //      const check = this.selectedFullCheckForCash() ?? this.selectedFullCheck();
+     //      return check?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(check.sendMax) : '';
+     // });
+
+     isIOUCheck = computed(() => {
+          const check = this.selectedFullCheck();
+          if (!check?.sendMax) return false;
+          return typeof check.sendMax === 'object' && 'currency' in check.sendMax;
+     });
+
+     selectedCheckIssuer = computed(() => {
+          const check = this.selectedFullCheck();
+          if (!check?.sendMax || typeof check.sendMax !== 'object') return '';
+          return (check.sendMax as any).issuer ?? '';
      });
 
      private buildTxLabel(defaultText: string) {

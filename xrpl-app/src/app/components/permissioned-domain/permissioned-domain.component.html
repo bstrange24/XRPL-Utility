@@ -29,7 +29,7 @@
                <app-transaction-options [showWhenTab]="['setPermissionedDomain', 'deletePermissionedDomain']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="mt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Action -->
                     <button type="button" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="whitespace-nowrap">{{ view.infoData()?.actionButtonLabel }}</button>
 

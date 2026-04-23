@@ -1,36 +1,48 @@
 <div class="space-y-6">
-     <!-- Destination -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5">
-          <label class="block text-sm font-semibold text-gray-700 mb-2"> Destination </label>
-          <p class="text-sm text-gray-600 mb-3">The address that will receive the remaining XRP after deletion.</p>
+     <!-- Destination Card (Mandatory) -->
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+          <label class="mb-2 block text-sm font-semibold text-gray-900">Destination</label>
+          <p class="mb-3 text-sm text-gray-600">The address that will receive the remaining XRP after deletion.</p>
+
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
      </div>
 
-     <!-- Optional Fields Toggle -->
-     <div class="pt-2">
-          <label class="flex items-center cursor-pointer group">
+     <!-- Optional Fields Toggle (Now has container) -->
+     <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <label class="flex cursor-pointer items-center gap-3">
                <div class="relative inline-flex items-center">
-                    <input type="checkbox" class="sr-only peer" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" />
-                    <div class="w-11 h-6 bg-gray-200 rounded-full peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600 transition-all duration-300 shadow-inner"></div>
-                    <div class="absolute left-0.5 w-5 h-5 bg-white rounded-full transition-all duration-300 transform shadow-md peer-checked:translate-x-5"></div>
+                    <input type="checkbox" class="peer sr-only" [checked]="txUiService.wantsOptions()" (change)="toggleOptions.emit($event.target.checked)" />
+                    <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
+                    <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
                </div>
-               <span class="ml-3 text-sm font-medium text-gray-900 select-none transition-colors">Include optional fields (Destination Tag, Source Tag)</span>
+               <span class="select-none text-sm font-medium text-gray-900 transition-colors"> Include optional fields (Destination Tag, Source Tag) </span>
           </label>
      </div>
 
      <!-- Optional Fields Section -->
      @if (wantsOptions()) {
-     <app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+          <app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
+     </div>
      }
 
+     <!-- Transaction Options (Signing) -->
+     <!-- <div class="space-y-6"> -->
      <app-transaction-options [activeTab]="view().activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+     <!-- </div> -->
+
+     <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
+     <div class="my-5 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+          <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
+          <div class="text-sm text-red-700">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div>
+     </div>
 
      <!-- Action Buttons -->
-     <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <!-- Delete Button -->
-          <button type="button" (click)="performAction.emit()" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" class="btn-red whitespace-nowrap px-8 py-3 text-base font-semibold">{{ view().deleteWalletButtonLabel() }}</button>
+     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <!-- Delete Button (Destructive) -->
+          <button type="button" (click)="performAction.emit()" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" class="w-full rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto">{{ view().deleteWalletButtonLabel() }}</button>
 
-          <!-- Clear Fields -->
-          <button type="button" (click)="clearFields.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+          <!-- Clear Fields Button (Secondary) -->
+          <button type="button" (click)="clearFields.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="rounded-2xl border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed">Clear Fields</button>
      </div>
 </div>

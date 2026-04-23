@@ -1,40 +1,43 @@
-<div class="space-y-8">
-     <!-- Select MPT -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Select MPT</label>
-          <p class="text-xs text-gray-500">MPT this account holds that can be sent to another account.</p>
-
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
-          </div>
-     </div>
-
-     <!-- MPT Issuance ID -->
-     <div class="space-y-2" style="margin-top: 0rem">
-          <label class="text-sm font-medium">MPT Issuance ID</label>
-          <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
-
-          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
-
-     <!-- Destination + Amount -->
-     <div class="grid grid-cols-1 md:grid-cols-2 gap-6" style="margin-top: 1rem">
-          <!-- Destination -->
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
+          <!-- Select MPT -->
           <div class="space-y-2">
-               <label class="text-sm font-medium">Destination</label>
-               <p class="text-xs text-gray-500">The unique address of the account receiving the MPT.</p>
+               <label class="block text-sm font-semibold text-gray-900">Select MPT</label>
+               <p class="text-xs text-gray-500">MPT this account holds that can be sent to another account.</p>
 
                <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                </div>
           </div>
 
-          <!-- MPT Amount -->
+          <!-- MPT Issuance ID -->
           <div class="space-y-2">
-               <label class="text-sm font-medium">MPT Amount</label>
-               <p class="text-xs text-gray-500">Amount of MPT to send. Make sure the receiving account is authorized.</p>
+               <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+               <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
 
-               <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
+
+          <!-- Destination + Amount -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+               <!-- Destination -->
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">Destination</label>
+                    <p class="text-xs text-gray-500">The unique address of the account receiving the MPT.</p>
+
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+                    </div>
+               </div>
+
+               <!-- MPT Amount -->
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">MPT Amount</label>
+                    <p class="text-xs text-gray-500">Amount of MPT to send. Make sure the receiving account is authorized.</p>
+
+                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               </div>
           </div>
      </div>
 </div>

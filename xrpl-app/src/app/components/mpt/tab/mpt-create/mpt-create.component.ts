@@ -10,7 +10,7 @@ import { NgIcon } from '@ng-icons/core';
 @Component({
      selector: 'app-mpt-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, JsonEditorComponent],
+     imports: [CommonModule, FormsModule, JsonEditorComponent, NgIcon],
      templateUrl: './mpt-create.component.html',
      styleUrl: './mpt-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

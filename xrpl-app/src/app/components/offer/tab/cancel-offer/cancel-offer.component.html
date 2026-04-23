@@ -1,55 +1,55 @@
 @if (offerStoreService.existingOffers().length > 0) {
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-4">
+          <!-- Select Offers to Cancel -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Select Offers to Cancel</label>
+               <p class="text-xs text-gray-500">Select existing offers to cancel for the selected account.</p>
 
-<!-- Select Offers to Cancel -->
-<div class="space-y-2">
-     <label class="text-sm font-medium">Select Offers to Cancel</label>
-     <p class="text-xs text-gray-500">Select existing offers to cancel for the selected account.</p>
+               <!-- Multi-Select Combobox -->
+               <div class="relative">
+                    <div class="relative">
+                         <input
+                              #offerDropdownInput
+                              type="text"
+                              [value]="offerSearchQuery()"
+                              (input)="onOfferSearchInput($event)"
+                              (focus)="openOfferDropdown()"
+                              (keydown)="onOfferKeyDown($event)"
+                              [placeholder]="selectedOfferSequences().length > 0 ? 
+                                                  selectedOfferSequences().length + ' offer(s) selected' : 
+                                                  'Search offers by sequence...'"
+                              class="w-full rounded-2xl border border-gray-200 px-4 py-3 pr-10 text-sm focus:border-green-500 focus:outline-none"
+                              autocomplete="off"
+                         />
 
-     <!-- Multi-Select Combobox -->
-     <div class="relative">
-          <div class="relative">
-               <input
-                    #offerDropdownInput
-                    type="text"
-                    [value]="offerSearchQuery()"
-                    (input)="onOfferSearchInput($event)"
-                    (focus)="openOfferDropdown()"
-                    (keydown)="onOfferKeyDown($event)"
-                    [placeholder]="selectedOfferSequences().length > 0 ? 
-                                   selectedOfferSequences().length + ' offer(s) selected' : 
-                                   'Search offers by sequence...'"
-                    class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500"
-                    autocomplete="off"
-               />
-
-               <button type="button" (click)="toggleOfferDropdown()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    <lucide-icon name="chevron-down" size="18" />
-               </button>
+                         <button type="button" (click)="toggleOfferDropdown()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                              <lucide-icon name="chevron-down" size="18" />
+                         </button>
+                    </div>
+               </div>
           </div>
-     </div>
-</div>
 
-<!-- Selected Offers Chips -->
-@if (selectedOffers().length > 0) {
-<div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-2xl">
-     <div class="flex items-center justify-between mb-3">
-          <span class="text-sm font-medium text-gray-700"> Selected Offers ({{ selectedOffers().length }}) </span>
-          <button type="button" (click)="clearAllOfferSelections()" class="text-red-600 hover:text-red-700 text-sm font-medium">Clear all</button>
-     </div>
+          <!-- Selected Offers Chips -->
+          @if (selectedOffers().length > 0) {
+          <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+               <div class="mb-3 flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-700">Selected Offers ({{ selectedOffers().length }})</span>
+                    <button type="button" (click)="clearAllOfferSelections()" class="text-sm font-medium text-red-600 hover:text-red-700">Clear all</button>
+               </div>
 
-     <div class="flex flex-wrap gap-2">
-          @for (offer of selectedOffers(); track offer.Sequence) {
-          <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-1.5">
-               <span class="font-mono text-gray-800">{{ formatOfferDisplay(offer) }}</span>
-               <button type="button" (click)="toggleOfferSelection(offer)" class="text-gray-400 hover:text-red-500 transition-colors">
-                    <ng-icon name="heroXCircle" size="18" />
-               </button>
+               <div class="flex flex-wrap gap-2">
+                    @for (offer of selectedOffers(); track offer.Sequence) {
+                    <div class="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-1.5">
+                         <span class="font-mono text-sm text-gray-800">{{ formatOfferDisplay(offer) }}</span>
+                         <button type="button" (click)="toggleOfferSelection(offer)" class="text-gray-400 transition-colors hover:text-red-500">
+                              <ng-icon name="heroXCircle" size="16" />
+                         </button>
+                    </div>
+                    }
+               </div>
           </div>
           }
      </div>
-</div>
-} } @else {
-<div class="p-6 bg-gray-50 border border-gray-200 rounded-2xl text-center">
-     <p class="text-gray-500">No outstanding offers found for this account.</p>
 </div>
 }

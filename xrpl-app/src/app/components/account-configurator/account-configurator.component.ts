@@ -37,13 +37,13 @@ import { MultiSignComponent } from './ui-components/tabs/multi-sgn/multi-sign.co
 import { RegularKeyComponent } from './ui-components/tabs/regular-key/regular-key.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { animation, toastAnimation } from '../../services/utils/animations/animations.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from './constants/account-configurator.ui';
 
 @Component({
      selector: 'app-account-configurator',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, AccountConfiguratorSummaryComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, AccountConfiguratorSummaryComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
      animations: [animation, toastAnimation],
      templateUrl: './account-configurator.component.html',
      styleUrl: './account-configurator.component.css',
@@ -198,6 +198,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
      protected refreshAccountObject(env: any): void {
           this.accountConfiguratorViewModelService.accountInfo.set(env.accountInfo);
+          this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
      }

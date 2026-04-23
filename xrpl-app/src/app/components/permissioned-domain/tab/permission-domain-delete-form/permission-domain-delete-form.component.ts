@@ -9,7 +9,7 @@ import { NgIcon } from '@ng-icons/core';
 @Component({
      selector: 'app-permission-domain-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
      templateUrl: './permission-domain-delete-form.component.html',
      styleUrl: './permission-domain-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

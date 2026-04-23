@@ -1,26 +1,29 @@
 @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-<!-- Remove Custom Wallets Section -->
-<div class="space-y-4">
-     <!-- Dropdown Label -->
-     <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Custom Wallets</label>
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-5">
+          <!-- Remove Custom Wallets Section -->
+          <div class="space-y-4">
+               <!-- Dropdown Label -->
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">Custom Wallets</label>
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+                    </div>
+               </div>
+
+               <!-- Selected Wallet Display -->
+               <div class="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-3">
+                    <span class="text-sm font-medium text-gray-600">Selected:</span>
+                    <code class="max-w-[70%] break-all text-right font-mono text-sm text-gray-900"> {{ walletsStoreService.selectedAddress() || 'No wallet selected' }} </code>
+               </div>
           </div>
-     </div>
 
-     <!-- Selected Wallet Display -->
-     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-          <span class="text-sm text-gray-600">Selected:</span>
-          <code class="text-sm font-mono text-gray-900 break-all text-right max-w-[70%]"> {{ walletsStoreService.selectedAddress() || 'No wallet selected' }} </code>
-     </div>
-</div>
+          <!-- Button Row -->
+          <!-- <div class="flex items-center gap-3 pt-2">
+               <button type="button" class="btn-red" (click)="WalletConfiguratorComponent.removeCustomWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+          </div> -->
 
-<!-- Button Row matching Send XRP exactly -->
-<div class="mt-4 flex items-center justify-between gap-3">
-     <!-- LEFT: primary action -->
-     <div class="flex items-center gap-2">
-          <button type="button" class="btn-red" (click)="WalletConfiguratorComponent.removeCustomWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+          <button type="button" class="btn-red" (click)="confirmRemoveWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
      </div>
 </div>
 }

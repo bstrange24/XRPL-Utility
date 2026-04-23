@@ -7,16 +7,20 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import * as xrpl from 'xrpl';
 import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
+import { NgIcon } from '@ng-icons/core';
+import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
+import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 
 @Component({
      selector: 'app-account-metadata',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountMetadataComponent {
+     public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly connectionGuard = inject(ConnectionGuardService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);

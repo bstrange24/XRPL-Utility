@@ -42,7 +42,7 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-nft-create',

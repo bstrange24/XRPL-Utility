@@ -36,7 +36,7 @@ import { OfferSummaryComponent } from './ui-components/offer-summary/offer-summa
 import { OfferRequirementsInfoComponent } from './ui-components/offer-requirements-info/offer-requirements-info.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-offer',

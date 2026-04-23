@@ -38,7 +38,7 @@ import { PERMISSION_DOMAIN_TAB, PermissionDomainActionTypes } from './constants/
 import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-permissioned-domain',
@@ -120,6 +120,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
+                    this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.permissionedDomainUtilService.clearFields();
                } catch (error: any) {

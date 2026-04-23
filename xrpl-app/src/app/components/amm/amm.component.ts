@@ -39,7 +39,7 @@ import { AmmSummaryComponent } from './ui-components/amm-summary/amm-summary.com
 import { AmmTransactionBuilderService } from '../../services/amm/amm-transaction-builder/amm-transaction-builder.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-amm',
@@ -194,8 +194,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
 
                          if (!env) throw new Error('Unable to get environment.');
 
-                         this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                          this.updateSharedObjectsStore(env);
+                         this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                          this.ammUtilsService.clearInputFields();
                     }
                } catch (error: any) {

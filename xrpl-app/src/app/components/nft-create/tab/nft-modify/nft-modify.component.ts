@@ -14,11 +14,12 @@ import { TrustlineUtilService } from '../../../../services/trustlines/trustline-
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-nft-modify',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon],
      templateUrl: './nft-modify.component.html',
      styleUrl: './nft-modify.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,5 +61,33 @@ export class NftModifyComponent {
 
      onNftSelected(item: SelectItem | null) {
           this.nftCreateStoreService.setField('nftId', item?.id || '');
+     }
+
+     // For NFT Burn
+     selectedNftIsNotBurnable(): boolean {
+          const selectedNft = this.nftUtilService.selectedNftItem();
+          // return selectedNft && !selectedNft.flags?.burnableNft;
+          return false;
+     }
+
+     // For NFT Modify
+     selectedNftIsNotMutable(): boolean {
+          const selectedNft = this.nftUtilService.selectedNftItem();
+          // return selectedNft && !selectedNft.flags?.mutableNft;
+          return false;
+     }
+
+     selectedNftOwnerMismatch(): boolean {
+          const selectedNft = this.nftUtilService.selectedNftItem();
+          const ownerAddress = this.nftCreateStoreService.nftOwnerAddress;
+          // return selectedNft && ownerAddress && selectedNft.owner !== ownerAddress;
+          return false;
+     }
+
+     uriByteLength(): number {
+          const uri = this.nftCreateStoreService.initialURI;
+          if (!uri) return 0;
+          // For hex-encoded URI, each character is 4 bits, so length / 2 = bytes
+          return uri.length / 2;
      }
 }

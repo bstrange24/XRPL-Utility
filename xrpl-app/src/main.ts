@@ -9,7 +9,53 @@ import { Buffer } from 'buffer';
 import { provideHttpClient } from '@angular/common/http';
 import process from 'process';
 import { importProvidersFrom } from '@angular/core';
-import { LucideAngularModule, Cog, BanknoteArrowUp, BanknoteArrowDown, Trash2, DollarSign, TicketCheck, Check, Hourglass, Wallet, Send, ShieldCheck, Flag, Copy, FileTextIcon, ChevronDown, ChevronRight, BookOpenCheck, ArrowBigRight, RefreshCcw, SplitIcon, Signature, ShieldEllipsis, CopyPlus, Eraser, GripVertical, Eye, EyeOff, CircleCheck, ShieldBan, CornerUpLeft, Sun, Moon, Inbox, Plus, ChevronUp, Edit2, CheckCircle, X, Loader, ShieldOff, ShieldCheckIcon, LockOpen, Search } from 'lucide-angular';
+import {
+     LucideAngularModule,
+     Cog,
+     BanknoteArrowUp,
+     BanknoteArrowDown,
+     Trash2,
+     DollarSign,
+     TicketCheck,
+     Check,
+     Hourglass,
+     Wallet,
+     Send,
+     ShieldCheck,
+     Flag,
+     Copy,
+     FileTextIcon,
+     ChevronDown,
+     ChevronRight,
+     BookOpenCheck,
+     ArrowBigRight,
+     RefreshCcw,
+     SplitIcon,
+     Signature,
+     ShieldEllipsis,
+     CopyPlus,
+     Eraser,
+     GripVertical,
+     Eye,
+     EyeOff,
+     CircleCheck,
+     ShieldBan,
+     CornerUpLeft,
+     Sun,
+     Moon,
+     Inbox,
+     Plus,
+     ChevronUp,
+     Edit2,
+     CheckCircle,
+     X,
+     Loader,
+     ShieldOff,
+     ShieldCheckIcon,
+     LockOpen,
+     Search,
+     Calendar,
+} from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
      heroInformationCircle,
@@ -47,6 +93,8 @@ import {
      heroChevronDown,
      heroCodeBracket,
      heroFolderOpen,
+     heroBars3,
+     heroMagnifyingGlass,
 } from '@ng-icons/heroicons/outline';
 import { NgIconsModule } from '@ng-icons/core';
 import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
@@ -107,6 +155,7 @@ bootstrapApplication(AppComponent, {
                     ShieldCheckIcon,
                     LockOpen,
                     Search,
+                    Calendar,
                })
           ),
           importProvidersFrom(
@@ -154,6 +203,8 @@ bootstrapApplication(AppComponent, {
                heroSun,
                heroCodeBracket,
                heroFolderOpen,
+               heroBars3,
+               heroMagnifyingGlass,
           }),
      ],
 }).catch(err => console.error(err));

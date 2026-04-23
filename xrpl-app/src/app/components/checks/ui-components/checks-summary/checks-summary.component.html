@@ -58,6 +58,20 @@
                }
           </ul>
      </div>
-     }
+     }@else {@if (info.checkCount <= 0) {
+     <!-- Empty State (when no checks) -->
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
+          </div>
+          @if (checksTransactionViewModelService.activeTab() === 'createCheck') {
+          <p class="text-sm text-gray-500">This wallet has not created any Checks yet.</p>
+          } @else if(checksTransactionViewModelService.activeTab() === 'cashCheck') {
+          <p class="text-sm text-gray-500">This wallet has no Checks to cash.</p>
+          }@else {
+          <p class="text-sm text-gray-500">This wallet has no Checks to cancel.</p>
+          }
+     </div>
+     }}
 </div>
 }

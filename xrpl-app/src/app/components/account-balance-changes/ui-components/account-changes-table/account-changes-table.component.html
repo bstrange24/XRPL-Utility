@@ -1,4 +1,4 @@
-<div class="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200">
+<div class="flex flex-col h-full bg-white rounded-2xl overflow-hidden border border-gray-200 transition-shadow hover:shadow-card">
      <!-- Sticky Header -->
      <div class="sticky top-0 z-10 bg-white border-b border-gray-200 grid grid-cols-12 gap-4 px-6 py-4 text-sm font-medium text-gray-600">
           <div class="col-span-2">Date</div>
@@ -17,25 +17,25 @@
 
                <!-- Transaction Hash -->
                <div class="col-span-3 font-mono flex items-center gap-2">
-                    <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 transition-colors"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
+                    <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-blue-600 transition-colors"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
                     <button (click)="copyToClipboard(change.hash); $event.stopPropagation()" class="text-gray-400 hover:text-gray-600 transition-colors">
                          <lucide-icon name="copy" size="15" />
                     </button>
                </div>
 
-               <!-- Type - Now narrower -->
+               <!-- Type -->
                <div class="col-span-1 font-medium" [style.color]="viewModel.getTypeColor(change.type)">{{ change.type }}</div>
 
                <!-- Change -->
                <div class="col-span-2 text-right font-medium" [class.text-green-600]="change.change > 0" [class.text-red-600]="change.change < 0">
-                    <strong> {{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }} </strong>
+                    <strong>{{ change.change > 0 ? '+' : '' }}{{ change.change | number:'1.2-8' }}</strong>
                     <span class="text-xs text-gray-500 ml-1">{{ change.currency }}</span>
                </div>
 
                <!-- Fee -->
                <div class="col-span-1 text-right text-gray-500">-{{ change.fees | number:'1.6-6' }} XRP</div>
 
-               <!-- Counterparty - Wider now -->
+               <!-- Counterparty -->
                <div class="col-span-3 text-gray-600 truncate" [matTooltip]="change.counterparty">{{ change.counterparty }}</div>
           </div>
 
@@ -57,7 +57,7 @@
 
           <!-- End of History -->
           @if (!store.hasMoreData() && viewModel.filteredBalanceChanges().length > 0 && !store.loadingMore()) {
-          <div class="flex items-center justify-center py-8 text-sm text-gray-500 border-t">
+          <div class="flex items-center justify-center py-8 text-sm text-gray-500 border-t border-gray-100">
                <lucide-icon name="circle-check" size="18" class="mr-2" />
                End of transaction history
           </div>

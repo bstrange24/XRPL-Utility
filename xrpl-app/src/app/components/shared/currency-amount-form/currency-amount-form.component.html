@@ -1,64 +1,66 @@
-<div class="space-y-6">
-     <!-- Currency Code -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Currency Code</label>
-          <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+<div class="rounded-2xl bg-white p-1 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <!-- Currency Code -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
+               <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
 
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" [disableCurrencySelection]="disableCurrencySelection">
-                    <ng-template #itemTemplate let-item>
-                         <div class="flex items-center gap-2">
-                              @if (item.id === 'XRP') {
-                              <span class="text-yellow-500 font-bold">XRP</span>
-                              } @else {
-                              <span>{{ item.display }}</span>
-                              }
-                              <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                         </div>
-                    </ng-template>
-               </app-select-search-dropdown>
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" [disableCurrencySelection]="disableCurrencySelection">
+                         <ng-template #itemTemplate let-item>
+                              <div class="flex items-center gap-2">
+                                   @if (item.id === 'XRP') {
+                                   <span class="font-bold text-yellow-500">XRP</span>
+                                   } @else {
+                                   <span>{{ item.display }}</span>
+                                   }
+                                   <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                              </div>
+                         </ng-template>
+                    </app-select-search-dropdown>
+               </div>
+
+               <!-- XRP Only Warning -->
+               @if (showXrpOnlyBadge) {
+               <div class="mt-2 rounded-2xl bg-blue-100 px-3 py-2 text-xs text-blue-700">Only XRP Allowed when OnlyXRP flag is set</div>
+               }
           </div>
 
-          <!-- XRP Only Warning -->
-          @if (showXrpOnlyBadge) {
-          <div class="mt-2 text-xs bg-blue-100 text-blue-700 px-3 py-2 rounded-2xl">Only XRP Allowed when OnlyXRP flag is set</div>
-          }
-     </div>
-
-     <!-- Amount (when not using custom amount mode) -->
-     @if (!showAmount) {
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Amount</label>
-          <p class="text-xs text-gray-500">Amount, in XRP or token, to send to the destination.</p>
-          <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
-     }
-
-     <!-- Issuer + Balance (when not XRP) -->
-     @if (currency !== 'XRP') {
-     <div class="space-y-4">
+          <!-- Amount (when not using custom amount mode) -->
+          @if (!showAmount) {
           <div class="space-y-2">
-               <label class="text-sm font-medium">Issuer</label>
-               <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+               <label class="block text-sm font-semibold text-gray-900">Amount</label>
+               <p class="text-xs text-gray-500">Amount, in XRP or token, to send to the destination.</p>
+               <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+          </div>
+          }
+
+          <!-- Issuer + Balance (when not XRP) -->
+          @if (currency !== 'XRP') {
+          <div class="space-y-4">
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">Issuer</label>
+                    <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+                    <div class="h-[54px]">
+                         <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+                    </div>
+               </div>
+
+               <div class="space-y-2">
+                    <label class="block text-sm font-semibold text-gray-900">Currency Balance</label>
+                    <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
+                    <input type="text" [value]="balance" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
                </div>
           </div>
+          }
 
+          <!-- Custom Amount (when showAmount = true) -->
+          @if (showAmount) {
           <div class="space-y-2">
-               <label class="text-sm font-medium">Currency Balance</label>
-               <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
-               <input type="text" [value]="balance" readonly class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm bg-gray-50" />
+               <label class="block text-sm font-semibold text-gray-900">{{ amountLabel }}</label>
+               <p class="text-xs text-gray-500" [innerHTML]="amountHint"></p>
+               <input type="number" [placeholder]="amountPlaceholder" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
           </div>
+          }
      </div>
-     }
-
-     <!-- Custom Amount (when showAmount = true) -->
-     @if (showAmount) {
-     <div class="space-y-2">
-          <label class="text-sm font-medium">{{ amountLabel }}</label>
-          <p class="text-xs text-gray-500" [innerHTML]="amountHint"></p>
-          <input type="number" [placeholder]="amountPlaceholder" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
-     }
 </div>

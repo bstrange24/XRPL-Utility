@@ -36,7 +36,7 @@ import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
 import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @Component({

@@ -92,6 +92,20 @@
                }
           </ul>
      </div>
-     }
+     }@else { @if (info.nftCount <= 0) {
+     <!-- Empty State (when no payment channels) -->
+     <div class="p-6 text-center">
+          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+               <ng-icon name="heroMagnifyingGlass" size="24" class="text-green-500" />
+          </div>
+          @if (nftTransactionViewModelService.activeTab() === 'createNft') {
+          <p class="text-sm text-gray-500">This wallet has not created any NFT's yet.</p>
+          } @else if(nftTransactionViewModelService.activeTab() === 'updateNFTMetadata') {
+          <p class="text-sm text-gray-500">This wallet has no NFT's to update.</p>
+          }@else {
+          <p class="text-sm text-gray-500">This wallet has no NFT's to burn.</p>
+          }
+     </div>
+     }}
 </div>
 }

@@ -377,6 +377,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      }
 
      protected refreshAccountObject(env: any): void {
+          this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 
           // NEW: Always refresh ticket count from the fresh account_objects

@@ -1,17 +1,19 @@
-<div class="space-y-8">
-     <!-- NFT Offer Index -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">NFT Offer Index</label>
-          <p class="text-xs text-gray-500">NFT Offer Index generated when the offer was created.</p>
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <!-- NFT Offer Index -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">NFT Offer Index</label>
+               <p class="text-xs text-gray-500">NFT Offer Index generated when the offer was created.</p>
 
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-     </div>
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
 
-     <!-- NFT Token ID -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">NFT Token ID</label>
-          <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+          <!-- NFT Token ID -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
 
-          <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
      </div>
 </div>

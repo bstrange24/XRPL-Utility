@@ -34,7 +34,7 @@ import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.com
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { TicketsSummaryComponent } from './ui-components/summary/tickets-summary.component';
-import { RightPanelService } from '../../services/right-panel/right-panel.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-tickets',

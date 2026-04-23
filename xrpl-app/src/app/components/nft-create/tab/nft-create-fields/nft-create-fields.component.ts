@@ -17,12 +17,11 @@ import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-in
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { NftOffersTransactionViewModelService } from '../../../../services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service';
 import { CurrencyAmountFormComponent } from '../../../shared/currency-amount-form/currency-amount-form.component';
-import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 
 @Component({
      selector: 'app-nft-create-fields',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, TransactionOptionsSectionComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
      templateUrl: './nft-create-fields.component.html',
      styleUrl: './nft-create-fields.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

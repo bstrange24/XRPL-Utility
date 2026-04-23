@@ -7,16 +7,19 @@ import { AccountConfiguratorUtilService } from '../../../../../services/account-
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
 import { NgIcon } from '@ng-icons/core';
 import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
+import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
+import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 
 @Component({
      selector: 'app-multi-sign',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
      templateUrl: './multi-sign.component.html',
      styleUrl: './multi-sign.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MultiSignComponent {
+     public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly connectionGuard = inject(ConnectionGuardService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
@@ -24,4 +27,8 @@ export class MultiSignComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+
+     totalSignerWeight(): number {
+          return this.accountConfiguratorStoreService.signers().reduce((total: number, signer: { SignerWeight: any }) => total + (Number(signer.SignerWeight) || 0), 0);
+     }
 }

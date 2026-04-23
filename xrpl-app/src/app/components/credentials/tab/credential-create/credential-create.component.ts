@@ -8,11 +8,12 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-credential-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon],
      templateUrl: './credential-create.component.html',
      styleUrl: './credential-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

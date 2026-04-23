@@ -1,19 +1,22 @@
-<div class="space-y-8">
-     <!-- Select MPT to Destroy -->
-     <div class="space-y-2">
-          <label class="text-sm font-medium">Select MPT to Destroy</label>
-          <p class="text-xs text-gray-500">MPT to destroy (must have zero holders).</p>
+<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="space-y-6">
+          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
+          <!-- Select MPT to Destroy -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">Select MPT to Destroy</label>
+               <p class="text-xs text-gray-500">MPT to destroy (must have zero holders).</p>
 
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+               <div class="h-[54px]">
+                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+               </div>
           </div>
-     </div>
 
-     <!-- MPT Issuance ID -->
-     <div class="space-y-2" style="margin-top: 0rem">
-          <label class="text-sm font-medium">MPT Issuance ID</label>
-          <p class="text-xs text-gray-500">Identifies the MPTokenIssuance to be destroyed.</p>
+          <!-- MPT Issuance ID -->
+          <div class="space-y-2">
+               <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+               <p class="text-xs text-gray-500">Identifies the MPTokenIssuance to be destroyed.</p>
 
-          <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
+               <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+          </div>
      </div>
 </div>
