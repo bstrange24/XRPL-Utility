@@ -1,62 +1,39 @@
-@if (info() && info()!.walletName; as infoData) {
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
-
-               <div>
-                    <code class="font-mono text-gray-700">{{ info()!.walletName }}</code>
-                    <span [innerHTML]="deleteAccountViewModelService.summaryMessage()"></span>
-               </div>
-          </div>
-
-          <!-- Expand / Collapse Button -->
-          @if (hasContent()) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 pt-0.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} blocking objects</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Collapsible Content -->
-     @if (hasContent() && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <!-- Blocking Objects -->
-          @if (info()!.blockers.length > 0) {
-          <div class="mb-6">
-               <h4 class="font-semibold text-red-700 mb-3 flex items-center gap-2 px-2">🛑 Blocking Objects</h4>
-               <ul class="space-y-2">
-                    @for (blocker of info()!.blockers; track blocker.route) {
-                    <li class="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3">
-                         <div class="flex items-center gap-3">
-                              <ng-icon name="heroXCircle" size="20" class="text-red-500 flex-shrink-0" />
-                              <div>
-                                   <span class="font-medium">{{ blocker.count }} {{ blocker.label }}</span>
-                              </div>
+<!-- delete-account-summary.component.html -->
+@if (info(); as infoData) {
+<app-summary-container [walletName]="infoData.walletName" [summaryText]="deleteAccountViewModelService.summaryMessage()" [itemCount]="infoData.blockers.length" [links]="null" [buttonLabel]="'blocking objects'" [emptyStateMessage]="getEmptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
+     <!-- Custom Content for Delete Account -->
+     <div items-list>
+          <!-- Blocking Objects Section -->
+          @if (infoData.blockers.length > 0) {
+          <div class="space-y-2">
+               @for (blocker of infoData.blockers; track blocker.route) {
+               <div class="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3">
+                    <div class="flex items-center gap-3">
+                         <ng-icon name="heroXCircle" size="20" class="text-red-500 flex-shrink-0" />
+                         <div>
+                              <span class="font-medium">{{ blocker.count }} {{ blocker.label }}</span>
                          </div>
-                         @if (blocker.route && blocker.route !== '#') {
-                         <a [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}" class="text-sm text-red-600 hover:text-red-700 font-medium underline"> Resolve → </a>
-                         }
-                    </li>
+                    </div>
+                    @if (blocker.route && blocker.route !== '#') {
+                    <a [routerLink]="blocker.route" [queryParams]="blocker.tab ? { tab: blocker.tab } : {}" class="text-sm text-red-600 hover:text-red-700 font-medium underline"> Resolve → </a>
                     }
-               </ul>
+               </div>
+               }
           </div>
           }
 
           <!-- Balance Warning -->
-          @if (info()!.balanceWarning) {
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mx-2">
+          @if (infoData.balanceWarning) {
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 mt-4">
                <div class="flex gap-3">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div class="text-sm text-amber-700"><strong>Warning:</strong> {{ info()!.balanceWarning }}</div>
+                    <div class="text-sm text-amber-700"><strong>Warning:</strong> {{ infoData.balanceWarning }}</div>
                </div>
           </div>
           }
 
-          <!-- No blockers state -->
-          @if (info()!.blockers.length === 0) {
+          <!-- Ready for deletion state (when blockers exist but you want to show it's ready) -->
+          @if (infoData.blockers.length === 0 && infoData.balanceWarning) {
           <div class="p-6 text-center">
                <div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
                     <ng-icon name="heroCheckCircle" size="28" class="text-green-600" />
@@ -66,16 +43,5 @@
           </div>
           }
      </div>
-     }
-
-     <!-- Empty / No Content State -->
-     @if (!hasContent()) {
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          <p class="text-sm text-gray-500">There are no blockers prohibiting account deletion.</p>
-     </div>
-     }
-</div>
+</app-summary-container>
 }

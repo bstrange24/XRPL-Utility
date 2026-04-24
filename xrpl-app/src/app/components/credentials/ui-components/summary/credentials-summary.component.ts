@@ -1,4 +1,3 @@
-// credentials-summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -10,6 +9,7 @@ import { CredentialActionTypes, CredentialItemVm } from '../../constants/credent
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { SummaryTextConfig, SummaryTextConfigService } from '../../../../services/shared/summary-text-config/summary-text-config.service';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 const CREDENTIALS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'credential',
@@ -26,7 +26,7 @@ const CREDENTIALS_SUMMARY_CONFIG: SummaryTextConfig = {
 @Component({
      selector: 'app-credentials-summary',
      standalone: true,
-     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './credentials-summary.component.html',
      styleUrl: './credentials-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

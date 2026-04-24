@@ -24,37 +24,34 @@
                               </div>
 
                               <!-- Metadata -->
-                              <div class="mt-3 space-y-2 text-sm">
-                                   <div class="flex items-center gap-2">
-                                        @if (channel.isOwner) {
-                                        <span class="text-gray-500 w-32">Destination:</span>
-                                        <span class="font-mono ml-2"> {{ channel.destination }} </span>
-                                        } @else {
-                                        <span class="text-gray-500 w-32">Sender</span>
-                                        <span class="font-mono ml-2"> {{ channel.sender }} </span>
-                                        }
-                                   </div>
+                              <div class="mt-3 text-sm">
+                                   <!-- Dynamic Sender / Destination -->
+                                   <app-summary-key-value [label]="channel.isOwner ? 'Destination' : 'Sender'">
+                                        <span class="font-mono"> {{ channel.isOwner ? channel.destination : channel.sender }} </span>
+                                   </app-summary-key-value>
 
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Channel ID:</span>
-                                        <span class="font-mono ml-2">{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</span>
-                                   </div>
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Remaining:</span>
-                                        <span class="font-medium ml-2">{{ channel.remaining }}</span>
+                                   <!-- Channel ID -->
+                                   <app-summary-key-value label="Channel ID">
+                                        <span class="font-mono"> {{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }} </span>
+                                   </app-summary-key-value>
+
+                                   <!-- Remaining -->
+                                   <app-summary-key-value label="Remaining">
+                                        <span class="font-medium">{{ channel.remaining }}</span>
                                         <span class="font-mono ml-2"> ({{ channel.balance }} claimed)</span>
-                                   </div>
+                                   </app-summary-key-value>
+
+                                   <!-- Expiration -->
                                    @if (channel.expiration) {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">{{ channel.isExpired ? 'Expired:' : 'Expires:' }}</span>
-                                        <span class="font-mono ml-2" [class.text-red-600]="channel.isExpired"> {{ channel.expiration }} </span>
-                                   </div>
+                                   <app-summary-key-value [label]="channel.isExpired ? 'Expired' : 'Expires'">
+                                        <span class="font-mono" [class.text-red-600]="channel.isExpired"> {{ channel.expiration }} </span>
+                                   </app-summary-key-value>
                                    }
 
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Settle Delay:</span>
-                                        <span class="font-mono ml-2">{{ channel.settleDelay }}s</span>
-                                   </div>
+                                   <!-- Settle Delay -->
+                                   <app-summary-key-value label="Settle Delay">
+                                        <span class="font-mono">{{ channel.settleDelay }}s</span>
+                                   </app-summary-key-value>
                               </div>
                          </div>
                     </div>

@@ -12,44 +12,38 @@
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
                                         @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
-                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">
-                                             {{ mpt.formattedAmount }}
+                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                             >{{ mpt.formattedAmount }}
                                              <small>({{ mpt.isHolder ? 'held' : 'issued' }})</small>
                                         </strong>
                                         } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
                                         <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Max {{ mpt.maxAmount }} </span>
                                         }
-                                        <!-- </div> -->
                                    </app-tooltip-link>
                               </div>
 
                               <!-- Metadata -->
-                              <div class="mt-3 space-y-2 text-sm">
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">MPT Issuance ID:</span>
-                                        <span class="font-mono ml-2 truncate">{{ mpt.mpt_issuance_id }}</span>
-                                   </div>
+                              <div class="mt-3 text-sm">
+                                   <app-summary-key-value label="MPT Issuance ID">
+                                        <span class="font-mono truncate">{{ mpt.mpt_issuance_id }}</span>
+                                   </app-summary-key-value>
 
                                    @if (mpt.ticker && mpt.ticker !== 'N/A') {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Ticker:</span>
-                                        <span class="font-mono ml-2">{{ mpt.ticker }}</span>
-                                   </div>
+                                   <app-summary-key-value label="Ticker">
+                                        <span class="font-mono">{{ mpt.ticker }}</span>
+                                   </app-summary-key-value>
                                    } @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Transfer Fee:</span>
-                                        <span class="font-mono ml-2">{{ mpt.transferFee / 1000 }}%</span>
-                                   </div>
+                                   <app-summary-key-value label="Transfer Fee">
+                                        <span class="font-mono">{{ mpt.transferFee / 1000 }}%</span>
+                                   </app-summary-key-value>
                                    } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Flags:</span>
-                                        <span class="font-mono ml-2">{{ mpt.flags }}</span>
-                                   </div>
+                                   <app-summary-key-value label="Flags">
+                                        <span class="font-mono">{{ mpt.flags }}</span>
+                                   </app-summary-key-value>
                                    } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Outstanding:</span>
-                                        <span class="font-mono ml-2">{{ mpt.formattedOutstanding }}</span>
-                                   </div>
+                                   <app-summary-key-value label="Outstanding">
+                                        <span class="font-mono">{{ mpt.formattedOutstanding }}</span>
+                                   </app-summary-key-value>
                                    }
                               </div>
                          </div>

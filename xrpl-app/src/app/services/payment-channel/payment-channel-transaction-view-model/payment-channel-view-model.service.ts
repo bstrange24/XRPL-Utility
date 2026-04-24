@@ -67,7 +67,7 @@ export class PaymentChannelViewModelService {
                     headerMessage = ' has no payment channels.';
                }
           } else {
-               headerMessage = `has <strong class="object-count">${channels.length}</strong> payment channel${channels.length === 1 ? '' : 's'} `;
+               headerMessage = ` has <strong class="object-count">${channels.length}</strong> payment channel${channels.length === 1 ? '' : 's'} `;
 
                switch (tab) {
                     case 'createPaymentChannel':

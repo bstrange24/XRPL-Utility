@@ -29,6 +29,57 @@ export class TrustlineUtilService {
      readonly activeTab = signal<TrustlineActionTypes>('setTrustline');
 
      async loadTrustlines(forceRefresh = false): Promise<void> {
+          const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+          if (!currentWallet) return;
+
+          this.trustlineStoreService.setField('isLoading', true);
+
+          try {
+               let env: any;
+
+               if (forceRefresh) {
+                    env = await this.txEnvironmentService.refreshEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeTrustlines: true,
+                         includeGatewayBalance: true,
+                         forceRefresh: true,
+                    });
+               } else {
+                    // Light / cached version - much faster
+                    env = await this.txEnvironmentService.getValidatedEnvironment(false);
+               }
+
+               // Update trustlines only when necessary
+               if (forceRefresh || this.trustlineStoreService.existingIOUs().length === 0) {
+                    this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, this.walletManager.getSelectedWallet()!.classicAddress));
+               }
+
+               const activeTab = this.activeTab();
+               const trustLineExists = this.checkForExistingTrustline(env);
+
+               if (trustLineExists) {
+                    if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects!);
+                    this.trustlineStoreService.setField('trustlineAlreadyExist', true);
+               } else {
+                    if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
+                    this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+               }
+
+               if (activeTab === 'removeTrustline') {
+                    this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
+               }
+
+               // Use already-fetched env for balance (huge win)
+               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+
+               this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+          } finally {
+               this.trustlineStoreService.setField('isLoading', false);
+          }
+     }
+
+     async loadTrustlines1(forceRefresh = false): Promise<void> {
           // Only show loading when we really need fresh data (wallet change or explicit refresh)
           this.trustlineStoreService.setField('isLoading', true);
 

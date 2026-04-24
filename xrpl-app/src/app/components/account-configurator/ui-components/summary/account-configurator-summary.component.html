@@ -1,55 +1,22 @@
-@let info = accountConfiguratorViewModelService.infoData(); @if (info; as infoData) {
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
-
-               <div>
-                    <code class="font-mono text-gray-700">{{ infoData.walletName }}</code>
-                    <span>{{ infoData.summaryMessage }}</span>
-               </div>
-          </div>
-
-          <!-- Expand / Collapse Button -->
-          @if (infoData.hasSpecialConfig) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 pt-0.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors whitespace-nowrap">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} configuration</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Collapsible Configuration Details -->
-     @if (infoData.hasSpecialConfig && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @for (item of infoData.configItems; track item.id) {
-               <li class="rounded-xl border border-gray-100 bg-white px-4 py-3 text-sm">{{ item.text }}</li>
-               } @if (infoData.hasIrreversible) {
-               <li class="rounded-xl border border-red-200 bg-red-50 p-4">
-                    <div class="flex gap-3">
-                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600 flex-shrink-0 mt-0.5" />
-                         <div>
-                              <strong class="text-red-700">{{ infoData.irreversibleMessage }}</strong>
-                              <p class="text-xs text-red-600 mt-1">These cannot be disabled once set.</p>
-                         </div>
+@if (accountConfiguratorViewModelService.infoData(); as info) {
+<app-summary-container [walletName]="info.walletName" [summaryText]="info.summaryMessage" [itemCount]="info.configItems.length" [buttonLabel]="'configuration items'" [emptyStateMessage]="'No special account configuration detected.'" [emptyStateSubMessage]="'All flags are set to default values.'" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @if (info.hasSpecialConfig) { @for (item of info.configItems; track item.id) {
+          <app-summary-item [copyValue]="item.text" copyTooltip="Copy configuration text" (onCopyClick)="copyUtilService.copyAndToast($event, 'Configuration text')">
+               <div item-content>{{ item.text }}</div>
+          </app-summary-item>
+          } @if (info.hasIrreversible) {
+          <li class="rounded-xl border border-red-200 bg-red-50 p-4 mt-3">
+               <div class="flex gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <strong class="text-red-700">{{ info.irreversibleMessage }}</strong>
+                         <p class="text-xs text-red-600 mt-1">These cannot be disabled once set.</p>
                     </div>
-               </li>
-               }
-          </ul>
+               </div>
+          </li>
+          } }
      </div>
-     }
-
-     <!-- No Special Config State -->
-     @if (!infoData.hasSpecialConfig) {
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="28" class="text-green-500" />
-          </div>
-          <p class="text-sm text-gray-600">No special account configuration detected.</p>
-          <p class="text-xs text-gray-500 mt-1">All flags are set to default values.</p>
-     </div>
-     }
-</div>
+</app-summary-container>
 }

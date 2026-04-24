@@ -1,4 +1,3 @@
-// summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { NgIcon } from '@ng-icons/core';
@@ -10,7 +9,7 @@ import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.servi
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { SummaryTextConfig, SummaryTextConfigService } from '../../../../services/shared/summary-text-config/summary-text-config.service';
-import { MptActionTypes } from '../../constants/mpt.types';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 const MPT_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'Multi-Purpose Token',
@@ -31,7 +30,7 @@ const MPT_SUMMARY_CONFIG: SummaryTextConfig = {
 @Component({
      selector: 'app-summary',
      standalone: true,
-     imports: [NgIcon, TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './summary.component.html',
      styleUrl: './summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -9,10 +9,11 @@ import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { CancelCheckItem } from '../../constants/checks.types';
 import { NgIcon } from '@ng-icons/core';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 @Component({
      selector: 'app-check-cancel-item',
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon, SummaryKeyValueComponent],
      templateUrl: './check-cancel-item.component.html',
      styleUrl: './check-cancel-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

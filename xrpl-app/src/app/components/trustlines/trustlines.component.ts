@@ -45,6 +45,7 @@ import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 
 @Component({
      selector: 'app-trustlines',
@@ -55,6 +56,8 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlinesComponent extends WalletDestinationBase implements OnInit {
+     private readonly currencyDebouncer = new Subject<any>();
+     private readonly issuerDebouncer = new Subject<any>();
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -67,8 +70,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
      private readonly rightPanelService = inject(RightPanelService);
-     // readonly menuTabs: TabConfig[] = TRUSTLINE_TABS;
-     // readonly tabMeta: Record<string, TabMetaInfo> = TRUSTLINE_TAB_META;
      public readonly tabs = TRUSTLINE_TABS;
      public readonly tabMeta = TRUSTLINE_TAB_META;
      readonly setFlags: Record<string, any> = SET_FLAGS;
@@ -78,6 +79,20 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          this.setupDebouncers();
+     }
+
+     private setupDebouncers() {
+          this.currencyDebouncer.pipe(debounceTime(160), distinctUntilChanged()).subscribe(item => {
+               this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
+               this.syncAfterSelection(false); // light sync
+          });
+
+          this.issuerDebouncer.pipe(debounceTime(160), distinctUntilChanged()).subscribe(item => {
+               this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? '');
+               this.syncAfterSelection(false);
+          });
      }
 
      ngOnInit(): void {
@@ -99,17 +114,21 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.trustlineStoreService.resetOptions(); // or a new clearTrustlines() method
+          // this.trustlineStoreService.setField('existingIOUs', []);
           await this.getTrustlinesForAccount(true);
      }
 
      async onCurrencyChange(item: any) {
-          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
-          await this.syncAfterSelection();
+          this.currencyDebouncer.next(item);
+          // this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
+          // await this.syncAfterSelection();
      }
 
      async onIssuerChange(item: any) {
-          this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? 'XRP');
-          await this.syncAfterSelection();
+          this.issuerDebouncer.next(item);
+          // this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? 'XRP');
+          // await this.syncAfterSelection();
      }
 
      async onCurrencySelected(item: SelectItem | null) {

@@ -20,19 +20,15 @@
           </app-tooltip-link>
 
           <!-- Metadata -->
-          <div class="mt-3 space-y-2 text-sm">
-               <!-- Check ID -->
-               <div class="flex items-center gap-2">
-                    <span class="text-gray-500 w-32">Check ID:</span>
-                    <span class="font-mono text-gray-700 truncate">{{ check.index }}</span>
-               </div>
+          <div class="mt-3 text-sm">
+               <app-summary-key-value label="Check ID">
+                    <span class="font-mono truncate">{{ check.index }}</span>
+               </app-summary-key-value>
 
-               <!-- Expiration -->
                @if (check.expiration) {
-               <div class="flex items-center gap-2">
-                    <span class="text-gray-500 w-32"> {{ check.isExpired ? 'Expired:' : 'Expires:' }} </span>
+               <app-summary-key-value [label]="check.isExpired ? 'Expired:' : 'Expires:'">
                     <span class="text-gray-600" [class.text-red-600]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
-               </div>
+               </app-summary-key-value>
                }
           </div>
      </div>

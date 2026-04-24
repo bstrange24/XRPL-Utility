@@ -589,3 +589,18 @@ pre code[class*="language-"] {
 .dark .scroll-container::-webkit-scrollbar-thumb {
      background: #555;
 }
+
+/* For the labels on the summary drop down */
+/* src/styles.css */
+.key-value-row {
+     @apply flex items-center gap-2 py-1;
+     /* vertical padding for breathing room */
+}
+
+.key-value-row .label {
+     @apply text-gray-500 w-32;
+}
+
+.key-value-row .value {
+     @apply text-gray-700;
+}

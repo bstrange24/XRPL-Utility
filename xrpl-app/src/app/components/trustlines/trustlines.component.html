@@ -16,9 +16,7 @@
 
           <!-- Summary (except Add New Issuers) -->
           @if (tab !== 'addNewIssuers') {
-          <div class="mt-4">
-               <app-summary [info]="view.infoData()" [trustlinesToShow]="view.trustlinesToShow()" [isExpanded]="infoPanelExpanded()" [explorerUrl]="txUiService.explorerUrl()" (toggle)="toggleInfoPanel()" />
-          </div>
+          <app-summary [wallet]="currentWallet()" [info]="trustlineViewModelService.infoData()" [isExpanded]="infoPanelExpanded()" (toggleExpanded)="infoPanelExpanded.set(!infoPanelExpanded())" />
           }
 
           <!-- Warning Message -->

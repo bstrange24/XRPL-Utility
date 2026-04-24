@@ -10,12 +10,13 @@ import { LucideAngularModule } from 'lucide-angular';
 import { OfferStoreService } from '../../../../services/offer/offer-store/offer-store.service';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 @Component({
      selector: 'app-offer-summary',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [CommonModule, NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent],
+     imports: [CommonModule, NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './offer-summary.component.html',
      styleUrl: './offer-summary.component.css',
 })

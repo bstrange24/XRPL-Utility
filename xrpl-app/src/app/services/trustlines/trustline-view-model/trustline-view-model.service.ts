@@ -29,6 +29,8 @@ export class TrustlineViewModelService {
      // ─── Memoized filter — only re-runs when IOUs, tab, issuer-role, or noRipple flag changes ───
      private readonly filteredTrustlines = computed(() => {
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
+          if (allTrustlines.length === 0) return [];
+
           const tab = this.activeTab();
           const isIssuer = this.isIssuerForSelected();
 
@@ -37,12 +39,11 @@ export class TrustlineViewModelService {
                case 'addNewIssuers':
                     return allTrustlines;
                case 'removeTrustline':
-                    return this.removableTrustlines();
+                    return this.removableTrustlines(); // Already optimized
                case 'issueCurrency':
-                    return isIssuer ? allTrustlines.filter((tl: any) => Number(tl.balance) < 0) : allTrustlines.filter((tl: any) => Number(tl.balance) > 0);
+                    return isIssuer ? allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) < 0) : allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) > 0);
                case 'clawbackTokens':
-                    return isIssuer ? allTrustlines.filter((tl: any) => Number(tl.balance) < 0) : [];
-
+                    return isIssuer ? allTrustlines.filter((tl: { balance: any }) => Number(tl.balance) < 0) : [];
                default:
                     return allTrustlines;
           }
@@ -78,13 +79,14 @@ export class TrustlineViewModelService {
           if (!wallet?.address || this.trustlineStoreService.isLoading()) {
                return {
                     walletName: wallet?.name || wallet?.address?.slice(0, 10) + '...' || 'Loading...',
+                    classicAddress: wallet?.classicAddress || wallet?.address || '',
                     activeTab: tab,
                     trustlineCount: 0,
                     totalTrustlines: 0,
                     trustlinesToShow: [],
                     links: '',
                     countText: 'trustlines',
-                    emptyMessage: 'Loading trustlines...',
+                    emptyMessage: ' Loading trustlines...',
                     helpHint: null,
                     isEmpty: true,
                     isLoading: true,
@@ -146,28 +148,28 @@ export class TrustlineViewModelService {
 
           if (!emptyMessage) {
                if (totalCount === 0) {
-                    emptyMessage = 'No trustlines found for this wallet.';
-                    helpHint = 'Start by adding or setting a trustline.';
+                    emptyMessage = ' No trustlines found for this wallet.';
+                    helpHint = ' Start by adding or setting a trustline.';
                } else if (filteredCount === 0) {
                     switch (tab) {
                          case 'removeTrustline':
-                              emptyMessage = 'No trustlines are currently eligible for removal.';
+                              emptyMessage = ' has no trustlines are currently eligible for removal.';
                               helpHint = '';
                               break;
                          case 'issueCurrency':
-                              emptyMessage = 'You are not an issuer of the selected currency/issuer pair.';
+                              emptyMessage = ' You are not an issuer of the selected currency/issuer pair.';
                               helpHint = '';
                               break;
                          case 'clawbackTokens':
-                              emptyMessage = 'No clawback-enabled currencies found.';
+                              emptyMessage = ' No clawback-enabled currencies found.';
                               helpHint = '';
                               break;
                          case 'setTrustline':
-                              emptyMessage = 'No existing trustlines.';
-                              helpHint = 'You can create a new trustline below.';
+                              emptyMessage = ' No existing trustlines.';
+                              helpHint = ' You can create a new trustline below.';
                               break;
                          default:
-                              emptyMessage = 'No matching trustlines found.';
+                              emptyMessage = ' No matching trustlines found.';
                     }
                }
           }

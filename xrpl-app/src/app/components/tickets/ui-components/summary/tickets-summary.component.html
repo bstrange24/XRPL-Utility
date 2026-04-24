@@ -1,20 +1,12 @@
-{{tab()}} @if (infoData()) {
-<div class="bg-blue-50 border border-blue-100 rounded-2xl p-2 flex gap-4 mb-4">
-     <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
-     <div class="text-sm leading-relaxed text-blue-800">
-          <div [innerHTML]="infoData()"></div>
+@if (infoData()) {
+<app-summary-container [walletName]="walletName()" [summaryText]="infoData()" [itemCount]="this.xrplTxOptionsStore.walletTicketCount()" [buttonLabel]="'Tickets'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [variant]="'green'">
+     <!-- Optional: if you support color variants -->
+
+     <!-- Items List (only shown when there are tickets) -->
+     <div items-list>
+          <!-- Your ticket items go here when you add them later -->
+          <!-- Example: -->
+          <!-- @for (ticket of tickets(); track ticket.index) { ... } -->
      </div>
-</div>
-} @if (this.xrplTxOptionsStore.walletTicketCount() === 0) {
-<!-- Empty State (when no checks) -->
-<div class="p-6 text-center">
-     <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-          <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-     </div>
-     @if ( tab()=== 'createTicket') {
-     <p class="text-sm text-gray-500">This wallet has not created any Tickets yet.</p>
-     } @else {
-     <p class="text-sm text-gray-500">This wallet has no Tickets to delete.</p>
-     }
-</div>
+</app-summary-container>
 }

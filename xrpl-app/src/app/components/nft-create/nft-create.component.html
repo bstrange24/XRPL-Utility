@@ -9,9 +9,7 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <div class="mt-4">
-               <app-nft-create-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-create-summary>
-          </div>
+          <app-nft-create-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-create-summary>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {

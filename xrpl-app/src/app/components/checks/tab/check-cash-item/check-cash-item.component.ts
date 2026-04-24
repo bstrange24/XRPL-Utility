@@ -9,10 +9,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { CashCheckItem } from '../../constants/checks.types';
 import { NgIcon } from '@ng-icons/core';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 @Component({
      selector: 'app-check-cash-item',
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon, SummaryKeyValueComponent],
      templateUrl: './check-cash-item.component.html',
      styleUrl: './check-cash-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -84,7 +84,7 @@ export class AccountConfiguratorViewModelService {
           const irreversibleMessage = irreversible.length ? `Irreversible flags enabled: ${irreversible.join(', ')}` : null;
           const totalItems = messageParts.length + irreversible.length;
           const pluralSuffix = totalItems > 1 ? 's' : '';
-          const summaryMessage = totalItems === 0 ? 'wallet has no special account configuration. All flags are in default state.' : `wallet has special account configuration (${totalItems} item${pluralSuffix}).`;
+          const summaryMessage = totalItems === 0 ? ' wallet has no special account configuration. All flags are in default state.' : ` wallet has special account configuration (${totalItems} item${pluralSuffix}).`;
 
           const configItemsWithIds = messageParts.map((item, index) => ({
                id: `${wallet.address}-config-${index}-${item.substring(0, 10)}`,

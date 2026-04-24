@@ -9,6 +9,7 @@ import { SummaryContainerComponent } from '../../../shared/ui-components/summary
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { SummaryTextConfig, SummaryTextConfigService } from '../../../../services/shared/summary-text-config/summary-text-config.service';
 import { NgIcon } from '@ng-icons/core';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 const NFT_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'NFT',
@@ -24,7 +25,7 @@ const NFT_SUMMARY_CONFIG: SummaryTextConfig = {
 @Component({
      selector: 'app-nft-create-summary',
      standalone: true,
-     imports: [TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent, NgIcon],
+     imports: [TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent, NgIcon, SummaryKeyValueComponent],
      templateUrl: './nft-create-summary.component.html',
      styleUrl: './nft-create-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

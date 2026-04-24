@@ -17,36 +17,14 @@
 
                               <!-- Metadata -->
                               <div class="mt-3 space-y-2 text-sm">
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Taxon:</span>
-                                        <span class="text-gray-700">{{ nft.taxon }}</span>
-                                   </div>
-
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Sequence:</span>
-                                        <span class="text-gray-700">{{ nft.sequence }}</span>
-                                   </div>
-
-                                   @if (nft.uri) {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">URI:</span>
-                                        <span class="text-gray-700 truncate">{{ nft.uri }}</span>
-                                   </div>
-                                   } @else {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">URI:</span>
-                                        <span class="text-gray-700">None</span>
-                                   </div>
-                                   } @if (nft.transferFee) {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Transfer Fee:</span>
-                                        <span class="text-gray-700">{{ nft.transferFee / 1000 }}%</span>
-                                   </div>
-                                   }
-
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Flags:</span>
-                                        <span class="text-gray-700">{{ nft.flags.length ? nft.flags : 'None' }}</span>
+                                   <div class="mt-3 space-y-2 text-sm">
+                                        <app-summary-key-value label="Taxon">{{ nft.taxon }}</app-summary-key-value>
+                                        <app-summary-key-value label="Sequence">{{ nft.sequence }}</app-summary-key-value>
+                                        <app-summary-key-value label="URI">{{ nft.uri || 'None' }}</app-summary-key-value>
+                                        @if (nft.transferFee) {
+                                        <app-summary-key-value label="Transfer Fee">{{ nft.transferFee / 1000 }}%</app-summary-key-value>
+                                        }
+                                        <app-summary-key-value label="Flags">{{ nft.flags.length ? nft.flags : 'None' }}</app-summary-key-value>
                                    </div>
                               </div>
                          </div>

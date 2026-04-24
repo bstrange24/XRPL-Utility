@@ -8,6 +8,7 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 export interface PermissionedDomainItem {
      index: string;
@@ -21,7 +22,7 @@ export interface PermissionedDomainItem {
 @Component({
      selector: 'app-permissioned-domains-summary',
      standalone: true,
-     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './permissioned-domains-summary.component.html',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })

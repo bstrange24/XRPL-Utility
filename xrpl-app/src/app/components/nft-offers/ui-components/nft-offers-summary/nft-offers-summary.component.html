@@ -27,34 +27,24 @@
                               </div>
 
                               <!-- Metadata -->
-                              <div class="mt-3 space-y-2 text-sm">
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Offer ID:</span>
-                                        <span class="text-gray-700">{{ offer.index }}</span>
-                                   </div>
+                              <div class="mt-3 text-sm">
+                                   <app-summary-key-value label="Offer ID">
+                                        <span class="font-mono">{{ offer.index }}</span>
+                                   </app-summary-key-value>
 
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">NFT ID:</span>
-                                        <span class="text-gray-700">{{ offer.nftId }}</span>
-                                   </div>
+                                   <app-summary-key-value label="NFT ID">
+                                        <span class="font-mono">{{ offer.nftId }}</span>
+                                   </app-summary-key-value>
 
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32">Counterparty:</span>
-                                        <span class="font-mono text-gray-700 truncate">{{ offer.counterparty }}</span>
-                                   </div>
+                                   <app-summary-key-value label="Counterparty">
+                                        <span class="font-mono truncate">{{ offer.counterparty }}</span>
+                                   </app-summary-key-value>
 
                                    @if (offer.expiration) {
-                                   <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32"> {{ offer.isExpired ? 'Expired:' : 'Expires:' }} </span>
+                                   <app-summary-key-value [label]="offer.isExpired ? 'Expired:' : 'Expires:'">
                                         <span class="text-gray-700" [class.text-red-600]="offer.isExpired"> {{ offer.expiration ? formatXrplTimestamp(offer.expiration) : 'N/A' }} </span>
-                                   </div>
+                                   </app-summary-key-value>
                                    }
-
-                                   <!-- Additional Copy Button for NFT ID -->
-                                   <!-- <div class="flex items-center gap-2">
-                                        <span class="text-gray-500 w-32"></span>
-                                        <button (click)="copyUtilService.copyAndToast(offer.nftId, 'NFT ID'); $event.stopPropagation()" class="text-xs text-blue-600 hover:text-blue-800 transition-colors">Copy NFT ID</button>
-                                   </div> -->
                               </div>
                          </div>
                     </div>

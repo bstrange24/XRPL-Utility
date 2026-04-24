@@ -9,15 +9,11 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <div class="mt-4">
-               <app-nft-offers-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-offers-summary>
-          </div>
+          <app-nft-offers-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-offers-summary>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <div class="mt-4">
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-          </div>
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->

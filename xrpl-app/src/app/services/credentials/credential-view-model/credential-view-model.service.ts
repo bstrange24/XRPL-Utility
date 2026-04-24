@@ -209,14 +209,14 @@ export class CredentialViewModelService {
                     return ` has issued <strong>${s.counts.issued}</strong> credential${s.counts.issued === 1 ? '' : 's'}.`;
                case 'acceptCredential':
                     if (s.counts.pendingToAccept === 0) return ' has no pending credentials to accept.';
-                    return `has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
+                    return ` has <strong>${s.counts.pendingToAccept}</strong> credential${s.counts.pendingToAccept === 1 ? '' : 's'} pending acceptance.`;
                case 'deleteCredential':
                     if (s.counts.issued === 0) return ' has no credentials to delete.';
-                    return `has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
+                    return ` has <strong>${s.counts.issued}</strong> issued credential${s.counts.issued === 1 ? '' : 's'} that can be deleted.`;
                case 'verifyCredential': {
                     const total = s.counts.issued + s.counts.received;
                     if (total === 0) return ' is not involved in any credentials.';
-                    return `is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;
+                    return ` is involved in <strong>${total}</strong> credential${total === 1 ? '' : 's'} — Received: ${s.counts.received} • Issued: ${s.counts.issued}`;
                }
           }
      }

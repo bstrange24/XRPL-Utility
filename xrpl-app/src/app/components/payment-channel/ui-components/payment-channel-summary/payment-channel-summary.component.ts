@@ -10,11 +10,12 @@ import { PaymentChannelUtilService } from '../../../../services/payment-channel/
 import { UnifiedPaymentChannel } from '../../constants/payment-channel.types';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 @Component({
      selector: 'app-payment-channel-summary',
      standalone: true,
-     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './payment-channel-summary.component.html',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })

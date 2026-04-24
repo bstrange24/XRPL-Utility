@@ -11,6 +11,7 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { SummaryTextConfig, SummaryTextConfigService } from '../../../../services/shared/summary-text-config/summary-text-config.service';
+import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 
 const NFT_OFFERS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'active NFT offer',
@@ -28,7 +29,7 @@ const NFT_OFFERS_SUMMARY_CONFIG: SummaryTextConfig = {
 @Component({
      selector: 'app-nft-offers-summary',
      standalone: true,
-     imports: [NgIcon, TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, TooltipLinkComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent, SummaryKeyValueComponent],
      templateUrl: './nft-offers-summary.component.html',
      styleUrl: './nft-offers-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

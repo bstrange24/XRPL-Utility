@@ -12,7 +12,7 @@ import { NgIcon } from '@ng-icons/core';
 export class SummaryContainerComponent {
      // Core inputs
      walletName = input<string>('');
-     summaryText = input<string>('');
+     summaryText = input<string | null>(null);
      itemCount = input<number>(0);
      loading = input<boolean>(false);
 
@@ -22,6 +22,7 @@ export class SummaryContainerComponent {
      buttonLabel = input<string>('items');
      emptyStateMessage = input<string>('No items found.');
      emptyStateSubMessage = input<string>('');
+     variant = input<'blue' | 'green'>('blue');
 
      // Expansion state
      infoPanelExpanded = input.required<boolean>();
