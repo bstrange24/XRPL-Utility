@@ -8,10 +8,11 @@ import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { CreateCheckItem } from '../../constants/checks.types';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-check-create-item',
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
      templateUrl: './check-create-item.component.html',
      styleUrl: './check-create-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -27,6 +27,10 @@ export type CreateCheckItem = {
      amount: string;
      destination: string;
      destinationTag?: number;
+     sendMax?: string;
+     display?: string;
+     secondary?: string;
+     sender?: string;
      expiration?: number;
      invoiceId?: string;
      isExpired: boolean;
@@ -37,10 +41,13 @@ export type CashCheckItem = {
      id: string;
      index: string;
      amount: string;
-     destination: string;
      sender: string;
      expiration?: number;
      isExpired: boolean;
+     sendMax?: string;
+     destinationTag?: number;
+     display?: string;
+     secondary?: string;
 };
 
 export type CancelCheckItem = {
@@ -48,12 +55,34 @@ export type CancelCheckItem = {
      id: string;
      index: string;
      amount: string;
-     destination: string;
      expiration?: number;
      isExpired: boolean;
+     sendMax?: string;
+     destinationTag?: number;
+     destination?: string;
+     display?: string;
+     secondary?: string;
+     sender?: string;
 };
 
 export type CheckListItem = CreateCheckItem | CashCheckItem | CancelCheckItem;
+
+export type AnyCheckDisplayItem = {
+     tab: CheckActionTypes;
+     index: string;
+     amount: string;
+     isExpired: boolean;
+     display: string;
+     secondary: string;
+     id: string;
+     sendMax?: string;
+     destinationTag?: number;
+     expiration?: number;
+     // For create checks
+     destination?: string;
+     // For cash/cancel checks
+     sender?: string;
+};
 
 export interface CheckTxConfig {
      check: CheckState;

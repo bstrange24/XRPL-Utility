@@ -1,36 +1,39 @@
 <!-- Check Item Content -->
-<div class="w-full">
-     <!-- Amount + Expired Badge -->
-     <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
-          <div class="flex items-center gap-3">
-               <span class="text-xl font-semibold text-gray-900" [class.line-through]="check.isExpired" [class.text-red-500]="check.isExpired"> {{ check.amount }} </span>
+<div class="flex items-start gap-3">
+     <!-- Status Icon -->
+     @if (check.isExpired) {
+     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />
+     } @else {
+     <ng-icon name="heroClock" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+     }
 
-               @if (check.isExpired) {
-               <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+     <div class="flex-1 min-w-0">
+          <!-- Amount + Expired Badge -->
+          <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + check.index" tooltipText="View Check on XRPL Explorer">
+               <div class="flex items-center gap-2 flex-wrap">
+                    <strong class="text-gray-900" [class.text-red-500]="check.isExpired"> {{ check.amount }} </strong>
+
+                    @if (check.isExpired) {
+                    <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+                    }
+               </div>
+          </app-tooltip-link>
+
+          <!-- Metadata -->
+          <div class="mt-3 space-y-2 text-sm">
+               <!-- Check ID -->
+               <div class="flex items-center gap-2">
+                    <span class="text-gray-500 w-32">Check ID:</span>
+                    <span class="font-mono text-gray-700 truncate">{{ check.index }}</span>
+               </div>
+
+               <!-- Expiration -->
+               @if (check.expiration) {
+               <div class="flex items-center gap-2">
+                    <span class="text-gray-500 w-32"> {{ check.isExpired ? 'Expired:' : 'Expires:' }} </span>
+                    <span class="text-gray-600" [class.text-red-600]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
+               </div>
                }
           </div>
-     </app-tooltip-link>
-
-     <!-- Metadata -->
-     <div class="mt-3 space-y-2 text-sm">
-          <!-- Check ID -->
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-24">Check ID:</span>
-               <span class="font-mono text-gray-700 truncate">{{ check.index }}</span>
-          </div>
-
-          <!-- Amount -->
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-24">Amount:</span>
-               <span class="font-medium">{{ check.amount }}</span>
-          </div>
-
-          <!-- Expiration -->
-          @if (check.expiration) {
-          <div class="flex items-center gap-2">
-               <span class="text-gray-500 w-24"> {{ check.isExpired ? 'Expired:' : 'Expires:' }} </span>
-               <span class="text-gray-600"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>
-          </div>
-          }
      </div>
 </div>

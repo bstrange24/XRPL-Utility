@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants } from '../../core/app.constants';
@@ -72,6 +72,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      }
 
      activeTabForRequirements = computed(() => this.permissionedDomainViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
@@ -260,6 +261,10 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           });
 
           this.infoPanelExpanded.set(false);
+     }
+
+     toggleSummaryPanel() {
+          this.summaryExpanded.update(expanded => !expanded);
      }
 
      readonly currentInfo = computed(

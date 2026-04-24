@@ -8,10 +8,11 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { CashCheckItem } from '../../constants/checks.types';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-check-cash-item',
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
      templateUrl: './check-cash-item.component.html',
      styleUrl: './check-cash-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

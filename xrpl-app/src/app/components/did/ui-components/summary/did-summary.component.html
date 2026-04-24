@@ -35,12 +35,14 @@
      @if (hasDid() && infoPanelExpanded()) {
      <div class="p-5 space-y-6">
           <!-- Index -->
-          <app-tooltip-link [href]="explorerUrl() + 'entry/' + getDid()!.index" tooltipText="View DID entry on XRPL Explorer">
-               <div class="flex items-center gap-3">
-                    <span class="font-medium text-gray-700">Index:</span>
-                    <span class="font-mono text-gray-900">{{ getDid()!.index }}</span>
-               </div>
-          </app-tooltip-link>
+          <div class="flex items-center gap-2 flex-wrap">
+               <app-tooltip-link [href]="explorerUrl() + 'entry/' + getDid()!.index" tooltipText="View DID entry on XRPL Explorer">
+                    <div class="flex items-center gap-3 flex-wrap font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                         <span class="font-medium">Index:</span>
+                         <span class="font-mono">{{ getDid()!.index }}</span>
+                    </div>
+               </app-tooltip-link>
+          </div>
 
           <!-- URI -->
           @if (getDid()!.URI && getDid()!.URI !== 'N/A') {

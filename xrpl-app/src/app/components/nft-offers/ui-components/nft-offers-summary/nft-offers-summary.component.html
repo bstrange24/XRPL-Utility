@@ -1,115 +1,66 @@
 @if (nftOffersTransactionViewModelService.infoData(); as info) {
+<app-summary-container [walletName]="info?.walletName || ''" [summaryText]="summaryText()" [itemCount]="info?.offerCount || 0" [links]="info?.links || null" [buttonLabel]="'NFT Offers'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @for (offer of info?.offersToShow || []; track offer.index) {
+          <!-- <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired!" [class.border-red-200]="offer.expiration" [copyValue]="offer.index" copyTooltip="Copy Offer ID" (onClick)="onNftClick(offer)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" secondaryCopyTooltip="Copy NFT ID" (onClick)="onNftClick(offer)" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')"> -->
+          <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired" [copyValue]="offer.index" [copyTooltip]="'Copy Offer ID'" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" [secondaryCopyValue]="offer.nftId" [secondaryCopyTooltip]="'Copy NFT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')" (onClick)="onNftClick(offer)">
+               <div item-content>
+                    <!-- NFT Offer Content -->
+                    <div class="flex items-start gap-3">
+                         <!-- Status Icon -->
+                         @if (offer.isExpired) {
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />
+                         } @else {
+                         <ng-icon name="heroClock" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                         }
+                         <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                   <app-tooltip-link [href]="explorerUrl() + 'nft/' + offer.nftId" tooltipText="View NFT on XRPL Explorer">
+                                        <!-- <span class="text-xl font-semibold text-gray-900" [class.line-through]="offer.isExpired" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </span> -->
+                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </strong>
 
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+                                        @if (offer.isExpired) {
+                                        <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+                                        }
+                                   </app-tooltip-link>
+                              </div>
 
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
+                              <!-- Metadata -->
+                              <div class="mt-3 space-y-2 text-sm">
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Offer ID:</span>
+                                        <span class="text-gray-700">{{ offer.index }}</span>
+                                   </div>
 
-                    @if (info.offerCount === 0) {
-                    <span class="text-gray-600 text-sm"> has no active NFT offers.</span>
-                    } @else {
-                    <span class="text-gray-600 text-sm">
-                         has <strong class="text-gray-900">{{ info.offerCount }}</strong>
-                         active NFT offer{{ info.offerCount === 1 ? '' : 's' }}.
-                    </span>
-                    }
-               </div>
-          </div>
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">NFT ID:</span>
+                                        <span class="text-gray-700">{{ offer.nftId }}</span>
+                                   </div>
 
-          <!-- XRPL Win Links -->
-          @if (info.links) {
-          <div class="text-xs text-blue-600 hover:text-blue-700 pt-1" [innerHTML]="info.links"></div>
-          }
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Counterparty:</span>
+                                        <span class="font-mono text-gray-700 truncate">{{ offer.counterparty }}</span>
+                                   </div>
 
-          <!-- Expand / Collapse Button -->
-          @if (info.offerCount > 0) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} NFT Offers</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Expandable Offers List -->
-     @if (info.offerCount > 0 && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @for (offer of info.offersToShow; track offer.index) {
-               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-4 cursor-pointer transition-all" [class.bg-blue-50]="offer.index === nftUtilService.selectedNftItem()" [class.border-blue-300]="offer.index === nftUtilService.selectedNftItem()" [class.border-red-200]="offer.isExpired" (click)="onNftClick(offer)" (keydown.enter)="onNftClick(offer)" (keydown.space)="onNftClick(offer); $event.preventDefault()">
-                    <!-- Main Content -->
-                    <div class="flex-1 min-w-0">
-                         <!-- Amount + Expired Badge -->
-                         <app-tooltip-link [href]="explorerUrl() + 'nft/' + offer.nftId" tooltipText="View NFT on XRPL Explorer">
-                              <div class="flex items-center gap-3">
-                                   <span class="text-xl font-semibold text-gray-900" [class.line-through]="offer.isExpired" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </span>
-
-                                   @if (offer.isExpired) {
-                                   <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+                                   @if (offer.expiration) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32"> {{ offer.isExpired ? 'Expired:' : 'Expires:' }} </span>
+                                        <span class="text-gray-700" [class.text-red-600]="offer.isExpired"> {{ offer.expiration ? formatXrplTimestamp(offer.expiration) : 'N/A' }} </span>
+                                   </div>
                                    }
-                              </div>
-                         </app-tooltip-link>
 
-                         <!-- Metadata -->
-                         <div class="mt-3 space-y-2 text-sm">
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Offer ID:</span>
-                                   <span class="font-mono text-gray-700">{{ offer.index }}</span>
+                                   <!-- Additional Copy Button for NFT ID -->
+                                   <!-- <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32"></span>
+                                        <button (click)="copyUtilService.copyAndToast(offer.nftId, 'NFT ID'); $event.stopPropagation()" class="text-xs text-blue-600 hover:text-blue-800 transition-colors">Copy NFT ID</button>
+                                   </div> -->
                               </div>
-
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">NFT ID:</span>
-                                   <span class="font-mono text-gray-700 truncate">{{ offer.nftId }}</span>
-                              </div>
-
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Counterparty:</span>
-                                   <span class="font-mono text-gray-700 truncate">{{ offer.counterparty }}</span>
-                              </div>
-
-                              @if (offer.expiration) {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28"> {{ offer.isExpired ? 'Expired:' : 'Expires:' }} </span>
-                                   <span class="text-gray-600" [class.text-red-600]="offer.isExpired"> {{ offer.expiration ? formatXrplTimestamp(offer.expiration) : 'N/A' }} </span>
-                              </div>
-                              }
                          </div>
                     </div>
-
-                    <!-- Copy Buttons -->
-                    <div class="flex flex-col gap-1">
-                         <button (click)="copyUtilService.copyAndToast(offer.index, 'Offer ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy Offer ID">
-                              <lucide-icon name="copy" size="16" />
-                         </button>
-                         <button (click)="copyUtilService.copyAndToast(offer.nftId, 'NFT ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy NFT ID">
-                              <lucide-icon name="copy" size="16" />
-                         </button>
-                    </div>
-               </li>
-               }
-          </ul>
-     </div>
-     }@else { @if (info.offerCount <= 0) {
-     <!-- Empty State (when no payment channels) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          @if (nftOffersTransactionViewModelService.activeTab() === 'buyNft') {
-          <p class="text-sm text-gray-500">This wallet has not created any NFT's buy offers.</p>
-          } @else if(nftOffersTransactionViewModelService.activeTab() === 'sellNft') {
-          <p class="text-sm text-gray-500">This wallet has not created any NFT's sell offers.</p>
-          } @else if(nftOffersTransactionViewModelService.activeTab() === 'buyNftOffer') {
-          <p class="text-sm text-gray-500">This wallet has not created any NFT's buy offers.</p>
-          } @else if(nftOffersTransactionViewModelService.activeTab() === 'sellNftOffer') {
-          <p class="text-sm text-gray-500">This wallet has not created any NFT's sell offers.</p>
-          }@else {
-          <p class="text-sm text-gray-500">This wallet has no NFT offers to cancel.</p>
+               </div>
+          </app-summary-item>
           }
      </div>
-     }}
-</div>
+</app-summary-container>
 }

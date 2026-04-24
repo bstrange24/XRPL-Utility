@@ -115,12 +115,18 @@ export class OfferTransactionViewModelService {
                walletName,
                offerCount,
                isOrderBookTab: this.activeTab() === 'getOrderBook',
-               offersToShow: offers.map((offer: any) => ({
-                    index: offer.TxHash,
-                    takerGets: offer.TakerGets,
-                    takerPays: offer.TakerPays,
-                    flags: this.decodeOfferFlags(offer.Flags),
-               })),
+               offersToShow: offers.map((offer: any) => {
+                    const pays = this.formatAmount(offer.TakerPays);
+                    const gets = this.formatAmount(offer.TakerGets);
+
+                    return {
+                         index: offer.TxHash,
+                         takerGets: `${gets.value} ${gets.currency}`,
+                         takerPays: `${pays.value} ${pays.currency}`,
+                         issuer: pays.issuer,
+                         flags: this.decodeOfferFlags(offer.Flags),
+                    };
+               }),
           };
 
           return {
@@ -139,6 +145,24 @@ export class OfferTransactionViewModelService {
                },
           };
      });
+
+     formatAmount = (amount: any) => {
+          if (!amount) return { value: '0', currency: '', issuer: '' };
+
+          if (amount.split(' ').length === 1) {
+               return {
+                    value: amount,
+                    currency: 'XRP',
+                    issuer: '',
+               };
+          } else {
+               return {
+                    value: amount.split(' ')[0],
+                    currency: amount.split(' ')[1],
+                    issuer: amount.split(' ')[2],
+               };
+          }
+     };
 
      private decodeOfferFlags(flags: number): string[] {
           const decoded: string[] = [];

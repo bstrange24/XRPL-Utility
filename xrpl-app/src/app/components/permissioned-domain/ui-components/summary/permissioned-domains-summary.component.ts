@@ -1,4 +1,4 @@
-import { Component, input, output, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, computed } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -6,6 +6,8 @@ import { PermissionedDomainStoreService } from '../../../../services/permissione
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
+import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
+import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 
 export interface PermissionedDomainItem {
      index: string;
@@ -19,9 +21,8 @@ export interface PermissionedDomainItem {
 @Component({
      selector: 'app-permissioned-domains-summary',
      standalone: true,
-     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent],
+     imports: [NgIcon, LucideAngularModule, TooltipLinkComponent, SummaryContainerComponent, SummaryItemComponent],
      templateUrl: './permissioned-domains-summary.component.html',
-     styleUrl: './permissioned-domains-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PermissionedDomainsSummaryComponent {
@@ -42,9 +43,8 @@ export class PermissionedDomainsSummaryComponent {
      >();
 
      tab = input.required<'setPermissionedDomain' | 'deletePermissionedDomain'>();
-
      summaryMessage = input.required<string>();
-     infoPanelExpanded = input.required<boolean>();
+     infoPanelExpanded = input<boolean>(false); // Made optional with default
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -52,17 +52,38 @@ export class PermissionedDomainsSummaryComponent {
      // Helpers
      explorerUrl = this.txUiService.explorerUrl;
 
+     emptyStateMessage = computed(() => {
+          const infoData = this.info();
+          const count = infoData?.permissionedDomainCount || 0;
+
+          if (count > 0) return '';
+
+          const currentTab = this.tab();
+
+          if (currentTab === 'setPermissionedDomain') {
+               return 'This wallet has not created any Permissioned Domains yet.';
+          } else {
+               return 'This wallet has no Permissioned Domains to delete.';
+          }
+     });
+
      isSelected(domainIndex: string): boolean {
-          return this.tab() !== 'setPermissionedDomain' && domainIndex === this.permissionedDomainStoreService.selectedDomainId();
+          // Don't show selection on setPermissionedDomain tab (create tab)
+          this.toggleInfoPanel.emit();
+
+          if (this.tab() === 'setPermissionedDomain') {
+               return false;
+          }
+          return domainIndex === this.permissionedDomainStoreService.selectedDomainId();
      }
 
      selectDomain(domain: PermissionedDomainItem) {
-          if (this.tab() === 'setPermissionedDomain') return;
+          // Don't allow selection on setPermissionedDomain tab (create tab)
+          this.toggleInfoPanel.emit();
+          if (this.tab() === 'setPermissionedDomain') {
+               return;
+          }
           this.permissionedDomainStoreService.setField('selectedDomainId', domain.index);
-     }
-
-     getCursorStyle(): string | null {
-          return this.tab() === 'setPermissionedDomain' ? null : 'pointer';
      }
 
      groupCredentialsByIssuer(credentials: { CredentialType: string; Issuer: string }[]) {

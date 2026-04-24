@@ -1,119 +1,80 @@
+<!-- offer-summary.component.html -->
 @if (view.infoData(); as info) {
-<div class="bg-white border border-gray-200 rounded-2xl overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border-b border-gray-100 p-4 flex items-start justify-between gap-4">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
-
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
-
-                    @if (info.offerCount === 0 && !info.isOrderBookTab) {
-                    <span class="text-gray-600 text-sm"> has no outstanding offers.</span>
-                    } @else {
-                    <span class="text-gray-600 text-sm">
-                         @if (info.isOrderBookTab) { viewing order book for <strong class="text-gray-900">{{ $any(info).pair }}</strong> } @else { has <strong class="text-gray-900">{{ info.offerCount }}</strong>
-                         outstanding offer{{ info.offerCount === 1 ? '' : 's' }}. }
-                    </span>
-                    }
+<app-summary-container [walletName]="info.walletName" [summaryText]="getSummaryText(info)" [itemCount]="info.offerCount" [links]="null" [buttonLabel]="getButtonLabel(info)" [emptyStateMessage]="getEmptyStateMessage()" [showExpandButton]="info.isOrderBookTab || info.offerCount > 0" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @if (info.isOrderBookTab && info.stats) {
+          <!-- Order Book Stats -->
+          <div class="rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all mb-2">
+               <div class="flex flex-wrap gap-2">
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">VWAP:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.vwap }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Simple Avg:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.simpleAvg }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Best Rate:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.bestRate }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Spread:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.spread }} ({{ info.stats.spreadPercent }}%)</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Depth (30% slippage):</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.depth }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Execution (15 input):</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.execution }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Volatility:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.volatility }} {{ info.pair }}</span>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                         <span class="text-xs text-gray-500">Liquidity Ratio:</span>
+                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.liquidityRatio }} {{ info.pair }}</span>
+                    </div>
                </div>
           </div>
-
-          <!-- Expand / Collapse Button -->
-          @if (info.isOrderBookTab || info.offerCount > 0) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} @if (info.isOrderBookTab) { order book } @else { offer{{ info.offerCount === 1 ? '' : 's' }} } </span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Expandable Content -->
-     @if ((info.offerCount > 0 || info.isOrderBookTab) && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @if (info.isOrderBookTab && info.stats) {
-               <!-- Order Book Stats -->
-               <li class="rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all">
-                    <div class="flex flex-wrap gap-2">
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">VWAP:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.vwap }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Simple Avg:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.simpleAvg }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Best Rate:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.bestRate }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Spread:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.spread }} ({{ $any(info).stats.spreadPercent }}%)</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Depth (30% slippage):</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.depth }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Execution (15 input):</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.execution }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Volatility:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.volatility }} {{ $any(info).pair }}</span>
-                         </div>
-                         <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                              <span class="text-xs text-gray-500">Liquidity Ratio:</span>
-                              <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ $any(info).stats.liquidityRatio }} {{ $any(info).pair }}</span>
-                         </div>
-                    </div>
-               </li>
-               } @for (offer of info.offersToShow; track offer.index) {
-               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 transition-all">
+          } @for (offer of info.offersToShow; track offer.index) {
+          <app-summary-item [selected]="false" [copyValue]="offer.index" copyTooltip="Copy Offer Index" (onClick)="onOfferClick(offer)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer Index')">
+               <div item-content>
                     <!-- Offer Content -->
-                    <div class="flex-1 min-w-0">
-                         <div class="flex items-center gap-2 mb-1">
-                              <app-tooltip-link [href]="txUiService.explorerUrl() + 'tx/' + offer.index" tooltipText="View Offer on XRPL Explorer">
-                                   <span class="font-mono text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"> {{ offer.takerGets }} → {{ offer.takerPays }} </span>
-                              </app-tooltip-link>
-                         </div>
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroCog" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                         <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                   <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + offer.index" tooltipText="View Offer on XRPL Explorer">
+                                        <span class="font-mono text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"> {{ offer.takerGets }} → {{ offer.takerPays }} </span>
+                                   </app-tooltip-link>
+                              </div>
 
-                         <div class="flex flex-wrap gap-2 mt-1">
-                              <div class="bg-gray-50 rounded-lg px-2 py-0.5">
-                                   <span class="text-xs text-gray-500">Offer Index:</span>
-                                   <span class="text-xs font-mono text-gray-700 ml-1">{{ offer.index }}</span>
+                              <div class="mt-3 space-y-2 text-sm">
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Offer Index:</span>
+                                        <span class="font-mono text-gray-700">{{ offer.index }}</span>
+                                   </div>
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Issuer:</span>
+                                        <span class="font-mono text-gray-700">{{ offer.issuer }}</span>
+                                   </div>
+                                   @if (offer.flags && offer.flags.length) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Flags:</span>
+                                        <span class="font-mono text-gray-700">{{ offer.flags.join(', ') }}</span>
+                                   </div>
+                                   }
                               </div>
-                              @if (offer.flags.length) {
-                              <div class="bg-gray-50 rounded-lg px-2 py-0.5">
-                                   <span class="text-xs text-gray-500">Flags:</span>
-                                   <span class="text-xs font-mono text-gray-700 ml-1">{{ offer.flags.join(', ') }}</span>
-                              </div>
-                              }
                          </div>
                     </div>
-
-                    <!-- Copy Button -->
-                    <button (click)="copyUtilService.copyAndToast(offer.index, 'Offer Index'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy Offer Index">
-                         <lucide-icon name="copy" size="16" />
-                    </button>
-               </li>
-               }
-          </ul>
-     </div>
-     }@else {@if (info.offerCount <= 0) { @if (view.activeTab() === 'createOffer' || view.activeTab() === 'cancelOffer') {
-     <!-- Empty State (when no offers) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          @if (view.activeTab() === 'createOffer') {
-          <p class="text-sm text-gray-500">This wallet has not created any Offers yet.</p>
-          } @else if(view.activeTab() === 'cancelOffer') {
-          <p class="text-sm text-gray-500">This wallet has no Offers to cancel.</p>
+               </div>
+          </app-summary-item>
           }
      </div>
-     } }}
-</div>
+</app-summary-container>
 }

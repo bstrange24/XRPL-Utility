@@ -9,10 +9,11 @@ import { EscrowTransactionViewModelService } from '../../../../services/escrow/e
 import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escrow-util.service';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { EscrowDisplayItem } from '../../constants/time-escrow.types';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-escrow-cancel-item',
-     imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
+     imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
      templateUrl: './escrow-cancel-item.component.html',
      styleUrl: './escrow-cancel-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

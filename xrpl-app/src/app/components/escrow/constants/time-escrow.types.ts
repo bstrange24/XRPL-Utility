@@ -166,6 +166,23 @@ export type EscrowDropdownItem = {
      // optional: rawEscrow?: any;  // if you need to look up later
 };
 
+// Define a union type that can be any of the escrow types
+export type AnyEscrowDisplayItem = {
+     tab: EscrowActionTypes;
+     EscrowSequence: string;
+     amount: string;
+     isExpired: boolean;
+     display: string;
+     secondary: string;
+     id: string;
+     finishAfter?: number;
+     cancelAfter?: number;
+     // For create escrows
+     destination?: string;
+     // For finish escrows
+     sender?: string;
+};
+
 export interface EscrowConfig {
      escrow?: EscrowState;
      account?: AccountConfiguratorState;

@@ -1,111 +1,59 @@
 @if (nftTransactionViewModelService.infoData(); as info) {
-
-<!-- Main Card -->
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
-
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
-
-                    @if (info.nftCount === 0) {
-                    <span class="text-gray-600 text-sm"> has no NFTs.</span>
-                    } @else {
-                    <span class="text-gray-600 text-sm">
-                         has <strong class="text-gray-900">{{ info.nftCount }}</strong>
-                         NFT{{ info.nftCount === 1 ? '' : 's' }}.
-                    </span>
-                    }
-               </div>
-          </div>
-
-          <!-- XRPL Win Links -->
-          @if (info.links) {
-          <div class="text-xs text-blue-600 hover:text-blue-700 pt-1" [innerHTML]="info.links"></div>
-          }
-
-          <!-- Expand / Collapse Button -->
-          @if (info.nftCount > 0) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} NFTs</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Expandable NFT List -->
-     @if (info.nftCount > 0 && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @for (nft of info.nftsToShow; track nft.id) {
-               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-4 cursor-pointer transition-all" [class.bg-blue-50]="nft.id === nftUtilService.selectedNftItem()" [class.border-blue-300]="nft.id === nftUtilService.selectedNftItem()" (click)="onNftClick(nft)" (keydown.enter)="onNftClick(nft)" (keydown.space)="onNftClick(nft); $event.preventDefault()">
-                    <!-- Main Content -->
-                    <div class="flex-1 min-w-0">
-                         <!-- NFT Title -->
-                         <app-tooltip-link [href]="explorerUrl() + 'nft/' + nft.id" tooltipText="View NFT on XRPL Explorer">
-                              <div class="text-lg font-medium text-gray-900">NFT ID: <span class="font-mono text-sm">{{ nft.id }}</span></div>
-                         </app-tooltip-link>
-
-                         <!-- Metadata -->
-                         <div class="mt-3 space-y-2 text-sm">
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Taxon:</span>
-                                   <span class="font-medium">{{ nft.taxon }}</span>
+<app-summary-container [walletName]="info?.walletName || ''" [summaryText]="summaryText()" [itemCount]="info?.nftCount || 0" [links]="info?.links || null" [buttonLabel]="'NFTs'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @for (nft of info?.nftsToShow || []; track nft.id) {
+          <app-summary-item [selected]="nft.id === nftUtilService.selectedNftItem()" [copyValue]="nft.id" copyTooltip="Copy NFT ID" (onClick)="onNftClick(nft)" (onCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')">
+               <div item-content>
+                    <!-- NFT Content -->
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroCog" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                         <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                   <app-tooltip-link [href]="explorerUrl() + 'nft/' + nft.id" tooltipText="View NFT on XRPL Explorer">
+                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">NFT ID: <span class="font-mono text-sm">{{ nft.id }}</span></strong>
+                                   </app-tooltip-link>
                               </div>
 
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Sequence:</span>
-                                   <span class="font-mono">{{ nft.sequence }}</span>
-                              </div>
+                              <!-- Metadata -->
+                              <div class="mt-3 space-y-2 text-sm">
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Taxon:</span>
+                                        <span class="text-gray-700">{{ nft.taxon }}</span>
+                                   </div>
 
-                              @if (nft.uri) {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">URI:</span>
-                                   <span class="font-mono text-gray-700 truncate">{{ nft.uri }}</span>
-                              </div>
-                              } @else {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">URI:</span>
-                                   <span class="text-gray-400">None</span>
-                              </div>
-                              } @if (nft.transferFee) {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Transfer Fee:</span>
-                                   <span class="font-medium">{{ nft.transferFee / 1000 }}%</span>
-                              </div>
-                              }
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Sequence:</span>
+                                        <span class="text-gray-700">{{ nft.sequence }}</span>
+                                   </div>
 
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-28">Flags:</span>
-                                   <span class="font-medium">{{ nft.flags.length ? nft.flags : 'None' }}</span>
+                                   @if (nft.uri) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">URI:</span>
+                                        <span class="text-gray-700 truncate">{{ nft.uri }}</span>
+                                   </div>
+                                   } @else {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">URI:</span>
+                                        <span class="text-gray-700">None</span>
+                                   </div>
+                                   } @if (nft.transferFee) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Transfer Fee:</span>
+                                        <span class="text-gray-700">{{ nft.transferFee / 1000 }}%</span>
+                                   </div>
+                                   }
+
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Flags:</span>
+                                        <span class="text-gray-700">{{ nft.flags.length ? nft.flags : 'None' }}</span>
+                                   </div>
                               </div>
                          </div>
                     </div>
-
-                    <!-- Copy Button -->
-                    <button (click)="copyUtilService.copyAndToast(nft.id, 'NFT ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy NFT ID">
-                         <lucide-icon name="copy" size="16" />
-                    </button>
-               </li>
-               }
-          </ul>
-     </div>
-     }@else { @if (info.nftCount <= 0) {
-     <!-- Empty State (when no payment channels) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          @if (nftTransactionViewModelService.activeTab() === 'createNft') {
-          <p class="text-sm text-gray-500">This wallet has not created any NFT's yet.</p>
-          } @else if(nftTransactionViewModelService.activeTab() === 'updateNFTMetadata') {
-          <p class="text-sm text-gray-500">This wallet has no NFT's to update.</p>
-          }@else {
-          <p class="text-sm text-gray-500">This wallet has no NFT's to burn.</p>
+               </div>
+          </app-summary-item>
           }
      </div>
-     }}
-</div>
+</app-summary-container>
 }

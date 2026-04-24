@@ -6,13 +6,11 @@ import { PermissionedDomainUtilService } from '../../../../services/permissioned
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { LucideAngularModule } from 'lucide-angular';
-import { WarningMessageComponent } from '../../../shared/ui-components/warning-message/warning-message.component';
-import console from 'node:console';
 
 @Component({
      selector: 'app-permission-domain-set-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule, WarningMessageComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

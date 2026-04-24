@@ -63,7 +63,9 @@ export class CancelOfferTabComponent {
      }
 
      formatOfferDisplay(offer: any): string {
-          return `${offer.Sequence}: Gets: ${offer.TakerGets} → Pays: ${offer.TakerPays}`;
+          const pays = this.view.formatAmount(offer.TakerPays);
+          const gets = this.view.formatAmount(offer.TakerGets);
+          return `Offer Sequence: ${offer.Sequence} - Gets: ${gets.value} ${gets.currency} → Pays: ${pays.value} ${pays.currency} - Issuer: ${pays.issuer}`;
      }
 
      formatOfferSequenceDisplay(offer: any): string {

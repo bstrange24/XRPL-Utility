@@ -10,7 +10,8 @@
 
           <!-- Summary -->
           <div class="mt-4">
-               <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary>
+               <!-- <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary> -->
+               <app-payment-channel-summary [infoPanelExpanded]="summaryExpanded()" (toggleInfoPanel)="toggleSummaryPanel()" (paymentChannelSelected)="paymentChannelSelected($event)" />
           </div>
 
           <!-- Warning Message -->

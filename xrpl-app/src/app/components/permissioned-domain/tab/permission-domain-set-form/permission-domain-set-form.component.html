@@ -25,7 +25,7 @@
                </label>
           </div>
 
-          <div class="mt-4 rounded-xl bg-blue-50 p-3 text-xs text-blue-700">@if (permissionedDomainStoreService.domainMode() === 'create') { ➕ You're creating a new Permissioned Domain } @else { 🔄 You're updating an existing domain — credentials will be replaced }</div>
+          <div class="mt-4 rounded-xl bg-blue-50 p-3 text-xs text-blue-700">@if (permissionedDomainStoreService.domainMode() === 'create') { ➕ You're creating a new Permissioned Domain } @else { 🔄 You're updating an existing domain — all existing credentials will be replaced }</div>
      </div>
 
      <!-- Update Mode: Domain Selector (Conditional Card) -->
@@ -109,11 +109,4 @@
                }
           </div>
      </div>
-
-     <!-- Update Warning (Anchored at bottom) -->
-     <!-- @if (permissionedDomainStoreService.domainMode() === 'update') {
-     <div class="mt-2">
-          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-     </div>
-     } -->
 </div>

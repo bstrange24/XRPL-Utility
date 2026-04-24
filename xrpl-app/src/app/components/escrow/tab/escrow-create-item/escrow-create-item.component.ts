@@ -9,11 +9,12 @@ import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escro
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { EscrowDisplayItem } from '../../constants/time-escrow.types';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-escrow-create-item',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent],
+     imports: [CommonModule, LucideAngularModule, OverlayModule, TooltipLinkComponent, NgIcon],
      templateUrl: './escrow-create-item.component.html',
      styleUrl: './escrow-create-item.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

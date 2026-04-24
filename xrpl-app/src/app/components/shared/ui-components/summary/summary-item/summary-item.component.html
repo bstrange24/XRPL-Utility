@@ -1,0 +1,23 @@
+<!-- summary-item.component.html -->
+<li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 cursor-pointer transition-all mt-3 mb-3" [class.bg-blue-50]="selected()" [class.border-blue-300]="selected()" [class.border-red-200]="isExpired()" [class.hover:border-red-400]="isExpired()" (click)="onClick.emit()">
+     <div class="flex-1 min-w-0">
+          <ng-content select="[item-content]" />
+     </div>
+
+     <!-- Copy Buttons Container -->
+     <div class="flex gap-1">
+          <!-- Primary Copy Button -->
+          @if (copyValue()) {
+          <button (click)="onCopy($event)" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" [title]="copyTooltip()">
+               <lucide-icon name="copy" size="16" />
+          </button>
+          }
+
+          <!-- Secondary Copy Button -->
+          @if (secondaryCopyValue()) {
+          <button (click)="onSecondaryCopy($event)" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" [title]="secondaryCopyTooltip()">
+               <lucide-icon name="copy" size="16" />
+          </button>
+          }
+     </div>
+</li>

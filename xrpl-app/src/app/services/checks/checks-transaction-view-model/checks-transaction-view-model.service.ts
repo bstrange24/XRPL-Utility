@@ -173,13 +173,6 @@ export class ChecksTransactionViewModelService {
 
      filteredCheckIds = this.checkUtilService.filteredCheckItems(this.checkItems, this.checksStoreService.checkIdSearchQuery);
 
-     // selectedFullCheck = computed(() => {
-     //      const selectedId = this.checksStoreService.checkIdField();
-     //      if (!selectedId) return null;
-
-     //      return this.checksStoreService.cancellableChecks().find(c => c.id === selectedId) ?? null;
-     // });
-
      selectedFullCheck = computed(() => {
           const selectedId = this.checksStoreService.checkIdField();
           if (!selectedId) return null;
@@ -194,22 +187,7 @@ export class ChecksTransactionViewModelService {
           return null;
      });
 
-     // selectedCheckIndex = computed(() => this.selectedFullCheck()?.id ?? '');
      selectedCheckDestination = computed(() => this.selectedFullCheck()?.destination ?? '');
-     // selectedCheckAmount = computed(() => (this.selectedFullCheck()?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(this.selectedFullCheck()!.sendMax) : ''));
-
-     // For IOU checks
-     // isIOUCheck = computed(() => {
-     //      const check = this.selectedFullCheck();
-     //      if (!check) return false;
-     //      return check.sendMax && typeof check.sendMax === 'object' && 'currency' in check.sendMax;
-     // });
-
-     // selectedCheckIssuer = computed(() => {
-     //      const check = this.selectedFullCheck();
-     //      if (!check?.sendMax || typeof check.sendMax !== 'object') return '';
-     //      return (check.sendMax as any).issuer ?? '';
-     // });
 
      selectedFullCheckForCash = computed(() => {
           const selectedId = this.checksStoreService.checkIdField();
@@ -220,7 +198,6 @@ export class ChecksTransactionViewModelService {
 
      selectedCheckCreator = computed(() => this.selectedFullCheckForCash()?.sender ?? '');
 
-     // Update these to be more flexible
      selectedCheckIndex = computed(() => {
           return this.selectedFullCheckForCash()?.id ?? this.selectedFullCheck()?.id ?? '';
      });
@@ -229,11 +206,6 @@ export class ChecksTransactionViewModelService {
           const check = this.selectedFullCheck();
           return check?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(check.sendMax) : '';
      });
-
-     // selectedCheckAmount = computed(() => {
-     //      const check = this.selectedFullCheckForCash() ?? this.selectedFullCheck();
-     //      return check?.sendMax ? this.utilsService.formatIOUXrpAmountOutstanding(check.sendMax) : '';
-     // });
 
      isIOUCheck = computed(() => {
           const check = this.selectedFullCheck();

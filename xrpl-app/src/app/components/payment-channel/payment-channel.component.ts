@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -70,6 +70,12 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabs = PAYMENT_CHANNEL_TABS;
      public readonly tabMeta = PAYMENT_CHANNEL_TAB_META;
+
+     readonly summaryExpanded = signal<boolean>(false);
+
+     toggleSummaryPanel() {
+          this.summaryExpanded.update(expanded => !expanded);
+     }
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

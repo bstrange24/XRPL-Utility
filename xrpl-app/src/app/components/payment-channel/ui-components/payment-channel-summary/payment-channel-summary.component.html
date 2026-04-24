@@ -1,108 +1,66 @@
 @if (viewModel.infoData(); as info) {
+<app-summary-container [walletName]="info.walletName" [summaryText]="info.headerMessage" [itemCount]="info.channelCount" [links]="null" [buttonLabel]="'Payment Channels'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @for (channel of info.channelsToShow; track channel.id) {
+          <app-summary-item [selected]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()" [isExpired]="channel.isExpired" [copyValue]="channel.id" copyTooltip="Copy Channel ID" (onClick)="onPaymentChannelClick(channel)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Channel ID')">
+               <div item-content>
+                    <!-- Payment Channel Content -->
+                    <div class="flex items-start gap-3">
+                         @if (channel.isExpired) {
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />
+                         } @else {
+                         <ng-icon name="heroClock" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                         }
+                         <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                   <app-tooltip-link [href]="explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
+                                        <span class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="channel.isExpired"> {{ channel.totalAmount }} </span>
 
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+                                        @if (channel.isExpired) {
+                                        <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+                                        }
+                                   </app-tooltip-link>
+                              </div>
 
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
-                    <span class="text-gray-600 text-sm" [innerHTML]="info.headerMessage"></span>
-               </div>
-          </div>
+                              <!-- Metadata -->
+                              <div class="mt-3 space-y-2 text-sm">
+                                   <div class="flex items-center gap-2">
+                                        @if (channel.isOwner) {
+                                        <span class="text-gray-500 w-32">Destination:</span>
+                                        <span class="font-mono ml-2"> {{ channel.destination }} </span>
+                                        } @else {
+                                        <span class="text-gray-500 w-32">Sender</span>
+                                        <span class="font-mono ml-2"> {{ channel.sender }} </span>
+                                        }
+                                   </div>
 
-          <!-- Expand / Collapse -->
-          @if (info.channelCount > 0) {
-          <button type="button" (click)="toggleInfoPanel()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} Payment Channels</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Expandable List -->
-     @if (info.channelCount > 0 && infoPanelExpanded()) {
-     <div class="max-h-[460px] overflow-y-auto p-3">
-          <ul class="space-y-2">
-               @for (channel of info.channelsToShow; track channel.id) {
-               <li
-                    class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-4 cursor-pointer transition-all"
-                    [class.bg-blue-50]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()"
-                    [class.border-blue-300]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()"
-                    [class.border-red-200]="channel.isExpired"
-                    (click)="onPaymentChannelClick(channel)"
-                    (keydown.enter)="onPaymentChannelClick(channel)"
-                    (keydown.space)="onPaymentChannelClick(channel); $event.preventDefault()"
-               >
-                    <div class="flex-1 min-w-0">
-                         <!-- Main Amount + Direction -->
-                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
-                              <div class="flex items-center gap-3">
-                                   <span class="text-xl font-semibold text-gray-900" [class.line-through]="channel.isExpired" [class.text-red-500]="channel.isExpired"> {{ channel.totalAmount }} </span>
-
-                                   @if (channel.isOwner) {
-                                   <span class="text-gray-400">→</span>
-                                   <span class="font-mono text-sm text-gray-600"> {{ channel.destination?.slice(0,8) + '...' }} </span>
-                                   } @else {
-                                   <span class="text-gray-400">←</span>
-                                   <span class="font-mono text-sm text-gray-600"> {{ channel.sender?.slice(0,8) + '...' }} </span>
-                                   } @if (channel.isExpired) {
-                                   <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Channel ID:</span>
+                                        <span class="font-mono ml-2">{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</span>
+                                   </div>
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Remaining:</span>
+                                        <span class="font-medium ml-2">{{ channel.remaining }}</span>
+                                        <span class="font-mono ml-2"> ({{ channel.balance }} claimed)</span>
+                                   </div>
+                                   @if (channel.expiration) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">{{ channel.isExpired ? 'Expired:' : 'Expires:' }}</span>
+                                        <span class="font-mono ml-2" [class.text-red-600]="channel.isExpired"> {{ channel.expiration }} </span>
+                                   </div>
                                    }
-                              </div>
-                         </app-tooltip-link>
 
-                         <!-- Metadata -->
-                         <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">
-                              <div>
-                                   <span class="text-gray-500">Channel ID:</span>
-                                   <span class="font-mono ml-2">{{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }}</span>
-                              </div>
-                              <div>
-                                   <span class="text-gray-500">Remaining:</span>
-                                   <span class="font-medium ml-2">{{ channel.remaining }}</span>
-                                   <span class="text-gray-500"> ({{ channel.balance }} claimed)</span>
-                              </div>
-                              @if (channel.expiration) {
-                              <div>
-                                   <span class="text-gray-500">{{ channel.isExpired ? 'Expired:' : 'Expires:' }}</span>
-                                   <span class="ml-2" [class.text-red-600]="channel.isExpired"> {{ channel.expiration }} </span>
-                              </div>
-                              }
-                              <div>
-                                   <span class="text-gray-500">Settle Delay:</span>
-                                   <span class="font-medium ml-2">{{ channel.settleDelay }}s</span>
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Settle Delay:</span>
+                                        <span class="font-mono ml-2">{{ channel.settleDelay }}s</span>
+                                   </div>
                               </div>
                          </div>
                     </div>
-
-                    <!-- Copy Button -->
-                    <button (click)="copyUtilService.copyAndToast(channel.id, 'Channel ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy Channel ID">
-                         <lucide-icon name="copy" size="16" />
-                    </button>
-               </li>
-               }
-          </ul>
-     </div>
-     }@else { @if (info.channelCount <= 0) {
-     <!-- Empty State (when no payment channels) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          @if (viewModel.activeTab() === 'createPaymentChannel') {
-          <p class="text-sm text-gray-500">This wallet has not created any Payment Channels yet.</p>
-          } @else if(viewModel.activeTab() === 'fundPaymentChannel') {
-          <p class="text-sm text-gray-500">This wallet has no Payment Channels to fund.</p>
-          } @else if(viewModel.activeTab() === 'claimPaymentChannel') {
-          <p class="text-sm text-gray-500">This wallet has no Payment Channels to claim.</p>
-          } @else if(viewModel.activeTab() === 'renewPaymentChannel') {
-          <p class="text-sm text-gray-500">This wallet has no Payment Channels to renew.</p>
-          }@else {
-          <p class="text-sm text-gray-500">This wallet has no Payment Channels to close.</p>
+               </div>
+          </app-summary-item>
           }
      </div>
-     }}
-</div>
+</app-summary-container>
 }

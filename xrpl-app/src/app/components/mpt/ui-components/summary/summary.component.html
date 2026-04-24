@@ -1,125 +1,62 @@
 @if (viewModel.infoData(); as info) {
-<!-- Main Card -->
-<div class="bg-blue-50 border border-blue-100 rounded-2xl border border-gray-200 bg-white overflow-hidden mb-4">
-     <!-- Summary Header -->
-     <div class="bg-blue-50 border border-blue-100 p-2 flex items-start justify-between gap-4 border-b border-gray-100">
-          <div class="flex items-start gap-3 flex-1">
-               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600 mt-0.5 flex-shrink-0" />
+<app-summary-container [walletName]="info?.walletName || ''" [summaryText]="summaryText()" [itemCount]="info?.mptCount || 0" [links]="info?.links || null" [buttonLabel]="'MPTs'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <!-- Items List -->
+     <div items-list>
+          @for (mpt of info?.mptsToShow || []; track mpt.id) {
+          <app-summary-item [selected]="mpt.mpt_issuance_id === mptUtilService.selectedMptIssuanceId()" [copyValue]="mpt.mpt_issuance_id" copyTooltip="Copy MPT Issuance ID" (onClick)="onMptClick(mpt)" (onCopyClick)="copyUtilService.copyAndToast($event, 'MPT Issuance ID')">
+               <div item-content>
+                    <!-- MPT Content -->
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroCog" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                         <div class="flex-1 min-w-0">
+                              <div class="flex items-center gap-2 flex-wrap">
+                                   <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
+                                        @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
+                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                                             {{ mpt.formattedAmount }}
+                                             <small>({{ mpt.isHolder ? 'held' : 'issued' }})</small>
+                                        </strong>
+                                        } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
+                                        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Max {{ mpt.maxAmount }} </span>
+                                        }
+                                        <!-- </div> -->
+                                   </app-tooltip-link>
+                              </div>
 
-               <div>
-                    <code class="font-mono text-sm text-gray-700">{{ info.walletName }}</code>
+                              <!-- Metadata -->
+                              <div class="mt-3 space-y-2 text-sm">
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">MPT Issuance ID:</span>
+                                        <span class="font-mono ml-2 truncate">{{ mpt.mpt_issuance_id }}</span>
+                                   </div>
 
-                    @if (info.mptCount === 0) {
-                    <span class="text-gray-600 text-sm"> has no Multi-Purpose Tokens.</span>
-                    } @else {
-                    <span class="text-gray-600 text-sm">
-                         has <strong class="text-gray-900">{{ info.mptCount }}</strong>
-                         Multi-Purpose Token{{ info.mptCount === 1 ? '' : 's' }}.
-                    </span>
-                    }
-               </div>
-          </div>
-
-          <!-- XRPL Win Links -->
-          @if (info.links) {
-          <div class="text-xs text-blue-600 hover:text-blue-700 pt-1" [innerHTML]="info.links"></div>
-          }
-
-          <!-- Expand / Collapse Button -->
-          @if (info.mptCount > 0) {
-          <button type="button" (click)="toggleInfoPanel.emit()" class="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">
-               <span>{{ infoPanelExpanded() ? 'Hide' : 'Show' }} MPTs</span>
-               <ng-icon name="heroChevronDown" size="18" class="transition-transform" [style.transform]="infoPanelExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'" />
-          </button>
-          }
-     </div>
-
-     <!-- Expandable MPT List -->
-     @if (info.mptCount > 0 && infoPanelExpanded()) {
-     <div class="max-h-[420px] overflow-y-auto p-2">
-          <ul class="space-y-2">
-               @for (mpt of info.mptsToShow; track mpt.id) {
-               <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-4 cursor-pointer transition-all" [class.bg-blue-50]="mpt.id === mptUtilService.selectedMptIssuanceId()" [class.border-blue-300]="mpt.id === mptUtilService.selectedMptIssuanceId()" (click)="onMptClick(mpt)" (keydown.enter)="onMptClick(mpt)" (keydown.space)="onMptClick(mpt); $event.preventDefault()">
-                    <!-- Main Content -->
-                    <div class="flex-1 min-w-0">
-                         <!-- MPT Title -->
-                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
-                              <div class="flex items-center gap-3">
-                                   <strong class="text-lg text-gray-900">MPT</strong>
-                                   @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
-                                   <span class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-full">
-                                        {{ mpt.formattedAmount }}
-                                        <small>({{ mpt.isHolder ? 'held' : 'issued' }})</small>
-                                   </span>
-                                   } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
-                                   <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Max {{ mpt.maxAmount }} </span>
+                                   @if (mpt.ticker && mpt.ticker !== 'N/A') {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Ticker:</span>
+                                        <span class="font-mono ml-2">{{ mpt.ticker }}</span>
+                                   </div>
+                                   } @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Transfer Fee:</span>
+                                        <span class="font-mono ml-2">{{ mpt.transferFee / 1000 }}%</span>
+                                   </div>
+                                   } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Flags:</span>
+                                        <span class="font-mono ml-2">{{ mpt.flags }}</span>
+                                   </div>
+                                   } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
+                                   <div class="flex items-center gap-2">
+                                        <span class="text-gray-500 w-32">Outstanding:</span>
+                                        <span class="font-mono ml-2">{{ mpt.formattedOutstanding }}</span>
+                                   </div>
                                    }
                               </div>
-                         </app-tooltip-link>
-
-                         <!-- Metadata -->
-                         <div class="mt-3 space-y-2 text-sm">
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-32">MPT Issuance ID:</span>
-                                   <span class="font-mono text-gray-700 truncate">{{ mpt.mpt_issuance_id }}</span>
-                              </div>
-
-                              @if (mpt.ticker && mpt.ticker !== 'N/A') {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-32">Ticker:</span>
-                                   <span class="font-medium">{{ mpt.ticker }}</span>
-                              </div>
-                              } @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-32">Transfer Fee:</span>
-                                   <span class="font-medium">{{ mpt.transferFee / 1000 }}%</span>
-                              </div>
-                              } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-32">Flags:</span>
-                                   <span class="font-medium">{{ mpt.flags }}</span>
-                              </div>
-                              } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
-                              <div class="flex items-center gap-2">
-                                   <span class="text-gray-500 w-32">Outstanding:</span>
-                                   <span class="font-medium">{{ mpt.formattedOutstanding }}</span>
-                              </div>
-                              }
                          </div>
                     </div>
-
-                    <!-- Copy Button -->
-                    <button (click)="copyUtilService.copyAndToast(mpt.mpt_issuance_id, 'MPT Issuance ID'); $event.stopPropagation()" class="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-gray-600 transition-all" title="Copy MPT Issuance ID">
-                         <lucide-icon name="copy" size="16" />
-                    </button>
-               </li>
-               }
-          </ul>
-     </div>
-     }@else { @if (info.mptCount <= 0) {
-     <!-- Empty State (when no payment channels) -->
-     <div class="p-6 text-center">
-          <div class="mx-auto w-12 h-8 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-               <ng-icon name="heroMagnifyingGlass" size="22" class="text-green-500" />
-          </div>
-          @if (viewModel.activeTab() === 'createMpt') {
-          <p class="text-sm text-gray-500">This wallet has not created any MPT's yet.</p>
-          } @else if(viewModel.activeTab() === 'authorizeMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to authorize.</p>
-          } @else if(viewModel.activeTab() === 'unauthorizeMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to unauthorize.</p>
-          } @else if(viewModel.activeTab() === 'sendMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's avilable to send.</p>
-          } @else if(viewModel.activeTab() === 'lockMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to lock.</p>
-          } @else if(viewModel.activeTab() === 'unlockMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to unlock.</p>
-          } @else if(viewModel.activeTab() === 'clawbackMpt') {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to clawback.</p>
-          }@else {
-          <p class="text-sm text-gray-500">This wallet has no MPT's to destroy.</p>
+               </div>
+          </app-summary-item>
           }
      </div>
-     }}
-</div>
+</app-summary-container>
 }
