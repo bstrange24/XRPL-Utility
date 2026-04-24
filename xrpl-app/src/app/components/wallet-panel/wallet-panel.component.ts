@@ -154,9 +154,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.walletManagerService.setSelectedIndex(index);
           this.walletSelected.emit(this.currentWallet);
 
-          if (!this.expandedWallets.has(index)) {
-               this.expandedWallets.add(index);
-          }
+          // if (!this.expandedWallets.has(index)) {
+          //      this.expandedWallets.add(index);
+          // }
      }
 
      editName(index: number) {
@@ -289,5 +289,19 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.expandedWallets.clear();
           // Force change detection
           this.cdr.detectChanges();
+     }
+
+     // In your WalletPanelComponent
+     handleWalletHeaderClick(event: MouseEvent, index: number) {
+          // Prevent expansion if user clicked on a button (Select, Edit, etc.)
+          const target = event.target as HTMLElement;
+
+          if (target.closest('button') || target.tagName === 'BUTTON' || target.closest('input') || target.tagName === 'INPUT') {
+               return; // Do nothing → prevents expansion
+          }
+
+          if (!this.editingIndex(index)) {
+               this.toggleWalletExpansion(index);
+          }
      }
 }

@@ -9,14 +9,6 @@
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
                </div>
-
-               <!-- Expired Warning -->
-               @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
-               <div class="mt-3 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
-                    <ng-icon name="heroExclamationTriangle" size="16" class="mt-0.5 flex-shrink-0 text-red-600" />
-                    <span class="text-sm text-red-700"> This selected escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished. } </span>
-               </div>
-               }
           </div>
 
           <!-- Finish Escrow Extra Fields -->
@@ -63,3 +55,11 @@
           }
      </div>
 </div>
+
+<!-- Expired Warning -->
+@if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
+<div class="mt-3 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
+     <ng-icon name="heroExclamationTriangle" size="16" class="mt-0.5 flex-shrink-0 text-red-600" />
+     <span class="text-sm text-red-700"> This selected escrow has expired@if (activeTab === 'finishEscrow') { and cannot be finished. } </span>
+</div>
+}

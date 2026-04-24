@@ -5,14 +5,6 @@
           <p class="mb-3 text-sm text-gray-600">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
 
           <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
-
-          <!-- Expired Warning -->
-          @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
-          <div class="my-4 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-               <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
-               <div class="text-sm text-red-700">This escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished }.</div>
-          </div>
-          }
      </div>
 
      <!-- Escrow Details Card -->
@@ -55,3 +47,10 @@
      </div>
      }
 </div>
+<!-- Expired Warning -->
+@if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
+<div class="my-4 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+     <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
+     <div class="text-sm text-red-700">This escrow has expired@if (activeTab === 'finishEscrow') { and cannot be finished }.</div>
+</div>
+}
