@@ -3,7 +3,6 @@
      <!-- Items List -->
      <div items-list>
           @for (offer of info?.offersToShow || []; track offer.index) {
-          <!-- <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired!" [class.border-red-200]="offer.expiration" [copyValue]="offer.index" copyTooltip="Copy Offer ID" (onClick)="onNftClick(offer)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" secondaryCopyTooltip="Copy NFT ID" (onClick)="onNftClick(offer)" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')"> -->
           <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired" [copyValue]="offer.index" [copyTooltip]="'Copy Offer ID'" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" [secondaryCopyValue]="offer.nftId" [secondaryCopyTooltip]="'Copy NFT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')" (onClick)="onNftClick(offer)">
                <div item-content>
                     <!-- NFT Offer Content -->
@@ -17,8 +16,7 @@
                          <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'nft/' + offer.nftId" tooltipText="View NFT on XRPL Explorer">
-                                        <!-- <span class="text-xl font-semibold text-gray-900" [class.line-through]="offer.isExpired" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </span> -->
-                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </strong>
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="offer.isExpired"> {{ formatAmount(offer.amount) }} </strong>
 
                                         @if (offer.isExpired) {
                                         <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
@@ -42,7 +40,7 @@
 
                                    @if (offer.expiration) {
                                    <app-summary-key-value [label]="offer.isExpired ? 'Expired:' : 'Expires:'">
-                                        <span class="text-gray-700" [class.text-red-600]="offer.isExpired"> {{ offer.expiration ? formatXrplTimestamp(offer.expiration) : 'N/A' }} </span>
+                                        <span class="font-mono" [class.text-red-600]="offer.isExpired"> {{ offer.expiration ? formatXrplTimestamp(offer.expiration) : 'N/A' }} </span>
                                    </app-summary-key-value>
                                    }
                               </div>

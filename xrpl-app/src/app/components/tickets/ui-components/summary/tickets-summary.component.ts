@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
-import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-tickets-summary',
      standalone: true,
-     imports: [SummaryContainerComponent],
+     imports: [NgIcon, LucideAngularModule],
      templateUrl: './tickets-summary.component.html',
      styleUrl: './tickets-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

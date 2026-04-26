@@ -104,8 +104,19 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+
                     const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
-                    this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
+
+                    console.log(`ticketObjects: ${JSON.stringify(ticketObjects, null, '\t')}`);
+
+                    // Extract sequences
+                    const allTicketsForWallet: string[] = (ticketObjects?.result?.account_objects ?? []).map((ticket: any) => String(ticket.TicketSequence)).sort((a, b) => Number(a) - Number(b)); // keeps them in ascending order
+
+                    this.xrplTxOptionsStore.setField('allTicketsForWallet', allTicketsForWallet);
+                    this.xrplTxOptionsStore.setField('walletTicketCount', allTicketsForWallet.length);
+
+                    // this.xrplTxOptionsStore.setField('allTicketsForWallet', ticketObjects???????);
+                    // this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);

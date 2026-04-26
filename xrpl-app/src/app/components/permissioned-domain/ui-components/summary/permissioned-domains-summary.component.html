@@ -11,7 +11,7 @@
                          <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'entry/' + domain.index" tooltipText="View Permissioned Domain on XRPL Explorer">
-                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">Domain ID: <span class="font-mono text-sm">{{ domain.index }}</span></strong>
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors">Domain ID: <span class="font-mono">{{ domain.index }}</span></strong>
                                    </app-tooltip-link>
                               </div>
 
@@ -21,7 +21,7 @@
                                    <div class="mb-4 last:mb-0">
                                         <!-- Issuer -->
                                         <app-summary-key-value label="Issuer">
-                                             <code class="font-mono text-gray-800">{{ group.issuer }}</code>
+                                             <code class="font-mono">{{ group.issuer }}</code>
                                         </app-summary-key-value>
 
                                         <!-- Credential Types -->

@@ -50,7 +50,7 @@
                          <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="txUiService.explorerUrl() + 'entry/' + offer.index" tooltipText="View Offer on XRPL Explorer">
-                                        <span class="font-mono text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors"> {{ offer.takerGets }} → {{ offer.takerPays }} </span>
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors"> {{ offer.takerGets }} → {{ offer.takerPays }} </strong>
                                    </app-tooltip-link>
                               </div>
 

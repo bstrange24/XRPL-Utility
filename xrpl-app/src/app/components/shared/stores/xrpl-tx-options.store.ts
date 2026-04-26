@@ -25,6 +25,7 @@ export interface XrplTxOptionsState {
      selectedTickets: string[];
      ticketCountField: string;
      selectedTicketSequences: string[];
+     allTicketsForWallet: string[];
      walletTicketCount: number;
      selectedSingleTicket: string;
      multiSelectMode: boolean;
@@ -52,6 +53,7 @@ const initialState: XrplTxOptionsState = {
      ticketArray: [],
      ticketCountField: '',
      selectedTicketSequences: [],
+     allTicketsForWallet: [],
      walletTicketCount: 0,
      multiSelectMode: false,
 

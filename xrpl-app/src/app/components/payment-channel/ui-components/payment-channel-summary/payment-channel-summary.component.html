@@ -7,15 +7,18 @@
                <div item-content>
                     <!-- Payment Channel Content -->
                     <div class="flex items-start gap-3">
+                         <!-- Status Icon -->
                          @if (channel.isExpired) {
                          <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />
                          } @else {
                          <ng-icon name="heroClock" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
                          }
+
                          <div class="flex-1 min-w-0">
+                              <!-- Amount + Expired Badge -->
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'entry/' + channel.id" tooltipText="View Channel on XRPL Explorer">
-                                        <span class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="channel.isExpired"> {{ channel.totalAmount }} </span>
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors" [class.text-red-500]="channel.isExpired"> {{ channel.totalAmount }} </strong>
 
                                         @if (channel.isExpired) {
                                         <span class="px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"> Expired </span>
@@ -32,7 +35,7 @@
 
                                    <!-- Channel ID -->
                                    <app-summary-key-value label="Channel ID">
-                                        <span class="font-mono"> {{ channel.id.slice(0,10) }}...{{ channel.id.slice(-8) }} </span>
+                                        <span class="font-mono"> {{ channel.id }} </span>
                                    </app-summary-key-value>
 
                                    <!-- Remaining -->

@@ -11,21 +11,29 @@
                          <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'nft/' + nft.id" tooltipText="View NFT on XRPL Explorer">
-                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors">NFT ID: <span class="font-mono text-sm">{{ nft.id }}</span></strong>
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors">NFT ID: <span class="font-mono text-sm">{{ nft.id }}</span></strong>
                                    </app-tooltip-link>
                               </div>
 
                               <!-- Metadata -->
-                              <div class="mt-3 space-y-2 text-sm">
-                                   <div class="mt-3 space-y-2 text-sm">
-                                        <app-summary-key-value label="Taxon">{{ nft.taxon }}</app-summary-key-value>
-                                        <app-summary-key-value label="Sequence">{{ nft.sequence }}</app-summary-key-value>
-                                        <app-summary-key-value label="URI">{{ nft.uri || 'None' }}</app-summary-key-value>
-                                        @if (nft.transferFee) {
-                                        <app-summary-key-value label="Transfer Fee">{{ nft.transferFee / 1000 }}%</app-summary-key-value>
-                                        }
-                                        <app-summary-key-value label="Flags">{{ nft.flags.length ? nft.flags : 'None' }}</app-summary-key-value>
-                                   </div>
+                              <div class="mt-3 text-sm">
+                                   <app-summary-key-value label="Taxon">
+                                        <span class="font-mono">{{ nft.taxon }}</span>
+                                   </app-summary-key-value>
+                                   <app-summary-key-value label="Sequence">
+                                        <span class="font-mono">{{ nft.sequence }}</span>
+                                   </app-summary-key-value>
+                                   <app-summary-key-value label="URI">
+                                        <span class="font-mono">{{ nft.uri || 'None' }}</span>
+                                   </app-summary-key-value>
+                                   @if (nft.transferFee) {
+                                   <app-summary-key-value label="Transfer Fee">
+                                        <span class="font-mono">{{ nft.transferFee / 1000 }}%</span>
+                                   </app-summary-key-value>
+                                   }
+                                   <app-summary-key-value label="Flags">
+                                        <span class="font-mono">{{ nft.flags.length ? nft.flags : 'None' }}</span>
+                                   </app-summary-key-value>
                               </div>
                          </div>
                     </div>

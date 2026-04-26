@@ -12,14 +12,14 @@
                               <div class="flex items-center gap-2 flex-wrap">
                                    <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
                                         @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
-                                        <strong class="font-mono font-medium text-gray-900 hover:text-blue-600 transition-colors"
+                                        <strong class="text-gray-900 hover:text-blue-600 transition-colors"
                                              >{{ mpt.formattedAmount }}
                                              <small>({{ mpt.isHolder ? 'held' : 'issued' }})</small>
                                         </strong>
                                         } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
-                                        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Max {{ mpt.maxAmount }} </span>
+                                        <span class="text-gray-900"> Max {{ mpt.maxAmount }} </span>
                                         } @else {
-                                        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Unlimited </span>
+                                        <span class="text-gray-900"> Unlimited </span>
                                         }
                                    </app-tooltip-link>
                               </div>
@@ -27,7 +27,7 @@
                               <!-- Metadata -->
                               <div class="mt-3 text-sm">
                                    <app-summary-key-value label="MPT Issuance ID">
-                                        <span class="font-mono truncate">{{ mpt.mpt_issuance_id }}</span>
+                                        <span class="font-mono">{{ mpt.mpt_issuance_id }}</span>
                                    </app-summary-key-value>
                                    @if (!mpt.isHolder) {
                                    <app-summary-key-value label="Maximum Amount">

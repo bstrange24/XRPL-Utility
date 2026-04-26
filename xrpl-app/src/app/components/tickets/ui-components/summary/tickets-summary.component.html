@@ -1,12 +1,9 @@
 @if (infoData()) {
-<app-summary-container [walletName]="walletName()" [summaryText]="infoData()" [itemCount]="this.xrplTxOptionsStore.walletTicketCount()" [buttonLabel]="'Tickets'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [variant]="'green'">
-     <!-- Optional: if you support color variants -->
+<div class="bg-green-50 border border-gray-200 rounded-2xl p-2 flex gap-4 mb-4">
+     <ng-icon name="heroInformationCircle" size="22" class="text-green-600 mt-0.5 flex-shrink-0" />
 
-     <!-- Items List (only shown when there are tickets) -->
-     <div items-list>
-          <!-- Your ticket items go here when you add them later -->
-          <!-- Example: -->
-          <!-- @for (ticket of tickets(); track ticket.index) { ... } -->
+     <div class="text-sm leading-relaxed text-green-800 flex-1">
+          <div [innerHTML]="infoData()"></div>
      </div>
-</app-summary-container>
+</div>
 }
