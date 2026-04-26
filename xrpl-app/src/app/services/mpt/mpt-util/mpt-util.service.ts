@@ -106,6 +106,13 @@ export class MptUtilService extends PerformanceBaseComponent {
                const o = obj as any;
                if (o.LedgerEntryType === 'MPTokenIssuance') {
                     issuances.set(o.mpt_issuance_id, o);
+                    // CACHE THE ASSET SCALE WHEN WE SEE AN ISSUANCE
+                    const assetScale = o.AssetScale ?? 0;
+                    this.mptStoreService.updateField('assetScaleCache', cache => {
+                         const newCache = new Map(cache);
+                         newCache.set(o.mpt_issuance_id, assetScale);
+                         return newCache;
+                    });
                } else if (o.LedgerEntryType === 'MPToken' && o.Account === classicAddress) {
                     holdings.push(o);
                }
@@ -115,25 +122,32 @@ export class MptUtilService extends PerformanceBaseComponent {
 
           // 2. Add holdings (you hold tokens)
           for (const holding of holdings) {
-               const issuance = issuances.get(holding.MPTokenIssuanceID) || {};
+               // Try to get asset scale from cache first, then from issuance if available
+               let assetScale = this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID);
+
+               if (assetScale === undefined) {
+                    const issuance = issuances.get(holding.MPTokenIssuanceID);
+                    assetScale = issuance?.AssetScale ?? 0;
+               }
+
                result.push({
                     LedgerEntryType: 'MPToken',
                     id: holding.index,
                     mpt_issuance_id: holding.MPTokenIssuanceID,
                     MPTAmount: holding.MPTAmount || '0',
-                    OutstandingAmount: issuance.OutstandingAmount || '0',
-                    MaximumAmount: issuance.MaximumAmount || 'Unlimited',
-                    TransferFee: issuance.TransferFee || '0',
-                    MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
+                    AssetScale: assetScale, // Use cached or found value
+                    OutstandingAmount: '0',
+                    MaximumAmount: 'Unlimited',
+                    TransferFee: '0',
+                    MPTokenMetadata: 'N/A',
                     Flags: holding.Flags || 0,
-                    AssetScale: issuance.AssetScale || 'N/A',
-                    Issuer: issuance.Account || 'Unknown',
+                    Issuer: 'Unknown',
                     isHolder: true,
                     amount: holding.MPTAmount || '0',
                });
           }
 
-          // 3. Add issuances that you own (even if you hold 0)
+          // 3. Add issuances that you own
           for (const [id, issuance] of issuances.entries()) {
                const alreadyAddedAsHolder = result.some(r => r.mpt_issuance_id === id);
                if (!alreadyAddedAsHolder) {
@@ -142,12 +156,12 @@ export class MptUtilService extends PerformanceBaseComponent {
                          id: issuance.index,
                          mpt_issuance_id: issuance.mpt_issuance_id,
                          MPTAmount: '0',
+                         AssetScale: issuance.AssetScale ?? 0,
                          OutstandingAmount: issuance.OutstandingAmount || '0',
                          MaximumAmount: issuance.MaximumAmount || 'Unlimited',
                          TransferFee: issuance.TransferFee || '0',
                          MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
                          Flags: issuance.Flags || 0,
-                         AssetScale: issuance.AssetScale || 'N/A',
                          Issuer: issuance.Account || 'Unknown',
                          isHolder: false,
                          amount: issuance.OutstandingAmount || '0',
@@ -155,7 +169,6 @@ export class MptUtilService extends PerformanceBaseComponent {
                }
           }
 
-          this.logService.logObjects('existingMpts (holders + issuers)', result);
           return result;
      }
 
@@ -195,20 +208,26 @@ export class MptUtilService extends PerformanceBaseComponent {
      }
 
      mptDropDownItems(existingMpts: any[]) {
-          computed(() => {
+          return computed(() => {
                const t = existingMpts.map(m => {
                     const type = m.LedgerEntryType === 'MPToken' ? 'MPToken' : 'MPTokenIssuance';
                     let isHolder = false;
                     if (type === 'MPToken') {
                          isHolder = true;
                     }
-                    const amount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
 
-                    const displayAmount = amount === '0' ? '0' : amount;
+                    // Get the raw amount
+                    const rawAmount = isHolder ? m.MPTAmount || '0' : m.OutstandingAmount || '0';
+
+                    // Get the asset scale (for holders, this should be set from the issuance)
+                    const assetScale = m.AssetScale ?? 0;
+
+                    // Format the amount using the asset scale
+                    const formattedAmount = this.formatMptAmount(rawAmount, assetScale);
 
                     return {
                          id: m.mpt_issuance_id ? m.mpt_issuance_id : m.id,
-                         display: `MPT • ${displayAmount} ${isHolder ? 'held' : 'issued'}`,
+                         display: `MPT • ${formattedAmount} ${isHolder ? 'held' : 'issued'}`,
                          secondary: m.mpt_issuance_id ? m.mpt_issuance_id.slice(0, 15) + '...' + m.mpt_issuance_id.slice(-10) : m.id.slice(0, 12) + '...' + m.id.slice(-10),
                          isCurrentAccount: false,
                          isCurrentCode: false,
@@ -390,16 +409,42 @@ export class MptUtilService extends PerformanceBaseComponent {
           if (!rawAmount || rawAmount === '0') return '0';
 
           const amountStr = rawAmount.toString();
-          const scale = typeof assetScale === 'number' ? assetScale : parseInt(assetScale || '0', 10);
 
-          if (scale === 0 || Number.isNaN(scale)) return amountStr;
+          // Convert scale safely
+          let scale = 0;
+          if (assetScale !== undefined && assetScale !== null && assetScale !== 'N/A') {
+               // Handle both number and string inputs
+               scale = typeof assetScale === 'number' ? assetScale : parseInt(assetScale.toString(), 10);
+               if (isNaN(scale)) scale = 0;
+          }
 
-          // Pad with zeros if needed
-          let padded = amountStr.padStart(scale + 1, '0');
+          if (scale <= 0) return amountStr;
 
+          const padded = amountStr.padStart(scale + 1, '0');
           const integerPart = padded.slice(0, -scale) || '0';
           const decimalPart = padded.slice(-scale);
 
-          return decimalPart === '0'.repeat(scale) ? integerPart : `${integerPart}.${decimalPart}`;
+          if (decimalPart === '0'.repeat(scale)) {
+               return integerPart;
+          }
+
+          // Remove trailing zeros
+          return `${integerPart}.${decimalPart.replace(/0+$/, '')}`;
      }
+
+     hasNoOutstandingMpts = computed(() => {
+          const existingMpts = this.mptStoreService.existingMpts();
+          const selectedMptId = this.mptStoreService.mptIssuanceId();
+
+          // Find the selected MPT
+          const selectedMpt = existingMpts.find(
+               m => (m.mpt_issuance_id === selectedMptId || m.id === selectedMptId) && m.LedgerEntryType === 'MPTokenIssuance' // Only check issuances
+          );
+
+          if (!selectedMpt) return true; // No MPT selected, can destroy
+
+          // Check if outstanding amount is 0 or not
+          const outstandingAmount = selectedMpt.OutstandingAmount || '0';
+          return outstandingAmount === '0';
+     });
 }

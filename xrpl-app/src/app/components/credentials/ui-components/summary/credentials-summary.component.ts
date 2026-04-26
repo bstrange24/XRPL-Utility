@@ -94,10 +94,14 @@ export class CredentialsSummaryComponent {
      });
 
      onCredentialClick(cred: CredentialItemVm) {
+          if (this.tab() === 'createCredential') {
+               return;
+          }
+
           this.credentialSelected.emit(cred);
      }
 
-     selectCredential(cred: CredentialItemVm, source: 'list') {
+     selectCredential(cred: CredentialItemVm, _source: 'list') {
           this.credentialUtilService.selectCredentialFromList(cred, this.tab(), this.wallet()?.address ?? '');
      }
 

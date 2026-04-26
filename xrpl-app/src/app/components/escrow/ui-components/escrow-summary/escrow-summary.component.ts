@@ -49,13 +49,13 @@ export class EscrowSummaryComponent {
      explorerUrl = this.txUiService.explorerUrl;
 
      onEscrowClick(escrow: any) {
+          if (this.tab() === 'createEscrow') {
+               return;
+          }
+
           this.escrowUtilService.onEscrowSelectedInUi(escrow);
           this.escrowSelected.emit(escrow);
-
-          // Collapse the summary after selecting on finish/cancel tabs
-          if (this.tab() === 'finishEscrow' || this.tab() === 'cancelEscrow') {
-               this.toggleInfoPanel.emit(); // collapses it
-          }
+          this.toggleInfoPanel.emit();
      }
 
      selectEscrow(escrow: any, _source: 'list') {

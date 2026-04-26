@@ -82,10 +82,14 @@ export class NftOffersSummaryComponent {
      });
 
      onNftClick(offer: any) {
+          const currentTab = this.nftOffersTransactionViewModelService.activeTab();
+          if (currentTab === 'sellNft') {
+               return;
+          }
+
           this.nftSelected.emit(offer);
 
           // Collapse on EVERY tab EXCEPT createMpt
-          const currentTab = this.nftOffersTransactionViewModelService.activeTab();
           this.toggleInfoPanel.emit();
      }
 

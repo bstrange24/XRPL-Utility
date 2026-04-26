@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, Signal, computed, inject, AfterViewInit, ElementRef, ViewChild, OnDestroy, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, Signal, computed, inject, AfterViewInit, ElementRef, ViewChild, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import flatpickr from 'flatpickr';
@@ -18,6 +18,8 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
 
      @Input({ required: true }) expirationSignal!: Signal<string>;
      @Input({ required: true }) setExpiration!: (value: string) => void;
+     @Input() enableSignal!: Signal<boolean>;
+     @Input() setEnable!: (enabled: boolean) => void;
 
      @Input() label = 'Expiration (optional)';
      @Input() hint = '';
@@ -25,6 +27,15 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      showPicker = false;
      private picker: any = null;
      enabled = signal(false);
+
+     constructor() {
+          // Sync store → component
+          effect(() => {
+               if (this.enableSignal) {
+                    this.enabled.set(this.enableSignal());
+               }
+          });
+     }
 
      formatted = computed(() => {
           const val = this.expirationSignal();
@@ -134,6 +145,21 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      }
 
      toggle(event: Event) {
+          const checked = (event.target as HTMLInputElement).checked;
+          this.enabled.set(checked);
+
+          if (this.setEnable) {
+               this.setEnable(checked);
+          }
+
+          if (!checked) {
+               this.setExpiration('');
+          } else if (!this.expirationSignal()) {
+               this.setNow();
+          }
+     }
+
+     toggle1(event: Event) {
           const checked = (event.target as HTMLInputElement).checked;
           this.enabled.set(checked);
 

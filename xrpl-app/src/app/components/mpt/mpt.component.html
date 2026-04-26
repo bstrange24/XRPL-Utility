@@ -42,7 +42,12 @@
                <app-mpt-clawback [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-clawback>
                } @if (tab === 'destroyMpt') {
                <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
-               }
+               } @if (tab === 'destroyMpt') { @if(!mptUtilService.hasNoOutstandingMpts()) {
+               <div class="my-5 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
+                    <div class="text-sm text-red-700">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
+               </div>
+               }}
 
                <!-- Transaction Options -->
                <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt', 'unauthorizeMpt', 'sendMpt', 'lockMpt', 'unlockMpt', 'clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
@@ -61,7 +66,7 @@
                     } @else if (tab === 'clawbackMpt') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue whitespace-nowrap">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
                     } @else if (tab === 'destroyMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ mptUtilService.destroyMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !mptUtilService.hasNoOutstandingMpts()" class="btn-red whitespace-nowrap">{{ mptUtilService.destroyMptButtonLabel() }}</button>
                     }
 
                     <!-- Clear Fields -->

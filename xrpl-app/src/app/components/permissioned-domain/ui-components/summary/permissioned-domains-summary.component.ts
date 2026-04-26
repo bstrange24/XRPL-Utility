@@ -69,9 +69,6 @@ export class PermissionedDomainsSummaryComponent {
      });
 
      isSelected(domainIndex: string): boolean {
-          // Don't show selection on setPermissionedDomain tab (create tab)
-          this.toggleInfoPanel.emit();
-
           if (this.tab() === 'setPermissionedDomain') {
                return false;
           }
@@ -80,10 +77,10 @@ export class PermissionedDomainsSummaryComponent {
 
      selectDomain(domain: PermissionedDomainItem) {
           // Don't allow selection on setPermissionedDomain tab (create tab)
-          this.toggleInfoPanel.emit();
           if (this.tab() === 'setPermissionedDomain') {
                return;
           }
+          this.toggleInfoPanel.emit();
           this.permissionedDomainStoreService.setField('selectedDomainId', domain.index);
      }
 

@@ -47,11 +47,12 @@ import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
 import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent, NgIcon],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

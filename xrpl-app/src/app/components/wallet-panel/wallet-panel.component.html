@@ -8,7 +8,11 @@
                          <span class="font-semibold" [class.text-gray-900]="!isDark()" [class.text-gray-100]="isDark()">Accounts</span>
                     </div>
 
-                    <ng-icon [name]="isWalletPanelExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="transition-transform" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()" />
+                    <button (click)="isWalletPanelExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }}" [disabled]="wallets.length === 0">
+                         <lucide-icon [name]="isWalletPanelExpanded() ? 'chevron-down' : 'chevron-up'" size="16" />
+
+                         <span class="hidden sm:inline"> {{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }} </span>
+                    </button>
                </div>
 
                @if (hasWallets) {
@@ -31,9 +35,10 @@
                               Generate
                          </button>
 
-                         <button (click)="collapseAllWallets()" class="btn-secondary flex items-center gap-2" title="Collapse all wallets">
-                              <lucide-icon name="chevron-up" size="16" />
-                              <span class="hidden sm:inline">Collapse All</span>
+                         <button (click)="toggleAllWallets()" class="btn-ghost flex items-center gap-2" title="{{ areAllCollapsed() ? 'Expand All' : 'Collapse All' }}" [disabled]="wallets.length === 0">
+                              <lucide-icon [name]="areAllCollapsed() ? 'chevron-down' : 'chevron-up'" size="16" />
+
+                              <span class="hidden sm:inline"> {{ areAllCollapsed() ? 'Expand All Wallets' : 'Collapse All Wallets' }} </span>
                          </button>
                     </div>
 

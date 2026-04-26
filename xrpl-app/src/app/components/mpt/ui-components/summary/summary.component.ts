@@ -88,12 +88,14 @@ export class SummaryComponent {
      });
 
      onMptClick(mpt: any) {
+          const currentTab = this.viewModel.activeTab();
+          if (currentTab === 'createMpt') {
+               return;
+          }
+
           this.mptSelected.emit(mpt);
 
           // Collapse on EVERY tab EXCEPT createMpt
-          const currentTab = this.viewModel.activeTab();
-          if (currentTab !== 'createMpt') {
-               this.toggleInfoPanel.emit();
-          }
+          this.toggleInfoPanel.emit();
      }
 }

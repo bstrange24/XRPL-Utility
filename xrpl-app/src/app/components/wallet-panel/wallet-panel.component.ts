@@ -44,11 +44,12 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      ngOnInit() {
           // Initialize with selected wallet expanded
-          this.expandedWallets.add(this.selectedWalletIndex);
+          // this.expandedWallets.add(this.selectedWalletIndex);
      }
 
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-     expandedWallets: Set<number> = new Set();
+     // expandedWallets: Set<number> = new Set();
+     expandedWallets = signal<Set<number>>(new Set());
      isWalletPanelExpanded = signal(true);
 
      // Prefer the panel's own execution time; fall back to the orchestrator's
@@ -148,14 +149,13 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           if (index === this.selectedWalletIndex) return;
 
           this.selectedWalletIndex = index;
-
           this.updateCurrentWallet();
 
           this.walletManagerService.setSelectedIndex(index);
           this.walletSelected.emit(this.currentWallet);
 
           // if (!this.expandedWallets.has(index)) {
-          //      this.expandedWallets.add(index);
+          // this.expandedWallets.add(index);
           // }
      }
 
@@ -272,21 +272,36 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
      // Toggle expansion for a specific wallet
      toggleWalletExpansion(index: number): void {
-          if (this.expandedWallets.has(index)) {
-               this.expandedWallets.delete(index);
-          } else {
-               this.expandedWallets.add(index);
-          }
+          this.expandedWallets.update(set => {
+               const newSet = new Set(set);
+               if (newSet.has(index)) {
+                    newSet.delete(index);
+               } else {
+                    newSet.add(index);
+               }
+               return newSet;
+          });
      }
+     // toggleWalletExpansion(index: number): void {
+     //      if (this.expandedWallets.has(index)) {
+     //           this.expandedWallets.delete(index);
+     //      } else {
+     //           this.expandedWallets.add(index);
+     //      }
+     // }
 
      // Check if a wallet is expanded
      isWalletExpanded(index: number): boolean {
-          return this.expandedWallets.has(index);
+          return this.expandedWallets().has(index);
      }
+     // isWalletExpanded(index: number): boolean {
+     //      return this.expandedWallets.has(index);
+     // }
 
      // Collapse all wallets
      collapseAllWallets(): void {
-          this.expandedWallets.clear();
+          this.expandedWallets.set(new Set());
+          // this.expandedWallets.clear();
           // Force change detection
           this.cdr.detectChanges();
      }
@@ -302,6 +317,34 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
           if (!this.editingIndex(index)) {
                this.toggleWalletExpansion(index);
+          }
+     }
+
+     // Computed - checks if ALL wallets are collapsed
+     readonly areAllCollapsed = computed(() => {
+          if (this.wallets.length === 0) return true;
+          return this.wallets.every((_, i) => !this.isWalletExpanded(i));
+     });
+
+     // Toggle between collapse all and expand all
+     toggleAllWallets(): void {
+          if (this.areAllCollapsed()) {
+               // Expand all
+               this.expandedWallets.set(new Set(this.wallets.map((_, i) => i)));
+          } else {
+               // Collapse all
+               this.expandedWallets.set(new Set());
+          }
+          this.cdr.detectChanges();
+     }
+
+     toggleMainWalletPanel(): void {
+          const isCurrentlyExpanded = this.isWalletPanelExpanded();
+          this.isWalletPanelExpanded.set(!isCurrentlyExpanded);
+
+          // Optional: Collapse all individual wallets when closing the main panel
+          if (!this.isWalletPanelExpanded()) {
+               this.collapseAllWallets();
           }
      }
 }

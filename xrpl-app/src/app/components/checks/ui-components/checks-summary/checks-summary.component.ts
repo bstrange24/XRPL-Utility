@@ -76,12 +76,12 @@ export class ChecksSummaryComponent {
      });
 
      onCheckClick(check: any) {
-          this.checkSelected.emit(check);
-
-          // Collapse summary after selection (same pattern as escrow)
-          if (this.tab() === 'cashCheck' || this.tab() === 'cancelCheck') {
-               this.toggleInfoPanel.emit();
+          if (this.tab() === 'createCheck') {
+               return;
           }
+
+          this.checkSelected.emit(check);
+          this.toggleInfoPanel.emit();
      }
 
      selectCheck(check: any, _source: 'list') {

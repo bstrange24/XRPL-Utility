@@ -18,6 +18,8 @@
                                         </strong>
                                         } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
                                         <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Max {{ mpt.maxAmount }} </span>
+                                        } @else {
+                                        <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"> Unlimited </span>
                                         }
                                    </app-tooltip-link>
                               </div>
@@ -27,8 +29,23 @@
                                    <app-summary-key-value label="MPT Issuance ID">
                                         <span class="font-mono truncate">{{ mpt.mpt_issuance_id }}</span>
                                    </app-summary-key-value>
-
-                                   @if (mpt.ticker && mpt.ticker !== 'N/A') {
+                                   @if (!mpt.isHolder) {
+                                   <app-summary-key-value label="Maximum Amount">
+                                        <span class="font-mono">{{ mpt.formattedMaxAmount }}</span>
+                                   </app-summary-key-value>
+                                   } @else {
+                                   <app-summary-key-value label="Total Amount">
+                                        <span class="font-mono">{{ mpt.formattedAmount || mpt.amount }}</span>
+                                   </app-summary-key-value>
+                                   } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
+                                   <app-summary-key-value label="Outstanding (Issued)">
+                                        <span class="font-mono">{{ mpt.formattedOutstanding }}</span>
+                                   </app-summary-key-value>
+                                   } @if(mpt.isHolder && mpt.assetScale === 'N/A') { } @else {
+                                   <app-summary-key-value label="Asset Scale">
+                                        <span class="font-mono">{{ mpt.assetScale === 'N/A'? '0': mpt.assetScale}}</span>
+                                   </app-summary-key-value>
+                                   } @if (mpt.ticker && mpt.ticker !== 'N/A') {
                                    <app-summary-key-value label="Ticker">
                                         <span class="font-mono">{{ mpt.ticker }}</span>
                                    </app-summary-key-value>
@@ -39,10 +56,6 @@
                                    } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
                                    <app-summary-key-value label="Flags">
                                         <span class="font-mono">{{ mpt.flags }}</span>
-                                   </app-summary-key-value>
-                                   } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
-                                   <app-summary-key-value label="Outstanding">
-                                        <span class="font-mono">{{ mpt.formattedOutstanding }}</span>
                                    </app-summary-key-value>
                                    }
                               </div>

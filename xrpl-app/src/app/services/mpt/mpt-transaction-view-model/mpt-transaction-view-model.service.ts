@@ -64,6 +64,76 @@ export class MptTransactionViewModelService {
 
           const links = count > 0 ? `<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>` : '';
 
+          const mptsToShow = mpts.map(m => {
+               const decodedMetadata = this._decodeMetadata(m);
+
+               const rawAmount = m.amount || m.MPTAmount || m.OutstandingAmount || '0';
+               const rawOutstanding = m.OutstandingAmount || '0';
+               const rawMaxAmount = m.MaximumAmount || '0';
+
+               // AssetScale should now be properly set on both holdings and issuances
+               const assetScale = m.AssetScale ?? 0;
+
+               const formattedAmount = this.mptUtilService.formatMptAmount(rawAmount, assetScale);
+               const formattedOutstanding = this.mptUtilService.formatMptAmount(rawOutstanding, assetScale);
+               const formattedMaxAmount = this.mptUtilService.formatMptAmount(rawMaxAmount, assetScale);
+
+               return {
+                    mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
+                    id: m.id || 'We have big issues',
+                    amount: m.amount,
+                    formattedAmount,
+                    formattedOutstanding,
+                    formattedMaxAmount,
+                    isHolder: m.isHolder,
+                    maxAmount: m.MaximumAmount,
+                    assetScale: assetScale, // This will now be correct for holders
+                    outstanding: m.OutstandingAmount,
+                    transferFee: m.TransferFee,
+                    flags: this.mptUtilService.decodeMptFlagsForUi(m.Flags || 0),
+
+                    ticker: decodedMetadata?.ticker ? decodedMetadata?.ticker : 'N/A',
+                    usefulLinks: (decodedMetadata?.uris || []).map((link: { uri: any; u: any; title: any; t: any; c: any; category: any }) => ({
+                         uri: link.uri || link.u || '',
+                         title: link.title || link.t || link.c || 'Link',
+                         category: link.category || '',
+                    })),
+
+                    linkHtml:
+                         (decodedMetadata?.uris || []).length > 0
+                              ? (decodedMetadata?.uris || [])
+                                     .map(
+                                          (link: { u: any; t: any; c: any }) => `
+                         <a href="${link.u}" target="_blank" rel="noopener noreferrer" class="mpt-link">${link.t || link.c || 'Link'}</a>`
+                                     )
+                                     .join(' • ')
+                              : 'No links provided',
+
+                    MPTokenMetadataFull: JSON.stringify(decodedMetadata, null, '\t'),
+               };
+          });
+
+          return {
+               walletName,
+               mptCount: count,
+               mptsToShow,
+               links,
+          };
+     });
+
+     infoData1 = computed(() => {
+          const wallet = this.walletManagerService.getSelectedWallet();
+          if (!wallet?.address) return null;
+
+          const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
+          const explorerBase = this.txUiService.explorerUrl();
+          const address = wallet.address;
+
+          const mpts = this.mptStoreService.existingMpts();
+          const count = mpts.length;
+
+          const links = count > 0 ? `<a href="${explorerBase}account/${address}/mpts/owned" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View MPTs</a>` : '';
+
           const mptsToShow = true
                ? this.mptStoreService.existingMpts().map(m => {
                       const decodedMetadata = this._decodeMetadata(m);
@@ -121,20 +191,49 @@ export class MptTransactionViewModelService {
           };
      });
 
-     // MPT Dropdown Items
      mptItems = computed(() => {
           return this.mptStoreService.existingMpts().map(m => {
-               const rawAmount = m.MPTAmount || m.OutstandingAmount || '0';
-               const scale = m.AssetScale ?? 0;
-               const formatted = this.mptUtilService.formatMptAmount(rawAmount, scale);
+               const assetScale = m.AssetScale ?? 0;
+
+               // Get the appropriate amount based on the entry type
+               let rawAmount: string;
+               let displayType: string;
+
+               if (m.LedgerEntryType === 'MPToken') {
+                    // Holder: use their balance
+                    rawAmount = m.MPTAmount || '0';
+                    displayType = 'held';
+               } else {
+                    // Issuer: show OutstandingAmount (tokens issued so far)
+                    // If OutstandingAmount is 0, it means no tokens have been issued yet
+                    rawAmount = m.OutstandingAmount || '0';
+                    displayType = 'issued';
+               }
+
+               const formatted = this.mptUtilService.formatMptAmount(rawAmount, assetScale);
 
                return {
                     id: m.mpt_issuance_id || m.id,
-                    display: `MPT • ${formatted} ${m.LedgerEntryType === 'MPToken' ? 'held' : 'issued'}`,
+                    display: `MPT • ${formatted} ${displayType}`,
                     secondary: (m.mpt_issuance_id || m.id || '').slice(0, 15) + '...' + (m.mpt_issuance_id || m.id || '').slice(-10),
                };
           });
      });
+
+     // mptItems = computed(() => {
+     //      return this.mptStoreService.existingMpts().map(m => {
+     //           // AssetScale is now properly set on all items
+     //           const assetScale = m.AssetScale ?? 0;
+     //           const rawAmount = m.MPTAmount || m.OutstandingAmount || '0';
+     //           const formatted = this.mptUtilService.formatMptAmount(rawAmount, assetScale);
+
+     //           return {
+     //                id: m.mpt_issuance_id || m.id,
+     //                display: `MPT • ${formatted} ${m.LedgerEntryType === 'MPToken' ? 'held' : 'issued'}`,
+     //                secondary: (m.mpt_issuance_id || m.id || '').slice(0, 15) + '...' + (m.mpt_issuance_id || m.id || '').slice(-10),
+     //           };
+     //      });
+     // });
 
      selectedMptItem = computed(() => {
           const id = this.mptStoreService.mptIssuanceId();

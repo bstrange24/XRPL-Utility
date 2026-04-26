@@ -79,6 +79,14 @@ export const EscrowStoreService = signalStore(
                patchState(store, { escrowCancelAfterExpirationDate: value });
           },
 
+          setEnableFinishAfter(enabled: boolean) {
+               this.setField('enableEscrowFinishAfterExpirationDate', enabled);
+          },
+
+          setEnableCancelAfter(enabled: boolean) {
+               this.setField('enableEscrowCancelAfterExpirationDate', enabled);
+          },
+
           /** Generic updater */
           updateField<K extends keyof EscrowState>(field: K, updater: (current: EscrowState[K]) => EscrowState[K]) {
                patchState(store, state => ({

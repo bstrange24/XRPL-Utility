@@ -5,7 +5,12 @@
                <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
                <span class="font-semibold text-gray-900">Account Delete Info</span>
           </div>
-          <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" />
+          <button (click)="isExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isExpanded() ? 'Collapse Panel' : 'Expand Panel' }}">
+               <lucide-icon [name]="isExpanded() ? 'chevron-down' : 'chevron-up'" size="16" />
+
+               <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
+          </button>
+          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      @if (isExpanded()) {

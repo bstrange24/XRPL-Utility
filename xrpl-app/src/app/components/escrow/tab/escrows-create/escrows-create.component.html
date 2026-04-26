@@ -56,9 +56,10 @@
 
           <!-- MPT Section -->
           @if (currencyStoreService.currency() === 'MPT') {
-          <div class="space-y-4">
+          <div class="space-y-4 mb-3">
                <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-900">Select MPT</label>
+                    <p class="text-xs text-gray-500">MPT this account holds that can be sent to another account.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                     </div>
@@ -66,6 +67,7 @@
 
                <div class="space-y-2">
                     <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+                    <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
                     <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>
           </div>
@@ -108,18 +110,30 @@
           </div>
           }
 
-          <div class="form-row">
+          <!-- <div class="form-row">
                <div class="switch-group">
                     <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowFinishAfterExpirationDate()" (change)="toggleEscrowFinishAfterExpiration($event.checked)">Set Escrow Finish After Time</mat-slide-toggle>
                </div>
                <div class="switch-group" style="padding-left: 225px">
                     <mat-slide-toggle class="mini-toggle" [checked]="escrowStoreService.enableEscrowCancelAfterExpirationDate()" (change)="toggleEscrowCancelAfterExpiration($event.checked)">Set Escrow Cancel After Time</mat-slide-toggle>
                </div>
-          </div>
+          </div> -->
 
           <!-- Time Settings -->
+          <!-- Finish After -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
-               <!-- <div class="rounded-2xl border border-gray-100 bg-gray-50 p-5 transition-shadow"></div> -->
+               <div class="rounded-2xl p-1 transition-shadow">
+                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)" [enableSignal]="escrowStoreService.enableEscrowFinishAfterExpirationDate" [setEnable]="escrowStoreService.setEnableFinishAfter.bind(escrowStoreService)" label="Set Escrow Finish After Time" hint="The time when the escrowed value can be released to the recipient.">
+                    </app-xrpl-expiration-input>
+               </div>
+
+               <!-- Cancel After -->
+               <div class="rounded-2xl p-1 transition-shadow">
+                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)" [enableSignal]="escrowStoreService.enableEscrowCancelAfterExpirationDate" [setEnable]="escrowStoreService.setEnableCancelAfter.bind(escrowStoreService)" label="Set Escrow Cancel After Time" hint="The time before the escrow can be cancelled by the sender.">
+                    </app-xrpl-expiration-input>
+               </div>
+          </div>
+          <!-- <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
                <div class="rounded-2xl p-1 transition-shadow">
                     <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)" label="Set Escrow Finish After Time" hint="The time when the escrowed value can be released to the recipient."> </app-xrpl-expiration-input>
                </div>
@@ -127,6 +141,6 @@
                <div class="rounded-2xl p-1 transition-shadow">
                     <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)" label="Set Escrow Cancel After Time" hint="The time before the escrow can be cancelled by the sender."> </app-xrpl-expiration-input>
                </div>
-          </div>
+          </div> -->
      </div>
 </div>

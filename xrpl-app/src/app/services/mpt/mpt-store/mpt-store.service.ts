@@ -25,6 +25,7 @@ export interface MptState {
      isCheckOwner: boolean;
      isCollapsed: boolean;
      existingMpts: any[];
+     assetScaleCache: Map<string, number>;
 }
 
 const initialState: MptState = {
@@ -79,6 +80,7 @@ const initialState: MptState = {
      isCollapsed: false,
      existingMpts: [],
      isMptEnabled: false,
+     assetScaleCache: new Map<string, number>(),
 };
 
 export const MptStoreService = signalStore(
