@@ -98,7 +98,28 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           });
      }
 
+     public currencyItems() {
+          return this.trustlineCurrencyService.currencyItems();
+     }
+
+     public selectedCurrencyItem() {
+          const code = this.currencyStoreService.currency();
+          if (!code) return null;
+          return this.currencyItems().find(item => item.id === code) || null;
+     }
+
+     public issuerItems() {
+          return this.trustlineCurrencyService.issuerItems();
+     }
+
+     public selectedIssuerItem() {
+          const addr = this.currencyStoreService.issuer();
+          if (!addr) return null;
+          return this.issuerItems().find(item => item.id === addr) || null;
+     }
+
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.trustlineCurrencyService.selectCurrency('XRP');
           await this.getChecks(false);
      }
 
@@ -118,6 +139,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
           await this.trustlineUtilService.loadTrustlines(false);
+          await this.trustlineCurrencyService.refreshCurrentBalance();
      }
 
      async onIssuerSelected(item: SelectItem | null) {
@@ -149,6 +171,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           if (wallet?.address === this.currentWallet()?.address) return;
           this.currentWallet.set(wallet);
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+
           this.trustlineCurrencyService.refreshCurrentBalance();
           this.populateDefaultDateTime();
      }
@@ -202,6 +225,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.checksStoreService.setField('isCheckBlocked', this.utilsService.isFlagEnabled(env.accountInfo, 'disallowIncomingCheck'));
                } catch (error: any) {
                     console.error('Failed to load checks:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
@@ -384,6 +408,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.checksStoreService.resetCheckFields();
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
+          this.trustlineCurrencyService.selectIssuer('XRP');
           this.txUiService.clearAllFields();
      }
 }

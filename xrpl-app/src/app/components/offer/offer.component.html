@@ -9,9 +9,7 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <div class="mt-4">
-               <app-offer-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-offer-summary>
-          </div>
+          <app-offer-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-offer-summary>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {

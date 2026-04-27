@@ -9,10 +9,8 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Summary -->
-          <div class="mt-4">
-               <!-- <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary> -->
-               <app-payment-channel-summary [infoPanelExpanded]="summaryExpanded()" (toggleInfoPanel)="toggleSummaryPanel()" (paymentChannelSelected)="paymentChannelSelected($event)" />
-          </div>
+          <!-- <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary> -->
+          <app-payment-channel-summary [infoPanelExpanded]="summaryExpanded()" (toggleInfoPanel)="toggleSummaryPanel()" (paymentChannelSelected)="paymentChannelSelected($event)" />
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {

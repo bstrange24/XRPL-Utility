@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
+import { NavbarStore } from '../../../services/shared/navbar/navbar-store.service';
 
 @Component({
      selector: 'app-connection-status',
@@ -13,6 +14,7 @@ import { ConnectionGuardService } from '../../../services/shared/connection-guar
 export class ConnectionStatusComponent {
      private readonly xrplService = inject(XrplService);
      private readonly connectionGuard = inject(ConnectionGuardService);
+     public readonly store = inject(NavbarStore);
 
      // Computed status values
      isConnected = computed(() => this.xrplService.connectionStatus$() === 'connected');

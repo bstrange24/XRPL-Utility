@@ -45,6 +45,42 @@ export class ChecksCreateComponent {
      @Output() destinationSearchQueryChange = new EventEmitter<string>();
      @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
 
+     public async onCurrencySelected(item: SelectItem | null) {
+          const currency = item?.id ?? 'XRP';
+          this.trustlineCurrencyService.selectCurrency(currency);
+          await this.trustlineUtilService.loadTrustlines(false);
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     public async onIssuerSelected(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.trustlineCurrencyService.selectIssuer(address);
+          if (this.currencyStoreService.currency() && address) {
+               await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+          }
+     }
+
+     public currencyItems() {
+          return this.trustlineCurrencyService.currencyItems();
+     }
+
+     public selectedCurrencyItem() {
+          const code = this.currencyStoreService.currency();
+          if (!code) return null;
+          return this.currencyItems().find(item => item.id === code) || null;
+     }
+
+     public issuerItems() {
+          return this.trustlineCurrencyService.issuerItems();
+     }
+
+     public selectedIssuerItem() {
+          const addr = this.currencyStoreService.issuer();
+          if (!addr) return null;
+          return this.issuerItems().find(item => item.id === addr) || null;
+     }
+
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;
           if (input.value) {

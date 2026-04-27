@@ -36,6 +36,26 @@ export interface XrplAccountFlags {
      asfAllowTrustLineLocking: boolean;
 }
 
+export interface AccountFlags {
+     requireDest: boolean;
+     requireAuthorization: boolean;
+     disallowIncomingXRP: boolean;
+     disableMasterKey: boolean;
+     requireDestinationTag: boolean;
+     noFreeze: boolean;
+     globalFreeze: boolean;
+     defaultRipple: boolean;
+     depositAuth: boolean;
+     asfAuthorizedNFTokenMinter: boolean;
+     disallowIncomingNFTokenOffer: boolean;
+     disallowIncomingCheck: boolean;
+     disallowIncomingPayChan: boolean;
+     disallowIncomingTrustline: boolean;
+     allowTrustLineClawback: boolean;
+     allowTrustLineLocking: boolean;
+     passwordSpent: boolean;
+}
+
 export type XrplAccountFlagKey = keyof XrplAccountFlags;
 
 /**

@@ -200,6 +200,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.trustlineCurrencyService.selectCurrency('XRP');
           await this.getEscrows(false);
      }
 

@@ -10,20 +10,32 @@
 
 /* Active tab styling */
 .menu-btn.active {
-     background-color: #10b981;
-     color: white;
-     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+     background-color: transparent;
+     box-shadow: none;
+     border: 1.5px solid #10b981;
+}
+
+
+/* Active tab text - use the same color as the icon */
+.menu-btn.active .menu-btn-text {
+     color: inherit;
 }
 
 /* Non-active tabs */
 .menu-btn:not(.active) {
      background-color: transparent;
-     color: #6b7280;
+     border: 1.5px solid transparent;
 }
 
+/* Keep icons at their original colors when active (not forcing them to change) */
 .menu-btn:not(.active):hover {
      background-color: #f3f4f6;
-     color: #374151;
+     border-color: #e5e7eb;
+}
+
+/* Non-active tab text */
+.menu-btn:not(.active) .menu-btn-text {
+     color: inherit;
 }
 
 .tab-grid {

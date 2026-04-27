@@ -15,6 +15,7 @@ export interface CheckState {
      useDeliverMin: boolean;
      isCheckOwner: boolean;
      isCollapsed: boolean;
+     isCheckBlocked: boolean;
      cancellableChecks: any[];
      cashableChecks: any[];
      existingChecks: any[];
@@ -36,6 +37,7 @@ const initialState: CheckState = {
      useDeliverMin: false,
      isCheckOwner: false,
      isCollapsed: false,
+     isCheckBlocked: false,
      cancellableChecks: [],
      cashableChecks: [],
      existingChecks: [],

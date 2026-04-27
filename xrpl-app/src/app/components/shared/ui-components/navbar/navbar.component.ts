@@ -16,10 +16,10 @@ import { ConnectionStatusComponent } from '../../connection-status/connection-st
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
-     store = inject(NavbarStore);
-     themeService = inject(ThemeService);
-     elRef = inject(ElementRef);
-     router = inject(Router);
+     public readonly store = inject(NavbarStore);
+     public readonly themeService = inject(ThemeService);
+     public readonly router = inject(Router);
+     public readonly elRef = inject(ElementRef);
 
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 

@@ -91,10 +91,18 @@
                                                   }
                                              </span>
 
-                                             <!-- Edit Name Button -->
-                                             <button (click)="editName(i); $event.stopPropagation()" class="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()">
-                                                  <lucide-icon name="edit-2" size="14" />
-                                             </button>
+                                             <!-- Actions (Copy + Edit) -->
+                                             <div class="flex items-center gap-1 flex-shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                  <!-- Copy Address -->
+                                                  <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy address" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                       <lucide-icon name="copy" size="14" />
+                                                  </button>
+
+                                                  <!-- Edit Name -->
+                                                  <button (click)="editName(i); $event.stopPropagation()" title="Edit name" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                       <lucide-icon name="edit-2" size="14" />
+                                                  </button>
+                                             </div>
                                         </div>
                                         }
                                    </div>
@@ -132,7 +140,7 @@
                                    <div class="text-xs mb-1 mt-2" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">Full Address</div>
                                    <div class="font-mono text-sm p-2 rounded-xl break-all" [class.bg-gray-50]="!isDark()" [class.bg-gray-900]="isDark()" [class.text-gray-700]="!isDark()" [class.text-gray-300]="isDark()">
                                         {{ wallet.address }}
-                                        <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" class="ml-2 inline-flex" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()">
+                                        <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy address" class="ml-2 inline-flex" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()">
                                              <lucide-icon name="copy" size="14" />
                                         </button>
                                    </div>
@@ -145,7 +153,7 @@
                                         <span class="text-xs hidden sm:inline">Refresh</span>
                                    </button>
 
-                                   <button (click)="toggleSecret(i); $event.stopPropagation()" class="flex-1 h-9 rounded-xl flex items-center justify-center gap-1 transition-colors" [class.hover:bg-gray-100]="!isDark()" [class.hover:bg-gray-700]="isDark()" [class.text-gray-600]="!isDark()" [class.text-gray-400]="isDark()">
+                                   <button (click)="toggleSecret(i); $event.stopPropagation()" title="Copy seed" class="flex-1 h-9 rounded-xl flex items-center justify-center gap-1 transition-colors" [class.hover:bg-gray-100]="!isDark()" [class.hover:bg-gray-700]="isDark()" [class.text-gray-600]="!isDark()" [class.text-gray-400]="isDark()">
                                         <lucide-icon [name]="wallet.showSecret ? 'eye-off' : 'eye'" size="16" />
                                         <span class="text-xs hidden sm:inline">{{ wallet.showSecret ? 'Hide' : 'Show' }} Seed</span>
                                    </button>
@@ -162,7 +170,7 @@
                                    <div class="text-xs mb-1 mt-2" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">Seed/Mnemonic</div>
                                    <div class="font-mono text-sm p-2 rounded-xl break-all" [class.bg-gray-50]="!isDark()" [class.bg-gray-900]="isDark()" [class.text-gray-700]="!isDark()" [class.text-gray-300]="isDark()">
                                         {{ wallet.seed || wallet.mnemonic }}
-                                        <button (click)="wallet.seed ? copyUtilService.copySeed(wallet.seed) : (wallet.mnemonic ? copyUtilService.copySeed(wallet.mnemonic) : null); $event.stopPropagation()" class="ml-2 inline-flex" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()">
+                                        <button (click)="wallet.seed ? copyUtilService.copySeed(wallet.seed) : (wallet.mnemonic ? copyUtilService.copySeed(wallet.mnemonic) : null); $event.stopPropagation()" title="Copy seed" class="ml-2 inline-flex" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()">
                                              <lucide-icon name="copy" size="14" />
                                         </button>
                                    </div>

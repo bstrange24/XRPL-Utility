@@ -19,7 +19,7 @@
 
           <!-- Form -->
           <form #theForm="ngForm">
-               <!-- Dynamic Form Content -->
+               <!-- Dynamic Content -->
                @if (tab === 'createCheck') {
                <app-checks-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
                } @else if (tab === 'cashCheck') {
@@ -42,7 +42,7 @@
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ viewModel.cancelCheckButtonLabel() }}</button>
                     }
 
-                    <!-- Secondary Actions -->
+                    <!-- Clear Fields -->
                     <div class="flex flex-wrap items-center justify-end gap-2">
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>

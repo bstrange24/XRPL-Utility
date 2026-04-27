@@ -7,15 +7,13 @@ export class StorageService {
      inputsCleared = new EventEmitter<void>();
 
      private readonly networkColors: { [key: string]: string } = {
-          devnet: 'rgb(56, 113, 69)',
+          devnet: '#10b981',
           testnet: '#ff6719',
           mainnet: 'rgb(115, 49, 55)',
      };
 
      readonly networkServers: { [key: string]: string } = {
-          // Made public for NavbarComponent access
-          devnet: 'wss://s.devnet.rippletest.net:51233',
-          // devnet: 'ws://192.168.1.226:6007',
+          devnet: 'wss://s.devnet.rippletest.net:51233', // devnet: 'ws://192.168.1.226:6007',
           testnet: 'wss://s.altnet.rippletest.net:51233',
           mainnet: 'wss://s1.ripple.com',
      };

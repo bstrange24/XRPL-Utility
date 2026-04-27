@@ -9,9 +9,7 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <div class="mt-4">
-               <app-amm-summary></app-amm-summary>
-          </div>
+          <app-amm-summary></app-amm-summary>
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
@@ -21,7 +19,7 @@
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <!-- Dynamic Form Fields -->
                <app-amm-fields
                     [tab]="tab"

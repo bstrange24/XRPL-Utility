@@ -604,3 +604,39 @@ pre code[class*="language-"] {
 .key-value-row .value {
      @apply text-gray-700;
 }
+
+/* Network button styles */
+.btn-network-devnet {
+     background-color: rgba(16, 185, 129, 0.125);
+     color: #10b981;
+     border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.btn-network-devnet:hover {
+     background-color: rgba(16, 185, 129, 0.2);
+}
+
+.btn-network-testnet {
+     background-color: rgba(255, 103, 25, 0.125);
+     color: #ff6719;
+     border: 1px solid rgba(255, 103, 25, 0.25);
+}
+
+.btn-network-testnet:hover {
+     background-color: rgba(255, 103, 25, 0.2);
+}
+
+.btn-network-mainnet {
+     background-color: rgba(115, 49, 55, 0.125);
+     color: #bd333f;
+     border: 1px solid rgba(115, 49, 55, 0.25);
+}
+
+.btn-network-mainnet:hover {
+     background-color: rgba(115, 49, 55, 0.2);
+}
+
+/* Dark mode adjustments if needed */
+:host-context(.dark) .btn-network-mainnet {
+     color: #a0525a;
+}

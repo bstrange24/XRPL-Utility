@@ -1,8 +1,11 @@
 <div class="connection-status-container">
      <!-- Main connection indicator -->
      <div class="connection-indicator" [class.connected]="isConnected()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [title]="statusMessage()">
-          <div class="status-dot"></div>
-          <span class="status-text">{{ statusText() }}</span>
+          <div class="flex items-center justify-center gap-3 w-full">
+               <span class="w-2 h-2 rounded-full animate-pulse" [style.backgroundColor]="'#10b981'" [style.boxShadow]="'0 0 0px 2px #10b98140'"> </span>
+               <span class="text-xs text-gray-500 hidden sm:inline">Network Status:</span>
+               <span class="status-text"> {{ statusText() }} </span>
+          </div>
      </div>
 
      <!-- Pending operations indicator -->

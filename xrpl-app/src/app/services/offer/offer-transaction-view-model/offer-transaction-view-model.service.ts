@@ -1,9 +1,9 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { OfferActionTypes } from '../../../components/offer/constants/offer.types';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { OfferStoreService } from '../offer-store/offer-store.service';
-import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
+import { IssuerItem, OfferCurrencyService } from '../offer-currency/offer-currency.service';
 
 @Injectable({
      providedIn: 'root',
@@ -15,18 +15,25 @@ export class OfferTransactionViewModelService {
      public readonly offerCurrency = inject(OfferCurrencyService);
 
      readonly activeTab = signal<OfferActionTypes>('createOffer');
-
      readonly weWantIssuersTrigger = signal(0);
      readonly weSpendIssuersTrigger = signal(0);
-
      readonly weWantCurrency = signal<string>('');
      readonly weWantIssuer = signal<string>('');
      readonly weSpendCurrency = signal<string>('XRP');
      readonly weSpendIssuer = signal<string>('');
-
      // User balances for the selected pool assets
      readonly weWantUserBalance = computed(() => this.offerCurrency.weWant.balance());
      readonly weSpendUserBalance = computed(() => this.offerCurrency.weSpend.balance());
+
+     constructor() {
+          effect(() => {
+               const issuer = this.weWantIssuer();
+               if (issuer) {
+                    const wallet = this.walletManagerService.getSelectedWallet();
+                    if (wallet) this.offerCurrency.selectWeWantIssuer(issuer, wallet); // will refresh balance
+               }
+          });
+     }
 
      readonly weWantCurrencyItems = computed(() => {
           this.weWantCurrency();
@@ -72,7 +79,8 @@ export class OfferTransactionViewModelService {
 
      readonly weWantIssuerItems = computed(() => {
           this.weWantIssuersTrigger();
-          return (this.offerCurrency.weWant.issuers() ?? []).map((iss: any, i: number) => ({
+          const issuers = this.offerCurrency.weWant.issuers() ?? [];
+          return issuers.map((iss: IssuerItem, i: number) => ({
                id: iss.address,
                display: iss.name || `Issuer ${i + 1}`,
                secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
@@ -80,14 +88,20 @@ export class OfferTransactionViewModelService {
      });
 
      readonly selectedWeWantIssuerItem = computed(() => {
-          const addr = this.weWantIssuer();
+          const addr = this.offerCurrency.weWant.issuer(); // ← Read directly from source
           if (!addr) return null;
-          return this.weWantIssuerItems().find(i => i.id === addr) ?? null;
+
+          const items = this.weWantIssuerItems();
+          const item = items.find(i => i.id === addr);
+
+          console.log(`selectedWeWantIssuerItem for ${this.weWantCurrency()}:`, addr, item ? '✅ FOUND' : '❌ NOT FOUND');
+          return item ?? null;
      });
 
      readonly weSpendIssuerItems = computed(() => {
           this.weSpendIssuersTrigger();
-          return (this.offerCurrency.weSpend.issuers() ?? []).map((iss: any, i: number) => ({
+          const issuers = this.offerCurrency.weSpend.issuers() ?? [];
+          return issuers.map((iss: IssuerItem, i: number) => ({
                id: iss.address,
                display: iss.name || `Issuer ${i + 1}`,
                secondary: `${iss.address.slice(0, 8)}...${iss.address.slice(-6)}`,
@@ -95,9 +109,14 @@ export class OfferTransactionViewModelService {
      });
 
      readonly selectedWeSpendIssuerItem = computed(() => {
-          const addr = this.weSpendIssuer();
+          const addr = this.offerCurrency.weSpend.issuer(); // ← Read directly from source
           if (!addr) return null;
-          return this.weSpendIssuerItems().find(i => i.id === addr) ?? null;
+
+          const items = this.weSpendIssuerItems();
+          const item = items.find(i => i.id === addr);
+
+          console.log(`selectedWeSpendIssuerItem for ${this.weSpendCurrency()}:`, addr, item ? '✅ FOUND' : '❌ NOT FOUND');
+          return item ?? null;
      });
 
      readonly infoData = computed(() => {

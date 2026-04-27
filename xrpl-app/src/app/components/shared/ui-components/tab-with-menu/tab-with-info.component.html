@@ -6,9 +6,9 @@
                @for (tab of tabs(); track tab.key) {
                <button [class]="getButtonClasses(tabs().length, active() === tab.key)" (click)="activeChange.emit(tab.key)" type="button">
                     @if (tab.iconType === 'ng-icon') {
-                    <ng-icon [name]="tab.icon" [size]="tabButtonClasses().iconSize" [color]="active() === tab.key ? 'white' : tab.color" class="flex-shrink-0" />
+                    <ng-icon [name]="tab.icon" [size]="tabButtonClasses().iconSize" [color]="tab.color" class="flex-shrink-0" />
                     } @else if (tab.iconType === 'lucide-icon') {
-                    <lucide-icon [name]="tab.icon" [size]="tabButtonClasses().iconSize" [color]="active() === tab.key ? 'white' : tab.color" class="flex-shrink-0" />
+                    <lucide-icon [name]="tab.icon" [size]="tabButtonClasses().iconSize" [color]="tab.color" class="flex-shrink-0" />
                     }
                     <span class="menu-btn-text">{{ tab.label }}</span>
                </button>
@@ -22,13 +22,13 @@
      <div class="submenu-info-text flex items-start gap-4">
           <div class="flex-shrink-0 mt-1">
                @if (currentMeta()!.iconType === 'ng-icon') {
-               <ng-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '24'" [color]="getIconColor()" />
+               <ng-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '25'" [color]="getIconColor()" />
                } @else if (currentMeta()!.iconType === 'lucide-icon') {
-               <lucide-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '24'" [color]="getIconColor()" />
+               <lucide-icon [name]="currentMeta()!.icon" [size]="currentMeta()!.iconSize ?? '25'" [color]="getIconColor()" />
                }
           </div>
           <div>
-               <h2 class="text-2xl font-semibold text-gray-900" style="margin-bottom: 1px">{{ currentMeta()!.title }}</h2>
+               <h2 class="text-1.8xl font-semibold text-gray-800" style="margin-bottom: 1px">{{ currentMeta()!.title }}</h2>
                <p class="text-gray-600 mt-1 leading-relaxed">{{ currentMeta()!.desc }}</p>
           </div>
      </div>

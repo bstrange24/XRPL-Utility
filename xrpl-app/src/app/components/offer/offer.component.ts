@@ -61,55 +61,31 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      public readonly tabs = OFFER_TABS;
      public readonly tabMeta = OFFER_TAB_META;
 
-     // readonly menuTabs: TabConfig[] = OFFER_TABS as unknown as TabConfig[];
-     // readonly tabMeta: Record<string, TabMetaInfo> = OFFER_TAB_META;
-
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
+
           this.txUiService.clearAllOptionsAndMessages();
 
+          // Currency → Store + VM
           effect(() => {
-               const currency = this.offerCurrency.weWant.currency();
-               this.offerTransactionViewModelService.weWantCurrency.set(currency);
-               this.offerStoreService.setField('weWantCurrency', currency);
+               const curr = this.offerCurrency.weWant.currency();
+               this.offerTransactionViewModelService.weWantCurrency.set(curr);
+               this.offerStoreService.setField('weWantCurrency', curr);
           });
 
           effect(() => {
-               const issuer = this.offerCurrency.weWant.issuer();
-               this.offerTransactionViewModelService.weWantIssuer.set(issuer);
-               this.offerStoreService.setField('weWantIssuer', issuer);
+               const curr = this.offerCurrency.weSpend.currency();
+               this.offerTransactionViewModelService.weSpendCurrency.set(curr);
+               this.offerStoreService.setField('weSpendCurrency', curr);
           });
 
+          // Only refresh dropdown lists
           effect(() => {
-               const issuers = this.offerCurrency.weWant.issuers();
-
                this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
-
-               if (issuers.length > 0 && !this.offerCurrency.weWant.issuer()) {
-                    this.offerCurrency.selectWeWantIssuer(issuers[0].address, this.currentWallet());
-               }
           });
 
           effect(() => {
-               const currency = this.offerCurrency.weSpend.currency();
-               this.offerTransactionViewModelService.weSpendCurrency.set(currency);
-               this.offerStoreService.setField('weSpendCurrency', currency);
-          });
-
-          effect(() => {
-               const issuer = this.offerCurrency.weSpend.issuer();
-               this.offerTransactionViewModelService.weSpendIssuer.set(issuer);
-               this.offerStoreService.setField('weSpendIssuer', issuer);
-          });
-
-          effect(() => {
-               const issuers = this.offerCurrency.weSpend.issuers();
-
                this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
-
-               if (issuers.length > 0 && !this.offerCurrency.weSpend.issuer()) {
-                    this.offerCurrency.selectWeSpendIssuer(issuers[0].address, this.currentWallet());
-               }
           });
 
           this.rightPanelService.setPanel(OfferRequirementsInfoComponent, {
@@ -120,18 +96,37 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, OFFER_TX_TYPES as any, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
-          this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());
-          this.offerCurrency.selectWeSpendIssuer('', this.currentWallet());
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
+          await this.offerCurrency.refreshBothBalances(this.currentWallet());
           await this.onAccountChange(true);
      }
 
      async selectWallet(wallet: Wallet): Promise<void> {
           if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
+          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
+
+          this.offerCurrency.setWalletAddress(wallet.address);
+          this.trustlineCurrencyService.refreshCurrentBalance();
+
+          // Smart default: set XRP on "What You Give" side only when wallet is ready
+          await this.offerCurrency.refreshBothBalances(wallet);
+          if (!this.offerCurrency.weSpend.currency()) {
+               await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
+          }
+     }
+
+     async selectWallet1(wallet: Wallet): Promise<void> {
+          if (wallet?.address === this.currentWallet()?.address) return;
+
+          this.currentWallet.set(wallet);
+          this.accountConfiguratorStoreService.resetAll();
+
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
           this.offerCurrency.setWalletAddress(wallet.address);
@@ -145,6 +140,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerTransactionViewModelService.activeTab.set(tab as OfferActionTypes);
           this.offerUtilsService.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
+
           if (this.hasWallets()) await this.onAccountChange(false);
      }
 
@@ -152,6 +148,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
           if (!forceRefresh) this.tryPrePopulateFromCache(address);
+
           await this.measure('onAccountChange', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
@@ -175,6 +172,13 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
                     if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
                          await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
+                    }
+
+                    // Force wallet address + smart XRP default after account loads
+                    this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress ?? '');
+                    await this.offerCurrency.refreshBothBalances(wallet);
+                    if (!this.offerCurrency.weSpend.currency()) {
+                         await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
                     }
                } catch (error: any) {
                     console.error('Failed to load account:', error);
@@ -267,7 +271,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
      }
 
-     onWeWantIssuerSelected(item: SelectItem | null): void {
+     async onWeWantIssuerSelected(item: SelectItem | null): Promise<void> {
           this.offerCurrency.selectWeWantIssuer(item?.id || '', this.currentWallet());
      }
 
@@ -275,7 +279,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerCurrency.selectWeSpendCurrency(item?.id || 'XRP', this.currentWallet());
      }
 
-     onWeSpendIssuerSelected(item: SelectItem | null): void {
+     async onWeSpendIssuerSelected(item: SelectItem | null): Promise<void> {
           this.offerCurrency.selectWeSpendIssuer(item?.id || '', this.currentWallet());
      }
 

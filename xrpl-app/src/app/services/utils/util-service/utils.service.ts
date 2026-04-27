@@ -17,6 +17,7 @@ import { TrustlineStoreService } from '../../trustlines/trustline-store/trustlin
 import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
+import { AccountFlags, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -1137,6 +1138,10 @@ export class UtilsService {
                console.error(`Error in getValidInvoiceID ${error.message}`);
                throw new Error('Failed to hash InvoiceID');
           }
+     }
+
+     isFlagEnabled(response: any, flag: keyof AccountFlags): boolean {
+          return response?.result?.account_flags?.[flag] === true;
      }
 
      loadSignerList(account: string, signers: any) {

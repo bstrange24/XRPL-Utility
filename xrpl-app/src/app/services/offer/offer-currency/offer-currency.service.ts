@@ -26,12 +26,9 @@ export class OfferCurrencyService {
      public readonly walletManagerService = inject(WalletManagerService);
 
      private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
-
      public readonly weWant: CurrencySideState;
      public readonly weSpend: CurrencySideState;
-
-     private walletAddress = '';
-
+     private readonly walletAddress = signal<string>('');
      // Cache per wallet+currency
      private readonly balanceCache = new Map<string, { data: any; timestamp: number }>();
 
@@ -51,14 +48,22 @@ export class OfferCurrencyService {
      }
 
      private loadKnownIssuersFromStorage() {
-          const data = this.storage.getKnownIssuers('knownIssuers');
-          if (data) {
-               this.knownTrustLinesIssuers = data;
+          try {
+               const data = this.storage.getKnownIssuers('knownIssuers');
+
+               if (data && typeof data === 'object') {
+                    this.knownTrustLinesIssuers = { ...data }; // deep copy
+               } else {
+                    this.knownTrustLinesIssuers = { XRP: [] };
+               }
+          } catch (e) {
+               console.error('Failed to load known issuers from storage', e);
+               this.knownTrustLinesIssuers = { XRP: [] };
           }
      }
 
      setWalletAddress(address: string) {
-          this.walletAddress = address;
+          this.walletAddress.set(address);
           this.balanceCache.clear();
      }
 
@@ -71,30 +76,43 @@ export class OfferCurrencyService {
      }
 
      // ===== WE WANT =====
-     selectWeWantCurrency(currency: string, currentWallet: any) {
+     async selectWeWantCurrency(currency: string, currentWallet: any) {
           this.weWant.currency.set(currency);
+          this.weWant.issuer.set('');
+
           this.loadIssuersForSide(currency, this.weWant);
-          this.updateBalanceForSide(this.weWant, currentWallet);
+
+          // Force Angular to process signals
+          await Promise.resolve();
+          await Promise.resolve();
+
+          await this.updateBalanceForSide(this.weWant, currentWallet);
      }
 
-     selectWeWantIssuer(issuer: string, currentWallet: any) {
+     async selectWeWantIssuer(issuer: string, currentWallet: any) {
           this.weWant.issuer.set(issuer);
-          this.updateBalanceForSide(this.weWant, currentWallet);
+          await this.updateBalanceForSide(this.weWant, currentWallet);
      }
 
-     // ===== WE SPEND =====
-     selectWeSpendCurrency(currency: string, currentWallet: any) {
+     /// ===== WE SPEND =====
+     async selectWeSpendCurrency(currency: string, currentWallet: any) {
           this.weSpend.currency.set(currency);
+          this.weSpend.issuer.set('');
+
           this.loadIssuersForSide(currency, this.weSpend);
-          this.updateBalanceForSide(this.weSpend, currentWallet);
+
+          await Promise.resolve();
+          await Promise.resolve();
+
+          await this.updateBalanceForSide(this.weSpend, currentWallet);
      }
 
-     selectWeSpendIssuer(issuer: string, currentWallet: any) {
+     async selectWeSpendIssuer(issuer: string, currentWallet: any) {
           this.weSpend.issuer.set(issuer);
-          this.updateBalanceForSide(this.weSpend, currentWallet);
+          await this.updateBalanceForSide(this.weSpend, currentWallet);
      }
 
-     private async loadIssuersForSide(currency: string, side: CurrencySideState) {
+     private loadIssuersForSide(currency: string, side: CurrencySideState) {
           if (!currency || currency === 'XRP') {
                side.issuers.set([]);
                side.issuer.set('');
@@ -112,61 +130,94 @@ export class OfferCurrencyService {
 
           side.issuers.set(issuers);
 
-          if (issuers.length > 0 && !side.issuer()) {
-               side.issuer.set(issuers[0].address);
+          if (issuers.length > 0) {
+               const selected = issuers[0].address;
+               side.issuer.set(selected);
+               console.log(`✅ Auto-selected issuer for ${currency}: ${selected}`);
+          } else {
+               side.issuer.set('');
           }
      }
 
      private getNiceName(address: string, currency: string): string {
+          // Check wallet names
           const wallet = this.walletManagerService.wallets()?.find(w => w.address === address);
           if (wallet?.name) return wallet.name;
 
-          const custom = this.storage.get('customDestinations');
-          if (custom) {
-               try {
+          // Check custom destinations
+          try {
+               const custom = this.storage.get('customDestinations');
+               if (custom) {
                     const list = JSON.parse(custom);
                     const found = list.find((d: any) => d.address === address);
                     if (found?.name) return found.name;
-               } catch {}
+               }
+          } catch (e) {
+               console.warn('Error parsing customDestinations', e);
           }
 
-          return `${currency} Issuer`;
+          return `${currency} Issuer (${address.slice(0, 8)}...)`;
      }
 
      private async updateBalanceForSide(side: CurrencySideState, currentWallet: any) {
           const currency = side.currency();
           const issuer = side.issuer();
+          const walletAddr = this.walletAddress();
 
-          if (!this.walletAddress || !currency || currency === 'XRP' || !issuer) {
-               side.balance.set(currency === 'XRP' ? currentWallet.balance : '0');
+          if (!walletAddr) {
+               side.balance.set('0');
                return;
           }
 
-          const cacheKey = `${this.walletAddress}_${currency}`;
+          if (!currency) {
+               side.balance.set('0');
+               return;
+          }
+
+          // XRP
+          if (currency === 'XRP') {
+               let xrpBalance = currentWallet?.balance ?? currentWallet?.xrpBalance ?? this.walletManagerService.getSelectedWallet()?.balance ?? '0';
+
+               side.balance.set(xrpBalance);
+               return;
+          }
+
+          // Issued Token
+          if (!issuer) {
+               side.balance.set('0');
+               return;
+          }
+
+          const cacheKey = `${walletAddr}_${currency}_${issuer}`;
           const cached = this.balanceCache.get(cacheKey);
 
           if (cached && Date.now() - cached.timestamp < 8000) {
                const balance = this.extractBalance(cached.data, currency, issuer);
-               side.balance.set(balance);
+               side.balance.set(balance || '0');
                return;
           }
 
           try {
                const client = await this.xrplService.getClient();
-               const wallet = await this.utils.getWalletFromAddress(this.walletAddress);
+               const wallet = await this.utils.getWalletFromAddress(walletAddr);
 
                const gatewayBalances = await this.xrplService.getTokenBalance(client, wallet.classicAddress, 'validated', '');
 
-               this.balanceCache.set(cacheKey, {
-                    data: gatewayBalances,
-                    timestamp: Date.now(),
-               });
+               this.balanceCache.set(cacheKey, { data: gatewayBalances, timestamp: Date.now() });
 
                const balance = this.extractBalance(gatewayBalances, currency, issuer);
-               side.balance.set(balance);
+               side.balance.set(balance || '0');
           } catch (e) {
-               console.warn('Failed to load balance', e);
+               console.error('Failed to load balance', currency, issuer, e);
                side.balance.set('0');
+          }
+     }
+
+     refreshXrpBalance(wallet: any) {
+          if (wallet?.balance) {
+               // Update both sides if they are XRP
+               if (this.weWant.currency() === 'XRP') this.weWant.balance.set(wallet.balance);
+               if (this.weSpend.currency() === 'XRP') this.weSpend.balance.set(wallet.balance);
           }
      }
 

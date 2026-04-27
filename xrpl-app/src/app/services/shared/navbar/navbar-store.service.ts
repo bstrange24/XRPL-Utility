@@ -10,7 +10,7 @@ export class NavbarStore {
      private networkService = inject(NetworkService);
 
      selectedNetwork = signal('Devnet');
-     networkColor = signal('rgb(56, 113, 69)');
+     networkColor = signal('#10b981');
 
      dropdowns = signal({
           network: false,
