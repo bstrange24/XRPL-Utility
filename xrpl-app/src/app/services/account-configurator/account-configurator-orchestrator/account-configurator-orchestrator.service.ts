@@ -88,7 +88,7 @@ const ACCOUNT_CONFIG_META: Record<AccountConfigAction, AccountConfigTxMeta> = {
           }),
           buildTx: ({ orchestrator, wallet, env, config }) => orchestrator.accountConfiguratorTransactionBuilderService.buildModifySetRegularKeyTransaction(wallet, env, config),
           simulationToastMessage: ({ config }) => (config.enableRegularKeyFlag === 'Y' ? `Successfully Simulated Setting Regular Key ${config.regularKeyAddress}` : `Successfully Simulated Removing Regular Key ${config.regularKeyAddress ?? ''}`),
-          successMessage: ({ config }) => (config.enableRegularKeyFlag === 'Y' ? `Successfully Set Regular Key ${config.regularKeyAddress}` : `Successfully Remove Regular Key ${config.regularKeyAddress ?? ''}`),
+          successMessage: ({ config }) => (config.enableRegularKeyFlag === 'Y' ? `Successfully Set Regular Key ${config.regularKeyAddress ?? ''}` : `Successfully Remove Regular Key ${config.regularKeyAddress ?? ''}`),
      },
 
      modifyMetaData: {

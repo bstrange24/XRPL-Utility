@@ -151,7 +151,11 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           config.clearFlags = clearFlags;
           config.operations = operations;
 
-          return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+          try {
+               return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+          } catch (error: any) {
+               throw new Error(error.message || 'Transaction failed');
+          }
      }
 
      getFlagUpdates(currentFlags: any) {
@@ -248,15 +252,19 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           const formatted = this.formatDepositAuthEntries(entries);
 
           if (!formatted.length) {
-               this.toastService.error('Deposit Auth address list is empty', AppConstants.TOAST.ERROR);
-               return;
+               throw new Error('Deposit Auth address list is empty.');
           }
 
           config.depsositAuthEntries = entries;
           config.formattedDepsositAuthEntries = formatted;
           config.authorizeFlag = enabled;
 
-          return this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+          try {
+               return this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+          } catch (error: any) {
+               console.error('Error modifying depist auth', error);
+               throw new Error(error.message || 'Transaction failed');
+          }
      }
 
      private async handleModifyMetaData(config: AccountConfig, enabled: string): Promise<{ success: boolean; error?: string } | null> {
@@ -264,18 +272,14 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                // Enable or disable NFT minter
                if (enabled === 'Y' || enabled === 'N') {
                     config.enableNftMinter = enabled;
-
                     return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', config);
                }
 
                // Otherwise update metadata fields
                return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('updateMetaData', config);
-          } catch (err: any) {
-               console.error('Error modifying metadata', err);
-
-               this.toastService.error(err.message || 'Failed to modify metadata', AppConstants.TOAST.ERROR);
-
-               return null;
+          } catch (error: any) {
+               console.error('Error modifying metadata', error);
+               throw new Error(error.message || 'Transaction failed');
           }
      }
 
@@ -284,8 +288,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           const formatted = this.formatSignerEntries(signerEntries);
 
           if (!formatted.length) {
-               this.toastService.error('Multi Signer list is empty', AppConstants.TOAST.ERROR);
-               return;
+               throw new Error('Multi Signer list is empty.');
           }
 
           config.account.signerEntries = signerEntries;
@@ -293,20 +296,23 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           config.account.enableMultiSignFlag = enabled;
           console.log('config: ', config.account);
 
-          return this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+          try {
+               return this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+          } catch (error: any) {
+               console.error('Error modifying multi sign', error);
+               throw new Error(error.message || 'Transaction failed');
+          }
      }
 
      private async handleModifyRegularKey(config: AccountConfig, enabled: string): Promise<{ success: boolean; error?: string } | null> {
           try {
                config.enableRegularKeyFlag = enabled;
+               console.error('config.enableRegularKeyFlag: ', config.enableRegularKeyFlag);
 
                return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyRegularKey', config);
-          } catch (err: any) {
-               console.error('Error modifying regular key', err);
-
-               this.toastService.error(err.message || 'Failed to modify regular key', AppConstants.TOAST.ERROR);
-
-               return null;
+          } catch (error: any) {
+               console.error('Error modifying regular key', error);
+               throw new Error(error.message || 'Transaction failed');
           }
      }
 

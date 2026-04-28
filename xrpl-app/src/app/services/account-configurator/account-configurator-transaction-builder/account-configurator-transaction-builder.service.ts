@@ -59,6 +59,7 @@ export class AccountConfiguratorTransactionBuilderService {
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
+          console.error('config.enableRegularKeyFlag: ', config.enableRegularKeyFlag);
           if (config.enableRegularKeyFlag === 'Y') {
                tx.RegularKey = config.account.regularKeyAddress;
           }

@@ -147,9 +147,9 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                });
                if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
-               console.error('prepareTxEnvironment failed:', err);
+               console.error('prepareTxEnvironment failed:', err.message);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
-               return;
+               throw new Error(err.message);
           }
 
           const accountState = this.accountConfiguratorStoreService.getAll();
@@ -163,16 +163,22 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                extra: {},
           };
 
-          const handler = this.accountConfiguratorUtilService.actionHandlers[currentTab];
-          if (!handler) {
-               this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
-               return;
-          }
-
           let txResult: { success: boolean; hash?: string; error?: string } | null = null;
+
           await this.withPerf('performAction', async () => {
                try {
+                    const handler = this.accountConfiguratorUtilService.actionHandlers[currentTab];
+                    if (!handler) {
+                         this.toastService.error('Unknown action', AppConstants.TOAST.ERROR);
+                         return;
+                    }
+
                     txResult = await handler(config, enabled);
+
+                    if (!txResult) {
+                         this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+                         return;
+                    }
                } catch (error: any) {
                     console.error(`[${currentTab}] execution failed:`, error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
@@ -180,13 +186,8 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                }
           });
 
-          if (!txResult) {
-               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
-               return;
-          }
-
           this.isAccountConfig.set(true);
-          const successFullTx = await this.handleTxResult(txResult, env.client, env.wallet, '', '', '');
+          const successFullTx = await this.handleTxResult(txResult!, env.client, env.wallet, '', '', '');
           if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                env = await this.txEnvironmentService.getValidatedEnvironment(true);
                this.accountConfiguratorUtilService.handlePostSuccess(currentTab, config, env);
