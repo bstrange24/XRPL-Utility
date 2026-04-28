@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, HostListener, ElementRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, HostListener, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { NgIcon } from '@ng-icons/core';
@@ -20,6 +20,17 @@ export class NavbarComponent {
      public readonly themeService = inject(ThemeService);
      public readonly router = inject(Router);
      public readonly elRef = inject(ElementRef);
+
+     // Mobile Menu Signal
+     isMobileMenuOpen = signal(false);
+
+     toggleMobileMenu() {
+          this.isMobileMenuOpen.update(open => !open);
+     }
+
+     closeMobileMenu() {
+          this.isMobileMenuOpen.set(false);
+     }
 
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 

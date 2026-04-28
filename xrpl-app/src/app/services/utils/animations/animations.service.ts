@@ -45,15 +45,14 @@ export const expandCollapse = trigger('expandCollapse', [
                height: 0,
                maxHeight: 0,
                opacity: 0,
-               overflow: 'hidden',
                paddingTop: 0,
                paddingBottom: 0,
           }),
           animate(
-               '320ms cubic-bezier(0.4, 0, 0.2, 1)', // matches your tabTransition feel
+               '320ms cubic-bezier(0.4, 0, 0.2, 1)',
                style({
                     height: '*',
-                    maxHeight: '9999px', // the trick for reliable animation
+                    maxHeight: '9999px',
                     opacity: 1,
                     paddingTop: '*',
                     paddingBottom: '*',
@@ -68,7 +67,6 @@ export const expandCollapse = trigger('expandCollapse', [
                     height: 0,
                     maxHeight: 0,
                     opacity: 0,
-                    overflow: 'hidden',
                     paddingTop: 0,
                     paddingBottom: 0,
                })

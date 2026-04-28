@@ -15,8 +15,8 @@
                </div>
 
                <!-- Navigation - Centered -->
-               <nav class="hidden lg:flex items-center gap-2 text-sm font-medium flex-1 justify-center">
-                    <!-- Regular Links -->
+               <nav class="hidden lg:flex items-center gap-2 text-sm font-medium flex-1 justify-center pl-28">
+                    <!-- Wallet -->
                     <a routerLink="/wallet-configurator" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-3 py-2 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="store.closeAllDropdowns()">Wallets</a>
 
                     <!-- Accounts Dropdown -->
@@ -112,7 +112,7 @@
                </nav>
 
                <!-- Mobile Menu Button -->
-               <button class="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors" [class.hover:bg-gray-700]="isDark()">
+               <button class="lg:hidden p-2 rounded-xl hover:bg-gray-100 transition-colors" [class.hover:bg-gray-700]="isDark()" (click)="toggleMobileMenu()">
                     <ng-icon name="heroBars3" size="22" class="text-gray-600" [class.text-gray-400]="isDark()" />
                </button>
 
@@ -153,3 +153,104 @@
           </div>
      </div>
 </div>
+
+<!-- Mobile Menu -->
+@if (isMobileMenuOpen()) {
+<div class="lg:hidden border-t border-gray-200 bg-white py-6 px-6">
+     <div class="flex flex-col gap-1 text-base font-medium">
+          <!-- Wallet -->
+          <a routerLink="/wallet-configurator" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Wallets</a>
+
+          <!-- Accounts Dropdown -->
+          <div class="relative">
+               <button
+                    class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-1 whitespace-nowrap"
+                    [class.hover:text-green-400]="isDark()"
+                    [class.hover:bg-gray-700]="isDark()"
+                    [class.text-green-600]="isAccountsActive() && !isDark()"
+                    [class.text-green-400]="isAccountsActive() && isDark()"
+                    [class.bg-green-50]="isAccountsActive() && !isDark()"
+                    [class.bg-green-900/20]="isAccountsActive() && isDark()"
+                    (click)="store.closeAllDropdowns(); store.closeAllDropdowns(); store.toggleDropdown('accounts')"
+               >
+                    Accounts <span class="text-xs">▾</span>
+               </button>
+
+               @if (store.dropdowns().accounts) {
+               <div class="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50" [class.bg-gray-800]="isDark()" [class.border-gray-700]="isDark()">
+                    <a routerLink="/account-balance-changes" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Balance Changes</a>
+                    <a routerLink="/account-configurator" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Configurator</a>
+                    <a routerLink="/delete-account" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Account Delete</a>
+                    <a routerLink="/create-credentials" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Credentials</a>
+                    <a routerLink="/permissioned-domain" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Permissioned Domain</a>
+                    <a routerLink="/create-did" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">DID</a>
+               </div>
+               }
+          </div>
+
+          <!-- Send XRP -->
+          <a routerLink="/send-xrp" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Send XRP</a>
+
+          <!-- Sign -->
+          <a routerLink="/sign-transactions" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Sign</a>
+
+          <!-- Trustlines -->
+          <a routerLink="/trustlines" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Trustlines</a>
+
+          <!-- Payment Channel -->
+          <a routerLink="/payment-channel" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Payment Channel</a>
+
+          <!-- Escrows Dropdown -->
+          <div class="relative">
+               <button
+                    class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-1 whitespace-nowrap"
+                    [class.hover:text-green-400]="isDark()"
+                    [class.hover:bg-gray-700]="isDark()"
+                    [class.text-green-600]="isEscrowsActive() && !isDark()"
+                    [class.text-green-400]="isEscrowsActive() && isDark()"
+                    [class.bg-green-50]="isEscrowsActive() && !isDark()"
+                    [class.bg-green-900/20]="isEscrowsActive() && isDark()"
+                    (click)="store.closeAllDropdowns(); store.toggleDropdown('escrows')"
+               >
+                    Escrows <span class="text-xs">▾</span>
+               </button>
+
+               @if (store.dropdowns().escrows) {
+               <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50" [class.bg-gray-800]="isDark()" [class.border-gray-700]="isDark()">
+                    <a routerLink="/time-escrow" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Time Escrow</a>
+                    <a routerLink="/conditional-escrow" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Conditional Escrow</a>
+               </div>
+               }
+          </div>
+
+          <!-- Checks -->
+          <a routerLink="/checks" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Checks</a>
+
+          <!-- Tickets -->
+          <a routerLink="/tickets" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Tickets</a>
+
+          <!-- Offers -->
+          <a routerLink="/create-offer" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">Offers</a>
+
+          <!-- AMM -->
+          <a routerLink="/create-amm" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">AMM</a>
+
+          <!-- NFTs Dropdown -->
+          <div class="relative">
+               <button class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-1 whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" [class.text-green-600]="isNftsActive() && !isDark()" [class.text-green-400]="isNftsActive() && isDark()" [class.bg-green-50]="isNftsActive() && !isDark()" [class.bg-green-900/20]="isNftsActive() && isDark()" (click)="store.toggleDropdown('nft')">
+                    NFTs <span class="text-xs">▾</span>
+               </button>
+
+               @if (store.dropdowns().nft) {
+               <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50" [class.bg-gray-800]="isDark()" [class.border-gray-700]="isDark()">
+                    <a routerLink="/create-nft" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Create</a>
+                    <a routerLink="/nft-offers" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Offers</a>
+               </div>
+               }
+          </div>
+
+          <!-- MPT -->
+          <a routerLink="/mpt" routerLinkActive="text-green-600 font-semibold bg-green-50" [class.text-green-400]="isDark()" [class.bg-green-900/20]="isDark()" class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-all whitespace-nowrap" [class.hover:text-green-400]="isDark()" [class.hover:bg-gray-700]="isDark()" (click)="closeMobileMenu()">MPT</a>
+     </div>
+</div>
+}
