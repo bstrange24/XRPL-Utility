@@ -9,22 +9,37 @@
      <div class="space-y-3">
           @for (flag of (trustlineViewModelService.activeTab() === 'setTrustline' ? trustlineCurrencyService.setFlags : trustlineCurrencyService.clearFlags); track flag.key) { @let isEnabled = trustlineCurrencyService.flags()[flag.key]; @let isRequired = trustlineViewModelService.activeTab() === 'removeTrustline' && flag.isClearFlag && isEnabled;
 
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="isEnabled && !isRequired" [class.bg-green-50]="isEnabled && !isRequired" [class.border-amber-300]="isRequired" [class.bg-amber-50]="isRequired" (click)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" [checked]="isEnabled" [disabled]="isRequired" (click)="$event.stopPropagation()" />
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="isEnabled && !isRequired" [class.bg-green-50]="isEnabled && !isRequired" [class.border-amber-500]="isRequired" [class.bg-amber-50]="isRequired" [class.opacity-60]="isRequired" [class.cursor-not-allowed]="isRequired">
+               <input type="checkbox" [checked]="isEnabled" [disabled]="isRequired" (change)="!isRequired && trustlineCurrencyService.toggleFlag(flag.key)" class="hidden" />
 
-                    <div class="flex-1">
-                         <div class="flex flex-wrap items-center justify-between gap-2">
-                              <span class="text-sm font-medium text-gray-900">{{ flag.title }}</span>
-                              @if (isRequired) {
-                              <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">Required</span>
-                              }
-                         </div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">{{ flag.hex }}</div>
-                         <div class="mt-0.5 text-xs text-gray-600">{{ flag.desc }}</div>
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="isEnabled && !isRequired" [class.border-amber-500]="isRequired" [class.border-gray-300]="!isEnabled && !isRequired" [class.bg-green-500]="isEnabled && !isRequired" [class.bg-amber-500]="isRequired" [class.bg-gray-200]="isRequired && !isEnabled">
+                         <!-- Checkmark for enabled flags -->
+                         @if (isEnabled && !isRequired) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         } @else if (isRequired) {
+                         <!-- Lock icon for required flags -->
+                         <lucide-icon name="lock" size="12" class="text-white" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                         <span class="text-sm font-medium" [class.text-gray-900]="!isRequired" [class.text-amber-900]="isRequired"> {{ flag.title }} </span>
+                         @if (isRequired) {
+                         <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">Required</span>
+                         }
+                    </div>
+                    <div class="mt-0.5 font-mono text-xs" [class.text-gray-500]="!isRequired" [class.text-amber-700]="isRequired">{{ flag.hex }}</div>
+                    <div class="mt-0.5 text-xs" [class.text-gray-600]="!isRequired" [class.text-amber-800]="isRequired">{{ flag.desc }}</div>
+
+                    <!-- Additional info for required flags -->
+                    @if (isRequired) {
+                    <p class="mt-2 text-xs font-medium text-amber-700">This flag must be enabled when removing the trustline.</p>
+                    }
+               </div>
+          </label>
           }
      </div>
 

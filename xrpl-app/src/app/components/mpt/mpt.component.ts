@@ -30,8 +30,8 @@ import { MptTransactionViewModelService } from '../../services/mpt/mpt-transacti
 import { MPT_TAB_META, MPT_TABS } from './constants/mpt.ui';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
-import { MPT_TAB } from './constants/mpt.constants';
-import { MptActionTypes, MptTxConfig, MptTxType } from './constants/mpt.types';
+import { MPT_TAB, MPT_FLAGS_CONFIG } from './constants/mpt.constants';
+import { MptActionTypes, MptFlagKey, MptTxConfig, MptTxType } from './constants/mpt.types';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
@@ -48,11 +48,12 @@ import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { NgIcon } from '@ng-icons/core';
+import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.component';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, MptFlagsComponent, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, NgIcon, FlagSelectorComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,6 +73,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      public readonly mptStoreService = inject(MptStoreService);
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabMeta = MPT_TAB_META;
+     public readonly mptFlagsConfig = MPT_FLAGS_CONFIG;
      private _jsonEditor?: JsonEditorComponent;
 
      monacoOptions = {
@@ -234,13 +236,12 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                     includeDestinationAccountObject: true,
                     destinationAddress,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'sendMpt') {
                if (!this.mptUtilService.isDestinationAuthorizedForMpt(env.accountObjects.result.account_objects, env.destinationAccountObject.result.account_objects, this.mptStoreService.mptIssuanceId())) {
@@ -311,7 +312,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
           this.txUiService.resetCurrentStepToIdle();

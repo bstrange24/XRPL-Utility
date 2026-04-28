@@ -186,13 +186,12 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                                    asset,
                                    asset2,
                               });
+                              if (!env) throw new Error('Unable to get environment.');
                          } catch (err: any) {
                               console.error('prepareTxEnvironment failed:', err);
                               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                               return;
                          }
-
-                         if (!env) throw new Error('Unable to get environment.');
 
                          this.updateSharedObjectsStore(env);
                          this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
@@ -221,13 +220,12 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                     includeLedgerInfo: true,
                     includeServerInfo: true,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
           if (currentTab === 'swapViaAMM' && !destination?.trim()) {
@@ -264,7 +262,10 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
           this.trustlineCurrencyService.refreshCurrentBalance();

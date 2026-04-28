@@ -150,13 +150,12 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                     includeBlockingObjects: true,
                     destinationAddress: destination,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           this.deleteAccountStoreService.setField('destination', destination);
           const accountDeleteState = this.deleteAccountStoreService.getAll();

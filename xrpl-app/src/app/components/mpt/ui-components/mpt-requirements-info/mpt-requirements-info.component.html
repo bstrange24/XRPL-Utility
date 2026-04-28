@@ -11,12 +11,11 @@
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">XRPL Multi-Purpose Tokens (MPTs)</h3>
@@ -34,11 +33,11 @@
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Holder Self-Authorization</span>
-                                   <span class="text-green-600 font-medium">✅ Always Required</span>
+                                   <span class="text-green-600 font-medium text-right">Always Required</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Issuer Authorization (tfMPTRequireAuth)</span>
-                                   <span class="text-gray-500">Only if flag enabled</span>
+                                   <span class="text-gray-500 text-right">Only if flag enabled</span>
                               </div>
                          </div>
                     </div>

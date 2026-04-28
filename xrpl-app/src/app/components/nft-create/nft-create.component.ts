@@ -22,7 +22,7 @@ import { NFT_CREATE_TAB_META, NFT_CREATE_TABS } from './constants/nft-create.ui'
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { NftTransactionViewModelService } from '../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
-import { NFT_CREATE_TAB } from './constants/nft-create.constants';
+import { NFT_CREATE_TAB, NFT_FLAGS_CONFIG } from './constants/nft-create.constants';
 import { NftCreateActionTypes, NftCreateTxConfig } from './constants/nft-create.types';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
@@ -36,18 +36,18 @@ import { NftCreateFieldsComponent } from './tab/nft-create-fields/nft-create-fie
 import { NftBurnComponent } from './tab/nft-burn/nft-burn.component';
 import { NftModifyComponent } from './tab/nft-modify/nft-modify.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { NftFlagsComponent } from './tab/nft-flags/nft-flags.component';
 import { NftRequirementsInfoComponent } from './ui-components/nft-requirements-info/nft-requirements-info.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.component';
 
 @Component({
      selector: 'app-nft-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateSummaryComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, NftFlagsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateSummaryComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, FlagSelectorComponent],
      templateUrl: './nft-create.component.html',
      styleUrl: './nft-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +67,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabs = NFT_CREATE_TABS;
      public readonly tabMeta = NFT_CREATE_TAB_META;
+     public readonly nftFlagsConfig = NFT_FLAGS_CONFIG;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -226,13 +227,12 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                     includeServerInfo: true,
                     includeDestinationAccountInfo: true,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'burnNft') {
                const validNFTs = this.nftUtilService.parseAndValidateNFTokenIDs(this.nftCreateStoreService.nftId());
@@ -284,7 +284,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, nftState.nftCreator, this.nftCreateStoreService.destination(), '', { includeNftObjects: true });
           this.txUiService.resetCurrentStepToIdle();

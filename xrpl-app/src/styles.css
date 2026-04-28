@@ -640,3 +640,42 @@ pre code[class*="language-"] {
 :host-context(.dark) .btn-network-mainnet {
      color: #a0525a;
 }
+
+/* Toast specific */
+/* Optimized Toast Progress Bar */
+.toast-progress {
+     width: 100%;
+     animation: toastProgress linear forwards;
+     animation-play-state: running;
+}
+
+.group:hover .toast-progress {
+     animation-play-state: paused;
+}
+
+@keyframes toastProgress {
+     from {
+          transform: translateX(0);
+     }
+
+     to {
+          transform: translateX(-100%);
+     }
+}
+
+.toast-container {
+     max-height: 60vh;
+     overflow: hidden;
+}
+
+@keyframes toastPop {
+     from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.9);
+     }
+
+     to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+     }
+}

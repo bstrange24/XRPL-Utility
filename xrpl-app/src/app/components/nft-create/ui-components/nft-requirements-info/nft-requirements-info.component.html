@@ -11,12 +11,11 @@
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">XRPL NFTs (Non-Fungible Tokens)</h3>
@@ -65,7 +64,7 @@
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Owner (for burn)</span>
-                                   <span class="text-green-600 font-medium">Current holder or issuer (if burnable)</span>
+                                   <span class="text-green-600 font-medium text-right">Current holder or issuer (if burnable)</span>
                               </div>
                          </div>
                     </div>

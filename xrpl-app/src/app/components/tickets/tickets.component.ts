@@ -137,7 +137,8 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           if (currentTab === 'createTicket') {
                const ticketCount = this.xrplTxOptionsStore.ticketCountField();
                if (this.xrplTxOptionsStore.walletTicketCount() + Number(ticketCount) > 250) {
-                    throw new Error(`An XRPL can not hold more than 250 Tickets at one time. This account already has ${this.xrplTxOptionsStore.walletTicketCount()}`);
+                    this.toastService.error(`An XRPL account can not hold more than 250 Tickets at one time. This account already has ${this.xrplTxOptionsStore.walletTicketCount()}`, AppConstants.TOAST.ERROR);
+                    return;
                }
           }
 
@@ -151,18 +152,18 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                     includeServerInfo: true,
                     includeTickets: true,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
-               this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               this.toastService.error('Failed to prepare transaction environment.', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'deleteTicket') {
                const ticketsToDelete = this.xrplTxOptionsStore.selectedTicketSequences();
                if (ticketsToDelete.length === 0) {
-                    return this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
+                    this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
+                    return;
                }
           }
 
@@ -198,7 +199,10 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, '', '', '', { includeTicketObjects: true });
           this.txUiService.resetCurrentStepToIdle();

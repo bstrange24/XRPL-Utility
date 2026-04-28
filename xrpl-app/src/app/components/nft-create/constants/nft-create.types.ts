@@ -10,6 +10,15 @@ export type NftCreateConfigTxDisplayType = 'createNft' | 'burnNft' | 'updateNFTM
 
 export type NftCreateTxType = 'createNft' | 'burnNft' | 'updateNFTMetadata';
 export type NftCreateFlagKey = 'createNft' | 'burnNft' | 'updateNFTMetadata';
+export type NftFlagKey = 'burnableNft' | 'onlyXrpNft' | 'transferableNft' | 'mutableNft';
+
+export interface NftFlags {
+     burnableNft: boolean;
+     onlyXrpNft: boolean;
+     trustLine: boolean;
+     transferableNft: boolean;
+     mutableNft: boolean;
+}
 
 export interface NftCreateTxConfig {
      nft: NFtState;

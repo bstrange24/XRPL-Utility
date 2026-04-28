@@ -335,13 +335,12 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                     includeEscrows: true,
                     destinationAddress,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           // Finish-specific safety checks
           if (currentTab === 'finishEscrow' || currentTab === 'cancelEscrow') {
@@ -405,7 +404,10 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, this.escrowStoreService.escrowOwner(), this.escrowStoreService.destination(), '', { includeCheckObjects: true });
           this.txUiService.resetCurrentStepToIdle();

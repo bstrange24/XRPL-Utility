@@ -48,12 +48,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      }
 
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);
-     // expandedWallets: Set<number> = new Set();
      expandedWallets = signal<Set<number>>(new Set());
      isWalletPanelExpanded = signal(true);
 
-     // Prefer the panel's own execution time; fall back to the orchestrator's
-     // so that wallet generation triggered from the Wallets page also shows a time.
      readonly displayExecutionTime = computed(() => this.executionTime() || this.walletConfiguratorOrchestratorService.executionTimeValue());
 
      @Output() walletSelected = new EventEmitter<Wallet>();
@@ -87,7 +84,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.selectedWalletIndex = Math.max(0, Math.min(this.selectedWalletIndex, this.wallets.length - 1));
 
           this.updateCurrentWallet();
-          this.cdr.detectChanges(); // remove later if zoneless / unnecessary
+          this.cdr.detectChanges();
      });
 
      private readonly _selectedIndexEffect = effect(() => {
@@ -102,7 +99,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.cdr.detectChanges();
      });
 
-     // Optional: safety clamp when both change
      private readonly _clampEffect = effect(() => {
           const list = this.walletManagerService.wallets();
           const idx = this.walletManagerService.selectedIndex();
@@ -118,7 +114,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           const saved = localStorage.getItem('walletPanelExpanded');
           if (saved !== null) this.isWalletPanelExpanded.set(saved === 'true');
 
-          // Save when changed
           effect(() => {
                localStorage.setItem('walletPanelExpanded', this.isWalletPanelExpanded().toString());
           });
@@ -153,10 +148,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
 
           this.walletManagerService.setSelectedIndex(index);
           this.walletSelected.emit(this.currentWallet);
-
-          // if (!this.expandedWallets.has(index)) {
-          // this.expandedWallets.add(index);
-          // }
      }
 
      editName(index: number) {
@@ -181,6 +172,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                ...this.wallets[index],
                showSecret: !this.wallets[index].showSecret,
           };
+          this.cdr.detectChanges();
      }
 
      async refreshBalance(index: number) {
@@ -200,7 +192,6 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           this.walletManagerService.deleteWallet(index);
      }
 
-     // Called by the all pages except the Wallet Configurator page
      async generateNewAccount() {
           this.walletsStoreService.updateField('buttonLoading', state => ({
                ...state,
@@ -219,21 +210,9 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                     const client = await this.xrplService.getClient();
                     await this.walletDataService.refreshWallets(client, [newWallet.address]);
 
-                    /**
-                     * Uncomment to auto-select the new wallet.
-                     * const freshWallets = this.walletManagerService.wallets(); // fresh read
-                     * const newIndex = freshWallets.findIndex(w => w.address === newWallet.address);
-                     *
-                     * if (newIndex !== -1) {
-                     *   this.walletManagerService.setSelectedIndex(newIndex);
-                     * }
-                     */
-
-                    // Success actions – do them synchronously first
                     this.updateCurrentWallet();
                     this.walletSelected.emit(this.currentWallet);
 
-                    // Set result signal + toast
                     this.txUiService.setTxResultSignal(newWallet);
                     this.toastService.success(`Generated ${newWallet.address || newWallet.wallet?.classicAddress} wallet successfully!`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
@@ -246,31 +225,59 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                          generateNewWalletFromSeed: false,
                     }));
 
-                    // executionTime signal was updated by withPerf — notify OnPush
                     this.cdr.detectChanges();
                }
           });
      }
 
-     dropWallet(event: CdkDragDrop<Wallet[]>) {
+     drop(event: CdkDragDrop<Wallet[]>) {
+          if (event.previousIndex === event.currentIndex) return;
+
+          const previousSelected = this.selectedWalletIndex;
+
+          // Save current expanded states
+          const oldExpanded = new Set(this.expandedWallets());
+          const newExpanded = new Set<number>();
+
+          // Rebuild expanded set with new indices
+          oldExpanded.forEach(idx => {
+               if (idx === event.previousIndex) {
+                    newExpanded.add(event.currentIndex);
+               } else if (idx > event.previousIndex && idx <= event.currentIndex) {
+                    newExpanded.add(idx - 1);
+               } else if (idx < event.previousIndex && idx >= event.currentIndex) {
+                    newExpanded.add(idx + 1);
+               } else {
+                    newExpanded.add(idx);
+               }
+          });
+
+          // Perform the reorder
           moveItemInArray(this.wallets, event.previousIndex, event.currentIndex);
 
-          // Adjust selected index after reordering
-          if (this.selectedWalletIndex === event.previousIndex) {
+          // Update selected index
+          if (previousSelected === event.previousIndex) {
                this.selectedWalletIndex = event.currentIndex;
-          } else if (this.selectedWalletIndex > event.previousIndex && this.selectedWalletIndex <= event.currentIndex) {
-               this.selectedWalletIndex--;
-          } else if (this.selectedWalletIndex < event.previousIndex && this.selectedWalletIndex >= event.currentIndex) {
-               this.selectedWalletIndex++;
+          } else if (previousSelected > event.previousIndex && previousSelected <= event.currentIndex) {
+               this.selectedWalletIndex = previousSelected - 1;
+          } else if (previousSelected < event.previousIndex && previousSelected >= event.currentIndex) {
+               this.selectedWalletIndex = previousSelected + 1;
           }
 
+          // Sync with service
           this.walletManagerService.setWallets([...this.wallets]);
+          this.walletManagerService.setSelectedIndex(this.selectedWalletIndex);
+
           this.updateCurrentWallet();
           this.walletSelected.emit(this.currentWallet);
-          this.walletManagerService.setSelectedIndex(this.selectedWalletIndex);
+
+          // Restore expanded states
+          this.expandedWallets.set(newExpanded);
+
+          // Force change detection
+          this.cdr.detectChanges();
      }
 
-     // Toggle expansion for a specific wallet
      toggleWalletExpansion(index: number): void {
           this.expandedWallets.update(set => {
                const newSet = new Set(set);
@@ -281,38 +288,24 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
                }
                return newSet;
           });
-     }
-     // toggleWalletExpansion(index: number): void {
-     //      if (this.expandedWallets.has(index)) {
-     //           this.expandedWallets.delete(index);
-     //      } else {
-     //           this.expandedWallets.add(index);
-     //      }
-     // }
-
-     // Check if a wallet is expanded
-     isWalletExpanded(index: number): boolean {
-          return this.expandedWallets().has(index);
-     }
-     // isWalletExpanded(index: number): boolean {
-     //      return this.expandedWallets.has(index);
-     // }
-
-     // Collapse all wallets
-     collapseAllWallets(): void {
-          this.expandedWallets.set(new Set());
-          // this.expandedWallets.clear();
-          // Force change detection
           this.cdr.detectChanges();
      }
 
-     // In your WalletPanelComponent
+     isWalletExpanded(index: number): boolean {
+          return this.expandedWallets().has(index);
+     }
+
+     collapseAllWallets(): void {
+          this.expandedWallets.set(new Set());
+          this.cdr.detectChanges();
+     }
+
      handleWalletHeaderClick(event: MouseEvent, index: number) {
-          // Prevent expansion if user clicked on a button (Select, Edit, etc.)
           const target = event.target as HTMLElement;
 
-          if (target.closest('button') || target.tagName === 'BUTTON' || target.closest('input') || target.tagName === 'INPUT') {
-               return; // Do nothing → prevents expansion
+          // Prevent expansion when clicking on interactive elements
+          if (target.closest('button') || target.closest('input') || target.closest('[cdkDragHandle]') || target.closest('.lucide-icon')) {
+               return;
           }
 
           if (!this.editingIndex(index)) {
@@ -320,29 +313,22 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
           }
      }
 
-     // Computed - checks if ALL wallets are collapsed
      readonly areAllCollapsed = computed(() => {
           if (this.wallets.length === 0) return true;
           return this.wallets.every((_, i) => !this.isWalletExpanded(i));
      });
 
-     // Toggle between collapse all and expand all
      toggleAllWallets(): void {
           if (this.areAllCollapsed()) {
-               // Expand all
                this.expandedWallets.set(new Set(this.wallets.map((_, i) => i)));
           } else {
-               // Collapse all
                this.expandedWallets.set(new Set());
           }
           this.cdr.detectChanges();
      }
 
      toggleMainWalletPanel(): void {
-          const isCurrentlyExpanded = this.isWalletPanelExpanded();
-          this.isWalletPanelExpanded.set(!isCurrentlyExpanded);
-
-          // Optional: Collapse all individual wallets when closing the main panel
+          this.isWalletPanelExpanded.update(v => !v);
           if (!this.isWalletPanelExpanded()) {
                this.collapseAllWallets();
           }

@@ -11,12 +11,11 @@
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">NFT Offers (Buy / Sell / Cancel)</h3>
@@ -36,23 +35,23 @@
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">NFTokenID</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Amount</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Offer Type</span>
-                                   <span class="text-green-600 font-medium">Sell or Buy</span>
+                                   <span class="text-green-600 font-medium text-right">Sell or Buy</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Expiration</span>
-                                   <span class="text-gray-500">Optional</span>
+                                   <span class="text-gray-500 text-right">Optional</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">Destination</span>
-                                   <span class="text-gray-500">Optional (direct offer)</span>
+                                   <span class="text-gray-500 text-right">Optional (direct offer)</span>
                               </div>
                          </div>
                     </div>
@@ -65,15 +64,15 @@
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">NFTokenOfferIndex</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">NFTokenID (for accept)</span>
-                                   <span class="text-green-600 font-medium">Required when accepting</span>
+                                   <span class="text-green-600 font-medium text-right">Required when accepting</span>
                               </div>
                               <div class="flex justify-between items-center">
                                    <span class="text-gray-700">BrokerFee</span>
-                                   <span class="text-gray-500">Optional</span>
+                                   <span class="text-gray-500 text-right">Optional</span>
                               </div>
                          </div>
                     </div>

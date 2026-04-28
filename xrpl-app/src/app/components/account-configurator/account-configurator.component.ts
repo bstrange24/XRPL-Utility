@@ -145,13 +145,12 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                     includeLedgerInfo: true,
                     includeServerInfo: true,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
@@ -181,7 +180,10 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           this.isAccountConfig.set(true);
           const successFullTx = await this.handleTxResult(txResult, env.client, env.wallet, '', '', '');

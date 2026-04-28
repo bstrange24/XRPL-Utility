@@ -10,6 +10,15 @@ export type MptConfigTxDisplayType = 'createMpt' | 'authorizeMpt' | 'sendMpt' | 
 export type MptTxType = 'createMpt' | 'authorizeMpt' | 'unauthorizeMpt' | 'sendMpt' | 'lockMpt' | 'unlockMpt' | 'clawbackMpt' | 'destroyMpt';
 export type MptFlagKey = 'canLock' | 'isRequireAuth' | 'canEscrow' | 'canTrade' | 'canTransfer' | 'canClawback';
 
+export interface MptFlags {
+     canLock: boolean;
+     isRequireAuth: boolean;
+     canEscrow: boolean;
+     canTrade: boolean;
+     canTransfer: boolean;
+     canClawback: boolean;
+}
+
 export interface MptTxConfig {
      mpt: MptState;
      account?: AccountConfiguratorState;

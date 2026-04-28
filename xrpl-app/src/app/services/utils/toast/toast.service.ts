@@ -8,13 +8,22 @@ export interface Toast {
      id: number;
      message: string | SafeHtml;
      type: 'success' | 'error' | 'info' | 'warn';
+     duration: number;
+     progress?: number;
+     remaining?: number;
+     timer?: ReturnType<typeof setTimeout>; // Store the timer reference
+     interval?: ReturnType<typeof setInterval>; // Store interval for progress updates
 }
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
      private readonly sanitizer = inject(DomSanitizer);
      private id = 0;
-     toasts = signal<Toast[]>([]);
+     private idCounter = 0;
+     public toasts = signal<Toast[]>([]);
+     private timers = new Map<number, ReturnType<typeof setTimeout>>();
+     private intervals = new Map<number, ReturnType<typeof setInterval>>();
+     private pausedToasts = new Map<number, { remaining: number; progress: number }>(); // Store remaining time when paused
 
      constructor() {}
 
@@ -27,7 +36,7 @@ export class ToastService {
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
 
-          this.show({ message: finalMessage, type: 'success' }, duration);
+          this.show({ message: finalMessage, type: 'success', duration }, duration);
      }
 
      successMultipleHashesWithTickets(message: string, results: { ticketSeq: string; hash: string }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/', duration = 4000) {
@@ -45,7 +54,7 @@ export class ToastService {
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
 
-          this.show({ message: finalMessage, type: 'success' }, duration);
+          this.show({ message: finalMessage, type: 'success', duration }, duration);
      }
 
      successMultipleHashesWithDepositAuth(message: string, results: { depostiAuthAddress: any; hash: string }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/', duration = 4000) {
@@ -63,7 +72,7 @@ export class ToastService {
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
 
-          this.show({ message: finalMessage, type: 'success' }, duration);
+          this.show({ message: finalMessage, type: 'success', duration }, duration);
      }
 
      successMultipleHashes(message: string, duration: number, results: { hash: string; label: string }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
@@ -78,7 +87,7 @@ export class ToastService {
                const html = `${message}<br>${linksHtml}`;
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
-          this.show({ message: finalMessage, type: 'success' }, duration);
+          this.show({ message: finalMessage, type: 'success', duration }, duration);
      }
 
      errorMultipleHashes(message: string, duration: number, results: { hash: string | undefined; label: string; error: string | undefined }[], explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
@@ -93,10 +102,10 @@ export class ToastService {
                const html = `${message}<br>${linksHtml}`;
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
-          this.show({ message: finalMessage, type: 'error' }, duration);
+          this.show({ message: finalMessage, type: 'error', duration }, duration);
      }
 
-     buildMultiErrorMessage(failedResults: { address: string; hash?: string; error: string }[], txMessage: string, explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
+     buildMultiErrorMessage(failedResults: { address: string; hash?: string; error: string }[], txMessage: string, explorerBaseUrl = 'https://livenet.xrpl.org/tx/', duration = 4000) {
           let finalMessage: string | SafeHtml = '';
 
           const count = failedResults.length;
@@ -109,7 +118,7 @@ export class ToastService {
                html += `${fail.error || 'Unknown error'}<br>${explorerLink}`;
           });
           finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
-          this.show({ message: finalMessage, type: 'error' }, AppConstants.TOAST.ERROR);
+          this.show({ message: finalMessage, type: 'error', duration }, AppConstants.TOAST.ERROR);
      }
 
      error(message: string, duration = 4000, makeHashLink = false, hash?: string, explorerBaseUrl = 'https://livenet.xrpl.org/tx/') {
@@ -120,34 +129,127 @@ export class ToastService {
                const html = `${message}<br>View Tx in Explorer: <a href="${link}" target="_blank" rel="noopener noreferrer" class="underline hover:text-blue-200">${hash}</a>`;
                finalMessage = this.sanitizer.bypassSecurityTrustHtml(html);
           }
-          this.show({ message: finalMessage, type: 'error' }, duration);
+          this.show({ message: finalMessage, type: 'error', duration }, duration);
      }
 
      info(message: string, duration = 2000) {
-          this.show({ message, type: 'info' }, duration);
+          this.show({ message, type: 'info', duration }, duration);
      }
 
      warn(message: string, duration = 2000) {
-          this.show({ message, type: 'warn' }, duration);
+          this.show({ message, type: 'warn', duration }, duration);
      }
 
-     public show(toast: Omit<Toast, 'id'>, duration: number) {
-          const id = ++this.id;
-          this.toasts.update(t => [...t, { ...toast, id }]);
+     public show(toastInput: Omit<Toast, 'id' | 'progress' | 'remaining'>, customDuration?: number) {
+          const duration = customDuration ?? toastInput.duration ?? 4000;
+          const id = ++this.idCounter;
 
-          setTimeout(() => {
-               this.toasts.update(t => t.filter(x => x.id !== id));
+          const toast: Toast = {
+               ...toastInput,
+               id,
+               duration,
+               progress: 100,
+               remaining: duration,
+          };
+
+          this.toasts.update(t => [...t, toast]);
+
+          // Start the timer and progress animation
+          this.startTimer(id, duration);
+     }
+
+     private startTimer(id: number, duration: number) {
+          let remaining = duration;
+          let startTime = Date.now();
+
+          // Set up the interval to update progress
+          const interval = setInterval(() => {
+               const toast = this.toasts().find(t => t.id === id);
+               if (toast) {
+                    const isPaused = this.pausedToasts.has(id);
+                    if (!isPaused) {
+                         const elapsed = Date.now() - startTime;
+                         remaining = Math.max(0, duration - elapsed);
+                         const progress = (remaining / duration) * 100;
+
+                         this.toasts.update(toasts => toasts.map(t => (t.id === id ? { ...t, progress, remaining } : t)));
+
+                         // Clear everything when done
+                         if (remaining <= 0) {
+                              this.removeToast(id);
+                         }
+                    }
+               }
+          }, 16); // Update roughly every frame (60fps)
+
+          this.intervals.set(id, interval);
+
+          // Also set a timeout as a backup
+          const timer = setTimeout(() => {
+               this.removeToast(id);
           }, duration);
+
+          this.timers.set(id, timer);
      }
 
-     clear() {
-          this.toasts.set([]);
+     pauseTimer(id: number) {
+          const toast = this.toasts().find(t => t.id === id);
+          if (toast && !this.pausedToasts.has(id)) {
+               // Store the current remaining time (ensure it has a value)
+               const remaining = toast.remaining ?? toast.duration;
+               const progress = toast.progress ?? 100;
+
+               this.pausedToasts.set(id, { remaining, progress });
+
+               // Clear existing timers
+               const timer = this.timers.get(id);
+               if (timer) {
+                    clearTimeout(timer);
+                    this.timers.delete(id);
+               }
+
+               const interval = this.intervals.get(id);
+               if (interval) {
+                    clearInterval(interval);
+                    this.intervals.delete(id);
+               }
+          }
+     }
+
+     resumeTimer(id: number) {
+          const paused = this.pausedToasts.get(id);
+          if (paused) {
+               this.pausedToasts.delete(id);
+               this.startTimer(id, paused.remaining);
+          }
      }
 
      removeToast(id: number) {
-          // Trigger leave animation first, then remove after it finishes
-          setTimeout(() => {
-               this.toasts.update(toasts => toasts.filter(t => t.id !== id));
-          }, 200);
+          // Clear all timers and intervals
+          const timer = this.timers.get(id);
+          if (timer) {
+               clearTimeout(timer);
+               this.timers.delete(id);
+          }
+
+          const interval = this.intervals.get(id);
+          if (interval) {
+               clearInterval(interval);
+               this.intervals.delete(id);
+          }
+
+          this.pausedToasts.delete(id);
+
+          // Remove the toast from the array
+          this.toasts.update(toasts => toasts.filter(t => t.id !== id));
+     }
+
+     clear() {
+          this.timers.forEach(t => clearTimeout(t));
+          this.timers.clear();
+          this.intervals.forEach(i => clearInterval(i));
+          this.intervals.clear();
+          this.pausedToasts.clear();
+          this.toasts.set([]);
      }
 }

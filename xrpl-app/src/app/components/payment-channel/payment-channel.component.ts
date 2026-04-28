@@ -252,13 +252,12 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     includePaymentChannelObjects: true,
                     destinationAddress,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'claimPaymentChannel') {
                const signatureVerified = await this.xrplService.getChannelVerifiy(env.client, this.paymentChannelStoreService.channelIDField(), this.paymentChannelStoreService.amount(), this.paymentChannelStoreService.publicKeyField(), this.paymentChannelStoreService.channelClaimSignatureField());
@@ -309,7 +308,10 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress, this.paymentChannelStoreService.destination(), '', { includePaymentChannelObjects: true });
           this.txUiService.resetCurrentStepToIdle();

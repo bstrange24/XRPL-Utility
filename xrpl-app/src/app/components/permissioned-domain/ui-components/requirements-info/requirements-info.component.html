@@ -9,17 +9,17 @@
                <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
                <span class="font-semibold text-gray-900">Permission Domain Info</span>
           </div>
+
           <button (click)="isExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isExpanded() ? 'Collapse Panel' : 'Expand Panel' }}">
                <lucide-icon [name]="isExpanded() ? 'chevron-down' : 'chevron-up'" size="16" />
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Info -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Permissioned Domains</h3>
@@ -57,7 +57,7 @@
                     </div>
 
                     <!-- Delete Domain (shown in same view for completeness) -->
-                    <div class="border border-gray-100 rounded-2xl p-5 opacity-75">
+                    <!-- <div class="border border-gray-100 rounded-2xl p-5 opacity-75">
                          <div class="flex items-center gap-2 mb-4">
                               <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑 Delete Domain</span>
                          </div>
@@ -67,7 +67,7 @@
                                    <span class="text-green-600 font-medium">Required</span>
                               </div>
                          </div>
-                    </div>
+                    </div> -->
                </div>
           </div>
 
@@ -100,7 +100,7 @@
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Info -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Delete Permissioned Domain</h3>
@@ -114,7 +114,6 @@
                <div class="border border-gray-100 rounded-2xl p-5">
                     <div class="flex items-center gap-2 mb-4">
                          <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑 Delete Domain</span>
-                         <span class="text-xs font-mono text-gray-500">PermissionedDomainDelete</span>
                     </div>
                     <div class="space-y-3 text-sm">
                          <div class="flex justify-between items-center">

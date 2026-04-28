@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { CommonModule } from '@angular/common';
 
 @Component({
      selector: 'app-mpt-flags',
-     imports: [LucideAngularModule],
+     imports: [CommonModule, LucideAngularModule],
      templateUrl: './mpt-flags.component.html',
      styleUrl: './mpt-flags.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

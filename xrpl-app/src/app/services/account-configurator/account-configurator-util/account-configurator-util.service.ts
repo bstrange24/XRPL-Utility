@@ -125,7 +125,12 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                return;
           }
 
-          const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
+          // const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
+          const operations: Array<{
+               operation: 'SetFlag' | 'ClearFlag';
+               flagValue: number;
+               flagName: string;
+          }> = [];
 
           setFlags.forEach(f => {
                operations.push({
@@ -150,6 +155,23 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      }
 
      getFlagUpdates(currentFlags: any) {
+          const setFlags: number[] = [];
+          const clearFlags: number[] = [];
+
+          AppConstants.FLAGS.forEach(flag => {
+               const key = flag.name as keyof XrplAccountFlags;
+
+               const desired = this.flags[key]; // ✅ SOURCE OF TRUTH
+               const actual = !!currentFlags[flag.xrplName];
+
+               if (desired && !actual) setFlags.push(flag.value);
+               if (!desired && actual) clearFlags.push(flag.value);
+          });
+
+          return { setFlags, clearFlags };
+     }
+
+     getFlagUpdates1(currentFlags: any) {
           const setFlags: any[] = [];
           const clearFlags: any[] = [];
 
@@ -167,7 +189,17 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           return { setFlags, clearFlags };
      }
 
-     getFlagName(value: string): string {
+     getFlagName(value: number): string {
+          const appFlag = AppConstants.FLAGS.find(f => f.value === value)?.label;
+          if (appFlag) return appFlag;
+
+          const rippleFlags = this.decodeRippleStateFlags(value);
+          if (rippleFlags.length > 0) return rippleFlags.join(', ');
+
+          return `${value}`;
+     }
+
+     getFlagName1(value: string): string {
           // 1. Try AppConstants.FLAGS
           // const appFlag = AppConstants.FLAGS.find(f => f.value.toString() === value)?.name;
           const appFlag = AppConstants.FLAGS.find(f => f.value === Number(value))?.label;

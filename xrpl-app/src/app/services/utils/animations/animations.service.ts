@@ -17,10 +17,10 @@ export const toastAnimation = trigger('toastAnimation', [
      transition(':enter', [
           style({
                opacity: 0,
-               transform: 'translateY(-12px) scale(0.95)',
+               transform: 'translateY(30px) scale(0.95)',
           }),
           animate(
-               '180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+               '280ms cubic-bezier(0.34, 1.56, 0.64, 1)', // nice bouncy pop-in
                style({
                     opacity: 1,
                     transform: 'translateY(0) scale(1)',
@@ -30,10 +30,47 @@ export const toastAnimation = trigger('toastAnimation', [
 
      transition(':leave', [
           animate(
-               '160ms ease-in',
+               '220ms cubic-bezier(0.4, 0, 1, 1)',
                style({
                     opacity: 0,
-                    transform: 'translateY(-10px) scale(0.96)',
+                    transform: 'translateY(15px) scale(0.95)',
+               })
+          ),
+     ]),
+]);
+
+export const expandCollapse = trigger('expandCollapse', [
+     transition(':enter', [
+          style({
+               height: 0,
+               maxHeight: 0,
+               opacity: 0,
+               overflow: 'hidden',
+               paddingTop: 0,
+               paddingBottom: 0,
+          }),
+          animate(
+               '320ms cubic-bezier(0.4, 0, 0.2, 1)', // matches your tabTransition feel
+               style({
+                    height: '*',
+                    maxHeight: '9999px', // the trick for reliable animation
+                    opacity: 1,
+                    paddingTop: '*',
+                    paddingBottom: '*',
+               })
+          ),
+     ]),
+
+     transition(':leave', [
+          animate(
+               '280ms cubic-bezier(0.4, 0, 0.2, 1)',
+               style({
+                    height: 0,
+                    maxHeight: 0,
+                    opacity: 0,
+                    overflow: 'hidden',
+                    paddingTop: 0,
+                    paddingBottom: 0,
                })
           ),
      ]),

@@ -7,76 +7,118 @@
 
      <div class="space-y-3">
           <!-- canLock -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.canLock" [class.bg-green-50]="mptUtilService.flags.canLock" (click)="mptUtilService.toggleFlag('canLock')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.canLock" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTCanLock</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000002</div>
-                         <div class="mt-0.5 text-xs text-gray-600">The MPT can be locked both individually and globally.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().canLock" [class.bg-green-50]="mptUtilService.flags().canLock">
+               <input type="checkbox" [checked]="mptUtilService.flags().canLock" (change)="mptUtilService.toggleFlag('canLock')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().canLock" [class.border-gray-300]="!mptUtilService.flags().canLock" [class.bg-green-500]="mptUtilService.flags().canLock">
+                         @if (mptUtilService.flags().canLock) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTCanLock</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000002</div>
+                    <div class="mt-0.5 text-xs text-gray-600">The MPT can be locked both individually and globally.</div>
+               </div>
+          </label>
 
           <!-- MPTRequireAuth -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.isRequireAuth" [class.bg-green-50]="mptUtilService.flags.isRequireAuth" (click)="mptUtilService.toggleFlag('isRequireAuth')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.isRequireAuth" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTRequireAuth</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000004</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Individual holders must be authorized.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().isRequireAuth" [class.bg-green-50]="mptUtilService.flags().isRequireAuth">
+               <input type="checkbox" [checked]="mptUtilService.flags().isRequireAuth" (change)="mptUtilService.toggleFlag('isRequireAuth')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().isRequireAuth" [class.border-gray-300]="!mptUtilService.flags().isRequireAuth" [class.bg-green-500]="mptUtilService.flags().isRequireAuth">
+                         @if (mptUtilService.flags().isRequireAuth) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTRequireAuth</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000004</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Individual holders must be authorized.</div>
+               </div>
+          </label>
 
           <!-- MPTCanEscrow -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.canEscrow" [class.bg-green-50]="mptUtilService.flags.canEscrow" (click)="mptUtilService.toggleFlag('canEscrow')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.canEscrow" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTCanEscrow</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000008</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Holders can place balances into escrow.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().canEscrow" [class.bg-green-50]="mptUtilService.flags().canEscrow">
+               <input type="checkbox" [checked]="mptUtilService.flags().canEscrow" (change)="mptUtilService.toggleFlag('canEscrow')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().canEscrow" [class.border-gray-300]="!mptUtilService.flags().canEscrow" [class.bg-green-500]="mptUtilService.flags().canEscrow">
+                         @if (mptUtilService.flags().canEscrow) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTCanEscrow</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000008</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Holders can place balances into escrow.</div>
+               </div>
+          </label>
 
           <!-- MPTCanTrade -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.canTrade" [class.bg-green-50]="mptUtilService.flags.canTrade" (click)="mptUtilService.toggleFlag('canTrade')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.canTrade" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTCanTrade</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000010</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Holders can trade on DEX or AMM.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().canTrade" [class.bg-green-50]="mptUtilService.flags().canTrade">
+               <input type="checkbox" [checked]="mptUtilService.flags().canTrade" (change)="mptUtilService.toggleFlag('canTrade')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().canTrade" [class.border-gray-300]="!mptUtilService.flags().canTrade" [class.bg-green-500]="mptUtilService.flags().canTrade">
+                         @if (mptUtilService.flags().canTrade) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTCanTrade</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000010</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Holders can trade on DEX or AMM.</div>
+               </div>
+          </label>
 
           <!-- MPTCanTransfer -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.canTransfer" [class.bg-green-50]="mptUtilService.flags.canTransfer" (click)="mptUtilService.toggleFlag('canTransfer')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.canTransfer" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTCanTransfer</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000020</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Tokens can be transferred to other accounts.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().canTransfer" [class.bg-green-50]="mptUtilService.flags().canTransfer">
+               <input type="checkbox" [checked]="mptUtilService.flags().canTransfer" (change)="mptUtilService.toggleFlag('canTransfer')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().canTransfer" [class.border-gray-300]="!mptUtilService.flags().canTransfer" [class.bg-green-500]="mptUtilService.flags().canTransfer">
+                         @if (mptUtilService.flags().canTransfer) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTCanTransfer</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000020</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Tokens can be transferred to other accounts.</div>
+               </div>
+          </label>
 
           <!-- MPTCanClawback -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="mptUtilService.flags.canClawback" [class.bg-green-50]="mptUtilService.flags.canClawback" (click)="mptUtilService.toggleFlag('canClawback')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="mptUtilService.flags.canClawback" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">MPTCanClawback</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000040</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Issuer can clawback value from holders.</div>
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="mptUtilService.flags().canClawback" [class.bg-green-50]="mptUtilService.flags().canClawback">
+               <input type="checkbox" [checked]="mptUtilService.flags().canClawback" (change)="mptUtilService.toggleFlag('canClawback')" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="mptUtilService.flags().canClawback" [class.border-gray-300]="!mptUtilService.flags().canClawback" [class.bg-green-500]="mptUtilService.flags().canClawback">
+                         @if (mptUtilService.flags().canClawback) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">MPTCanClawback</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000040</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Issuer can clawback value from holders.</div>
+               </div>
+          </label>
      </div>
 
      <!-- Total Flags -->

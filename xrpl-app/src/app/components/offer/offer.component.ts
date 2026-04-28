@@ -216,13 +216,12 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                     includeLedgerInfo: true,
                     includeServerInfo: true,
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           const offerState = this.offerStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
@@ -248,7 +247,10 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
           this.trustlineCurrencyService.refreshCurrentBalance();

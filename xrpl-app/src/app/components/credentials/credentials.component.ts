@@ -180,13 +180,12 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                     includeServerInfo: true,
                     ...(currentTab === 'createCredential' ? { destinationAddress: subjectDestination } : {}),
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
 
           const credentialState = this.credentialStore.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();
@@ -223,7 +222,10 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           const successFullTx: boolean = await this.handleTxResult(txResult, env.client, env.wallet, subjectDestination, this.credentialStore.credentialIssuer(), '');
           if (currentTab === 'deleteCredential' && successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {

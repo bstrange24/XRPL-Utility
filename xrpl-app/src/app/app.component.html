@@ -34,8 +34,44 @@
           }
      </main>
 
-     <!-- TOASTS (unchanged) -->
-     <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center space-y-3 space-y-reverse">
+     <!-- Toast Container -->
+     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-3 pointer-events-none">
+          @for (toast of toastService.toasts(); track toast.id) {
+          <div [@toastAnimation] class="group pointer-events-auto bg-white rounded-2xl shadow-xl border overflow-hidden w-fit min-w-[320px] max-w-[600px] hover:scale-[1.02] transition-transform" [class.border-green-500]="toast.type === 'success'" [class.border-red-500]="toast.type === 'error'" [class.border-blue-500]="toast.type === 'info'" [class.border-amber-500]="toast.type === 'warn'" (mouseenter)="toastService.pauseTimer(toast.id)" (mouseleave)="toastService.resumeTimer(toast.id)">
+               <!-- Progress Bar -->
+               <div class="h-0.5 bg-gray-100 relative overflow-hidden">
+                    <div class="absolute left-0 top-0 h-full transition-all duration-100" [class.bg-green-500]="toast.type === 'success'" [class.bg-red-500]="toast.type === 'error'" [class.bg-blue-500]="toast.type === 'info'" [class.bg-amber-500]="toast.type === 'warn'" [style.width.%]="toast.progress"></div>
+               </div>
+
+               <div class="flex items-start gap-4 pl-5 pr-4 py-4">
+                    <!-- Icon -->
+                    <div class="mt-0.5 flex-shrink-0">
+                         <ng-icon
+                              [name]="toast.type === 'success' ? 'heroCheckCircle' : 
+                         toast.type === 'error' ? 'heroXCircle' : 
+                         toast.type === 'warn' ? 'heroExclamationTriangle' : 'heroInformationCircle'"
+                              size="22"
+                              [class.text-green-500]="toast.type === 'success'"
+                              [class.text-red-500]="toast.type === 'error'"
+                              [class.text-amber-500]="toast.type === 'warn'"
+                              [class.text-blue-500]="toast.type === 'info'"
+                         >
+                         </ng-icon>
+                    </div>
+
+                    <div class="flex-1 min-w-0 pt-0.5">
+                         <div class="text-sm text-gray-800 leading-relaxed break-words" [innerHTML]="toast.message"></div>
+                    </div>
+
+                    <!-- Close Button -->
+                    <button (click)="toastService.removeToast(toast.id); $event.stopPropagation()" class="mt-0.5 text-gray-400 hover:text-gray-500 transition-colors">
+                         <lucide-icon name="x" size="18"></lucide-icon>
+                    </button>
+               </div>
+          </div>
+          }
+     </div>
+     <!-- <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center space-y-3 space-y-reverse">
           @for (toast of toastService.toasts(); track toast.id) {
           <div class="group relative flex items-start gap-3 w-96 bg-white rounded-xl shadow-lg border overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 animate-slide-up" [class.border-green-500]="toast.type === 'success'" [class.border-red-500]="toast.type === 'error'" [class.border-blue-500]="toast.type === 'info'" (click)="toastService.removeToast(toast.id)">
                <div class="absolute top-0 left-0 w-1 h-full" [class.bg-green-500]="toast.type === 'success'" [class.bg-red-500]="toast.type === 'error'" [class.bg-blue-500]="toast.type === 'info'"></div>
@@ -51,5 +87,5 @@
                </div>
           </div>
           }
-     </div>
+     </div> -->
 </div>

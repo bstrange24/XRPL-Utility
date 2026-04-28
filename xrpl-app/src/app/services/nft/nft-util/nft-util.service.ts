@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { CreateNftStoreService } from '../nft-store/nft-store.service';
-import { AccountFlags, NftFlags } from '../../../components/nft-create/constants/nft-create.types';
+import { AccountFlags, NftFlagKey, NftFlags } from '../../../components/nft-create/constants/nft-create.types';
 import * as xrpl from 'xrpl';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
@@ -17,7 +17,7 @@ export class NftUtilService {
      public readonly utilsService = inject(UtilsService);
      public readonly logService = inject(LogServiceService);
 
-     nftFlagValues = {
+     readonly nftFlagValues = {
           burnableNft: 0x00000001,
           onlyXrpNft: 0x00000002,
           trustLine: 0x00000004,
@@ -136,6 +136,7 @@ export class NftUtilService {
                transferableNft: false,
                mutableNft: false,
           });
+          this.updateNftFlagTotal();
      }
 
      selectedNftItem = computed(() => {
@@ -180,6 +181,28 @@ export class NftUtilService {
      //      this.batchMode = mode;
      //      this.toggleFlags(); // optional: update your XRPL batch flags
      // }
+
+     toggleFlag(flag: NftFlagKey): void {
+          this.nftFlags.update(current => ({
+               ...current,
+               [flag]: !current[flag],
+          }));
+          this.updateNftFlagTotal();
+     }
+
+     private updateNftFlagTotal(): void {
+          const flags = this.nftFlags();
+          let sum = 0;
+
+          if (flags.burnableNft) sum |= this.nftFlagValues.burnableNft;
+          if (flags.onlyXrpNft) sum |= this.nftFlagValues.onlyXrpNft;
+          if (flags.trustLine) sum |= this.nftFlagValues.trustLine;
+          if (flags.transferableNft) sum |= this.nftFlagValues.transferableNft;
+          if (flags.mutableNft) sum |= this.nftFlagValues.mutableNft;
+
+          this.totalFlagsValue.set(sum);
+          this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
+     }
 
      onBurnToggle(checked: boolean, nftId: string) {
           // normalize current ids

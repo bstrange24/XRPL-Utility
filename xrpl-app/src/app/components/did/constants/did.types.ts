@@ -8,6 +8,13 @@ export type DidTxType = 'setDid' | 'deleteDid';
 export type DidTab = 'setDid' | 'deleteDid';
 export type DidField = 'didData' | 'uriData' | 'createdDids' | 'existingDid' | 'didDocumentData' | 'regularKeySigningEnabled';
 
+export interface ExistingDid {
+     index: string;
+     URI?: string;
+     Data?: string;
+     DIDDocument?: string;
+}
+
 export type DidValidationResult = {
      success: boolean;
      hexData?: string;

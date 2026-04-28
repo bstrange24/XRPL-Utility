@@ -13,11 +13,10 @@
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Account Flags (AccountSet)</h3>
                <p class="text-sm text-gray-600">AccountSet lets you enable or disable specific account behaviors using SetFlag and ClearFlag.</p>
@@ -85,7 +84,7 @@
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Account Metadata (AccountSet)</h3>
                <p class="text-sm text-gray-600">Attach public metadata to your account such as Domain, MessageKey, TransferRate, etc.</p>
@@ -128,7 +127,7 @@
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main content similar structure as above - let me know if you want me to expand all cases fully -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Deposit Authorization (DepositAuth)</h3>
@@ -160,7 +159,7 @@
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Multi-Signer (SignerListSet)</h3>
                <p class="text-sm text-gray-600">Configure multiple keys that can collectively authorize transactions for your account. Useful for shared control, security, and institutional setups.</p>
@@ -243,7 +242,7 @@
      </button>
 
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Modify Regular Key (SetRegularKey)</h3>
                <p class="text-sm text-gray-600">Assign, change, or remove a secondary key that can sign transactions for your account.</p>

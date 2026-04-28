@@ -19,11 +19,12 @@ import { TxEnvironmentService } from './services/transaction-environment/tx-envi
 import { CopyUtilService } from './services/utils/copy-util/copy-util.service';
 import { RightPanelService } from './services/utils/right-panel/right-panel.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-root',
      standalone: true,
-     imports: [RouterOutlet, CommonModule, WalletPanelComponent, NavbarComponent, LucideAngularModule],
+     imports: [RouterOutlet, CommonModule, WalletPanelComponent, NavbarComponent, NgIcon, LucideAngularModule],
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './app.component.html',
      styleUrls: ['./app.component.css'],

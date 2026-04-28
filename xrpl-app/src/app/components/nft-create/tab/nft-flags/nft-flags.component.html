@@ -7,56 +7,80 @@
 
      <div class="space-y-3">
           <!-- Burnable -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().burnableNft" [class.bg-green-50]="nftUtilService.nftFlags().burnableNft" (click)="toggleFlag('burnableNft')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="nftUtilService.nftFlags().burnableNft" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="nftUtilService.nftFlags().burnableNft" [class.bg-green-50]="nftUtilService.nftFlags().burnableNft">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().burnableNft" (change)="toggleFlag('burnableNft')" class="hidden" />
 
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">Burnable</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000001 tfBurnable</div>
-                         <div class="mt-0.5 text-xs text-gray-600">The minted token may be burned by the issuer or current holder.</div>
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="nftUtilService.nftFlags().burnableNft" [class.border-gray-300]="!nftUtilService.nftFlags().burnableNft" [class.bg-green-500]="nftUtilService.nftFlags().burnableNft">
+                         @if (nftUtilService.nftFlags().burnableNft) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">Burnable</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000001 tfBurnable</div>
+                    <div class="mt-0.5 text-xs text-gray-600">The minted token may be burned by the issuer or current holder.</div>
+               </div>
+          </label>
 
           <!-- OnlyXRP -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().onlyXrpNft" [class.bg-green-50]="nftUtilService.nftFlags().onlyXrpNft" (click)="toggleFlag('onlyXrpNft')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="nftUtilService.nftFlags().onlyXrpNft" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="nftUtilService.nftFlags().onlyXrpNft" [class.bg-green-50]="nftUtilService.nftFlags().onlyXrpNft">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().onlyXrpNft" (change)="toggleFlag('onlyXrpNft')" class="hidden" />
 
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">OnlyXRP</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000002 tfOnlyXRP</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Indicates that the token may only be offered or sold for XRP.</div>
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="nftUtilService.nftFlags().onlyXrpNft" [class.border-gray-300]="!nftUtilService.nftFlags().onlyXrpNft" [class.bg-green-500]="nftUtilService.nftFlags().onlyXrpNft">
+                         @if (nftUtilService.nftFlags().onlyXrpNft) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">OnlyXRP</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000002 tfOnlyXRP</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Indicates that the token may only be offered or sold for XRP.</div>
+               </div>
+          </label>
 
           <!-- Transferable -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().transferableNft" [class.bg-green-50]="nftUtilService.nftFlags().transferableNft" (click)="toggleFlag('transferableNft')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="nftUtilService.nftFlags().transferableNft" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="nftUtilService.nftFlags().transferableNft" [class.bg-green-50]="nftUtilService.nftFlags().transferableNft">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().transferableNft" (change)="toggleFlag('transferableNft')" class="hidden" />
 
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">Transferable</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000008 tfTransferable</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Indicates that this NFT can be transferred.</div>
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="nftUtilService.nftFlags().transferableNft" [class.border-gray-300]="!nftUtilService.nftFlags().transferableNft" [class.bg-green-500]="nftUtilService.nftFlags().transferableNft">
+                         @if (nftUtilService.nftFlags().transferableNft) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">Transferable</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000008 tfTransferable</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Indicates that this NFT can be transferred.</div>
+               </div>
+          </label>
 
           <!-- Mutable -->
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:bg-gray-50" [class.border-green-300]="nftUtilService.nftFlags().mutableNft" [class.bg-green-50]="nftUtilService.nftFlags().mutableNft" (click)="toggleFlag('mutableNft')">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="nftUtilService.nftFlags().mutableNft" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()" />
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="nftUtilService.nftFlags().mutableNft" [class.bg-green-50]="nftUtilService.nftFlags().mutableNft">
+               <input type="checkbox" [checked]="nftUtilService.nftFlags().mutableNft" (change)="toggleFlag('mutableNft')" class="hidden" />
 
-                    <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">Mutable</div>
-                         <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000010 tfMutable</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Indicates that this NFT's URI can be modified after minting.</div>
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="nftUtilService.nftFlags().mutableNft" [class.border-gray-300]="!nftUtilService.nftFlags().mutableNft" [class.bg-green-500]="nftUtilService.nftFlags().mutableNft">
+                         @if (nftUtilService.nftFlags().mutableNft) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900">Mutable</div>
+                    <div class="mt-0.5 font-mono text-xs text-gray-500">0x00000010 tfMutable</div>
+                    <div class="mt-0.5 text-xs text-gray-600">Indicates that this NFT's URI can be modified after minting.</div>
+               </div>
+          </label>
      </div>
 
      <!-- Total Flags Value -->

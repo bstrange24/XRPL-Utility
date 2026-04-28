@@ -33,8 +33,8 @@ export class MptTransactionBuilderService {
                tx.AssetScale = assetScale;
           }
 
-          if (this.mptUtilService.flags.canTransfer) {
-               if (!mpt.transferFee && this.mptUtilService.flags.canTransfer) {
+          if (this.mptUtilService.flags().canTransfer) {
+               if (!mpt.transferFee && this.mptUtilService.flags().canTransfer) {
                     throw new Error('Transfer Fee is required when CanTransfer is enabled');
                }
                if (mpt.transferFee) {
@@ -52,7 +52,7 @@ export class MptTransactionBuilderService {
           }
 
           if (this.mptUtilService.flags) {
-               const flagsValue = this.mptUtilService.getFlagsValue(this.mptUtilService.flags);
+               const flagsValue = this.mptUtilService.getFlagsValue(this.mptUtilService.flags());
                console.log('Creating MPT with Flags:', flagsValue.toString(16));
                tx.Flags = flagsValue;
           }

@@ -11,12 +11,11 @@
 
                <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
-          <!-- <ng-icon [name]="isExpanded() ? 'heroChevronUp' : 'heroChevronDown'" size="20" class="text-gray-500 transition-transform" /> -->
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6">
+     <div [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Sign & Submit Transactions</h3>
@@ -35,16 +34,19 @@
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Transaction Type</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-gray-700 text-left">Transaction Type</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Transaction JSON</span>
-                                   <span class="text-green-600 font-medium">Required (editable)</span>
+                                   <span class="text-gray-700 text-left">Transaction JSON</span>
+                                   <span class="text-green-600 font-medium text-right">Required (editable)</span>
                               </div>
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Signing Method</span>
-                                   <span class="text-gray-500">Single / Regular Key / Multi-Sign</span>
+                                   <span class="text-gray-700 text-left">Signing Method</span>
+                                   <span class="text-gray-500 text-right"
+                                        >Single / Regular Key / <br />
+                                        Multi-Sign</span
+                                   >
                               </div>
                          </div>
                     </div>
@@ -56,16 +58,16 @@
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Signed Transaction</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-gray-700 text-left">Signed Transaction</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Submit to Network</span>
-                                   <span class="text-green-600 font-medium">Required</span>
+                                   <span class="text-gray-700 text-left">Submit to Network</span>
+                                   <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Transaction Result</span>
-                                   <span class="text-gray-500">tesSUCCESS or error codes</span>
+                                   <span class="text-gray-700 text-left">Transaction Result</span>
+                                   <span class="text-gray-500 text-right">tesSUCCESS or error codes</span>
                               </div>
                          </div>
                     </div>

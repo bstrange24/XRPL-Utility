@@ -31,7 +31,7 @@
                     <label class="block text-sm font-semibold text-gray-900">Token Metadata</label>
                     <span class="text-xs text-gray-500">(XLS-89)</span>
                </div>
-               <p class="text-xs text-gray-500">JSON metadata for this MPT issuance (immutable after creation).</p>
+               <p class="text-xs text-gray-500 pb-2">JSON metadata for this MPT issuance (immutable after creation).</p>
 
                <app-json-editor [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
 

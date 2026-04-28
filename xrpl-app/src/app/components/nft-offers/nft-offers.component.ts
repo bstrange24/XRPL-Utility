@@ -245,14 +245,12 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     includeNftSellOffers: currentTab === 'buyNft' || currentTab === 'buyNftOffer',
                     includeNftBuyOffers: currentTab === 'sellNft' || currentTab === 'sellNftOffer',
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
-
-          if (!env) throw new Error('Unable to get environment.');
-          console.log('Prepared environment:', env);
 
           if (currentTab === 'buyNft') {
                const sellOffer = env.nftSellOffersObject.result?.offers || [];
@@ -334,7 +332,10 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, nftState.nftCreator, this.nftCreateStoreService.destination(), '', { includeNftObjects: true });
           this.txUiService.resetCurrentStepToIdle();

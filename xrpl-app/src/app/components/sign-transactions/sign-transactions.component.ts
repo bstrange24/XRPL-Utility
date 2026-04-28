@@ -33,7 +33,7 @@ import { SIGN_TRANSACTION_TAB_META, SIGN_TRANSACTION_TABS } from './constants/si
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { SIGN_TRANSACTION_TAB } from './constants/sign-transaction.constants';
 import { NgIcon } from '@ng-icons/core';
-import { animate, style, transition, trigger } from '@angular/animations';
+import { expandCollapse } from '../../services/utils/animations/animations.service';
 
 @Component({
      selector: 'app-sign-transactions',
@@ -41,7 +41,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
      imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
-     animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('300ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('250ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
+     animations: [expandCollapse],
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignTransactionsComponent extends WalletDestinationBase implements OnInit {
@@ -87,12 +87,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                let updated: string;
                if (isTicket && selectedTicket) {
                     updated = this.signTransactionsOrchestratorService.applyTicketToJson(txJson, selectedTicket);
-               } else if (!isTicket) {
+               } else if (isTicket) {
+                    return;
+               } else {
                     const accountInfo = untracked(() => this.signTransationStoreService.accountInfo());
                     const originalSeq: number = accountInfo?.result?.account_data?.Sequence ?? 0;
                     updated = this.signTransactionsOrchestratorService.removeTicketFromJson(txJson, originalSeq);
-               } else {
-                    return;
                }
 
                this.signTransationStoreService.setField('txJson', updated);
@@ -110,10 +110,10 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                let updated: string;
                if (isMemo && memos.length > 0) {
                     updated = this.signTransactionsOrchestratorService.applyMemoToJson(txJson, memos);
-               } else if (!isMemo) {
-                    updated = this.signTransactionsOrchestratorService.removeMemoFromJson(txJson);
-               } else {
+               } else if (isMemo) {
                     return;
+               } else {
+                    updated = this.signTransactionsOrchestratorService.removeMemoFromJson(txJson);
                }
 
                this.signTransationStoreService.setField('txJson', updated);
@@ -122,7 +122,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
           // Sync signed field display when outputField changes externally
           effect(() => {
-               const output = this.signTransationStoreService.outputField();
                untracked(() => this.updateSignedDisplay());
           });
 
@@ -158,7 +157,6 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      async setTab(tab: string): Promise<void> {
           if (!SIGN_TRANSACTION_TABS.includes(tab as any)) return;
-          // this.sendXrpViewModelService.activeTab.set(tab as SendXrpActionTypes);
           this.clearInputFields();
      }
 
@@ -233,13 +231,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                               includeLedgerInfo: true,
                               includeServerInfo: true,
                          });
+                         if (!env) throw new Error('Unable to get environment.');
                     } catch (err: any) {
                          console.error('prepareTxEnvironment failed:', err);
                          this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                          return;
                     }
-
-                    if (!env) throw new Error('Unable to get environment.');
 
                     const jsonStr = await this.signTransactionsOrchestratorService.generateTransactionJson({
                          wallet,
@@ -395,13 +392,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                               includeLedgerInfo: true,
                               includeServerInfo: true,
                          });
+                         if (!env) throw new Error('Unable to get environment.');
                     } catch (err: any) {
                          console.error('prepareTxEnvironment failed:', err);
                          this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                          return;
                     }
-
-                    if (!env) throw new Error('Unable to get environment.');
 
                     const txType = this.getTransactionLabel(this.signTransationStoreService.selectedTransaction() ?? '');
                     const result = await this.signTransactionsOrchestratorService.submitTransaction({
@@ -562,7 +558,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           const value = target.textContent?.trim() || '';
 
           this.signTransationStoreService.setField('outputField', value);
-          this.signTransationStoreService.setAppSigned(false); // ← Important: User edited/pasted
+          this.signTransationStoreService.setAppSigned(false);
      }
 
      // Final sync on blur (recommended for performance)
@@ -570,9 +566,5 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           const target = this.signedEditable.nativeElement;
           const value = target.textContent?.trim() || '';
           this.signTransationStoreService.setField('outputField', value);
-     }
-
-     private hasProperty(obj: any, prop: string): boolean {
-          return obj && obj[prop] != null;
      }
 }

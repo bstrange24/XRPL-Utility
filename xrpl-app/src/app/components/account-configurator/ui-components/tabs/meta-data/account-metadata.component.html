@@ -61,16 +61,23 @@
      </div>
 
      <!-- Message Key Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <div class="cursor-pointer rounded-2xl border p-4 transition-all hover:border-green-300" [class.border-green-400]="accountConfiguratorStoreService.isMessageKey()" [class.bg-green-50/30]="accountConfiguratorStoreService.isMessageKey()" (click)="accountConfiguratorUtilService.toggleMessageKey()">
-               <div class="flex items-start gap-3">
-                    <input type="checkbox" [checked]="accountConfiguratorStoreService.isMessageKey()" class="mt-0.5 h-4 w-4 cursor-pointer rounded border-gray-300 text-green-600 focus:ring-green-500" (click)="$event.stopPropagation()" />
-                    <div>
-                         <span class="font-medium text-gray-900">Save Message Key</span>
-                         <p class="mt-1 text-sm text-gray-600">Public key for receiving encrypted messages</p>
+     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.bg-green-50]="accountConfiguratorStoreService.isMessageKey()">
+               <input type="checkbox" [checked]="accountConfiguratorStoreService.isMessageKey()" (change)="accountConfiguratorUtilService.toggleMessageKey()" class="hidden" />
+
+               <div class="mt-0.5 flex-shrink-0">
+                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.border-gray-300]="!accountConfiguratorStoreService.isMessageKey()" [class.bg-green-500]="accountConfiguratorStoreService.isMessageKey()">
+                         @if (accountConfiguratorStoreService.isMessageKey()) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
                     </div>
                </div>
-          </div>
+
+               <div class="flex-1">
+                    <span class="font-medium text-gray-900">Save Message Key</span>
+                    <p class="mt-1 text-sm text-gray-600">Public key for receiving encrypted messages</p>
+               </div>
+          </label>
      </div>
 
      <!-- Transaction Options -->

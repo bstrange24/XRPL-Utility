@@ -455,7 +455,8 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                     this.toastService.buildMultiErrorMessage(
                          failed.map(f => ({ address: f.address, hash: f.hash, error: f.error || 'Unknown error' })),
                          'deposit auth update',
-                         `${this.txUiService.explorerUrl()}tx/`
+                         `${this.txUiService.explorerUrl()}tx/`,
+                         AppConstants.TOAST.ERROR
                     );
                }
 

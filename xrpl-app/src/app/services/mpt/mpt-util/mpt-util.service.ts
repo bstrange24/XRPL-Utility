@@ -11,7 +11,7 @@ import { MPTokenIssuanceCreateFlags } from 'xrpl';
 import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { MptStoreService } from '../mpt-store/mpt-store.service';
-import { MptFlagKey } from '../../../components/mpt/constants/mpt.types';
+import { MptFlagKey, MptFlags } from '../../../components/mpt/constants/mpt.types';
 import { LogServiceService } from '../../shared/log-service/log-service.service';
 
 @Injectable({
@@ -37,17 +37,25 @@ export class MptUtilService extends PerformanceBaseComponent {
           canClawback: 0x00000040,
           isAuthorized: 0x00000002,
      };
-
-     totalFlagsValue = signal<number>(0);
-     totalFlagsHex = signal<string>('0x0');
-     flags: AccountFlags = {
+     flags = signal<MptFlags>({
           canLock: false,
           isRequireAuth: false,
           canEscrow: false,
           canTrade: false,
-          canClawback: false,
           canTransfer: false,
-     };
+          canClawback: false,
+     });
+
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
+     // flags: AccountFlags = {
+     //      canLock: false,
+     //      isRequireAuth: false,
+     //      canEscrow: false,
+     //      canTrade: false,
+     //      canClawback: false,
+     //      canTransfer: false,
+     // };
 
      readonly selectedMptIssuanceId = computed(() => this.mptStoreService.mptIssuanceId());
 
@@ -312,33 +320,39 @@ export class MptUtilService extends PerformanceBaseComponent {
           return (flags & this.flagValues.isAuthorized) !== 0;
      }
 
+     toggleFlag1(flag: MptFlagKey): void {
+          this.flags()[flag] = !this.flags()[flag];
+          this.updateFlagTotal();
+     }
+
      toggleFlag(flag: MptFlagKey): void {
-          this.flags[flag] = !this.flags[flag];
+          this.flags.update(current => ({
+               ...current,
+               [flag]: !current[flag],
+          }));
           this.updateFlagTotal();
      }
 
      updateFlagTotal() {
           let sum = 0;
-          if (this.flags.canLock) sum |= this.flagValues.canLock;
-          if (this.flags.isRequireAuth) sum |= this.flagValues.isRequireAuth;
-          if (this.flags.canEscrow) sum |= this.flagValues.canEscrow;
-          if (this.flags.canTrade) sum |= this.flagValues.canTrade;
-          if (this.flags.canTransfer) sum |= this.flagValues.canTransfer;
-          if (this.flags.canClawback) sum |= this.flagValues.canClawback;
+          if (this.flags().canLock) sum |= this.flagValues.canLock;
+          if (this.flags().isRequireAuth) sum |= this.flagValues.isRequireAuth;
+          if (this.flags().canEscrow) sum |= this.flagValues.canEscrow;
+          if (this.flags().canTrade) sum |= this.flagValues.canTrade;
+          if (this.flags().canTransfer) sum |= this.flagValues.canTransfer;
+          if (this.flags().canClawback) sum |= this.flagValues.canClawback;
 
           this.totalFlagsValue.set(sum);
           this.totalFlagsHex.set('0x' + sum.toString(16).toUpperCase().padStart(8, '0'));
      }
 
      resetFlags() {
-          this.flags = {
-               canLock: false,
-               isRequireAuth: false,
-               canEscrow: false,
-               canTrade: false,
-               canTransfer: false,
-               canClawback: false,
-          };
+          this.flags().canLock = false;
+          this.flags().isRequireAuth = false;
+          this.flags().canEscrow = false;
+          this.flags().canTrade = false;
+          this.flags().canTransfer = false;
+          this.flags().canClawback = false;
           this.updateFlagTotal();
      }
 

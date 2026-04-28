@@ -267,13 +267,13 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     includeServerInfo: true,
                     ...(currentTab === 'issueCurrency' || currentTab === 'clawbackTokens' ? { destination: destinationAddress } : {}),
                });
+               if (!env) throw new Error('Unable to get environment.');
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
                return;
           }
 
-          if (!env) throw new Error('Unable to get environment.');
 
           if (currentTab === 'removeTrustline') {
                const trustLineflags = this.trustlineCurrencyService.flags();
@@ -352,7 +352,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                }
           });
 
-          if (!txResult) throw new Error('Unexpected error when submitting transaction.');
+          if (!txResult) {
+               this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+               return;
+          } 
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress);
           await this.trustlineCurrencyService.refreshCurrentBalance();
