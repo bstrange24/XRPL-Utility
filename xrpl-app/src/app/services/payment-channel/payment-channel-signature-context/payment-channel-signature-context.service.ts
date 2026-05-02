@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
      providedIn: 'root',
 })
 export class PaymentChannelSignatureContextService {
-     private signatureContexts = new Map<string, any>();
+     private readonly signatureContexts = new Map<string, any>();
 
      constructor() {
           this.loadContextsFromStorage();

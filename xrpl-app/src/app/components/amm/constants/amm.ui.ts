@@ -76,7 +76,7 @@ export const AMM_TAB_META: Record<
      }
 > = {
      createAMM: {
-          icon: 'heroCurrencyDollar',
+          icon: 'heroPlusCircle',
           colorClass: 'blue-button-submenu',
           title: 'Create',
           desc: 'Create an AMM on the XRPL.',
@@ -103,7 +103,7 @@ export const AMM_TAB_META: Record<
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      clawbackFromAMM: {
-          icon: 'heroCurrencyDollar',
+          icon: 'heroArrowUturnLeft',
           colorClass: 'blue-button-submenu',
           title: 'Clawback assets from AMM',
           desc: 'Clawback assets issued from an AMM.',

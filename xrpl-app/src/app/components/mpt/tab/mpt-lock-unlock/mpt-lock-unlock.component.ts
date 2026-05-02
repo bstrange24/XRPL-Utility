@@ -4,8 +4,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
-import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-import { TransactionDropdownService } from '../../../../services/transaction-dropdown/transaction-dropdown.service';
 
 @Component({
      selector: 'app-mpt-lock-unlock',
@@ -17,8 +15,6 @@ import { TransactionDropdownService } from '../../../../services/transaction-dro
 })
 export class MptLockUnlockComponent {
      public readonly mptStoreService = inject(MptStoreService);
-     private readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
-     private readonly transactionDropdownService = inject(TransactionDropdownService);
 
      // Inputs from parent
      readonly destinationItems = input.required<SelectItem[]>();

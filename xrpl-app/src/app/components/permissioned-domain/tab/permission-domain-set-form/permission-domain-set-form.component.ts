@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { PermissionedDomainUtilService } from '../../../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
@@ -127,6 +127,11 @@ export class PermissionDomainSetFormComponent {
      addCredential() {
           if (!this.newIssuer || this.newCredentialType.trim() === '') {
                return;
+          }
+
+          // Add maximum limit check
+          if (this.credentialsArray.length >= 10) {
+               return; // Don't add more than 10
           }
 
           const credGroup = this.fb.group({

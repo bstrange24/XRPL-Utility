@@ -115,20 +115,15 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineStoreService.resetOptions(); // or a new clearTrustlines() method
-          // this.trustlineStoreService.setField('existingIOUs', []);
           await this.getTrustlinesForAccount(true);
      }
 
      async onCurrencyChange(item: any) {
           this.currencyDebouncer.next(item);
-          // this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
-          // await this.syncAfterSelection();
      }
 
      async onIssuerChange(item: any) {
           this.issuerDebouncer.next(item);
-          // this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? 'XRP');
-          // await this.syncAfterSelection();
      }
 
      async onCurrencySelected(item: SelectItem | null) {
@@ -274,7 +269,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                return;
           }
 
-
           if (currentTab === 'removeTrustline') {
                const trustLineflags = this.trustlineCurrencyService.flags();
                if (trustLineflags['tfSetNoRipple'] && trustLineflags['tfClearNoRipple']) {
@@ -355,14 +349,14 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (!txResult) {
                this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
                return;
-          } 
+          }
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress);
           await this.trustlineCurrencyService.refreshCurrentBalance();
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
      }
 

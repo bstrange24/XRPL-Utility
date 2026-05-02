@@ -237,7 +237,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.permissionedDomainViewModelService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
      }
 

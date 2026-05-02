@@ -5,8 +5,10 @@
                <span class="text-sm font-medium" [class.text-gray-900]="!paymentChannelStoreService.isCreatorMode()" [class.text-gray-400]="paymentChannelStoreService.isCreatorMode()"> Normal Claim (as Destination) </span>
 
                <label class="flex cursor-pointer items-center">
+                    <span class="sr-only">Creator Mode</span>
+
                     <div class="relative inline-flex items-center">
-                         <input type="checkbox" class="peer sr-only" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.target.checked)" />
+                         <input type="checkbox" class="peer sr-only" aria-label="Creator Mode" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.target.checked)" />
                          <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
                          <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
                     </div>
@@ -28,7 +30,7 @@
                <!-- Select Channel -->
                <div class="space-y-2">
                     <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
-                    <label class="block text-sm font-semibold text-gray-900">Select Your Created Channel</label>
+                    <label for="selectCreatedChanel" class="block text-sm font-semibold text-gray-900">Select Your Created Channel</label>
                     <p class="text-xs text-gray-500">Choose one of your created channels to generate a signature.</p>
 
                     <div class="h-[54px]">
@@ -45,13 +47,13 @@
 
                <!-- Channel ID -->
                <div class="mt-5 space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Channel ID</label>
+                    <label for="channelID" class="block text-sm font-semibold text-gray-900">Channel ID</label>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Amount -->
                <div class="mt-5 space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Amount to Authorize (XRP)</label>
+                    <label for="amountToAuth" class="block text-sm font-semibold text-gray-900">Amount to Authorize (XRP)</label>
                     <p class="text-xs text-gray-500">The amount the destination is allowed to claim (must not exceed remaining balance).</p>
                     <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
@@ -59,7 +61,7 @@
                <!-- Generated Signature -->
                @if (paymentChannelStoreService.channelClaimSignatureField()) {
                <div class="mt-5 space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Generated Signature</label>
+                    <label for="generateSign" class="block text-sm font-semibold text-gray-900">Generated Signature</label>
                     <div class="flex flex-col gap-3 sm:flex-row">
                          <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly class="flex-1 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                          <button type="button" class="btn-primary whitespace-nowrap" (click)="copyUtilService.copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
@@ -77,7 +79,7 @@
                <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
                <!-- Select Channel -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Select Payment Channel to Claim</label>
+                    <label for="selectChannelToClaim" class="block text-sm font-semibold text-gray-900">Select Payment Channel to Claim</label>
                     <p class="text-xs text-gray-500">Select an existing payment channel to claim funds from.</p>
 
                     <div class="h-[54px]">
@@ -94,20 +96,20 @@
 
                <!-- Channel ID -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Channel ID</label>
+                    <label for="channelID" class="block text-sm font-semibold text-gray-900">Channel ID</label>
                     <p class="text-xs text-gray-500">The unique ID of the channel (64-character hex).</p>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>
 
                <!-- Amount to Claim -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">XRP Amount to Claim</label>
+                    <label for="xrpToClaim" class="block text-sm font-semibold text-gray-900">XRP Amount to Claim</label>
                     <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
 
                <!-- Signature -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Claim Signature</label>
+                    <label for="claimSign" class="block text-sm font-semibold text-gray-900">Claim Signature</label>
                     <p class="text-xs text-gray-500">The signed message from the channel creator.</p>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.channelClaimSignatureField" name="channelClaimSignatureField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>

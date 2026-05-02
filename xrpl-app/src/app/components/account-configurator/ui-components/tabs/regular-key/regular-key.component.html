@@ -11,9 +11,8 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Regular Key Address -->
                <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-900">Regular Key Address</label>
+                    <label for="regularKeyAddress" class="mb-2 block text-sm font-semibold text-gray-900">Regular Key Address</label>
                     <p class="mb-3 text-sm text-gray-600">The account address to use as your regular key</p>
-                    <!-- <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeyAddress', $event)" placeholder="r..." /> -->
                     <input type="text" class="w-full rounded-2xl border px-4 py-3 font-mono text-sm focus:outline-none" [class.border-gray-200]="!regularKeyAddressInvalid()" [class.border-red-500]="regularKeyAddressInvalid()" [class.border-green-500]="regularKeyAddressValid()" [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeyAddress', $event)" placeholder="r..." />
 
                     <!-- Helper text for invalid address -->
@@ -24,21 +23,13 @@
 
                <!-- Regular Key Seed -->
                <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-900">Regular Key Seed</label>
+                    <label for="regularKeySeed" class="mb-2 block text-sm font-semibold text-gray-900">Regular Key Seed</label>
                     <p class="mb-3 text-sm text-gray-600">Secret seed for the regular key</p>
                     <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.regularKeySeed()" (ngModelChange)="accountConfiguratorStoreService.setField('regularKeySeed', $event)" placeholder="s..." />
                </div>
           </div>
 
-          <!-- Optional: Warning when address is set but seed is missing -->
-          <!-- @if (accountConfiguratorStoreService.regularKeyAddress() && !accountConfiguratorStoreService.regularKeySeed()) {
-          <div class="mt-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
-               <ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600" />
-               <p class="text-xs text-amber-700">Seed is optional but recommended if you want to sign transactions with this key.</p>
-          </div>
-          } -->
-
-          <!-- Optional: Warning when seed is set but address is missing -->
+          <!-- Warning when seed is set but address is missing -->
           @if (accountConfiguratorStoreService.regularKeySeed() && !accountConfiguratorStoreService.regularKeyAddress()) {
           <div class="mt-4 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
                <ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600" />

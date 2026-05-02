@@ -284,6 +284,19 @@ export class TxEnvironmentService {
      }
 
      private getSeed(wallet: Wallet): string {
-          return wallet.seed ?? wallet.mnemonic ?? wallet.secretNumbers!;
+          if (wallet.seed && wallet.seed !== '') {
+               return wallet.seed;
+          }
+
+          if (wallet.mnemonic && wallet.mnemonic !== '') {
+               return wallet.mnemonic;
+          }
+
+          if (wallet.secretNumbers && wallet.secretNumbers !== '') {
+               return wallet.secretNumbers;
+          }
+
+          return '';
+          // return wallet.seed ?? wallet.mnemonic ?? wallet.secretNumbers!;
      }
 }

@@ -16,7 +16,6 @@ import { AcccountDataService } from '../../../../services/account-data/acccount-
 import { StorageService } from '../../../../services/shared/local-storage/storage.service';
 import { ActivatedRoute } from '@angular/router';
 import { WalletsStoreService } from '../../../../services/wallets/wallets-store/wallets-store.service';
-import { WalletsUtilService } from '../../../../services/wallets/wallets-util/wallets-util.service';
 import { WalletsViewModelService } from '../../../../services/wallets/wallets-view-model/wallets-view-model.service';
 import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
 
@@ -69,7 +68,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           return customWallets;
      });
 
-     // Mark the currently selected one (must match SelectItem shape)
      override readonly selectedCustomItem = computed(() => {
           const addr = this.walletsStoreService.selectedAddress();
           if (!addr) return null;
@@ -82,8 +80,8 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           console.log('label: ', label);
           return {
                id: addr,
-               name: label, // ✅ satisfies base
-               display: label, // ✅ satisfies dropdown
+               name: label,
+               display: label,
                address: addr,
           };
      });
@@ -92,7 +90,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           return;
      }
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 

@@ -1,5 +1,3 @@
-import { SEND_XRP_CONFIG_TX_DISPLAY_TYPES } from '../../send-xrp/constants/send-xrp.constants';
-
 export const ACCOUNT_DELETE_TX_TYPES = 'AccountDelete';
 
 export const ACCOUNT_DELETE_CONFIG_TX_DISPLAY_TYPES = {

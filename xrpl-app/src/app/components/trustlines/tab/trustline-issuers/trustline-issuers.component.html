@@ -6,14 +6,14 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
+                    <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
                     <p class="text-xs text-gray-500">Add a unique currency code to this application.</p>
                     <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
 
                <!-- Issuer Address -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Issuer Address</label>
+                    <label for="issuerAddress" class="block text-sm font-semibold text-gray-900">Issuer Address</label>
                     <p class="text-xs text-gray-500">Add a unique issuer address to this application.</p>
                     <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>
@@ -29,7 +29,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Select Currency -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Select Currency</label>
+                    <label for="selectCurrency" class="block text-sm font-semibold text-gray-900">Select Currency</label>
                     <p class="text-xs text-gray-500">Remove a unique currency code from this application.</p>
 
                     <div class="h-[54px]">
@@ -50,7 +50,7 @@
 
                <!-- Select Issuer -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Select Issuer</label>
+                    <label for="selectIssuer" class="block text-sm font-semibold text-gray-900">Select Issuer</label>
                     <p class="text-xs text-gray-500">Remove a unique issuer address from this application.</p>
 
                     <div class="h-[54px]">

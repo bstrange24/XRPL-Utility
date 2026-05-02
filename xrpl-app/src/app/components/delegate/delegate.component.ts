@@ -378,7 +378,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           this.delegateStore.setField('selected', new Set<number>());
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 

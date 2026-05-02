@@ -541,7 +541,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           return (AppConstants.SIGN_TRANSACTION_LABEL_MAP as Record<string, string>)[key] || key;
      }
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 

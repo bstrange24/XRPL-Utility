@@ -119,17 +119,13 @@ export class OfferTransactionOrchestratorService {
                return { success: false, error: 'No offer sequences provided.' };
           }
 
-          const total = sequences.length;
           const isSimulate = txOptions?.isSimulateEnabled;
-          // this.txUiService.showSpinnerWithDelay(isSimulate ? `Simulating deletion of ${total} offer(s)...` : `Cancelling ${total} offer(s)...`, 200);
 
           const deletedHashes: string[] = [];
           let successCount = 0;
 
-          for (let i = 0; i < sequences.length; i++) {
-               const sequence = Number(sequences[i]);
-               const progressMsg = isSimulate ? `Simulating offer ${i + 1}/${total}...` : `Cancelling offer ${i + 1}/${total}...`;
-               // this.txUiService.updateSpinnerMessage(progressMsg);
+          for (const element of sequences) {
+               const sequence = Number(element);
 
                const freshLedger = await env.client.getLedgerIndex();
                const cancelEnv = { ...env, ledgerInfo: { lastIndex: freshLedger } };

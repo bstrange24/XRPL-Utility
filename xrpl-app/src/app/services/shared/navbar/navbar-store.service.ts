@@ -5,9 +5,9 @@ import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({ providedIn: 'root' })
 export class NavbarStore {
-     private storageService = inject(StorageService);
-     private xrplService = inject(XrplService);
-     private networkService = inject(NetworkService);
+     private readonly storageService = inject(StorageService);
+     private readonly xrplService = inject(XrplService);
+     private readonly networkService = inject(NetworkService);
 
      selectedNetwork = signal('Devnet');
      networkColor = signal('#10b981');

@@ -18,7 +18,7 @@
           <!-- Select NFT -->
           @if (nftCreateStoreService.existingNfts().length > 0) {
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select NFT</label>
+               <label for="selectNft" class="block text-sm font-semibold text-gray-900">Select NFT</label>
                <p class="text-xs text-gray-500">Select an existing NFT for this offer.</p>
 
                <div class="h-[54px]">
@@ -29,7 +29,7 @@
 
           <!-- NFT Token ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <label for="nftTokenID" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
                <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />

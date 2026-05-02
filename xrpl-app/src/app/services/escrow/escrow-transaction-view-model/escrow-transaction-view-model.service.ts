@@ -16,8 +16,6 @@ import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/tr
 import { TrustlineStoreService } from '../../trustlines/trustline-store/trustline-store.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
-import { WalletDataService } from '../../wallets/refresh-wallet/refresh-wallets.service';
-import { XrplCacheService } from '../../xrpl-cache/xrpl-cache.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { EscrowUtilService } from '../escrow-util/escrow-util.service';
 import { EscrowStoreService } from '../escrow-store/escrow-store.service';
@@ -32,8 +30,6 @@ export class EscrowTransactionViewModelService {
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
-     private readonly walletDataService = inject(WalletDataService);
-     private readonly xrplCache = inject(XrplCacheService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
@@ -46,7 +42,6 @@ export class EscrowTransactionViewModelService {
      public readonly mptUtilService = inject(MptUtilService);
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly escrowOrchestrator = inject(EscrowOrchestratorService);
-     private readonly walletManager = inject(WalletManagerService);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly currencyStoreService = inject(CurrencyStoreService);

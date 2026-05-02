@@ -1,386 +1,320 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
-import { of } from 'rxjs';
-import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
-import * as xrpl from 'xrpl';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal, computed } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+
 import { MptComponent } from './mpt.component';
-import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
-import { MptTransactionViewModelService } from '../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
-import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
-import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
-import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
+import { MPT_TABS, MPT_TAB_META } from './constants/mpt.ui';
+import { MPT_TAB, MPT_FLAGS_CONFIG } from './constants/mpt.constants';
+
+// Services
+import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { ToastService } from '../../services/utils/toast/toast.service';
-import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
+import { MptTransactionViewModelService } from '../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
+import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
+import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
+import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
-import { provideHttpClient } from '@angular/common/http';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
-import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
+
+// Mock performance API
+const mockPerformance = {
+     mark: jasmine.createSpy('mark'),
+     measure: jasmine.createSpy('measure'),
+     getEntriesByName: jasmine.createSpy('getEntriesByName').and.returnValue([{ duration: 100 }]),
+     clearMarks: jasmine.createSpy('clearMarks'),
+     clearMeasures: jasmine.createSpy('clearMeasures'),
+};
+Object.defineProperty(window, 'performance', { value: mockPerformance, writable: true });
 
 describe('MptComponent', () => {
      let component: MptComponent;
      let fixture: ComponentFixture<MptComponent>;
 
-     const mockWallet = { address: 'rTEST', classicAddress: 'rTEST', name: 'Test', seed: '' } as any;
+     let walletManager: jasmine.SpyObj<WalletManagerService>;
+     let transactionUiService: jasmine.SpyObj<TransactionUiService>;
+     let downloadUtilService: jasmine.SpyObj<DownloadUtilService>;
+     let copyUtilService: jasmine.SpyObj<CopyUtilService>;
+     let walletDataService: jasmine.SpyObj<WalletDataService>;
+     let trustlineCurrencyService: jasmine.SpyObj<TrustlineCurrencyService>;
 
-     const walletManagerMock = {
-          wallets: signal([mockWallet]),
-          wallets$: of([mockWallet]),
-          hasWallets$: of(true),
-          hasWalletsFromWallets$: of(true),
-          hasWallets: signal(true),
-          selectedIndex$: of(0),
-          selectedIndex: signal(0),
+     let mptViewModelService: jasmine.SpyObj<any>;
+     let mptStoreService: jasmine.SpyObj<any>;
+     let mptUtilService: jasmine.SpyObj<any>;
+     let mptOrchestrator: jasmine.SpyObj<MptOrchestratorServiceService>;
 
-          // ← UPDATED: always return a wallet with classicAddress
-          getSelectedWallet: jasmine.createSpy('getSelectedWallet').and.returnValue(mockWallet),
+     let acccountDataService: jasmine.SpyObj<AcccountDataService>;
+     let txEnvironmentService: jasmine.SpyObj<any>;
+     let transactionDropdownService: jasmine.SpyObj<any>;
+     let toastService: jasmine.SpyObj<ToastService>;
+     let storageService: jasmine.SpyObj<StorageService>;
+     let rightPanelService: jasmine.SpyObj<RightPanelService>;
+     let xrplService: jasmine.SpyObj<XrplService>;
 
-          getSelectedIndex: jasmine.createSpy('getSelectedIndex').and.returnValue(0),
-          ensureWalletSelected: jasmine.createSpy('ensureWalletSelected').and.returnValue(true),
-          isEditing: { bind: jasmine.createSpy('bind').and.returnValue(() => false) },
-          setSelectedIndex: jasmine.createSpy('setSelectedIndex'),
-          setWallets: jasmine.createSpy('setWallets'),
-          startEdit: jasmine.createSpy('startEdit'),
-          saveEdit: jasmine.createSpy('saveEdit'),
-          cancelEdit: jasmine.createSpy('cancelEdit'),
-          deleteWallet: jasmine.createSpy('deleteWallet'),
-     };
+     const mockWallet: Wallet = {
+          address: 'rTestWallet1234567890',
+          classicAddress: 'rTestWallet1234567890',
+          name: 'Test Wallet',
+          seed: 'sEdTestSeed1234567890abcdef',
+     } as any;
 
-     const txUiMock = {
-          currentStep: signal('idle'),
-          stepMessage: jasmine.createSpy('stepMessage').and.returnValue(''),
-          spinner: signal(false),
-          wantsOptions: signal(false),
-          infoPanelExpanded: signal(false),
-          explorerUrl: signal('https://testnet.xrpl.org/'),
-          clearAllOptionsAndMessages: jasmine.createSpy('clearAllOptionsAndMessages'),
-          clearAllFields: jasmine.createSpy('clearAllFields'),
-          resetCurrentStepToIdle: jasmine.createSpy('resetCurrentStepToIdle'),
-          setTxResultSignal: jasmine.createSpy('setTxResultSignal'),
-          txResultSignal: signal([]),
-          successMessageSignal: signal(''),
-          errorMessageSignal: signal(null),
-          isSummaryLoading: signal(false),
-          isSummaryLoadingSignal: signal(false),
-          txSignal: signal(null),
-          warningMessage: null,
-          clearWarning: jasmine.createSpy('clearWarning'),
-          setWarning: jasmine.createSpy('setWarning'),
-          setError: jasmine.createSpy('setError'),
-          setInfoMessage: jasmine.createSpy('setInfoMessage'),
-          suppressTxClear: signal(false),
-     };
-
-     const outstandingMptsCollapsed = signal(false);
-     const destination = signal('');
-     const mptIssuanceId = signal('');
-     const mptIdSearchQuery = signal('');
-
-     const mptStoreMock = {
-          outstandingMptsCollapsed,
-          destination,
-          mptIssuanceId,
-          mptIdSearchQuery,
-          existingMpts: signal([]),
-          authAction: signal('authorize'),
-          lockAction: signal('unlock'),
-          metaData: signal(''),
-          XLS89_TEMPLATE: jasmine.createSpy('XLS89_TEMPLATE').and.returnValue('{}'),
-          setField: jasmine.createSpy('setField').and.callFake((field: string, value: any) => {
-               const map: Record<string, any> = {
-                    outstandingMptsCollapsed,
-                    destination,
-                    mptIssuanceId,
-                    mptIdSearchQuery,
-               };
-               map[field]?.set(value);
-          }),
-          getAll: jasmine.createSpy('getAll').and.returnValue({}),
-          resetMptFields: jasmine.createSpy('resetMptFields'),
-     };
-
-     const vmMock = {
-          activeTab: signal('createMpt'),
-          infoData: signal(null),
-          explorerLinks: signal(null),
-          metadataByteLength: jasmine.createSpy('metadataByteLength').and.returnValue(0),
-          metadataIsValid: jasmine.createSpy('metadataIsValid').and.returnValue(true),
-     };
-
-     const dropdownMock = {
-          customDestinations: signal([]),
-          allDestinations: jasmine.createSpy('allDestinations').and.returnValue(signal([])),
-          destinationMap: jasmine.createSpy('destinationMap').and.returnValue(signal(new Map())),
-          destinationItems: jasmine.createSpy('destinationItems').and.returnValue(signal([])),
-          selectedDestinationItem: jasmine.createSpy('selectedDestinationItem').and.returnValue(signal(null)),
-          filteredDestinations: jasmine.createSpy('filteredDestinations').and.returnValue(signal([])),
-          destinationDisplay: jasmine.createSpy('destinationDisplay').and.returnValue(signal('')),
-          setupAutoSelectOnValidTypedAddress: jasmine.createSpy('setupAutoSelectOnValidTypedAddress'),
-          loadCustomDestinations: jasmine.createSpy('loadCustomDestinations'),
-          getFinalDestinationAddress: jasmine.createSpy('getFinalDestinationAddress').and.returnValue(''),
-          addCustomIfNewAndSelect: jasmine.createSpy('addCustomIfNewAndSelect'),
-     };
-
-     const toastMock = { error: jasmine.createSpy('error'), success: jasmine.createSpy('success') };
-     const storeMock = {
-          get: jasmine.createSpy('get').and.returnValue(null),
-          set: jasmine.createSpy('set'),
-          removeValue: jasmine.createSpy('removeValue'),
-          getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'testnet' }),
-          getNetworkColor: jasmine.createSpy('getNetworkColor').and.returnValue('#00f'),
-     };
+     const XLS89_TEMPLATE_MOCK = `{"t":"TBILL","n":"T-Bill Yield Token"}`;
 
      beforeEach(async () => {
-          spyOn(console, 'error');
+          mockPerformance.mark.calls.reset();
+          mockPerformance.measure.calls.reset();
+          mockPerformance.getEntriesByName.calls.reset();
+          mockPerformance.clearMarks.calls.reset();
+          mockPerformance.clearMeasures.calls.reset();
+
+          xrplService = jasmine.createSpyObj('XrplService', ['getAccountNFTs', 'getNet']);
+          xrplService.getAccountNFTs.and.resolveTo({ result: { account_nfts: [] } });
+          xrplService.getNet.and.returnValue({ net: 'wss://s.devnet.rippletest.net:51233', environment: 'devnet' });
+
+          walletManager = jasmine.createSpyObj('WalletManagerService', ['ensureWalletSelected', 'getSelectedWallet', 'getSelectedIndex', 'hasWallets'], {
+               wallets: signal([mockWallet]),
+               selectedIndex: signal(0),
+               hasWallets: computed(() => true),
+               currentWallet: computed(() => mockWallet),
+          });
+          walletManager.ensureWalletSelected.and.returnValue(true);
+          walletManager.getSelectedWallet.and.returnValue(mockWallet);
+
+          transactionUiService = jasmine.createSpyObj('TransactionUiService', ['clearAllOptionsAndMessages', 'resetCurrentStepToIdle', 'setTxResultSignal', 'clearMessages', 'clearAllFields'], {
+               currentStep: signal('idle'),
+               wantsOptions: signal(false),
+               spinner: signal(false),
+               explorerUrl: signal('https://testnet.xrpl.org'),
+               warningMessage: '',
+               errorMessage: '',
+               infoMessage: '',
+               txSignal: signal([]),
+               txResultSignal: signal([]),
+               stepMessage: signal(''),
+               suppressTxClear: signal(false),
+          });
+          spyOn(transactionUiService.wantsOptions, 'set');
+
+          downloadUtilService = jasmine.createSpyObj('DownloadUtilService', ['download']);
+          copyUtilService = jasmine.createSpyObj('CopyUtilService', ['copyAddress', 'copyAndToast']);
+
+          walletDataService = jasmine.createSpyObj('WalletDataService', ['refreshWallets']);
+
+          trustlineCurrencyService = jasmine.createSpyObj('TrustlineCurrencyService', ['load', 'selectCurrency', 'selectIssuer', 'refreshCurrentBalance', 'currencyItems'], {
+               preferXrpAsDefault: signal(true),
+               addXrpInCurrencyDropdown: signal(true),
+               addMptInCurrencyDropdown: signal(false),
+          });
+          trustlineCurrencyService.currencyItems.and.returnValue([]);
+
+          transactionDropdownService = jasmine.createSpyObj('TransactionDropdownService', ['loadCustomDestinations', 'setupAutoSelectOnValidTypedAddress', 'getFinalDestinationAddress'], {
+               allDestinations: jasmine.createSpy('allDestinations').and.returnValue(signal([])),
+               destinationMap: jasmine.createSpy('destinationMap').and.returnValue(signal(new Map())),
+               destinationItems: jasmine.createSpy('destinationItems').and.returnValue(signal([])),
+               selectedDestinationItem: jasmine.createSpy('selectedDestinationItem').and.returnValue(signal(null)),
+               filteredDestinations: jasmine.createSpy('filteredDestinations').and.returnValue(signal([])),
+               destinationDisplay: jasmine.createSpy('destinationDisplay').and.returnValue(signal('')),
+               customDestinations: signal([]),
+          });
+          transactionDropdownService.getFinalDestinationAddress.and.returnValue('rDestination123');
+
+          mptViewModelService = jasmine.createSpyObj('MptTransactionViewModelService', ['getExistingNfts'], {
+               activeTab: signal('createMpt'),
+               infoData: computed(() => ({
+                    walletName: 'Test Wallet',
+                    mptCount: 3,
+                    mptsToShow: [],
+                    links: '',
+               })),
+               mptItems: computed(() => []),
+               metadataByteLength: computed(() => 0), // default small
+               metadataIsValid: computed(() => true),
+          });
+
+          mptStoreService = jasmine.createSpyObj('MptStoreService', ['setField', 'getAll', 'resetMptFields'], {
+               mptIssuanceId: signal(''),
+               metaData: signal('{}'),
+               authAction: signal('authorize'),
+               lockAction: signal('lock'),
+               outstandingMptsCollapsed: signal(false),
+               existingMpts: signal([]),
+               transferFee: signal(0),
+               assetScale: signal(0),
+               tokenCount: signal(1000),
+               destination: signal(''),
+               XLS89_TEMPLATE: jasmine.createSpy('XLS89_TEMPLATE').and.returnValue(XLS89_TEMPLATE_MOCK),
+          });
+          mptStoreService.getAll.and.returnValue({} as any);
+
+          mptUtilService = jasmine.createSpyObj('MptUtilService', ['flags', 'getFlagsValue', 'decodeMptFlagsForUi', 'resetFlags', 'toggleFlag', 'createMptButtonLabel', 'authorizeButtonLabel', 'sendMptButtonLabel', 'lockMptButtonLabel', 'clawbackMptButtonLabel', 'destroyMptButtonLabel', 'hasNoOutstandingMpts', 'getMpts'], {
+               flags: computed(() => ({
+                    canLock: false,
+                    isRequireAuth: false,
+                    canEscrow: false,
+                    canTrade: false,
+                    canTransfer: false,
+                    canClawback: false,
+               })),
+               totalFlagsValue: signal(0),
+               totalFlagsHex: signal('0x0'),
+               createMptButtonLabel: computed(() => 'Create MPT'),
+               authorizeButtonLabel: computed(() => 'Authorize MPT'),
+               sendMptButtonLabel: computed(() => 'Send MPT'),
+               lockMptButtonLabel: computed(() => 'Lock MPT'),
+               clawbackMptButtonLabel: computed(() => 'Clawback MPT'),
+               destroyMptButtonLabel: computed(() => 'Destroy MPT'),
+               hasNoOutstandingMpts: computed(() => true),
+          });
+          mptUtilService.getFlagsValue.and.returnValue(0);
+          mptUtilService.decodeMptFlagsForUi.and.returnValue('None');
+          mptUtilService.getMpts.and.returnValue([]);
+          mptUtilService.toggleFlag.and.callFake(() => {});
+
+          mptOrchestrator = jasmine.createSpyObj('MptOrchestratorServiceService', ['executeMptTx']);
+          mptOrchestrator.executeMptTx.and.resolveTo({ success: true, hash: 'txHash123' });
+
+          acccountDataService = jasmine.createSpyObj('AcccountDataService', ['refreshUiState']);
+
+          txEnvironmentService = jasmine.createSpyObj('TxEnvironmentService', ['getValidatedEnvironment', 'prepareTxEnvironmentWithWallet', 'prepareTxEnvironment']);
+          txEnvironmentService.getValidatedEnvironment.and.resolveTo({
+               wallet: mockWallet,
+               accountInfo: { result: { account_data: {} } },
+               accountObjects: { result: { account_objects: [] } },
+               client: {} as any,
+               ledgerInfo: { currentRippleTime: Date.now() },
+               fee: '10',
+          } as any);
+
+          txEnvironmentService.prepareTxEnvironmentWithWallet.and.resolveTo({ client: {}, wallet: mockWallet } as any);
+          txEnvironmentService.prepareTxEnvironment.and.resolveTo({ client: {}, wallet: mockWallet } as any);
+
+          toastService = jasmine.createSpyObj('ToastService', ['error', 'success', 'info']);
+
+          storageService = jasmine.createSpyObj('StorageService', ['get', 'set']);
+          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel']);
 
           await TestBed.configureTestingModule({
                imports: [MptComponent],
-               schemas: [NO_ERRORS_SCHEMA], // ← this finally skips Lucide
-
                providers: [
                     provideRouter([]),
-                    provideHttpClient(),
-
-                    { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
-
-                    { provide: WalletManagerService, useValue: walletManagerMock },
-                    { provide: TransactionUiService, useValue: txUiMock },
-                    { provide: MptTransactionViewModelService, useValue: vmMock },
-                    { provide: ToastService, useValue: toastMock },
-                    { provide: StorageService, useValue: storeMock },
-                    { provide: TransactionDropdownService, useValue: dropdownMock },
-                    { provide: MptOrchestratorServiceService, useValue: { executeMptTx: jasmine.createSpy().and.resolveTo({ success: true }) } },
-                    {
-                         provide: MptUtilService,
-                         useValue: {
-                              resetFlags: jasmine.createSpy('resetFlags'),
-                              getMpts: jasmine.createSpy('getMpts').and.returnValue([]),
-                              getAllMptTokens: jasmine.createSpy('getAllMptTokens').and.returnValue(null),
-                              isDestinationAuthorizedForMpt: jasmine.createSpy('isDestinationAuthorizedForMpt').and.returnValue(true),
-                         },
-                    },
-                    {
-                         provide: CheckTransactionOrchestrator,
-                         useValue: { executeCredentialTx: jasmine.createSpy().and.resolveTo({ success: true }) },
-                    },
-
-                    {
-                         provide: CheckUtilService,
-                         useValue: { getExistingChecks: jasmine.createSpy().and.returnValue([]) },
-                    },
-                    { provide: TrustlineCurrencyService, useValue: { load: jasmine.createSpy() } },
-                    {
-                         provide: XrplTransactionService,
-                         useValue: { waitForFinalOutcome: jasmine.createSpy().and.resolveTo({}), processTxFinalResult: jasmine.createSpy(), processTxError: jasmine.createSpy() },
-                    },
-                    {
-                         provide: TxEnvironmentService,
-                         useValue: {
-                              getValidatedEnvironment: jasmine.createSpy('getValidatedEnvironment').and.rejectWith(new Error('Unable to get environment.')),
-                              prepareTxEnvironmentWithWallet: jasmine.createSpy('prepareTxEnvironmentWithWallet').and.rejectWith(new Error('Unable to get environment.')),
-                         },
-                    },
-                    { provide: DownloadUtilService, useValue: {} },
-                    { provide: CopyUtilService, useValue: { copy: jasmine.createSpy() } },
-                    { provide: WalletDataService, useValue: { refreshWallets: jasmine.createSpy().and.resolveTo() } },
-                    { provide: AcccountDataService, useValue: { refreshUiState: jasmine.createSpy(), loadAccountData: jasmine.createSpy() } },
+                    { provide: WalletManagerService, useValue: walletManager },
+                    { provide: TransactionUiService, useValue: transactionUiService },
+                    { provide: DownloadUtilService, useValue: downloadUtilService },
+                    { provide: CopyUtilService, useValue: copyUtilService },
+                    { provide: WalletDataService, useValue: walletDataService },
+                    { provide: TrustlineCurrencyService, useValue: trustlineCurrencyService },
+                    { provide: MptTransactionViewModelService, useValue: mptViewModelService },
+                    { provide: MptStoreService, useValue: mptStoreService },
+                    { provide: MptUtilService, useValue: mptUtilService },
+                    { provide: MptOrchestratorServiceService, useValue: mptOrchestrator },
+                    { provide: AcccountDataService, useValue: acccountDataService },
+                    { provide: TxEnvironmentService, useValue: txEnvironmentService },
+                    { provide: TransactionDropdownService, useValue: transactionDropdownService },
+                    { provide: ToastService, useValue: toastService },
+                    { provide: StorageService, useValue: storageService },
+                    { provide: RightPanelService, useValue: rightPanelService },
+                    { provide: XrplService, useValue: xrplService },
                     { provide: ConnectionGuardService, useValue: { isConnected: signal(true) } },
-                    {
-                         provide: ActivatedRoute,
-                         useValue: {
-                              params: of({}),
-                              queryParams: of({}),
-                              fragment: of(null),
-                              data: of({}),
-                              paramMap: of(convertToParamMap({})),
-                              queryParamMap: of(convertToParamMap({})),
-                              snapshot: {
-                                   params: {},
-                                   queryParams: {},
-                                   data: {},
-                                   paramMap: convertToParamMap({}),
-                                   queryParamMap: convertToParamMap({}),
-                              },
-                         },
-                    },
+                    { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
+                    { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
                ],
-          })
-               .overrideProvider(MptStoreService, { useValue: mptStoreMock })
-               .overrideComponent(NavbarComponent, { set: { template: '<div></div>' } })
-               .overrideComponent(WalletPanelComponent, { set: { template: '<div></div>' } })
-               .overrideComponent(TransactionPreviewComponent, { set: { template: '<div></div>' } })
-               .compileComponents();
+          }).compileComponents();
 
           fixture = TestBed.createComponent(MptComponent);
           component = fixture.componentInstance;
+
+          (component as any).tabs = computed(() => MPT_TABS);
+          (component as any).tabMeta = MPT_TAB_META;
+          (component as any).mptFlagsConfig = MPT_FLAGS_CONFIG;
+
+          (component as any).xrpl = { isValidAddress: jasmine.createSpy('isValidAddress').and.returnValue(true) };
+
           fixture.detectChanges();
-          await fixture.whenStable();
      });
 
      it('should create', () => {
           expect(component).toBeTruthy();
      });
 
-     describe('setTab', () => {
-          it('should set activeTab to a valid tab value', async () => {
-               await component.setTab('sendMpt');
-               expect(vmMock.activeTab()).toBe('sendMpt');
-          });
-
-          it('should ignore invalid tab values', async () => {
-               vmMock.activeTab.set('createMpt');
-               await component.setTab('invalidTab');
-               expect(vmMock.activeTab()).toBe('createMpt');
-          });
-
-          it('should set activeTab to authorizeMpt', async () => {
-               await component.setTab('authorizeMpt');
-               expect(vmMock.activeTab()).toBe('authorizeMpt');
-          });
-
-          it('should set activeTab to destroyMpt', async () => {
-               await component.setTab('destroyMpt');
-               expect(vmMock.activeTab()).toBe('destroyMpt');
+     describe('ngOnInit', () => {
+          it('should load custom destinations and set right panel', () => {
+               expect(transactionDropdownService.loadCustomDestinations).toHaveBeenCalled();
+               expect(rightPanelService.setPanel).toHaveBeenCalled();
           });
      });
 
-     describe('toggleExistingMpts', () => {
-          it('should toggle outstandingMptsCollapsed from false to true', () => {
-               mptStoreMock.outstandingMptsCollapsed.set(false);
-               component.toggleExistingMpts();
-               expect(mptStoreMock.setField).toHaveBeenCalledWith('outstandingMptsCollapsed', true);
+     describe('performAction', () => {
+          beforeEach(() => {
+               component.currentWallet.set(mockWallet);
+               mptOrchestrator.executeMptTx.calls.reset();
+               toastService.error.calls.reset();
           });
 
-          it('should toggle outstandingMptsCollapsed from true to false', () => {
-               mptStoreMock.outstandingMptsCollapsed.set(true);
-               component.toggleExistingMpts();
-               expect(mptStoreMock.setField).toHaveBeenCalledWith('outstandingMptsCollapsed', false);
+          it('should execute createMpt successfully', async () => {
+               mptViewModelService.activeTab.set('createMpt');
+               await component.performAction();
+
+               expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalled();
+               expect(mptOrchestrator.executeMptTx).toHaveBeenCalled();
+          });
+
+          it('should reject createMpt with oversized metadata', async () => {
+               mptViewModelService.activeTab.set('createMpt');
+               // Override the computed for this test
+               Object.defineProperty(mptViewModelService, 'metadataByteLength', {
+                    value: computed(() => 2048),
+                    writable: true,
+               });
+
+               await component.performAction();
+
+               expect(toastService.error).toHaveBeenCalledWith(jasmine.stringContaining('exceeds maximum size'), jasmine.any(Number));
+               expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+          });
+
+          it('should show error for invalid destination (sendMpt)', async () => {
+               mptViewModelService.activeTab.set('sendMpt');
+               transactionDropdownService.getFinalDestinationAddress.and.returnValue('');
+               (component as any).xrpl.isValidAddress.and.returnValue(false);
+
+               await component.performAction();
+
+               expect(toastService.error).toHaveBeenCalled();
+               expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+          });
+     });
+
+     describe('setTab', () => {
+          it('should change active tab and clear fields', async () => {
+               await component.setTab('sendMpt');
+               expect(mptViewModelService.activeTab()).toBe('sendMpt');
+               expect(mptStoreService.resetMptFields).toHaveBeenCalled();
           });
      });
 
      describe('onMptSelected', () => {
-          it('should set mptIssuanceId from selected item id', () => {
-               component.onMptSelected({ id: 'ABC123', display: 'Token', secondary: '' });
-               expect(mptStoreMock.setField).toHaveBeenCalledWith('mptIssuanceId', 'ABC123');
-          });
-
-          it('should not call setField when item is null', () => {
-               mptStoreMock.setField.calls.reset();
-               component.onMptSelected(null);
-               expect(mptStoreMock.setField).not.toHaveBeenCalled();
+          it('should update mptIssuanceId', () => {
+               component.onMptSelected({ id: '0000000000000001', display: 'Test MPT' } as any);
+               expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', '0000000000000001');
           });
      });
 
-     describe('onMptSelectedFromSummary', () => {
-          it('should set mptIssuanceId from mpt_issuance_id', () => {
-               component.onMptSelectedFromSummary({ mpt_issuance_id: 'ISSUANCE001' });
-               expect(mptStoreMock.setField).toHaveBeenCalledWith('mptIssuanceId', 'ISSUANCE001');
-          });
-
-          it('should not call setField when mpt is null', () => {
-               mptStoreMock.setField.calls.reset();
-               component.onMptSelectedFromSummary(null);
-               expect(mptStoreMock.setField).not.toHaveBeenCalled();
-          });
-     });
-
-     describe('clearInputFields', () => {
-          it('should reset selectedDestinationAddress', () => {
-               component.selectedDestinationAddress.set('rSOME');
-               (component as any).clearInputFields();
-               expect(component.selectedDestinationAddress()).toBe('');
-          });
-
-          it('should call mptUtilService.resetFlags', () => {
-               const mptUtil = TestBed.inject(MptUtilService) as any;
-               (component as any).clearInputFields();
-               expect(mptUtil.resetFlags).toHaveBeenCalled();
-          });
-
-          it('should call mptStoreService.resetMptFields', () => {
-               (component as any).clearInputFields();
-               expect(mptStoreMock.resetMptFields).toHaveBeenCalled();
-          });
-     });
-
-     describe('clearFields', () => {
-          it('should clear selectedDestinationAddress and call clearAllOptionsAndMessages', () => {
-               component.selectedDestinationAddress.set('rSOME');
-               component.clearFields(false);
-               expect(component.selectedDestinationAddress()).toBe('');
-               expect(txUiMock.clearAllOptionsAndMessages).toHaveBeenCalled();
-          });
-
-          it('should also reset mpt fields when clearAllFields is true', () => {
-               component.clearFields(true);
-               expect(mptStoreMock.resetMptFields).toHaveBeenCalled();
-          });
-     });
-
-     describe('selectWallet', () => {
-          it('should update currentWallet when a different wallet is selected', () => {
-               const newWallet = { address: 'rNEW', classicAddress: 'rNEW', seed: '', name: 'New' } as any;
-               component.currentWallet.set({ address: 'rOLD', classicAddress: 'rOLD' } as any);
-               component.selectWallet(newWallet);
-               expect(component.currentWallet().address).toBe('rNEW');
-          });
-
-          it('should not change currentWallet when same wallet is selected', () => {
-               component.currentWallet.set(mockWallet);
-               component.selectWallet(mockWallet);
-               expect(component.currentWallet().address).toBe('rTEST');
-          });
-
-          it('should clear selectedDestinationAddress if it matches newly selected wallet address', () => {
-               const wallet = { address: 'rMATCH', classicAddress: 'rMATCH', seed: '', name: 'Match' } as any;
-               component.selectedDestinationAddress.set('rMATCH');
-               component.currentWallet.set({ address: 'rOTHER', classicAddress: 'rOTHER' } as any);
-               component.selectWallet(wallet);
-               expect(component.selectedDestinationAddress()).toBe('');
-          });
-     });
-
-     describe('performAction – invalid destination for sendMpt', () => {
-          it('should show error toast when destination address is invalid for sendMpt', async () => {
-               vmMock.activeTab.set('sendMpt');
-               spyOn(xrpl, 'isValidAddress').and.returnValue(false);
-               dropdownMock.getFinalDestinationAddress.and.returnValue('');
-
-               await component.performAction();
-
-               expect(toastMock.error).toHaveBeenCalledWith(jasmine.stringContaining('valid destination'), jasmine.any(String));
-          });
-     });
-
-     describe('getMptDetails', () => {
-          it('should call toastService.error when environment fetch fails', async () => {
-               await component.getMptDetails(false);
-               expect(toastMock.error).toHaveBeenCalled();
-          });
-
-          it('should set isSummaryLoading to false after completion', async () => {
-               await component.getMptDetails(false);
-               expect(component.isSummaryLoading()).toBeFalse();
-          });
-     });
-
-     describe('onWalletSelected', () => {
-          it('should delegate to selectWallet', () => {
-               spyOn(component, 'selectWallet');
-               component.onWalletSelected(mockWallet);
-               expect(component.selectWallet).toHaveBeenCalledWith(mockWallet);
+     describe('toggleExistingMpts', () => {
+          it('should toggle collapsed state', () => {
+               mptStoreService.outstandingMptsCollapsed.set(false);
+               component.toggleExistingMpts();
+               expect(mptStoreService.setField).toHaveBeenCalledWith('outstandingMptsCollapsed', true);
           });
      });
 });

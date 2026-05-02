@@ -7,15 +7,17 @@
                <div item-content>{{ item.text }}</div>
           </app-summary-item>
           } @if (info.hasIrreversible) {
-          <li class="rounded-xl border border-red-200 bg-red-50 p-4 mt-3">
-               <div class="flex gap-3">
-                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                         <strong class="text-red-700">{{ info.irreversibleMessage }}</strong>
-                         <p class="text-xs text-red-600 mt-1">These cannot be disabled once set.</p>
+          <ol>
+               <li class="rounded-xl border border-red-200 bg-red-50 p-4 mt-3">
+                    <div class="flex gap-3">
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-600 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <strong class="text-red-700">{{ info.irreversibleMessage }}</strong>
+                              <p class="text-xs text-red-600 mt-1">These cannot be disabled once set.</p>
+                         </div>
                     </div>
-               </div>
-          </li>
+               </li>
+          </ol>
           } }
      </div>
 </app-summary-container>

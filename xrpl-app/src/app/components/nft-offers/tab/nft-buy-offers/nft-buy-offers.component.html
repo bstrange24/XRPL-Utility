@@ -17,7 +17,7 @@
 
           <!-- NFT Token ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <label for="nftTokenID" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
                <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
@@ -32,7 +32,7 @@
 
                <!-- Owner -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Owner</label>
+                    <label for="nftOwner" class="block text-sm font-semibold text-gray-900">Owner</label>
                     <p class="text-xs text-gray-500">Owner of the NFT (usually your own address for sell offers).</p>
 
                     <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />

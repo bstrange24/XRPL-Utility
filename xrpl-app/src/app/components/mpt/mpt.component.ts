@@ -31,7 +31,7 @@ import { MPT_TAB_META, MPT_TABS } from './constants/mpt.ui';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { MPT_TAB, MPT_FLAGS_CONFIG } from './constants/mpt.constants';
-import { MptActionTypes, MptFlagKey, MptTxConfig, MptTxType } from './constants/mpt.types';
+import { MptActionTypes, MptTxConfig, MptTxType } from './constants/mpt.types';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
@@ -44,7 +44,6 @@ import { MptSendComponent } from './tab/mpt-send/mpt-send.component';
 import { MptClawbackComponent } from './tab/mpt-clawback/mpt-clawback.component';
 import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
 import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
-import { MptFlagsComponent } from './tab/mpt-flags/mpt-flags.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { NgIcon } from '@ng-icons/core';
@@ -277,32 +276,51 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           await this.withPerf('performAction', async () => {
                try {
                     switch (currentTab) {
-                         case 'createMpt':
+                         case 'createMpt': {
                               txType = 'createMpt' as MptTxType;
                               break;
+                         }
+
                          case 'authorizeMpt':
-                         case 'unauthorizeMpt':
+                         case 'unauthorizeMpt': {
                               const action = this.mptStoreService.authAction();
-                              if (action === 'authorize' || action === 'unauthorize') txType = `${action}Mpt` as MptTxType;
-                              else throw new Error(`Invalid auth action: ${action}`);
+                              if (action === 'authorize' || action === 'unauthorize') {
+                                   txType = `${action}Mpt` as MptTxType;
+                              } else {
+                                   throw new Error(`Invalid auth action: ${action}`);
+                              }
                               break;
+                         }
+
                          case 'lockMpt':
-                         case 'unlockMpt':
+                         case 'unlockMpt': {
                               const lockAction = this.mptStoreService.lockAction();
-                              if (lockAction === 'lock' || lockAction === 'unlock') txType = `${lockAction}Mpt` as MptTxType;
-                              else throw new Error(`Invalid lock action: ${lockAction}`);
+                              if (lockAction === 'lock' || lockAction === 'unlock') {
+                                   txType = `${lockAction}Mpt` as MptTxType;
+                              } else {
+                                   throw new Error(`Invalid lock action: ${lockAction}`);
+                              }
                               break;
-                         case 'sendMpt':
+                         }
+
+                         case 'sendMpt': {
                               txType = 'sendMpt' as MptTxType;
                               break;
-                         case 'clawbackMpt':
+                         }
+
+                         case 'clawbackMpt': {
                               txType = 'clawbackMpt' as MptTxType;
                               break;
-                         case 'destroyMpt':
+                         }
+
+                         case 'destroyMpt': {
                               txType = 'destroyMpt' as MptTxType;
                               break;
-                         default:
+                         }
+
+                         default: {
                               throw new Error(`Unknown tab: ${currentTab}`);
+                         }
                     }
                     txResult = await this.mptOrchestratorServiceService.executeMptTx(txType as MptTxType, config);
                } catch (error: any) {
@@ -325,7 +343,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(accountObjects, address));
      }
 
-     protected refreshAccountObject(env: any) {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
      }

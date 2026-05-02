@@ -1,28 +1,11 @@
 <div class="space-y-6">
-     <!-- Auth Info Box -->
-     <!-- @if (mptUtilService.flags.isRequireAuth) {
-     <div class="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-          <div class="flex items-start gap-3">
-               <ng-icon name="heroInformationCircle" size="18" class="mt-0.5 flex-shrink-0 text-blue-600" />
-               <p class="text-sm text-blue-800">This MPT requires Issuer + Holder authorization. Use this tab from the Issuer wallet to approve holders.</p>
-          </div>
-     </div>
-     } @else {
-     <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-          <div class="flex items-start gap-3">
-               <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-amber-600" />
-               <p class="text-sm text-amber-800">This MPT does not require Issuer authorization. Only the recipient needs to self-authorize using this tab from their own wallet.</p>
-          </div>
-     </div>
-     } -->
-
      <!-- Auth/Unauth Card -->
      <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
           <div class="space-y-6">
                <!-- Auth section - Radio Buttons -->
                <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
                <div>
-                    <label class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
+                    <label for="mptAction" class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
 
                     <div class="flex flex-wrap gap-6">
                          <!-- Authorize Radio -->
@@ -53,7 +36,7 @@
 
                <!-- MPT Issuer -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">MPT Issuer</label>
+                    <label for="mptIssuer" class="block text-sm font-semibold text-gray-900">MPT Issuer</label>
                     <p class="text-xs text-gray-500">Account that issued the MPT.</p>
 
                     <div class="h-[54px]">
@@ -63,11 +46,37 @@
 
                <!-- MPT Issuance ID -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+                    <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
                     <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
 
                     <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>
           </div>
      </div>
+
+     <!-- Auth Info Box -->
+     @if (selectedMpt(); as mpt) { @if (requiresIssuerAuth()) {
+     <div class="rounded-2xl border border-blue-200 bg-blue-50 p-3">
+          <div class="flex items-start gap-3">
+               <ng-icon name="heroInformationCircle" size="18" class="mt-0.5 flex-shrink-0 text-blue-600" />
+               <p class="text-sm text-blue-800">
+                    This MPT requires <strong>Issuer + Holder authorization</strong>.<br />
+                    Use this tab from the Issuer wallet to approve holders.
+               </p>
+          </div>
+     </div>
+     } @else {
+     <div class="rounded-2xl border border-amber-200 bg-amber-50 p-3">
+          <div class="flex items-start gap-3">
+               <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-amber-600" />
+               <p class="text-sm text-amber-800">
+                    This MPT does <strong>not require Issuer authorization</strong>.<br />
+                    Only the recipient needs to self-authorize.
+               </p>
+          </div>
+     </div>
+     } } @else {
+     <!-- Fallback when no MPT is selected -->
+     <div class="rounded-2xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-500">Select an MPT from the summary panel above to see authorization requirements.</div>
+     }
 </div>

@@ -262,7 +262,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           if (accountObjects) this.offerUtilsService.getExistingOffers(accountObjects, address);
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           if (env?.accountObjects) {
                const wallet = env.wallet ?? this.walletManagerService.getSelectedWallet();
                this.offerUtilsService.getExistingOffers(env.accountObjects, wallet.classicAddress);

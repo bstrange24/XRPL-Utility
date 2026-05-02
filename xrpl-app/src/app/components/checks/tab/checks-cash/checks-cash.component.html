@@ -1,7 +1,7 @@
 <div class="space-y-6">
      <!-- Main Selection Card -->
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label class="block text-sm font-semibold text-gray-900">Select Check to Cash</label>
+          <label for="selectCheckToCash" class="block text-sm font-semibold text-gray-900">Select Check to Cash</label>
           <p class="mb-3 text-sm text-gray-600">Check ID generated when the check was created.</p>
 
           <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
@@ -15,7 +15,7 @@
                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <!-- Check Creator (Sender) -->
                     <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Check Creator</label>
+                         <label for="checkCreator" class="mb-2 block text-sm font-semibold text-gray-900">Check Creator</label>
                          <p class="mb-2 text-xs text-gray-500">The address that created this check</p>
                          <input type="text" [value]="checksTransactionViewModelService.selectedCheckCreator()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                     </div>
@@ -23,7 +23,7 @@
                     <!-- Issuer (only for IOU) -->
                     @if (checksTransactionViewModelService.isIOUCheck()) {
                     <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Issuer</label>
+                         <label for="checkIssuer" class="mb-2 block text-sm font-semibold text-gray-900">Issuer</label>
                          <p class="mb-2 text-xs text-gray-500">The issuer of this IOU</p>
                          <input type="text" [value]="checksTransactionViewModelService.selectedCheckIssuer()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                     </div>
@@ -32,14 +32,14 @@
 
                <!-- Check Index -->
                <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-900">Check Index (ID)</label>
+                    <label for="checkindexID" class="mb-2 block text-sm font-semibold text-gray-900">Check Index (ID)</label>
                     <p class="mb-2 text-xs text-gray-500">Unique ledger identifier of the Check</p>
                     <input type="text" [value]="checksTransactionViewModelService.selectedCheckIndex()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Amount (Read-only display) -->
                <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-900">Check Amount</label>
+                    <label for="checkAmount" class="mb-2 block text-sm font-semibold text-gray-900">Check Amount</label>
                     <p class="mb-2 text-xs text-gray-500">Original amount on the check</p>
                     <input type="text" [value]="checksTransactionViewModelService.selectedCheckAmount()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
@@ -49,7 +49,7 @@
 
      <!-- Amount Input (Keep your existing editable field) -->
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label class="block text-sm font-semibold text-gray-900">Amount to Cash</label>
+          <label for="amountToCash" class="block text-sm font-semibold text-gray-900">Amount to Cash</label>
           <p class="text-xs text-gray-500 mb-2">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
 
           <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checkStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
@@ -87,14 +87,14 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-amber-800">Currency Code</label>
+                    <label for="checkCurrencyCode" class="block text-sm font-semibold text-amber-800">Currency Code</label>
                     <p class="text-xs text-amber-700">Issued asset combined with the issuer to uniquely define a token.</p>
                     <input type="text" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.currencyCode" class="w-full cursor-not-allowed rounded-2xl border border-amber-200 bg-amber-100/50 px-4 py-3 text-sm text-amber-900" />
                </div>
 
                <!-- Issuer -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-amber-800">Issuer</label>
+                    <label for="checkCurrencyIssuer" class="block text-sm font-semibold text-amber-800">Issuer</label>
                     <p class="text-xs text-amber-700">The XRPL account that issues and controls this currency.</p>
                     <input type="text" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.issuer" class="w-full cursor-not-allowed rounded-2xl border border-amber-200 bg-amber-100/50 px-4 py-3 font-mono text-sm text-amber-900" />
                </div>
@@ -102,7 +102,7 @@
 
           <!-- Trust Limit -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-amber-800">Trust Limit</label>
+               <label for="checkTrustLimit" class="block text-sm font-semibold text-amber-800">Trust Limit</label>
                <p class="text-xs text-amber-700">Max amount you're willing to hold (set reasonably high)</p>
                <input type="number" min="0" placeholder="e.g. 1000000" [ngModel]="trustlineStoreService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm focus:border-amber-500 focus:outline-none" />
           </div>

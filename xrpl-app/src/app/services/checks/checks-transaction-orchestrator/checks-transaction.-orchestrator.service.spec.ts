@@ -11,7 +11,6 @@ import { TransactionOptionalFieldsService } from '../../transaction-optional-fie
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { AppConstants } from '../../../core/app.constants';
 
 describe('CheckTransactionOrchestrator', () => {
      let service: CheckTransactionOrchestrator;

@@ -273,7 +273,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 

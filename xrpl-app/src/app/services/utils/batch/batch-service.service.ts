@@ -8,8 +8,8 @@ import { UtilsService } from '../util-service/utils.service';
 })
 export class BatchService {
      constructor(
-          private xrplService: XrplService,
-          private utilsService: UtilsService
+          private readonly xrplService: XrplService,
+          private readonly utilsService: UtilsService
      ) {}
 
      async submitBatchTransaction(

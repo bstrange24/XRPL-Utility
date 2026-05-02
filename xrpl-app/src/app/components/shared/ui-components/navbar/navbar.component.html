@@ -125,10 +125,6 @@
                               <span>{{ store.selectedNetwork() }}</span>
                               <span [class.rotate-180]="store.dropdowns().network" class="transition-transform">▾</span>
                          </button>
-                         <!-- <button (click)="store.toggleDropdown('network')" class="btn-primary flex items-center gap-2">
-                              <span>{{ store.selectedNetwork() }}</span>
-                              <span [class.rotate-180]="store.dropdowns().network">▾</span>
-                         </button> -->
 
                          @if (store.dropdowns().network) {
                          <div class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50">

@@ -2,7 +2,7 @@
      <div class="space-y-6">
           <!-- Select Offer to Cancel -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select Offer to Cancel</label>
+               <label for="selectNftOfferToCancel" class="block text-sm font-semibold text-gray-900">Select Offer to Cancel</label>
                <p class="text-xs text-gray-500">Select an existing NFT offer to cancel.</p>
 
                <div class="h-[54px]">
@@ -12,18 +12,10 @@
 
           <!-- NFT Offer ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">NFT Offer ID</label>
+               <label for="nftOfferID" class="block text-sm font-semibold text-gray-900">NFT Offer ID</label>
                <p class="text-xs text-gray-500">NFT Offer ID generated when the offer was created.</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftOfferIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
           </div>
-
-          <!-- Expired Warning -->
-          <!-- @if (selectedOfferIsExpired()) {
-               <div class="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
-                    <ng-icon name="heroExclamationTriangle" size="16" class="mt-0.5 flex-shrink-0 text-red-600" />
-                    <span class="text-sm text-red-700">This offer has already expired and cannot be cancelled.</span>
-               </div>
-          } -->
      </div>
 </div>

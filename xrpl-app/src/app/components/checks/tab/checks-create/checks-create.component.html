@@ -5,7 +5,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
+                    <label for="checkCurrencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
                     <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
@@ -25,7 +25,7 @@
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Amount</label>
+                    <label for="checkAmount" class="block text-sm font-semibold text-gray-900">Amount</label>
                     <p class="text-xs text-gray-500">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
                     <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checksStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
@@ -36,7 +36,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Issuer -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Issuer</label>
+                    <label for="checkIssuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
                     <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
@@ -45,7 +45,7 @@
 
                <!-- Currency Balance -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Currency Balance</label>
+                    <label for="checkCurrencyBalance" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
                     <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
                     <input type="text" [value]="currencyStoreService.balance()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
                </div>
@@ -54,7 +54,7 @@
 
           <!-- Destination -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Destination</label>
+               <label for="checkDestination" class="block text-sm font-semibold text-gray-900">Destination</label>
                <p class="text-xs text-gray-500">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />

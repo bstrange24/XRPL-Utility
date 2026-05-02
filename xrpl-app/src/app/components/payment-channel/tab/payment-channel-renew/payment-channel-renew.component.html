@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
           <!-- Select Payment Channel to Renew -->
           <div class="space-y-2">
-               <label class="text-sm font-medium text-gray-700">Select Payment Channel to Renew</label>
+               <label for="selectChannelToRenew" class="text-sm font-medium text-gray-700">Select Payment Channel to Renew</label>
                <p class="text-xs text-gray-500">Select a channel you created (source account).</p>
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
@@ -20,7 +20,7 @@
 
           <!-- Channel ID -->
           <div class="space-y-2 mt-3">
-               <label class="text-sm font-medium text-gray-700">Channel ID</label>
+               <label for="channelID" class="text-sm font-medium text-gray-700">Channel ID</label>
                <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
                <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
           </div>

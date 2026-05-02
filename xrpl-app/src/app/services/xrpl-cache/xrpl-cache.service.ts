@@ -1,4 +1,3 @@
-// xrpl-cache.service.ts
 import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';

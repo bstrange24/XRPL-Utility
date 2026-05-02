@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
           <!-- Action Selection -->
           <div>
-               <label class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
+               <label for="mptAction" class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
 
                <div class="flex flex-wrap gap-6">
                     <!-- Unlock Radio -->
@@ -34,7 +34,7 @@
 
           <!-- MPT Issuer -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">MPT Issuer</label>
+               <label for="mptIssuer" class="block text-sm font-semibold text-gray-900">MPT Issuer</label>
                <p class="text-xs text-gray-500">Account that issued the MPT.</p>
 
                <div class="h-[54px]">
@@ -44,7 +44,7 @@
 
           <!-- MPT Issuance ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+               <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
                <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
 
                <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />

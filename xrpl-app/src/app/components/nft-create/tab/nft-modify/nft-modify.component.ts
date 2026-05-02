@@ -65,22 +65,15 @@ export class NftModifyComponent {
 
      // For NFT Burn
      selectedNftIsNotBurnable(): boolean {
-          const selectedNft = this.nftUtilService.selectedNftItem();
-          // return selectedNft && !selectedNft.flags?.burnableNft;
           return false;
      }
 
      // For NFT Modify
      selectedNftIsNotMutable(): boolean {
-          const selectedNft = this.nftUtilService.selectedNftItem();
-          // return selectedNft && !selectedNft.flags?.mutableNft;
           return false;
      }
 
      selectedNftOwnerMismatch(): boolean {
-          const selectedNft = this.nftUtilService.selectedNftItem();
-          const ownerAddress = this.nftCreateStoreService.nftOwnerAddress;
-          // return selectedNft && ownerAddress && selectedNft.owner !== ownerAddress;
           return false;
      }
 

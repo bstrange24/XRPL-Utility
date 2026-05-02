@@ -51,7 +51,10 @@ const CREDENTIAL_META: Record<CredentialTxType, CredentialTxMeta> = {
           }),
           buildTx: ({ orchestrator, env, wallet, credential, preparedConfig }) => orchestrator.credentialTransactionBuilderService.buildCreateCredentialTx(env.wallet || wallet, env, credential, preparedConfig),
           simulationToastMessage: () => `Simulated Creating Credential`,
-          successMessage: ({ credential }) => `Successfully Created Credential${credential.subject ? ` for ${credential.subject}` : ''}`,
+          successMessage: ({ credential }) => {
+               const subjectText = credential.subject ? ` for ${credential.subject}` : '';
+               return `Successfully Created Credential${subjectText}`;
+          },
      },
 
      acceptCredentials: {

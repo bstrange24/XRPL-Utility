@@ -1,4 +1,4 @@
-import { Component, inject, effect, ChangeDetectorRef, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectionStrategy, computed, signal } from '@angular/core';
+import { Component, inject, effect, ChangeDetectorRef, Output, EventEmitter, ViewChild, ElementRef, ChangeDetectionStrategy, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -28,7 +28,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
      animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('200ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('200ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WalletPanelComponent extends PerformanceBaseComponent {
+export class WalletPanelComponent extends PerformanceBaseComponent implements OnInit {
      private readonly walletManagerService = inject(WalletManagerService);
      private readonly walletGenerator = inject(WalletGeneratorService);
      private readonly walletDataService = inject(WalletDataService);
@@ -43,8 +43,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent {
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
      ngOnInit() {
-          // Initialize with selected wallet expanded
-          // this.expandedWallets.add(this.selectedWalletIndex);
+          return;
      }
 
      readonly editingIndex = this.walletManagerService.isEditing.bind(this.walletManagerService);

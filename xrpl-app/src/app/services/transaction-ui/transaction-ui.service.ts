@@ -109,6 +109,7 @@ export class TransactionUiService {
      toggleOptions(enabled: boolean): void {
           this.wantsOptions.set(enabled);
           if (!enabled) {
+               return;
           }
      }
 

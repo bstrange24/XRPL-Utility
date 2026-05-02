@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
           <!-- Select Payment Channel to Close -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select Payment Channel to Close</label>
+               <label for="selectChannelToClose" class="block text-sm font-semibold text-gray-900">Select Payment Channel to Close</label>
                <p class="text-xs text-gray-500">Select an existing payment channel to close.</p>
 
                <div class="h-[54px]">
@@ -21,7 +21,7 @@
 
           <!-- Channel ID -->
           <div class="space-y-2 mt-3">
-               <label class="block text-sm font-semibold text-gray-900">Channel ID</label>
+               <label for="channelID" class="block text-sm font-semibold text-gray-900">Channel ID</label>
                <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
                <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
           </div>

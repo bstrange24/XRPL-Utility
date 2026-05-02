@@ -324,7 +324,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
           }
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           if (env.accountObjects?.result?.account_objects) {
                this.paymentChannelUtilService.processPaymentChannels(env.accountObjects?.result?.account_objects as PaymentChannelObject[], env.wallet.classicAddress);
                this.paymentChannelStoreService.setField('walletPaymentChannelCount', env.accountObjects?.result?.account_objects?.length);

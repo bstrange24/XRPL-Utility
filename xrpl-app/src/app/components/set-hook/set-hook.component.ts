@@ -214,7 +214,7 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
           });
      }
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 

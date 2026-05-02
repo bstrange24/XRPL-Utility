@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, input, Output, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Output, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CredentialStore } from '../../../../services/credentials/credential-store/credential-store.service';
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';

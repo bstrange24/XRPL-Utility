@@ -107,7 +107,7 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
      }
 
      /** Subclass must implement to refresh credentials or permissioned domains */
-     protected abstract refreshAccountObject(env: any): void;
+     protected abstract refreshAccountObject(env: any): Promise<void>;
 
      /** Subclass must implement to clear input fields after a transaction */
      protected abstract clearInputFields(): void;

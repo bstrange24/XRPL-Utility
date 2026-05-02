@@ -1,7 +1,7 @@
 <div class="space-y-6">
      <!-- Configuration Templates Card -->
      <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <label class="mb-2 block text-sm font-semibold text-gray-900">Configuration Templates</label>
+          <label for="configurationTemplate" class="mb-2 block text-sm font-semibold text-gray-900">Configuration Templates</label>
           <p class="mb-4 text-sm text-gray-600">Choose a preset configuration based on your account's primary use case</p>
 
           <div class="flex flex-wrap gap-3">
@@ -44,9 +44,11 @@
 
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                @for (flag of accountConfiguratorUtilService.accountFlagsConfig; track flag.key) {
-               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="accountConfiguratorUtilService.flags[flag.key]" [class.bg-green-50]="accountConfiguratorUtilService.flags[flag.key]" (click)="accountConfiguratorUtilService.toggleFlag(flag.key)">
-                    <input type="checkbox" [checked]="accountConfiguratorUtilService.flags[flag.key]" (click)="$event.stopPropagation()" class="hidden" />
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="accountConfiguratorUtilService.flags[flag.key]" [class.bg-green-50]="accountConfiguratorUtilService.flags[flag.key]">
+                    <!-- REAL checkbox (accessible, focusable, keyboard works automatically) -->
+                    <input type="checkbox" [checked]="accountConfiguratorUtilService.flags[flag.key]" (change)="accountConfiguratorUtilService.toggleFlag(flag.key)" class="sr-only" />
 
+                    <!-- Custom checkbox UI -->
                     <div class="mt-0.5 flex-shrink-0">
                          <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="accountConfiguratorUtilService.flags[flag.key]" [class.border-gray-300]="!accountConfiguratorUtilService.flags[flag.key]" [class.bg-green-500]="accountConfiguratorUtilService.flags[flag.key]">
                               @if (accountConfiguratorUtilService.flags[flag.key]) {

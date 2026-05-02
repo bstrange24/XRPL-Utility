@@ -2,8 +2,7 @@ import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
-import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase'; // ← Import this
-
+import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
@@ -13,17 +12,14 @@ import { ToastService } from '../../services/utils/toast/toast.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { ActivatedRoute } from '@angular/router';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
-
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { AccountChangesSummaryComponent } from './ui-components/account-changes-summary/account-changes-summary.component';
 import { AccountChangesFiltersComponent } from './ui-components/account-changes-filters/account-changes-filters.component';
 import { AccountChangesTableComponent } from './ui-components/account-changes-table/account-changes-table.component';
-
 import { AccountChangesOrchestratorService } from '../../services/account-balance-changes/account-changes-orchestrator/account-changes-orchestrator.service';
 import { AccountChangesStoreService } from '../../services/account-balance-changes/account-changes-store/account-changes-store.service';
 import { AccountChangesViewModelService } from '../../services/account-balance-changes/account-changes-view-model/account-changes-view-model.service';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { ThemeService } from '../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -49,10 +45,7 @@ export class AccountChangesComponent extends WalletDestinationBase implements On
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     ngOnInit(): void {
-          // Optional: initial load (the effect in base class will also trigger it)
-          // this.loadBalanceChangesForCurrentWallet();
-     }
+     ngOnInit(): void {}
 
      /** Called automatically when user switches wallet */
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -67,8 +60,13 @@ export class AccountChangesComponent extends WalletDestinationBase implements On
      }
 
      // Required abstract methods (no-op for this page)
-     protected refreshAccountObject(_env: any): void {}
-     protected clearInputFields(): void {}
+     protected async refreshAccountObject(_env: any): Promise<void> {
+          return;
+     }
+
+     protected clearInputFields(): void {
+          return;
+     }
 
      // Keep your existing handlers
      onLoadMore(): void {

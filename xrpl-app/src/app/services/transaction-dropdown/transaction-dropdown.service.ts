@@ -139,7 +139,7 @@ export class TransactionDropdownService {
 
      addCustomDestinationIfNew(address: string) {
           const addr = address.trim();
-          if (!xrpl.isValidAddress(addr)) return false;
+          if (!this.isValidAddress(addr)) return false;
           if (this.customDestinations().some(d => d.address === addr)) return false;
 
           this.customDestinations.update(list => [...list, { name: `Custom ${list.length + 1}`, address: addr }]);
@@ -166,7 +166,7 @@ export class TransactionDropdownService {
      addCustomIfNewAndSelect(address: string | null, destMap: Signal<Map<string, Destination>>, selectedAddr: WritableSignal<string>, searchQuery: WritableSignal<string>, shouldSelect = true): boolean {
           if (!address) return false;
           const addr = address.trim();
-          if (!xrpl.isValidAddress(addr)) return false;
+          if (!this.isValidAddress(addr)) return false;
 
           if (destMap().has(addr)) return false;
 
@@ -199,5 +199,9 @@ export class TransactionDropdownService {
      resetDestinationInputs(searchQuery: WritableSignal<string>, selectedAddress: WritableSignal<string>) {
           searchQuery.set('');
           selectedAddress.set('');
+     }
+
+     protected isValidAddress(addr: string): boolean {
+          return xrpl.isValidAddress(addr);
      }
 }

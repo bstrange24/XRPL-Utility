@@ -3,10 +3,10 @@
           <!-- Destination -->
           <div class="space-y-2">
                @if (activeTab === 'issueCurrency') {
-               <label class="block text-sm font-semibold text-gray-900">{{ viewModel.formTitle() }}</label>
+               <label for="formTitle" class="block text-sm font-semibold text-gray-900">{{ viewModel.formTitle() }}</label>
                <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
                } @else {
-               <label class="block text-sm font-semibold text-gray-900">Destination</label>
+               <label for="destination" class="block text-sm font-semibold text-gray-900">Destination</label>
                <p class="text-xs text-gray-500">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
                }
 
@@ -17,7 +17,7 @@
 
           <!-- Destination Tag -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
+               <label for="destinationTag" class="block text-sm font-semibold text-gray-900">Destination Tag</label>
                <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
                <input type="text" placeholder="e.g. 123456" [ngModel]="destinationTag" (ngModelChange)="destinationTagChange.emit($event)" name="destinationTagField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
           </div>

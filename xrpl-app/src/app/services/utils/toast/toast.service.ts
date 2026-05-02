@@ -18,12 +18,12 @@ export interface Toast {
 @Injectable({ providedIn: 'root' })
 export class ToastService {
      private readonly sanitizer = inject(DomSanitizer);
-     private id = 0;
+     private readonly id = 0;
      private idCounter = 0;
      public toasts = signal<Toast[]>([]);
-     private timers = new Map<number, ReturnType<typeof setTimeout>>();
-     private intervals = new Map<number, ReturnType<typeof setInterval>>();
-     private pausedToasts = new Map<number, { remaining: number; progress: number }>(); // Store remaining time when paused
+     private readonly timers = new Map<number, ReturnType<typeof setTimeout>>();
+     private readonly intervals = new Map<number, ReturnType<typeof setInterval>>();
+     private readonly pausedToasts = new Map<number, { remaining: number; progress: number }>(); // Store remaining time when paused
 
      constructor() {}
 

@@ -4,7 +4,7 @@
           <!-- Ticket Selection Input -->
           <div>
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Select Tickets to Delete</label>
+                    <label for="ticketsToDelete" class="block text-sm font-semibold text-gray-900">Select Tickets to Delete</label>
                     <p class="mt-1 text-xs text-gray-500">Select available tickets to delete for the selected account.</p>
                </div>
                <div class="relative mt-2" (clickOutside)="closeTicketDropdown()">
@@ -53,7 +53,7 @@
 
 <!-- Dropdown Template -->
 <ng-template #ticketDropdownTemplate>
-     <div class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg" (click)="$event.stopPropagation()">
+     <div class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg" (mousedown)="$event.stopPropagation()">
           <div class="max-h-[340px] overflow-y-auto rounded-xl">
                <!-- Header: Select All + Clear -->
                <div class="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-gray-50 px-4 py-2">

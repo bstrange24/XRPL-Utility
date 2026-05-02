@@ -9,7 +9,6 @@
           <app-tab-menu-with-info [tabs]="permisisonDoaminTabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          <!-- <app-permissioned-domains-summary [info]="view.infoData()" [tab]="tab" [summaryMessage]="view.summaryMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-permissioned-domains-summary> -->
           <app-permissioned-domains-summary [info]="view.infoData()" [tab]="view.activeTab()" [summaryMessage]="view.summaryMessage()" [infoPanelExpanded]="summaryExpanded()" (toggleInfoPanel)="toggleSummaryPanel()" />
 
           <!-- Warning Message -->

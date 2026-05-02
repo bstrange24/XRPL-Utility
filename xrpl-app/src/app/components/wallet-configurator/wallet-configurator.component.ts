@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { OverlayModule } from '@angular/cdk/overlay';
 import * as xrpl from 'xrpl';
-import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
+import { AppConstants } from '../../core/app.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -210,7 +210,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           return;
      }
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 

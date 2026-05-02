@@ -46,7 +46,7 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
 
      protected async onSelectedWalletIndexChange(): Promise<void> {}
 
-     protected refreshAccountObject(_env: any): void {
+     protected async refreshAccountObject(_env: any): Promise<void> {
           return;
      }
 
@@ -84,16 +84,42 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
                     takeUntilDestroyed(this.destroyRef)
                )
                .subscribe(data => {
-                    if (data['title']) {
+                    if (data && data['title']) {
+                         // Add check for data being truthy
                          this.titleService.setTitle(data['title']);
                     } else {
-                         this.titleService.setTitle('XRPL App'); // fallback
+                         this.titleService.setTitle('XRPL App');
                     }
                });
+          // this.router.events
+          //      .pipe(
+          //           filter(event => event instanceof NavigationEnd),
+          //           map(() => this.activatedRoute),
+          //           map(route => {
+          //                while (route.firstChild) route = route.firstChild;
+          //                return route;
+          //           }),
+          //           mergeMap(route => route.data),
+          //           takeUntilDestroyed(this.destroyRef)
+          //      )
+          //      .subscribe(data => {
+          //           if (data['title']) {
+          //                this.titleService.setTitle(data['title']);
+          //           } else {
+          //                this.titleService.setTitle('XRPL App'); // fallback
+          //           }
+          //      });
      }
+
+     // isBalanceChangesPage(): boolean {
+     //      const url = this.router.url;
+     //      const isBalance = url === '/account-balance-changes' || url.startsWith('/account-balance-changes');
+     //      return isBalance;
+     // }
 
      isBalanceChangesPage(): boolean {
           const url = this.router.url;
+          if (!url) return false; // Add this guard clause
           const isBalance = url === '/account-balance-changes' || url.startsWith('/account-balance-changes');
           return isBalance;
      }

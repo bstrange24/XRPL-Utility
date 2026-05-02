@@ -25,7 +25,7 @@
 <ng-template #currencyTpl>
      <div class="space-y-2">
           <h4 class="mb-5 font-semibold text-gray-900">Trustline Details</h4>
-          <label class="block text-sm font-semibold text-gray-900">Currency Code</label>
+          <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
           <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token.</p>
 
           <div class="h-[54px]">
@@ -37,7 +37,7 @@
 <ng-template #issuerTpl>
      <div class="space-y-2">
           <h4 class="mb-5 font-semibold text-gray-900">Issuer Details</h4>
-          <label class="block text-sm font-semibold text-gray-900">Issuer</label>
+          <label for="issuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
           <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
 
           <div class="h-[54px]">
@@ -48,7 +48,7 @@
 
 <ng-template #amountTpl>
      <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-900">{{ limitLabel }}</label>
+          <label for="limitLabel" class="block text-sm font-semibold text-gray-900">{{ limitLabel }}</label>
 
           <p class="text-xs text-gray-500">
                @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }
@@ -60,7 +60,7 @@
 
 <ng-template #balanceTpl>
      <div class="space-y-2">
-          <label class="block text-sm font-semibold text-gray-900">Currency Balance</label>
+          <label for="currencyBalance" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
 
           <p class="text-xs text-gray-500">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
 

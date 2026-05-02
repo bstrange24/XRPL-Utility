@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { signal, NO_ERRORS_SCHEMA } from '@angular/core';
+import { signal, NO_ERRORS_SCHEMA, InjectionToken } from '@angular/core';
 import { of } from 'rxjs';
 import { provideRouter, ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SendChecksComponent } from './checks.component';
@@ -33,6 +33,8 @@ import { WalletPanelComponent } from '../wallet-panel/wallet-panel.component';
 import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { ChecksCashComponent } from './tab/checks-cash/checks-cash.component';
+import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+export const XRPL = new InjectionToken<any>('xrpl');
 
 describe('SendChecksComponent', () => {
      let component: SendChecksComponent;
@@ -150,6 +152,7 @@ describe('SendChecksComponent', () => {
           destination,
           checkIdSearchQuery,
           amount: signal(0),
+          checkIdField: jasmine.createSpy('checkIdField').and.returnValue(''),
           resetCheckFields: jasmine.createSpy('resetCheckFields'),
           getAll: jasmine.createSpy('getAll').and.returnValue({}),
           setField: jasmine.createSpy('setField').and.callFake((field: string, value: any) => {
@@ -169,7 +172,7 @@ describe('SendChecksComponent', () => {
           get: jasmine.createSpy('get').and.returnValue(null),
           set: jasmine.createSpy('set'),
           removeValue: jasmine.createSpy('removeValue'),
-          getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'testnet' }),
+          getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'devnet' }),
           getNetworkColor: jasmine.createSpy('getNetworkColor').and.returnValue('#00f'),
      };
 
@@ -185,18 +188,22 @@ describe('SendChecksComponent', () => {
                     provideHttpClient(),
 
                     { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
+                    {
+                         provide: XRPL,
+                         useValue: {
+                              isValidAddress: jasmine.createSpy('isValidAddress').and.returnValue(true),
+                         },
+                    },
 
                     { provide: WalletManagerService, useValue: walletManagerMock },
                     { provide: TransactionUiService, useValue: txUiMock },
                     { provide: ChecksTransactionViewModelService, useValue: vmMock },
                     { provide: ToastService, useValue: toastMock },
                     { provide: StorageService, useValue: storeMock },
-
                     {
                          provide: CheckTransactionOrchestrator,
-                         useValue: { executeCredentialTx: jasmine.createSpy().and.resolveTo({ success: true }) },
+                         useValue: jasmine.createSpyObj('CheckTransactionOrchestrator', ['executeCheckTx']),
                     },
-
                     {
                          provide: CheckUtilService,
                          useValue: {
@@ -235,12 +242,41 @@ describe('SendChecksComponent', () => {
                     { provide: TrustlineUtilService, useValue: { loadTrustlines: jasmine.createSpy().and.resolveTo() } },
                     { provide: ValidationService, useValue: { validate: jasmine.createSpy().and.resolveTo([]) } },
                     { provide: XrplTransactionOrchestratorService, useValue: {} },
-                    { provide: XrplTransactionService, useValue: { waitForFinalOutcome: jasmine.createSpy().and.resolveTo({}), processTxFinalResult: jasmine.createSpy(), processTxError: jasmine.createSpy() } },
+                    {
+                         provide: XrplTransactionService,
+                         useValue: {
+                              waitForFinalOutcome: jasmine.createSpy().and.resolveTo({}),
+                              processTxFinalResult: jasmine.createSpy(),
+                              processTxError: jasmine.createSpy(),
+                              getCurrentRippleTime: jasmine.createSpy().and.resolveTo(999999999),
+                              getCheckByCheckId: jasmine.createSpy('getCheckByCheckId'),
+                              getNet: jasmine.createSpy('getNet').and.returnValue('devnet'),
+                         },
+                    },
                     {
                          provide: TxEnvironmentService,
                          useValue: {
-                              getValidatedEnvironment: jasmine.createSpy('getValidatedEnvironment').and.rejectWith(new Error('Unable to get environment.')),
-                              prepareTxEnvironmentWithWallet: jasmine.createSpy('prepareTxEnvironmentWithWallet').and.rejectWith(new Error('Unable to get environment.')),
+                              getValidatedEnvironment: jasmine.createSpy().and.resolveTo({
+                                   wallet: mockWallet,
+                                   accountInfo: { result: { account_data: {} } } as any,
+                                   accountObjects: { result: { account_objects: [] } } as any,
+                                   checkObjects: { result: { account_objects: [] } } as any,
+                              }),
+                              prepareTxEnvironmentWithWallet: jasmine.createSpy().and.resolveTo({
+                                   client: {} as any,
+                                   wallet: mockWallet,
+                                   accountInfo: { result: { account_data: {} } } as any,
+                                   accountObjects: { result: { account_objects: [] } } as any,
+                                   checkObjects: { result: { account_objects: [] } } as any,
+                              }),
+                              prepareTxEnvironment: jasmine.createSpy().and.resolveTo({
+                                   // Add this
+                                   client: {} as any,
+                                   wallet: mockWallet,
+                                   accountInfo: { result: { account_data: {} } } as any,
+                                   accountObjects: { result: { account_objects: [] } } as any,
+                                   checkObjects: { result: { account_objects: [] } } as any,
+                              }),
                          },
                     },
                     {
@@ -283,7 +319,9 @@ describe('SendChecksComponent', () => {
                     },
                ],
           })
-               .overrideProvider(ChecksStoreService, { useValue: checksStoreMock })
+               .overrideProvider(ChecksStoreService, {
+                    useValue: checksStoreMock,
+               })
                .overrideComponent(NavbarComponent, { set: { template: '<div></div>' } })
                .overrideComponent(WalletPanelComponent, { set: { template: '<div></div>' } })
                .overrideComponent(TransactionPreviewComponent, { set: { template: '<div></div>' } })
@@ -304,6 +342,233 @@ describe('SendChecksComponent', () => {
      it('should set activeTab to valid tab value', async () => {
           await component.setTab('cashCheck');
           expect(vmMock.activeTab()).toBe('cashCheck');
+     });
+
+     it('should update stores in handleCachedAccountObjects', () => {
+          const accountObjects = [{ Check: '123' }];
+          (component as any).handleCachedAccountObjects(accountObjects, 'rTest');
+
+          expect(checksStoreMock.setField).toHaveBeenCalledWith('existingChecks', jasmine.any(Array));
+     });
+
+     it('should update stores in refreshAccountObject', async () => {
+          const env = { accountObjects: [], wallet: { classicAddress: 'rTest' } };
+          await (component as any).refreshAccountObject(env);
+
+          expect(checksStoreMock.setField).toHaveBeenCalledWith('existingChecks', jasmine.anything());
+     });
+
+     it('should call onSelectedWalletIndexChange when wallet changes', async () => {
+          spyOn(component as any, 'getChecks').and.resolveTo();
+          await (component as any).onSelectedWalletIndexChange();
+          expect((component as any).getChecks).toHaveBeenCalledWith(false);
+     });
+
+     it('should clear fields on tab change', async () => {
+          spyOn(component as any, 'clearInputFields');
+          await component.setTab('cashCheck');
+          expect((component as any).clearInputFields).toHaveBeenCalled();
+     });
+
+     describe('ngOnInit', () => {
+          it('should apply tab from query param and initialize services', async () => {
+               spyOn(component as any, 'applyTabFromQueryParam');
+
+               // Make sure signals are spied
+               trustlineCurrencyMock.preferXrpAsDefault = jasmine.createSpyObj('preferXrpAsDefault', ['set']);
+               trustlineCurrencyMock.addXrpInCurrencyDropdown = jasmine.createSpyObj('addXrpInCurrencyDropdown', ['set']);
+
+               await component.ngOnInit();
+
+               expect((component as any).applyTabFromQueryParam).toHaveBeenCalled();
+               expect(trustlineCurrencyMock.load).toHaveBeenCalled();
+               expect(trustlineCurrencyMock.preferXrpAsDefault.set).toHaveBeenCalledWith(true);
+               expect(trustlineCurrencyMock.selectCurrency).toHaveBeenCalledWith('XRP');
+               expect(trustlineCurrencyMock.refreshCurrentBalance).toHaveBeenCalled();
+          });
+     });
+
+     it('should call getCheckByCheckId for cashCheck', async () => {
+          // Get the service from TestBed
+          const xrplService = TestBed.inject(XrplTransactionService) as any;
+
+          vmMock.activeTab.set('cashCheck');
+
+          // Mock the checkIdField to return a value
+          checksStoreMock.checkIdField = jasmine.createSpy('checkIdField').and.returnValue('check123');
+
+          // Mock the getCheckByCheckId method
+          xrplService.getCheckByCheckId = jasmine.createSpy('getCheckByCheckId').and.resolveTo({
+               Account: 'rIssuer',
+               Expiration: 999999999,
+          });
+
+          // Ensure component has reference to the service
+          (component as any).xrplService = xrplService;
+
+          await component.performAction();
+
+          expect(xrplService.getCheckByCheckId).toHaveBeenCalled();
+     });
+
+     describe('getChecks', () => {
+          beforeEach(() => {
+               const envService = TestBed.inject(TxEnvironmentService) as any;
+               envService.getValidatedEnvironment.and.resolveTo({
+                    wallet: mockWallet,
+                    accountInfo: { result: { account_data: {} } } as any,
+                    accountObjects: { result: { account_objects: [] } } as any,
+                    checkObjects: { result: { account_objects: [] } } as any,
+               });
+          });
+
+          it('should load checks and update stores on success', async () => {
+               await component.getChecks();
+
+               expect(component.isSummaryLoading()).toBeFalse();
+               expect(TestBed.inject(CheckUtilService).getExistingChecks).toHaveBeenCalled();
+               expect(TestBed.inject(ChecksStoreService).setField).toHaveBeenCalledWith('existingChecks', jasmine.any(Array));
+          });
+
+          it('should handle errors gracefully', async () => {
+               const envService = TestBed.inject(TxEnvironmentService);
+               envService.getValidatedEnvironment = jasmine.createSpy().and.rejectWith(new Error('Network error'));
+
+               await component.getChecks();
+
+               expect(toastMock.error).toHaveBeenCalled();
+               expect(component.isSummaryLoading()).toBeFalse();
+          });
+
+          it('should use cache when forceRefresh = false', async () => {
+               spyOn(component as any, 'tryPrePopulateFromCache');
+               await component.getChecks(false);
+               expect((component as any).tryPrePopulateFromCache).toHaveBeenCalled();
+          });
+     });
+
+     describe('performAction', () => {
+          let orchestrator: jasmine.SpyObj<CheckTransactionOrchestrator>;
+          let envService: any; // Change to any to avoid type issues
+          let xrplService: any;
+          let mockXrpl: any;
+
+          beforeEach(() => {
+               orchestrator = TestBed.inject(CheckTransactionOrchestrator) as jasmine.SpyObj<CheckTransactionOrchestrator>;
+               envService = TestBed.inject(TxEnvironmentService);
+               xrplService = TestBed.inject(XrplTransactionService);
+
+               // Ensure xrplService has all required methods
+               if (!xrplService.getNet) {
+                    xrplService.getNet = jasmine.createSpy('getNet').and.returnValue('testnet');
+               }
+               if (!xrplService.getCheckByCheckId) {
+                    xrplService.getCheckByCheckId = jasmine.createSpy('getCheckByCheckId');
+               }
+
+               // Mock xrpl library
+               mockXrpl = {
+                    isValidAddress: jasmine.createSpy('isValidAddress').and.returnValue(true),
+               };
+               (component as any).xrpl = mockXrpl;
+
+               // Reset all spies
+               toastMock.error.calls.reset();
+               orchestrator.executeCheckTx.calls.reset();
+               xrplService.getCheckByCheckId.calls.reset();
+               if (xrplService.getNet) {
+                    xrplService.getNet.calls.reset();
+               }
+               mockXrpl.isValidAddress.calls.reset();
+
+               // Set up component dependencies
+               component.currentWallet.set(mockWallet);
+               (component as any).xrplService = xrplService;
+
+               // Make sure envService has BOTH methods
+               const mockEnvResponse = {
+                    client: {} as any,
+                    wallet: mockWallet,
+                    accountInfo: { result: { account_data: { Balance: '1000000000' } as any, validated: true } } as any,
+                    accountObjects: { result: { account_objects: [] } } as any,
+                    checkObjects: { result: { account_objects: [] } } as any,
+                    fee: '10',
+               };
+
+               // Set up both methods
+               envService.prepareTxEnvironmentWithWallet = envService.prepareTxEnvironmentWithWallet || jasmine.createSpy();
+               envService.prepareTxEnvironmentWithWallet.and.resolveTo(mockEnvResponse);
+
+               envService.prepareTxEnvironment = envService.prepareTxEnvironment || jasmine.createSpy();
+               envService.prepareTxEnvironment.and.resolveTo(mockEnvResponse);
+
+               envService.getValidatedEnvironment = envService.getValidatedEnvironment || jasmine.createSpy();
+               envService.getValidatedEnvironment.and.resolveTo({
+                    wallet: mockWallet,
+                    accountInfo: { result: { account_data: {} } } as any,
+                    accountObjects: { result: { account_objects: [] } } as any,
+                    checkObjects: { result: { account_objects: [] } } as any,
+               });
+          });
+
+          it('should execute createCheck successfully', async () => {
+               vmMock.activeTab.set('createCheck');
+
+               const validAddress = 'rnq5JCxrS2qFRRc9J8CMa8ib991J4WXhf6';
+               dropdownMock.getFinalDestinationAddress.and.returnValue(validAddress);
+
+               checksStoreMock.amount.set(100);
+
+               orchestrator.executeCheckTx.and.resolveTo({ success: true, hash: 'abc123' });
+
+               await component.performAction();
+
+               expect(orchestrator.executeCheckTx).toHaveBeenCalledWith('createCheck', jasmine.any(Object));
+          });
+     });
+
+     describe('currency and issuer selection', () => {
+          beforeEach(() => {
+               spyOn(component as any, 'syncAfterSelection').and.resolveTo();
+          });
+
+          it('should handle onCurrencyChange', async () => {
+               await component.onCurrencyChange({ id: 'USD' });
+               expect(trustlineCurrencyMock.selectCurrency).toHaveBeenCalledWith('USD');
+               expect((component as any).syncAfterSelection).toHaveBeenCalled();
+          });
+     });
+
+     describe('wallet selection', () => {
+          it('should switch wallet and refresh data', () => {
+               const newWallet = { address: 'rNewWallet', classicAddress: 'rNewWallet' } as any;
+               component.selectWallet(newWallet);
+
+               expect(component.currentWallet()).toBe(newWallet);
+               expect(trustlineCurrencyMock.refreshCurrentBalance).toHaveBeenCalled();
+          });
+
+          it('should not switch to same wallet', () => {
+               component.selectWallet(mockWallet);
+               expect(component.currentWallet()).toBe(mockWallet); // no change
+          });
+     });
+
+     describe('check selection', () => {
+          it('should handle onCheckSelected', () => {
+               const item = { display: '100 XRP', id: 'check123' } as SelectItem;
+               component.onCheckSelected(item);
+
+               expect(checksStoreMock.setField).toHaveBeenCalledWith('amount', '100');
+               expect(TestBed.inject(CheckUtilService).onCheckSelected).toHaveBeenCalledWith(item);
+          });
+
+          it('should handle onCheckSelectedInUi', () => {
+               const item = { amount: '250', checkId: 'abc' };
+               component.onCheckSelectedInUi(item);
+
+               expect(checksStoreMock.setField).toHaveBeenCalledWith('amount', '250');
+          });
      });
 
      describe('setTab', () => {

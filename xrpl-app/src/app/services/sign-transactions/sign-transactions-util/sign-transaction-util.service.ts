@@ -175,7 +175,8 @@ export class SignTransactionUtilService {
           try {
                JSON.parse(value);
                this.signTransationStoreService.setField('jsonEditorError', '');
-          } catch (e: any) {
+          } catch (error: any) {
+               console.error(`Error onTxJsonChange JSON: ${error.message}`);
                this.signTransationStoreService.setField('jsonEditorError', 'Invalid JSON');
           }
      }
@@ -261,7 +262,6 @@ export class SignTransactionUtilService {
           });
 
           await this.applyTicket(tx, client, wallet, options.isTicketEnabled, options.ticketSequence);
-          // this.applyMemo(tx);
 
           return JSON.stringify(tx, null, 2);
      }
@@ -300,7 +300,7 @@ export class SignTransactionUtilService {
                Account: wallet.classicAddress,
                Destination: 'rHp1RqKdRSG5cJY5ikZadRA91yE35wTJFf',
                Amount: {
-                    currency: 'BOB',
+                    currency: 'USD',
                     issuer: 'rBRQ1Dt3wg9b4D1vsqL2DP4VgLgXaK2vHV',
                     value: '10',
                },

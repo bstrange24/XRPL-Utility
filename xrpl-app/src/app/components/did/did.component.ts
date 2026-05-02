@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -45,7 +45,7 @@ import { RequirementsInfoComponent } from './ui-components/requirements-info/req
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DidComponent extends WalletDestinationBase implements OnInit, AfterViewInit {
+export class DidComponent extends WalletDestinationBase implements OnInit, AfterViewInit, OnDestroy {
      @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
@@ -196,7 +196,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.didUtilService.getExistingDid(accountObjects);
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.didUtilService.getExistingDid(env.accountObjects);
      }
 

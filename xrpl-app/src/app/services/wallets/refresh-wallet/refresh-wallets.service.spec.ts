@@ -1,150 +1,133 @@
-// import { TestBed } from '@angular/core/testing';
-// import { NgZone } from '@angular/core';
-// import * as xrpl from 'xrpl';
-// import { WalletDataService } from './refresh-wallets.service';
+import { WalletManagerService } from '../manager/wallet-manager.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { ToastService } from '../../utils/toast/toast.service';
+import { NetworkService } from '../../utils/network/network-service';
+import { NgZone, signal } from '@angular/core';
+import { WalletDataService } from './refresh-wallets.service';
+import { provideZoneChangeDetection } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-// // Stubs/Spies for dependencies
-// class MockUtilsService {
-//      getXrplReserve = jasmine.createSpy('getXrplReserve').and.returnValue(Promise.resolve('2'));
-//      updateOwnerCountAndReserves = jasmine.createSpy('updateOwnerCountAndReserves').and.callFake((_client: any, _accountInfo: any, _address: string) => Promise.resolve({ ownerCount: 1, totalXrpReserves: '2' }));
-// }
+describe('WalletDataService', () => {
+     let service: WalletDataService;
 
-// class MockXrplService {
-//      getAccountInfo = jasmine.createSpy('getAccountInfo').and.callFake((_client: any, _address: string) => Promise.resolve({ result: { account_data: { Balance: '10000000' } } }));
-// }
+     let walletManagerMock: jasmine.SpyObj<WalletManagerService>;
+     let utilsMock: jasmine.SpyObj<UtilsService>;
+     let toastMock: jasmine.SpyObj<ToastService>;
+     let txUiMock: jasmine.SpyObj<TransactionUiService>;
 
-// class MockWalletManagerService {
-//      updateWallet = jasmine.createSpy('updateWallet');
-// }
+     let networkSignal = signal<string | undefined>(undefined);
 
-// class MockNgZone {
-//      run<T>(fn: () => T): T {
-//           return fn();
-//      }
-//      runOutsideAngular<T>(fn: () => T | Promise<T>): T | Promise<T> {
-//           return fn();
-//      }
-// }
+     const mockWallet = {
+          address: 'r123',
+          classicAddress: 'r123',
+          seed: '',
+          balance: '0',
+          lastUpdated: 0,
+     };
 
-// describe('WalletDataService', () => {
-//      let service: WalletDataService;
-//      let utilsService: MockUtilsService;
-//      let xrplService: MockXrplService;
-//      let walletManagerService: MockWalletManagerService;
-//      let zone: MockNgZone;
+     beforeEach(async () => {
+          // ← async + await is safer
+          walletManagerMock = jasmine.createSpyObj<WalletManagerService>('WalletManagerService', ['wallets', 'getSelectedIndex', 'updateWallet']);
+          utilsMock = jasmine.createSpyObj<UtilsService>('UtilsService', ['sleep']);
+          toastMock = jasmine.createSpyObj<ToastService>('ToastService', ['error']);
+          txUiMock = {} as jasmine.SpyObj<TransactionUiService>; // fixed earlier
 
-//      beforeEach(() => {
-//           utilsService = new MockUtilsService();
-//           xrplService = new MockXrplService();
-//           walletManagerService = new MockWalletManagerService();
-//           zone = new MockNgZone();
+          walletManagerMock.wallets.and.returnValue([mockWallet]);
+          walletManagerMock.getSelectedIndex.and.returnValue(0);
 
-//           TestBed.configureTestingModule({
-//                providers: [
-//                     { provide: NgZone, useValue: zone },
-//                     { provide: 'UtilsService', useValue: utilsService },
-//                     { provide: 'XrplService', useValue: xrplService },
-//                     { provide: 'WalletManagerService', useValue: walletManagerService },
-//                     // Provide service with manual deps because it uses constructor injection by type names
-//                     // {
-//                     //      provide: WalletDataService,
-//                     //      useFactory: (ngZone: NgZone) => new WalletDataService(ngZone as any, utilsService as any, xrplService as any, walletManagerService as any),
-//                     //      deps: [NgZone],
-//                     // },
-//                ],
-//           });
+          const ngZoneMock = {
+               run: (fn: any) => fn(),
+               runOutsideAngular: (fn: any) => fn(),
+          };
 
-//           service = TestBed.inject(WalletDataService);
+          const networkMock = {
+               networkChanged: networkSignal, // your signal
+          };
 
-//           // Default dropsToXrp behavior
-//           spyOn(xrpl, 'dropsToXrp').and.callFake((drops: any) => {
-//                // simplistic conversion used for tests
-//                return Number(drops) / 1_000_000;
-//           });
-//      });
+          await TestBed.configureTestingModule({
+               providers: [WalletDataService, { provide: WalletManagerService, useValue: walletManagerMock }, { provide: UtilsService, useValue: utilsMock }, { provide: ToastService, useValue: toastMock }, { provide: TransactionUiService, useValue: txUiMock }, { provide: NetworkService, useValue: networkMock }, { provide: NgZone, useValue: ngZoneMock }, provideZoneChangeDetection({ eventCoalescing: true })],
+          }).compileComponents();
 
-//      it('should create the service', () => {
-//           expect(service).toBeTruthy();
-//      });
+          service = TestBed.inject(WalletDataService);
 
-//      it('should skip refresh when wallets are updated within threshold', async () => {
-//           const now = Date.now();
-//           const wallets: any[] = [
-//                { address: 'rA', lastUpdated: now },
-//                { address: 'rB', lastUpdated: now },
-//           ];
+          // Patch xrplService (still needed because it's not injected)
+          (service as any).xrplService = {
+               getAccountInfo: jasmine.createSpy().and.resolveTo({
+                    result: { account_data: { Balance: '1000000' } },
+               }),
+               getXrplReserve: jasmine.createSpy().and.resolveTo(10),
+               updateOwnerCountAndReserves: jasmine.createSpy().and.resolveTo({
+                    ownerCount: '1',
+                    totalXrpReserves: '10',
+               }),
+          };
 
-//           await service.refreshWallets({} as any, wallets, 0);
+          // Bypass PerformanceBaseComponent.measure
+          spyOn(service as any, 'measure').and.callFake(async (_: any, __: any, fn: any) => fn());
+     });
 
-//           expect(xrplService.getAccountInfo).not.toHaveBeenCalled();
-//           expect(walletManagerService.updateWallet).not.toHaveBeenCalled();
-//      });
+     it('should queue refresh and call performRefreshWallets', fakeAsync(() => {
+          const spy = spyOn<any>(service, 'performRefreshWallets').and.resolveTo();
 
-//      it('should filter updates by addressesToRefresh', async () => {
-//           const past = Date.now() - 10_000;
-//           const wallets: any[] = [
-//                { address: 'rA', lastUpdated: past },
-//                { address: 'rB', lastUpdated: past },
-//           ];
+          service.refreshWallets({} as any);
 
-//           await service.refreshWallets({} as any, wallets, 0, ['rB']);
+          tick(300); // pass debounceTime
 
-//           // Only rB should be updated
-//           expect(xrplService.getAccountInfo).toHaveBeenCalledTimes(1);
-//           expect(xrplService.getAccountInfo).toHaveBeenCalledWith(jasmine.anything(), 'rB', 'validated', '');
-//           expect(walletManagerService.updateWallet).toHaveBeenCalledTimes(1);
-//      });
+          expect(spy).toHaveBeenCalled();
+     }));
 
-//      it('should compute spendable balance and update wallet manager', async () => {
-//           const past = Date.now() - 10_000;
-//           const wallets: any[] = [{ address: 'rA', lastUpdated: past }];
+     it('should update wallets when refresh runs', async () => {
+          await (service as any).performRefreshWallets({} as any, [mockWallet], 0);
 
-//           // Configure conversions: Balance 12 XRP, reserves 5 XRP => spendable 7 XRP
-//           (xrpl.dropsToXrp as jasmine.Spy).and.returnValue('12');
-//           utilsService.updateOwnerCountAndReserves.and.returnValue(Promise.resolve({ ownerCount: 2, totalXrpReserves: '5' }));
+          expect(walletManagerMock.updateWallet).toHaveBeenCalled();
+     });
 
-//           await service.refreshWallets({} as any, wallets, 0);
+     it('should skip update if wallets are fresh', async () => {
+          const freshWallet = {
+               ...mockWallet,
+               lastUpdated: Date.now(),
+          };
 
-//           expect(walletManagerService.updateWallet).toHaveBeenCalledTimes(1);
-//           const callArgs = walletManagerService.updateWallet.calls.mostRecent().args;
-//           const updated = callArgs[1];
-//           expect(updated.ownerCount).toBe(2);
-//           expect(updated.xrpReserves).toBe('5');
-//           expect(updated.balance).toBe('7.000000');
-//           expect(updated.spendableXrp).toBe('7.000000');
-//           expect(typeof updated.lastUpdated).toBe('number');
-//      });
+          walletManagerMock.wallets.and.returnValue([freshWallet]);
 
-//      it('should cache reserves across multiple refresh calls', async () => {
-//           const past = Date.now() - 10_000;
-//           const wallets: any[] = [{ address: 'rA', lastUpdated: past }];
+          const onUpdate = jasmine.createSpy();
 
-//           await service.refreshWallets({} as any, wallets, 0);
+          await (service as any).performRefreshWallets({} as any, [freshWallet], 0, undefined, onUpdate);
 
-//           // Advance time to force refresh again
-//           (wallets[0].lastUpdated as number) = Date.now() - 10_000;
+          expect(walletManagerMock.updateWallet).not.toHaveBeenCalled();
+          expect(onUpdate).toHaveBeenCalled();
+     });
 
-//           await service.refreshWallets({} as any, wallets, 0);
+     it('should filter wallets by address', async () => {
+          await (service as any).performRefreshWallets({} as any, [mockWallet], 0, ['r123']);
 
-//           // getXrplReserve should only be called once due to caching
-//           expect(utilsService.getXrplReserve).toHaveBeenCalledTimes(1);
-//      });
+          expect(walletManagerMock.updateWallet).toHaveBeenCalled();
+     });
 
-//      it('should call onUpdate with the current wallet (updated or not)', async () => {
-//           const fresh = Date.now();
-//           const past = Date.now() - 10_000;
-//           const wallets: any[] = [
-//                { address: 'rCurrent', lastUpdated: fresh }, // not updated due to freshness
-//                { address: 'rOther', lastUpdated: past }, // will be updated
-//           ];
+     it('should handle XRPL errors gracefully', async () => {
+          (service as any).xrplService.getAccountInfo.and.rejectWith(new Error('fail'));
 
-//           const onUpdate = jasmine.createSpy('onUpdate');
+          await (service as any).performRefreshWallets({} as any, [mockWallet], 0);
 
-//           await service.refreshWallets({} as any, wallets, 0, undefined, onUpdate);
+          expect(toastMock.error).toHaveBeenCalled();
+     });
 
-//           expect(onUpdate).toHaveBeenCalledTimes(1);
-//           const args = onUpdate.calls.mostRecent().args;
-//           expect(args[0]).toBe(wallets);
-//           expect(args[1].address).toBe('rCurrent');
-//      });
-// });
+     it('should call onUpdate with updated wallet', async () => {
+          const onUpdate = jasmine.createSpy();
+
+          await (service as any).performRefreshWallets({} as any, [mockWallet], 0, undefined, onUpdate);
+
+          expect(onUpdate).toHaveBeenCalled();
+     });
+
+     it('should always resolve promise in refreshWallets', fakeAsync(() => {
+          let resolved = false;
+
+          service.refreshWallets({} as any).then(() => (resolved = true));
+
+          tick(300);
+
+          expect(resolved).toBeTrue();
+     }));
+});

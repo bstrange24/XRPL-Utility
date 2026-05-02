@@ -15,7 +15,6 @@ describe('CheckCashItemComponent', () => {
           id: 'CASHID001',
           index: 'CASHID001',
           amount: '5 XRP',
-          destination: 'rMYADDR',
           sender: 'rSENDER456',
           isExpired: false,
      };

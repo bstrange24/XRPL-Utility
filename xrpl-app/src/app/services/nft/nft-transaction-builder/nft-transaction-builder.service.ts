@@ -20,7 +20,7 @@ export class NftTransactionBuilderService {
           const tx: xrpl.NFTokenMint = {
                TransactionType: 'NFTokenMint',
                Account: wallet.classicAddress,
-               NFTokenTaxon: parseInt(nft.taxon, 0),
+               NFTokenTaxon: Number.parseInt(nft.taxon, 0),
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
@@ -110,10 +110,10 @@ export class NftTransactionBuilderService {
 
      buildSellNftDataTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, nft: any, currency: any) {
           let sendMax;
-          if (currency.currency !== 'XRP') {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
-          } else {
+          if (currency.currency === 'XRP') {
                sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', nft.amount, false).sendMax;
+          } else {
+               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
           }
 
           const tx: xrpl.NFTokenCreateOffer = {
@@ -137,12 +137,12 @@ export class NftTransactionBuilderService {
      }
 
      buildBuyNftOfferDataTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, nft: any, currency: any) {
-          let sendMax;
-          if (currency.currency !== 'XRP') {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
-          } else {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', nft.amount, false).sendMax;
-          }
+          // let sendMax;
+          // if (currency.currency === 'XRP') {
+          //      sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', nft.amount, false).sendMax;
+          // } else {
+          //      sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
+          // }
 
           const tx: xrpl.NFTokenAcceptOffer = {
                TransactionType: 'NFTokenAcceptOffer',
@@ -157,12 +157,12 @@ export class NftTransactionBuilderService {
      }
 
      buildSellNftOfferDataTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, nft: any, currency: any) {
-          let sendMax;
-          if (currency.currency !== 'XRP') {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
-          } else {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', nft.amount, false).sendMax;
-          }
+          // let sendMax;
+          // if (currency.currency === 'XRP') {
+          //      sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', nft.amount, false).sendMax;
+          // } else {
+          //      sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', nft.amount, false).sendMax;
+          // }
 
           const tx: xrpl.NFTokenAcceptOffer = {
                TransactionType: 'NFTokenAcceptOffer',

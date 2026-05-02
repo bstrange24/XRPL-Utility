@@ -66,9 +66,9 @@ export const AppConstants = {
      MAX_FEE: '12',
      MIN_FEE: '10',
      TOAST: {
-          CONNECTION: 2000,
+          CONNECTION: 1000,
           SUCCESS: 4000,
-          ERROR: 4000,
+          ERROR: 3000,
           INFO: 2000,
           WARN: 3000,
      },

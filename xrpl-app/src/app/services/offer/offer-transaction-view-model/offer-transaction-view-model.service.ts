@@ -37,17 +37,14 @@ export class OfferTransactionViewModelService {
 
      readonly weWantCurrencyItems = computed(() => {
           this.weWantCurrency();
-          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
-               id: curr,
-               display: curr === 'XRP' ? 'XRP' : curr,
-               secondary:
-                    curr === 'XRP'
-                         ? 'Native currency'
-                         : (() => {
-                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-                           })(),
-          }));
+          return this.offerCurrency.getAvailableCurrencies(true).map(curr => {
+               const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+               return {
+                    id: curr,
+                    display: curr === 'XRP' ? 'XRP' : curr,
+                    secondary: curr === 'XRP' ? 'Native currency' : this.getIssuerSecondary(count),
+               };
+          });
      });
 
      readonly selectedWeWantCurrencyItem = computed(() => {
@@ -58,17 +55,14 @@ export class OfferTransactionViewModelService {
 
      readonly weSpendCurrencyItems = computed(() => {
           this.weSpendCurrency();
-          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
-               id: curr,
-               display: curr === 'XRP' ? 'XRP' : curr,
-               secondary:
-                    curr === 'XRP'
-                         ? 'Native currency'
-                         : (() => {
-                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
-                           })(),
-          }));
+          return this.offerCurrency.getAvailableCurrencies(true).map(curr => {
+               const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+               return {
+                    id: curr,
+                    display: curr === 'XRP' ? 'XRP' : curr,
+                    secondary: curr === 'XRP' ? 'Native currency' : this.getIssuerSecondary(count),
+               };
+          });
      });
 
      readonly selectedWeSpendCurrencyItem = computed(() => {
@@ -182,6 +176,12 @@ export class OfferTransactionViewModelService {
                };
           }
      };
+
+     private getIssuerSecondary(count: number): string {
+          if (count === 0) return 'No issuers';
+          const suffix = count === 1 ? '' : 's';
+          return `${count} issuer${suffix}`;
+     }
 
      private decodeOfferFlags(flags: number): string[] {
           const decoded: string[] = [];

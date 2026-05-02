@@ -1,4 +1,3 @@
-// payment-channel-summary.component.ts
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -22,7 +21,7 @@ import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/
 export class PaymentChannelSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
-     public readonly viewModel = inject(PaymentChannelViewModelService);
+     public viewModel = inject(PaymentChannelViewModelService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
 
      infoPanelExpanded = input<boolean>(false);

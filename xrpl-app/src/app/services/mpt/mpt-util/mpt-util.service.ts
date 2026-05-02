@@ -428,8 +428,8 @@ export class MptUtilService extends PerformanceBaseComponent {
           let scale = 0;
           if (assetScale !== undefined && assetScale !== null && assetScale !== 'N/A') {
                // Handle both number and string inputs
-               scale = typeof assetScale === 'number' ? assetScale : parseInt(assetScale.toString(), 10);
-               if (isNaN(scale)) scale = 0;
+               scale = typeof assetScale === 'number' ? assetScale : Number.parseInt(assetScale.toString(), 10);
+               if (Number.isNaN(scale)) scale = 0;
           }
 
           if (scale <= 0) return amountStr;

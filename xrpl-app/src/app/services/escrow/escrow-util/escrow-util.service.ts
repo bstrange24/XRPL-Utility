@@ -16,7 +16,6 @@ import { EscrowStoreService } from '../escrow-store/escrow-store.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { EscrowDataForUI, EscrowDropdownItem, EscrowObject, EscrowValidationInput, EscrowValidationResult } from '../../../components/escrow/constants/time-escrow.types';
 import { LogServiceService } from '../../shared/log-service/log-service.service';
-import { send } from 'node:process';
 
 @Injectable({
      providedIn: 'root',
@@ -67,7 +66,7 @@ export class EscrowUtilService {
           return this.txUiService.stepMessage();
      });
 
-     async getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string, isConditional: boolean = false, activeTab: string): Promise<EscrowDataForUI[]> {
+     async getExistingEscrows(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string, activeTab: string, isConditional: boolean = false): Promise<EscrowDataForUI[]> {
           const filtered = (escrowObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Escrow' && obj.Account === classicAddress && (isConditional ? !!obj.Condition : (obj.FinishAfter || obj.CancelAfter) && !obj.Condition));
 
           const mapped = await Promise.all(
@@ -103,9 +102,11 @@ export class EscrowUtilService {
                          }
                     }
 
+                    const issuerText = issuer ? `issued by ${issuer}` : '';
+
                     return {
                          Account: obj.Account,
-                         Amount: `${amount} ${currency} ${issuer ? `issued by ${issuer}` : ''}`.trim(),
+                         Amount: `${amount} ${currency} ${issuerText}`.trim(),
                          Destination: obj.Destination,
                          DestinationTag: obj.DestinationTag,
                          CancelAfter: obj.CancelAfter,
@@ -144,9 +145,8 @@ export class EscrowUtilService {
                               amount = String(xrpl.dropsToXrp(sendMax));
                          }
                     } else if (sendMax?.mpt_issuance_id) {
-                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id; // e.g. "100 MPT"
+                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id;
                     } else if (sendMax?.value) {
-                         // amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
                          amount = sendMax.value;
                          currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
                          issuer = sendMax.issuer;
@@ -163,8 +163,9 @@ export class EscrowUtilService {
                          }
                     }
 
+                    const issuerText = issuer ? 'issued by ' + issuer : '';
                     return {
-                         Amount: `${amount} ${currency} ${issuer ? `issued by ${issuer}` : ''}`.trim(),
+                         Amount: `${amount} ${currency} ${issuerText}`.trim(),
                          Sender: obj.Account,
                          Destination: obj.Destination,
                          EscrowSequence,

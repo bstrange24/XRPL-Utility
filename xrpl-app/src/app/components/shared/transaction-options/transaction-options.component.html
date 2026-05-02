@@ -90,17 +90,17 @@
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
                <div class="space-y-2 md:col-span-5">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Signers</label>
+                    <label for="signers" class="text-xs font-semibold uppercase tracking-wider text-gray-500">Signers</label>
                     <textarea class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-600" rows="5" readonly>{{ accountConfiguratorStoreService.multiSignAddress() }}</textarea>
                </div>
 
                <div class="space-y-2 md:col-span-5">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Seeds</label>
+                    <label for="seeds" class="text-xs font-semibold uppercase tracking-wider text-gray-500">Seeds</label>
                     <textarea class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-600" rows="5" readonly>{{ accountConfiguratorStoreService.multiSignSeeds() }}</textarea>
                </div>
 
                <div class="space-y-2 md:col-span-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Quorum</label>
+                    <label for="quorum" class="text-xs font-semibold uppercase tracking-wider text-gray-500">Quorum</label>
                     <input type="text" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-center font-mono text-sm text-gray-600" readonly [ngModel]="accountConfiguratorStoreService.signerQuorum()" />
                </div>
           </div>
@@ -117,11 +117,11 @@
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Regular Key Address</label>
+                    <label for="regKeyAddr" class="text-xs font-semibold uppercase tracking-wider text-gray-500">Regular Key Address</label>
                     <input type="text" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-600" readonly [ngModel]="accountConfiguratorStoreService.regularKeyAddress()" />
                </div>
                <div class="space-y-2">
-                    <label class="text-xs font-semibold uppercase tracking-wider text-gray-500">Regular Key Seed</label>
+                    <label for="regKeySeed" class="text-xs font-semibold uppercase tracking-wider text-gray-500">Regular Key Seed</label>
                     <input type="text" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-600" readonly [ngModel]="accountConfiguratorStoreService.regularKeySeed()" />
                </div>
           </div>

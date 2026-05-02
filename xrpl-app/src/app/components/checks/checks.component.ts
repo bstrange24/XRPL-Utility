@@ -300,9 +300,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                const currencyCode = this.currencyStoreService.currencyCode();
                const accountObjects = env.checkObjects?.result.account_objects;
                if (accountObjects) {
-                    if (currencyCode === AppConstants.XRP_CURRENCY) {
-                         checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, this.checksStoreService.checkIdField(), 'XRP');
-                    } else {
+                    if (currencyCode !== AppConstants.XRP_CURRENCY) {
                          checkIssuer = this.checkUtilService.getIssuerForCheck(accountObjects, this.checksStoreService.checkIdField(), 'Token');
                          if (checkIssuer && this.currencyStoreService.currencyIssuer() !== checkIssuer) {
                               return this.toastService.error(`Invalid issuer ${checkIssuer} for this check`, AppConstants.TOAST.ERROR);
@@ -366,7 +364,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.checksStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.checksStoreService.setField('existingChecks', this.checkUtilService.getExistingChecks(env.accountObjects, env.wallet.classicAddress));
           this.checksStoreService.setField('cashableChecks', this.checkUtilService.getCashableChecks(env.accountObjects, env.wallet.classicAddress));
           this.checksStoreService.setField('cancellableChecks', this.checkUtilService.getCancelableChecks(env.accountObjects, env.wallet.classicAddress));

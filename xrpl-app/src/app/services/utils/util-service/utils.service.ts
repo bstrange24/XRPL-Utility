@@ -1,15 +1,12 @@
-import { Injectable, ElementRef, ViewChild, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { XrplService } from '../../xrpl-services/xrpl.service';
 import { AppConstants } from '../../../core/app.constants';
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
 import { StorageService } from '../../shared/local-storage/storage.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { MPToken, RippleState } from '../../../models/interface-items.model';
-import * as bip39 from 'bip39';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
@@ -17,7 +14,7 @@ import { TrustlineStoreService } from '../../trustlines/trustline-store/trustlin
 import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
-import { AccountFlags, XrplAccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
+import { AccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -924,11 +921,11 @@ export class UtilsService {
           const type = tx.TransactionType;
 
           switch (type) {
-               case 'TrustSet':
-                    // Non-zero limit or flags will likely create a trustline
+               case 'TrustSet': { // Non-zero limit or flags will likely create a trustline
                     const limit = Number.parseFloat(tx?.LimitAmount?.value || '0');
                     const flags = tx?.Flags || 0;
                     return limit !== 0 || flags !== 0;
+               }
 
                case 'OfferCreate':
                     // Offers often create new ledger objects unless fully consumed

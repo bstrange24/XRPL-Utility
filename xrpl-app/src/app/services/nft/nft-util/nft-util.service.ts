@@ -369,12 +369,9 @@ export class NftUtilService {
 
                const mergedBuyOffersResponse = this.mergeOffers(buyOffersResponse, b);
                const mergedSellOffersResponse = this.mergeOffers(sellOffersResponse, s);
-               // const mergedBuyOffersResponse = this.mergeByNftId(buyOffersResponse, b, false);
-               // const mergedSellOffersResponse = this.mergeByNftId(sellOffersResponse, s, true);
                this.logService.logObjects('mergedBuyOffersResponse', mergedBuyOffersResponse);
                this.logService.logObjects('mergedSellOffersResponse', mergedSellOffersResponse);
 
-               // return { accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse };
                return { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse: mergedSellOffersResponse, buyOffersResponse: mergedBuyOffersResponse };
           }
      }
@@ -619,7 +616,7 @@ export class NftUtilService {
                return (isUnrestricted || isTargeted) && offer.amount;
           });
           // Sort by lowest price
-          validOffers.sort((a, b) => parseInt(a.amount) - parseInt(b.amount));
+          validOffers.sort((a, b) => Number.parseInt(a.amount) - Number.parseInt(b.amount));
           return validOffers;
      }
 

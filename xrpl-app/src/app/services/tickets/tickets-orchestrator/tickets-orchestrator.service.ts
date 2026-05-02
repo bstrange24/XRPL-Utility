@@ -284,7 +284,7 @@ export class TicketsOrchestratorService extends PerformanceBaseComponent {
           this.toastService.successMultipleHashesWithTickets(msg, deletedHashes, this.txUiService.explorerUrl() + 'tx/', AppConstants.TOAST.SUCCESS);
           this.txUiService.currentStep?.set('success');
 
-          return { success: true, deletedHashes, hash: deletedHashes[deletedHashes.length - 1]?.hash };
+          return { success: true, deletedHashes, hash: deletedHashes.at(-1)?.hash };
      }
 
      handleSimulationSuccess(type: TicketTxType, ticket: any, txOptions: any, hash?: string) {

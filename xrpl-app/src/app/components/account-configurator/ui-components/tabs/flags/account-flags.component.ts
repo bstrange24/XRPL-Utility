@@ -8,6 +8,7 @@ import { TransactionUiService } from '../../../../../services/transaction-ui/tra
 import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
+import { XrplAccountFlags } from '../../../constants/account-configurator.types';
 
 @Component({
      selector: 'app-account-flags',
@@ -27,4 +28,11 @@ export class AccountFlagsComponent {
      configurationType = this.accountConfiguratorStoreService.configurationType;
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+
+     onFlagKeyDown(event: KeyboardEvent, key: keyof XrplAccountFlags) {
+          if (event.key === ' ' || event.key === 'Enter') {
+               event.preventDefault(); // prevents page scroll on space
+               this.accountConfiguratorUtilService.toggleFlag(key);
+          }
+     }
 }

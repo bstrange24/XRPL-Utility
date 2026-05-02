@@ -76,7 +76,7 @@ export class AmmTransactionBuilderService {
      buildWithdrawFromAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any, withdrawOptions: PoolOptions, lpToken: { currency: string; issuer: string }): xrpl.AMMWithdraw {
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
           const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
-          const cleanLpAmount = amm.withdrawlLpTokenFromPoolField.replace(/,/g, '');
+          const cleanLpAmount = amm.withdrawlLpTokenFromPoolField.replaceAll(',', '');
 
           const lpTokenAmount: xrpl.IssuedCurrencyAmount = {
                currency: lpToken.currency,

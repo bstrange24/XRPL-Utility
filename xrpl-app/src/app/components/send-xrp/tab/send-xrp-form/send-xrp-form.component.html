@@ -4,7 +4,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Destination -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Destination</label>
+                    <label for="destination" class="block text-sm font-semibold text-gray-900">Destination</label>
                     <p class="text-xs text-gray-500">The unique address receiving the XRP payment.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown class="h-full w-full" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
@@ -13,7 +13,7 @@
 
                <!-- XRP Amount -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">XRP Amount</label>
+                    <label for="xrpAmount" class="block text-sm font-semibold text-gray-900">XRP Amount</label>
                     <p class="text-xs text-gray-500">Amount in XRP (precision up to 0.000001).</p>
                     <input type="number" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="accountConfiguratorStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" />
                </div>

@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { OfferStoreService } from '../offer-store/offer-store.service';
@@ -18,8 +18,6 @@ export class OfferUtilsService {
      public readonly utilsService = inject(UtilsService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      public readonly offerTransactionViewModelService = inject(OfferTransactionViewModelService);
-     private readonly copyUtilService = inject(CopyUtilService);
-
      private amountTimeout: ReturnType<typeof setTimeout> | null = null;
 
      readonly actionButtonLabel = computed(() => {
@@ -125,9 +123,7 @@ export class OfferUtilsService {
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
                type CurrencyAmount = { currency: string; value: string; issuer?: string };
-
                const we_want: CurrencyAmount = weWantCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() } : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
-
                const we_spend: CurrencyAmount = weSpendCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weSpendAmount() } : { currency: this.utilsService.encodeIfNeeded(weSpendCurr), issuer: this.offerStoreService.weSpendIssuer(), value: this.offerStoreService.weSpendAmount() };
 
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);
@@ -167,15 +163,15 @@ export class OfferUtilsService {
                          // execution: stats.forward.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
                          // volatility: `${stats.forward.volatility.toFixed(8)} (${stats.forward.volatilityPercent.toFixed(2)}%)`,
 
-                         vwap: stats?.forward?.vwap != null ? stats.forward.vwap.toFixed(8) : '0',
-                         simpleAvg: stats?.forward?.simpleAvg != null ? stats.forward.simpleAvg.toFixed(8) : '0',
-                         bestRate: stats?.forward?.bestRate != null ? stats.forward.bestRate.toFixed(8) : '0',
-                         spread: spread?.spread != null ? spread.spread.toFixed(8) : '0',
-                         spreadPercent: spread?.spreadPercent != null ? spread.spreadPercent.toFixed(2) : '0',
-                         liquidityRatio: liquidity?.ratio != null ? liquidity.ratio.toFixed(2) : '0',
-                         depth: `${stats?.forward?.depthDOG != null ? stats.forward.depthDOG.toFixed(2) : '0'} ${displayWeWant} for ${stats?.forward?.depthXRP != null ? stats.forward.depthXRP.toFixed(2) : '0'} ${displayWeSpend}`,
+                         vwap: stats?.forward?.vwap == null ? '0' : stats.forward.vwap.toFixed(8),
+                         simpleAvg: stats?.forward?.simpleAvg == null ? '0' : stats.forward.simpleAvg.toFixed(8),
+                         bestRate: stats?.forward?.bestRate == null ? '0' : stats.forward.bestRate.toFixed(8),
+                         spread: spread?.spread == null ? '0' : spread.spread.toFixed(8),
+                         spreadPercent: spread?.spreadPercent == null ? '0' : spread.spreadPercent.toFixed(2),
+                         liquidityRatio: liquidity?.ratio == null ? '0' : liquidity.ratio.toFixed(2),
+                         depth: `${stats?.forward?.depthDOG == null ? '0' : stats.forward.depthDOG.toFixed(2)} ${displayWeWant} for ${stats?.forward?.depthXRP == null ? '0' : stats.forward.depthXRP.toFixed(2)} ${displayWeSpend}`,
                          execution: stats?.forward?.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
-                         volatility: `${stats?.forward?.volatility != null ? stats.forward.volatility.toFixed(8) : '0'} (${stats?.forward?.volatilityPercent != null ? stats.forward.volatilityPercent.toFixed(2) : '0'}%)`,
+                         volatility: `${stats?.forward?.volatility == null ? '0' : stats.forward.volatility.toFixed(8)} (${stats?.forward?.volatilityPercent == null ? '0' : stats.forward.volatilityPercent.toFixed(2)}%)`,
                     });
                } else {
                     this.offerStoreService.setField('orderBookStats', {
@@ -208,13 +204,10 @@ export class OfferUtilsService {
 
      async updateTokenBalanceAndExchange(): Promise<void> {
           const weSpendAmt = this.offerStoreService.weSpendAmount();
-          if (!weSpendAmt || parseFloat(weSpendAmt) <= 0) {
+          if (!weSpendAmt || Number.parseFloat(weSpendAmt) <= 0) {
                this.offerStoreService.setField('weWantAmount', '0');
                return;
           }
-
-          // this.txUiService.spinner.set(true);
-          // this.txUiService.showSpinnerWithDelay('Calculating best rate...', 500);
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -260,20 +253,15 @@ export class OfferUtilsService {
                console.error('Error in updateTokenBalanceAndExchange:', error);
                this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weWantAmount', '0');
-          } finally {
-               // this.txUiService.spinner.set(false);
           }
      }
 
      async updateTokenBalanceAndExchangeReverse(): Promise<void> {
           const weWantAmt = this.offerStoreService.weWantAmount();
-          if (!weWantAmt || parseFloat(weWantAmt) <= 0) {
+          if (!weWantAmt || Number.parseFloat(weWantAmt) <= 0) {
                this.offerStoreService.setField('weSpendAmount', '0');
                return;
           }
-
-          // this.txUiService.spinner.set(true);
-          // this.txUiService.showSpinnerWithDelay('Calculating required amount...', 500);
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -320,8 +308,6 @@ export class OfferUtilsService {
                console.error('Error in updateTokenBalanceAndExchangeReverse:', error);
                this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weSpendAmount', '0');
-          } finally {
-               // this.txUiService.spinner.set(false);
           }
      }
 
@@ -336,15 +322,15 @@ export class OfferUtilsService {
           let bestTokenXrp = 0;
           if (tokenXrpOffers.length > 0) {
                const o = tokenXrpOffers[0];
-               const getsValue = o.TakerGets?.value ? parseFloat(o.TakerGets.value) : parseFloat(o.TakerGets) / 1_000_000;
-               const paysValue = o.TakerPays?.value ? parseFloat(o.TakerPays.value) : parseFloat(o.TakerPays) / 1_000_000;
+               const getsValue = o.TakerGets?.value ? Number.parseFloat(o.TakerGets.value) : Number.parseFloat(o.TakerGets) / 1_000_000;
+               const paysValue = o.TakerPays?.value ? Number.parseFloat(o.TakerPays.value) : Number.parseFloat(o.TakerPays) / 1_000_000;
                bestTokenXrp = getsValue / paysValue;
           }
           let bestXrpToken = 0;
           if (xrpTokenOffers.length > 0) {
                const o = xrpTokenOffers[0];
-               const getsValue = o.TakerGets?.value ? parseFloat(o.TakerGets.value) : parseFloat(o.TakerGets) / 1_000_000;
-               const paysValue = o.TakerPays?.value ? parseFloat(o.TakerPays.value) : parseFloat(o.TakerPays) / 1_000_000;
+               const getsValue = o.TakerGets?.value ? Number.parseFloat(o.TakerGets.value) : Number.parseFloat(o.TakerGets) / 1_000_000;
+               const paysValue = o.TakerPays?.value ? Number.parseFloat(o.TakerPays.value) : Number.parseFloat(o.TakerPays) / 1_000_000;
                bestXrpToken = getsValue / paysValue;
           }
           const bestXrpTokenInverse = bestXrpToken > 0 ? 1 / bestXrpToken : 0;
@@ -355,7 +341,7 @@ export class OfferUtilsService {
      }
 
      private computeLiquidityRatio(tokenXrpOffers: any[], xrpTokenOffers: any[], isTokenXrp = true) {
-          const sumVolume = (offers: any[]) => offers.reduce((sum, o) => sum + (o.TakerGets?.value ? parseFloat(o.TakerGets.value) : parseFloat(o.TakerGets) / 1_000_000), 0);
+          const sumVolume = (offers: any[]) => offers.reduce((sum, o) => sum + (o.TakerGets?.value ? Number.parseFloat(o.TakerGets.value) : Number.parseFloat(o.TakerGets) / 1_000_000), 0);
           const tokenVolume = tokenXrpOffers.length > 0 ? sumVolume(tokenXrpOffers) : 0;
           const xrpVolume = xrpTokenOffers.length > 0 ? sumVolume(xrpTokenOffers) : 0;
           const ratio = isTokenXrp ? (xrpVolume > 0 ? tokenVolume / xrpVolume : 0) : tokenVolume > 0 ? xrpVolume / tokenVolume : 0;
@@ -370,8 +356,8 @@ export class OfferUtilsService {
           let bestQuality = Infinity;
 
           for (const offer of offers) {
-               const getsValue = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1_000_000 : parseFloat(offer.TakerGets?.value ?? '0');
-               const paysValue = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1_000_000 : parseFloat(offer.TakerPays?.value ?? '0');
+               const getsValue = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const paysValue = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
                if (getsValue > 0 && paysValue > 0) {
                     totalPays += paysValue;
                     totalGets += getsValue;
@@ -385,8 +371,8 @@ export class OfferUtilsService {
           let depthGets = 0;
           let depthPays = 0;
           for (const offer of offers) {
-               const gv = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1_000_000 : parseFloat(offer.TakerGets?.value ?? '0');
-               const pv = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1_000_000 : parseFloat(offer.TakerPays?.value ?? '0');
+               const gv = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const pv = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
                if (pv / gv <= maxQuality) {
                     depthGets += gv;
                     depthPays += pv;
@@ -398,8 +384,8 @@ export class OfferUtilsService {
           let remainingPays = tradeSizeXRP;
           let insufficientLiquidity = false;
           for (const offer of offers) {
-               const gv = typeof offer.TakerGets === 'string' ? parseFloat(offer.TakerGets) / 1_000_000 : parseFloat(offer.TakerGets?.value ?? '0');
-               const pv = typeof offer.TakerPays === 'string' ? parseFloat(offer.TakerPays) / 1_000_000 : parseFloat(offer.TakerPays?.value ?? '0');
+               const gv = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const pv = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
                const paysToUse = Math.min(remainingPays, pv);
                if (paysToUse > 0) {
                     execGets += (paysToUse / pv) * gv;

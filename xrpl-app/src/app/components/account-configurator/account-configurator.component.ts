@@ -11,7 +11,6 @@ import { CopyUtilService } from '../../services/utils/copy-util/copy-util.servic
 import { WalletManagerService, Wallet } from '../../services/wallets/manager/wallet-manager.service';
 import { DropdownItem } from '../../models/dropdown-item.model';
 import { ToastService } from '../../services/utils/toast/toast.service';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -187,19 +186,21 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           });
 
           this.isAccountConfig.set(true);
-          const successFullTx = await this.handleTxResult(txResult!, env.client, env.wallet, '', '', '');
-          if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-               env = await this.txEnvironmentService.getValidatedEnvironment(true);
-               this.accountConfiguratorUtilService.handlePostSuccess(currentTab, config, env);
-               this.refreshAccountObject(env);
-               this.accoutDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+          if (txResult !== null) {
+               const successFullTx = await this.handleTxResult(txResult, env.client, env.wallet, '', '', '');
+               if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+                    env = await this.txEnvironmentService.getValidatedEnvironment(true);
+                    this.accountConfiguratorUtilService.handlePostSuccess(currentTab, config, env);
+                    this.refreshAccountObject(env);
+                    this.accoutDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+               }
           }
           this.isAccountConfig.set(false);
 
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.accountConfiguratorViewModelService.accountInfo.set(env.accountInfo);
           this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);

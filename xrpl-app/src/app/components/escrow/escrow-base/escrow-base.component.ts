@@ -414,7 +414,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.escrowStoreService.setField('existingEscrow', await this.escrowUtilService.getExistingEscrows(env.accountObjects, env.wallet.classicAddress, this.isConditional, this.escrowTransactionViewModelService.activeTab()));
+          this.escrowStoreService.setField('existingEscrow', await this.escrowUtilService.getExistingEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab(), this.isConditional));
           this.escrowStoreService.setField('expiredOrFulfilledEscrows', await this.escrowUtilService.getExpiredOrFulfilledEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab()));
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getExistingMpts(env.accountObjects, env.wallet.classicAddress));
           this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));

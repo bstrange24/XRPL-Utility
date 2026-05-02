@@ -33,7 +33,7 @@ export class WalletsUtilService {
           if (this.walletsStoreService.secp256k1_encryption_type()) {
                return AppConstants.ENCRYPTION.SECP256K1;
           }
-          return AppConstants.ENCRYPTION.ED25519; // Default if neither or only ed25519 checked
+          return AppConstants.ENCRYPTION.ED25519;
      }
 
      onEncryptionChange() {

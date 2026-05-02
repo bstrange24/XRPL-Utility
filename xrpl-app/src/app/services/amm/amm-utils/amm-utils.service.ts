@@ -96,7 +96,7 @@ export class AmmUtilsService {
           };
 
           try {
-               if (ammResponse.result && ammResponse.result.amm) {
+               if (ammResponse.result?.amm) {
                     this.logService.logObjects('checkAmmParticipation', ammResponse.result.amm);
                     result.isAmmPool = true;
                     result.ammInfo = ammResponse.result.amm;
@@ -114,12 +114,10 @@ export class AmmUtilsService {
                          this.ammStoreService.setField('assetPool1Balance', toDisplay(result.ammInfo.amount));
                          this.ammStoreService.setField('assetPool2Balance', toDisplay(result.ammInfo.amount2));
                     }
-               } else {
-                    if (displayChanges) {
-                         this.ammStoreService.setField('lpTokenBalance', '0');
-                         this.ammStoreService.setField('assetPool1Balance', '0');
-                         this.ammStoreService.setField('assetPool2Balance', '0');
-                    }
+               } else if (displayChanges) {
+                    this.ammStoreService.setField('lpTokenBalance', '0');
+                    this.ammStoreService.setField('assetPool1Balance', '0');
+                    this.ammStoreService.setField('assetPool2Balance', '0');
                }
           } catch (e) {
                // Not an AMM, ignore

@@ -182,7 +182,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                    // this.acccountDataService.setNfTokenMinter(env);
                } catch (error: any) {
                     console.error('Error in getNFT:', error);
                     this.toastService.error(error.message || 'Failed to load NFTs', AppConstants.TOAST.ERROR);

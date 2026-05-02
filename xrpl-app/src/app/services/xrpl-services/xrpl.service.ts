@@ -313,7 +313,6 @@ export class XrplService {
                if (!ledgerData) {
                     throw new Error('validated_ledger is undefined in server_state');
                }
-               const baseFee = ledgerData.base_fee;
                const reserveBaseXRP = ledgerData.reserve_base;
                const reserveIncrementXRP = ledgerData.reserve_inc;
 

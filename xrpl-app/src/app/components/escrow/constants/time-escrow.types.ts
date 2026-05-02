@@ -7,10 +7,20 @@ import { CurrencyState } from '../../../services/currency/constants/currency.typ
 import { EscrowState } from '../../../services/escrow/escrow-store/escrow-store.service';
 import { MptState } from '../../../services/mpt/mpt-store/mpt-store.service';
 
+type IssuedCurrencyAmount = {
+     currency: string;
+     value: string;
+};
+
+type MptAmount = {
+     mpt_issuance_id: string;
+     value: string;
+};
+
+type XrplAmount = string | IssuedCurrencyAmount | MptAmount;
+
 export type EscrowTxType = 'createEscrow' | 'finishEscrow' | 'cancelEscrow';
-
 export type EscrowActionTypes = 'createEscrow' | 'finishEscrow' | 'cancelEscrow';
-
 export type EscrowDisplayItem =
      | {
             tab: 'createEscrow' | 'cancelEscrow';
@@ -75,7 +85,7 @@ export interface EscrowObject {
 
 export interface EscrowDataForUI {
      Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
+     Amount?: XrplAmount;
      CancelAfter?: number;
      Destination: string;
      DestinationNode?: string;
@@ -91,7 +101,7 @@ export interface EscrowDataForUI {
 export interface EscrowWithTxData {
      LedgerEntryType: 'Escrow';
      Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
+     Amount?: XrplAmount;
      Destination: string;
      PreviousTxnID?: string;
      Condition?: string;
@@ -118,7 +128,7 @@ export interface EscrowValidationResult {
 
 export interface EscrowDataForUI {
      Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
+     Amount?: XrplAmount;
      CancelAfter?: number;
      Destination: string;
      DestinationNode?: string;
@@ -134,7 +144,7 @@ export interface EscrowDataForUI {
 export interface EscrowWithTxData {
      LedgerEntryType: 'Escrow';
      Account: string;
-     Amount?: string | { currency: string; value: string } | { mpt_issuance_id: string; value: string };
+     Amount?: XrplAmount;
      Destination: string;
      PreviousTxnID?: string;
      Condition?: string;

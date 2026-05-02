@@ -315,7 +315,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           console.info('Credential is verified.');
 
-          // this.txUiService.setSuccess(this.txUiService.result());
           this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);
 
           return true;
@@ -326,7 +325,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           this.credentialStore.setField('subjectCredentials', this.credentialUtilService.parseSubjectCredentials(accountObjects, address));
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.credentialStore.setField('existingCredentials', this.credentialUtilService.parseIssuedCredentials(env.accountObjects, env.wallet.classicAddress));
           this.credentialStore.setField('subjectCredentials', this.credentialUtilService.parseSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
      }

@@ -208,7 +208,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 
           // NEW: Always refresh ticket count from the fresh account_objects

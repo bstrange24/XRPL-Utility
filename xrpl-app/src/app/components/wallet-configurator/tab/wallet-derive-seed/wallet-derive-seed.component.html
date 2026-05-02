@@ -5,7 +5,7 @@
           <div class="space-y-2">
                <!-- Label Row with Validation Status -->
                <div class="flex items-center justify-between">
-                    <label class="block text-sm font-semibold text-gray-900">Enter Seed</label>
+                    <label for="enterSeed" class="block text-sm font-semibold text-gray-900">Enter Seed</label>
                     @if (walletsStoreService.seedInput().length > 0) {
                     <span
                          [ngClass]="{
@@ -32,11 +32,11 @@
 
           <!-- Encryption Type Toggle -->
           <div class="space-y-3">
-               <label class="block text-sm font-semibold text-gray-900">Encryption Type</label>
+               <label for="encryptionType" class="block text-sm font-semibold text-gray-900">Encryption Type</label>
 
                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <!-- ED25519 Option -->
-                    <div class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.bg-green-50]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-200]="!walletsStoreService.ed25519_encryption_type()" (click)="walletsUtilService.setEncryption('ed25519')">
+                    <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.bg-green-50]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-200]="!walletsStoreService.ed25519_encryption_type()" (click)="walletsUtilService.setEncryption('ed25519')">
                          <div class="flex items-start gap-3">
                               <div class="mt-0.5 flex-shrink-0">
                                    <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-300]="!walletsStoreService.ed25519_encryption_type()">
@@ -49,10 +49,10 @@
                                    <p class="mt-1 text-xs text-gray-500">Modern encryption, faster transactions</p>
                               </div>
                          </div>
-                    </div>
+                    </button>
 
                     <!-- SECP256K1 Option -->
-                    <div class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.bg-green-50]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-200]="!walletsStoreService.secp256k1_encryption_type()" (click)="walletsUtilService.setEncryption('secp256k1')">
+                    <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.bg-green-50]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-200]="!walletsStoreService.secp256k1_encryption_type()" (click)="walletsUtilService.setEncryption('secp256k1')">
                          <div class="flex items-start gap-3">
                               <div class="mt-0.5 flex-shrink-0">
                                    <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-300]="!walletsStoreService.secp256k1_encryption_type()">
@@ -65,7 +65,7 @@
                                    <p class="mt-1 text-xs text-gray-500">Legacy encryption, widely compatible</p>
                               </div>
                          </div>
-                    </div>
+                    </button>
                </div>
           </div>
 
@@ -73,15 +73,6 @@
           <div class="flex items-center gap-3 pt-2">
                <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading" class="btn-blue">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
           </div>
-
-          <!-- <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading" class="btn-blue inline-flex items-center gap-2">
-               @if (walletsStoreService.buttonLoading().deriveWalletFromFamilySeed) {
-               <div class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-               <span>Processing...</span>
-               } @else {
-               <span>Derive Wallet from Family Seed</span>
-               }
-          </button> -->
      </div>
 </div>
 }

@@ -8,15 +8,6 @@
      </div>
 
      <!-- Toggle Switch -->
-     <!-- <label class="flex items-center gap-3 cursor-pointer group">
-          <div class="relative inline-flex items-center">
-               <input type="checkbox" class="peer sr-only" [checked]="enabled()" (change)="toggle($event)" />
-               <div class="h-6 w-11 rounded-full transition-all duration-300" [class.bg-gray-200]="!enabled()" [class.bg-gradient-to-r]="enabled()" [class.from-green-500]="enabled()" [class.to-green-600]="enabled()"></div>
-               <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300" [class.translate-x-5]="enabled()" [class.translate-x-0]="!enabled()"></div>
-          </div>
-          <span class="text-sm text-gray-700 select-none transition-colors"> Enable expiration </span>
-     </label> -->
-
      <label class="flex items-center gap-3 cursor-pointer group">
           <div class="relative inline-flex items-center">
                <input type="checkbox" class="peer sr-only" [checked]="enabled()" (change)="toggle($event)" />
@@ -67,73 +58,3 @@
      </div>
      }
 </div>
-
-<!-- OG -->
-<!-- <div class="mt-0 max-w-[425px]">
-     <div class="space-y-2">
-          <label class="text-sm font-medium">{{ label }}</label>
-
-          @if (hint) {
-          <p class="text-xs text-gray-500" [innerHTML]="hint"></p>
-          }
-
-          <input type="datetime-local" [value]="expirationSignal()" step="1" (input)="onInput($event)" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:border-green-500" />
-
-          <div class="grid grid-cols-3 gap-2 mt-3">
-               <button type="button" (click)="setNow()" class="btn-blue text-xs py-2 font-medium">Now</button>
-               <button type="button" (click)="addSeconds(10)" class="btn-primary text-xs py-2 font-medium">+10s</button>
-               <button type="button" (click)="addSeconds(30)" class="btn-primary text-xs py-2 font-medium">+30s</button>
-               <button type="button" (click)="addSeconds(60)" class="btn-primary text-xs py-2 font-medium">+1 min</button>
-               <button type="button" (click)="addSeconds(3600)" class="btn-primary text-xs py-2 font-medium">+1 hour</button>
-               <button type="button" (click)="clear()" class="btn-red text-xs py-2 font-medium">Clear</button>
-          </div>
-     </div>
-</div> -->
-
-<!-- 2nd and Works -->
-<!-- <div class="space-y-4">
-     <div>
-          <label class="block text-sm font-semibold text-gray-900"> {{ label }} </label>
-          @if (hint) {
-          <p class="text-xs text-gray-500 mt-0.5">{{ hint }}</p>
-          }
-     </div>
-
-     <label class="flex items-center gap-3 cursor-pointer group">
-          <div class="relative inline-flex items-center">
-               <input type="checkbox" class="peer sr-only" [checked]="enabled()" (change)="toggle($event)" />
-               <div class="h-6 w-11 rounded-full transition-all duration-300" [class.bg-gray-200]="!enabled()" [class.bg-gradient-to-r]="enabled()" [class.from-green-500]="enabled()" [class.to-green-600]="enabled()"></div>
-               <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300" [class.translate-x-5]="enabled()" [class.translate-x-0]="!enabled()"></div>
-          </div>
-          <span class="text-sm text-gray-700 select-none transition-colors"> Enable expiration </span>
-     </label>
-
-     @if (enabled()) {
-     <div class="space-y-4 pt-2">
-          <div class="flex flex-wrap gap-2">
-               <button (click)="setFromNow(60)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1m</button>
-               <button (click)="setFromNow(300)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">5m</button>
-               <button (click)="setFromNow(3600)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1h</button>
-               <button (click)="setFromNow(86400)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1d</button>
-               <button (click)="setNow()" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 transition-all">Now</button>
-          </div>
-
-          <button type="button" (click)="showPicker = !showPicker" class="text-xs text-gray-500 hover:text-gray-700 transition-colors">{{ showPicker ? 'Hide custom' : 'Custom date/time' }}</button>
-
-          @if (showPicker) {
-          <input type="datetime-local" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-blue-500 transition-all" [value]="expirationSignal()" step="1" (input)="onInput($event)" />
-          }
-
-          @if (expirationSignal()) {
-          <div class="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">Expires <span class="font-medium text-gray-700">{{ formatted() }}</span> (<span class="text-blue-600">{{ relative() }}</span>)</div>
-          }
-
-          <div class="flex gap-2 pt-1">
-               <button (click)="addSeconds(10)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+10s</button>
-               <button (click)="addSeconds(30)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+30s</button>
-               <button (click)="addSeconds(60)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+1m</button>
-               <button (click)="clear()" class="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all ml-auto">Clear</button>
-          </div>
-     </div>
-     }
-</div> -->

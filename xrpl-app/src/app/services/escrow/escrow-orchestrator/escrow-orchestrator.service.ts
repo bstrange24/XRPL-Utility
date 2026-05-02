@@ -58,7 +58,8 @@ const ESCROW_META: Record<EscrowTxType, EscrowTxMeta> = {
                const code = orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP';
                const dest = escrow.destination;
                const shortDest = dest ? `${dest.slice(0, 7)}…${dest.slice(-7)}` : '';
-               return `Successfully Sent Escrow of ${escrow.amount} ${code}${shortDest ? ` to ${shortDest}` : ''}`;
+               const destSuffix = shortDest ? ` to ${shortDest}` : '';
+               return `Successfully Sent Escrow of ${escrow.amount} ${code}${destSuffix}`;
           },
      },
 
@@ -176,14 +177,12 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
                let isInsufficientBalance;
                if (currency?.currency !== 'XRP' && currency?.currency !== 'MPT') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
+               } else if (type === 'createEscrow') {
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');
                } else {
-                    if (type === 'createEscrow') {
-                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, config?.escrow!.amount ? config.escrow.amount : '0');
-                    } else {
-                         // If we are finishing or cancelling an escrow, we need to ensure the account has enough XRP to cover the fee,
-                         // since the amount is not being sent from the account but the transaction still requires a fee to be paid.
-                         isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-                    }
+                    // If we are finishing or cancelling an escrow, we need to ensure the account has enough XRP to cover the fee,
+                    // since the amount is not being sent from the account but the transaction still requires a fee to be paid.
+                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
                }
                if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 

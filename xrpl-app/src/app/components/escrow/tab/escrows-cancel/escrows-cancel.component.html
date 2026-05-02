@@ -1,7 +1,7 @@
 <div class="space-y-6">
      <!-- Selection Card -->
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+          <label for="selectEscrow" class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
           <p class="mb-3 text-sm text-gray-600">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
 
           <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
@@ -14,14 +14,14 @@
                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <!-- Sequence Number -->
                     <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Escrow Sequence</label>
+                         <label for="escrowSequence" class="mb-2 block text-sm font-semibold text-gray-900">Escrow Sequence</label>
                          <p class="mb-2 text-xs text-gray-500">Sequence number of the escrow</p>
                          <input type="text" [value]="viewModel.selectedEscrowSequence()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                     </div>
 
                     <!-- Amount -->
                     <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
+                         <label for="escrowAmount" class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
                          <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
                          <input type="text" [value]="viewModel.selectedEscrowAmount()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                     </div>
@@ -30,15 +30,15 @@
                <!-- Creator / Destination -->
                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                     <!-- Creator (Sender) -->
-                    <!-- <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Creator</label>
+                    <div>
+                         <label for="escrowCreator" class="mb-2 block text-sm font-semibold text-gray-900">Creator</label>
                          <p class="mb-2 text-xs text-gray-500">The account that created this escrow</p>
                          <input type="text" [value]="viewModel.selectedEscrowCreator()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                    </div> -->
+                    </div>
 
                     <!-- Destination -->
                     <div>
-                         <label class="mb-2 block text-sm font-semibold text-gray-900">Destination</label>
+                         <label for="escrowDestination" class="mb-2 block text-sm font-semibold text-gray-900">Destination</label>
                          <p class="mb-2 text-xs text-gray-500">The recipient of the escrow</p>
                          <input type="text" [value]="viewModel.selectedEscrowDestination()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                     </div>

@@ -1067,7 +1067,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
           this.txUiService.setInfoMessage(message);
      }
 
-     protected refreshAccountObject(env: any): void {}
+     protected async refreshAccountObject(_env: any): Promise<void> {}
 
      private loadKnownIssuers() {
           const data = this.storageService.getKnownIssuers('knownIssuers');

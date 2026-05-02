@@ -47,7 +47,6 @@
                </div>
 
                <!-- Wallet List with Drag and Drop -->
-               <!-- Wallet List with Drag and Drop -->
                <div cdkDropList [cdkDropListData]="wallets" (cdkDropListDropped)="drop($event)" class="flex-1 p-2 space-y-3 scroll-container overflow-y-auto">
                     @if (hasWallets) { @for (wallet of wallets; track wallet.address; let i = $index) {
                     <div

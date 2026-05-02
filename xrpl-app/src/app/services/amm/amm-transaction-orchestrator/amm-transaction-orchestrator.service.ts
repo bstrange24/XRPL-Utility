@@ -231,7 +231,7 @@ export class AmmTransactionOrchestratorService {
                // Validate LP token amount for withdraw
                if (type === 'withdrawalFromAMM' && lpToken) {
                     const lpBalance = Number.parseFloat(lpToken.balance);
-                    const requested = Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replace(/,/g, ''));
+                    const requested = Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replaceAll(',', ''));
                     if (requested > lpBalance) {
                          return { success: false, error: `Insufficient LP token balance. Available: ${lpToken.balance}`, validationError: true };
                     }

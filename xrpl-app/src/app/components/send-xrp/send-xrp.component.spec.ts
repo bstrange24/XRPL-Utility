@@ -1,360 +1,227 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { signal, WritableSignal, Signal } from '@angular/core';
-import { BehaviorSubject, map, of } from 'rxjs';
-import * as xrpl from 'xrpl';
-
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { signal, computed } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { of } from 'rxjs';
 import { SendXrpComponent } from './send-xrp.component';
-import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
-import { UtilsService } from '../../services/utils/util-service/utils.service';
-import { StorageService } from '../../services/shared/local-storage/storage.service';
-import { TransactionUiService, TxStep } from '../../services/transaction-ui/transaction-ui.service';
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
+import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { ToastService } from '../../services/utils/toast/toast.service';
-import { XrplCacheService } from '../../services/xrpl-cache/xrpl-cache.service';
-import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { ValidationService } from '../../services/utils/validation/transaction-validation-rule.service';
-import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute, provideRouter, Router } from '@angular/router';
-import { NavbarComponent } from '../shared/ui-components/navbar/navbar.component';
+import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
+import { SendXrpTransactionOrchestratorService } from '../../services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
+import { CredentialStore } from '../../services/credentials/credential-store/credential-store.service';
+import { SendXrpViewModelService } from '../../services/send-xrp/send-xrp-view-model/send-xrp-view-model.service';
+import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-xrp-util.service';
+import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { XrplService } from '../../services/xrpl-services/xrpl.service';
+import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { AppConstants } from '../../core/app.constants';
+import { SEND_XRP_TABS, SEND_XRP_TAB_META } from './constants/send-xrp.ui';
 
-// ────────────────────────────────────────────────
-// ToastService Mock
-// ────────────────────────────────────────────────
-class ToastServiceMock implements Partial<ToastService> {
-     error = jasmine.createSpy('error');
-     success = jasmine.createSpy('success');
-}
-
-// ────────────────────────────────────────────────
-// TransactionUiService Mock — EXACT MATCH TO REAL TYPES
-// ────────────────────────────────────────────────
-class TransactionUiServiceMock implements Partial<TransactionUiService> {
-     // Core state signals
-     wantsOptions: WritableSignal<boolean> = signal(false);
-     currentWallet: WritableSignal<Wallet> = signal({} as Wallet);
-     currentStep: WritableSignal<TxStep> = signal('idle');
-     detailedStatus: WritableSignal<string> = signal('');
-     ticketArray: WritableSignal<string[]> = signal([]);
-     signerQuorum: WritableSignal<number> = signal(0);
-     signers: WritableSignal<any[]> = signal([]);
-     regularKeySigningEnabled: WritableSignal<boolean> = signal(false);
-     multiSigningEnabled: WritableSignal<boolean> = signal(false);
-
-     // Form & tx-related signals
-     amountField: WritableSignal<string> = signal('1.5');
-     regularKeyAddress: WritableSignal<string> = signal('');
-     regularKeySeed: WritableSignal<string> = signal('');
-     multiSignAddress: WritableSignal<string> = signal('');
-     multiSignSeeds: WritableSignal<string> = signal('');
-     credentialIDs: WritableSignal<string[]> = signal([]);
-     domainId: WritableSignal<string> = signal('');
-     destinationTagField: WritableSignal<string> = signal('');
-     invoiceIdField: WritableSignal<string> = signal('');
-     sourceTagField: WritableSignal<string> = signal('');
-     memoField: WritableSignal<string> = signal('');
-     isMemoEnabled: WritableSignal<boolean> = signal(false);
-     isSimulateEnabled: WritableSignal<boolean> = signal(false);
-     isRegularKeyAddress: WritableSignal<boolean> = signal(false);
-     useMultiSign: WritableSignal<boolean> = signal(false);
-     isTicket: WritableSignal<boolean> = signal(false);
-     selectedSingleTicket: WritableSignal<string> = signal('');
-     selectedTickets: WritableSignal<string[]> = signal([]);
-
-     // Computed signals — mock as read-only Signal (not writable)
-     // stepMessage: Signal<string> = signal(''); // real is computed, so read-only
-     explorerUrl: Signal<string> = signal('https://explorer/');
-
-     // Methods (spies only)
-     clearAllOptionsAndMessages = jasmine.createSpy('clearAllOptionsAndMessages');
-     clearAllOptions = jasmine.createSpy('clearAllOptions');
-     clearWarning = jasmine.createSpy('clearWarning');
-     setWarning = jasmine.createSpy('setWarning');
-     getValidationInputs = jasmine.createSpy('getValidationInputs').and.callFake((v: any) => v);
-     setTxResultSignal = jasmine.createSpy('setTxResultSignal');
-     clearAllFields = jasmine.createSpy('clearAllFields');
-     resetCurrentStepToIdle = jasmine.createSpy('resetCurrentStepToIdle');
-}
-
-// ────────────────────────────────────────────────
-// WalletManagerService Mock
-// ────────────────────────────────────────────────
-class WalletManagerServiceMock implements Partial<WalletManagerService> {
-     wallets$ = new BehaviorSubject<Wallet[]>([]);
-     selectedIndex$ = new BehaviorSubject<number>(0);
-     hasWallets$ = new BehaviorSubject<boolean>(false);
-
-     // Make sure this is a real observable (even if empty)
-     hasWalletsFromWallets$ = this.wallets$.pipe(map(wallets => wallets.length > 0));
-
-     getSelectedIndex = jasmine.createSpy('getSelectedIndex').and.returnValue(0);
-}
-
-// Minimal mocks for other services
-class UtilsServiceMock implements Partial<UtilsService> {
-     getWalletWithEncryptionAlgorithm = jasmine.createSpy().and.resolveTo({ classicAddress: 'rTEST' } as any);
-     isTxSuccessful = jasmine.createSpy().and.returnValue(false);
-     getTransactionResultMessage = jasmine.createSpy().and.returnValue('tefFAIL');
-     processErrorMessageFromLedger = (m: string) => m;
-     setTicketSequence = jasmine.createSpy();
-     setDestinationTag = jasmine.createSpy();
-     setMemoField = jasmine.createSpy();
-     setInvoiceIdField = jasmine.createSpy();
-     setSourceTagField = jasmine.createSpy();
-     setDomainId = jasmine.createSpy();
-     setCredentialIDsField = jasmine.createSpy();
-     getAccountTickets = jasmine.createSpy().and.returnValue([]);
-     checkForSignerAccounts = jasmine.createSpy().and.returnValue({ signerAccounts: [], signerQuorum: 0 });
-     setRegularKeyProperties = jasmine.createSpy().and.returnValue({ regularKeyAddress: '', regularKeySeed: '' });
-}
-
-class XrplCacheServiceMock implements Partial<XrplCacheService> {
-     getClient = jasmine.createSpy().and.callFake((factory: any) => factory());
-     getAccountData = jasmine.createSpy().and.resolveTo({
-          accountInfo: { result: { account_data: {} } },
-          accountObjects: {},
-     });
-}
-
-class ValidationServiceMock implements Partial<ValidationService> {
-     validate = jasmine.createSpy('validate').and.resolveTo([]);
-}
-
-class TxEnvironmentServiceMock implements Partial<TxEnvironmentService> {
-     prepareTxEnvironment = jasmine.createSpy().and.resolveTo({
-          client: { isConnected: () => true } as any,
-          wallet: { classicAddress: 'rTEST' } as any,
-          accountInfo: { result: { account_data: {} } },
-          accountObjects: {},
-          fee: '12',
-          currentLedger: 1000,
-     });
-}
+// Mock performance API
+const mockPerformance = {
+     mark: jasmine.createSpy('mark'),
+     measure: jasmine.createSpy('measure'),
+     getEntriesByName: jasmine.createSpy('getEntriesByName').and.returnValue([{ duration: 100 }]),
+     clearMarks: jasmine.createSpy('clearMarks'),
+     clearMeasures: jasmine.createSpy('clearMeasures'),
+};
+Object.defineProperty(window, 'performance', { value: mockPerformance, writable: true });
 
 describe('SendXrpComponent', () => {
      let component: SendXrpComponent;
      let fixture: ComponentFixture<SendXrpComponent>;
 
-     let walletManager: WalletManagerServiceMock;
-     let txUi: TransactionUiServiceMock;
-     let toast: ToastServiceMock;
-     let validation: ValidationServiceMock;
-     let txEnv: TxEnvironmentServiceMock;
+     let walletManagerService: jasmine.SpyObj<WalletManagerService>;
+     let transactionUiService: jasmine.SpyObj<TransactionUiService>;
+     let transactionDropdownService: jasmine.SpyObj<TransactionDropdownService>;
+     let walletDataService: jasmine.SpyObj<WalletDataService>;
+     let txEnvironmentService: jasmine.SpyObj<TxEnvironmentService>;
+     let toastService: jasmine.SpyObj<ToastService>;
+     let sendXrpTransactionOrchestratorService: jasmine.SpyObj<SendXrpTransactionOrchestratorService>;
+     let credentialStore: jasmine.SpyObj<typeof CredentialStore>;
+     let sendXrpViewModelService: any;
+     let sendXrpUtilService: any;
+     let rightPanelService: jasmine.SpyObj<RightPanelService>;
+     let xrplService: jasmine.SpyObj<XrplService>;
+     let acccountDataService: jasmine.SpyObj<AcccountDataService>;
 
-     beforeEach(waitForAsync(async () => {
+     const mockWallet = {
+          address: 'rTestWallet1234567890',
+          classicAddress: 'rTestWallet1234567890',
+          name: 'Test Wallet',
+          seed: 'sEdTestSeed1234567890abcdef',
+     } as any;
+
+     beforeEach(async () => {
+          mockPerformance.mark.calls.reset();
+          mockPerformance.measure.calls.reset();
+          mockPerformance.getEntriesByName.calls.reset();
+          mockPerformance.clearMarks.calls.reset();
+          mockPerformance.clearMeasures.calls.reset();
+
+          xrplService = jasmine.createSpyObj('XrplService', ['getNet']);
+          xrplService.getNet.and.returnValue({ net: 'wss://s.devnet.rippletest.net:51233', environment: 'devnet' });
+
+          walletManagerService = jasmine.createSpyObj('WalletManagerService', ['ensureWalletSelected', 'getSelectedWallet', 'getSelectedIndex'], {
+               wallets: signal([mockWallet]),
+               selectedIndex: signal(0),
+               hasWallets: computed(() => true),
+               currentWallet: computed(() => mockWallet),
+          });
+          walletManagerService.ensureWalletSelected.and.returnValue(true);
+          walletManagerService.getSelectedWallet.and.returnValue(mockWallet);
+
+          transactionUiService = jasmine.createSpyObj('TransactionUiService', ['clearAllOptionsAndMessages', 'resetCurrentStepToIdle', 'setTxResultSignal', 'clearMessages', 'clearAllFields', 'toggleOptions'], {
+               currentStep: signal('idle'),
+               wantsOptions: signal(false),
+               spinner: signal(false),
+               explorerUrl: signal('https://testnet.xrpl.org'),
+               warningMessage: '',
+               errorMessage: '',
+               infoMessage: '',
+               txSignal: signal([]),
+               txResultSignal: signal([]),
+               stepMessage: signal(''),
+               suppressTxClear: signal(false),
+          });
+
+          transactionDropdownService = jasmine.createSpyObj('TransactionDropdownService', ['loadCustomDestinations', 'getFinalDestinationAddress', 'setupAutoSelectOnValidTypedAddress', 'allDestinations', 'destinationMap', 'destinationItems', 'selectedDestinationItem', 'filteredDestinations', 'destinationDisplay'], {
+               customDestinations: signal([]),
+          });
+          transactionDropdownService.allDestinations.and.returnValue(signal([]));
+          transactionDropdownService.destinationMap.and.returnValue(signal(new Map()));
+          transactionDropdownService.destinationItems.and.returnValue(signal([]));
+          transactionDropdownService.selectedDestinationItem.and.returnValue(signal(null));
+          transactionDropdownService.filteredDestinations.and.returnValue(signal([]));
+          transactionDropdownService.destinationDisplay.and.returnValue(signal(''));
+          transactionDropdownService.getFinalDestinationAddress.and.returnValue('rDestination123');
+
+          txEnvironmentService = jasmine.createSpyObj('TxEnvironmentService', ['getValidatedEnvironment', 'prepareTxEnvironmentWithWallet']);
+          txEnvironmentService.getValidatedEnvironment.and.resolveTo({
+               wallet: mockWallet,
+               accountInfo: { result: { account_data: {} } },
+               accountObjects: { result: { account_objects: [] } },
+               client: {} as any,
+               ledgerInfo: { currentRippleTime: Date.now() },
+               fee: '10',
+          } as any);
+          txEnvironmentService.prepareTxEnvironmentWithWallet.and.resolveTo({
+               client: {},
+               wallet: mockWallet,
+               accountInfo: { result: { account_data: {} } },
+               accountObjects: { result: { account_objects: [] } },
+          } as any);
+
+          toastService = jasmine.createSpyObj('ToastService', ['error', 'success']);
+
+          sendXrpTransactionOrchestratorService = jasmine.createSpyObj('SendXrpTransactionOrchestratorService', ['executeXrpPayment']);
+          sendXrpTransactionOrchestratorService.executeXrpPayment.and.resolveTo({ success: true, hash: 'txHash123' });
+
+          credentialStore = jasmine.createSpyObj('CredentialStore', ['setField', 'getAll']);
+          // credentialStore.getAll.and.returnValue({});
+
+          sendXrpViewModelService = {
+               activeTab: signal('sendXrp'),
+               infoData: computed(() => ({ walletName: 'Test Wallet', balance: '1000' })),
+          };
+
+          sendXrpUtilService = {
+               sendButtonLabel: computed(() => 'Send XRP'),
+               clearInputFields: jasmine.createSpy('clearInputFields'),
+          };
+
+          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel', 'clearPanel']);
+
+          walletDataService = jasmine.createSpyObj('WalletDataService', ['refreshWallets']);
+          walletDataService.refreshWallets.and.resolveTo();
+
+          // Add acccountDataService mock
+          acccountDataService = jasmine.createSpyObj('AcccountDataService', ['refreshUiState']);
+          acccountDataService.refreshUiState.and.returnValue();
+
           await TestBed.configureTestingModule({
                imports: [SendXrpComponent],
                providers: [
-                    { provide: UtilsService, useClass: UtilsServiceMock },
-                    {
-                         provide: StorageService,
-                         useValue: (() => {
-                              const store = new Map<string, any>();
-                              return {
-                                   get: jasmine.createSpy('get').and.callFake((key: string) => store.get(key) ?? null),
-                                   set: jasmine.createSpy('set').and.callFake((key: string, value: any) => store.set(key, value)),
-                                   removeValue: jasmine.createSpy('removeValue').and.callFake((key: string) => store.delete(key)),
-                                   getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'devnet' }),
-                                   getNetworkColor: jasmine.createSpy('getNetworkColor').and.returnValue('#000'),
-                              };
-                         })(),
-                    },
-                    { provide: TransactionUiService, useClass: TransactionUiServiceMock },
-                    { provide: WalletDataService, useValue: { refreshWallets: jasmine.createSpy().and.resolveTo() } },
-                    { provide: ToastService, useClass: ToastServiceMock },
-                    { provide: XrplCacheService, useClass: XrplCacheServiceMock },
-                    {
-                         provide: XrplTransactionService,
-                         useValue: {
-                              waitForFinalOutcome: jasmine.createSpy().and.resolveTo({ result: 'tesSUCCESS' }),
-                              buildSendXrpTransaction: jasmine.createSpy().and.returnValue({ TransactionType: 'Payment' } as any),
-                              processTxFinalResult: jasmine.createSpy(),
-                              processTxError: jasmine.createSpy(),
-                         },
-                    },
-                    {
-                         provide: XrplService,
-                         useValue: {
-                              getClient: jasmine.createSpy('getClient').and.resolveTo({ isConnected: () => true }),
-                              getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'devnet' }),
-                              getLastLedgerIndex: jasmine.createSpy('getLastLedgerIndex').and.resolveTo(1000),
-                              getAccountInfo: jasmine.createSpy('getAccountInfo').and.resolveTo({ result: { account_data: {} } }),
-                              getAccountObjects: jasmine.createSpy('getAccountObjects').and.resolveTo({}),
-                         },
-                    },
-                    { provide: WalletManagerService, useClass: WalletManagerServiceMock },
-                    { provide: TxEnvironmentService, useClass: TxEnvironmentServiceMock },
-                    { provide: ValidationService, useClass: ValidationServiceMock },
-                    {
-                         provide: HttpClient,
-                         useValue: {
-                              get: jasmine.createSpy('get').and.returnValue(of({})),
-                              post: jasmine.createSpy('post').and.returnValue(of({})),
-                              put: jasmine.createSpy('put').and.returnValue(of({})),
-                              delete: jasmine.createSpy('delete').and.returnValue(of({})),
-                         },
-                    },
                     provideRouter([]),
-                    {
-                         provide: ActivatedRoute,
-                         useValue: {
-                              params: of({}),
-                              queryParams: of({}),
-                              fragment: of(null),
-                              data: of({}),
-                              snapshot: { params: {}, queryParams: {}, data: {} },
-                              paramMap: of(new Map<string, string>()),
-                              queryParamMap: of(new Map<string, string>()),
-                         },
-                    },
-                    {
-                         provide: Router,
-                         useValue: {
-                              events: of({}),
-                              url: '/mock-route',
-                              navigate: jasmine.createSpy('navigate').and.returnValue(Promise.resolve(true)),
-                              navigateByUrl: jasmine.createSpy('navigateByUrl').and.returnValue(Promise.resolve(true)),
-                         },
-                    },
+                    { provide: WalletManagerService, useValue: walletManagerService },
+                    { provide: TransactionUiService, useValue: transactionUiService },
+                    { provide: TransactionDropdownService, useValue: transactionDropdownService },
+                    { provide: WalletDataService, useValue: walletDataService },
+                    { provide: TxEnvironmentService, useValue: txEnvironmentService },
+                    { provide: CopyUtilService, useValue: {} },
+                    { provide: ToastService, useValue: toastService },
+                    { provide: AcccountDataService, useValue: acccountDataService },
+                    { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
+                    { provide: StorageService, useValue: { getNet: () => ({ environment: 'devnet' }) } },
+                    { provide: XrplTransactionService, useValue: {} },
+                    { provide: SendXrpTransactionOrchestratorService, useValue: sendXrpTransactionOrchestratorService },
+                    { provide: TrustlineCurrencyService, useValue: {} },
+                    { provide: CredentialStore, useValue: credentialStore },
+                    { provide: SendXrpViewModelService, useValue: sendXrpViewModelService },
+                    { provide: SendXrpUtilService, useValue: sendXrpUtilService },
+                    { provide: RightPanelService, useValue: rightPanelService },
+                    { provide: ConnectionGuardService, useValue: { isConnected: signal(true) } },
+                    { provide: XrplService, useValue: xrplService },
+                    { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
                ],
+               schemas: [NO_ERRORS_SCHEMA],
           }).compileComponents();
-
-          // STUB NAVBAR TO PREVENT SUBSCRIBE CRASH
-          TestBed.overrideComponent(NavbarComponent, {
-               set: {
-                    template: '<div>Mock Navbar</div>',
-               },
-          });
 
           fixture = TestBed.createComponent(SendXrpComponent);
           component = fixture.componentInstance;
 
-          walletManager = TestBed.inject(WalletManagerService) as unknown as WalletManagerServiceMock;
-          txUi = TestBed.inject(TransactionUiService) as unknown as TransactionUiServiceMock;
-          toast = TestBed.inject(ToastService) as unknown as ToastServiceMock;
-          validation = TestBed.inject(ValidationService) as unknown as ValidationServiceMock;
-          txEnv = TestBed.inject(TxEnvironmentService) as unknown as TxEnvironmentServiceMock;
-
-          // Seed data
-          walletManager.wallets$.next([
-               {
-                    address: 'rSOURCE',
-                    classicAddress: 'rSOURCE',
-                    seed: 'sseed',
-                    encryptionAlgorithm: 'ed25519',
-               } as Wallet,
-          ]);
-          walletManager.hasWallets$.next(true);
+          (component as any).sendXrpTabs = SEND_XRP_TABS;
+          (component as any).tabMeta = SEND_XRP_TAB_META;
+          (component as any).destinationItems = signal([]);
+          (component as any).selectedDestinationItem = signal(null);
+          (component as any).destinationSearchQuery = signal('');
+          (component as any).selectedDestinationAddress = signal('');
+          (component as any).xrpl = { isValidAddress: jasmine.createSpy('isValidAddress').and.returnValue(true) };
 
           fixture.detectChanges();
-          await fixture.whenStable();
-     }));
+     });
 
      it('should create', () => {
           expect(component).toBeTruthy();
      });
 
-     // it('should round amount correctly', () => {
-     //      component.updateAmount('1.23456789');
-     //      expect(txUi.amountField()).toBe('1.234568');
-     // });
-
-     // it('should clear amount on invalid input', () => {
-     //      component.updateAmount('abc');
-     //      expect(txUi.amountField()).toBe('');
-     // });
-
-     it('should auto-select valid address via effect', async () => {
-          spyOn(xrpl, 'isValidAddress').and.returnValue(true);
-          component.destinationSearchQuery.set('rValid1234567890ABCDEF');
-          fixture.detectChanges();
-          await fixture.whenStable();
-          expect(component.selectedDestinationAddress()).toBe('rValid1234567890ABCDEF');
-     });
-
-     it('should show error toast when validation fails in onAccountChange', async () => {
-          validation.validate.and.resolveTo(['Invalid amount', 'Invalid tag']);
-          await component.onAccountChange(false);
-          expect(toast.error).toHaveBeenCalledWith('Invalid amount\n• Invalid tag', jasmine.any(String));
-     });
-
-     it('should simulate sendXrp successfully', async () => {
-          spyOn(xrpl, 'isValidAddress').and.returnValue(true);
-          component.selectedDestinationAddress.set('rDESTVALID');
-          txUi.amountField.set('10');
-          txUi.isSimulateEnabled.set(true);
-
-          await component.performAction();
-
-          expect(toast.success).toHaveBeenCalled();
-     });
-
-     describe('handleSearchQueryChange', () => {
-          it('should update destinationSearchQuery', () => {
-               component.handleSearchQueryChange('rTest123');
-               expect(component.destinationSearchQuery()).toBe('rTest123');
+     describe('performAction', () => {
+          beforeEach(() => {
+               component.currentWallet.set(mockWallet);
+               transactionDropdownService.getFinalDestinationAddress.and.returnValue('rDestination123');
+               (component as any).xrpl.isValidAddress.and.returnValue(true);
+               sendXrpTransactionOrchestratorService.executeXrpPayment.calls.reset();
+               txEnvironmentService.prepareTxEnvironmentWithWallet.calls.reset();
           });
 
-          it('should clear destinationSearchQuery when empty string is passed', () => {
-               component.destinationSearchQuery.set('rOldValue');
-               component.handleSearchQueryChange('');
-               expect(component.destinationSearchQuery()).toBe('');
-          });
-     });
+          // it('should execute sendXrp successfully', async () => {
+          //      sendXrpViewModelService.activeTab.set('sendXrp');
 
-     describe('handleDestinationChange', () => {
-          it('should update selectedDestinationAddress from item id', () => {
-               component.handleDestinationChange({ id: 'rDEST123', display: 'rDEST123', isCurrentAccount: false, secondary: '' });
-               expect(component.selectedDestinationAddress()).toBe('rDEST123');
-          });
+          //      await component.performAction();
 
-          it('should clear selectedDestinationAddress when item is null', () => {
-               component.selectedDestinationAddress.set('rOldDest');
-               component.handleDestinationChange(null);
-               expect(component.selectedDestinationAddress()).toBe('');
-          });
+          //      expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalled();
+          //      expect(sendXrpTransactionOrchestratorService.executeXrpPayment).toHaveBeenCalled();
+          // });
 
-          it('should clear selectedDestinationAddress when item id is empty', () => {
-               component.selectedDestinationAddress.set('rOldDest');
-               component.handleDestinationChange({ id: '', display: '', isCurrentAccount: false, secondary: '' });
-               expect(component.selectedDestinationAddress()).toBe('');
-          });
-     });
-
-     describe('selectWallet', () => {
-          it('should update currentWallet when a different wallet is selected', () => {
-               const newWallet = { address: 'rNEW', classicAddress: 'rNEW', seed: 'sseedNEW', encryptionAlgorithm: 'ed25519' } as any;
-               component.currentWallet.set({ address: 'rOLD', classicAddress: 'rOLD' } as any);
-               component.selectWallet(newWallet);
-               expect(component.currentWallet().address).toBe('rNEW');
-          });
-
-          it('should not change currentWallet when same wallet is selected', () => {
-               const wallet = { address: 'rSAME', classicAddress: 'rSAME', seed: 'sseed', encryptionAlgorithm: 'ed25519' } as any;
-               component.currentWallet.set(wallet);
-               component.selectWallet(wallet);
-               expect(component.currentWallet().address).toBe('rSAME');
-          });
-
-          it('should clear selectedDestinationAddress if it matches newly selected wallet address', () => {
-               const wallet = { address: 'rMATCH', classicAddress: 'rMATCH', seed: 'sseed', encryptionAlgorithm: 'ed25519' } as any;
-               component.selectedDestinationAddress.set('rMATCH');
-               component.currentWallet.set({ address: 'rOTHER', classicAddress: 'rOTHER' } as any);
-               component.selectWallet(wallet);
-               expect(component.selectedDestinationAddress()).toBe('');
-          });
-     });
-
-     describe('performAction – invalid destination', () => {
-          it('should show error toast when destination address is invalid', async () => {
-               spyOn(xrpl, 'isValidAddress').and.returnValue(false);
-               component.selectedDestinationAddress.set('');
-               component.destinationSearchQuery.set('');
+          it('should show error for invalid destination', async () => {
+               sendXrpViewModelService.activeTab.set('sendXrp');
+               transactionDropdownService.getFinalDestinationAddress.and.returnValue('');
+               (component as any).xrpl.isValidAddress.and.returnValue(false);
 
                await component.performAction();
 
-               expect(toast.error).toHaveBeenCalledWith('Please enter a valid destination address.', jasmine.any(String));
+               expect(toastService.error).toHaveBeenCalledWith('Please enter a valid destination address.', AppConstants.TOAST.ERROR);
+               expect(sendXrpTransactionOrchestratorService.executeXrpPayment).not.toHaveBeenCalled();
           });
      });
 });

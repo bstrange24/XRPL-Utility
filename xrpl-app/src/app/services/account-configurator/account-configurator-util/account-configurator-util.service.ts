@@ -35,8 +35,8 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly modifyMultiSignSpecificKeys = ['signerQuorum'] as const;
      readonly modifyDepositAuthSpecificKeys = [] as const;
      readonly accountFlagsConfig = XRPL_ACCOUNT_FLAGS_CONFIG;
-     readonly accountConfigTabs = ACCOUNT_CONFIG_TABS;
-     readonly accountConfigTabsMeta = ACCOUNT_CONFIG_TAB_META;
+     accountConfigTabs = ACCOUNT_CONFIG_TABS;
+     accountConfigTabsMeta = ACCOUNT_CONFIG_TAB_META;
 
      readonly FLAG_VALUES = xrpl.AccountSetAsfFlags;
      flags: XrplAccountFlags = {
@@ -109,7 +109,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           }
      }
 
-     readonly actionHandlers: Record<string, (config: AccountConfig, enabled: string) => Promise<any>> = {
+     actionHandlers: Record<string, (config: AccountConfig, enabled: string) => Promise<any>> = {
           modifyAccountFlags: config => this.handleModifyAccountFlags(config),
           modifyDepositAuth: (config, enabled) => this.handleModifyDepositAuth(config, enabled),
           modifyMetaData: (config, enabled) => this.handleModifyMetaData(config, enabled),
@@ -125,7 +125,6 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
                return;
           }
 
-          // const operations: Array<{ operation: 'SetFlag' | 'ClearFlag'; flagValue: string; flagName: string }> = [];
           const operations: Array<{
                operation: 'SetFlag' | 'ClearFlag';
                flagValue: number;
@@ -152,7 +151,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           config.operations = operations;
 
           try {
-               return this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
+               return await this.accountConfiguratorOrchestratorService.executeAccountSetFlagsTx('modifyAccountFlags', config);
           } catch (error: any) {
                throw new Error(error.message || 'Transaction failed');
           }
@@ -260,7 +259,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           config.authorizeFlag = enabled;
 
           try {
-               return this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
+               return await this.accountConfiguratorOrchestratorService.executeDepositAuthTx('modifyDepositAuth', config);
           } catch (error: any) {
                console.error('Error modifying depist auth', error);
                throw new Error(error.message || 'Transaction failed');
@@ -297,7 +296,7 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           console.log('config: ', config.account);
 
           try {
-               return this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
+               return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMultiSigners', config);
           } catch (error: any) {
                console.error('Error modifying multi sign', error);
                throw new Error(error.message || 'Transaction failed');

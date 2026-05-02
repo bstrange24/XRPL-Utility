@@ -82,6 +82,10 @@ npm install five-bells-condition@5.0.1
 npm install @ng-icons/core @ng-icons/feather-icons
 npm install @ngrx/signals@19 --legacy-peer-deps
 npm i -g @xahau/hooks-cli
+npm install ang-jsoneditor jsoneditor
+npm install @codemirror/view @codemirror/state @codemirror/commands @codemirror/language @codemirror/lang-json @codemirror/theme-one-dark @uiw/codemirror-theme-vscode
+npm install @codemirror/lint
+npm install @codemirror/basic-setup
 npm install prismjs
 npm install @types/prismjs --save-dev
 npm install --save-dev eslint-plugin-simple-import-sort
@@ -103,12 +107,6 @@ docker run -p 4000:4000 hook-compiler
 curl -X POST http://localhost:4000/compile \
  -H "Content-Type: application/json" \
  -d '{"requireCredential": true}'
-
-Maybe
-npm install ang-jsoneditor jsoneditor
-npm install @codemirror/view @codemirror/state @codemirror/commands @codemirror/language @codemirror/lang-json @codemirror/theme-one-dark @uiw/codemirror-theme-vscode
-npm install @codemirror/lint
-npm install @codemirror/basic-setup
 
 # 1. Update Angular CLI & Core (you likely already did this)
 
@@ -135,8 +133,6 @@ npm install
 # 2d. Start dev server
 
 ng serve
-
-Start without wallet derivation
 npm start
 
 ## NFT URLs
@@ -246,39 +242,6 @@ https://xrpl.org/docs/use-cases/tokenization/real-world-assets
 2. Send MPT from issuer to destiation
 3. Destination can create Escrow
 
-## DEVNET Accounts
-
-DEVNET
-Warm
-rDaM6irSxqFKT185hvAarnHpPTCHoqtrsw = 24456.999963 xrp
-snzezKX7GjVDeggt61J4pSTy2K9bC
-
-Hot
-r3ewQDZ2J922xJwEMaLLm1etfx9m91ySSG = 23325.799927 xrp
-sawq5G4Jro14pteBtEiUxbd5tkjBm
-
-Cold
-rn3GKEBSxdgXATEKbnoA9dsU94Meci6noT = 24765.59997 xrp
-snqkZJ6upDfxTVY2u8dFFp3QsnRmP
-
-## MPT Meta Data
-
-{
-"Name": "US Treasury Bill Token",
-"Identifier": "USTBT",
-"Issuer": "US Treasury",
-"IssueDate": "2024-03-25",
-"MaturityDate": "2025-03-25",
-"FaceValue": 1000,
-"InterestRate": 2.5,
-"InterestFrequency": "Quarterly",
-"Collateral": "US Government",
-"Jurisdiction": "United States",
-"RegulatoryCompliance": "SEC Regulations",
-"SecurityType": "Treasury Bill",
-"ExternalUrl": "https://example.com/t-bill-token-metadata.json"
-}
-
 ipfs://bafybeiexamplehash
 
 ## DID Data
@@ -327,11 +290,3 @@ did:xrpl:raWwLN6xwPcwpLTiuHYf8S8vFaQtRzK9ey#vcs
 VerifiableCredentialService
 https://example.com/vc/
 did:xrpl:raWwLN6xwPcwpLTiuHYf8S8vFaQtRzK9ey#keys-1
-
-Check if master key is disabled
-IF IT IS
-Check for multi sign
-Check for reg key
-
-Batch on Tickets and Account Flag Set
-Date change in Escrow, Creds

@@ -199,7 +199,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected refreshAccountObject(env: any): void {
+     protected async refreshAccountObject(env: any): Promise<void> {
           this.deleteAccountStoreService.setField('accountInfo', env.accountInfo);
           this.deleteAccountStoreService.setField('accountObjects', env.accountObjects);
           this.deleteAccountStoreService.setField('serverInfo', env.serverInfo);

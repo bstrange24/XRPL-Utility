@@ -24,19 +24,19 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
                          <!-- Account -->
                          <div class="md:col-span-5">
-                              <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Account</label>
+                              <label for="multiSignAccount" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Account</label>
                               <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" placeholder="r..." />
                          </div>
 
                          <!-- Seed -->
                          <div class="md:col-span-4">
-                              <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Seed</label>
+                              <label for="multiSignSeed" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Seed</label>
                               <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" placeholder="s..." />
                          </div>
 
                          <!-- Weight -->
                          <div class="md:col-span-3">
-                              <label class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Weight</label>
+                              <label for="multiSignWeight" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Weight</label>
                               <input type="number" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
                          </div>
                     </div>
@@ -49,7 +49,7 @@
 
           <!-- Quorum -->
           <div class="mt-6 border-t border-gray-100 pt-6">
-               <label class="mb-2 block text-sm font-semibold text-gray-900">Signer Quorum</label>
+               <label for="multiSignQuorum" class="mb-2 block text-sm font-semibold text-gray-900">Signer Quorum</label>
                <p class="mb-3 text-sm text-gray-600">Minimum total weight required to authorize a transaction</p>
                <input type="number" class="w-full max-w-xs rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
 

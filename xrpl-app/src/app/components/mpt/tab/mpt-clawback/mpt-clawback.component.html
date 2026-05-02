@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
           <!-- Select MPT -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select MPT to Clawback</label>
+               <label for="selectMptToClawback" class="block text-sm font-semibold text-gray-900">Select MPT to Clawback</label>
                <p class="text-xs text-gray-500">MPT to clawback from a holder.</p>
 
                <div class="h-[54px]">
@@ -13,7 +13,7 @@
 
           <!-- MPT Issuance ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+               <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
                <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
 
                <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
@@ -23,7 +23,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- MPT Holder (Destination) -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">MPT Holder</label>
+                    <label for="mptHolder" class="block text-sm font-semibold text-gray-900">MPT Holder</label>
                     <p class="text-xs text-gray-500">MPT holder address to clawback tokens from.</p>
 
                     <div class="h-[54px]">
@@ -33,7 +33,7 @@
 
                <!-- Amount to Clawback -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Amount to Clawback</label>
+                    <label for="amountToClawback" class="block text-sm font-semibold text-gray-900">Amount to Clawback</label>
                     <p class="text-xs text-gray-500">MPT amount to clawback from an existing holder.</p>
 
                     <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />

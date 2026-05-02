@@ -16,10 +16,10 @@ export class ChecksTransactionBuilderService {
 
      buildCreateCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any, currency: any) {
           let sendMax;
-          if (currency.currency !== 'XRP') {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
-          } else {
+          if (currency.currency === 'XRP') {
                sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amount, false).sendMax;
+          } else {
+               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
           }
 
           const tx: xrpl.CheckCreate = {
@@ -44,10 +44,10 @@ export class ChecksTransactionBuilderService {
 
      buildCashCheckTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, check: any, currency: any, trustline: any) {
           let sendMax;
-          if (currency.currencyCode !== 'XRP') {
-               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
-          } else {
+          if (currency.currencyCode === 'XRP') {
                sendMax = this.xrplTransactionService.buildSendMaxAmount('XRP', '', check.amount, false).sendMax;
+          } else {
+               sendMax = this.xrplTransactionService.buildSendMaxAmount(currency.currencyCode, currency.currencyIssuer ?? '', check.amount, false).sendMax;
           }
 
           const base: any = {

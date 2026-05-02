@@ -29,12 +29,7 @@ describe('EscrowTransactionBuilderService', () => {
           };
 
           TestBed.configureTestingModule({
-               providers: [
-                    EscrowTransactionBuilderService,
-                    { provide: UtilsService, useValue: utilsSpy },
-                    { provide: XrplTransactionService, useValue: xrplTxSpy },
-                    { provide: TrustlineUtilService, useValue: {} },
-               ],
+               providers: [EscrowTransactionBuilderService, { provide: UtilsService, useValue: utilsSpy }, { provide: XrplTransactionService, useValue: xrplTxSpy }, { provide: TrustlineUtilService, useValue: {} }],
           });
           service = TestBed.inject(EscrowTransactionBuilderService);
      });
@@ -57,7 +52,7 @@ describe('EscrowTransactionBuilderService', () => {
                const currency = { currency: 'MPT', currencyCode: 'MPT', issuer: 'rISSUER' };
                const tx = service.buildCreateEscrowTx(mockWallet, mockEnv, escrow, currency);
                expect(tx.TransactionType).toBe('EscrowCreate');
-               expect(xrplTxSpy.buildSendMaxAmount).toHaveBeenCalledWith('MPT', 'rISSUER', '', true);
+               expect(xrplTxSpy.buildSendMaxAmount).toHaveBeenCalledWith('MPT', 'rISSUER', '5', true);
           });
 
           it('should build IOU escrow transaction', () => {
@@ -135,7 +130,7 @@ describe('EscrowTransactionBuilderService', () => {
                const escrow = { escrowOwner: 'rOWNER', escrowSequenceNumber: 5, fulfillment, condition: 'CCCC' };
                const tx = service.buildFinishEscrowTx(mockWallet, mockEnv, escrow);
                const baseFee = Number(mockEnv.fee);
-               const expectedFee = baseFee * (33 + Math.ceil((fulfillment.length / 2) / 16));
+               const expectedFee = baseFee * (33 + Math.ceil(fulfillment.length / 2 / 16));
                expect(tx.Fee).toBe(expectedFee.toString());
           });
      });

@@ -1,4 +1,3 @@
-<!-- summary-item.component.html -->
 <li class="group flex items-center justify-between rounded-xl border border-gray-100 hover:border-gray-200 px-4 py-3 cursor-pointer transition-all mt-3 mb-3" [class.bg-blue-50]="selected()" [class.border-blue-300]="selected()" [class.border-red-200]="isExpired()" [class.hover:border-red-400]="isExpired()" (click)="onClick.emit()">
      <div class="flex-1 min-w-0">
           <ng-content select="[item-content]" />

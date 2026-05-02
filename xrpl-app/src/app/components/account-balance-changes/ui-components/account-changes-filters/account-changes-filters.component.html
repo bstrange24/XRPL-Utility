@@ -2,7 +2,7 @@
      <div class="flex flex-col lg:flex-row gap-6">
           <!-- Search -->
           <div class="flex-1">
-               <label class="text-sm font-semibold text-gray-900 block mb-1.5">Search</label>
+               <label for="search" class="text-sm font-semibold text-gray-900 block mb-1.5">Search</label>
                <div class="relative">
                     <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                          <lucide-icon name="search" size="18" />
@@ -19,7 +19,7 @@
           </div>
 
           <div class="flex-1">
-               <label class="text-sm font-semibold text-gray-900 block mb-1.5">Date Range</label>
+               <label for="dateRange" class="text-sm font-semibold text-gray-900 block mb-1.5">Date Range</label>
 
                <div class="flex items-center gap-3">
                     <div class="relative flex-1">
@@ -35,22 +35,6 @@
                     </button>
                </div>
           </div>
-
-          <!-- Date Range -->
-          <!-- <div class="flex-1">
-               <label class="text-sm font-semibold text-gray-900 block mb-1.5">Date Range</label>
-               <div class="flex items-center gap-3">
-                    <input type="date" class="flex-1 rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none bg-white text-gray-900" [ngModel]="store.dateRange().start ? (store.dateRange().start | date:'yyyy-MM-dd') : null" (ngModelChange)="setStartDate($event)" />
-
-                    <span class="text-gray-400">–</span>
-
-                    <input type="date" class="flex-1 rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none bg-white text-gray-900" [ngModel]="store.dateRange().end ? (store.dateRange().end | date:'yyyy-MM-dd') : null" (ngModelChange)="setEndDate($event)" />
-
-                    <button type="button" (click)="clearDateFilter()" class="px-3 py-3 text-gray-400 hover:text-gray-600 transition-colors" matTooltip="Clear date filter">
-                         <lucide-icon name="eraser" size="18" />
-                    </button>
-               </div>
-          </div> -->
      </div>
 
      <!-- Action Buttons -->

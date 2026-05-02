@@ -59,7 +59,7 @@ export class TrustlineUtilService {
                const trustLineExists = this.checkForExistingTrustline(env);
 
                if (trustLineExists) {
-                    if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects!);
+                    if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects);
                     this.trustlineStoreService.setField('trustlineAlreadyExist', true);
                } else {
                     if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
@@ -67,7 +67,7 @@ export class TrustlineUtilService {
                }
 
                if (activeTab === 'removeTrustline') {
-                    this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
+                    this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects);
                }
 
                // Use already-fetched env for balance (huge win)

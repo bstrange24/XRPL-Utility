@@ -216,7 +216,7 @@ export class ChecksTransactionViewModelService {
      selectedCheckIssuer = computed(() => {
           const check = this.selectedFullCheck();
           if (!check?.sendMax || typeof check.sendMax !== 'object') return '';
-          return (check.sendMax as any).issuer ?? '';
+          return check.sendMax.issuer ?? '';
      });
 
      private buildTxLabel(defaultText: string) {

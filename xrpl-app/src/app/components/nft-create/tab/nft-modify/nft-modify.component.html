@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">NFT Details</h4>
           <!-- Select NFT -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select NFT</label>
+               <label for="selectNft" class="block text-sm font-semibold text-gray-900">Select NFT</label>
                <p class="text-xs text-gray-500">Select an existing NFT to update its metadata.</p>
 
                <div class="h-[54px]">
@@ -13,7 +13,7 @@
 
           <!-- NFT Token ID -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
+               <label for="nftTokenID" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
                <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.nftId" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
@@ -21,7 +21,7 @@
 
           <!-- New URI -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label class="block text-sm font-semibold text-gray-900">New URI</label>
+               <label for="newURI" class="block text-sm font-semibold text-gray-900">New URI</label>
                <p class="text-xs text-gray-500">URI that points to the updated data/metadata. Max 256 bytes (hex-encoded).</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.initialURI" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
@@ -42,7 +42,7 @@
 
           <!-- Owner -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label class="block text-sm font-semibold text-gray-900">Owner</label>
+               <label for="nftOwner" class="block text-sm font-semibold text-gray-900">Owner</label>
                <p class="text-xs text-gray-500">The current owner of the NFT (must match the account submitting the update if required by flags).</p>
 
                <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />

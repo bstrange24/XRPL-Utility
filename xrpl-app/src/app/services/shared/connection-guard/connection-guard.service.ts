@@ -23,7 +23,7 @@ export class ConnectionGuardService {
 
           try {
                // Ensure we have a connection
-               const client = await this.xrplService.ensureConnection();
+               // const client = await this.xrplService.ensureConnection();
 
                // Execute the operation
                return await operation();

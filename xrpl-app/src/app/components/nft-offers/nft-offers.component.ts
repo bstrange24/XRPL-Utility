@@ -131,13 +131,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           return this.nftOffersTransactionViewModelService.offerItems().find(i => i.id === id) || null;
      });
 
-     onOfferSelected(item: any | null) {
-          if (item) {
-               this.nftCreateStoreService.setField('nftId', item?.nftId || '');
-               this.nftCreateStoreService.setField('nftOfferId', item?.index || '');
-          }
-     }
-
      onNftSelected(item: any | null) {
           if (item) {
                this.nftCreateStoreService.setField('nftId', item?.nftId || '');

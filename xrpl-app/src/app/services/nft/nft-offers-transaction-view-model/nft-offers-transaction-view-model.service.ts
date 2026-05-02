@@ -41,8 +41,6 @@ export class NftOffersTransactionViewModelService {
           if (!wallet?.address) return null;
 
           const walletName = wallet.name || wallet.address.slice(0, 10) + '...';
-          const baseUrl = this.txUiService.explorerUrl();
-          const address = wallet.address;
 
           let offers: any[] = [];
           switch (this.activeTab()) {
@@ -59,7 +57,7 @@ export class NftOffersTransactionViewModelService {
 
           const count = offers.length;
 
-          const links = count > 0 ? `<a href="${baseUrl}account/${address}/nft-offers" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Offers</a>` : '';
+          const links = ''; // = count > 0 ? `<a href="${baseUrl}account/${address}/nft-offers" target="_blank" rel="noopener noreferrer" class="xrpl-win-link">View Offers</a>` : '';
 
           const offersToShow = true
                ? offers.map(o => {

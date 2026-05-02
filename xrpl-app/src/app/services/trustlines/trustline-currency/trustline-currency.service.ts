@@ -123,7 +123,7 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
                this.currencyStore.setIssuer('');
                return;
           }
-          this.currencyStore.setIssuer(issuers[0]); // already correct for your BOB case
+          this.currencyStore.setIssuer(issuers[0]);
      }
 
      selectIssuer(item: any) {

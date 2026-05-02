@@ -45,7 +45,12 @@ export class AmmTransactionViewModelService {
                          ? 'Native currency'
                          : (() => {
                                 const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-                                return count === 0 ? 'No issuers' : `${count} issuer${count !== 1 ? 's' : ''}`;
+                                if (count === 0) {
+                                     return 'No issuers';
+                                }
+
+                                const plural = count === 1 ? '' : 's';
+                                return `${count} issuer${plural}`;
                            })(),
           }));
      });

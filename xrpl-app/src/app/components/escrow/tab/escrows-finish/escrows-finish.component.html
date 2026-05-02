@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">Escrow Details</h4>
           <!-- Select Escrow -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+               <label for="selectEscrow" class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
                <p class="text-xs text-gray-500">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
 
                <div class="h-[54px]">
@@ -16,21 +16,21 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Escrow Sequence ID -->
                <div class="space-y-2 mt-4">
-                    <label class="block text-sm font-semibold text-gray-900">Escrow Sequence ID</label>
+                    <label for="escrowID" class="block text-sm font-semibold text-gray-900">Escrow Sequence ID</label>
                     <p class="text-xs text-gray-500">Sequence ID generated when the escrow was created.</p>
                     <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Escrow Owner -->
                <div class="space-y-2 mt-4">
-                    <label class="block text-sm font-semibold text-gray-900">Escrow Owner</label>
+                    <label for="escrowOwner" class="block text-sm font-semibold text-gray-900">Escrow Owner</label>
                     <p class="text-xs text-gray-500">The account that originally created the escrow.</p>
                     <input type="text" [ngModel]="escrowStoreService.escrowOwner()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Amount -->
                <div>
-                    <label class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
+                    <label for="escrowAmount" class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
                     <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
                     <input type="text" [value]="viewModel.selectedEscrowAmount()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
@@ -41,13 +41,13 @@
           @if (isConditional) {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Condition</label>
+                    <label for="escrowCondition" class="block text-sm font-semibold text-gray-900">Condition</label>
                     <p class="text-xs text-gray-500">Hex value matching the previously-supplied PREIMAGE-SHA-256 crypto-condition.</p>
                     <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>
 
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Fulfillment</label>
+                    <label for="escrowFulfillment" class="block text-sm font-semibold text-gray-900">Fulfillment</label>
                     <p class="text-xs text-gray-500">Hex value of the PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
                     <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
                </div>

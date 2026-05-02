@@ -121,7 +121,7 @@ export class SignTransactionsOrchestratorService {
      // Submit Transaction
      async submitTransaction(options: SubmitTxOptions): Promise<{ success: boolean; hash?: string; error?: string; response?: any }> {
           try {
-               const { txJson, outputField, env, isSimulateEnabled, txType } = options;
+               const { txJson, outputField, env, isSimulateEnabled } = options;
 
                let response: any;
 
@@ -158,6 +158,7 @@ export class SignTransactionsOrchestratorService {
                this.utilsService.addMemoField(tx, memos);
                return JSON.stringify(tx, null, 2);
           } catch (error: any) {
+               console.error(`Error applying memo to JSON: ${error.message}`);
                return txJson;
           }
      }
@@ -204,7 +205,7 @@ export class SignTransactionsOrchestratorService {
           };
 
           for (const field in defaults) {
-               if (Object.prototype.hasOwnProperty.call(editedJson, field) && defaults[field].includes(editedJson[field])) {
+               if (Object.hasOwn(editedJson, field) && defaults[field].includes(editedJson[field])) {
                     delete editedJson[field];
                }
           }

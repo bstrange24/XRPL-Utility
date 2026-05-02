@@ -5,14 +5,14 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
                <!-- XRP Amount -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">XRP Amount</label>
+                    <label for="xrpAmount" class="block text-sm font-semibold text-gray-900">XRP Amount</label>
                     <p class="text-xs text-gray-500">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
                     <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
 
                <!-- Settle Delay -->
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Settle Delay</label>
+                    <label for="settleDely" class="block text-sm font-semibold text-gray-900">Settle Delay</label>
                     <p class="text-xs text-gray-500">Amount of time the source address must wait before closing the channel if it has unclaimed XRP.</p>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.settleDelay" name="settleDelay" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
                </div>
@@ -20,7 +20,7 @@
 
           <!-- Destination -->
           <div class="space-y-2 mt-3">
-               <label class="block text-sm font-semibold text-gray-900">Destination</label>
+               <label for="destination" class="block text-sm font-semibold text-gray-900">Destination</label>
                <p class="text-xs text-gray-500">The unique address to receive XRP claims against this channel. Select destination from the dropdown or manually enter a new destination.</p>
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationChanged.emit($event)" placeholder="Enter or select destination address" />

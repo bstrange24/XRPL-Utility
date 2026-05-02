@@ -3,7 +3,7 @@
           <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
           <!-- Select MPT to Destroy -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Select MPT to Destroy</label>
+               <label for="selectMptToDestroy" class="block text-sm font-semibold text-gray-900">Select MPT to Destroy</label>
                <p class="text-xs text-gray-500">MPT to destroy (must have zero holders).</p>
 
                <div class="h-[54px]">
@@ -13,7 +13,7 @@
 
           <!-- MPT Issuance ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
+               <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
                <p class="text-xs text-gray-500">Identifies the MPTokenIssuance to be destroyed.</p>
 
                <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />

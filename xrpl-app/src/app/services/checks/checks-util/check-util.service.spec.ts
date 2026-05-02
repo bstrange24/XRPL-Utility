@@ -195,8 +195,9 @@ describe('CheckUtilService', () => {
           });
 
           it('should return true when expiration is in the past', () => {
-               // 0 = Jan 1 2000 in ripple time, which is definitely in the past
-               expect(service.isCheckExpired(0)).toBeTrue();
+               // 30 days after Jan 1, 2000 (still 26 years ago)
+               const thirtyDaysInSeconds = 30 * 24 * 60 * 60;
+               expect(service.isCheckExpired(thirtyDaysInSeconds)).toBeTrue();
           });
 
           it('should return false when expiration is far in the future', () => {

@@ -1,4 +1,4 @@
-import { Component, inject, output, ChangeDetectionStrategy, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, output, ChangeDetectionStrategy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -17,7 +17,7 @@ import flatpickr from 'flatpickr';
      templateUrl: './account-changes-filters.component.html',
      styleUrl: './account-changes-filters.component.css',
 })
-export class AccountChangesFiltersComponent {
+export class AccountChangesFiltersComponent implements AfterViewInit {
      public readonly store = inject(AccountChangesStoreService);
      public readonly orchestrator = inject(AccountChangesOrchestratorService);
      @ViewChild('rangeInput', { static: true }) rangeInput!: ElementRef;

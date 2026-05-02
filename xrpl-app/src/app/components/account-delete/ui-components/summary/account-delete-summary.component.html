@@ -1,4 +1,3 @@
-<!-- delete-account-summary.component.html -->
 @if (info(); as infoData) {
 <app-summary-container [walletName]="infoData.walletName" [summaryText]="deleteAccountViewModelService.summaryMessage()" [itemCount]="infoData.blockers.length" [links]="null" [buttonLabel]="'blocking objects'" [emptyStateMessage]="getEmptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
      <!-- Custom Content for Delete Account -->

@@ -4,7 +4,7 @@
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
           <div class="mb-4">
                <div class="flex items-center justify-between mb-2">
-                    <label class="text-sm font-semibold text-gray-900">DID Document</label>
+                    <label for="didDocument" class="text-sm font-semibold text-gray-900">DID Document</label>
                     <div class="flex items-center gap-2">
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDocumentEditor.format()">Format JSON</button>
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('document')">Clear DID Document</button>
@@ -29,7 +29,7 @@
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
           <div class="mb-4">
                <div class="flex items-center justify-between mb-2">
-                    <label class="text-sm font-semibold text-gray-900">URI Data</label>
+                    <label for="uriData" class="text-sm font-semibold text-gray-900">URI Data</label>
                     <div class="flex items-center gap-2">
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="uriEditor.format()">Format JSON</button>
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('uri')">Clear URI Data</button>
@@ -54,7 +54,7 @@
      <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
           <div class="mb-4">
                <div class="flex items-center justify-between mb-2">
-                    <label class="text-sm font-semibold text-gray-900">DID Data</label>
+                    <label for="didData" class="text-sm font-semibold text-gray-900">DID Data</label>
                     <div class="flex items-center gap-2">
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDataEditor.format()">Format JSON</button>
                          <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('data')">Clear DID Data</button>

@@ -249,8 +249,9 @@ export class CheckUtilService extends PerformanceBaseComponent {
 
      isCheckExpired = (expiration?: number): boolean => {
           if (!expiration) return false;
-          const rippleEpochStart = new Date('2000-01-01T00:00:00Z').getTime() / 1000;
-          const expirationUnix = expiration + rippleEpochStart;
+          // const rippleEpochStart = new Date('2000-01-01T00:00:00Z').getTime() / 1000;
+          // const expirationUnix = expiration + rippleEpochStart;
+          const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
           const nowUnix = Math.floor(Date.now() / 1000);
           return nowUnix > expirationUnix;
      };

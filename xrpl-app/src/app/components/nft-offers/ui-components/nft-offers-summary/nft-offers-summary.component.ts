@@ -100,7 +100,8 @@ export class NftOffersSummaryComponent {
      formatAmount(amount: any): string {
           // Check if it's an IOU object
           if (typeof amount === 'object' && amount !== null && amount.value && amount.currency) {
-               return `${amount.value} ${amount.currency} ${amount.issuer ? `(Issuer: ${amount.issuer})` : ''}`;
+               const issuerPart = amount.issuer ? ` (Issuer: ${amount.issuer})` : '';
+               return `${amount.value} ${amount.currency}${issuerPart}`;
           }
           // Otherwise treat as XRP (string number in drops)
           return `${amount}`;
