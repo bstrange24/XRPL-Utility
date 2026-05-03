@@ -308,25 +308,29 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/did/did-transaction-orchestrator/did-transaction-orchestrator.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/did/did-util/did-util.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/did/did-view-model/did-view-model.service.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/currency/currency-store/currency-store.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/currency/currency-dropdown/currency-dropdown.service.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-store/offer-store.service.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/wallets/wallets-store/wallets-store.service.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/account-objects-store/account-objects-store.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/navbar/navbar-store.service.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/toast/toast.service.spec.ts
-	
-	
-	
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-utils/offer-utils.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-transaction-view-model/offer-transaction-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-transaction-orchestrator/offer-transaction-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-transaction-builder/offer-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-currency/offer-currency.service.spec.ts
+
 ////////////////// Utils //////////////////	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/validation/transaction-validation-rule.service.spec.ts
-	
-	
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/util-service/utils.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/download-util/download-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service.spec.ts
+
+npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-util/payment-channel-util.service.spec.ts
+
+																			  src\app\services\nft\nft-util\nft-util.service.spec.ts
+npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-util/nft-util.service.spec.ts
 
 
 ////////////////// Core //////////////////	
