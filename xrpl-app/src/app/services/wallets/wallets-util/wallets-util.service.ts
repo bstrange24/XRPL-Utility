@@ -158,6 +158,9 @@ export class WalletsUtilService {
      }
 
      isValidMnemonic(mnemonic: string): boolean {
+          if (mnemonic === null || mnemonic === undefined || mnemonic === '') {
+               return false;
+          }
           const cleaned = this.normalizeMnemonic(mnemonic);
           const words = cleaned.split(' ');
 

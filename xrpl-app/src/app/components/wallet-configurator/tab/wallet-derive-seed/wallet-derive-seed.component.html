@@ -71,7 +71,7 @@
 
           <!-- Button Row -->
           <div class="flex items-center gap-3 pt-2">
-               <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading" class="btn-blue">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+               <button type="button" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading || !walletsStoreService.seedValid()" class="btn-blue">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
           </div>
      </div>
 </div>

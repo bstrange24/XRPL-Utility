@@ -33,7 +33,7 @@
 
           <!-- Button Row -->
           <div class="flex items-center gap-3 pt-2">
-               <button type="button" class="btn-blue" (click)="walletConfiguratorComponent.deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+               <button type="button" class="btn-blue" (click)="walletConfiguratorComponent.deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading || !walletsStoreService.mnemonicValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
           </div>
 
           @if (walletsStoreService.mnemonicInput().trim().length > 0 && !walletsStoreService.mnemonicValid()) {

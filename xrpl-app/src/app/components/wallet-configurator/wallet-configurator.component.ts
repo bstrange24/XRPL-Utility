@@ -143,7 +143,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                walletType: 'mnemonic',
                mode: 'import',
                input: () => this.walletsStoreService.mnemonic(),
-               validate: () => (this.walletsUtilService.isValidMnemonic(this.walletsStoreService.mnemonic()) ? null : this.walletsStoreService.errorMessage()),
+               validate: () => (this.walletsUtilService.isValidMnemonic(this.walletsStoreService.mnemonic()) ? null : 'Invalid mnemonic value.'),
                successMessage: addr => `Successfully added ${addr}`,
           });
           if (result.success && result.wallet) {
