@@ -6,6 +6,7 @@ import * as xrpl from 'xrpl';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { AppConstants } from '../../../core/app.constants';
 import { MptUtilService } from '../mpt-util/mpt-util.service';
+import { XrplWrapperService } from '../../xrpl-wrapper/xrpl-wrapper.service';
 
 @Injectable({
      providedIn: 'root',
@@ -15,6 +16,7 @@ export class MptTransactionBuilderService {
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly mptUtilService = inject(MptUtilService);
+     public readonly xrplWrapper = inject(XrplWrapperService);
 
      buildCreateMptTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, mpt: any, account?: any, txOptions?: any): xrpl.MPTokenIssuanceCreate {
           const tx: xrpl.MPTokenIssuanceCreate = {
@@ -48,7 +50,7 @@ export class MptTransactionBuilderService {
           }
 
           if (mpt.metaData) {
-               tx.MPTokenMetadata = xrpl.convertStringToHex(mpt.metaData);
+               tx.MPTokenMetadata = this.xrplWrapper.convertStringToHex(mpt.metaData);
           }
 
           if (this.mptUtilService.flags) {

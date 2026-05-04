@@ -227,6 +227,11 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           const currentTab = this.nftOffersTransactionViewModelService.activeTab();
           const wallet = this.currentWallet();
 
+          if (!this.nftCreateStoreService.nftId()) {
+               this.toastService.error('NFT Token ID can not be empty.', AppConstants.TOAST.ERROR);
+               return;
+          }
+
           let env: any = null;
           try {
                env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
@@ -248,13 +253,13 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           if (currentTab === 'buyNft') {
                const sellOffer = env.nftSellOffersObject.result?.offers || [];
                if (!Array.isArray(sellOffer) || sellOffer.length === 0) {
-                    this.txUiService.setError(`No sell offers found for this NFT ${this.nftCreateStoreService.nftId()}`);
+                    this.toastService.error(`No sell offers found for this NFT ${this.nftCreateStoreService.nftId()}`, AppConstants.TOAST.ERROR);
                     return;
                }
 
                const validOffers = this.nftUtilService.filterOffers(sellOffer, wallet);
                if (validOffers.length === 0) {
-                    this.txUiService.setError('No matching sell offers found for this wallet.');
+                    this.toastService.error(`No matching sell offers found for this wallet.`, AppConstants.TOAST.ERROR);
                     return;
                }
 
@@ -265,19 +270,20 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                console.log('First sell offer:', validOffers[0]);
 
                if (selectedOffer?.Destination) {
-                    this.txUiService.setError(`This NFT is only purchasable by: ${selectedOffer.Destination}`);
+                    this.toastService.error(`This NFT is only purchasable by: ${selectedOffer.Destination}`, AppConstants.TOAST.ERROR);
                     return;
                }
 
                if (selectedOffer?.owner === wallet.classicAddress) {
-                    this.txUiService.setError('You already own this NFT.');
+                    this.toastService.error(`You already own this NFT.`, AppConstants.TOAST.ERROR);
                     return;
                }
           }
 
           if (currentTab === 'buyNftOffer') {
                if (!env.nftBuyOffersObject || env.nftBuyOffersObject.result?.offers?.length <= 0) {
-                    return this.txUiService.setError(`No NFT offers for ${this.nftCreateStoreService.nftId()} were found for this account.`);
+                    this.toastService.error(`No NFT offers for ${this.nftCreateStoreService.nftId()} were found for this account.`, AppConstants.TOAST.ERROR);
+                    return;
                }
                this.nftCreateStoreService.setField('nftOwnerAddress', env.nftBuyOffersObject.result.offers[0].owner);
           }

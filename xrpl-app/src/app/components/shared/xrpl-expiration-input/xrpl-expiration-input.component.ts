@@ -159,17 +159,6 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           }
      }
 
-     toggle1(event: Event) {
-          const checked = (event.target as HTMLInputElement).checked;
-          this.enabled.set(checked);
-
-          if (!checked) {
-               this.setExpiration('');
-          } else if (!this.expirationSignal()) {
-               this.setNow();
-          }
-     }
-
      setNow() {
           const now = new Date();
           now.setMilliseconds(0);

@@ -105,6 +105,10 @@ The below commands are to run individual test for a particular file.
 
 ////////////////// Delegate //////////////////	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/delegate/delegate-store/delegate-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/delegate/delegate-transaction-builder/delegate-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/delegate/delegate-transaction-orchestrator/delegate-transaction-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/delegate/delegate-transaction-view-model/delegate-transaction-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/delegate/delegate-util/delegate-util.service.spec.ts
 	
 	
 ////////////////// MPT //////////////////
@@ -121,6 +125,10 @@ The below commands are to run individual test for a particular file.
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/mpt/ui-components/summary/summary.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/mpt/ui-components/mpt-requirements-info/mpt-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/mpt/mpt-store/mpt-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/mpt/mpt-util/mpt-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/mpt/mpt-transaction-builder/mpt-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/mpt/mpt-orchestrator/mpt-orchestrator.service.service.spec.ts
 
 ////////////////// NFT Create //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-create/nft-create.component.spec.ts
@@ -133,17 +141,22 @@ The below commands are to run individual test for a particular file.
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-create/ui-components/nft-requirements-info/nft-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-create/ui-components/nft-create-summary/nft-create-summary.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-store/nft-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-orchestrator/nft-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-transaction-builder/nft-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-transaction-view-model/nft-transaction-view-model.service.spec.ts
 
 ////////////////// NFT Offers //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/nft-offers.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/constants/nft-offers.constants.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/constants/nft-offers.ui.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/tab/nft-buy-offers/nft-buy-offers.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/tab/nft-cancel-offers/nft-cancel-offers.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/tab/nft-sell/nft-sell.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/tab/nft-sell-offers/nft-sell-offers.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/nft-offers/ui-components/nft-offers-requirements-info/nft-offers-requirements-info.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-offers-orchestrator/nft-offers-orchestrator.service.spec.ts
+	
 
 ////////////////// Offers //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/offer/offer.component.spec.ts
@@ -164,12 +177,16 @@ The below commands are to run individual test for a particular file.
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-close/payment-channel-close.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-flags/payment-channel-flags.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-create/payment-channel-create.component.spec.ts
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-fund/payment-channel-fund.component.spec.ts
+npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-fund/payment-channel-fund.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-create/payment-channel-create.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/tab/payment-channel-renew/payment-channel-renew.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/ui-components/payment-channel-requirements-info/payment-channel-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/payment-channel/ui-components/payment-channel-summary/payment-channel-summary.component.spec.ts																	  
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-store/payment-channel-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-orchestrator/payment-channel-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-transaction-builder/payment-channel-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-transaction-view-model/payment-channel-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service.spec.ts
 
 ////////////////// Permissioned Domain //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/permissioned-domain/permissioned-domain.component.spec.ts
@@ -180,14 +197,20 @@ The below commands are to run individual test for a particular file.
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/permissioned-domain/tab/permission-domain-set-form/permission-domain-set-form.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/permissioned-domain/ui-components/summary/permissioned-domains-summary.component.spec.ts																		      
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/permissioned-domain/permissioned-domain-orchestrator/permissioned-domain-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/permissioned-domain/permissioned-domain-transaction-builder/permissioned-domain-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service.spec.ts
 	
 ////////////////// Send XRP //////////////////
-npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/send-xrp.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/send-xrp.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/constants/send-xrp.constants.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/constants/send-xrp.ui.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/ui-components/send-xrp-requirements-info/send-xrp-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/ui-components/summary/send-xrp-summary.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/tab/send-xrp-form/send-xrp-form.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/send-xrp/send-xrp-view-model/send-xrp-view-model.service.spec.ts
 
 ////////////////// Sign Tx //////////////////
 
@@ -195,6 +218,8 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/sign-transactions/constants/sign-transaction.ui.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/sign-transactions/ui-components/sign-transaction-requirements-info/sign-transaction-requirements-info.component.spec.ts																      
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/sign-transactions/sign-transaction-store/sign-transation-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/sign-transactions/sign-transactions-orchestrator/sign-transactions-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/sign-transactions/sign-transactions-util/sign-transaction-util.service.spec.ts
 	
 ////////////////// Tickets //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/tickets/tickets.component.spec.ts
@@ -204,6 +229,9 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/tickets/ui-components/tickets-requirements-info/tickets-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/tickets/ui-components/summary/tickets-summary.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/tickets/tickets-store/tickets-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/tickets/tickets-orchestrator/tickets-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/tickets/tickets-transaction-builder/tickets-transaction-builder.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/tickets/tickets-util/tickets-util.service.spec.ts
 
 ////////////////// Trustlines //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/trustlines/trustlines.component.spec.ts
@@ -217,6 +245,11 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/trustlines/ui-components/summary/summary.component.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/trustlines/ui-components/trustline-requirements-info/trustline-requirements-info.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-store/trustline-store.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-transaction-orchestrator/trustline-transaction-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-transaction-orchestrator/trustline-transaction-orchestrator.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-utils/trustline-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-view-model/trustline-view-model.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/trustlines/trustline-currency/trustline-currency.service.spec.ts
 
 ////////////////// Wallet Generator-Configurator //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/wallet-configurator/wallet-configurator.component.spec.ts
@@ -236,6 +269,7 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/wallets/wallets-util/wallets-util.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/wallets/walletDestinationBase.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/wallets/wallets-view-model/wallets-view-model.service.spec.ts
 
 ////////////////// Shared //////////////////
 
@@ -249,10 +283,10 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/transaction-options/transaction-options.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/transaction-options-section/transaction-options-section.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/transaction-preview/transaction-preview.component.spec.ts
-	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/stores/ledger.store.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/stores/wallet.store.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/stores/xrpl-tx-options.store.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/destination-dropdown/destination-dropdown.service.spec.ts
 
 ////////////////// Shared - Ui Components //////////////////
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/shared/ui-components/navbar/navbar.component.spec.ts
@@ -320,18 +354,27 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-transaction-orchestrator/offer-transaction-orchestrator.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-transaction-builder/offer-transaction-builder.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/offer/offer-currency/offer-currency.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/copy-util/copy-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/local-storage/storage.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/connection-guard/connection-guard.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/shared/log-service/log-service.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/xrpl-transactions/xrpl-transaction.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/xrpl-services/xrpl.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/xrpl-cache/xrpl-cache.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/batch/batch-service.service.spec.ts
 
 ////////////////// Utils //////////////////	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/validation/transaction-validation-rule.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/util-service/utils.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/download-util/download-util.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service.spec.ts
-
-npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-util/payment-channel-util.service.spec.ts
-
-																			  src\app\services\nft\nft-util\nft-util.service.spec.ts
-npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-util/nft-util.service.spec.ts
-
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/payment-channel/payment-channel-util/payment-channel-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/nft/nft-util/nft-util.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/network/network-service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/right-panel/right-panel.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/sufficent-account-balance/sufficent-account-balance.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/theme/theme.service.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/utils/animations/animations.service.spec.ts
 
 ////////////////// Core //////////////////	
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/core/app.constants.spec.ts

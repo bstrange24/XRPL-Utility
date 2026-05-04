@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Component, signal } from '@angular/core';
 import { XrplExpirationInputComponent } from './xrpl-expiration-input.component';
 import { XrplDateService } from '../../../core/xrpl-date.service';
+import * as flatpickrModule from 'flatpickr';
 
 // Mock flatpickr instance
 const createMockFlatpickrInstance = () => ({
@@ -20,9 +21,6 @@ function mockFlatpickrFn(element: any, options: any) {
      return mockFlatpickrInstance;
 }
 
-// Replace flatpickr on window object
-(window as any).flatpickr = mockFlatpickrFn;
-
 describe('XrplExpirationInputComponent', () => {
      let component: XrplExpirationInputComponent;
      let fixture: ComponentFixture<XrplExpirationInputComponent>;
@@ -31,7 +29,6 @@ describe('XrplExpirationInputComponent', () => {
      beforeEach(async () => {
           // Reset mock instance
           mockFlatpickrInstance = createMockFlatpickrInstance();
-          (window as any).flatpickr = mockFlatpickrFn;
 
           xrplDateServiceSpy = jasmine.createSpyObj('XrplDateService', ['formatDateTimeLocal', 'toRippleTime']);
           xrplDateServiceSpy.formatDateTimeLocal.and.callFake((date: Date) => {
@@ -105,21 +102,6 @@ describe('XrplExpirationInputComponent', () => {
           });
      });
 
-     // describe('Effect - sync enableSignal', () => {
-     //      it('should sync enableSignal to enabled signal', fakeAsync(() => {
-     //           // Create a new component instance with the test signal
-     //           const testSignal = signal(true);
-     //           component.enableSignal = testSignal;
-     //           // Manually trigger the effect by changing the signal and detecting changes
-     //           component.enabled.set(false); // Start with false
-     //           fixture.detectChanges();
-     //           tick(50);
-     //           // The effect should have set enabled to match the signal
-     //           // Note: The effect runs in the constructor, so we need to ensure it's triggered
-     //           expect(component.enabled()).toBeTrue();
-     //      }));
-     // });
-
      describe('formatted computed', () => {
           it('should return empty string when no expiration', () => {
                component.expirationSignal = signal('');
@@ -170,6 +152,20 @@ describe('XrplExpirationInputComponent', () => {
                tick(110);
                expect(component['picker']).toBeTruthy();
           }));
+
+          it('should destroy existing picker before creating new one', () => {
+               const oldPicker = createMockFlatpickrInstance();
+               component['picker'] = oldPicker;
+
+               const flatpickrSpy = jasmine.createSpy('flatpickr').and.returnValue(mockFlatpickrInstance);
+               (window as any).flatpickr = flatpickrSpy;
+
+               component.flatpickrInput = { nativeElement: document.createElement('input') } as any;
+
+               (component as any).initFlatpickr();
+
+               expect(oldPicker.destroy).toHaveBeenCalled(); // ✅ correct instance
+          });
 
           it('should hide picker and destroy flatpickr', () => {
                component.showPicker = true;
@@ -349,12 +345,159 @@ describe('XrplExpirationInputComponent', () => {
                (component as any).initFlatpickr();
                expect((window as any).flatpickr).not.toHaveBeenCalled();
           });
+     });
 
-          // it('should initialize flatpickr with default date from expirationSignal', () => {
-          //      component.expirationSignal = signal('2024-01-15T10:30:00');
+     describe('common', () => {
+          function setupFlatpickr(expiration: string): {
+               instance: ReturnType<typeof createMockFlatpickrInstance>;
+               optionsRef: { current: any };
+               flatpickrSpy: jasmine.Spy;
+          } {
+               const instance = createMockFlatpickrInstance();
+               const optionsRef: { current: any } = { current: null };
+
+               component.expirationSignal = signal(expiration);
+               component.flatpickrInput = {
+                    nativeElement: document.createElement('input'),
+               } as any;
+
+               const flatpickrSpy = jasmine.createSpy('flatpickr').and.callFake((el: any, options: any) => {
+                    optionsRef.current = options;
+                    return instance;
+               });
+
+               (window as any).flatpickr = flatpickrSpy;
+
+               return { instance, optionsRef, flatpickrSpy };
+          }
+
+          // it('should initialize flatpickr with valid default date and setDate', () => {
+          //      const { instance, flatpickrSpy } = setupFlatpickr('2024-01-15T10:30:00');
+
           //      (component as any).initFlatpickr();
-          //      expect((window as any).flatpickr).toHaveBeenCalled();
+
+          //      expect(flatpickrSpy).toHaveBeenCalled();
+          //      expect(instance.setDate).toHaveBeenCalled();
           // });
+
+          // it('should handle invalid date and not set defaultDate', () => {
+          //      const { instance, flatpickrSpy } = setupFlatpickr('invalid-date');
+
+          //      (component as any).initFlatpickr();
+
+          //      expect(flatpickrSpy).toHaveBeenCalled();
+          //      expect(instance.setDate).not.toHaveBeenCalled();
+          // });
+
+          // it('should destroy existing picker before creating new one', () => {
+          //      const oldPicker = createMockFlatpickrInstance();
+          //      component['picker'] = oldPicker;
+
+          //      const { flatpickrSpy } = setupFlatpickr('2024-01-01T10:00:00');
+
+          //      (component as any).initFlatpickr();
+
+          //      expect(flatpickrSpy).toHaveBeenCalled();
+          //      expect(oldPicker.destroy).toHaveBeenCalled();
+          // });
+
+          // it('should close picker if it is open after init', () => {
+          //      const { instance } = setupFlatpickr('2024-01-01T10:00:00');
+          //      instance.isOpen = true;
+
+          //      (component as any).initFlatpickr();
+
+          //      expect(instance.close).toHaveBeenCalled();
+          // });
+
+          // it('should call setExpiration on date change', () => {
+          //      const { optionsRef } = setupFlatpickr('2024-01-01T10:00:00');
+
+          //      (component as any).initFlatpickr();
+
+          //      expect(optionsRef.current).toBeDefined();
+
+          //      optionsRef.current.onChange([new Date('2024-01-01T10:00:00')]);
+
+          //      expect(component.setExpiration).toHaveBeenCalled();
+          // });
+
+          it('should return seconds', () => {
+               spyOn(Date, 'now').and.returnValue(new Date('2024-01-01T10:00:00').getTime());
+               component.expirationSignal = signal('2024-01-01T10:00:10');
+
+               expect(component.relative()).toContain('s');
+          });
+
+          it('should return minutes', () => {
+               spyOn(Date, 'now').and.returnValue(new Date('2024-01-01T10:00:00').getTime());
+               component.expirationSignal = signal('2024-01-01T10:05:00');
+
+               expect(component.relative()).toContain('m');
+          });
+
+          it('should return hours', () => {
+               spyOn(Date, 'now').and.returnValue(new Date('2024-01-01T10:00:00').getTime());
+               component.expirationSignal = signal('2024-01-01T12:00:00');
+
+               expect(component.relative()).toContain('h');
+          });
+
+          it('should return days', () => {
+               spyOn(Date, 'now').and.returnValue(new Date('2024-01-01T10:00:00').getTime());
+               component.expirationSignal = signal('2024-01-05T10:00:00');
+
+               expect(component.relative()).toContain('d');
+          });
+
+          it('should sync enableSignal into enabled via effect', () => {
+               const sig = signal(true);
+
+               fixture = TestBed.createComponent(XrplExpirationInputComponent);
+               component = fixture.componentInstance;
+
+               component.expirationSignal = signal('');
+               component.setExpiration = jasmine.createSpy('setExpiration');
+               component.enableSignal = sig;
+               component.setEnable = jasmine.createSpy('setEnable');
+
+               fixture.detectChanges();
+
+               expect(component.enabled()).toBeTrue();
+
+               sig.set(false);
+               fixture.detectChanges();
+
+               expect(component.enabled()).toBeFalse();
+          });
+
+          it('should format date correctly', () => {
+               const date = new Date('2024-01-01T05:06:07');
+               const result = (component as any).formatDateTime(date);
+
+               expect(result).toBe('2024-01-01T05:06:07');
+          });
+
+          it('should call initFlatpickr when opening picker', fakeAsync(() => {
+               spyOn<any>(component, 'initFlatpickr');
+
+               component.flatpickrInput = {
+                    nativeElement: document.createElement('input'),
+               } as any;
+
+               component.togglePicker();
+               tick(110);
+
+               expect(component['initFlatpickr']).toHaveBeenCalled();
+          }));
+
+          it('should not throw if setEnable is undefined', () => {
+               component.setEnable = undefined as any;
+
+               const event = { target: { checked: true } } as any;
+
+               expect(() => component.toggle(event)).not.toThrow();
+          });
      });
 });
 

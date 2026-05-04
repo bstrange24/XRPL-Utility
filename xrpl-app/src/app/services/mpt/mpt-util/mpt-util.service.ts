@@ -400,6 +400,27 @@ export class MptUtilService extends PerformanceBaseComponent {
 
      decodeMptFlagsForUi(flags: number): string {
           const flagDefinitions = [
+               { value: 2, name: 'canLock' }, // 0x00000002
+               { value: 4, name: 'isRequireAuth' }, // 0x00000004
+               { value: 8, name: 'canEscrow' }, // 0x00000008
+               { value: 16, name: 'canTrade' }, // 0x00000010 (not 10!)
+               { value: 32, name: 'canTransfer' }, // 0x00000020 (not 16!)
+               { value: 64, name: 'canClawback' }, // 0x00000040 (not 40!)
+          ];
+
+          const activeFlags: string[] = [];
+
+          for (const flag of flagDefinitions) {
+               if ((flags & flag.value) === flag.value) {
+                    activeFlags.push(flag.name);
+               }
+          }
+
+          return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
+     }
+
+     decodeMptFlagsForUi1(flags: number): string {
+          const flagDefinitions = [
                { value: 2, name: 'canLock' },
                { value: 4, name: 'isRequireAuth' },
                { value: 8, name: 'canEscrow' },

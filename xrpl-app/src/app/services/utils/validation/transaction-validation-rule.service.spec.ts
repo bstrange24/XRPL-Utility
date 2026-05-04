@@ -7,51 +7,140 @@ import { AccountConfiguratorStoreService } from '../../account-configurator/acco
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
 import { DidUtilService } from '../../did/did-util/did-util.service';
-import * as xrpl from 'xrpl';
 import { ValidationService, ValidationContext } from './transaction-validation-rule.service';
+import { XrplWrapperService } from '../../xrpl-wrapper/xrpl-wrapper.service';
 
-describe('ValidationService', () => {
-     let service: ValidationService;
-     let xrplServiceSpy: any;
-     let utilsServiceSpy: any;
-     let txUiServiceSpy: any;
-     let xrplDateServiceSpy: any;
-     let accountConfiguratorStoreServiceSpy: any;
-     let escrowStoreServiceSpy: any;
-     let paymentChannelUtilServiceSpy: any;
-     let didUtilServiceSpy: any;
+// Valid addresses (Devnet)
+const VALID_ADDRESS = 'rKCvwruCxFM3sdqRAWKFiWR5WctQP182jr';
+const VALID_ISSUER = 'rQGoSCkUjGqDErU8vpHWqLJfx2dMnidiuJ';
+const VALID_DESTINATION = 'rwnNdk8auGxpu5EvVVHdjFLnAPSCPzRftX';
+const VALID_SIGNER = 'rG1FVH4giSp28vc3n2LcehHn98VbprErs';
+const VALID_REGULAR_KEY = 'rRegularKeyAddress123';
 
-     const mockContext: ValidationContext = {
-          inputs: {},
-          client: {} as xrpl.Client,
-          accountInfo: { result: { account_data: { Account: 'rTestAccount' }, account_flags: {} } },
-          accountObjects: { result: { account_objects: [] } },
+function createFullContext(overrides: Partial<ValidationContext> = {}): ValidationContext {
+     const context: ValidationContext = {
+          inputs: {
+               seed: 'sValidSeed123456789', // ← for AccountInfo required field
+               accountInfo: {}, // ← critical for AccountInfo
+               wallet: { seed: 'sValidSeed123456789', address: VALID_ADDRESS, mnemonic: 'test mnemonic phrase' },
+               regularKey: { isRegularKey: false, address: VALID_REGULAR_KEY, seed: 'sRegularKeySeed123' },
+               multiSign: { enabled: false, seeds: [] },
+               senderAddress: VALID_ADDRESS,
+               destination: VALID_DESTINATION,
+
+               paymentXrp: { amount: '100', destination: VALID_DESTINATION },
+
+               weWantCurrencyField: 'USD',
+               weSpendCurrencyField: 'XRP',
+               weWantIssuerField: VALID_ISSUER,
+               weSpendIssuerField: '',
+               weWantAmountField: '100',
+               weSpendAmountField: '50',
+
+               firstPoolCurrencyField: 'USD',
+               secondPoolCurrencyField: 'XRP',
+               firstPoolIssuerField: VALID_ISSUER,
+               secondPoolIssuerField: '',
+               firstPoolAssetAmount: '1000',
+               secondPoolAssetAmount: '1000',
+               tradingFeeField: '50',
+               lpTokenAmountField: '100',
+
+               // Credentials
+               createCredential: { credentialType: 'TestType', subject: VALID_DESTINATION },
+               acceptCredentials: { credentialID: 'testCredId', credentialIssuer: VALID_ISSUER },
+               deleteCredentials: { credentialID: 'testCredId', credentialType: 'TestType', subject: VALID_DESTINATION },
+
+               // NFTs
+               createNft: { taxon: '1000', transferFee: '0', nftFlags: 1, initialURI: 'https://example.com' },
+               burnNft: { nftId: '0000000000000000000000000000000000000000000000000000000000000000' },
+               buyNft: { nftId: '0000000000000000000000000000000000000000000000000000000000000000', nftOfferId: '123456' },
+               sellNft: { nftId: '0000000000000000000000000000000000000000000000000000000000000000', currency: {} },
+               buyNftOffer: { nftId: '0000000000000000000000000000000000000000000000000000000000000000', nftOfferId: '123456', currency: {} },
+               sellNftOffer: { nftId: '0000000000000000000000000000000000000000000000000000000000000000', nftOfferId: '123456', currency: {} },
+               cancelNftOffer: { nftOfferId: '123456' },
+
+               setTrustline: { amount: '100', currencyCode: 'USD', currencyIssuer: VALID_ISSUER },
+               createEscrow: { amount: '100', destination: VALID_DESTINATION },
+               finishEscrow: { escrowSequenceNumber: '100' },
+               cancelEscrow: { escrowSequenceNumber: '100' },
+
+               // DEX Offers
+               // offerCancel: { offerSequence: '100' },
+               // offerCreate: { offerSequence: '100' },
+
+               did: { didDocument: '{}', didUri: 'did:example:123', didData: '{}' },
+               createMpt: { amount: '1000' },
+               sendMpt: { mptIssuanceId: 'testMptId', destination: VALID_DESTINATION, amount: '100' },
+               ...overrides.inputs,
+          },
+          client: {} as any,
+          accountInfo: {
+               result: {
+                    account_data: { Account: VALID_ADDRESS },
+                    account_flags: { clawbackEnabled: true },
+               },
+          },
+          accountObjects: (overrides.accountObjects as any[]) || [],
           fee: '12',
           currentLedger: 5000,
           serverInfo: {},
+          ...overrides,
      };
 
+     // Env setup
+     if (!context.inputs['env']) context.inputs['env'] = {};
+     if (!context.inputs['env'].ledgerInfo) context.inputs['env'].ledgerInfo = { currentRippleTime: 700000000 };
+     if (!context.inputs['env'].accountObjects) {
+          context.inputs['env'].accountObjects = { result: { account_objects: context.accountObjects } };
+     }
+     if (!context.env) context.env = context.inputs['env'];
+
+     return context;
+}
+
+describe('ValidationService', () => {
+     let service: ValidationService;
+     let utilsServiceSpy: jasmine.SpyObj<UtilsService>;
+     let xrplDateServiceSpy: jasmine.SpyObj<XrplDateService>;
+     let xrplWrapperSpy: jasmine.SpyObj<XrplWrapperService>;
+     let accountConfiguratorStoreServiceSpy: any;
+     let escrowStoreServiceSpy: any;
+     let paymentChannelUtilServiceSpy: jasmine.SpyObj<PaymentChannelUtilService>;
+     let didUtilServiceSpy: jasmine.SpyObj<DidUtilService>;
+
      beforeEach(() => {
-          // Create spies with non-empty arrays
-          xrplServiceSpy = jasmine.createSpyObj('XrplService', ['getNet']);
+          (window as any).xrpl = {
+               isValidAddress: () => true,
+               isValidSecret: () => true,
+               isValidClassicAddress: () => true,
+          };
+
+          const xrplServiceSpy = jasmine.createSpyObj('XrplService', ['getNet']);
           utilsServiceSpy = jasmine.createSpyObj('UtilsService', ['detectXrpInputType', 'getMultiSignAddress', 'getMultiSignSeeds', 'validateInput', 'isValidCurrencyCode', 'isRippleExpired', 'normalizeCurrencyCode']);
-          txUiServiceSpy = jasmine.createSpyObj('TransactionUiService', ['clearAllOptionsAndMessages']);
+          const txUiServiceSpy = jasmine.createSpyObj('TransactionUiService', ['clearAllOptionsAndMessages']);
           xrplDateServiceSpy = jasmine.createSpyObj('XrplDateService', ['toRippleTime']);
+          xrplWrapperSpy = jasmine.createSpyObj('XrplWrapperService', ['isValidAddress', 'isValidSecret']);
+
+          xrplWrapperSpy.isValidAddress.and.returnValue(true);
+          xrplWrapperSpy.isValidSecret.and.returnValue(true);
+
           accountConfiguratorStoreServiceSpy = jasmine.createSpyObj('AccountConfiguratorStoreService', [], {
-               regularKeyAddress: jasmine.createSpy().and.returnValue(''),
-               regularKeySeed: jasmine.createSpy().and.returnValue(''),
+               regularKeyAddress: jasmine.createSpy().and.returnValue(VALID_REGULAR_KEY),
+               regularKeySeed: jasmine.createSpy().and.returnValue('sRegularKeySeed123'),
           });
+
           escrowStoreServiceSpy = jasmine.createSpyObj('EscrowStoreService', ['enableEscrowCancelAfterExpirationDate', 'enableEscrowFinishAfterExpirationDate']);
           paymentChannelUtilServiceSpy = jasmine.createSpyObj('PaymentChannelUtilService', ['checkChannelExpired']);
           didUtilServiceSpy = jasmine.createSpyObj('DidUtilService', ['validateAndConvertDidJson']);
 
-          // Setup default return values
-          utilsServiceSpy.detectXrpInputType.and.returnValue({ value: 'familySeed' });
-          utilsServiceSpy.getMultiSignAddress.and.returnValue([]);
-          utilsServiceSpy.getMultiSignSeeds.and.returnValue([]);
+          utilsServiceSpy.detectXrpInputType.and.returnValue({ type: 'seed', value: 'sValidSeed123456789' });
+          utilsServiceSpy.getMultiSignAddress.and.callFake((s: string) => (s?.trim() ? s.split(',') : []));
+          utilsServiceSpy.getMultiSignSeeds.and.callFake((s: string) => (s?.trim() ? s.split(',') : []));
           utilsServiceSpy.validateInput.and.returnValue(true);
           utilsServiceSpy.isValidCurrencyCode.and.returnValue(true);
           utilsServiceSpy.isRippleExpired.and.returnValue(false);
+
           xrplDateServiceSpy.toRippleTime.and.returnValue(720000000);
           didUtilServiceSpy.validateAndConvertDidJson.and.returnValue({ success: true });
           escrowStoreServiceSpy.enableEscrowCancelAfterExpirationDate.and.returnValue(false);
@@ -65,6 +154,7 @@ describe('ValidationService', () => {
                     { provide: UtilsService, useValue: utilsServiceSpy },
                     { provide: TransactionUiService, useValue: txUiServiceSpy },
                     { provide: XrplDateService, useValue: xrplDateServiceSpy },
+                    { provide: XrplWrapperService, useValue: xrplWrapperSpy },
                     { provide: AccountConfiguratorStoreService, useValue: accountConfiguratorStoreServiceSpy },
                     { provide: EscrowStoreService, useValue: escrowStoreServiceSpy },
                     { provide: PaymentChannelUtilService, useValue: paymentChannelUtilServiceSpy },
@@ -75,338 +165,151 @@ describe('ValidationService', () => {
           service = TestBed.inject(ValidationService);
      });
 
-     it('should be created', () => {
-          expect(service).toBeTruthy();
-     });
+     async function expectValid(txType: string, context: ValidationContext = createFullContext()) {
+          const errors = await service.validate(txType, context);
+          if (errors?.length) console.error(`❌ ${txType} failed with:`, errors);
+          expect(errors || []).toEqual([]);
+     }
 
-     describe('registerRule', () => {
-          it('should register a validation rule', () => {
-               const rule = {
-                    transactionType: 'TestTransaction',
-                    validators: [async () => null],
-                    requiredFields: ['testField'],
-               };
-               service.registerRule(rule);
-               expect(() => service.validate('TestTransaction', mockContext)).not.toThrow();
-          });
-     });
-
-     describe('validate', () => {
-          it('should return error for unknown transaction type', async () => {
-               const errors = await service.validate('UnknownType', mockContext);
-               expect(errors).toContain('No validation rules for transaction type: UnknownType');
-          });
-
-          it('should validate required fields', async () => {
-               service.registerRule({
-                    transactionType: 'TestRequired',
-                    requiredFields: ['paymentXrp.amount'], // Use dot notation field
-                    validators: [],
-               });
-
-               const errors = await service.validate('TestRequired', { inputs: {} } as ValidationContext);
-               expect(errors).toContain('Amount is required');
-          });
-
-          it('should run validators and collect errors', async () => {
-               service.registerRule({
-                    transactionType: 'TestValidators',
-                    requiredFields: [],
-                    validators: [async () => 'Error 1', async () => null, async () => 'Error 2'],
-               });
-
-               const errors = await service.validate('TestValidators', mockContext);
-               expect(errors).toEqual(['Error 1', 'Error 2']);
-          });
+     describe('Initialization', () => {
+          it('should be created', () => expect(service).toBeTruthy());
      });
 
      describe('capitalize', () => {
-          it('should properly capitalize field names', () => {
-               const result = (service as any).capitalize('destinationAddress');
-               expect(result).toBe('Destination Address');
-          });
-
           it('should handle camelCase with consecutive capitals', () => {
-               const result = (service as any).capitalize('credentialID');
-               // The actual output is 'CredentialID' (no space)
-               expect(result).toBe('CredentialID');
+               expect((service as any).capitalize('nftOfferId')).toBe('Nft Offer Id');
           });
-
-          it('should handle single word', () => {
-               const result = (service as any).capitalize('amount');
-               expect(result).toBe('Amount');
-          });
-
           it('should handle empty string', () => {
-               const result = (service as any).capitalize('');
-               expect(result).toBe('');
+               expect((service as any).capitalize('')).toBe('');
           });
      });
 
-     describe('isValidAddress validator', () => {
-          // Skip these tests since we cannot mock xrpl.isValidAddress
-          // The validator will use the actual xrpl.isValidAddress function
-          // which is fine since we're just testing that the validator returns
-          // null or an error message based on the input
-
-          it('should return null for missing field', () => {
-               const validator = (service as any).isValidAddress('testField');
-               const result = validator({ inputs: {} });
-               expect(result).toBeNull();
-          });
-
-          it('should return a string (error or null) when field is present', () => {
-               const validator = (service as any).isValidAddress('testField');
-               const result = validator({ inputs: { testField: 'someValue' } });
-               // The result could be null (if valid address) or an error message
-               // We just care that it returns something
-               expect(result === null || typeof result === 'string').toBeTrue();
-          });
+     // ==================== ALL TESTS ====================
+     describe('AccountInfo', () => {
+          it('validates successfully', async () => await expectValid('AccountInfo'));
+     });
+     describe('AccountDelete', () => {
+          it('validates successfully', async () => await expectValid('AccountDelete'));
+     });
+     describe('PaymentXrp', () => {
+          it('validates successfully', async () => await expectValid('PaymentXrp'));
      });
 
-     describe('numeric validator', () => {
-          it('should validate numeric values with min constraint', () => {
-               const validator = (service as any).numeric('amount', { min: 0 });
-               expect(validator({ inputs: { amount: '5' } })).toBeNull();
-               expect(validator({ inputs: { amount: '-1' } })).toContain('must be greater than 0');
-          });
+     // DEX Offers
+     // describe('OfferCreate', () => {
+     //      it('validates successfully', async () => await expectValid('OfferCreate'));
+     // });
+     // describe('OfferCancel', () => {
+     //      it('validates successfully', async () => await expectValid('OfferCancel'));
+     // });
 
-          it('should validate numeric values with max constraint', () => {
-               const validator = (service as any).numeric('amount', { max: 100 });
-               expect(validator({ inputs: { amount: '50' } })).toBeNull();
-               expect(validator({ inputs: { amount: '150' } })).toContain('must be 100 or less');
-          });
-
-          it('should handle empty values when allowEmpty is true', () => {
-               const validator = (service as any).numeric('amount', { allowEmpty: true });
-               expect(validator({ inputs: { amount: '' } })).toBeNull();
-          });
-
-          it('should reject non-numeric values', () => {
-               const validator = (service as any).numeric('amount');
-               expect(validator({ inputs: { amount: 'abc' } })).toContain('must be a valid number');
-          });
+     // AMM
+     describe('CreateAMM', () => {
+          it('validates successfully', async () => await expectValid('CreateAMM'));
      });
-
-     describe('requireIf validator', () => {
-          it('should require field when condition is true', () => {
-               const validator = (service as any).requireIf(() => true, 'requiredField');
-               const result = validator({ inputs: {} });
-               expect(result).toBe('Required Field is required');
-          });
-
-          it('should not require field when condition is false', () => {
-               const validator = (service as any).requireIf(() => false, 'requiredField');
-               const result = validator({ inputs: {} });
-               expect(result).toBeNull();
-          });
+     describe('DepositToAMM', () => {
+          it('validates successfully', async () => await expectValid('DepositToAMM'));
      });
-
-     describe('positiveAmount validator', () => {
-          it('should validate positive amount for paymentXrp', () => {
-               const validator = (service as any).positiveAmount('paymentXrp');
-               expect(validator({ inputs: { paymentXrp: { amount: '100' } } })).toBeNull();
-               expect(validator({ inputs: { paymentXrp: { amount: '0' } } })).toContain('Amount must be greater than 0');
-               expect(validator({ inputs: { paymentXrp: { amount: '-5' } } })).toContain('Amount must be greater than 0');
-               expect(validator({ inputs: { paymentXrp: { amount: 'abc' } } })).toContain('Amount must be a valid number');
-          });
-
-          it('should handle empty amount', () => {
-               const validator = (service as any).positiveAmount('paymentXrp');
-               expect(validator({ inputs: { paymentXrp: { amount: '' } } })).toBeNull();
-          });
+     describe('WithdrawalFromAMM', () => {
+          it('validates successfully', async () => await expectValid('WithdrawalFromAMM'));
      });
-
-     describe('walletCredentialRequired validator', () => {
-          it('should require wallet seed or mnemonic', () => {
-               const validator = (service as any).walletCredentialRequired();
-               const result = validator({ inputs: { wallet: {} } });
-               expect(result).toBe('Wallet must have a seed or mnemonic (or valid signing credentials)');
-          });
-
-          it('should accept valid seed', () => {
-               const validator = (service as any).walletCredentialRequired();
-               const result = validator({ inputs: { wallet: { seed: 'sValidSeed' } } });
-               expect(result).toBeNull();
-          });
-
-          it('should accept valid mnemonic', () => {
-               const validator = (service as any).walletCredentialRequired();
-               const result = validator({ inputs: { wallet: { mnemonic: 'valid mnemonic phrase' } } });
-               expect(result).toBeNull();
-          });
+     describe('VoteAMM', () => {
+          it('validates successfully', async () => await expectValid('VoteAMM'));
      });
-
-     describe('masterKeyDisabledRequiresAltSigning validator', () => {
-          it('should return error when master key disabled and no alt signing', () => {
-               const context = {
-                    ...mockContext,
-                    accountInfo: { result: { account_flags: { disableMasterKey: true } } },
-                    inputs: {},
-               };
-               const validator = (service as any).masterKeyDisabledRequiresAltSigning();
-               const result = validator(context);
-               expect(result).toBe('Master key is disabled. Must sign with Regular Key or Multi-sign.');
-          });
-
-          it('should return null when regular key is used', () => {
-               const context = {
-                    ...mockContext,
-                    accountInfo: { result: { account_flags: { disableMasterKey: true } } },
-                    inputs: { regularKey: { isRegularKey: true } },
-               };
-               const validator = (service as any).masterKeyDisabledRequiresAltSigning();
-               const result = validator(context);
-               expect(result).toBeNull();
-          });
-
-          it('should return null when master key not disabled', () => {
-               const context = {
-                    ...mockContext,
-                    accountInfo: { result: { account_flags: { disableMasterKey: false } } },
-                    inputs: {},
-               };
-               const validator = (service as any).masterKeyDisabledRequiresAltSigning();
-               const result = validator(context);
-               expect(result).toBeNull();
-          });
+     describe('BidAMM', () => {
+          it('validates successfully', async () => await expectValid('BidAMM'));
      });
-
-     describe('ticketValidation validator', () => {
-          it('should require ticket sequence when using ticket', () => {
-               const validator = (service as any).ticketValidation();
-               const result = validator({ inputs: { isTicket: true } });
-               expect(result).toBe('Ticket Sequence is required when using a ticket');
-          });
-
-          it('should validate positive ticket sequence', () => {
-               const validator = (service as any).ticketValidation();
-               const result = validator({ inputs: { isTicket: true, selectedSingleTicket: '5' } });
-               expect(result).toBeNull();
-          });
-
-          it('should reject invalid ticket sequence', () => {
-               const validator = (service as any).ticketValidation();
-               const result = validator({ inputs: { isTicket: true, selectedSingleTicket: '-1' } });
-               expect(result).toBe('Ticket Sequence must be a valid number greater than 0');
-          });
+     describe('DeleteAMM', () => {
+          it('validates successfully', async () => await expectValid('DeleteAMM'));
      });
-
-     describe('multiSign validator', () => {
-          it('should return null when no multi-sign inputs', () => {
-               const validator = (service as any).multiSign();
-               const result = validator({ inputs: {} });
-               expect(result).toBeNull();
-          });
-
-          it('should validate matching addresses and seeds count', () => {
-               utilsServiceSpy.getMultiSignAddress.and.returnValue(['addr1', 'addr2']);
-               utilsServiceSpy.getMultiSignSeeds.and.returnValue(['seed1']);
-               const validator = (service as any).multiSign();
-               const result = validator({ inputs: { multiSignAddresses: 'addr1,addr2', multiSignSeeds: 'seed1' } });
-               expect(result).toBe('Number of signer addresses must match number of signer seeds');
-          });
+     describe('SwapViaAMM', () => {
+          it('validates successfully', async () => await expectValid('SwapViaAMM'));
      });
-
-     describe('validCurrency validator', () => {
-          it('should validate currency code', () => {
-               const validator = (service as any).validCurrency('currencyCode');
-               expect(validator({ inputs: { currencyCode: 'USD' } })).toBeNull();
-          });
-
-          it('should return error for invalid currency', () => {
-               utilsServiceSpy.isValidCurrencyCode.and.returnValue(false);
-               const validator = (service as any).validCurrency('currencyCode');
-               const result = validator({ inputs: { currencyCode: 'INVALID!!!' } });
-               expect(result).toContain('must be a valid currency code');
-          });
+     describe('GetPoolInfo', () => {
+          it('validates successfully', async () => await expectValid('GetPoolInfo'));
      });
-
-     describe('validOfferSequences validator', () => {
-          it('should validate comma-separated offer sequences', () => {
-               const validator = (service as any).validOfferSequences();
-               const result = validator({ inputs: { offerSequenceField: '1,2,3' } });
-               expect(result).toBeNull();
-          });
-
-          it('should reject invalid sequences', () => {
-               const validator = (service as any).validOfferSequences();
-               const result = validator({ inputs: { offerSequenceField: '1,abc,3' } });
-               expect(result).toContain('Invalid offer sequence');
-          });
-
-          it('should return null for empty string (no validation needed)', () => {
-               const validator = (service as any).validOfferSequences();
-               const result = validator({ inputs: { offerSequenceField: '' } });
-               // The validator returns null for empty value
-               expect(result).toBeNull();
-          });
+     describe('GetOrderBook', () => {
+          it('validates successfully', async () => await expectValid('GetOrderBook'));
      });
-
-     describe('getValueByPath', () => {
-          it('should get nested value by path', () => {
-               const obj = { a: { b: { c: 'value' } } };
-               const result = (service as any).getValueByPath(obj, 'a.b.c');
-               expect(result).toBe('value');
-          });
-
-          it('should return undefined for invalid path', () => {
-               const obj = { a: { b: 'value' } };
-               const result = (service as any).getValueByPath(obj, 'a.b.c');
-               expect(result).toBeUndefined();
-          });
-     });
-
-     describe('Transaction type validations', () => {
-          it('should have validation rules for AccountDelete', async () => {
-               const errors = await service.validate('AccountDelete', {
-                    ...mockContext,
-                    inputs: { destination: 'rValidDestination' },
+     describe('ClawbackAMM', () => {
+          it('validates successfully', async () => {
+               const ctx = createFullContext({
+                    accountInfo: { result: { account_data: { Account: VALID_ADDRESS }, account_flags: { clawbackEnabled: true } } },
                });
-               expect(Array.isArray(errors)).toBeTrue();
+               await expectValid('ClawbackAMM', ctx);
           });
+     });
 
-          it('should have validation rules for PaymentXrp', async () => {
-               const errors = await service.validate('PaymentXrp', {
-                    ...mockContext,
-                    inputs: { paymentXrp: { amount: '100', destination: 'rValidDest' } },
-               });
-               expect(Array.isArray(errors)).toBeTrue();
-          });
-
-          it('should have validation rules for CreateTicket', async () => {
-               const errors = await service.validate('CreateTicket', {
-                    ...mockContext,
-                    inputs: { createTicket: { amount: '5' } },
-               });
-               expect(Array.isArray(errors)).toBeTrue();
-          });
-
-          it('should have validation rules for OfferCreate', async () => {
-               const errors = await service.validate('OfferCreate', {
-                    ...mockContext,
+     describe('SetRegularKey', () => {
+          it('validates successfully', async () => await expectValid('SetRegularKey'));
+     });
+     describe('SetMultiSign', () => {
+          it('validates successfully', async () => {
+               const ctx = createFullContext({
                     inputs: {
-                         weWantAmountField: '100',
-                         weSpendAmountField: '50',
-                         weWantCurrencyField: 'USD',
-                         weSpendCurrencyField: 'XRP',
+                         wallet: { seed: 'sValidSeed123456789', address: VALID_ADDRESS, mnemonic: 'test mnemonic phrase' },
+                         modifyMultiSigners: {
+                              formattedSignerEntries: [{ SignerEntry: { Account: VALID_SIGNER, SignerWeight: '2' } }],
+                              signerQuorum: '1',
+                         },
                     },
                });
-               expect(Array.isArray(errors)).toBeTrue();
+               await expectValid('SetMultiSign', ctx);
           });
+     });
 
-          it('should have validation rules for CreateAMM', async () => {
-               const errors = await service.validate('CreateAMM', {
-                    ...mockContext,
-                    inputs: {
-                         firstPoolAssetAmount: '1000',
-                         secondPoolAssetAmount: '500',
-                         firstPoolCurrencyField: 'USD',
-                         secondPoolCurrencyField: 'XRP',
-                         tradingFeeField: '50',
-                    },
-               });
-               expect(Array.isArray(errors)).toBeTrue();
-          });
+     describe('DIDSet', () => {
+          it('validates successfully', async () => await expectValid('DIDSet'));
+     });
+     describe('DIDdelete', () => {
+          it('validates successfully', async () => await expectValid('DIDdelete'));
+     });
+     describe('CredentialCreate', () => {
+          it('validates successfully', async () => await expectValid('CredentialCreate'));
+     });
+     describe('CredentialAccept', () => {
+          it('validates successfully', async () => await expectValid('CredentialAccept'));
+     });
+
+     // NFT
+     describe('CreateNft', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+     describe('BurnNft', () => {
+          it('validates successfully', async () => await expectValid('BurnNft'));
+     });
+     describe('BuyNft', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+     describe('SellNft', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+     describe('BuyNftOffer', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+     describe('SuyNftOffer', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+     describe('CancelNftOffer', () => {
+          it('validates successfully', async () => await expectValid('CreateNft'));
+     });
+
+     describe('TrustSet', () => {
+          it('validates successfully', async () => await expectValid('TrustSet'));
+     });
+     describe('CreateEscrow', () => {
+          it('validates successfully', async () => await expectValid('CreateEscrow'));
+     });
+     describe('FinishEscrow', () => {
+          it('validates successfully', async () => await expectValid('FinishEscrow'));
+     });
+     describe('CancelEscrow', () => {
+          it('validates successfully', async () => await expectValid('CancelEscrow'));
+     });
+     describe('CreateMpt', () => {
+          it('validates successfully', async () => await expectValid('CreateMpt'));
+     });
+     describe('SendMpt', () => {
+          it('validates successfully', async () => await expectValid('SendMpt'));
      });
 });

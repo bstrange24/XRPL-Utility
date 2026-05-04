@@ -11,6 +11,7 @@ import { TxEnvironmentService } from '../../transaction-environment/tx-environme
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import { TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';
 import { AcccountDataService } from '../../account-data/acccount-data.service';
+import { AppConstants } from '../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -329,7 +330,7 @@ export class TrustlineUtilService {
           const issuer = this.currencyStoreService.newIssuer();
 
           if (!this.isAddValid()) {
-               this.txUiService.setError('Invalid currency code or issuer address, or already exists');
+               this.toastService.error(`Invalid currency code or issuer address, or already exists.`, AppConstants.TOAST.ERROR);
                return;
           }
 
@@ -348,7 +349,7 @@ export class TrustlineUtilService {
           const issuer = this.currencyStoreService.issuer();
 
           if (!this.isRemoveValid()) {
-               this.txUiService.setError('No valid currency or issuer selected to remove');
+               this.toastService.error(`No valid currency or issuer selected to remove.`, AppConstants.TOAST.ERROR);
                return;
           }
 

@@ -156,9 +156,8 @@ export class DelegateTransactionOrchestratorService extends PerformanceBaseCompo
 
                txHash = submitOrSimResult.hash;
 
-               // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
-                    return this.handleSimulationSuccess(type, delegate, txHash);
+                    return this.handleSimulationSuccess(type, delegate, undefined, txHash);
                }
 
                // Final validated outcome (preserved)

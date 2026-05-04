@@ -12,6 +12,7 @@ import { PaymentChannelObject } from '../../../components/payment-channel/consta
 import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { DidUtilService } from '../../did/did-util/did-util.service';
+import { XrplWrapperService } from '../../xrpl-wrapper/xrpl-wrapper.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -28,6 +29,7 @@ export interface ValidationContext {
      regularKeyAddress?: any;
      regularKeySeed?: any;
      useMultiSign?: any;
+     env?: any;
 }
 
 export type ValidatorFn = (ctx: ValidationContext) => Promise<string | null> | string | null;
@@ -49,6 +51,7 @@ export class ValidationService {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly didUtilService = inject(DidUtilService);
+     public readonly xrplWrapperService = inject(XrplWrapperService);
 
      constructor() {
           this.registerBuiltInRules();
@@ -73,18 +76,32 @@ export class ValidationService {
           const errors: string[] = [];
 
           // Check required fields
+          // Replace the requiredFields loop with this safer version:
           if (rule.requiredFields) {
                for (const field of rule.requiredFields) {
                     const value = this.getValueByPath(context.inputs, field);
                     if (value === undefined || value === null || value === '') {
-                         if (this.capitalize(field.split('.')[1]) === 'Nf Token Minter Address') {
+                         const fieldName = field.includes('.') ? field.split('.').pop() || 'Field' : field;
+                         if (this.capitalize(fieldName) === 'Nf Token Minter Address') {
                               errors.push(`NFT Minter Address is required`);
                          } else {
-                              errors.push(`${this.capitalize(field.split('.')[1])} is required`);
+                              errors.push(`${this.capitalize(fieldName)} is required`);
                          }
                     }
                }
           }
+          // if (rule.requiredFields) {
+          //      for (const field of rule.requiredFields) {
+          //           const value = this.getValueByPath(context.inputs, field);
+          //           if (value === undefined || value === null || value === '') {
+          //                if (this.capitalize(field.split('.')[1]) === 'Nf Token Minter Address') {
+          //                     errors.push(`NFT Minter Address is required`);
+          //                } else {
+          //                     errors.push(`${this.capitalize(field.split('.')[1])} is required`);
+          //                }
+          //           }
+          //      }
+          // }
 
           // Run all validators
           const results = await Promise.all(rule.validators.map(validator => Promise.resolve(validator(context))));
@@ -105,15 +122,57 @@ export class ValidationService {
           );
      }
 
+     // private capitalize(field: any): string {
+     //      if (!field || typeof field !== 'string') return 'Field';
+     //      return field
+     //           .replace(/([A-Z])/g, ' $1')
+     //           .replace(/^./, c => c.toUpperCase())
+     //           .replace(/Id$/i, 'ID')
+     //           .replace(/Nft/i, 'NFT')
+     //           .replace(/Amm/i, 'AMM')
+     //           .replace(/Mpt/i, 'MPT')
+     //           .trim();
+     // }
+
+     private capitalize1(field: string | undefined | null): string {
+          if (!field) return 'Field';
+
+          // Handle camelCase
+          let result = field
+               .replace(/([A-Z])/g, ' $1') // Add space before capitals
+               .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+
+          // Fix common cases
+          result = result.replace(/Id$/, 'ID').replace(/Nft/, 'NFT').replace(/Amm/, 'AMM').replace(/Mpt/, 'MPT');
+
+          return result.trim();
+     }
+
      private requireField(field: string, message?: string): ValidatorFn {
           return ctx => (ctx.inputs[field] ? null : message || `${this.capitalize(field)} is required`);
      }
 
-     private isValidAddress(field: string): ValidatorFn {
-          return ctx => {
-               const value = this.getValueByPath(ctx.inputs, field);
-               if (value && !xrpl.isValidAddress(value)) {
-                    return 'Invalid XRP Address';
+     private isValidAddress(fieldName: string) {
+          return async (context: ValidationContext): Promise<string | null> => {
+               const value = this.getValueByPath(context.inputs, fieldName);
+               if (!value) return null;
+
+               // Use the wrapper service
+               if (!this.xrplWrapperService.isValidAddress(value)) {
+                    return `${this.capitalize(fieldName)} is not a valid XRP address`;
+               }
+               return null;
+          };
+     }
+
+     private isValidSecret(fieldName: string) {
+          return async (context: ValidationContext): Promise<string | null> => {
+               const value = this.getValueByPath(context.inputs, fieldName);
+               if (!value) return null;
+
+               // Use the wrapper service
+               if (!this.xrplWrapperService.isValidSecret(value)) {
+                    return `${this.capitalize(fieldName)} is not a valid secret`;
                }
                return null;
           };
@@ -269,7 +328,7 @@ export class ValidationService {
                     return 'Number of signer addresses must match number of signer seeds';
                }
 
-               const invalidAddr = addresses.find((addr: string) => !xrpl.isValidAddress(addr));
+               const invalidAddr = addresses.find((addr: string) => !this.xrplWrapperService.isValidAddress(addr));
                if (invalidAddr) {
                     return `Invalid signer address: ${invalidAddr}`;
                }
@@ -363,7 +422,7 @@ export class ValidationService {
      private validAddressIf(condition: (ctx: ValidationContext) => boolean, field: string): ValidatorFn {
           return ctx => {
                const value = ctx.inputs[field];
-               return condition(ctx) && value && !xrpl.isValidAddress(value) ? `${this.capitalize(field)} is not a valid XRP address` : null;
+               return condition(ctx) && value && !this.xrplWrapperService.isValidAddress(value) ? `${this.capitalize(field)} is not a valid XRP address` : null;
           };
      }
 
@@ -489,7 +548,7 @@ export class ValidationService {
           return ctx => {
                const currency = ctx.inputs[currencyField];
                const issuer = ctx.inputs[issuerField];
-               if (currency && currency !== 'XRP' && issuer && !xrpl.isValidAddress(issuer)) {
+               if (currency && currency !== 'XRP' && issuer && !this.xrplWrapperService.isValidAddress(issuer)) {
                     return `${this.capitalize(issuerField)} is not a valid XRP address`;
                }
                return null;
@@ -773,7 +832,7 @@ export class ValidationService {
                     this.walletCredentialRequired(),
                     ctx => {
                          console.log('ctx: ', ctx['inputs']['destination']);
-                         this.isValidAddress(ctx['inputs']['destination']);
+                         this.xrplWrapperService.isValidAddress(ctx['inputs']['destination']);
                          return null;
                     },
 
@@ -1933,7 +1992,7 @@ export class ValidationService {
                          if (!addr) return null; // empty → handled by earlier required check
 
                          // Use official XRPL validation
-                         if (!xrpl.isValidAddress(addr)) {
+                         if (!this.xrplWrapperService.isValidAddress(addr)) {
                               return 'Invalid Regular Key address: not a valid XRPL classic address (checksum failed or malformed).';
                          }
 

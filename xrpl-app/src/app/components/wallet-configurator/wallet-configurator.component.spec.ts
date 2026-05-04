@@ -173,7 +173,19 @@ describe('WalletConfiguratorComponent', () => {
           accountDataService = jasmine.createSpyObj('AcccountDataService', ['refreshUiState']);
           storageService = { getItem: jasmine.createSpy('getItem'), setItem: jasmine.createSpy('setItem'), getNet: jasmine.createSpy('getNet').and.returnValue('devnet'), set: jasmine.createSpy('set'), get: jasmine.createSpy('get') };
           xrplService = { getClient: jasmine.createSpy('getClient').and.returnValue(Promise.resolve(mockClient)), getNet: jasmine.createSpy('getNet').and.returnValue({ environment: 'devnet' }) };
-          walletsUtilService = { isValidMnemonic: jasmine.createSpy('isValidMnemonic').and.returnValue(true), convertSecretNumberStringToArray: jasmine.createSpy('convertSecretNumberStringToArray').and.returnValue([]), isValidSecret: jasmine.createSpy('isValidSecret').and.returnValue(true) };
+          walletsUtilService = {
+               isValidMnemonic: jasmine.createSpy('isValidMnemonic').and.returnValue(true),
+               convertSecretNumberStringToArray: jasmine.createSpy('convertSecretNumberStringToArray').and.returnValue([]),
+               isValidSecret: jasmine.createSpy('isValidSecret').and.returnValue(true),
+               errorMessage: jasmine.createSpy().and.returnValue('Invalid mnemonic'),
+          };
+
+          // walletsUtilService = {
+          //      isValidMnemonic: jasmine.createSpy().and.returnValue(true),
+          //      convertSecretNumberStringToArray: jasmine.createSpy().and.returnValue([]),
+          //      isValidSecret: jasmine.createSpy().and.returnValue(true),
+          //      errorMessage: jasmine.createSpy().and.returnValue('Invalid mnemonic'),
+          // };
 
           activatedRouteSpy = {
                queryParams: of({}),
@@ -254,6 +266,15 @@ describe('WalletConfiguratorComponent', () => {
           it('should set right panel', () => {
                expect(rightPanelService.setPanel).toHaveBeenCalled();
           });
+
+          it('should fully execute ngOnInit lifecycle', () => {
+               component.ngOnInit();
+
+               expect(transactionDropdownService.loadCustomDestinations).toHaveBeenCalled();
+               expect(walletsStoreService.resetAll).toHaveBeenCalled();
+               expect(walletsStoreService.setField).toHaveBeenCalledWith('secp256k1_encryption_type', true);
+               expect(rightPanelService.setPanel).toHaveBeenCalled();
+          });
      });
 
      describe('selectWallet', () => {
@@ -270,6 +291,114 @@ describe('WalletConfiguratorComponent', () => {
                component.selectWallet(mockWallets[0]);
                expect(xrplCacheService.invalidateAccountCache).not.toHaveBeenCalled();
           });
+
+          it('should select new wallet', () => {
+               component.currentWallet = signal(mockWallets[0]);
+
+               component.selectWallet(mockWallets[1]);
+
+               expect(component.currentWallet()).toEqual(mockWallets[1]);
+               expect(xrplCacheService.invalidateAccountCache).toHaveBeenCalled();
+          });
+
+          it('should ignore same wallet', () => {
+               component.currentWallet = signal(mockWallets[0]);
+
+               component.selectWallet(mockWallets[0]);
+
+               expect(xrplCacheService.invalidateAccountCache).not.toHaveBeenCalled();
+          });
+
+          // it('should clear selectedAddress when wallet matches current store selection', () => {
+          //      walletsStoreService.setField.calls.reset();
+
+          //      component.currentWallet = signal(mockWallets[0]);
+          //      walletsStoreService.selectedAddress = signal(mockWallets[0]);
+
+          //      component.selectWallet(mockWallets[0]);
+
+          //      expect(walletsStoreService.setField).toHaveBeenCalledWith('selectedAddress', '');
+          // });
+
+          it('should execute generateNewAccount successMessage branch', async () => {
+               await component.generateNewAccount();
+
+               expect(walletConfiguratorOrchestrator.executeWalletFlow).toHaveBeenCalledWith(
+                    jasmine.objectContaining({
+                         successMessage: jasmine.any(Function),
+                    })
+               );
+          });
+
+          it('should execute mnemonic successMessage branch', async () => {
+               await component.generateNewWalletFromMnemonic();
+
+               const args = walletConfiguratorOrchestrator.executeWalletFlow.calls.mostRecent().args[0];
+
+               expect(args.successMessage('rTest')).toBe('Generated rTest wallet from a mnemonic successfully!');
+          });
+
+          // it('should execute seed validate + successMessage branch', async () => {
+          //      walletsStoreService.seed.set('sEd123');
+
+          //      xrpl.isValidSecret = jasmine.createSpy().and.returnValue(true);
+
+          //      await component.deriveWalletFromFamilySeed();
+
+          //      const args = walletConfiguratorOrchestrator.executeWalletFlow.calls.mostRecent().args[0];
+
+          //      expect(args.validate()).toBeNull();
+          //      expect(args.successMessage('rTest')).toBe('Successfully added rTest');
+          // });
+
+          it('should hit mnemonic validation failure branch', async () => {
+               walletsStoreService.mnemonic.set('bad');
+
+               walletsUtilService.isValidMnemonic.and.returnValue(false);
+               walletsUtilService.errorMessage.and.returnValue('Invalid mnemonic');
+
+               await component.deriveWalletFromMnemonic();
+
+               const args = walletConfiguratorOrchestrator.executeWalletFlow.calls.mostRecent().args[0];
+
+               expect(args.validate()).toBe('Invalid input');
+          });
+
+          it('should execute secret numbers successMessage branch', async () => {
+               await component.generateNewWalletFromSecretNumbers();
+
+               const args = walletConfiguratorOrchestrator.executeWalletFlow.calls.mostRecent().args[0];
+
+               expect(args.successMessage('rTest')).toBe('Generated rTest wallet from secret numbers successfully!');
+          });
+
+          it('should execute secret numbers validate branch', async () => {
+               walletsStoreService.secretNumbers.set('1,2,3');
+
+               walletsUtilService.convertSecretNumberStringToArray.and.returnValue([1, 2, 3]);
+               walletsUtilService.isValidSecret.and.returnValue(false);
+
+               await component.deriveWalletFromSecretNumbers();
+
+               const args = walletConfiguratorOrchestrator.executeWalletFlow.calls.mostRecent().args[0];
+
+               expect(args.validate()).toBe('Invalid Secret Number.');
+          });
+
+          it('should use fallback error message when result.error is missing', () => {
+               const validAddress = 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh';
+
+               walletsStoreService.selectedAddress.set(validAddress);
+
+               walletConfiguratorOrchestrator.removeCustomWallet.and.returnValue({
+                    success: false,
+                    error: undefined,
+               });
+
+               component.removeCustomWallet();
+
+               expect(toastService.error).toHaveBeenCalledWith('Selected wallet not found in custom list', AppConstants.TOAST.ERROR);
+          });
      });
 
      describe('setTab', () => {
@@ -282,6 +411,20 @@ describe('WalletConfiguratorComponent', () => {
           it('should ignore invalid tab', async () => {
                await component.setTab('invalidTab');
                expect(walletsViewModelService.activeTab()).toBe('deriveSeed');
+          });
+
+          it('should set valid tab', async () => {
+               await component.setTab('deriveSeed');
+
+               expect(walletsViewModelService.activeTab()).toBe('deriveSeed');
+               expect(walletsStoreService.resetAll).toHaveBeenCalledTimes(3);
+          });
+
+          it('should ignore invalid tab', async () => {
+               const before = walletsViewModelService.activeTab();
+               await component.setTab('invalid');
+
+               expect(walletsViewModelService.activeTab()).toBe(before);
           });
      });
 
@@ -397,6 +540,39 @@ describe('WalletConfiguratorComponent', () => {
                component.removeCustomWallet();
                expect(toastService.error).toHaveBeenCalledWith('Not found', AppConstants.TOAST.ERROR);
           });
+
+          it('should error when invalid address', () => {
+               walletsStoreService.selectedAddress.set('bad');
+
+               component.removeCustomWallet();
+
+               expect(toastService.error).toHaveBeenCalledWith('Invalid address selected', AppConstants.TOAST.ERROR);
+          });
+
+          it('should error when empty address', () => {
+               walletsStoreService.selectedAddress.set('');
+
+               component.removeCustomWallet();
+
+               expect(toastService.error).toHaveBeenCalled();
+          });
+
+          it('should fail remove when result success false', () => {
+               walletsStoreService.selectedAddress.set('fail');
+
+               component.removeCustomWallet();
+
+               expect(toastService.error).toHaveBeenCalledWith('Invalid address selected', AppConstants.TOAST.ERROR);
+          });
+
+          // it('should succeed remove wallet', () => {
+          //      walletsStoreService.selectedAddress.set('rWallet1');
+
+          //      component.removeCustomWallet();
+
+          //      expect(walletConfiguratorOrchestrator.removeCustomWallet).toHaveBeenCalled();
+          //      expect(walletsStoreService.setField).toHaveBeenCalledWith('selectedAddress', '');
+          // });
      });
 
      describe('clearInputFields', () => {
@@ -421,6 +597,11 @@ describe('WalletConfiguratorComponent', () => {
           it('should only reset store when all is false', () => {
                component.clearFields(false);
                expect(walletsStoreService.resetAll).toHaveBeenCalled();
+          });
+
+          it('should run noop methods', async () => {
+               await (component as any).onSelectedWalletIndexChange();
+               await (component as any).refreshAccountObject({});
           });
      });
 
