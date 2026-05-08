@@ -1,11 +1,11 @@
-<div class="rounded-2xl bg-white p-1 transition-shadow hover:shadow-card">
+<div class="space-y-6">
      <div class="space-y-2">
           @if (activeTab === 'issueCurrency') {
-          <label for="formTitle" class="block text-sm font-semibold text-gray-900">{{ viewModel.formTitle() }}</label>
-          <p class="text-xs text-gray-500">{{ viewModel.hintText() }}</p>
+          <label for="formTitle" class="label-primary">{{ viewModel.formTitle() }}</label>
+          <p class="text-secondary">{{ viewModel.hintText() }}</p>
           } @else {
-          <label for="tokenHolder" class="block text-sm font-semibold text-gray-900">Token Holder</label>
-          <p class="text-xs text-gray-500">The unique address of the account holding the tokens. Select destination from the dropdown or manually enter a new destination.</p>
+          <label for="tokenHolder" class="label-primary">Token Holder</label>
+          <p class="text-secondary">The unique address of the account holding the tokens. Select destination from the dropdown or manually enter a new destination.</p>
           }
 
           <div class="h-[54px]">

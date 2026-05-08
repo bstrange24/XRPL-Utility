@@ -38,7 +38,9 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                     this.utilsService.setTickSize(tx, Number.parseInt(config.tickSize));
                }
 
-               if (config.transferRate) {
+               if (config.transferRate && config.transferRate == 0) {
+                    this.utilsService.setTransferRate(tx, 0);
+               } else if (config.transferRate) {
                     const transferRate = percentToTransferRate(config.transferRate + '%');
                     this.utilsService.setTransferRate(tx, transferRate);
                }

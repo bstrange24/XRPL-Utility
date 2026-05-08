@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output, TemplateRef } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
+import { animation, expandCollapse } from '../../../../../services/utils/animations/animations.service';
 
 @Component({
      selector: 'app-summary-container',
      standalone: true,
-     imports: [NgIcon],
+     imports: [NgIcon, LucideAngularModule],
+     animations: [animation, expandCollapse],
      templateUrl: './summary-container.component.html',
      styleUrl: './summary-container.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,7 +28,7 @@ export class SummaryContainerComponent {
      variant = input<'blue' | 'green'>('blue');
 
      // Expansion state
-     infoPanelExpanded = input.required<boolean>();
+     infoPanelExpanded = input<boolean>();
      toggleInfoPanel = output<void>();
 
      // Custom header template

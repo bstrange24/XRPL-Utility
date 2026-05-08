@@ -1,3 +1,4 @@
+// account-metadata.component.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
@@ -49,13 +50,175 @@ export class AccountMetadataComponent {
           return hex ? Math.ceil(hex.length / 2) : 0;
      });
 
-     // Optional: is the domain too long?
+     // Check if domain is too long
      readonly isDomainTooLong = computed(() => this.domainHexLengthBytes() > 256);
 
-     // Helper method for the template if you prefer calling a function
+     // Check if NFT minter address is valid
+     isNftMinterValid = computed(() => {
+          const address = this.accountConfiguratorStoreService.nfTokenMinterAddress();
+          if (!address) return true; // Empty is valid (means no minter)
+          return xrpl.isValidAddress(address);
+     });
+
+     isNftMinterInvalid = computed(() => {
+          const address = this.accountConfiguratorStoreService.nfTokenMinterAddress();
+          return !!address && !xrpl.isValidAddress(address);
+     });
+
+     // Check if Transfer Rate is valid
+     isTransferRateValid = computed(() => {
+          const rate = this.accountConfiguratorStoreService.transferRate();
+          if (!rate) return true; // Empty is valid (0% fee)
+          const numRate = parseFloat(rate);
+          return !isNaN(numRate) && numRate >= 0 && numRate <= 100;
+     });
+
+     isTransferRateInvalid = computed(() => {
+          const rate = this.accountConfiguratorStoreService.transferRate();
+          if (!rate) return false;
+          const numRate = parseFloat(rate);
+          return isNaN(numRate) || numRate < 0 || numRate > 100;
+     });
+
+     // Check if Tick Size is valid
+     isTickSizeValid = computed(() => {
+          const tickSize = this.accountConfiguratorStoreService.tickSize();
+          if (!tickSize) return true; // Empty is valid (not set)
+          const numTickSize = parseInt(tickSize, 10);
+          return !isNaN(numTickSize) && numTickSize >= 3 && numTickSize <= 15;
+     });
+
+     isTickSizeInvalid = computed(() => {
+          const tickSize = this.accountConfiguratorStoreService.tickSize();
+          if (!tickSize) return false;
+          const numTickSize = parseInt(tickSize, 10);
+          return isNaN(numTickSize) || numTickSize < 3 || numTickSize > 15;
+     });
+
+     // Check if any field has changed from its original value
+     hasChanges = computed(() => {
+          // Check if any metadata field is set
+          const nftMinter = this.accountConfiguratorStoreService.nfTokenMinterAddress();
+          const transferRate = this.accountConfiguratorStoreService.transferRate();
+          const tickSize = this.accountConfiguratorStoreService.tickSize();
+          const domain = this.accountConfiguratorStoreService.domain();
+          const messageKey = this.accountConfiguratorStoreService.isMessageKey();
+
+          return !!(nftMinter || transferRate || tickSize || domain || messageKey);
+     });
+
+     // Combined validation for Modify Metadata button
+     canModifyMetadata = computed(() => {
+          // Must have at least one field to modify
+          if (!this.hasChanges()) return false;
+
+          // NFT Minter validation
+          if (this.isNftMinterInvalid()) return false;
+
+          // Transfer Rate validation
+          if (this.isTransferRateInvalid()) return false;
+
+          // Tick Size validation
+          if (this.isTickSizeInvalid()) return false;
+
+          // Domain validation
+          if (this.isDomainTooLong()) return false;
+
+          return this.canSubmit() && this.connectionGuard.isConnectionReady();
+     });
+
+     // Check if there are any validation errors
+     hasValidationErrors = computed(() => {
+          if (this.isNftMinterInvalid()) return true;
+          if (this.isTransferRateInvalid()) return true;
+          if (this.isTickSizeInvalid()) return true;
+          if (this.isDomainTooLong()) return true;
+          return false;
+     });
+
+     // Get validation error message
+     validationErrorMessage = computed(() => {
+          if (this.isNftMinterInvalid()) {
+               return 'NFT Minter address is invalid. Please enter a valid XRP address (starting with "r").';
+          }
+          if (this.isTransferRateInvalid()) {
+               return 'Transfer Rate must be a number between 0 and 100.';
+          }
+          if (this.isTickSizeInvalid()) {
+               return 'Tick Size must be a number between 3 and 15.';
+          }
+          if (this.isDomainTooLong()) {
+               return `Domain exceeds 256 byte limit (current: ${this.domainHexLengthBytes()}/256 bytes). Please shorten the domain.`;
+          }
+          return '';
+     });
+
+     // Helper method for template
      domainToHex(value: string): string {
           if (!value) return '';
           if (/^[0-9A-Fa-f]+$/.test(value)) return value.toUpperCase();
           return xrpl.convertStringToHex(value);
      }
 }
+
+// import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+// import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
+// import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
+// import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
+// import { LucideAngularModule } from 'lucide-angular';
+// import { FormsModule } from '@angular/forms';
+// import { CommonModule } from '@angular/common';
+// import * as xrpl from 'xrpl';
+// import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
+// import { NgIcon } from '@ng-icons/core';
+// import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
+// import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
+
+// @Component({
+//      selector: 'app-account-metadata',
+//      standalone: true,
+//      imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+//      templateUrl: './account-metadata.component.html',
+//      styleUrl: './account-metadata.component.css',
+//      changeDetection: ChangeDetectionStrategy.OnPush,
+// })
+// export class AccountMetadataComponent {
+//      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
+//      public readonly connectionGuard = inject(ConnectionGuardService);
+//      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+//      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
+//      protected txUiService = inject(TransactionUiService);
+
+//      readonly performAction = output<'Y' | 'N' | ''>();
+//      canSubmit = input<boolean>();
+
+//      // Computed signal: the final hex that will be sent
+//      readonly domainHex = computed(() => {
+//           const input = this.accountConfiguratorStoreService.domain()?.trim() ?? '';
+//           if (!input) return '';
+
+//           // If already hex → keep it (and uppercase for consistency)
+//           if (/^[0-9A-Fa-f]+$/.test(input)) {
+//                return input.toUpperCase();
+//           }
+
+//           // Otherwise convert string to hex
+//           return xrpl.convertStringToHex(input);
+//      });
+
+//      // Computed: length in bytes (hex chars / 2)
+//      readonly domainHexLengthBytes = computed(() => {
+//           const hex = this.domainHex();
+//           return hex ? Math.ceil(hex.length / 2) : 0;
+//      });
+
+//      // Optional: is the domain too long?
+//      readonly isDomainTooLong = computed(() => this.domainHexLengthBytes() > 256);
+
+//      // Helper method for the template if you prefer calling a function
+//      domainToHex(value: string): string {
+//           if (!value) return '';
+//           if (/^[0-9A-Fa-f]+$/.test(value)) return value.toUpperCase();
+//           return xrpl.convertStringToHex(value);
+//      }
+// }

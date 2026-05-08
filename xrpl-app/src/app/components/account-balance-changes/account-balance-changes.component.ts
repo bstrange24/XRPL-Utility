@@ -22,12 +22,15 @@ import { AccountChangesViewModelService } from '../../services/account-balance-c
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { ThemeService } from '../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
+import { ACCOUNT_BALANCE_TABS, ACCOUNT_BALANCE_TAB_META } from './constants/account-balance.ui';
+import { AccountBalanceActionTypes } from './constants/account-balance.types';
 
 @Component({
      selector: 'app-account-changes',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [CommonModule, LucideAngularModule, NgIcon, WarningMessageComponent, AccountChangesSummaryComponent, AccountChangesFiltersComponent, AccountChangesTableComponent],
+     imports: [CommonModule, LucideAngularModule, WarningMessageComponent, AccountChangesSummaryComponent, AccountChangesFiltersComponent, AccountChangesTableComponent, TabMenuWithInfoComponent],
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
      host: { class: 'balance-page-component' },
@@ -38,6 +41,8 @@ export class AccountChangesComponent extends WalletDestinationBase implements On
      public readonly viewModel = inject(AccountChangesViewModelService);
      public readonly themeService = inject(ThemeService);
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
+     public readonly tabs = ACCOUNT_BALANCE_TABS;
+     public readonly tabMeta = ACCOUNT_BALANCE_TAB_META;
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -46,6 +51,11 @@ export class AccountChangesComponent extends WalletDestinationBase implements On
      }
 
      ngOnInit(): void {}
+
+     async setTab(tab: string): Promise<void> {
+          if (!ACCOUNT_BALANCE_TABS.includes(tab as any)) return;
+          this.viewModel.activeTab.set(tab as AccountBalanceActionTypes);
+     }
 
      /** Called automatically when user switches wallet */
      protected async onSelectedWalletIndexChange(): Promise<void> {

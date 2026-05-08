@@ -8,8 +8,6 @@
 
           <button (click)="isExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isExpanded() ? 'Collapse Panel' : 'Expand Panel' }}">
                <lucide-icon [name]="isExpanded() ? 'chevron-down' : 'chevron-up'" size="16" />
-
-               <span class="hidden sm:inline"> {{ isExpanded() ? 'Collapse' : 'Expand' }} </span>
           </button>
      </button>
 

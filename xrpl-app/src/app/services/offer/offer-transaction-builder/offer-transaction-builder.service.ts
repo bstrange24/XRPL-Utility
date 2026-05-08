@@ -30,7 +30,7 @@ export class OfferTransactionBuilderService {
           } else {
                takerGets = {
                     currency: this.utilsService.encodeIfNeeded(offer.weSpendCurrency),
-                    issuer: offer.weSpendIssuer,
+                    issuer: 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm', // offer.weSpendIssuer,
                     value: offer.weSpendAmount,
                };
           }
@@ -40,7 +40,7 @@ export class OfferTransactionBuilderService {
           } else {
                takerPays = {
                     currency: this.utilsService.encodeIfNeeded(offer.weWantCurrency),
-                    issuer: offer.weWantIssuer,
+                    issuer: 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm', //offer.weWantIssuer,
                     value: offer.weWantAmount,
                };
           }

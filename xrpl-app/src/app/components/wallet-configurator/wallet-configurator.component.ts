@@ -71,8 +71,16 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.walletsStoreService.resetAll();
           this.walletsStoreService.setField('secp256k1_encryption_type', true);
 
-          this.rightPanelService.setPanel(WalletGeneratorRequirementsInfoComponent, {
-               activeTab: this.walletsViewModelService.activeTab,
+          // NEW - Recommended
+          this.rightPanelService.setPanel({
+               mainComponent: WalletGeneratorRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.walletsViewModelService.activeTab,
+               },
+
+               // Add summary here when you want it (e.g. on Credentials page)
+               // summaryComponent: CredentialsSummaryComponent,
+               // summaryInputs: { ... }
           });
      }
 

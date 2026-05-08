@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants } from '../../core/app.constants';
@@ -12,7 +12,6 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
 import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
 import { PermissionedDomainUtilService } from '../../services/permissioned-domain/permissioned-domain-util/permissioned-domain-util.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
@@ -29,7 +28,7 @@ import { PermissionedDomainStoreService } from '../../services/permissioned-doma
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { PermissionedDomainsSummaryComponent } from './ui-components/summary/permissioned-domains-summary.component';
+import { PermissionedDomainsSummaryComponent } from './ui-components/permissioned-domain-summary/permissioned-domains-summary.component';
 import { PERMISSION_DOMAIN_TAB_META, PERMISSION_DOMAIN_TABS } from './constants/permissioned-domain.ui';
 import { PermissionDomainConfig } from './constants/permissioned-domain.types';
 import { PermissionDomainDeleteFormComponent } from './tab/permission-domain-delete-form/permission-domain-delete-form.component';
@@ -39,11 +38,12 @@ import { CredentialStore } from '../../services/credentials/credential-store/cre
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { PermissionedDomainRequirementsInfoComponent } from './ui-components/permissioned-domain-requirements-info/permissioned-domain-requirements-info.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionedDomainsSummaryComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -80,10 +80,25 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.permissionedDomainUtilService.clearFields();
           this.permissionedDomainUtilService.clearFields();
 
-          this.rightPanelService.setPanel(RequirementsInfoComponent, {
-               activeTab: this.activeTabForRequirements,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getPermissionedDomainForAccount(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getPermissionedDomainForAccount();
@@ -239,6 +254,21 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.permissionedDomainViewModelService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: PermissionedDomainsSummaryComponent,
+               summaryInputs: {
+                    info: this.permissionedDomainViewModelService.infoData(),
+                    tab: this.permissionedDomainViewModelService.activeTab(),
+               },
+
+               mainComponent: PermissionedDomainRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

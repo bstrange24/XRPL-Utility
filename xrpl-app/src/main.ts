@@ -11,9 +11,11 @@ import process from 'process';
 import { importProvidersFrom } from '@angular/core';
 import {
      LucideAngularModule,
+     ScrollText,
      Cog,
      BanknoteArrowUp,
      BanknoteArrowDown,
+     HourglassIcon,
      Trash2,
      DollarSign,
      TicketCheck,
@@ -56,9 +58,22 @@ import {
      LockOpen,
      Search,
      Calendar,
+     Wand,
+     Signal,
+     Link,
+     Handshake,
+     FileCheck,
+     LucideSettings2,
+     LucideLayoutTemplate,
+     LucideBadgeInfo,
 } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
+     heroSquares2x2,
+     heroIdentification,
+     heroMinus,
+     heroCheckBadge,
+     heroQuestionMarkCircle,
      heroInformationCircle,
      heroExclamationCircle,
      heroExclamationTriangle,
@@ -70,6 +85,7 @@ import {
      heroTrash,
      heroPlusCircle,
      heroPaperAirplane,
+     heroArrowRight,
      heroTicket,
      heroClock,
      heroQueueList,
@@ -90,6 +106,9 @@ import {
      heroCheckCircle,
      heroMoon,
      heroSun,
+     heroCalendar,
+     heroLink,
+     heroLinkSlash,
      heroChevronUp,
      heroChevronDown,
      heroCodeBracket,
@@ -98,6 +117,8 @@ import {
      heroMagnifyingGlass,
      heroCircleStack,
      heroCog,
+     heroArrowUp,
+     heroArrowDown,
 } from '@ng-icons/heroicons/outline';
 
 import { NgIconsModule } from '@ng-icons/core';
@@ -117,8 +138,10 @@ bootstrapApplication(AppComponent, {
           importProvidersFrom(
                LucideAngularModule.pick({
                     Cog,
+                    ScrollText,
                     BanknoteArrowUp,
                     BanknoteArrowDown,
+                    HourglassIcon,
                     Trash2,
                     DollarSign,
                     TicketCheck,
@@ -161,6 +184,14 @@ bootstrapApplication(AppComponent, {
                     LockOpen,
                     Search,
                     Calendar,
+                    Wand,
+                    Signal,
+                    Link,
+                    FileCheck,
+                    LucideSettings2,
+                    LucideLayoutTemplate,
+                    LucideBadgeInfo,
+                    Handshake,
                })
           ),
           importProvidersFrom(
@@ -173,8 +204,18 @@ bootstrapApplication(AppComponent, {
                })
           ),
           provideIcons({
+               heroLinkSlash,
+               heroCalendar,
+               heroLink,
                heroChevronUp,
                heroChevronDown,
+               heroArrowUp,
+               heroArrowDown,
+               heroSquares2x2,
+               heroIdentification,
+               heroMinus,
+               heroCheckBadge,
+               heroQuestionMarkCircle,
                heroInformationCircle,
                heroExclamationCircle,
                heroExclamationTriangle,
@@ -186,6 +227,7 @@ bootstrapApplication(AppComponent, {
                heroTrash,
                heroPlusCircle,
                heroPaperAirplane,
+               heroArrowRight,
                heroTicket,
                heroClock,
                heroQueueList,

@@ -8,9 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-tickets-summary [infoData]="viewModel.infoData()" [tab]="'createTicket'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-tickets-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

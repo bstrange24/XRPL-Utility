@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, effect } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, effect, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -41,7 +41,7 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 @Component({
      selector: 'app-offer',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent, OfferSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent],
      templateUrl: './offer.component.html',
      styleUrl: './offer.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,16 +87,34 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           effect(() => {
                this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
           });
-
-          this.rightPanelService.setPanel(OfferRequirementsInfoComponent, {
-               activeTab: this.offerTransactionViewModelService.activeTab,
-          });
      }
+
+     activeTabForRequirements = computed(() => this.offerTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, OFFER_TX_TYPES as any, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.onAccountChange(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
@@ -267,6 +285,21 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                const wallet = env.wallet ?? this.walletManagerService.getSelectedWallet();
                this.offerUtilsService.getExistingOffers(env.accountObjects, wallet.classicAddress);
           }
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: OfferSummaryComponent,
+               summaryInputs: {
+                    info: this.offerTransactionViewModelService.infoData(),
+                    tab: this.offerTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: OfferRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      onWeWantCurrencySelected(item: SelectItem | null): void {

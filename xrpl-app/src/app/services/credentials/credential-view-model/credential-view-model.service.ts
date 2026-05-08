@@ -25,29 +25,30 @@ export class CredentialViewModelService {
      /** Fully reactive credential VM */
      readonly credentialVm = computed<{ list: CredentialItemVm[]; dropdown: { id: string; display: string; secondary: string }[]; stats: any; hasCredentials: boolean }>(() => {
           const wallet = this.walletManager.getSelectedWallet();
-          const tab = this.activeTab(); // <-- make sure tab is read inside computed
+          const tab = this.activeTab();
 
           if (!wallet) return { list: [], dropdown: [], stats: {}, hasCredentials: false };
 
           const issued = this.credentialStore.existingCredentials() ?? [];
           const received = this.credentialStore.subjectCredentials() ?? [];
+          const walletAddress = wallet.address;
 
-          // normalize function
-          const normalize = (c: CredentialItem, issuedByMe: boolean): CredentialItemVm => ({
+          // FIXED: Normalize with actual wallet verification
+          const normalize = (c: CredentialItem): CredentialItemVm => ({
                ...c,
-               accepted: typeof c.Flags === 'number' ? (c.Flags & 65536) !== 0 : c.Flags === 'Credential accepted',
-               issuedByMe,
-               selectable: tab !== 'createCredential' && (tab !== 'verifyCredential' || issuedByMe),
-               expired: !!c.Expiration && c.Expiration !== 'N/A' && new Date(c.Expiration) < new Date(),
+               accepted: this.credentialUtilService.isCredentialAccepted(c),
+               issuedByMe: c.Issuer === walletAddress, // Actual verification against wallet
+               selectable: tab !== 'createCredential' && (tab !== 'verifyCredential' || c.Issuer === walletAddress),
+               expired: this.credentialUtilService.isCredentialExpired(c), // Use util method
           });
 
-          const pendingIssued: CredentialItemVm[] = [];
-          const acceptedIssued: CredentialItemVm[] = [];
-          const pendingReceived: CredentialItemVm[] = [];
-          const acceptedReceived: CredentialItemVm[] = [];
+          const allIssued = issued.map(c => normalize(c));
+          const allReceived = received.map(c => normalize(c));
 
-          issued.forEach((c: CredentialItem) => (normalize(c, true).accepted ? acceptedIssued.push(normalize(c, true)) : pendingIssued.push(normalize(c, true))));
-          received.forEach((c: CredentialItem) => (normalize(c, false).accepted ? acceptedReceived.push(normalize(c, false)) : pendingReceived.push(normalize(c, false))));
+          const pendingIssued = allIssued.filter(c => !c.accepted);
+          const acceptedIssued = allIssued.filter(c => c.accepted);
+          const pendingReceived = allReceived.filter(c => !c.accepted);
+          const acceptedReceived = allReceived.filter(c => c.accepted);
 
           let list: CredentialItemVm[] = [];
           switch (tab) {
@@ -96,9 +97,9 @@ export class CredentialViewModelService {
 
      /** Main VM for templates */
      readonly vm = computed(() => {
-          const tab = this.activeTab(); // <-- read active tab here
+          const tab = this.activeTab();
           const wallet = this.walletManager.getSelectedWallet();
-          const creds = this.credentialVm(); // <-- must read here, so vm re-runs on tab change
+          const creds = this.credentialVm();
 
           const selectedId = this.credentialStore.credentialID();
           const selectedCredentialItem = selectedId ? (creds.dropdown.find((i: { id: string }) => i.id === selectedId) ?? null) : null;
@@ -192,6 +193,8 @@ export class CredentialViewModelService {
                case 'createCredential':
                     return [...s.pendingIssued, ...s.acceptedIssued];
                case 'acceptCredential':
+                    // FIXED: Only show pending to accept
+                    // return s.pendingToAccept;
                     return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
                case 'deleteCredential':
                     return s.issuedByMe;

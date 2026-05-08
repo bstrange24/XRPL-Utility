@@ -1,4 +1,9 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+<div class="card-base">
+     <h4 class="section-heading">
+          <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
+          NFT Offer Details
+     </h4>
+
      <div class="space-y-6">
           <!-- Currency + Amount -->
           <app-currency-amount-form
@@ -17,10 +22,10 @@
 
           <!-- NFT Token ID -->
           <div class="space-y-2">
-               <label for="nftTokenID" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
-               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+               <label for="nftTokenID" class="label-primary">NFT Token ID</label>
+               <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="input-base" />
           </div>
 
           <!-- Expiration + Owner -->
@@ -32,10 +37,10 @@
 
                <!-- Owner -->
                <div class="space-y-2">
-                    <label for="nftOwner" class="block text-sm font-semibold text-gray-900">Owner</label>
-                    <p class="text-xs text-gray-500">Owner of the NFT (usually your own address for sell offers).</p>
+                    <label for="nftOwner" class="label-primary">Owner</label>
+                    <p class="text-secondary">Owner of the NFT (usually your own address for sell offers).</p>
 
-                    <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="input-base" />
                </div>
           </div>
      </div>

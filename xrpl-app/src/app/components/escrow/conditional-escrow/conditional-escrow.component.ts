@@ -19,7 +19,7 @@ import { EscrowSummaryComponent } from '../ui-components/escrow-summary/escrow-s
 @Component({
      selector: 'app-conditional-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowSummaryComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
      templateUrl: './conditional-escrow.component.html',
      styleUrl: './conditional-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

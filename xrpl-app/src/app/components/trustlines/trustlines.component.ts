@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -41,16 +41,16 @@ import { TrustlineTransactionOrchestratorService } from '../../services/trustlin
 import { TrustlineIssuersComponent } from './tab/trustline-issuers/trustline-issuers.component';
 import { TrustlineIssueComponent } from './tab/trustline-issue/trustline-issue.component';
 import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-clawback.component';
-import { SummaryComponent } from './ui-components/summary/summary.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { TrustlinesSummaryComponent } from './ui-components/trustline-summary/trustlines-summary.component';
 
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, SummaryComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -95,6 +95,9 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           });
      }
 
+     activeTabForRequirements = computed(() => this.trustlineViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, TRUSTLINE_TAB, tab => this.setTab(tab));
           this.trustlineCurrencyService.load();
@@ -103,10 +106,25 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
           this.transactionDropdownService.loadCustomDestinations();
 
-          this.rightPanelService.setPanel(TrustlineRequirementsInfoComponent, {
-               activeTab: this.trustlineViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getTrustlinesForAccount(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      readonly isCurrencyFlow = computed(() => {
           const tab = this.trustlineViewModelService.activeTab();
@@ -367,6 +385,21 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: TrustlinesSummaryComponent,
+               summaryInputs: {
+                    info: this.trustlineViewModelService.infoData(),
+                    tab: this.trustlineViewModelService.activeTab(),
+               },
+
+               mainComponent: TrustlineRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

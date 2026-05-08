@@ -9,8 +9,8 @@
           <app-tab-menu-with-info [tabs]="conditionMenuTabs" [active]="tab" [metaMap]="timeTabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          @let wallet = currentWallet();
-          <app-escrow-summary [wallet]="wallet" [tab]="viewModel.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [escrowLength]="escrowUtilService.escrowLength()" (toggleInfoPanel)="toggleInfoPanel()" (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)"> </app-escrow-summary>
+          <!-- @let wallet = currentWallet(); -->
+          <!-- <app-escrow-summary [wallet]="wallet" [tab]="viewModel.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [escrowLength]="escrowUtilService.escrowLength()" (toggleInfoPanel)="toggleInfoPanel()" (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)"> </app-escrow-summary> -->
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {

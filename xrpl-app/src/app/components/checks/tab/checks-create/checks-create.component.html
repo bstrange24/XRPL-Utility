@@ -1,12 +1,16 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Check Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="file-check" class="section-heading-icon-green"></lucide-icon>
+               Check Details
+          </h4>
+
           <!-- Currency + Amount -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="checkCurrencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                    <label for="checkCurrencyCode" class="label-primary">Currency Code</label>
+                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                               <ng-template #itemTemplate let-item>
@@ -25,9 +29,9 @@
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label for="checkAmount" class="block text-sm font-semibold text-gray-900">Amount</label>
-                    <p class="text-xs text-gray-500">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checksStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="checkAmount" class="label-primary">Amount</label>
+                    <p class="text-secondary">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                    <input type="number" class="input-base" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="checksStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" />
                </div>
           </div>
 
@@ -36,8 +40,8 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Issuer -->
                <div class="space-y-2">
-                    <label for="checkIssuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+                    <label for="checkIssuer" class="label-primary">Issuer</label>
+                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
@@ -45,38 +49,39 @@
 
                <!-- Currency Balance -->
                <div class="space-y-2">
-                    <label for="checkCurrencyBalance" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
-                    <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
-                    <input type="text" [value]="currencyStoreService.balance()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="checkCurrencyBalance" class="label-primary">Currency Balance</label>
+                    <p class="text-secondary">Total currency balance held by this account.</p>
+                    <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
                </div>
           </div>
           }
 
           <!-- Destination -->
           <div class="space-y-2">
-               <label for="checkDestination" class="block text-sm font-semibold text-gray-900">Destination</label>
-               <p class="text-xs text-gray-500">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
+               <label for="checkDestination" class="label-primary">Destination</label>
+               <p class="text-secondary">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
                </div>
           </div>
      </div>
 
-     <!-- Optional Fields Toggle (Outside the card) -->
-     <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow hover:shadow-sm">
-          <label class="flex cursor-pointer items-center gap-3">
-               <div class="relative inline-flex items-center">
-                    <input type="checkbox" class="peer sr-only" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" />
-                    <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
-                    <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
+     <!-- Toggle optional fields Card -->
+     <div class="card-base">
+          <div class="flex items-center justify-between">
+               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
+
+               <div class="flex items-center gap-2">
+                    <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors" title="Destination Tag, Source Tag, Invoice ID and expiration date are optional XRPL transaction fields">
+                         <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
+                    </button>
                </div>
-               <span class="select-none text-sm font-medium text-gray-900 transition-colors"> Include optional fields (Expiration Date, Destination Tag, Source Tag, Invoice ID) </span>
-          </label>
+          </div>
      </div>
 
      <!-- Optional Fields Section (Outside the card) -->
      @if (txUiService.wantsOptions()) {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="card-base">
           <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
      </div>
      }

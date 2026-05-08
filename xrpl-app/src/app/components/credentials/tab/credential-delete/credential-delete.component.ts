@@ -7,11 +7,12 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 import { NgIcon } from '@ng-icons/core';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-credential-delete',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, LucideAngularModule],
      templateUrl: './credential-delete.component.html',
      styleUrl: './credential-delete.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

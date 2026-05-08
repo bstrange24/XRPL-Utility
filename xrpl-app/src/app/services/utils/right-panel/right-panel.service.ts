@@ -1,22 +1,45 @@
-// services/right-panel/right-panel.service.ts
 import { Injectable, Type, signal, computed } from '@angular/core';
+
+export interface RightPanelConfig {
+     mainComponent?: Type<any> | null;
+     mainInputs?: Record<string, any>;
+
+     summaryComponent?: Type<any> | null;
+     summaryInputs?: Record<string, any>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class RightPanelService {
-     readonly component = signal<Type<any> | null>(null);
+     private readonly config = signal<RightPanelConfig>({});
+     readonly component = computed(() => this.config().mainComponent ?? null);
+     readonly inputs = computed(() => this.config().mainInputs ?? {});
+     readonly summaryComponent = computed(() => this.config().summaryComponent ?? null);
+     readonly summaryInputs = computed(() => this.config().summaryInputs ?? {});
 
-     // Store raw values or signals
-     private readonly _inputs = signal<Record<string, any>>({});
+     setPanel(config: RightPanelConfig) {
+          this.config.set({
+               mainComponent: config.mainComponent ?? null,
+               mainInputs: config.mainInputs ?? {},
+               summaryComponent: config.summaryComponent ?? null,
+               summaryInputs: config.summaryInputs ?? {},
+          });
+     }
 
-     readonly inputs = computed(() => this._inputs());
-
-     setPanel<T>(component: Type<T>, inputs: Partial<Record<keyof T, any>> = {}) {
-          this.component.set(component);
-          this._inputs.set(inputs);
+     setMainPanel<T>(component: Type<T>, inputs: Record<string, any> = {}) {
+          this.setPanel({
+               mainComponent: component,
+               mainInputs: inputs,
+          });
      }
 
      clearPanel() {
-          this.component.set(null);
-          this._inputs.set({});
+          this.config.set({});
+     }
+
+     clearSummary() {
+          this.setPanel({
+               mainComponent: this.component(),
+               mainInputs: this.inputs(),
+          });
      }
 }

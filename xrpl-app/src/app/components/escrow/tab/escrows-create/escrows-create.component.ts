@@ -15,11 +15,12 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-escrows-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
      templateUrl: './escrows-create.component.html',
      styleUrl: './escrows-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

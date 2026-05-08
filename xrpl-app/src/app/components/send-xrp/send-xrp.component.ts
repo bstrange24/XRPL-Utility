@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -34,7 +34,7 @@ import { StorageService } from '../../services/shared/local-storage/storage.serv
 import { SendXrpActionTypes, XrpPaymentConfig } from './constants/send-xrp.types';
 import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
-import { SendXrpSummaryComponent } from './ui-components/summary/send-xrp-summary.component';
+import { SendXrpSummaryComponent } from './ui-components/send-xrp-summary/send-xrp-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -42,7 +42,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, SendXrpSummaryComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, MatSlideToggleModule],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,14 +70,26 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SEND_XRP_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
-          this.rightPanelService.setPanel(SendXrpRequirementsInfoComponent, {
-               activeTab: this.sendXrpViewModelService.activeTab,
-          });
+
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.onAccountChange(true); // force refresh from ledger
+          }
      }
 
      ngOnDestroy() {
           this.rightPanelService.clearPanel();
      }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.onAccountChange();
@@ -185,6 +197,20 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
 
      protected async refreshAccountObject(_env: any): Promise<void> {
           return;
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               mainComponent: SendXrpRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.sendXrpViewModelService.activeTab,
+               },
+
+               summaryComponent: SendXrpSummaryComponent,
+               summaryInputs: {
+                    info: this.sendXrpViewModelService.infoData(),
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

@@ -6,11 +6,14 @@ import { PermissionedDomainUtilService } from '../../../../services/permissioned
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
+import { AppConstants } from '../../../../core/app.constants';
+import { ToastService } from '../../../../services/utils/toast/toast.service';
 
 @Component({
      selector: 'app-permission-domain-set-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule],
+     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, ReactiveFormsModule, LucideAngularModule],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +22,7 @@ export class PermissionDomainSetFormComponent {
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
+     public readonly toastService = inject(ToastService);
      private readonly fb = inject(FormBuilder);
 
      // Inputs
@@ -126,26 +130,43 @@ export class PermissionDomainSetFormComponent {
 
      addCredential() {
           if (!this.newIssuer || this.newCredentialType.trim() === '') {
+               this.toastService.warn('Please enter both Issuer and Credential Type', AppConstants.TOAST.WARN);
                return;
           }
 
-          // Add maximum limit check
+          // Check maximum limit
           if (this.credentialsArray.length >= 10) {
-               return; // Don't add more than 10
+               this.toastService.warn('Maximum of 10 credentials allowed per domain', AppConstants.TOAST.WARN);
+               return;
+          }
+
+          const trimmedType = this.newCredentialType.trim();
+
+          // Check for duplicate issuer + credential type
+          const existingCred = this.credentialsArray.value.find((cred: { issuer: string; credentialType: string }) => cred?.issuer === this.newIssuer && cred?.credentialType === trimmedType);
+
+          if (existingCred) {
+               this.toastService.error(`Credential "${trimmedType}" already exists for issuer "${this.newIssuer}"`, AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          // Optional: Check if the same credential type exists for any issuer
+          const duplicateTypeOnly = this.credentialsArray.value.some((cred: { credentialType: string }) => cred?.credentialType === trimmedType);
+          if (duplicateTypeOnly) {
+               this.toastService.info(`Note: Credential type "${trimmedType}" already exists for another issuer`, AppConstants.TOAST.INFO);
           }
 
           const credGroup = this.fb.group({
                issuer: [this.newIssuer, [Validators.required]],
-               credentialType: [this.newCredentialType.trim(), [Validators.required]],
+               credentialType: [trimmedType, [Validators.required]],
           });
 
           this.credentialsArray.push(credGroup);
 
+          // Reset form fields
           this.newCredentialType = '';
           this.form.markAsUntouched();
           this.form.updateValueAndValidity();
-
-          // syncing to store
           this.syncToStore();
      }
 

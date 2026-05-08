@@ -9,8 +9,8 @@
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
           <!-- Info / Summary -->
-          @let wallet = currentWallet();
-          <app-checks-summary [wallet]="wallet" [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"> </app-checks-summary>
+          <!-- @let wallet = currentWallet(); -->
+          <!-- <app-checks-summary [wallet]="wallet" [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"> </app-checks-summary> -->
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {

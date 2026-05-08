@@ -9,11 +9,13 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-payment-channel-fund',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
      templateUrl: './payment-channel-fund.component.html',
      styleUrl: './payment-channel-fund.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

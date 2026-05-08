@@ -32,7 +32,7 @@ describe('AccountMetadataComponent', () => {
           accountConfiguratorStoreService = {
                nfTokenMinterAddress: signal(''),
                transferRate: signal(''),
-               tickSize: signal(''),
+               number: signal(0),
                domain: signal(''),
                isMessageKey: signal(false),
                multiSigningEnabled: signal(false),
@@ -220,9 +220,9 @@ describe('AccountMetadataComponent', () => {
           });
 
           it('should have tickSize from store', () => {
-               accountConfiguratorStoreService.tickSize.set('6');
+               accountConfiguratorStoreService.tickSize.set(6);
                fixture.detectChanges();
-               expect(accountConfiguratorStoreService.tickSize()).toBe('6');
+               expect(accountConfiguratorStoreService.tickSize()).toBe(6);
           });
 
           it('should have domain from store', () => {
@@ -297,7 +297,7 @@ describe('AccountMetadataComponent', () => {
           });
 
           it('should handle setField being called with tickSize', () => {
-               const newTickSize = '8';
+               const newTickSize = 8;
                accountConfiguratorStoreService.setField('tickSize', newTickSize);
                expect(accountConfiguratorStoreService.setField).toHaveBeenCalledWith('tickSize', newTickSize);
           });

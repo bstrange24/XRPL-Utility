@@ -1,21 +1,21 @@
 <div class="space-y-6">
      <!-- Add New Currency + Issuer Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="card-base">
           <h4 class="mb-4 text-sm font-semibold text-gray-900">Add New Currency / Issuer</h4>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">Add a unique currency code to this application.</p>
-                    <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="currencyCode" class="label-primary">Currency Code</label>
+                    <p class="text-secondary">Add a unique currency code to this application.</p>
+                    <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" class="input-base" />
                </div>
 
                <!-- Issuer Address -->
                <div class="space-y-2">
-                    <label for="issuerAddress" class="block text-sm font-semibold text-gray-900">Issuer Address</label>
-                    <p class="text-xs text-gray-500">Add a unique issuer address to this application.</p>
-                    <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="issuerAddress" class="label-primary">Issuer Address</label>
+                    <p class="text-secondary">Add a unique issuer address to this application.</p>
+                    <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." class="input-base" />
                </div>
           </div>
 
@@ -23,14 +23,14 @@
      </div>
 
      <!-- Remove Existing Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="card-base">
           <h4 class="mb-4 text-sm font-semibold text-gray-900">Remove Currency / Issuer</h4>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Select Currency -->
                <div class="space-y-2">
-                    <label for="selectCurrency" class="block text-sm font-semibold text-gray-900">Select Currency</label>
-                    <p class="text-xs text-gray-500">Remove a unique currency code from this application.</p>
+                    <label for="selectCurrency" class="label-primary">Select Currency</label>
+                    <p class="text-secondary">Remove a unique currency code from this application.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
@@ -50,8 +50,8 @@
 
                <!-- Select Issuer -->
                <div class="space-y-2">
-                    <label for="selectIssuer" class="block text-sm font-semibold text-gray-900">Select Issuer</label>
-                    <p class="text-xs text-gray-500">Remove a unique issuer address from this application.</p>
+                    <label for="selectIssuer" class="label-primary">Select Issuer</label>
+                    <p class="text-secondary">Remove a unique issuer address from this application.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />

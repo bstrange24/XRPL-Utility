@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+// escrow-summary.component.ts
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -12,6 +13,10 @@ import { LucideAngularModule } from 'lucide-angular';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { SummaryTextConfig, SummaryTextConfigService } from '../../../../services/shared/summary-text-config/summary-text-config.service';
+import { FormsModule } from '@angular/forms';
+import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
+import { ExpirationFilterInputComponent } from '../../../shared/expiration-filter-input/expiration-filter-input.component';
+import { NgIcon } from '@ng-icons/core';
 
 const ESCROW_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'escrow',
@@ -23,12 +28,13 @@ const ESCROW_SUMMARY_CONFIG: SummaryTextConfig = {
      },
 };
 
+type SortKey = 'amount' | 'party' | 'sequence' | 'expiration';
+
 @Component({
      selector: 'app-escrow-summary',
      standalone: true,
-     imports: [EscrowCreateItemComponent, EscrowCancelItemComponent, EscrowFinishItemComponent, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent],
+     imports: [EscrowCreateItemComponent, EscrowCancelItemComponent, EscrowFinishItemComponent, NgIcon, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent, FormsModule, SortControlComponent, ExpirationFilterInputComponent],
      templateUrl: './escrow-summary.component.html',
-     styleUrl: './escrow-summary.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EscrowSummaryComponent {
@@ -39,68 +45,251 @@ export class EscrowSummaryComponent {
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
      public readonly utilsService = inject(UtilsService);
 
+     // Inputs
      wallet = input.required<{ address: string } | null | undefined>();
      escrowLength = input.required<number>();
      tab = input.required<EscrowActionTypes>();
+     infoPanelExpanded = input<boolean>();
+     info = input<string>();
 
-     infoPanelExpanded = input.required<boolean>();
+     // Outputs
      toggleInfoPanel = output<void>();
      escrowSelected = output<any>();
+
+     // Search and Filter State
+     readonly searchQuery = signal<string>('');
+     readonly expiresAfter = signal<string>('');
+     readonly expiresBefore = signal<string>('');
+     readonly activeQuickFilter = signal<'all' | 'expired' | 'active' | 'pending'>('all');
+     readonly sortBy = signal<SortKey>('expiration');
+     readonly sortDirection = signal<'asc' | 'desc'>('asc');
+
+     // Sort Options
+     sortOptions: SortOption[] = [
+          { key: 'amount', label: 'Amount' },
+          { key: 'party', label: 'Destination/Sender' },
+          { key: 'sequence', label: 'Sequence' },
+          { key: 'expiration', label: 'Expiration' },
+     ];
+
+     // Quick Filter Options
+     quickFilters: { key: 'all' | 'active' | 'expired' | 'pending'; label: string; icon: string; color: string }[] = [
+          { key: 'all', label: 'All', icon: 'heroSquares2x2', color: 'blue' },
+          { key: 'active', label: 'Active', icon: 'heroClock', color: 'green' },
+          { key: 'expired', label: 'Expired', icon: 'heroExclamationCircle', color: 'red' },
+          { key: 'pending', label: 'Pending', icon: 'heroClock', color: 'amber' },
+     ];
+
      explorerUrl = this.txUiService.explorerUrl;
 
-     onEscrowClick(escrow: any) {
-          if (this.tab() === 'createEscrow') {
-               return;
+     // Helper function to get party (destination or sender) from escrow
+     private getParty(escrow: AnyEscrowDisplayItem): string {
+          if (escrow.tab === 'finishEscrow') {
+               return (escrow as any).sender || '';
+          }
+          return (escrow as any).destination || '';
+     }
+
+     // Helper function to get expiration timestamp
+     private getExpirationTimestamp(escrow: AnyEscrowDisplayItem): number {
+          const expirationValue = escrow.cancelAfter || escrow.finishAfter;
+          if (!expirationValue) return 0;
+
+          // Convert from Ripple time (seconds since 2000-01-01) to JS timestamp
+          const RIPPLE_EPOCH_OFFSET = 946684800;
+          return (expirationValue + RIPPLE_EPOCH_OFFSET) * 1000;
+     }
+
+     // Computed values
+     infoData = computed(() => this.escrowTransactionViewModelService.infoData());
+     totalCount = computed(() => this.infoData()?.escrowCount ?? 0);
+     hasActiveFilters = computed(() => this.searchQuery().length > 0 || this.expiresAfter() || this.expiresBefore() || this.activeQuickFilter() !== 'all');
+
+     // Filtered and Sorted Escrows
+     filteredEscrows = computed(() => {
+          let escrows = [...(this.infoData()?.escrowsToShow ?? [])];
+          const query = this.searchQuery().trim().toLowerCase();
+          const after = this.expiresAfter();
+          const before = this.expiresBefore();
+          const quickFilter = this.activeQuickFilter();
+
+          // Text Search
+          if (query) {
+               escrows = escrows.filter(escrow => escrow.id?.toLowerCase().includes(query) || escrow.amount?.toLowerCase().includes(query) || this.getParty(escrow).toLowerCase().includes(query) || escrow.EscrowSequence?.toString().toLowerCase().includes(query));
           }
 
-          this.escrowUtilService.onEscrowSelectedInUi(escrow);
-          this.escrowSelected.emit(escrow);
-          this.toggleInfoPanel.emit();
-     }
+          // Date Range Filter (by expiration - cancelAfter or finishAfter)
+          if (after || before) {
+               escrows = escrows.filter(escrow => {
+                    const expirationValue = escrow.cancelAfter || escrow.finishAfter;
+                    if (!expirationValue) return false;
 
-     selectEscrow(escrow: any, _source: 'list') {
-          this.escrowUtilService.onEscrowSelected(escrow);
-     }
+                    const RIPPLE_EPOCH_OFFSET = 946684800;
+                    const expirationDate = new Date((expirationValue + RIPPLE_EPOCH_OFFSET) * 1000);
+
+                    if (isNaN(expirationDate.getTime())) return false;
+                    if (after && expirationDate < new Date(after)) return false;
+                    if (before && expirationDate > new Date(before)) return false;
+                    return true;
+               });
+          }
+
+          // Quick Filters
+          if (quickFilter !== 'all') {
+               escrows = escrows.filter(escrow => {
+                    switch (quickFilter) {
+                         case 'expired':
+                              return escrow.isExpired;
+                         case 'active':
+                              return !escrow.isExpired && escrow.finishAfter;
+                         case 'pending':
+                              return !escrow.isExpired && !escrow.finishAfter;
+                         default:
+                              return true;
+                    }
+               });
+          }
+
+          return escrows;
+     });
+
+     sortedEscrows = computed(() => {
+          let items = [...this.filteredEscrows()];
+          const sortField = this.sortBy();
+          const direction = this.sortDirection();
+
+          return items.sort((a, b) => {
+               let valA: string | number = '';
+               let valB: string | number = '';
+
+               switch (sortField) {
+                    case 'amount':
+                         valA = parseFloat(a.amount?.split(' ')[0] || '0');
+                         valB = parseFloat(b.amount?.split(' ')[0] || '0');
+                         break;
+                    case 'party':
+                         valA = this.getParty(a);
+                         valB = this.getParty(b);
+                         break;
+                    case 'sequence':
+                         valA = parseInt(a.EscrowSequence || '0', 10);
+                         valB = parseInt(b.EscrowSequence || '0', 10);
+                         break;
+                    case 'expiration':
+                         valA = a.cancelAfter || a.finishAfter || 0;
+                         valB = b.cancelAfter || b.finishAfter || 0;
+                         break;
+               }
+
+               if (typeof valA === 'number' && typeof valB === 'number') {
+                    return direction === 'asc' ? valA - valB : valB - valA;
+               }
+
+               const cmp = String(valA).localeCompare(String(valB));
+               return direction === 'asc' ? cmp : -cmp;
+          });
+     });
+
+     filteredCount = computed(() => this.sortedEscrows().length);
 
      summaryText = computed(() => {
           const info = this.escrowTransactionViewModelService.infoData();
           if (!info) return '';
-
           return this.summaryTextConfigService.buildSummaryText(info.walletName, info.escrowCount, this.tab(), ESCROW_SUMMARY_CONFIG);
      });
 
-     getActionText(): string {
-          switch (this.tab()) {
-               case 'createEscrow':
-                    return 'created.';
-               case 'finishEscrow':
-                    return 'that can be finished.';
-               case 'cancelEscrow':
-                    return 'that can be cancelled.';
+     emptyStateMessage = computed(() => {
+          const count = this.infoData()?.escrowCount ?? 0;
+          const query = this.searchQuery();
+          const quickFilter = this.activeQuickFilter();
+
+          if (query && this.filteredEscrows().length === 0) {
+               return `No escrows matching "${query}"`;
+          }
+          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredEscrows().length === 0) {
+               return `No escrows expire in the selected date range`;
+          }
+          if (quickFilter !== 'all' && this.filteredEscrows().length === 0) {
+               return `No ${quickFilter} escrows found`;
+          }
+          if (count === 0) {
+               switch (this.tab()) {
+                    case 'createEscrow':
+                         return 'This wallet has not created any Escrows yet.';
+                    case 'finishEscrow':
+                         return 'This wallet has no Escrows to finish.';
+                    case 'cancelEscrow':
+                         return 'This wallet has no Escrows to cancel.';
+                    default:
+                         return 'No escrows found.';
+               }
+          }
+          return '';
+     });
+
+     emptyStateSubMessage = computed(() => {
+          const query = this.searchQuery();
+          if (query && this.filteredEscrows().length === 0) {
+               return 'Try a different search term';
+          }
+          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredEscrows().length === 0) {
+               return 'Try adjusting the expiration date range';
+          }
+          return '';
+     });
+
+     getQuickFilterClass(filterKey: string): string {
+          const isActive = this.activeQuickFilter() === filterKey;
+          const baseClass = 'px-4 py-2 text-sm font-medium rounded-2xl transition-all border hover:shadow-sm active:scale-[0.985] inline-flex items-center gap-2';
+
+          switch (filterKey) {
+               case 'expired':
+                    return `${baseClass} ${isActive ? 'bg-red-100 text-red-700 border-red-200' : 'border-gray-200 text-gray-600 hover:bg-red-50'}`;
+               case 'active':
+                    return `${baseClass} ${isActive ? 'bg-green-100 text-green-700 border-green-200' : 'border-gray-200 text-gray-600 hover:bg-green-50'}`;
+               case 'pending':
+                    return `${baseClass} ${isActive ? 'bg-amber-100 text-amber-700 border-amber-200' : 'border-gray-200 text-gray-600 hover:bg-amber-50'}`;
                default:
-                    return '';
+                    return `${baseClass} ${isActive ? 'bg-blue-600 text-white border-blue-200' : 'border-gray-200 text-gray-600 hover:bg-blue-50'}`;
           }
      }
 
-     emptyStateMessage = computed(() => {
-          switch (this.tab()) {
-               case 'createEscrow':
-                    return 'This wallet has not created any Escrows yet.';
-               case 'finishEscrow':
-                    return 'This wallet has no Escrows to finish.';
-               case 'cancelEscrow':
-                    return 'This wallet has no Escrows to cancel.';
-               default:
-                    return 'No escrows found.';
+     onSearchChange(value: string) {
+          this.searchQuery.set(value);
+     }
+
+     setQuickFilter(filter: 'all' | 'expired' | 'active' | 'pending') {
+          this.activeQuickFilter.set(filter);
+     }
+
+     onSortChange(event: SortChangeEvent) {
+          const validKeys: SortKey[] = ['amount', 'party', 'sequence', 'expiration'];
+          if (validKeys.includes(event.key as SortKey)) {
+               this.sortBy.set(event.key as SortKey);
+               this.sortDirection.set(event.direction);
           }
-     });
+     }
+
+     clearAllFilters() {
+          this.searchQuery.set('');
+          this.expiresAfter.set('');
+          this.expiresBefore.set('');
+          this.activeQuickFilter.set('all');
+     }
+
+     onEscrowClick(escrow: any) {
+          if (this.tab() === 'createEscrow') return;
+          this.escrowUtilService.onEscrowSelectedInUi(escrow);
+          this.escrowSelected.emit(escrow);
+          this.toggleInfoPanel.emit();
+     }
 
      castToCreateEscrow(escrow: AnyEscrowDisplayItem) {
           return {
                tab: 'createEscrow' as const,
                EscrowSequence: escrow.EscrowSequence,
                amount: escrow.amount,
-               destination: escrow.destination || '',
+               destination: (escrow as any).destination || '',
                finishAfter: escrow.finishAfter,
                cancelAfter: escrow.cancelAfter,
                isExpired: escrow.isExpired,
@@ -115,7 +304,7 @@ export class EscrowSummaryComponent {
                tab: 'finishEscrow' as const,
                EscrowSequence: escrow.EscrowSequence,
                amount: escrow.amount,
-               sender: escrow.sender || '',
+               sender: (escrow as any).sender || '',
                finishAfter: escrow.finishAfter,
                cancelAfter: escrow.cancelAfter,
                isExpired: escrow.isExpired,
@@ -130,7 +319,7 @@ export class EscrowSummaryComponent {
                tab: 'cancelEscrow' as const,
                EscrowSequence: escrow.EscrowSequence,
                amount: escrow.amount,
-               destination: escrow.destination || '',
+               destination: (escrow as any).destination || '',
                finishAfter: escrow.finishAfter,
                cancelAfter: escrow.cancelAfter,
                isExpired: escrow.isExpired,

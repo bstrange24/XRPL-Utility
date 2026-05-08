@@ -6,11 +6,12 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-payment-channel-renew',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './payment-channel-renew.component.html',
      styleUrl: './payment-channel-renew.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

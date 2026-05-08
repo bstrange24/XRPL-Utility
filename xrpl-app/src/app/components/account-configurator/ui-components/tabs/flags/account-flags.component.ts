@@ -35,4 +35,9 @@ export class AccountFlagsComponent {
                this.accountConfiguratorUtilService.toggleFlag(key);
           }
      }
+
+     clearFlags() {
+          this.accountConfiguratorUtilService.resetFlags();
+          this.accountConfiguratorStoreService.setField('configurationType', null);
+     }
 }

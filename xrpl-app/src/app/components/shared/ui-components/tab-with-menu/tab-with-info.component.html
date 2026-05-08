@@ -1,10 +1,18 @@
 <div class="form-panel-header rounded-t-3xl px-1 py-3">
      <!-- Tabs -->
      @if (tabs().length > 0) {
-     <div class="menu-bar bg-white p-1 rounded-2xl mb-2">
+     <div class="menu-bar bg-white p-1 rounded-2xl mb-3">
           <div class="tab-grid" [class.tab-grid-single]="tabs().length === 1" [class.tab-grid-multiple]="tabs().length > 1">
                @for (tab of tabs(); track tab.key) {
-               <button [class]="getButtonClasses(tabs().length, active() === tab.key)" (click)="activeChange.emit(tab.key)" type="button">
+               <button
+                    (click)="activeChange.emit(tab.key)"
+                    type="button"
+                    [class]="[
+               'inline-flex items-center justify-center whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-medium  gap-2',
+               tabs().length === 1 ? 'w-full' : 'flex-1',
+               active() === tab.key ? 'bg-white shadow-xs border' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 border border-transparent'].join(' ')"
+                    [style.borderColor]="active() === tab.key ? tab.color + '80' : 'transparent'"
+               >
                     @if (tab.iconType === 'ng-icon') {
                     <ng-icon [name]="tab.icon" [size]="tabButtonClasses().iconSize" [color]="tab.color" class="flex-shrink-0" />
                     } @else if (tab.iconType === 'lucide-icon') {

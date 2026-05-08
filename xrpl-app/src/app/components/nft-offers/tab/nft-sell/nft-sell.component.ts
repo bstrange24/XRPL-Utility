@@ -17,11 +17,12 @@ import { NftOffersTransactionViewModelService } from '../../../../services/nft/n
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { NftTransactionViewModelService } from '../../../../services/nft/nft-transaction-view-model/nft-transaction-view-model.service';
 import { NftTransactionOrchestrator } from '../../../../services/nft/nft-orchestrator/nft-orchestrator.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-sell',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
      templateUrl: './nft-sell.component.html',
      styleUrl: './nft-sell.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

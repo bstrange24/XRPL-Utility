@@ -15,11 +15,12 @@ import { TrustlineUtilService } from '../../../../services/trustlines/trustline-
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { CurrencyAmountFormComponent } from '../../../shared/currency-amount-form/currency-amount-form.component';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-sell-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
      templateUrl: './nft-sell-offers.component.html',
      styleUrl: './nft-sell-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

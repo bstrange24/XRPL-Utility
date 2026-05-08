@@ -6,11 +6,12 @@ import { NgIcon } from '@ng-icons/core';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { PaymentChannelViewModelService } from '../../../../services/payment-channel/payment-channel-transaction-view-model/payment-channel-view-model.service';
 import { PaymentChannelUtilService } from '../../../../services/payment-channel/payment-channel-util/payment-channel-util.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-payment-channel-close',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './payment-channel-close.component.html',
      styleUrl: './payment-channel-close.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

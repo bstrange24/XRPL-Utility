@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
@@ -27,8 +27,7 @@ import { CredentialViewModelService } from '../../services/credentials/credentia
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { RequirementsInfoComponent } from './ui-components/credential-requirements-info/requirements-info.component';
-import { CredentialsSummaryComponent } from './ui-components/summary/credentials-summary.component';
+import { CredentialsSummaryComponent } from './ui-components/credential-summary/credentials-summary.component';
 import { CredentialDeleteComponent } from './tab/credential-delete/credential-delete.component';
 import { CredentialVerifyComponent } from './tab/credential-verify/credential-verify.component';
 import { CredentialCreateComponent } from './tab/credential-create/credential-create.component';
@@ -39,11 +38,12 @@ import { CREDENTIAL_REGEX, CREDENTIAL_TAB } from './constants/credential.constan
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { CredentialRequirementsInfoComponent } from './ui-components/credential-requirements-info/credential-requirements-info.component';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialsSummaryComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,22 +62,37 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      public readonly credentialTabs = CREDENTIAL_TABS;
      public readonly tabMeta = CREDENTIAL_TAB_META;
 
+     activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
+
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
-
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CREDENTIAL_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
 
-          this.rightPanelService.setPanel(RequirementsInfoComponent, {
-               activeTab: this.activeTabForRequirements,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getCredentialsForAccount(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getCredentialsForAccount(false);
@@ -328,6 +343,30 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      protected async refreshAccountObject(env: any): Promise<void> {
           this.credentialStore.setField('existingCredentials', this.credentialUtilService.parseIssuedCredentials(env.accountObjects, env.wallet.classicAddress));
           this.credentialStore.setField('subjectCredentials', this.credentialUtilService.parseSubjectCredentials(env.accountObjects, env.wallet.classicAddress));
+     }
+
+     private setRightPanel(): void {
+          const currentTab = this.credentialViewModelService.activeTab();
+          const credentialVm = this.credentialViewModelService.credentialVm();
+
+          this.rightPanelService.setPanel({
+               mainComponent: CredentialRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+
+               summaryComponent: CredentialsSummaryComponent,
+               summaryInputs: {
+                    wallet: this.currentWallet(),
+                    view: {
+                         walletName: this.currentWallet()?.name || 'Selected wallet',
+                         summaryMessage: this.credentialViewModelService.summaryMessage(currentTab),
+                    },
+                    creds: credentialVm,
+                    credsLength: credentialVm.list?.length || 0,
+                    tab: currentTab,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

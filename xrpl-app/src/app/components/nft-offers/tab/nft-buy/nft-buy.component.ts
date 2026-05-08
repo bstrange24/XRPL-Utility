@@ -11,11 +11,12 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-buy',
      standalone: true,
-     imports: [CommonModule, FormsModule],
+     imports: [CommonModule, LucideAngularModule, FormsModule],
      templateUrl: './nft-buy.component.html',
      styleUrl: './nft-buy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

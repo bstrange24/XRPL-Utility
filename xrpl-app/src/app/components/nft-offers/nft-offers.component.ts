@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, computed, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, computed, ChangeDetectionStrategy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -48,7 +48,7 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 @Component({
      selector: 'app-nft-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, WarningMessageComponent, NftOffersSummaryComponent, NftSellComponent, NftSellOffersComponent, NftBuyComponent, NftBuyOffersComponent, NftCancelOffersComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, WarningMessageComponent, NftSellComponent, NftSellOffersComponent, NftBuyComponent, NftBuyOffersComponent, NftCancelOffersComponent],
      templateUrl: './nft-offers.component.html',
      styleUrl: './nft-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -76,6 +76,9 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.nftOffersTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, NFT_OFFERS_TAB, tab => this.setTab(tab));
           this.trustlineCurrencyService.load();
@@ -86,9 +89,13 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
 
-          this.rightPanelService.setPanel(NftOffersRequirementsInfoComponent, {
-               activeTab: this.nftOffersTransactionViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getNFTOffers(true);
+          }
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -386,6 +393,21 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
           await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: NftOffersSummaryComponent,
+               summaryInputs: {
+                    info: this.nftOffersTransactionViewModelService.infoData(),
+                    tab: this.nftOffersTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: NftOffersRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

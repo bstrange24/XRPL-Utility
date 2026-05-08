@@ -8,11 +8,13 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

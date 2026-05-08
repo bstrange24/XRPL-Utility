@@ -13,11 +13,14 @@ import { TrustlineUtilService } from '../../../../services/trustlines/trustline-
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

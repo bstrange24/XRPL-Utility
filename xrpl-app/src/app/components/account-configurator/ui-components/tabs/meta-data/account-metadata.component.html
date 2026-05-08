@@ -1,42 +1,59 @@
 <div class="space-y-6">
      <!-- NFT Minter Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label for="mftMinterAddress" class="mb-2 block text-sm font-semibold text-gray-900">NFT Minter Address</label>
-          <p class="mb-3 text-sm text-gray-600">Authorize another account to mint NFTs on your behalf.</p>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="wand" class="section-heading-icon-green"></lucide-icon>
+               NFT Minter Address
+          </h4>
 
-          <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
+          <p class="text-secondary">Authorize another account to mint NFTs on your behalf.</p>
+
+          <input type="text" class="input-base-with-validation" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." [class.border-gray-200]="!isNftMinterInvalid()" [class.border-red-500]="isNftMinterInvalid()" />
+
+          @if (isNftMinterInvalid()) {
+          <p class="form-error">Please enter a valid XRP address</p>
+          }
 
           <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg disabled:opacity-50" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
-               <button type="button" class="rounded-2xl border border-red-300 bg-white px-6 py-2.5 text-sm font-semibold text-red-600 transition-all hover:bg-red-50 hover:text-red-700 disabled:opacity-50" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+               <button type="button" class="btn-primary py-3" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || isNftMinterInvalid()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+               <button type="button" class="btn-red py-3" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
           </div>
      </div>
 
      <!-- Transfer Rate + Tick Size Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <h4 class="mb-4 text-sm font-semibold text-gray-900">Transfer Settings</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="lucideSettings2" class="section-heading-icon-green"></lucide-icon>
+               Transfer Settings
+          </h4>
 
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div>
-                    <label for="accountTransferRate" class="mb-2 block text-sm font-semibold text-gray-900">Transfer Rate</label>
-                    <p class="mb-3 text-xs text-gray-500">Fee percentage for issued currencies (0 = no fee)</p>
-                    <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" placeholder="e.g. 1.5" />
+                    <label for="accountTransferRate" class="label-primary">Transfer Rate</label>
+                    <p class="text-secondary">Fee percentage for issued currencies (0 = no fee, max 100)</p>
+                    <input type="number" class="input-base-with-validation" [class.border-gray-200]="!isTransferRateInvalid()" [class.border-red-500]="isTransferRateInvalid()" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" placeholder="e.g. 1.5" step="0.0000001" min="0" max="100" />
+                    @if (isTransferRateInvalid()) {
+                    <p class="form-error">Transfer Rate must be a number between 0 and 100</p>
+                    }
                </div>
 
                <div>
-                    <label for="accountTickSize" class="mb-2 block text-sm font-semibold text-gray-900">Tick Size</label>
-                    <p class="mb-3 text-xs text-gray-500">Decimal precision for trading (3–15)</p>
-                    <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" placeholder="e.g. 6" />
+                    <label for="accountTickSize" class="label-primary">Tick Size</label>
+                    <p class="text-secondary">Decimal precision for trading (3–15)</p>
+                    <input type="number" class="input-base-with-validation" [class.border-gray-200]="!isTickSizeInvalid()" [class.border-red-500]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" placeholder="e.g. 6" min="3" max="15" />
+                    @if (isTickSizeInvalid()) {
+                    <p class="form-error">Tick Size must be a number between 3 and 15</p>
+                    }
                </div>
           </div>
      </div>
 
      <!-- Domain Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label for="accountDomain" class="mb-2 block text-sm font-semibold text-gray-900">Domain</label>
-          <p class="mb-3 text-sm text-gray-600">Public domain associated with this account (e.g. example.com)</p>
+     <div class="card-base">
+          <label for="accountDomain" class="label-primary">Domain</label>
+          <p class="text-secondary">Public domain associated with this account (e.g. example.com)</p>
 
-          <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" />
+          <input type="text" class="input-base-with-validation" [class.border-gray-200]="!isDomainTooLong()" [class.border-red-500]="isDomainTooLong()" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" />
 
           @if (accountConfiguratorStoreService.domain()) {
           <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
@@ -46,14 +63,14 @@
                          <code class="block break-all font-mono text-sm text-gray-700">{{ domainHex() || '(empty)' }}</code>
                     </div>
                     <div class="text-right">
-                         <p class="text-xs text-gray-500">Length</p>
+                         <p class="text-secondary">Length</p>
                          <p class="font-mono text-sm font-semibold" [class.text-red-600]="isDomainTooLong()" [class.text-green-600]="!isDomainTooLong()">{{ domainHexLengthBytes() }} / 256 bytes</p>
                     </div>
                </div>
                @if (isDomainTooLong()) {
                <div class="mt-3 flex items-center gap-2 rounded-xl bg-red-50 p-2 text-xs text-red-700">
                     <ng-icon name="heroExclamationTriangle" size="14" />
-                    <span>Domain exceeds 256 byte limit</span>
+                    <span>Domain exceeds 256 byte limit. Please shorten the domain.</span>
                </div>
                }
           </div>
@@ -61,30 +78,40 @@
      </div>
 
      <!-- Message Key Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.bg-green-50]="accountConfiguratorStoreService.isMessageKey()">
-               <input type="checkbox" [checked]="accountConfiguratorStoreService.isMessageKey()" (change)="accountConfiguratorUtilService.toggleMessageKey()" class="hidden" />
+     <div class="card-base">
+          <div class="space-y-3">
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.bg-green-50]="accountConfiguratorStoreService.isMessageKey()">
+                    <input type="checkbox" [checked]="accountConfiguratorStoreService.isMessageKey()" (change)="accountConfiguratorUtilService.toggleMessageKey()" class="hidden" />
 
-               <div class="mt-0.5 flex-shrink-0">
-                    <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.border-gray-300]="!accountConfiguratorStoreService.isMessageKey()" [class.bg-green-500]="accountConfiguratorStoreService.isMessageKey()">
-                         @if (accountConfiguratorStoreService.isMessageKey()) {
-                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
-                         }
+                    <div class="mt-0.5 flex-shrink-0">
+                         <div class="flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="accountConfiguratorStoreService.isMessageKey()" [class.border-gray-300]="!accountConfiguratorStoreService.isMessageKey()" [class.bg-green-500]="accountConfiguratorStoreService.isMessageKey()">
+                              @if (accountConfiguratorStoreService.isMessageKey()) {
+                              <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                              }
+                         </div>
                     </div>
-               </div>
 
-               <div class="flex-1">
-                    <span class="font-medium text-gray-900">Save Message Key</span>
-                    <p class="mt-1 text-sm text-gray-600">Public key for receiving encrypted messages</p>
-               </div>
-          </label>
+                    <div class="flex-1">
+                         <div class="text-sm font-medium text-gray-900">Save Message Key</div>
+                         <div class="mt-0.5 text-xs text-gray-600">Public key for receiving encrypted messages.</div>
+                    </div>
+               </label>
+          </div>
      </div>
 
      <!-- Transaction Options -->
      <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">{{ validationErrorMessage() }}</div>
+     </div>
+     }
+
      <!-- Main Action Button -->
      <div class="flex flex-col gap-3 sm:flex-row">
-          <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-10 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+          <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="performAction.emit('')" [disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
      </div>
 </div>

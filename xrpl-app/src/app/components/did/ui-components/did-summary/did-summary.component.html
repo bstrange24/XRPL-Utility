@@ -1,0 +1,64 @@
+@if (info(); as data) {
+<app-summary-container [walletName]="data.walletName" [summaryText]="getSummaryText()" [itemCount]="data.didCount" [links]="null" [buttonLabel]="'DID'" [emptyStateMessage]="data.didCount === 0 ? 'This wallet has no DID yet.' : ''" [emptyStateSubMessage]="data.didCount === 0 ? 'Use the Set DID tab to create one.' : ''">
+     <!-- Items List -->
+     <div items-list class="flex flex-col h-full">
+          @if (hasDid() && did(); as d) {
+          <!-- DID Details -->
+          <div class="p-4 space-y-6">
+               <!-- Index -->
+               <div class="flex justify-between items-start">
+                    <div>
+                         <div class="text-sm text-gray-500 mb-3">DID Index</div>
+                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + d.index" tooltipText="View on XRPL Explorer">
+                              <div class="font-mono text-sm text-gray-900 hover:text-blue-600 cursor-pointer break-all">{{ d.index.slice(0, 15) }}...{{ d.index.slice(-15) }}</div>
+                         </app-tooltip-link>
+                    </div>
+                    <button (click)="copyField('index')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy Index</button>
+               </div>
+
+               <!-- URI -->
+               @if (d.URI && d.URI !== 'N/A') {
+               <div>
+                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
+                         <span>DID URI</span>
+                         <button (click)="copyField('URI')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy URI</button>
+                    </div>
+                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.URI) }}</pre>
+               </div>
+               }
+
+               <!-- Data -->
+               @if (d.Data && d.Data !== 'N/A') {
+               <div>
+                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
+                         <span>DID Data</span>
+                         <button (click)="copyField('Data')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy DID Data</button>
+                    </div>
+                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.Data) }}</pre>
+               </div>
+               }
+
+               <!-- DID Document -->
+               @if (d.DIDDocument && d.DIDDocument !== 'N/A') {
+               <div>
+                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
+                         <span>DID Document</span>
+                         <button (click)="copyField('DIDDocument')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy DID Document</button>
+                    </div>
+                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.DIDDocument) }}</pre>
+               </div>
+               }
+          </div>
+          } @else {
+          <!-- Empty State -->
+          <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+               <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                    <ng-icon name="heroIdentification" size="32" class="text-gray-400" />
+               </div>
+               <p class="text-gray-600 font-medium">No DID Found</p>
+               <p class="text-sm text-gray-500 mt-1 max-w-[240px]">This wallet doesn't have a Decentralized Identifier yet.</p>
+          </div>
+          }
+     </div>
+</app-summary-container>
+}

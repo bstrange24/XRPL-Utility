@@ -1,4 +1,4 @@
-import { Component, inject, output, ChangeDetectionStrategy, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, inject, output, ChangeDetectionStrategy, ElementRef, ViewChild, AfterViewInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -78,10 +78,6 @@ export class AccountChangesFiltersComponent implements AfterViewInit {
      clearFilter(): void {
           this.store.setField('filterValue', '');
      }
-
-     // clearDateFilter(): void {
-     //      this.store.setField('dateRange', { start: null, end: null });
-     // }
 
      clearAll(): void {
           this.clearFilter();

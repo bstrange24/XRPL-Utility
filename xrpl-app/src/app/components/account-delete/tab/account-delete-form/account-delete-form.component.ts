@@ -9,11 +9,12 @@ import { ConnectionGuardService } from '../../../../services/shared/connection-g
 import { TransactionOptionsComponent } from '../../../shared/transaction-options/transaction-options.component';
 import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { NgIcon } from '@ng-icons/core';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-account-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon, ToggleSliderComponent],
      templateUrl: './account-delete-form.component.html',
      styleUrl: './account-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -10,9 +10,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="meta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-account-configurator-summary [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-account-configurator-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

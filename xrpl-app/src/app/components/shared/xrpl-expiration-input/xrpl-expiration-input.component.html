@@ -1,9 +1,9 @@
 <div class="space-y-4">
      <!-- Header -->
      <div>
-          <label class="block text-sm font-semibold text-gray-900"> {{ label }} </label>
+          <label class="label-primary"> {{ label }} </label>
           @if (hint) {
-          <p class="text-xs text-gray-500 mt-0.5">{{ hint }}</p>
+          <p class="mb-2 text-sm text-gray-600">{{ hint }}</p>
           }
      </div>
 
@@ -18,7 +18,7 @@
      </label>
 
      @if (enabled()) {
-     <div class="space-y-4 rounded-2xl border border-gray-250 p-4">
+     <div class="space-y-4 rounded-2xl border border-gray-200 p-4">
           <!-- Preset Buttons -->
           <div class="flex flex-wrap gap-2">
                <button (click)="setFromNow(60)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1m</button>
@@ -34,7 +34,7 @@
           <!-- Flatpickr DateTime Picker -->
           @if (showPicker) {
           <div class="flex gap-2">
-               <input #flatpickrInput type="text" class="flex-1 rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-blue-500 transition-all cursor-pointer" placeholder="Select date and time..." readonly />
+               <input #flatpickrInput type="text" class="flex-1 rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-green-500 transition-all cursor-pointer" placeholder="Select date and time..." readonly />
                <button type="button" (click)="openPicker()" class="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm transition-all whitespace-nowrap">Choose</button>
           </div>
           }
@@ -48,7 +48,7 @@
           <div class="flex gap-2 pt-1">
                <button (click)="addSeconds(10)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+10s</button>
                <button (click)="addSeconds(30)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+30s</button>
-               <button (click)="addSeconds(60)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+1m</button>
+               <button (click)="addSeconds(45)" class="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-3 py-1.5 rounded-xl transition-all">+45s</button>
                <button (click)="clear()" class="text-xs text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-xl transition-all ml-auto">Clear All</button>
           </div>
 

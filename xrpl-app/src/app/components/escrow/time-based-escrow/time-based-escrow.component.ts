@@ -10,7 +10,6 @@ import { ExecutionTimeDisplayComponent } from '../../shared/ui-components/execut
 import { TabMenuWithInfoComponent } from '../../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WarningMessageComponent } from '../../shared/ui-components/warning-message/warning-message.component';
 import { TransactionPreviewComponent } from '../../shared/transaction-preview/transaction-preview.component';
-import { EscrowSummaryComponent } from '../ui-components/escrow-summary/escrow-summary.component';
 import { EscrowsCreateComponent } from '../tab/escrows-create/escrows-create.component';
 import { EscrowsCancelComponent } from '../tab/escrows-cancel/escrows-cancel.component';
 import { EscrowsFinishComponent } from '../tab/escrows-finish/escrows-finish.component';
@@ -18,7 +17,7 @@ import { EscrowsFinishComponent } from '../tab/escrows-finish/escrows-finish.com
 @Component({
      selector: 'app-time-based-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowSummaryComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
      templateUrl: './time-based-escrow.component.html',
      styleUrl: './time-based-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

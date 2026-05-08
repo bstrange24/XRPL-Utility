@@ -14,11 +14,12 @@ import { TrustlineUtilService } from '../../../../services/trustlines/trustline-
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-burn',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './nft-burn.component.html',
      styleUrl: './nft-burn.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

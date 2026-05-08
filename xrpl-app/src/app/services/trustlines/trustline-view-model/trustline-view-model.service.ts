@@ -116,10 +116,10 @@ export class TrustlineViewModelService {
                case 'issueCurrency':
                     countText = isIssuer ? 'issuable currencies' : 'currencies you can send';
                     if (allTrustlines.length === 0) {
-                         emptyMessage = 'No trustlines found for this wallet.';
-                         helpHint = isIssuer ? 'You must have trustlines before issuing tokens.' : 'You need a trustline and balance to send tokens.';
+                         emptyMessage = ' No trustlines found for this wallet.';
+                         helpHint = isIssuer ? 'You must have trustlines before issuing tokens.' : ' You need a trustline and balance to send tokens.';
                     } else if (filteredCount === 0) {
-                         emptyMessage = isIssuer ? 'You are not currently issuing any tokens.' : 'You do not hold any tokens to send.';
+                         emptyMessage = isIssuer ? ' You are not currently issuing any tokens.' : ' You do not hold any tokens to send.';
                          helpHint = isIssuer ? 'Issue tokens to a destination to create supply.' : 'Receive tokens first or check another currency.';
                     }
                     break;
@@ -127,15 +127,15 @@ export class TrustlineViewModelService {
                     if (isIssuer) {
                          countText = 'currencies you can clawback';
                          if (allTrustlines.length === 0) {
-                              emptyMessage = 'No trustlines found for this wallet.';
+                              emptyMessage = ' No trustlines found for this wallet.';
                               helpHint = 'You must issue tokens before they can be clawed back.';
                          } else if (filteredCount === 0) {
-                              emptyMessage = 'No issued tokens available to claw back.';
+                              emptyMessage = ' No issued tokens available to claw back.';
                               helpHint = 'Clawback applies only to tokens you have issued.';
                          }
                     } else {
                          countText = 'clawback-eligible currencies';
-                         emptyMessage = 'Clawback is only available to the issuer of a currency.';
+                         emptyMessage = ' Clawback is only available to the issuer of a currency.';
                          helpHint = 'Switch to the issuing wallet to claw back tokens.';
                     }
                     break;

@@ -22,7 +22,7 @@
           <!-- Metadata -->
           <div class="mt-3 text-sm">
                <app-summary-key-value label="Check ID">
-                    <span class="font-mono">{{ check.index }}</span>
+                    <span class="font-mono">{{ check.index.slice(0, 15) }}...{{ check.index.slice(-15) }}</span>
                </app-summary-key-value>
 
                @if (check.expiration) {

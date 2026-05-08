@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, computed } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -37,7 +37,7 @@ import { StorageService } from '../../services/shared/local-storage/storage.serv
 import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { SummaryComponent } from './ui-components/summary/summary.component';
+import { MptSummaryComponent } from './ui-components/mpt-summary/mpt-summary.component';
 import { MptAuthorizeUnauthorizeComponent } from './tab/mpt-authorize-unauthorize/mpt-authorize-unauthorize.component';
 import { MptLockUnlockComponent } from './tab/mpt-lock-unlock/mpt-lock-unlock.component';
 import { MptSendComponent } from './tab/mpt-send/mpt-send.component';
@@ -52,7 +52,7 @@ import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.com
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, SummaryComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, NgIcon, FlagSelectorComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, NgIcon, FlagSelectorComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -91,14 +91,21 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.mptTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, MPT_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
           this.mptStoreService.setField('metaData', this.mptStoreService.XLS89_TEMPLATE());
 
-          this.rightPanelService.setPanel(MptRequirementsInfoComponent, {
-               activeTab: this.mptTransactionViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getMptDetails(true);
+          }
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -346,6 +353,21 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      protected async refreshAccountObject(env: any): Promise<void> {
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: MptSummaryComponent,
+               summaryInputs: {
+                    info: this.mptTransactionViewModelService.infoData(),
+                    tab: this.mptTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: MptRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      protected clearInputFields() {

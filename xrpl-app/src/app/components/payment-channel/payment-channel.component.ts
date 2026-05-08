@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -49,7 +49,7 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 @Component({
      selector: 'app-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, PaymentChannelSummaryComponent, PaymentChannelCreateComponent, PaymentChannelFundComponent, PaymentChannelRenewComponent, PaymentChannelClaimComponent, PaymentChannelCloseComponent, PaymentChannelFlagsComponent, WarningMessageComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, PaymentChannelCreateComponent, PaymentChannelFundComponent, PaymentChannelRenewComponent, PaymentChannelClaimComponent, PaymentChannelCloseComponent, PaymentChannelFlagsComponent, WarningMessageComponent],
      templateUrl: './payment-channel.component.html',
      styleUrl: './payment-channel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,10 +89,19 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                }
           });
 
-          this.rightPanelService.setPanel(PaymentChannelRequirementsInfoComponent, {
-               activeTab: this.paymentChannelViewModelService.activeTab,
-          });
+          // this.rightPanelService.setPanel({
+          //      mainComponent: PaymentChannelRequirementsInfoComponent,
+          //      mainInputs: {
+          //           activeTab: this.paymentChannelViewModelService.activeTab,
+          //      },
+
+          //      // Add summary here when you want it (e.g. on Credentials page)
+          //      // summaryComponent: CredentialsSummaryComponent,
+          //      // summaryInputs: { ... }
+          // });
      }
+
+     activeTabForRequirements = computed(() => this.paymentChannelViewModelService.activeTab());
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, PAYMENT_CHANNEL_TAB, tab => this.setTab(tab));
@@ -117,6 +126,14 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     }
                }
           }
+
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getPaymentChannels(true);
+          }
      }
 
      ngOnDestroy() {
@@ -129,7 +146,16 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
           if (this.signatureSubscription) {
                this.signatureSubscription.unsubscribe();
           }
+
+          this.rightPanelService.clearPanel();
      }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getPaymentChannels(true);
@@ -337,6 +363,21 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
           } else {
                return 'If the creator included the tfClose flag in their signature, you can claim and close ' + 'the channel in one transaction. Check the signature hex to verify.';
           }
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: PaymentChannelSummaryComponent,
+               summaryInputs: {
+                    info: this.paymentChannelViewModelService.infoData(),
+                    tab: this.paymentChannelViewModelService.activeTab(),
+               },
+
+               mainComponent: PaymentChannelRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

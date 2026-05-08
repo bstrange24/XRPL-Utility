@@ -2,8 +2,8 @@
      <div class="space-y-6">
           <!-- Currency Code -->
           <div class="space-y-2">
-               <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-               <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+               <label for="currencyCode" class="label-primary">Currency Code</label>
+               <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
 
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" [disableCurrencySelection]="disableCurrencySelection">
@@ -29,9 +29,9 @@
           <!-- Amount (when not using custom amount mode) -->
           @if (!showAmount) {
           <div class="space-y-2">
-               <label for="amount" class="block text-sm font-semibold text-gray-900">Amount</label>
-               <p class="text-xs text-gray-500">Amount, in XRP or token, to send to the destination.</p>
-               <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="amount" class="label-primary">Amount</label>
+               <p class="text-secondary">Amount, in XRP or token, to send to the destination.</p>
+               <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="input-base" />
           </div>
           }
 
@@ -39,17 +39,17 @@
           @if (currency !== 'XRP') {
           <div class="space-y-4">
                <div class="space-y-2">
-                    <label for="issuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+                    <label for="issuer" class="label-primary">Issuer</label>
+                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
                </div>
 
                <div class="space-y-2">
-                    <label for="currencyBalabce" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
-                    <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
-                    <input type="text" [value]="balance" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="currencyBalabce" class="label-primary">Currency Balance</label>
+                    <p class="text-secondary">Total currency balance held by this account.</p>
+                    <input type="text" readonly class="input-disabled" [value]="balance" />
                </div>
           </div>
           }
@@ -57,9 +57,9 @@
           <!-- Custom Amount (when showAmount = true) -->
           @if (showAmount) {
           <div class="space-y-2">
-               <label for="amountLabel" class="block text-sm font-semibold text-gray-900">{{ amountLabel }}</label>
-               <p class="text-xs text-gray-500" [innerHTML]="amountHint"></p>
-               <input type="number" [placeholder]="amountPlaceholder" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="amountLabel" class="label-primary">{{ amountLabel }}</label>
+               <p class="text-secondary" [innerHTML]="amountHint"></p>
+               <input type="number" [placeholder]="amountPlaceholder" step="0.000001" min="0" [ngModel]="amount" (ngModelChange)="amountChange.emit($event)" (focus)="onFocus($event)" class="input-base" />
           </div>
           }
      </div>

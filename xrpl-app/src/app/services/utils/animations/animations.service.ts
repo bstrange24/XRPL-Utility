@@ -43,33 +43,63 @@ export const expandCollapse = trigger('expandCollapse', [
      transition(':enter', [
           style({
                height: 0,
-               maxHeight: 0,
                opacity: 0,
-               paddingTop: 0,
-               paddingBottom: 0,
+               overflow: 'hidden',
           }),
           animate(
-               '320ms cubic-bezier(0.4, 0, 0.2, 1)',
+               '320ms cubic-bezier(0.4, 0.0, 0.2, 1)',
                style({
                     height: '*',
-                    maxHeight: '9999px',
                     opacity: 1,
-                    paddingTop: '*',
-                    paddingBottom: '*',
                })
           ),
      ]),
 
      transition(':leave', [
+          style({
+               overflow: 'hidden',
+          }),
           animate(
-               '280ms cubic-bezier(0.4, 0, 0.2, 1)',
+               '280ms cubic-bezier(0.4, 0.0, 0.2, 1)',
                style({
                     height: 0,
-                    maxHeight: 0,
                     opacity: 0,
-                    paddingTop: 0,
-                    paddingBottom: 0,
                })
           ),
      ]),
 ]);
+
+// export const expandCollapse = trigger('expandCollapse', [
+//      transition(':enter', [
+//           style({
+//                height: 0,
+//                maxHeight: 0,
+//                opacity: 0,
+//                paddingTop: 0,
+//                paddingBottom: 0,
+//           }),
+//           animate(
+//                '320ms cubic-bezier(0.4, 0, 0.2, 1)',
+//                style({
+//                     height: '*',
+//                     maxHeight: '9999px',
+//                     opacity: 1,
+//                     paddingTop: '*',
+//                     paddingBottom: '*',
+//                })
+//           ),
+//      ]),
+
+//      transition(':leave', [
+//           animate(
+//                '280ms cubic-bezier(0.4, 0, 0.2, 1)',
+//                style({
+//                     height: 0,
+//                     maxHeight: 0,
+//                     opacity: 0,
+//                     paddingTop: 0,
+//                     paddingBottom: 0,
+//                })
+//           ),
+//      ]),
+// ]);

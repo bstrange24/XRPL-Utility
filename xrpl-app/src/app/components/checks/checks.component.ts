@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, effect, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -51,7 +51,7 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent, ChecksSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +83,9 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.checksTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CHECK_TAB, tab => this.setTab(tab));
           this.trustlineCurrencyService.load();
@@ -93,10 +96,25 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
 
-          this.rightPanelService.setPanel(ChecksRequirementInfoComponent, {
-               activeTab: this.checksTransactionViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getChecks(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      public currencyItems() {
           return this.trustlineCurrencyService.currencyItems();
@@ -385,6 +403,21 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
           await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: ChecksSummaryComponent,
+               summaryInputs: {
+                    info: this.checksTransactionViewModelService.infoData(),
+                    tab: this.checksTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: ChecksRequirementInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

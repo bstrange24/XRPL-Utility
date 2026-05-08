@@ -118,8 +118,15 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                }
           });
 
-          this.rightPanelService.setPanel(AmmRequirementsInfoComponent, {
-               activeTab: this.ammTransactionViewModelService.activeTab,
+          this.rightPanelService.setPanel({
+               mainComponent: AmmRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.ammTransactionViewModelService.activeTab,
+               },
+
+               // Add summary here when you want it (e.g. on Credentials page)
+               // summaryComponent: CredentialsSummaryComponent,
+               // summaryInputs: { ... }
           });
      }
 

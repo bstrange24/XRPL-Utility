@@ -15,11 +15,12 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
 import { CurrencyAmountFormComponent } from '../../../shared/currency-amount-form/currency-amount-form.component';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-buy-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
      templateUrl: './nft-buy-offers.component.html',
      styleUrl: './nft-buy-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

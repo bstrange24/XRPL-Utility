@@ -1,12 +1,16 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Escrow Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="lock" class="section-heading-icon-green"></lucide-icon>
+               Escrow Details
+          </h4>
+
           <!-- Currency + Amount -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
+                    <label for="escrowCurrencyCode" class="label-primary">Currency Code</label>
+                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                               <ng-template #itemTemplate let-item>
@@ -25,9 +29,9 @@
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label for="escrowAmount" class="block text-sm font-semibold text-gray-900">Amount</label>
-                    <p class="text-xs text-gray-500">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowAmount" class="label-primary">Amount</label>
+                    <p class="text-secondary">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
+                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="input-base" />
                </div>
           </div>
 
@@ -36,8 +40,8 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Issuer -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyIssuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+                    <label for="escrowCurrencyIssuer" class="label-primary">Issuer</label>
+                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
@@ -46,10 +50,10 @@
 
                <!-- Currency Balance -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyBalance" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
-                    <p class="text-xs text-gray-500">Total currency balance held by this account.</p>
+                    <label for="escrowCurrencyBalance" class="label-primary">Currency Balance</label>
+                    <p class="text-secondary">Total currency balance held by this account.</p>
 
-                    <input type="text" [value]="currencyStoreService.balance()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
                </div>
           </div>
           }
@@ -58,17 +62,17 @@
           @if (currencyStoreService.currency() === 'MPT') {
           <div class="space-y-4 mb-3">
                <div class="space-y-2">
-                    <label for="selectMpt" class="block text-sm font-semibold text-gray-900">Select MPT</label>
-                    <p class="text-xs text-gray-500">MPT this account holds that can be sent to another account.</p>
+                    <label for="selectMpt" class="label-primary">Select MPT</label>
+                    <p class="text-secondary">MPT this account holds that can be sent to another account.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                     </div>
                </div>
 
                <div class="space-y-2">
-                    <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
-                    <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
-                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
+                    <p class="text-secondary">Identifies the MPTokenIssuance.</p>
+                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" class="input-base" />
                </div>
           </div>
           }
@@ -77,8 +81,8 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Destination -->
                <div class="space-y-2">
-                    <label for="escrowDestination" class="block text-sm font-semibold text-gray-900">Destination</label>
-                    <p class="text-xs text-gray-500">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
+                    <label for="escrowDestination" class="label-primary">Destination</label>
+                    <p class="text-secondary">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
                     <p></p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address" />
@@ -87,9 +91,9 @@
 
                <!-- Destination Tag -->
                <div class="space-y-2">
-                    <label for="escrowDestinationTag" class="block text-sm font-semibold text-gray-900">Destination Tag</label>
-                    <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input type="text" [ngModel]="xrplTxOptionsStore.destinationTag()" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowDestinationTag" class="label-primary">Destination Tag</label>
+                    <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+                    <input type="text" [ngModel]="xrplTxOptionsStore.destinationTag()" class="input-base" />
                </div>
           </div>
 
@@ -97,15 +101,15 @@
           @if (isConditional) {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="escrowCondition" class="block text-sm font-semibold text-gray-900">Condition</label>
-                    <p class="text-xs text-gray-500">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
-                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowCondition" class="label-primary">Condition</label>
+                    <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="input-base" />
                </div>
 
                <div class="space-y-2">
-                    <label for="escrowFulfillment" class="block text-sm font-semibold text-gray-900">Fulfillment</label>
-                    <p class="text-xs text-gray-500">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                    <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="input-base" />
                </div>
           </div>
           }

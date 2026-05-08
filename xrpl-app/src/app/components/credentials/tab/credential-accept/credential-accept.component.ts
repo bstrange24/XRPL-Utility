@@ -6,11 +6,12 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { NgIcon } from '@ng-icons/core';
 import { CredentialViewModelService } from '../../../../services/credentials/credential-view-model/credential-view-model.service';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-credential-accept',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, LucideAngularModule],
      templateUrl: './credential-accept.component.html',
      styleUrl: './credential-accept.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

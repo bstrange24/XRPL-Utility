@@ -10,11 +10,12 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-payment-channel-claim',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './payment-channel-claim.component.html',
      styleUrl: './payment-channel-claim.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

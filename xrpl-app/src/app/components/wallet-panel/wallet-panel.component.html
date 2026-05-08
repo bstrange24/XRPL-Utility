@@ -9,15 +9,16 @@
                     </div>
 
                     <button (click)="isWalletPanelExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }}" [disabled]="wallets.length === 0">
-                         <lucide-icon [name]="isWalletPanelExpanded() ? 'chevron-down' : 'chevron-up'" size="16" />
+                         <lucide-icon [name]="isWalletPanelExpanded() ? 'chevron-up' : 'chevron-down'" size="16" />
                          <span class="hidden sm:inline"> {{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }} </span>
                     </button>
                </div>
 
                @if (hasWallets) {
                <div class="mt-2 text-xs font-mono space-y-0.5 pl-9" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">
-                    <div>{{ wallets.length }} {{ wallets.length === 1 ? 'account' : 'accounts' }}</div>
+                    <div>{{ wallets.length === 1 ? 'Total Account:' : 'Total Accounts:' }} {{ wallets.length }}</div>
                     <div class="truncate">Currently Selected Account: {{ currentWallet.name || (currentWallet.address ? (currentWallet.address | slice:0:12) + '...' : 'No account selected') }}</div>
+                    <div><strong>XRP Balance: {{ currentWallet.balance || 0 | number:'1.2-2' }} XRP</strong></div>
                     <div>Owner Count: {{ currentWallet.ownerCount || 0 }}</div>
                     <div>Reserve: {{ currentWallet.xrpReserves || 0 | number:'1.2-2' }} XRP</div>
                </div>

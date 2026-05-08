@@ -6,9 +6,6 @@
           <!-- Menu / Tabs (kept for consistency even if empty) -->
           <app-tab-menu-with-info [tabs]="[]" [active]="view.activeTab()" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-account-delete-summary [info]="view.infoData()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-account-delete-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

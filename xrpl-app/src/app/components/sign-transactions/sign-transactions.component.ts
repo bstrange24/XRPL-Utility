@@ -125,8 +125,15 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                untracked(() => this.updateSignedDisplay());
           });
 
-          this.rightPanelService.setPanel(SignTransactionRequirementsInfoComponent, {
-               activeTab: 'sendXrp',
+          this.rightPanelService.setPanel({
+               mainComponent: SignTransactionRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: 'sendXrp',
+               },
+
+               // Add summary here when you want it (e.g. on Credentials page)
+               // summaryComponent: CredentialsSummaryComponent,
+               // summaryInputs: { ... }
           });
      }
 

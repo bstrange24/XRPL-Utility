@@ -1,22 +1,22 @@
 @let vm = view;
 
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+<div class="card-base">
      <div class="space-y-6">
           <!-- Headers -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div>
-                    <label for="buySide" class="block text-sm font-semibold text-gray-900">Taker Gets – Buy Side</label>
+                    <label for="buySide" class="label-primary">Taker Gets – Buy Side</label>
                </div>
                <div>
-                    <label for="sellSide" class="block text-sm font-semibold text-gray-900">Taker Pays – Sell Side</label>
+                    <label for="sellSide" class="label-primary">Taker Pays – Sell Side</label>
                </div>
           </div>
 
           <!-- Currency Codes -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">The token you want to receive.</p>
+                    <label for="currencyCode" class="label-primary">Currency Code</label>
+                    <p class="text-secondary">The token you want to receive.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
@@ -24,8 +24,8 @@
                </div>
 
                <div class="space-y-2">
-                    <label for="currencyCodeWant" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-                    <p class="text-xs text-gray-500">The token you want to spend.</p>
+                    <label for="currencyCodeWant" class="label-primary">Currency Code</label>
+                    <p class="text-secondary">The token you want to spend.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
@@ -36,8 +36,8 @@
           <!-- Issuers -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="issuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues the token you want to receive.</p>
+                    <label for="issuer" class="label-primary">Issuer</label>
+                    <p class="text-secondary">The XRPL account that issues the token you want to receive.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
@@ -45,8 +45,8 @@
                </div>
 
                <div class="space-y-2">
-                    <label for="issuerWants" class="block text-sm font-semibold text-gray-900">Issuer</label>
-                    <p class="text-xs text-gray-500">The XRPL account that issues the token you want to spend.</p>
+                    <label for="issuerWants" class="label-primary">Issuer</label>
+                    <p class="text-secondary">The XRPL account that issues the token you want to spend.</p>
 
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />

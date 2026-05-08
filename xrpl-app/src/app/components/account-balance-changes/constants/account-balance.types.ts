@@ -1,3 +1,5 @@
+export type AccountBalanceActionTypes = 'accountBalance';
+
 export interface BalanceChange {
      date: Date;
      hash: string;

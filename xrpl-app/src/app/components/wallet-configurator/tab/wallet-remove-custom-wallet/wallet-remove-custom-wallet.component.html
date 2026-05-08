@@ -1,11 +1,12 @@
 @if (walletsViewModelService.activeTab() === 'removeCustomWallets') {
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-     <div class="space-y-5">
+<div class="card-base">
+     <div class="space-y-6">
           <!-- Remove Custom Wallets Section -->
           <div class="space-y-4">
                <!-- Dropdown Label -->
                <div class="space-y-2">
-                    <label for="customWallets" class="block text-sm font-semibold text-gray-900">Custom Wallets</label>
+                    <label for="customWallets" class="label-primary">Custom Wallets</label>
+                    <p class="text-secondary">Remove a custom wallet manually added in a dropdown.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
                     </div>

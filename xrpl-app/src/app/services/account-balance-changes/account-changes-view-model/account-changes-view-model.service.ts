@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { AccountChangesStoreService } from '../account-changes-store/account-changes-store.service';
@@ -10,6 +10,7 @@ export class AccountChangesViewModelService {
      private readonly store = inject(AccountChangesStoreService);
      private readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
+     activeTab = signal<any>('accountBalance');
 
      readonly filteredBalanceChanges = computed(() => {
           const data = this.store.balanceChanges();

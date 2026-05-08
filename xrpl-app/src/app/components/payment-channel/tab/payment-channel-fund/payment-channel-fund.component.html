@@ -1,58 +1,63 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="signal" class="section-heading-icon-green"></lucide-icon>
+               Payment Channel Details
+          </h4>
+
           <!-- Select Payment Channel to Fund -->
-          <div class="space-y-2">
-               <label for="selectChannelToFund" class="block text-sm font-semibold text-gray-900">Select Payment Channel to Fund</label>
-               <p class="text-xs text-gray-500">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
+          <label for="selectChannelToFund" class="label-primary">Select Payment Channel to Fund</label>
+          <p class="text-secondary">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
 
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
-               </div>
+          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
+     </div>
 
-               <!-- Expired warning -->
-               @if (viewModel.selectedIsExpired()) {
-               <div class="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
-                    <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-red-600" />
-                    <span class="text-sm text-red-700">This selected payment channel has expired.</span>
-               </div>
-               }
-          </div>
-
+     @if (paymentChannelStoreService.channelIDField()) {
+     <div class="card-base">
           <!-- Channel ID and XRP Amount - Two Column Grid -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-1">
                <!-- Channel ID -->
                <div class="space-y-2">
-                    <label for="channelID" class="block text-sm font-semibold text-gray-900">Channel ID</label>
-                    <p class="text-xs text-gray-500">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
-                    <input type="text" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="channelID" class="label-primary">Channel ID</label>
+                    <p class="text-secondary">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
+                    <input type="text" readonly class="input-disabled" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
                </div>
 
                <!-- XRP Amount -->
                <div class="space-y-2">
-                    <label for="xrpAmount" class="block text-sm font-semibold text-gray-900">XRP Amount</label>
-                    <p class="text-xs text-gray-500">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
-                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="xrpAmount" class="label-primary">XRP Amount</label>
+                    <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
+                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="input-base" />
+               </div>
+          </div>
+     </div>
+     }
+
+     <!-- Toggle optional fields Card -->
+     <div class="card-base">
+          <div class="flex items-center justify-between">
+               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
+
+               <div class="flex items-center gap-2">
+                    <button type="button" class="btn-optional-fields" title="Expiration Date are optional XRPL transaction fields">
+                         <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
+                    </button>
                </div>
           </div>
      </div>
 
-     <!-- Optional Fields Toggle (Outside the card) -->
-     <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 transition-shadow hover:shadow-sm">
-          <label class="flex cursor-pointer items-center gap-3">
-               <div class="relative inline-flex items-center">
-                    <input type="checkbox" class="peer sr-only" [checked]="txUiService.wantsOptions()" (change)="txUiService.toggleOptions($event.target.checked)" />
-                    <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
-                    <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
-               </div>
-               <span class="select-none text-sm font-medium text-gray-900 transition-colors"> Include optional field (Expiration Date) </span>
-          </label>
-     </div>
-
-     <!-- Optional Fields Section (Outside the card) -->
+     <!-- Optional Fields Section -->
      @if (txUiService.wantsOptions()) {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="card-base">
           <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
+     </div>
+     }
+
+     <!-- Expired warning -->
+     @if (viewModel.selectedIsExpired()) {
+     <div class="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+          <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
+          <span class="text-sm text-red-700">This selected payment channel has expired.</span>
      </div>
      }
 </div>

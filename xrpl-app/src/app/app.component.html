@@ -20,14 +20,25 @@
                </div>
           </section>
 
-          <!-- RIGHT PANEL (Requirements) - Made smaller -->
+          <!-- RIGHT PANEL (Summary + Info) -->
           @if (!isBalanceChangesPage()) {
           <aside class="hidden lg:block lg:col-span-5 xl:col-span-5 min-h-0">
-               <div class="h-full bg-white rounded-2xl shadow-sm overflow-hidden">
+               <div class="h-full flex flex-col gap-4 overflow-hidden">
+                    <!-- 1. SUMMARY (Top) -->
+                    @if (rightPanelService.summaryComponent(); as summaryComp) {
+                    <div class="flex-none bg-white rounded-2xl shadow-sm overflow-hidden">
+                         <ng-container *ngComponentOutlet="summaryComp; inputs: rightPanelService.summaryInputs()" />
+                    </div>
+                    }
+
+                    <!-- 2. MAIN INFO PANEL -->
                     @if (rightPanelService.component(); as comp) {
-                    <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
-                    } @else {
-                    <div class="p-6 text-sm text-gray-400">No info available</div>
+                    <div class="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden min-h-0">
+                         <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
+                    </div>
+                    } @else if (!rightPanelService.summaryComponent()) {
+                    <!-- Only show placeholder if there's nothing at all -->
+                    <div class="flex-1 bg-white rounded-2xl shadow-sm p-6 text-sm text-gray-400 flex items-center justify-center">No info available</div>
                     }
                </div>
           </aside>
@@ -71,21 +82,4 @@
           </div>
           }
      </div>
-     <!-- <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col-reverse items-center space-y-3 space-y-reverse">
-          @for (toast of toastService.toasts(); track toast.id) {
-          <div class="group relative flex items-start gap-3 w-96 bg-white rounded-xl shadow-lg border overflow-hidden cursor-pointer transform transition-all duration-300 hover:scale-105 animate-slide-up" [class.border-green-500]="toast.type === 'success'" [class.border-red-500]="toast.type === 'error'" [class.border-blue-500]="toast.type === 'info'" (click)="toastService.removeToast(toast.id)">
-               <div class="absolute top-0 left-0 w-1 h-full" [class.bg-green-500]="toast.type === 'success'" [class.bg-red-500]="toast.type === 'error'" [class.bg-blue-500]="toast.type === 'info'"></div>
-
-               <div class="flex-1 pl-4 pr-3 py-3">
-                    <div class="text-sm text-gray-800 break-all" [innerHTML]="toast.message"></div>
-               </div>
-
-               <div class="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div class="text-gray-400 hover:text-gray-600">
-                         <lucide-icon name="x" size="14"></lucide-icon>
-                    </div>
-               </div>
-          </div>
-          }
-     </div> -->
 </div>

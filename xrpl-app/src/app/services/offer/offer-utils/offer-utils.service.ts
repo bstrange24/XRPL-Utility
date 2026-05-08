@@ -122,7 +122,7 @@ export class OfferUtilsService {
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
                type CurrencyAmount = { currency: string; value: string; issuer?: string };
-               const we_want: CurrencyAmount = weWantCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() } : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
+               const we_want: CurrencyAmount = weWantCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() } : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm', value: this.offerStoreService.weWantAmount() }; //issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
                const we_spend: CurrencyAmount = weSpendCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weSpendAmount() } : { currency: this.utilsService.encodeIfNeeded(weSpendCurr), issuer: this.offerStoreService.weSpendIssuer(), value: this.offerStoreService.weSpendAmount() };
 
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, output, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -7,11 +7,14 @@ import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-co
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-payment-channel-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
      templateUrl: './payment-channel-create.component.html',
      styleUrl: './payment-channel-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

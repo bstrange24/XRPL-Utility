@@ -115,7 +115,7 @@ const ACCOUNT_CONFIG_META: Record<AccountConfigAction, AccountConfigTxMeta> = {
                regularKey: { isRegularKey: config.isRegularKeyAddress, address: config.regularKeyAddress, seed: config.regularKeySeed },
                updateMetaData: { tickSize: config.tickSize, transferRate: config.transferRate, userEmail: config.userEmail, domain: config.domain },
           }),
-          buildTx: ({ orchestrator, wallet, env, config }) => orchestrator.accountConfiguratorTransactionBuilderService.buildModifyAccountSetTransaction(wallet, env, config),
+          buildTx: ({ orchestrator, wallet, env, config }) => orchestrator.accountConfiguratorTransactionBuilderService.buildModifyMetaDataTransaction(wallet, env, config),
           simulationToastMessage: () => `Simulated Updating Account Meta Data`,
           successMessage: () => `Successfully Updated Account Meta Data`,
      },

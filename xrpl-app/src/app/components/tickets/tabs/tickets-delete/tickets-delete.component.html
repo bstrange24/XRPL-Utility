@@ -1,11 +1,15 @@
 <div class="space-y-4">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Ticket Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <ng-icon name="heroTicket" class="section-heading-icon-green"></ng-icon>
+               Ticket Details
+          </h4>
+
           <!-- Ticket Selection Input -->
           <div>
                <div class="space-y-2">
-                    <label for="ticketsToDelete" class="block text-sm font-semibold text-gray-900">Select Tickets to Delete</label>
-                    <p class="mt-1 text-xs text-gray-500">Select available tickets to delete for the selected account.</p>
+                    <label for="ticketsToDelete" class="label-primary">Select Tickets to Delete</label>
+                    <p class="text-secondary">Select available tickets to delete for the selected account.</p>
                </div>
                <div class="relative mt-2" (clickOutside)="closeTicketDropdown()">
                     <div class="relative">

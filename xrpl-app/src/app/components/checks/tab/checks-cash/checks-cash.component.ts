@@ -9,11 +9,13 @@ import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { LucideAngularModule } from 'lucide-angular';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-checks-cash',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ToggleSliderComponent, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './checks-cash.component.html',
      styleUrl: './checks-cash.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -13,11 +13,12 @@ import { NftOffersTransactionViewModelService } from '../../../../services/nft/n
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-cancel-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './nft-cancel-offers.component.html',
      styleUrl: './nft-cancel-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

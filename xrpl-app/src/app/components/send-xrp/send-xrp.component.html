@@ -8,9 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="[]" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info Message -->
-          <app-send-xrp-summary [info]="view.infoData()" [tab]="'sendXrp'" [summaryMessage]="''" [infoPanelExpanded]="false"> </app-send-xrp-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>

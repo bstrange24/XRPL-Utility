@@ -8,16 +8,13 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-nft-offers-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-offers-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <!-- Dynamic Content -->
                @if (tab === 'sellNft') {
                <app-nft-sell [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)"> </app-nft-sell>

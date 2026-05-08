@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject
 import { CommonModule } from '@angular/common';
 import { SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-currency-form-section',
      standalone: true,
-     imports: [CommonModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

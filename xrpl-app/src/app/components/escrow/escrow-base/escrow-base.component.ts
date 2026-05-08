@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Wallet, WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { WalletDestinationBase } from '../../../services/wallets/walletDestinationBase';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -35,6 +35,7 @@ import { EscrowOrchestratorService } from '../../../services/escrow/escrow-orche
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../../services/utils/right-panel/right-panel.service';
 import { EscrowRequirementsInfoComponent } from '../ui-components/escrow-requirements-info/escrow-requirements-info.component';
+import { EscrowSummaryComponent } from '../ui-components/escrow-summary/escrow-summary.component';
 
 @Component({
      standalone: true,
@@ -72,6 +73,9 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.escrowTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ESCROW_TAB, tab => this.setTab(tab));
           this.trustlineCurrencyService.load();
@@ -82,10 +86,13 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
 
-          this.rightPanelService.setPanel(EscrowRequirementsInfoComponent, {
-               activeTab: this.escrowTransactionViewModelService.activeTab,
-               page: this.isConditional,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getEscrows(true);
+          }
      }
 
      public get activeTab() {
@@ -429,6 +436,22 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      private async syncAfterSelection(load = true) {
           if (load) await this.trustlineUtilService.loadTrustlines();
           await this.trustlineCurrencyService.refreshCurrentBalance();
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: EscrowSummaryComponent,
+               summaryInputs: {
+                    info: this.escrowTransactionViewModelService.infoData(),
+                    tab: this.escrowTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: EscrowRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+                    page: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

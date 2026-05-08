@@ -1,10 +1,14 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">NFT Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="lucideBadgeInfo" class="section-heading-icon-green"></lucide-icon>
+               NFT Details
+          </h4>
+
           <!-- Select NFT -->
           <div class="space-y-2">
-               <label for="selectNFt" class="block text-sm font-semibold text-gray-900">Select NFT</label>
-               <p class="text-xs text-gray-500">Select an existing NFT to burn.</p>
+               <label for="selectNFt" class="label-primary">Select NFT</label>
+               <p class="text-secondary">Select an existing NFT to burn.</p>
 
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
@@ -13,10 +17,10 @@
 
           <!-- NFT Token ID -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label for="nftTokenId" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
-               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+               <label for="nftTokenId" class="label-primary">NFT Token ID</label>
+               <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="input-base" />
           </div>
      </div>
 </div>

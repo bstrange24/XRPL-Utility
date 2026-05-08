@@ -1,7 +1,7 @@
 <!-- Get view model and store for easier template access -->
 @let view = ammTransactionViewModelService; @let store = ammStoreService; @let opts = ammUtilsService;
 
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+<div class="card-base">
      <div class="space-y-6">
           <!-- ── Pool Assets Section ── -->
           @if (tab() === 'createAMM' || tab() === 'depositToAMM' || tab() === 'withdrawalFromAMM' || tab() === 'clawbackFromAMM' || tab() === 'swapViaAMM' || tab() === 'deleteAMM') {
@@ -12,8 +12,8 @@
                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <!-- Asset 1 -->
                     <div class="space-y-2">
-                         <label for="asset1" class="block text-sm font-semibold text-gray-900">Asset 1</label>
-                         <p class="text-xs text-gray-500">First token in the liquidity pool.</p>
+                         <label for="asset1" class="label-primary">Asset 1</label>
+                         <p class="text-secondary">First token in the liquidity pool.</p>
 
                          <div class="h-[54px]">
                               <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
@@ -22,8 +22,8 @@
 
                     <!-- Asset 2 -->
                     <div class="space-y-2">
-                         <label for="asset2" class="block text-sm font-semibold text-gray-900">Asset 2</label>
-                         <p class="text-xs text-gray-500">Second token in the liquidity pool.</p>
+                         <label for="asset2" class="label-primary">Asset 2</label>
+                         <p class="text-secondary">Second token in the liquidity pool.</p>
 
                          <div class="h-[54px]">
                               <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
@@ -34,8 +34,8 @@
                <!-- Issuer 1 + Issuer 2 -->
                <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div class="space-y-2">
-                         <label for="issuerAsset1" class="block text-sm font-semibold text-gray-900">Issuer (Asset 1)</label>
-                         <p class="text-xs text-gray-500">Issuer of the first token (ignored for XRP).</p>
+                         <label for="issuerAsset1" class="label-primary">Issuer (Asset 1)</label>
+                         <p class="text-secondary">Issuer of the first token (ignored for XRP).</p>
 
                          <div class="h-[54px]">
                               <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
@@ -43,8 +43,8 @@
                     </div>
 
                     <div class="space-y-2">
-                         <label for="issuerAsset2" class="block text-sm font-semibold text-gray-900">Issuer (Asset 2)</label>
-                         <p class="text-xs text-gray-500">Issuer of the second token (ignored for XRP).</p>
+                         <label for="issuerAsset2" class="label-primary">Issuer (Asset 2)</label>
+                         <p class="text-secondary">Issuer of the second token (ignored for XRP).</p>
 
                          <div class="h-[54px]">
                               <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
@@ -55,12 +55,12 @@
                <!-- Your Balances -->
                <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div class="space-y-2">
-                         <label for="balanceAsset1" class="block text-sm font-semibold text-gray-900">Your Balance – Asset 1</label>
-                         <input type="text" [value]="view.asset1UserBalance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                         <label for="balanceAsset1" class="label-primary">Your Balance – Asset 1</label>
+                         <input type="text" readonly class="input-disabled" [value]="view.asset1UserBalance() || '0'" />
                     </div>
                     <div class="space-y-2">
-                         <label for="balanceAsset2" class="block text-sm font-semibold text-gray-900">Your Balance – Asset 2</label>
-                         <input type="text" [value]="view.asset2UserBalance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                         <label for="balanceAsset2" class="label-primary">Your Balance – Asset 2</label>
+                         <input type="text" readonly class="input-disabled" [value]="view.asset2UserBalance() || '0'" />
                     </div>
                </div>
           </div>
@@ -69,14 +69,14 @@
           @if (tab() !== 'deleteAMM') {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="amountAsset1" class="block text-sm font-semibold text-gray-900">Amount – Asset 1</label>
-                    <p class="text-xs text-gray-500">Amount of Asset 1 to use in the pool.</p>
-                    <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="amountAsset1" class="label-primary">Amount – Asset 1</label>
+                    <p class="text-secondary">Amount of Asset 1 to use in the pool.</p>
+                    <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event)" class="input-base" />
                </div>
                <div class="space-y-2">
-                    <label for="amountAsset2" class="block text-sm font-semibold text-gray-900">Amount – Asset 2</label>
-                    <p class="text-xs text-gray-500">Amount of Asset 2 to use in the pool.</p>
-                    <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="amountAsset2" class="label-primary">Amount – Asset 2</label>
+                    <p class="text-secondary">Amount of Asset 2 to use in the pool.</p>
+                    <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event)" class="input-base" />
                </div>
           </div>
           }
@@ -84,12 +84,12 @@
           <!-- Pool Totals -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="poolTotalAsset1" class="block text-sm font-semibold text-gray-900">Pool Total – Asset 1</label>
-                    <input type="text" [value]="store.assetPool1Balance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="poolTotalAsset1" class="label-primary">Pool Total – Asset 1</label>
+                    <input type="text" readonly class="input-disabled" [value]="store.assetPool1Balance() || '0'" />
                </div>
                <div class="space-y-2">
-                    <label for="poolTotalAsset2" class="block text-sm font-semibold text-gray-900">Pool Total – Asset 2</label>
-                    <input type="text" [value]="store.assetPool2Balance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="poolTotalAsset2" class="label-primary">Pool Total – Asset 2</label>
+                    <input type="text" readonly class="input-disabled" [value]="store.assetPool2Balance() || '0'" />
                </div>
           </div>
           }
@@ -98,13 +98,13 @@
           @if (tab() === 'createAMM') {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="ammTradingFee" class="block text-sm font-semibold text-gray-900">Trading Fee (%)</label>
-                    <p class="text-xs text-gray-500">Fee charged on every swap (0% – 1%).</p>
-                    <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" placeholder="e.g. 0.3" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="ammTradingFee" class="label-primary">Trading Fee (%)</label>
+                    <p class="text-secondary">Fee charged on every swap (0% – 1%).</p>
+                    <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" placeholder="e.g. 0.3" class="input-base" />
                </div>
                <div class="space-y-2">
-                    <label for="lpTokenBalance" class="block text-sm font-semibold text-gray-900">LP Token Balance</label>
-                    <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="lpTokenBalance" class="label-primary">LP Token Balance</label>
+                    <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
                </div>
           </div>
           }
@@ -181,19 +181,19 @@
           <div class="space-y-6">
                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div class="space-y-2">
-                         <label for="lpTokenBalanceWithdrawl" class="block text-sm font-semibold text-gray-900">LP Token Balance</label>
-                         <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                         <label for="lpTokenBalanceWithdrawl" class="label-primary">LP Token Balance</label>
+                         <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
                     </div>
                     <div class="space-y-2">
-                         <label for="lpTokenToBurn" class="block text-sm font-semibold text-gray-900">LP Tokens to Burn</label>
-                         <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="Enter amount to withdraw" />
+                         <label for="lpTokenToBurn" class="label-primary">LP Tokens to Burn</label>
+                         <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter amount to withdraw" />
                     </div>
                </div>
 
                <div class="space-y-3">
                     <div>
                          <label for="lpWithdrawlStrategy" class="mb-1 block text-sm font-semibold text-gray-900">Withdrawal Strategy</label>
-                         <p class="text-xs text-gray-500">Choose which asset(s) to receive from the pool.</p>
+                         <p class="text-secondary">Choose which asset(s) to receive from the pool.</p>
                     </div>
 
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -262,12 +262,12 @@
           @if (tab() === 'clawbackFromAMM') {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label for="lpTokenClawback" class="block text-sm font-semibold text-gray-900">LP Token Balance</label>
-                    <input type="text" [value]="store.lpTokenBalance() || '0'" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+                    <label for="lpTokenClawback" class="label-primary">LP Token Balance</label>
+                    <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
                </div>
                <div class="space-y-2">
-                    <label for="lpTokenClawbackHolder" class="block text-sm font-semibold text-gray-900">Holder Address (optional)</label>
-                    <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="lpTokenClawbackHolder" class="label-primary">Holder Address (optional)</label>
+                    <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" />
                </div>
           </div>
           }
@@ -275,8 +275,8 @@
           <!-- Swap Destination -->
           @if (tab() === 'swapViaAMM') {
           <div class="space-y-2">
-               <label for="swapDestinationAccount" class="block text-sm font-semibold text-gray-900">Destination Account</label>
-               <p class="text-xs text-gray-500">The account that will receive the swapped tokens.</p>
+               <label for="swapDestinationAccount" class="label-primary">Destination Account</label>
+               <p class="text-secondary">The account that will receive the swapped tokens.</p>
 
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />

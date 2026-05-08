@@ -67,12 +67,12 @@ export const XRPL_ACCOUNT_FLAGS_CONFIG: {
      {
           key: 'asfDisallowXRP',
           title: 'Disallow XRP',
-          desc: 'XRP should not be sent to this account.',
+          desc: 'Prevents XRP from being sent to this account (other assets can still be sent)',
      },
      {
           key: 'asfDisableMaster',
           title: 'Disable Master Key',
-          desc: 'Disallow use of the master key pair.',
+          desc: 'Permanently disables the master key. Can only be enabled if a Regular Key or Signer List is configured.',
      },
      {
           key: 'asfNoFreeze',
@@ -82,17 +82,17 @@ export const XRPL_ACCOUNT_FLAGS_CONFIG: {
      {
           key: 'asfGlobalFreeze',
           title: 'Global Freeze',
-          desc: 'Freeze all assets issued by this account.',
+          desc: 'Freezes all trust lines connected to this account, preventing transfers of issued assets.',
      },
      {
           key: 'asfDefaultRipple',
           title: 'Default Ripple',
-          desc: "Enable rippling on this account's trust lines by default.",
+          desc: 'Allow trust lines to ripple (gateway/currency exchange behavior) by default.',
      },
      {
           key: 'asfDepositAuth',
           title: 'Deposit Authorization',
-          desc: 'Enable Deposit Authorization on this account.',
+          desc: 'Requires explicit pre-authorization before others can send payments to this account.',
      },
      {
           key: 'asfAuthorizedNFTokenMinter',
@@ -122,11 +122,11 @@ export const XRPL_ACCOUNT_FLAGS_CONFIG: {
      {
           key: 'asfAllowTrustLineClawback',
           title: 'Allow TrustLine Clawback',
-          desc: 'Permanently gain the ability to claw back issued IOUs.',
+          desc: `Allows the issuer to claw back (reverse) IOUs after they've been sent. This flag cannot be disabled once enabled.`,
      },
      {
           key: 'asfAllowTrustLineLocking',
           title: 'Allow TrustLine Locking',
-          desc: 'Issuers allow their IOUs to be used as escrow amounts.',
+          desc: 'Allows trust lines to be locked, enabling IOUs to be used as collateral or escrow amounts.',
      },
 ];

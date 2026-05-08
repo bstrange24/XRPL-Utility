@@ -9,11 +9,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { NgIcon } from '@ng-icons/core';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-credential-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon, ToggleSliderComponent, LucideAngularModule],
      templateUrl: './credential-create.component.html',
      styleUrl: './credential-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

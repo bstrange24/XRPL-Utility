@@ -8,10 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Summary -->
-          <!-- <app-payment-channel-summary [tab]="tab" (paymentChannelSelected)="paymentChannelSelected($event)"> </app-payment-channel-summary> -->
-          <app-payment-channel-summary [infoPanelExpanded]="summaryExpanded()" (toggleInfoPanel)="toggleSummaryPanel()" (paymentChannelSelected)="paymentChannelSelected($event)" />
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <div class="mt-4">
@@ -20,7 +16,7 @@
           }
 
           <!-- Main Form Area -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <div class="flex flex-col gap-6 lg:flex-row">
                     <!-- Left / Main Content (Form Fields) -->
                     <div class="min-w-0 flex-1">
@@ -47,9 +43,7 @@
                </div>
 
                <!-- Transaction Options -->
-               <div class="mt-6">
-                    <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-               </div>
+               <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
                <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

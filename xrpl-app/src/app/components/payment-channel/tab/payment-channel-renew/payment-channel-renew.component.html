@@ -1,28 +1,30 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Payment Channel Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="signal" class="section-heading-icon-green"></lucide-icon>
+               Payment Channel Details
+          </h4>
+
           <!-- Select Payment Channel to Renew -->
-          <div class="space-y-2">
-               <label for="selectChannelToRenew" class="text-sm font-medium text-gray-700">Select Payment Channel to Renew</label>
-               <p class="text-xs text-gray-500">Select a channel you created (source account).</p>
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
-               </div>
-
-               <!-- Expired warning for renewPaymentChannel tab -->
-               @if (viewModel.selectedIsExpired()) {
-               <div class="flex items-center gap-2 mt-2 p-3 bg-red-50 border border-red-200 rounded-xl">
-                    <ng-icon name="heroExclamationTriangle" size="18" class="text-red-600 flex-shrink-0" />
-                    <span class="text-sm text-red-700">This selected payment channel has expired.</span>
-               </div>
-               }
-          </div>
-
-          <!-- Channel ID -->
-          <div class="space-y-2 mt-3">
-               <label for="channelID" class="text-sm font-medium text-gray-700">Channel ID</label>
-               <p class="text-xs text-gray-500">The unique ID of the channel as a 64-character hexadecimal string.</p>
-               <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full rounded-2xl border border-gray-300 px-4 py-3 text-sm font-mono focus:outline-none focus:border-green-500" />
-          </div>
+          <label for="selectChannelToRenew" class="label-primary">Select Payment Channel to Renew</label>
+          <p class="text-secondary">Select a channel you created (source account).</p>
+          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
      </div>
+
+     @if (paymentChannelStoreService.channelIDField()) {
+     <div class="card-base">
+          <!-- Channel ID -->
+          <label for="channelID" class="label-primary">Channel ID</label>
+          <p class="text-secondary">The unique ID of the channel (64-character hex).</p>
+          <input type="text" readonly class="input-disabled" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" />
+     </div>
+     }
+
+     <!-- Expired warning for renewPaymentChannel tab -->
+     @if (viewModel.selectedIsExpired()) {
+     <div class="alert-error">
+          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">This selected payment channel has expired.</div>
+     </div>
+     }
 </div>

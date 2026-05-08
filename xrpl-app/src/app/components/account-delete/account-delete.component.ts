@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -30,7 +30,7 @@ import { AccountDeleteViewModelService } from '../../services/account-delete/acc
 import { AccountDeleteStoreService } from '../../services/account-delete/account-delete-store/account-delete-store.service';
 import { AccountDeleteRequirementsInfoComponent } from './ui-components/account-delete-requirements-info/account-delete-requirements-info.component';
 import { AccountDeleteFormComponent } from './tab/account-delete-form/account-delete-form.component';
-import { AccountDeleteSummaryComponent } from './ui-components/summary/account-delete-summary.component';
+import { AccountDeleteSummaryComponent } from './ui-components/account-delete-summary/account-delete-summary.component';
 import { AccountDeleteConfig } from './constants/account-delete.types';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
@@ -39,7 +39,7 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 @Component({
      selector: 'app-account-delete',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, AccountDeleteFormComponent, AccountDeleteFormComponent, AccountDeleteSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, AccountDeleteFormComponent, AccountDeleteFormComponent],
      templateUrl: './account-delete.component.html',
      styleUrl: './account-delete.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,10 +67,25 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           this.applyTabFromQueryParam(this.route, ['deleteAccount'] as const, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
 
-          this.rightPanelService.setPanel(AccountDeleteRequirementsInfoComponent, {
-               activeTab: this.deleteAccountViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getAccountDetails(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getAccountDetails();
@@ -204,6 +219,21 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           this.deleteAccountStoreService.setField('accountObjects', env.accountObjects);
           this.deleteAccountStoreService.setField('serverInfo', env.serverInfo);
           this.deleteAccountStoreService.setField('blockingObjects', env.blockingObjects);
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               mainComponent: AccountDeleteRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.deleteAccountViewModelService.activeTab,
+               },
+
+               summaryComponent: AccountDeleteSummaryComponent,
+               summaryInputs: {
+                    info: this.deleteAccountViewModelService.infoData(),
+                    tab: this.deleteAccountViewModelService.activeTab(),
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

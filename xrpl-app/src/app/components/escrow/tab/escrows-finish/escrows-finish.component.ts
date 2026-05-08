@@ -8,11 +8,12 @@ import { EscrowStoreService } from '../../../../services/escrow/escrow-store/esc
 import { EscrowTransactionViewModelService } from '../../../../services/escrow/escrow-transaction-view-model/escrow-transaction-view-model.service';
 import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escrow-util.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-escrows-finish',
      standalone: true,
-     imports: [CommonModule, FormsModule, MatSlideToggleModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, MatSlideToggleModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './escrows-finish.component.html',
      styleUrl: './escrows-finish.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

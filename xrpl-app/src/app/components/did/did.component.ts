@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, effect, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -25,7 +25,7 @@ import { DidStoreService } from '../../services/did/did-store/did-store.service'
 import { DidViewModelService } from '../../services/did/did-view-model/did-view-model.service';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
-import { DidSummaryComponent } from './ui-components/summary/did-summary.component';
+import { DidSummaryComponent } from './ui-components/did-summary/did-summary.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { DID_TAB_META, DID_TABS } from './constants/did.ui';
 import { DidTxConfig, DidTxType } from './constants/did.types';
@@ -35,12 +35,12 @@ import { DID_TAB } from './constants/did.constants';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
-import { RequirementsInfoComponent } from './ui-components/requirements-info/requirements-info.component';
+import { DidRequirementsInfoComponent } from './ui-components/did-requirements-info/did-requirements-info.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidSummaryComponent, DidDeleteComponent, DidSetComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidDeleteComponent, DidSetComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,9 +73,13 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.applyTabFromQueryParam(this.route, DID_TAB, tab => this.setTab(tab));
           this.didUtilService.populateDidDefaultData();
 
-          this.rightPanelService.setPanel(RequirementsInfoComponent, {
-               activeTab: this.didViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getDidForAccount(true);
+          }
      }
 
      ngOnDestroy() {
@@ -85,6 +89,13 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      ngAfterViewInit() {
           this.didViewModelService.setDidDataEditor(this.didDataEditor);
      }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getDidForAccount(true);
@@ -198,6 +209,21 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.didUtilService.getExistingDid(env.accountObjects);
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: DidSummaryComponent,
+               summaryInputs: {
+                    info: this.didViewModelService.infoData(),
+                    infoPanelExpanded: signal(true),
+               },
+
+               mainComponent: DidRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.didViewModelService.activeTab,
+               },
+          });
      }
 
      protected clearInputFields(): void {

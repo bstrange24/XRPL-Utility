@@ -15,11 +15,12 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-nft-modify',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
      templateUrl: './nft-modify.component.html',
      styleUrl: './nft-modify.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

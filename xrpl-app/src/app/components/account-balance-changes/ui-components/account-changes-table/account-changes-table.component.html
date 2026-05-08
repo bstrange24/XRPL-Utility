@@ -18,7 +18,7 @@
                <!-- Transaction Hash -->
                <div class="col-span-3 font-mono flex items-center gap-2">
                     <a [href]="txUiService.explorerUrl() + 'tx/' + change.hash" target="_blank" rel="noopener noreferrer" class="text-gray-700 hover:text-blue-600 transition-colors"> {{ change.hash.slice(0, 8) }}…{{ change.hash.slice(-8) }} </a>
-                    <button (click)="copyToClipboard(change.hash); $event.stopPropagation()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <button (click)="copyToClipboard(change.hash); $event.stopPropagation()" class="btn-optional-fields">
                          <lucide-icon name="copy" size="15" />
                     </button>
                </div>

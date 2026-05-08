@@ -1,6 +1,84 @@
 <div class="space-y-6">
+     <!-- Currency Details Card -->
+     <h4 class="section-heading">
+          <lucide-icon name="link" class="w-5 h-5 text-green-600"></lucide-icon>
+          Currency Details
+     </h4>
+
      @if (layout === 'split') {
      <!-- Split Layout (one field per row) -->
+     <div class="space-y-6">
+          <!-- Currency Code -->
+          <div>
+               <label for="currencyCode" class="label-primary">Currency Code</label>
+               <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+          </div>
+
+          <!-- Issuer -->
+          <div>
+               <label for="issuer" class="label-primary">Issuer</label>
+               <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+          </div>
+
+          <!-- Amount -->
+          <div>
+               <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
+               <p class="text-secondary">
+                    @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
+                    trustline. }
+               </p>
+               <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
+          </div>
+
+          <!-- Currency Balance -->
+          <div>
+               <label for="currencyBalance" class="label-primary">Currency Balance</label>
+               <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
+               <input type="text" readonly class="input-disabled" [value]="currencyBalance" />
+          </div>
+     </div>
+     } @else {
+     <!-- Paired Layout (two fields per row - matches credential page grid) -->
+     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- Currency Code -->
+          <div>
+               <label for="currencyCode" class="label-primary">Currency Code</label>
+               <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+          </div>
+
+          <!-- Issuer -->
+          <div>
+               <label for="issuer" class="label-primary">Issuer</label>
+               <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+          </div>
+     </div>
+
+     <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <!-- Amount -->
+          <div>
+               <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
+               <p class="text-secondary">
+                    @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
+                    trustline. }
+               </p>
+               <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
+          </div>
+
+          <!-- Currency Balance -->
+          <div>
+               <label for="currencyBalance" class="label-primary">Currency Balance</label>
+               <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
+               <input type="text" readonly class="input-disabled" [value]="currencyBalance" />
+          </div>
+     </div>
+     }
+</div>
+<!-- <div class="space-y-6">
+     @if (layout === 'split') {
      <div class="space-y-6">
           <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
           <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
@@ -8,7 +86,6 @@
           <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
      </div>
      } @else {
-     <!-- Paired Layout (two fields per row) -->
      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
           <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
@@ -21,12 +98,15 @@
      }
 </div>
 
-<!-- ==================== Templates ==================== -->
 <ng-template #currencyTpl>
      <div class="space-y-2">
-          <h4 class="mb-5 font-semibold text-gray-900">Trustline Details</h4>
-          <label for="currencyCode" class="block text-sm font-semibold text-gray-900">Currency Code</label>
-          <p class="text-xs text-gray-500">Issued asset combined with the issuer to uniquely define a token.</p>
+          <h4 class="section-heading">
+               <lucide-icon name="link" class="section-heading-icon-green"></lucide-icon>
+               Trustline Details
+          </h4>
+
+          <label for="currencyCode" class="label-primary">Currency Code</label>
+          <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
 
           <div class="h-[54px]">
                <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
@@ -36,9 +116,13 @@
 
 <ng-template #issuerTpl>
      <div class="space-y-2">
-          <h4 class="mb-5 font-semibold text-gray-900">Issuer Details</h4>
-          <label for="issuer" class="block text-sm font-semibold text-gray-900">Issuer</label>
-          <p class="text-xs text-gray-500">The XRPL account that issues and controls this currency.</p>
+          <h4 class="section-heading">
+               <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
+               Issuer Details
+          </h4>
+
+          <label for="issuer" class="label-primary">Issuer</label>
+          <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
 
           <div class="h-[54px]">
                <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
@@ -47,10 +131,10 @@
 </ng-template>
 
 <ng-template #amountTpl>
-     <div class="space-y-2">
-          <label for="limitLabel" class="block text-sm font-semibold text-gray-900">{{ limitLabel }}</label>
+     <div class="space-y-2" style="margin-top: 4px">
+          <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
 
-          <p class="text-xs text-gray-500">
+          <p class="text-secondary">
                @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }
           </p>
 
@@ -59,11 +143,11 @@
 </ng-template>
 
 <ng-template #balanceTpl>
-     <div class="space-y-2">
-          <label for="currencyBalance" class="block text-sm font-semibold text-gray-900">Currency Balance</label>
+     <div class="space-y-2" style="margin-top: 12px">
+          <label for="currencyBalance" class="label-primary">Currency Balance</label>
 
-          <p class="text-xs text-gray-500">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
+          <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
 
-          <input type="text" [value]="currencyBalance" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-700" />
+          <input type="text"  readonly class="input-disabled"  [value]="currencyBalance" />
      </div>
-</ng-template>
+</ng-template> -->

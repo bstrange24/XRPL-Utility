@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -33,13 +33,13 @@ import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution
 import { TicketsCreateComponent } from './tabs/tickets-create/tickets-create.component';
 import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
-import { TicketsSummaryComponent } from './ui-components/summary/tickets-summary.component';
+import { TicketsSummaryComponent } from './ui-components/tickets-summary/tickets-summary.component';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent, TicketsSummaryComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -64,12 +64,31 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.ticketsViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, TICKET_TAB, tab => this.setTab(tab));
-          this.rightPanelService.setPanel(TicketsRequirementsInfoComponent, {
-               activeTab: this.ticketsViewModelService.activeTab,
-          });
+
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getTickets(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getTickets(false);
@@ -107,16 +126,11 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
                     const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
 
-                    console.log(`ticketObjects: ${JSON.stringify(ticketObjects, null, '\t')}`);
-
                     // Extract sequences
                     const allTicketsForWallet: string[] = (ticketObjects?.result?.account_objects ?? []).map((ticket: any) => String(ticket.TicketSequence)).sort((a, b) => Number(a) - Number(b)); // keeps them in ascending order
 
                     this.xrplTxOptionsStore.setField('allTicketsForWallet', allTicketsForWallet);
                     this.xrplTxOptionsStore.setField('walletTicketCount', allTicketsForWallet.length);
-
-                    // this.xrplTxOptionsStore.setField('allTicketsForWallet', ticketObjects???????);
-                    // this.xrplTxOptionsStore.setField('walletTicketCount', ticketObjects?.result?.account_objects?.length ?? 0);
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
@@ -215,6 +229,25 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
           const newCount = ticketObjects?.result?.account_objects?.length ?? 0;
           this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
+          const allTicketsForWallet: string[] = (ticketObjects?.result?.account_objects ?? []).map((ticket: any) => String(ticket.TicketSequence)).sort((a, b) => Number(a) - Number(b)); // keeps them in ascending order
+          this.xrplTxOptionsStore.setField('allTicketsForWallet', allTicketsForWallet);
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: TicketsSummaryComponent,
+               summaryInputs: {
+                    infoData: this.ticketsViewModelService.infoData(),
+                    tab: this.ticketsViewModelService.activeTab(),
+                    walletName: this.walletName(),
+                    ticketCount: this.xrplTxOptionsStore.walletTicketCount(),
+               },
+
+               mainComponent: TicketsRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      protected clearInputFields(): void {

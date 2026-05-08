@@ -1,4 +1,4 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+<div class="card-base">
      <div class="space-y-6">
           <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
           <!-- Action Selection -->
@@ -34,8 +34,8 @@
 
           <!-- MPT Issuer -->
           <div class="space-y-2">
-               <label for="mptIssuer" class="block text-sm font-semibold text-gray-900">MPT Issuer</label>
-               <p class="text-xs text-gray-500">Account that issued the MPT.</p>
+               <label for="mptIssuer" class="label-primary">MPT Issuer</label>
+               <p class="text-secondary">Account that issued the MPT.</p>
 
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
@@ -44,10 +44,10 @@
 
           <!-- MPT Issuance ID -->
           <div class="space-y-2">
-               <label for="mptIssuanceID" class="block text-sm font-semibold text-gray-900">MPT Issuance ID</label>
-               <p class="text-xs text-gray-500">Identifies the MPTokenIssuance.</p>
+               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
+               <p class="text-secondary">Identifies the MPTokenIssuance.</p>
 
-               <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="input-base" />
           </div>
      </div>
 </div>

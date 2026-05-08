@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -28,7 +28,7 @@ import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh
 import { AccountConfiguratorViewModelService } from '../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { ACCOUNT_CONFIG_ACTIONS, AccountConfigAction } from './constants/account-configurator.types';
-import { AccountConfiguratorSummaryComponent } from './ui-components/summary/account-configurator-summary.component';
+import { AccountConfiguratorSummaryComponent } from './ui-components/account-configurator-summary/account-configurator-summary.component';
 import { DepositAuthComponent } from './ui-components/tabs/deposit-auth/deposit-auth.component';
 import { AccountFlagsComponent } from './ui-components/tabs/flags/account-flags.component';
 import { AccountMetadataComponent } from './ui-components/tabs/meta-data/account-metadata.component';
@@ -42,7 +42,7 @@ import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from './constants/accoun
 @Component({
      selector: 'app-account-configurator',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, AccountConfiguratorSummaryComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, RouterModule, ExecutionTimeDisplayComponent, WarningMessageComponent, TabMenuWithInfoComponent, DepositAuthComponent, AccountFlagsComponent, AccountMetadataComponent, MultiSignComponent, RegularKeyComponent],
      animations: [animation, toastAnimation],
      templateUrl: './account-configurator.component.html',
      styleUrl: './account-configurator.component.css',
@@ -72,10 +72,25 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['modifyAccountFlags', 'modifyDepositAuth', 'modifyMetaData', 'modifyMultiSigners', 'modifyRegularKey'] as const, tab => this.setTab(tab));
 
-          this.rightPanelService.setPanel(AccountConfiguratorRequirementsInfoComponent, {
-               activeTab: this.activeTabForRequirements,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getAccountDetails(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getAccountDetails(true);
@@ -174,10 +189,10 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
                     txResult = await handler(config, enabled);
 
-                    if (!txResult) {
-                         this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
-                         return;
-                    }
+                    // if (txResult !== null && txResult !== undefined) {
+                    //      this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
+                    //      return;
+                    // }
                } catch (error: any) {
                     console.error(`[${currentTab}] execution failed:`, error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
@@ -186,7 +201,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           });
 
           this.isAccountConfig.set(true);
-          if (txResult !== null) {
+          if (txResult !== null && txResult !== undefined) {
                const successFullTx = await this.handleTxResult(txResult, env.client, env.wallet, '', '', '');
                if (successFullTx && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                     env = await this.txEnvironmentService.getValidatedEnvironment(true);
@@ -205,6 +220,22 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
+     }
+
+     // In account-configurator.component.ts
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               mainComponent: AccountConfiguratorRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.accountConfiguratorViewModelService.activeTab,
+               },
+
+               summaryComponent: AccountConfiguratorSummaryComponent,
+               summaryInputs: {
+                    info: this.accountConfiguratorViewModelService.infoData(),
+                    tab: this.accountConfiguratorViewModelService.activeTab(),
+               },
+          });
      }
 
      protected clearInputFields(): void {

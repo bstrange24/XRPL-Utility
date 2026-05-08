@@ -1,19 +1,24 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-     <div class="space-y-6">
+<div class="space-y-6">
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
+               NFT Offer Details
+          </h4>
+
           <!-- NFT Offer Index -->
           <div class="space-y-2">
-               <label for="nftOfferIndex" class="block text-sm font-semibold text-gray-900">NFT Offer Index</label>
-               <p class="text-xs text-gray-500">NFT Offer Index generated when the offer was created.</p>
+               <label for="nftOfferIndex" class="label-primary">NFT Offer Index</label>
+               <p class="text-secondary">NFT Offer Index generated when the offer was created.</p>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftOfferId" name="nftIndexField" class="input-base" />
           </div>
 
           <!-- NFT Token ID -->
           <div class="space-y-2">
-               <label for="nftTokenID" class="block text-sm font-semibold text-gray-900">NFT Token ID</label>
-               <p class="text-xs text-gray-500">NFT Token ID generated when the NFT was created.</p>
+               <label for="nftTokenID" class="label-primary">NFT Token ID</label>
+               <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="input-base" />
           </div>
      </div>
 </div>

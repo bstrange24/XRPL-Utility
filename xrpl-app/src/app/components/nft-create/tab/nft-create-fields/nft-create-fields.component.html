@@ -1,32 +1,36 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">NFT Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="lucideBadgeInfo" class="section-heading-icon-green"></lucide-icon>
+               NFT Details
+          </h4>
+
           <!-- Taxon -->
           <div class="space-y-2">
-               <label for="nftTaxon" class="block text-sm font-semibold text-gray-900">Taxon</label>
-               <p class="text-xs text-gray-500">Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter.</p>
-               <input type="text" [(ngModel)]="nftCreateStoreService.taxon" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="nftTaxon" class="label-primary">Taxon</label>
+               <p class="text-secondary">Indicates the taxon associated with this token. The taxon is generally a value chosen by the minter.</p>
+               <input type="text" [(ngModel)]="nftCreateStoreService.taxon" class="input-base" />
           </div>
 
           <!-- Transfer Fee -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label for="nftTransferFee" class="block text-sm font-semibold text-gray-900">Transfer Fee</label>
-               <p class="text-xs text-gray-500">Specifies the fee charged by the issuer for secondary sales (0–50000 = 0%–50% in 0.001% steps).</p>
-               <input type="number" [ngModel]="nftCreateStoreService.transferFee()" (ngModelChange)="utilsService.updateTransferFee($event)" (focus)="onFocus($event)" placeholder="e.g. 5000 (5%)" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="nftTransferFee" class="label-primary">Transfer Fee</label>
+               <p class="text-secondary">Specifies the fee charged by the issuer for secondary sales (0–50000 = 0%–50% in 0.001% steps).</p>
+               <input type="number" [ngModel]="nftCreateStoreService.transferFee()" (ngModelChange)="utilsService.updateTransferFee($event)" (focus)="onFocus($event)" placeholder="e.g. 5000 (5%)" min="0" max="50000" step="1" class="input-base" />
           </div>
 
           <!-- URI -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label for="nftURI" class="block text-sm font-semibold text-gray-900">URI</label>
-               <p class="text-xs text-gray-500">URI that points to the data/metadata for this NFT (hex-encoded, max 256 bytes).</p>
-               <input type="text" [(ngModel)]="nftCreateStoreService.initialURI" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <label for="nftURI" class="label-primary">URI</label>
+               <p class="text-secondary">URI that points to the data/metadata for this NFT (hex-encoded, max 256 bytes).</p>
+               <input type="text" [(ngModel)]="nftCreateStoreService.initialURI" class="input-base" />
           </div>
 
           <!-- NFT Token Minter -->
           <div class="space-y-2" style="margin-top: 1.5rem">
-               <label for="nftTokenMinter" class="block text-sm font-semibold text-gray-900">NFT Token Minter</label>
-               <p class="text-xs text-gray-500">Indicates the account that should be the issuer of this token (optional).</p>
-               <input type="text" [(ngModel)]="nftCreateStoreService.nfTokenMinterAddress" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+               <label for="nftTokenMinter" class="label-primary">NFT Token Minter</label>
+               <p class="text-secondary">Indicates the account that should be the issuer of this token (optional).</p>
+               <input type="text" [(ngModel)]="nftCreateStoreService.nfTokenMinterAddress" class="input-base" />
           </div>
      </div>
 
@@ -44,8 +48,8 @@
 
      <!-- Sell Offer Fields -->
      @if (nftCreateStoreService.enableExpirationDate()) {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <div class="space-y-5">
+     <div class="card-base">
+          <div class="space-y-6">
                <app-currency-amount-form
                     [currencyItems]="nftOffersTransactionViewModelService.currencyItems()"
                     [selectedCurrencyItem]="nftOffersTransactionViewModelService.selectedCurrencyItem()"
@@ -67,8 +71,8 @@
 
                <!-- Destination -->
                <div class="space-y-2">
-                    <label for="nftDestination" class="block text-sm font-semibold text-gray-900">Destination</label>
-                    <p class="text-xs text-gray-500">The unique address of the account receiving the NFT.</p>
+                    <label for="nftDestination" class="label-primary">Destination</label>
+                    <p class="text-secondary">The unique address of the account receiving the NFT.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
                     </div>

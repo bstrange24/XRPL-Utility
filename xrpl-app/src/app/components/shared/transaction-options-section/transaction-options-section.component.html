@@ -5,17 +5,17 @@
 @if(txUiService.wantsOptions()) {
 <!-- Domain ID and Credential ID -->
 <!-- @if (tab === 'setPermissionedDomain') {
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+<div class="card-base">>
      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Domain ID</label>
-               <p class="text-xs text-gray-500">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
+               <label class="label-primary">Domain ID</label>
+               <p class="text-secondary">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
                <textarea name="domainId" class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)"> </textarea>
           </div>
 
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Credential IDs</label>
-               <p class="text-xs text-gray-500">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
+               <label class="label-primary">Credential IDs</label>
+               <p class="text-secondary">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
                <textarea name="credentialIDs" class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"> </textarea>
           </div>
      </div>
@@ -24,13 +24,13 @@
 
 <!-- Credential Expiration and URI -->
 @if(tab === 'createCredential') {
-<div class="rounded-2xl bg-white p-1">
+<div class="rounded-2xl border-gray-200 bg-white p-1">
      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <!-- URI -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">URI</label>
-               <p class="text-xs text-gray-500">Additional data about the credential (i.e. a link to the VC document).</p>
-               <input type="text" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label class="label-primary">URI</label>
+               <p class="text-secondary">Additional data about the credential (i.e. a link to the VC document).</p>
+               <input type="text" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI" class="input-base" />
           </div>
 
           <!-- Credential Expiration -->
@@ -48,9 +48,9 @@
      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <!-- Destination Tag -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
-               <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label class="label-primary">Destination Tag</label>
+               <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+               <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" class="input-base" />
           </div>
 
           <!-- Payment Channel Expiration -->
@@ -74,34 +74,34 @@
 
 <!-- Send XRP / Create Check / Cash Check -->
 @else if (tab === 'sendXrp' || tab === 'createCheck' || tab === 'cashCheck') {
-<div class="rounded-2xl bg-white p-1">
-     <div class="space-y-5">
+<div class="rounded-2xl border-gray-200 bg-white p-1">
+     <div class="space-y-6">
           <!-- Tags Row -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
-                    <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+                    <label class="label-primary">Destination Tag</label>
+                    <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+                    <input class="input-base" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
                </div>
 
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Source Tag</label>
-                    <p class="text-xs text-gray-500">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-                    <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
+                    <label class="label-primary">Source Tag</label>
+                    <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
+                    <input class="input-base" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
                </div>
           </div>
 
           <!-- Invoice ID -->
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Invoice ID</label>
-               <p class="text-xs text-gray-500">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-               <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" placeholder="64 hex chars" maxlength="64" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" />
+               <label class="label-primary">Invoice ID</label>
+               <p class="text-secondary">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
+               <input class="input-base" placeholder="64 hex chars" maxlength="64" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" />
 
                @if (xrplTxOptionsStore.invoiceId()) {
                <div class="rounded-2xl border border-gray-100 bg-gray-50 p-3">
-                    <p class="text-xs text-gray-500">Will be sent as hex:</p>
+                    <p class="text-secondary">Will be sent as hex:</p>
                     <code class="mt-1 block break-all font-mono text-sm text-gray-700">{{ invoiceIdHex() || '(empty)' }}</code>
-                    <p class="mt-1 text-xs text-gray-500">
+                    <p class="mt-1 mb-3 text-sm text-gray-600">
                          Length: {{ invoiceIdHexLengthBytes() }} bytes @if (isInvoiceIdTooLong()) {
                          <span class="ml-1 font-medium text-red-600">→ Too long (max 256 bytes)</span>
                          }
@@ -121,14 +121,14 @@
           @if (tab === 'sendXrp') {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Domain ID</label>
-                    <p class="text-xs text-gray-500">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
-                    <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" />
+                    <label class="label-primary">Domain ID</label>
+                    <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
+                    <input class="input-base" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" />
                </div>
 
                <div class="space-y-2">
-                    <label class="block text-sm font-semibold text-gray-900">Credential IDs</label>
-                    <p class="text-xs text-gray-500">Credentials associated with the sender of this transaction. The credentials included must not be expired.</p>
+                    <label class="label-primary">Credential IDs</label>
+                    <p class="text-secondary">Credentials associated with the sender of this transaction. The credentials included must not be expired.</p>
                     <textarea class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" rows="2" placeholder="Comma separated" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"> </textarea>
                </div>
           </div>
@@ -142,15 +142,15 @@
 <div class="rounded-2xl bg-white p-1">
      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Destination Tag</label>
-               <p class="text-xs text-gray-500">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+               <label class="label-primary">Destination Tag</label>
+               <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+               <input class="input-base" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
           </div>
 
           <div class="space-y-2">
-               <label class="block text-sm font-semibold text-gray-900">Source Tag</label>
-               <p class="text-xs text-gray-500">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-               <input class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
+               <label class="label-primary">Source Tag</label>
+               <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
+               <input class="input-base" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
           </div>
      </div>
 </div>

@@ -207,7 +207,7 @@ npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include sr
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/constants/send-xrp.constants.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/constants/send-xrp.ui.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/ui-components/send-xrp-requirements-info/send-xrp-requirements-info.component.spec.ts
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/ui-components/summary/send-xrp-summary.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/ui-components/send-xrp-summary/send-xrp-summary.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/send-xrp/tab/send-xrp-form/send-xrp-form.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/send-xrp/send-xrp-orchestrator/send-xrp-transaction-orchestrator.service.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/services/send-xrp/send-xrp-view-model/send-xrp-view-model.service.spec.ts

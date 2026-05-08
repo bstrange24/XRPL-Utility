@@ -8,9 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-nft-create-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (nftSelected)="onNftSelected($event)"> </app-nft-create-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <div class="mt-4">
@@ -19,7 +16,7 @@
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <!-- Dynamic Content -->
                <div class="flex flex-col gap-6">
                     <div class="min-w-0 flex-1">

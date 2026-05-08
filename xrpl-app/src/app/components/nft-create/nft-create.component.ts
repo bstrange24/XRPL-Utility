@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -47,7 +47,7 @@ import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.com
 @Component({
      selector: 'app-nft-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateSummaryComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, FlagSelectorComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, FlagSelectorComponent],
      templateUrl: './nft-create.component.html',
      styleUrl: './nft-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +75,9 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.txUiService.clearAllOptionsAndMessages();
      }
 
+     activeTabForRequirements = computed(() => this.nftCreateTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, NFT_CREATE_TAB, tab => this.setTab(tab));
           this.trustlineCurrencyService.load();
@@ -85,10 +88,25 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
 
-          this.rightPanelService.setPanel(NftRequirementsInfoComponent, {
-               activeTab: this.nftCreateTransactionViewModelService.activeTab,
-          });
+          // Initial setup
+          this.setRightPanel();
+
+          // Force load credentials
+          if (this.hasWallets()) {
+               this.getNFT(true);
+          }
      }
+
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           await this.getNFT(false);
@@ -321,6 +339,21 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           const code = this.currencyStoreService.currency();
           if (!code) return null;
           return this.currencyItems().find(item => item.id === code) || null;
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               summaryComponent: NftCreateSummaryComponent,
+               summaryInputs: {
+                    info: this.nftCreateTransactionViewModelService.infoData(),
+                    tab: this.nftCreateTransactionViewModelService.activeTab(),
+               },
+
+               mainComponent: NftRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+          });
      }
 
      handleSearchQueryChange(query: string) {

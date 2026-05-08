@@ -45,7 +45,7 @@ const NFT_META: Record<NftCreateTxType, NftCreateMeta> = {
                createNft: { amount: nft.amount, taxon: nft.taxon, nftFlags: nft.nftFlags, URI: nft.initialURI, transferfee: nft.transferFee, issuer: nft.issuer, expiration: nft.expiration, decodedNftFlags: nft.decodedNftFlags, currency: currency?.currency },
           }),
           buildTx: ({ orchestrator, env, wallet, nft, currency }) => orchestrator.nftTransactionBuilderService.buildCreateNftTx(env.wallet || wallet, env, nft, currency),
-          simulationToastMessage: ({ orchestrator, nft }) => `Simulated Sending NFT of ${nft.amount}`,
+          simulationToastMessage: ({ orchestrator, nft }) => `Simulated NFT creation succesfully.`,
           successMessage: ({ orchestrator, nft }) => {
                return `Successfully Sent NFT of ${nft.amount}`;
           },

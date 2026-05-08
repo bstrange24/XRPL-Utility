@@ -1,8 +1,13 @@
 <!-- Mode: Create New vs Update Existing -->
 <div class="space-y-6">
      <!-- Domain Action Selector Card -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <label for="domainAction" class="mb-4 block text-sm font-semibold text-gray-900"> Domain Action </label>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="scroll-text" class="section-heading-icon-tan"></lucide-icon>
+               Permission Domain Details
+          </h4>
+
+          <label for="domainAction" class="label-primary"> Domain Action </label>
 
           <div class="flex flex-col gap-3 sm:flex-row">
                <label class="flex-1 cursor-pointer">
@@ -30,9 +35,9 @@
 
      <!-- Update Mode: Domain Selector (Conditional Card) -->
      @if (permissionedDomainStoreService.domainMode() === 'update') {
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
+     <div class="card-base">
           <div class="mb-4">
-               <label for="selectPDomainToUpdate" class="mb-2 block text-sm font-semibold text-gray-900"> Select Domain to Update </label>
+               <label for="selectPDomainToUpdate" class="label-primary"> Select Domain to Update </label>
                <p class="text-sm text-gray-600">Choose one of your existing Permissioned Domains. This will <strong class="font-semibold text-amber-600">replace</strong> its AcceptedCredentials list.</p>
           </div>
 
@@ -43,34 +48,47 @@
           <!-- Selected Domain ID -->
           @if (permissionedDomainStoreService.domainId()) {
           <div class="mt-4">
-               <label for="domainID" class="mb-2 block text-sm font-semibold text-gray-900"> Domain ID</label>
+               <label for="domainID" class="label-primary"> Domain ID</label>
                <p class="text-sm text-gray-600 mb-2">Ledger hash of the Permissioned Domain to be updated.</p>
-               <input type="text" [value]="permissionedDomainStoreService.domainId()" readonly class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-500" />
+               <input type="text" readonly class="input-disabled" [value]="permissionedDomainStoreService.domainId()" />
           </div>
           }
      </div>
      }
 
-     <!-- Credentials Management Card (The Complex One) -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 hover:shadow-card transition-shadow">
-          <h4 class="mb-5 font-semibold text-gray-900">📜 Accepted Credentials</h4>
+     <!-- Credentials Management Card -->
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="scroll-text" class="section-heading-icon-tan"></lucide-icon>
+               Accepted Credentials
+          </h4>
 
           <!-- Add New Credential (Dashed sub-card) -->
           <div class="mb-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50/30 p-5">
                <div class="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
                     <div class="md:col-span-5">
-                         <label for="domainIssuer" class="mb-1.5 block text-sm font-medium text-gray-700">Issuer</label>
+                         <label for="domainIssuer" class="label-primary">Issuer</label>
                          <app-select-search-dropdown [items]="destinationItems()" [value]="newIssuerSelectedItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="onNewIssuerSelected($event)" placeholder="Select or enter issuer address"> </app-select-search-dropdown>
                     </div>
 
                     <div class="md:col-span-5">
-                         <label for="credentialType" class="mb-1.5 block text-sm font-medium text-gray-700">Credential Type</label>
-                         <input type="text" [(ngModel)]="newCredentialType" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" placeholder="e.g. KYC-Level2" />
+                         <label for="credentialType" class="label-primary">Credential Type</label>
+                         <input type="text" [(ngModel)]="newCredentialType" class="input-base" placeholder="e.g. KYC-Level2" />
                     </div>
 
                     <div class="md:col-span-2">
                          <button type="button" class="w-full rounded-2xl bg-blue-600 py-3 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">+ Add Credential</button>
                     </div>
+               </div>
+               <!-- Counter Footer -->
+               <div class="status-bar">
+                    <span class="status-count"> Added: <strong>{{ credentialsArray.length }} / 10</strong> </span>
+                    @if (credentialsArray.length >= 10) {
+                    <span class="badge-warning">
+                         <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0" />
+                         Maximum reached
+                    </span>
+                    }
                </div>
           </div>
 
@@ -88,25 +106,17 @@
 
                          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                   <label for="domainIssuer" class="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500">Issuer</label>
-                                   <input type="text" readonly formControlName="issuer" class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                                   <label for="domainIssuer" class="label-primary">Issuer</label>
+                                   <input type="text" readonly class="input-disabled" formControlName="issuer" />
                               </div>
                               <div>
-                                   <label for="credentialType" class="mb-1 block text-xs font-medium uppercase tracking-wider text-gray-500">Credential Type</label>
-                                   <input type="text" readonly formControlName="credentialType" class="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                                   <label for="credentialType" class="label-primary">Credential Type</label>
+                                   <input type="text" readonly class="input-disabled" formControlName="credentialType" />
                               </div>
                          </div>
                     </div>
                     }
                </div>
           </form>
-
-          <!-- Counter Footer -->
-          <div class="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-sm">
-               <span class="text-gray-600"> Added: <strong class="font-semibold text-gray-900">{{ credentialsArray.length }} / 10</strong> </span>
-               @if (credentialsArray.length >= 10) {
-               <span class="flex items-center gap-1 text-xs font-medium text-amber-600"> ⚠️ Maximum reached </span>
-               }
-          </div>
      </div>
 </div>

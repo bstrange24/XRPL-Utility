@@ -1,12 +1,12 @@
 @if (offerStoreService.existingOffers().length > 0) {
 <div class="space-y-4">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+     <div class="card-base">
           <h4 class="mb-5 font-semibold text-gray-900">Offer Details</h4>
           <!-- Label + Hint -->
           <div>
                <div class="space-y-1">
-                    <label for="selectOfferToCancel" class="block text-sm font-semibold text-gray-900"> Select Offers to Cancel </label>
-                    <p class="text-xs text-gray-500">Select existing offers to cancel for the selected account.</p>
+                    <label for="selectOfferToCancel" class="label-primary"> Select Offers to Cancel </label>
+                    <p class="text-secondary">Select existing offers to cancel for the selected account.</p>
                </div>
                <div class="relative mt-2" (clickOutside)="closeOfferDropdown()">
                     <div class="relative">

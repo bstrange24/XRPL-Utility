@@ -44,6 +44,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
                this.credentialStore.setField('credentialID', cred.index);
                this.credentialStore.setField('credentialType', cred.CredentialType || '');
                this.credentialStore.setField('credentialIssuer', cred.Issuer);
+               this.credentialStore.setField('subject', cred.Subject);
           } else {
                this.credentialStore.resetCredentialIdDropDown();
           }
@@ -62,18 +63,16 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           return mapped;
      }
 
-     private sortCredentials(a: any, b: any) {
-          const aHasExpiration = a.Expiration && a.Expiration !== 'N/A';
-          const bHasExpiration = b.Expiration && b.Expiration !== 'N/A';
+     private sortCredentials(a: CredentialItem, b: CredentialItem) {
+          // Use raw timestamps for accurate comparison
+          const aHasExpiration = a.ExpirationRaw !== undefined && a.ExpirationRaw !== 0;
+          const bHasExpiration = b.ExpirationRaw !== undefined && b.ExpirationRaw !== 0;
 
           if (aHasExpiration && !bHasExpiration) return -1;
           if (!aHasExpiration && bHasExpiration) return 1;
 
           if (aHasExpiration && bHasExpiration) {
-               const aExp = Number.parseInt(a.Expiration, 10) || 0;
-               const bExp = Number.parseInt(b.Expiration, 10) || 0;
-
-               return aExp - bExp;
+               return (a.ExpirationRaw || 0) - (b.ExpirationRaw || 0);
           }
 
           const aIndex = typeof a.index === 'number' ? a.index : Number.parseInt(a.index, 10) || 0;
@@ -93,15 +92,17 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      private mapCredential(obj: any): CredentialItem {
           const credentialType = obj.CredentialType;
           const uri = obj.URI;
+          const expirationRaw = obj.Expiration || 0;
 
           return {
                index: obj.index,
                CredentialType: credentialType ? this.decodeutf8Hex(credentialType) : 'Unknown Type',
-               Expiration: obj.Expiration ? this.utilsService.fromRippleTime(obj.Expiration).est : 'N/A',
+               Expiration: expirationRaw ? this.utilsService.fromRippleTime(expirationRaw).est : 'N/A',
+               ExpirationRaw: expirationRaw, // Store raw for comparisons
                Issuer: obj.Issuer,
                Subject: obj.Subject,
                URI: this.decodeutf8Hex(uri),
-               Flags: this.getCredentialStatus(obj.Flags),
+               Flags: obj.Flags || 0, // Always store as number
           };
      }
 
@@ -124,17 +125,39 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           return list.filter(c => c.CredentialType?.toLowerCase().includes(lower) || c.Issuer?.toLowerCase().includes(lower) || c.Subject?.toLowerCase().includes(lower) || c.index?.toLowerCase().includes(lower));
      }
 
+     /**
+      * Check if a credential has been accepted
+      * LSF_ACCEPTED flag value is 65536 (0x10000)
+      */
      isCredentialAccepted(cred: CredentialItem): boolean {
-          // Flags come from XRPL as number, but your utilsService.getCredentialStatus() returns object
-          // So we check both possibilities
-          if (typeof cred.Flags === 'number') return (cred.Flags & AppConstants.LSF_ACCEPTED) !== 0;
-          if (typeof cred.Flags === 'object') return !!cred.Flags.lsfAccepted;
-          if (cred.Flags === 'Credential accepted') return true;
+          // Flags should always be a number from the XRPL
+          if (typeof cred.Flags === 'number') {
+               return (cred.Flags & AppConstants.LSF_ACCEPTED) !== 0;
+          }
+          // Fallback for any edge cases
+          console.warn('Credential Flags is not a number:', cred.index, cred.Flags);
           return false;
      }
 
+     /**
+      * Check if a credential is expired
+      * Uses raw XRPL timestamp for accurate comparison
+      */
+     isCredentialExpired(cred: CredentialItem): boolean {
+          if (!cred.ExpirationRaw || cred.ExpirationRaw === 0) {
+               return false; // No expiration date
+          }
+
+          // Convert XRPL time (seconds since 2000-01-01) to JS timestamp
+          const RIPPLE_EPOCH_OFFSET = 946684800; // Seconds from 1970 to 2000
+          const expirationDate = new Date((cred.ExpirationRaw + RIPPLE_EPOCH_OFFSET) * 1000);
+          const now = new Date();
+
+          return expirationDate < now;
+     }
+
      selectCredential(item: SelectItem | CredentialItem | null, activeTab: CredentialActionTypes, walletAddress: string | undefined, source: 'dropdown' | 'list' = 'list'): void {
-          if (!item) {
+          if (!item || !walletAddress) {
                this.applySelectedCredential(null);
                return;
           }
@@ -153,20 +176,21 @@ export class CredentialUtilService extends PerformanceBaseComponent {
 
           if (!cred) return;
 
-          const isWalletSubject = walletAddress && cred.Subject === walletAddress;
-          const isWalletIssuer = walletAddress && cred.Issuer === walletAddress;
+          const isWalletSubject = cred.Subject === walletAddress;
+          const isWalletIssuer = cred.Issuer === walletAddress;
 
-          // Tab-specific business rules
+          // Tab-specific business rules - FIXED
           if (activeTab === 'verifyCredential') {
-               if (isWalletIssuer) {
-                    this.applySelectedCredential(cred);
-               } else if (isWalletSubject) {
-                    this.applySelectedCredential(null);
-                    this.toastService.info('You cannot verify credentials you are the subject of. Verification is typically performed by the issuer or a third party.', AppConstants.TOAST.INFO);
-                    return;
-               } else {
-                    this.applySelectedCredential(cred);
+               // Allow verification but provide appropriate warnings
+               if (isWalletSubject) {
+                    this.toastService.warn('You are the subject of this credential. Verification results may have limited meaning for third parties.', AppConstants.TOAST.WARN);
                }
+
+               if (isWalletIssuer) {
+                    this.toastService.info('You are the issuer of this credential. Verification confirms your own issued credential.', AppConstants.TOAST.INFO);
+               }
+
+               this.applySelectedCredential(cred);
           } else {
                this.applySelectedCredential(cred);
           }
@@ -187,7 +211,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      }
 
      getCredentialStatus(flags: number): string {
-          return flags === 65536 ? 'Credential accepted' : 'Credential not accepted';
+          return this.isCredentialAccepted({ Flags: flags } as CredentialItem) ? 'Credential accepted' : 'Credential not accepted';
      }
 
      onCredentialIdInput(event: Event): void {

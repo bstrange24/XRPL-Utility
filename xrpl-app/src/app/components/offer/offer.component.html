@@ -8,9 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-offer-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()"> </app-offer-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <div class="mt-4">
@@ -19,7 +16,7 @@
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <!-- Dynamic Form Fields -->
                <app-offer-fields [tab]="tab" (weWantCurrencySelected)="onWeWantCurrencySelected($event)" (weWantIssuerSelected)="onWeWantIssuerSelected($event)" (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)" (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)" (weWantAmountChange)="handleWeWantAmountChange()" (weSpendAmountChange)="handleWeSpendAmountChange()" (invertOrder)="invertOrder()" />
 

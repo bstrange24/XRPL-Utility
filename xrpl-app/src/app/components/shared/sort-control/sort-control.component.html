@@ -1,0 +1,17 @@
+<div class="flex items-center gap-3">
+     <span class="text-xs font-medium text-gray-500">Sort by:</span>
+
+     <div class="relative">
+          <select [value]="sortKey()" (change)="onSortKeyChange($event)" class="text-sm border border-gray-200 rounded-xl pl-4 pr-8 py-2 bg-white focus:outline-none focus:border-blue-500 appearance-none cursor-pointer min-w-[140px]">
+               @for (option of options(); track option.key) {
+               <option [value]="option.key">{{ option.label }}</option>
+               }
+          </select>
+          <ng-icon name="heroChevronDown" size="14" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+     </div>
+
+     <button (click)="toggleDirection()" class="inline-flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors" [attr.aria-label]="'Sort ' + (direction() === 'asc' ? 'descending' : 'ascending')">
+          <ng-icon [name]="direction() === 'asc' ? 'heroArrowUp' : 'heroArrowDown'" size="14" />
+          <span class="text-gray-600">{{ direction() === 'asc' ? 'Ascending' : 'Descending' }}</span>
+     </button>
+</div>

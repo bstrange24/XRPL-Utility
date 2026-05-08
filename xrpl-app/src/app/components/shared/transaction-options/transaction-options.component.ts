@@ -8,11 +8,12 @@ import { SelectSearchDropdownComponent } from '../ui-components/select-search-dr
 import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
+import { ToggleSliderComponent } from '../toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-transaction-options',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule, ToggleSliderComponent],
      templateUrl: './transaction-options.component.html',
      styleUrl: './transaction-options.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -84,6 +85,8 @@ export class TransactionOptionsComponent {
 
           if (!enabled) {
                this.xrplTxOptionsStore.addMemo('');
+          } else {
+               this.xrplTxOptionsStore.setField('memos', []);
           }
      }
 

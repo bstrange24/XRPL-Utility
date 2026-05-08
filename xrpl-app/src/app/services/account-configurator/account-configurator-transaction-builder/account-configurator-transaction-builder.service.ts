@@ -3,6 +3,7 @@ import * as xrpl from 'xrpl';
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { AppConstants } from '../../../core/app.constants';
+import { percentToTransferRate } from 'xrpl';
 
 @Injectable({
      providedIn: 'root',
@@ -32,6 +33,28 @@ export class AccountConfiguratorTransactionBuilderService {
                } else {
                     tx.ClearFlag = Number(config.flagValue);
                }
+          }
+
+          return tx;
+     }
+
+     buildModifyMetaDataTransaction(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, config: any): xrpl.AccountSet {
+          const tx: xrpl.AccountSet = {
+               TransactionType: 'AccountSet',
+               Account: wallet.classicAddress,
+               Fee: env.fee,
+               LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+
+          if (config.account.tickSize) {
+               const tickSize = percentToTransferRate(config.account.tickSize + '%');
+               tx.TickSize = tickSize;
+          }
+
+          if (config.account.transferRate == 0) {
+               tx.TransferRate = 0;
+          } else if (config.account.transferRate) {
+               tx.TransferRate = Number(config.account.tickSize);
           }
 
           return tx;

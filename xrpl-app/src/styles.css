@@ -6,6 +6,412 @@
 @tailwind utilities;
 
 /* ============================================
+   REUSABLE TEXT & LABEL CLASSES
+   ============================================ */
+@layer components {
+
+     /* Most used - secondary / helper text */
+     .text-secondary {
+          @apply mb-3 text-sm;
+          color: var(--text-secondary);
+     }
+
+     /* Primary label / section title */
+     .label-primary {
+          @apply mb-2 block text-sm font-semibold;
+          color: var(--text-primary);
+     }
+
+     /* Secondary label */
+     .label-secondary {
+          @apply mb-2 text-sm;
+          color: var(--text-secondary);
+     }
+
+     /* Bold title / heading label */
+     .label-title {
+          @apply mb-2 block text-base font-semibold;
+          color: var(--text-primary);
+     }
+
+     /* Form field label */
+     .form-label {
+          @apply mb-1.5 block text-sm font-medium;
+          color: var(--text-secondary);
+     }
+
+     /* Muted / caption text */
+     .text-muted {
+          @apply text-sm;
+          color: var(--text-secondary);
+     }
+
+     /* Optional: Very small caption */
+     .text-caption {
+          @apply text-xs;
+          color: var(--text-secondary);
+     }
+}
+
+/* ============================================
+   REUSABLE CARD / BORDER LAYOUT
+   ============================================ */
+@layer components {
+
+     /* Standard card / panel with hover effect */
+     .card-base {
+          @apply rounded-2xl border bg-white p-5 transition-shadow;
+          border-color: var(--border-color);
+     }
+
+     .card-base:hover {
+          @apply hover:shadow-card;
+     }
+
+     /* Optional variants */
+     .card-base-sm {
+          @apply rounded-2xl border bg-white p-4 transition-shadow;
+          border-color: var(--border-color);
+     }
+
+     .card-base-lg {
+          @apply rounded-2xl border bg-white p-6 transition-shadow;
+          border-color: var(--border-color);
+     }
+}
+
+/* Dark mode for cards - handled via CSS variables */
+.dark .card-base,
+.dark .card-base-sm,
+.dark .card-base-lg {
+     background-color: var(--card-bg);
+}
+
+/* ============================================
+   REUSABLE INPUT STYLES
+   ============================================ */
+@layer components {
+
+     /* Disabled / Read-only input (your exact style) */
+     .input-disabled {
+          @apply w-full cursor-not-allowed rounded-2xl border bg-gray-50 px-4 py-3 font-mono text-sm;
+          border-color: var(--border-color);
+          color: var(--text-secondary);
+     }
+
+     /* Standard form input (for consistency with your existing .form-input) */
+     .input-base {
+          /* @apply w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500; */
+          @apply w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500 border-gray-200;
+          border-color: var(--border-color);
+     }
+
+     .input-base-with-validation {
+          @apply w-full rounded-2xl border px-4 py-3 font-mono text-sm focus:outline-none;
+     }
+
+     .input-base-font-mono {
+          @apply w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500 border-gray-200 font-mono;
+          border-color: var(--border-color);
+     }
+
+     /* Monospace input (common for addresses, hashes, etc.) */
+     .input-mono {
+          @apply w-full rounded-2xl border px-4 py-3 font-mono text-sm transition-all focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500;
+          border-color: var(--border-color);
+     }
+}
+
+/* Dark mode for inputs */
+.dark .input-disabled {
+     background-color: #374151;
+     color: #9ca3af;
+}
+
+.dark .input-base,
+.dark .input-mono {
+     background-color: #374151;
+     color: #f3f4f6;
+}
+
+.dark .input-base:focus,
+.dark .input-mono:focus {
+     border-color: #4ade80;
+     box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+}
+
+/* ============================================
+   SECTION HEADINGS WITH ICON
+   ============================================ */
+@layer components {
+
+     .section-heading {
+          @apply mb-5 font-semibold text-gray-900 flex items-center gap-2;
+          color: var(--text-primary);
+     }
+
+     .section-heading-sm {
+          @apply mb-4 text-base font-semibold flex items-center gap-2;
+          color: var(--text-primary);
+     }
+
+     /* For smaller headings */
+     .section-heading-xs {
+          @apply mb-3 text-sm font-semibold flex items-center gap-2;
+          color: var(--text-primary);
+     }
+
+     .section-heading-icon-green {
+          @apply w-5 h-5 icon-green-700;
+          color: var(--icon-green);
+     }
+
+     .section-heading-icon-red {
+          @apply w-5 h-5 icon-red-700;
+          color: var(--icon-red);
+     }
+
+     .section-heading-icon-tan {
+          @apply w-5 h-5 icon-tan-700;
+          color: var(--icon-tan);
+     }
+}
+
+/* ============================================
+   ALERT / WARNING BOXES
+   ============================================ */
+@layer components {
+
+     /* Base alert */
+     .alert {
+          @apply my-5 flex gap-3 rounded-xl border p-3;
+     }
+
+     /* Warning / Red alert (your exact style) */
+     .alert-error {
+          @apply alert border-red-200 bg-red-50;
+     }
+
+     .alert-error .alert-icon {
+          color: #dc2626;
+          /* text-red-600 */
+     }
+
+     .alert-error .alert-content {
+          @apply text-sm text-red-700;
+     }
+
+     /* Success / Green alert */
+     .alert-success {
+          @apply alert border-green-200 bg-green-50;
+     }
+
+     .alert-success .alert-icon {
+          color: #16a34a;
+     }
+
+     .alert-success .alert-content {
+          @apply text-sm text-green-700;
+     }
+
+     /* Info / Blue alert */
+     .alert-info {
+          @apply alert border-blue-200 bg-blue-50;
+     }
+
+     .alert-info .alert-icon {
+          color: #2563eb;
+     }
+
+     .alert-info .alert-content {
+          @apply text-sm text-blue-700;
+     }
+
+     /* Warning / Blue alert */
+     .alert-warning {
+          @apply alert border-amber-200 bg-amber-50;
+     }
+
+     .alert-warning .alert-icon {
+          color: #d97706;
+     }
+
+     .alert-warning .alert-content {
+          @apply text-sm text-amber-700;
+     }
+}
+
+/* Dark mode for alerts */
+.dark .alert-error {
+     background-color: #431407;
+     border-color: #854d0e;
+}
+
+.dark .alert-error .alert-content {
+     color: #fda4af;
+}
+
+.dark .alert-success {
+     background-color: #14532d;
+     border-color: #166534;
+}
+
+.dark .alert-success .alert-content {
+     color: #86efac;
+}
+
+.dark .alert-info {
+     background-color: #1e3a8a;
+     border-color: #3b82f6;
+}
+
+.dark .alert-info .alert-content {
+     color: #93c5fd;
+}
+
+/* ============================================
+   FORM VALIDATION ERROR
+   ============================================ */
+@layer components {
+
+     .form-error {
+          @apply mt-2 ml-1 text-xs;
+          color: #dc2626;
+          /* text-red-600 */
+     }
+
+     /* Optional: More prominent version with background */
+     .form-error-inline {
+          @apply mt-2 px-3 py-1.5 text-xs rounded-2xl border;
+          background-color: #fef2f2;
+          border-color: #fecaca;
+          color: #dc2626;
+     }
+}
+
+/* Dark mode */
+.dark .form-error {
+     color: #f87171;
+     /* brighter red in dark mode */
+}
+
+.dark .form-error-inline {
+     background-color: #431407;
+     border-color: #f87171;
+     color: #fda4af;
+}
+
+/* ============================================
+   UPPERCASE FIELD LABELS
+   ============================================ */
+@layer components {
+
+     .field-label {
+          @apply mb-1 block text-xs font-semibold tracking-wider;
+          color: var(--text-secondary);
+     }
+
+     /* Variant with slightly more emphasis */
+     .field-label-strong {
+          @apply mb-1 block text-xs font-semibold tracking-wider;
+          color: var(--text-secondary);
+     }
+}
+
+/* ============================================
+   STATUS BAR / FOOTER COUNT
+   ============================================ */
+@layer components {
+
+     .status-bar {
+          @apply mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-sm;
+     }
+
+     .status-count {
+          @apply text-gray-600;
+     }
+
+     .status-count strong {
+          @apply font-semibold text-gray-900;
+     }
+
+     /* Warning badge with icon */
+     .badge-warning {
+          @apply flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200;
+     }
+}
+
+/* Dark mode */
+.dark .status-bar {
+     border-color: #374151;
+}
+
+.dark .status-count {
+     color: #9ca3af;
+}
+
+.dark .status-count strong {
+     color: #f3f4f6;
+}
+
+.dark .badge-warning {
+     background-color: #451a03;
+     border-color: #78350f;
+     color: #fbbf24;
+}
+
+/* ============================================
+   OPTIONAL FIELDS HELP BUTTON
+   ============================================ */
+@layer components {
+
+     /* Subtle help icon for optional fields */
+     .help-icon {
+          @apply text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-xl hover: bg-gray-100 active:bg-gray-200;
+     }
+
+     /* Main button - renamed as requested */
+     .btn-optional-fields {
+          @apply text-gray-400 hover:text-gray-600 transition-colors;
+     }
+
+     /* Smaller variant if needed */
+     .help-icon-sm {
+          @apply text-gray-400 hover:text-gray-600 transition-colors;
+     }
+}
+
+/* Dark mode for optional fields help button */
+.dark .help-icon,
+.dark .btn-optional-fields,
+.dark .help-icon-sm {
+     color: #6b7280;
+}
+
+.dark .help-icon:hover,
+.dark .btn-optional-fields:hover,
+.dark .help-icon-sm:hover {
+     color: #9ca3af;
+}
+
+.dark .btn-optional-fields:hover {
+     background-color: #374151;
+}
+
+.dark .btn-optional-fields:active {
+     background-color: #4b5563;
+}
+
+/* Bonus: Better hover inside cards */
+.card-base .btn-optional-fields:hover {
+     background-color: #f3f4f6;
+}
+
+.dark .card-base .btn-optional-fields:hover {
+     background-color: #374151;
+}
+
+/* ============================================
    BASE TYPOGRAPHY & SCALING
    ============================================ */
 @layer base {
@@ -42,6 +448,10 @@ body {
      --bg-secondary: #f9fafb;
      --text-primary: #111827;
      --text-secondary: #6b7280;
+     --icon-tan: #d6b37a;
+     --icon-green: #16a34a;
+     --icon-red: #dc2626;
+     --icon-cyan: #d6b37a;
      --border-color: #e5e7eb;
      --card-bg: #ffffff;
 }
@@ -74,6 +484,18 @@ body {
      color: var(--text-secondary);
 }
 
+.icon-tan-700 {
+     color: var(--icon-tan);
+}
+
+.icon-green-700 {
+     color: var(--icon-green);
+}
+
+.icon-red-700 {
+     color: var(--icon-red);
+}
+
 .border-gray-200 {
      border-color: var(--border-color);
 }
@@ -90,7 +512,6 @@ body {
      background-color: #1a1c21;
 }
 
-/* Dark mode overrides - without !important for better Tailwind compatibility */
 .dark .bg-white {
      background-color: #1f2937 !important;
 }
@@ -259,31 +680,35 @@ body {
    BUTTON STYLES
    ============================================ */
 .btn-primary {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-green-600 text-white font-semibold hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2;
 }
 
 .btn-blue {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-semibold hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.btn-green-small {
+     @appy rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover: from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed
 }
 
 .btn-red {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-red-600 text-white font-semibold hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2;
 }
 
 .btn-purple {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-purple-600 text-white font-semibold hover:bg-purple-700 active:bg-purple-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-purple-600 text-white font-semibold hover:bg-purple-700 active:bg-purple-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2;
 }
 
 .btn-amber {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-amber-600 text-white font-semibold hover:bg-amber-700 active:bg-amber-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-amber-600 text-white font-semibold hover:bg-amber-700 active:bg-amber-800 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2;
 }
 
 .btn-secondary {
-     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
+     @apply inline-flex items-center justify-center px-5 py-2.5 rounded-2xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:bg-gray-300 border border-gray-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2;
 }
 
 .btn-ghost {
-     @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-40;
+     @apply inline-flex items-center justify-center px-4 py-2.5 rounded-2xl text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all duration-200 disabled:opacity-40;
 }
 
 /* ============================================
@@ -300,8 +725,6 @@ label {
 /* ============================================
    TOGGLE SWITCH
    ============================================ */
-/* Replace your existing toggle-switch styles with this */
-/* Modern toggle switch - No @apply with peer */
 .toggle-switch {
      position: relative;
      display: inline-block;
@@ -438,7 +861,6 @@ label:hover .toggle-label {
    ============================================ */
 .card {
      @apply bg-white rounded-2xl shadow p-4;
-     /* was p-3 */
 }
 
 .navbar-container {
@@ -532,7 +954,6 @@ pre code[class*="language-"] {
      overflow-wrap: anywhere !important;
 }
 
-/* Ensure the expanded main area looks good */
 /* Balance page height lockdown */
 .balance-page-component,
 .balance-page-component>div,
@@ -544,13 +965,6 @@ pre code[class*="language-"] {
 .cdk-virtual-scroll-viewport {
      height: 100% !important;
 }
-
-/* Extra breathing room when main is expanded */
-/* @media (min-width: 1024px) {
-     .lg\:col-span-19 {
-          padding-right: 1.5rem !important;
-     }
-} */
 
 /* Make right panel a bit more compact */
 @media (min-width: 1024px) {
@@ -564,37 +978,33 @@ pre code[class*="language-"] {
      transition: box-shadow 0.2s ease;
 }
 
-.scroll-container::-webkit-scrollbar {
+
+.custom-scrollbar {
+     scrollbar-width: thin;
+     scrollbar-color: #d1d5db #f3f4f6;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
      width: 6px;
 }
 
-.scroll-container::-webkit-scrollbar-track {
-     background: #f1f1f1;
-     border-radius: 10px;
+.custom-scrollbar::-webkit-scrollbar-track {
+     background: #f3f4f6;
+     border-radius: 20px;
 }
 
-.scroll-container::-webkit-scrollbar-thumb {
-     background: #c1c1c1;
-     border-radius: 10px;
+.custom-scrollbar::-webkit-scrollbar-thumb {
+     background: #d1d5db;
+     border-radius: 20px;
 }
 
-.scroll-container::-webkit-scrollbar-thumb:hover {
-     background: #a8a8a8;
-}
-
-.dark .scroll-container::-webkit-scrollbar-track {
-     background: #2d2d2d;
-}
-
-.dark .scroll-container::-webkit-scrollbar-thumb {
-     background: #555;
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+     background: #9ca3af;
 }
 
 /* For the labels on the summary drop down */
-/* src/styles.css */
 .key-value-row {
-     @apply flex items-center gap-2 py-1;
-     /* vertical padding for breathing room */
+     @apply grid items-center gap-1 py-1;
 }
 
 .key-value-row .label {

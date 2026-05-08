@@ -54,7 +54,8 @@ export const AppConstants = {
 
      INSUFFICIENT_XRP_BALANCE: 'Insufficient XRP to complete transaction',
      INSUFFICIENT_IOU_BALANCE: 'Insufficent IOU balance for this transaction',
-     LSF_ACCEPTED: 0x00010000,
+     // LSF_ACCEPTED: 0x00010000,
+     LSF_ACCEPTED: 65536,
      RIPPLE_EPOCH: Date.UTC(2000, 0, 1, 0, 0, 0),
      RIPPLE_EPOCH_START: new Date('2000-01-01T00:00:00Z').getTime() / 1000,
      RIPPLE_EPOCH_OFFSET: 946684800,

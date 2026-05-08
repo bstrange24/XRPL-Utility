@@ -1,38 +1,44 @@
 <div class="space-y-6">
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <h4 class="mb-5 font-semibold text-gray-900">Escrow Details</h4>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="lock" class="section-heading-icon-green"></lucide-icon>
+               Escrow Details
+          </h4>
+
           <!-- Select Escrow -->
           <div class="space-y-2">
-               <label for="selectEscrow" class="block text-sm font-semibold text-gray-900"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
-               <p class="text-xs text-gray-500">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+               <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+               <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
 
                <div class="h-[54px]">
                     <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
                </div>
           </div>
+     </div>
 
+     <div class="card-base">
           <!-- Finish Escrow Extra Fields -->
           @if (activeTab === 'finishEscrow' && !selectedEscrowIsExpired()) {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Escrow Sequence ID -->
                <div class="space-y-2 mt-4">
-                    <label for="escrowID" class="block text-sm font-semibold text-gray-900">Escrow Sequence ID</label>
-                    <p class="text-xs text-gray-500">Sequence ID generated when the escrow was created.</p>
+                    <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
+                    <p class="text-secondary">Sequence ID generated when the escrow was created.</p>
                     <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Escrow Owner -->
                <div class="space-y-2 mt-4">
-                    <label for="escrowOwner" class="block text-sm font-semibold text-gray-900">Escrow Owner</label>
-                    <p class="text-xs text-gray-500">The account that originally created the escrow.</p>
-                    <input type="text" [ngModel]="escrowStoreService.escrowOwner()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                    <label for="escrowOwner" class="label-primary">Escrow Owner</label>
+                    <p class="text-secondary">The account that originally created the escrow.</p>
+                    <input type="text" readonly class="input-disabled" [ngModel]="escrowStoreService.escrowOwner()" />
                </div>
 
                <!-- Amount -->
                <div>
-                    <label for="escrowAmount" class="mb-2 block text-sm font-semibold text-gray-900">Amount</label>
+                    <label for="escrowAmount" class="label-primary">Amount</label>
                     <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
-                    <input type="text" [value]="viewModel.selectedEscrowAmount()" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                    <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
                </div>
           </div>
           }
@@ -41,15 +47,15 @@
           @if (isConditional) {
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
                <div class="space-y-2">
-                    <label for="escrowCondition" class="block text-sm font-semibold text-gray-900">Condition</label>
-                    <p class="text-xs text-gray-500">Hex value matching the previously-supplied PREIMAGE-SHA-256 crypto-condition.</p>
-                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowCondition" class="label-primary">Condition</label>
+                    <p class="text-secondary">Hex value matching the previously-supplied PREIMAGE-SHA-256 crypto-condition.</p>
+                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="input-base" />
                </div>
 
                <div class="space-y-2">
-                    <label for="escrowFulfillment" class="block text-sm font-semibold text-gray-900">Fulfillment</label>
-                    <p class="text-xs text-gray-500">Hex value of the PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="w-full rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" />
+                    <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                    <p class="text-secondary">Hex value of the PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="input-base" />
                </div>
           </div>
           }
@@ -59,7 +65,7 @@
 <!-- Expired Warning -->
 @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
 <div class="mt-3 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
-     <ng-icon name="heroExclamationTriangle" size="16" class="mt-0.5 flex-shrink-0 text-red-600" />
+     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
      <span class="text-sm text-red-700"> This selected escrow has expired@if (activeTab === 'finishEscrow') { and cannot be finished. } </span>
 </div>
 }

@@ -1,16 +1,9 @@
 @if (walletsViewModelService.activeTab() === 'generate') {
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-     <div class="space-y-5">
-          <!-- Generation Buttons -->
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewAccount()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate from Family Seed' }}</button>
-               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate from Mnemonic' }}</button>
-               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewWalletFromSecretNumbers()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate from Secret Numbers' }}</button>
-          </div>
-
+<div class="card-base">
+     <div class="space-y-6">
           <!-- Encryption Type Toggle -->
           <div class="space-y-3">
-               <label for="encryptionType" class="block text-sm font-semibold text-gray-900">Encryption Type</label>
+               <label for="encryptionType" class="label-primary">Encryption Type</label>
 
                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <!-- ED25519 Option -->
@@ -51,6 +44,13 @@
           <div class="flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
                <ng-icon name="heroInformationCircle" size="18" class="mt-0.5 flex-shrink-0 text-blue-600" />
                <div class="text-sm text-blue-800"><strong class="font-semibold">Note:</strong> Generating a Mnemonic or Secret Number wallet will always use SECP256K1 encryption.</div>
+          </div>
+
+          <!-- Generation Buttons -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewAccount()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSeed || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSeed ? 'Processing...' : 'Generate from Family Seed' }}</button>
+               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromMnemonic || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromMnemonic ? 'Processing...' : 'Generate from Mnemonic' }}</button>
+               <button type="button" class="btn-primary w-full" (click)="walletConfiguratorComponent.generateNewWalletFromSecretNumbers()" [disabled]="walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers || walletsUtilService.isAnyButtonLoading">{{ walletsStoreService.buttonLoading().generateNewWalletFromSecretNumbers ? 'Processing...' : 'Generate from Secret Numbers' }}</button>
           </div>
      </div>
 </div>

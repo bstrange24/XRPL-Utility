@@ -34,11 +34,23 @@ export interface CredentialItem {
      CredentialType: string;
      Subject: string;
      Issuer: string;
-     Expiration?: string;
-     URI?: string;
-     Flags?: any;
+     Expiration: string;
+     ExpirationRaw?: number;
+     URI: string;
+     Flags: number;
      expired?: boolean;
 }
+
+// export interface CredentialItem {
+//      index: string;
+//      CredentialType: string;
+//      Subject: string;
+//      Issuer: string;
+//      Expiration?: string;
+//      URI?: string;
+//      Flags?: any;
+//      expired?: boolean;
+// }
 
 export interface CredentialData {
      version: string;

@@ -1,34 +1,34 @@
-<div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-     <div class="space-y-6">
+<div class="space-y-6">
+     <div class="card-base">
           <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
           <!-- Asset Scale -->
           <div class="space-y-2">
-               <label for="mptAssetScale" class="block text-sm font-semibold text-gray-900">Asset Scale</label>
-               <p class="text-xs text-gray-500">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
-               <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="mptAssetScale" class="label-primary">Asset Scale</label>
+               <p class="text-secondary">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
+               <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="input-base" />
           </div>
 
           <!-- Maximum Tokens -->
           <div class="space-y-2">
-               <label for="mptMaxTokens" class="block text-sm font-semibold text-gray-900">Maximum Tokens</label>
-               <p class="text-xs text-gray-500">Maximum tokens that can ever be issued (supply cap).</p>
-               <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <label for="mptMaxTokens" class="label-primary">Maximum Tokens</label>
+               <p class="text-secondary">Maximum tokens that can ever be issued (supply cap).</p>
+               <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" class="input-base" />
           </div>
 
           <!-- Transfer Fee -->
           <div class="space-y-2">
-               <label for="mptTransferFee" class="block text-sm font-semibold text-gray-900">
+               <label for="mptTransferFee" class="label-primary">
                     Transfer Fee
                     <span class="ml-1 text-xs font-normal text-gray-500">(0-50,000 = 0%-50%)</span>
                </label>
-               <p class="text-xs text-gray-500">Fee for secondary sales. Only available if Can Transfer is enabled.</p>
-               <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="Enter fee percentage (0-50000)" min="0" max="50000" step="1" class="w-full rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" />
+               <p class="text-secondary">Fee for secondary sales. Only available if Can Transfer is enabled.</p>
+               <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="Enter fee percentage (0-50000)" min="0" max="50000" step="1" class="input-base" />
           </div>
 
           <!-- Token Metadata -->
           <div class="space-y-2">
                <div class="flex items-center gap-1">
-                    <label for="mptMetaData" class="block text-sm font-semibold text-gray-900">Token Metadata</label>
+                    <label for="mptMetaData" class="label-primary">Token Metadata</label>
                     <span class="text-xs text-gray-500">(XLS-89)</span>
                </div>
                <p class="text-xs text-gray-500 pb-2">JSON metadata for this MPT issuance (immutable after creation).</p>

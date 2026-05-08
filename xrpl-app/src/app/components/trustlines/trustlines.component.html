@@ -14,11 +14,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Summary (except Add New Issuers) -->
-          @if (tab !== 'addNewIssuers') {
-          <app-summary [wallet]="currentWallet()" [info]="trustlineViewModelService.infoData()" [isExpanded]="infoPanelExpanded()" (toggleExpanded)="infoPanelExpanded.set(!infoPanelExpanded())" />
-          }
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <div class="mt-4">
@@ -27,13 +22,13 @@
           }
 
           <!-- Form -->
-          <form #theForm="ngForm" class="mt-4">
+          <form #theForm="ngForm">
                <div class="flex flex-col gap-6 lg:flex-row">
                     <!-- Main Form Area (Left) -->
                     <div class="min-w-0 flex-1">
                          <!-- Currency Flow Section -->
                          @if (isCurrencyFlow()) {
-                         <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
+                         <div class="card-base">
                               <app-currency-form-section
                                    [layout]="view.currencyLayout()"
                                    [currencyItems]="view.currencyItems()"
@@ -55,7 +50,7 @@
                          <!-- Trustline Exists Warning -->
                          @if (tab === 'setTrustline' && trustlineStore.trustlineAlreadyExist()) {
                          <div class="mt-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                              <ng-icon name="heroExclamationTriangle" size="20" class="mt-0.5 flex-shrink-0 text-amber-600" />
+                              <ng-icon name="heroExclamationTriangle" size="20" class="flex-shrink-0 text-amber-600" />
                               <p class="text-sm text-amber-800">Trustline already exists for this currency/issuer pair.</p>
                          </div>
                          }
@@ -82,9 +77,7 @@
                               <app-trustline-clawback [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-clawback>
                          </div>
                          } @if (tab === 'addNewIssuers') {
-                         <div class="rounded-2xl border border-gray-200 bg-white p-4 transition-shadow hover:shadow-card">
-                              <app-trustline-issuers (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" [isIdle]="isIdle()" />
-                         </div>
+                         <app-trustline-issuers (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" [isIdle]="isIdle()" />
                          }
                     </div>
 

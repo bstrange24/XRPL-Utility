@@ -1,17 +1,17 @@
 <div class="space-y-6">
      <!-- Multi-Sign Configuration -->
-     <div class="rounded-2xl border border-gray-200 bg-white p-5 transition-shadow hover:shadow-card">
-          <div class="mb-4 flex items-center gap-3">
-               <ng-icon name="heroUserGroup" size="22" class="text-blue-600" />
-               <h4 class="text-sm font-semibold text-gray-900">Multi-Signer Configuration</h4>
-          </div>
+     <div class="card-base">
+          <h4 class="section-heading">
+               <ng-icon name="heroUserGroup" class="section-heading-icon-green"></ng-icon>
+               Multi-Signer Configuration
+          </h4>
 
-          <p class="mb-5 text-sm text-gray-600">Add signers and set the required quorum. Each signer must meet the total weight threshold to authorize a transaction.</p>
+          <p class="text-secondary">Add signers and set the required quorum. Each signer must meet the total weight threshold to authorize a transaction.</p>
 
           <!-- Signers List -->
           <div class="space-y-4">
                @for (signer of accountConfiguratorStoreService.signers(); track $index; let i = $index) {
-               <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 transition-all hover:border-gray-300">
+               <div class="card-base">
                     <div class="mb-4 flex items-center justify-between">
                          <span class="text-sm font-medium text-gray-800">Signer {{ i + 1 }}</span>
                          @if (accountConfiguratorStoreService.signers().length > 1) {
@@ -24,20 +24,34 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
                          <!-- Account -->
                          <div class="md:col-span-5">
-                              <label for="multiSignAccount" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Account</label>
-                              <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" placeholder="r..." />
+                              <label for="multiSignAccount" class="field-label">Account</label>
+                              <p class="text-secondary">The account address to use for multi signing</p>
+                              <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.Account && xrpl.isValidAddress(signer.Account)" [class.border-red-500]="signer.Account && !xrpl.isValidAddress(signer.Account)" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" placeholder="r..." />
+
+                              <!-- Helper text for invalid address -->
+                              @if (signer.Account && !xrpl.isValidAddress(signer.Account)) {
+                              <p class="form-error">Please enter a valid XRP address</p>
+                              }
                          </div>
 
                          <!-- Seed -->
                          <div class="md:col-span-4">
-                              <label for="multiSignSeed" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Seed</label>
-                              <input type="text" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 font-mono text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" placeholder="s..." />
+                              <label for="multiSignSeed" class="field-label">Seed</label>
+                              <p class="text-secondary">The account seed to use for multi signing</p>
+                              <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.seed && xrpl.isValidSecret(signer.seed)" [class.border-red-500]="signer.seed && !xrpl.isValidSecret(signer.seed)" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" placeholder="s..." />
+                              @if (signer.seed && !xrpl.isValidSecret(signer.seed)) {
+                              <p class="form-error">Invalid seed</p>
+                              }
                          </div>
 
                          <!-- Weight -->
                          <div class="md:col-span-3">
-                              <label for="multiSignWeight" class="mb-1 block text-xs font-semibold uppercase tracking-wider text-gray-500">Weight</label>
-                              <input type="number" class="w-full rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:border-green-500 focus:outline-none" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
+                              <label for="multiSignWeight" class="field-label">Weight</label>
+                              <p class="text-secondary">Total weight of the signer</p>
+                              <input type="number" class="input-base-with-validation" [class.border-gray-200]="signer.SignerWeight > 0" [class.border-red-500]="signer.SignerWeight <= 0" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
+                              @if (signer.SignerWeight <= 0) {
+                              <p class="form-error">Weight must be > 0</p>
+                              }
                          </div>
                     </div>
                </div>
@@ -45,17 +59,18 @@
           </div>
 
           <!-- Add Signer Button -->
-          <button type="button" (click)="accountConfiguratorUtilService.addSigner()" class="mt-5 w-full rounded-2xl border border-dashed border-gray-300 py-4 font-medium text-gray-700 transition-all hover:border-gray-400 hover:text-gray-900">+ Add Another Signer</button>
+          <button type="button" (click)="accountConfiguratorUtilService.addSigner()" class="mt-5 w-full rounded-2xl border border-dashed border-gray-300 py-2 font-medium text-gray-700 transition-all hover:border-gray-400 hover:text-gray-900">+ Add Another Signer</button>
 
           <!-- Quorum -->
           <div class="mt-6 border-t border-gray-100 pt-6">
-               <label for="multiSignQuorum" class="mb-2 block text-sm font-semibold text-gray-900">Signer Quorum</label>
-               <p class="mb-3 text-sm text-gray-600">Minimum total weight required to authorize a transaction</p>
-               <input type="number" class="w-full max-w-xs rounded-2xl border border-gray-200 px-4 py-2.5 text-sm focus:border-green-500 focus:outline-none" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
+               <label for="multiSignQuorum" class="label-primary">Total Signer Quorum</label>
+               <p class="text-secondary">Minimum total weight required to authorize a transaction</p>
+               <input type="number" class="input-base-with-validation" [class.border-gray-200]="isQuorumValid()" [class.border-red-500]="!isQuorumValid()" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
 
-               <!-- Optional: Quorum Validation Hint -->
-               @if (accountConfiguratorStoreService.signerQuorum() > totalSignerWeight()) {
-               <p class="mt-2 text-xs text-amber-600">⚠️ Quorum exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>
+               @if (!isQuorumValid() && totalSignerWeight() > 0) {
+               <p class="form-error">Quorum ({{ accountConfiguratorStoreService.signerQuorum() }}) exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>
+               } @else if (accountConfiguratorStoreService.signerQuorum() > totalSignerWeight()) {
+               <p class="form-error">Quorum exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>
                }
           </div>
      </div>
@@ -63,10 +78,20 @@
      <!-- Transaction Options -->
      <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-     <!-- Action Buttons (Your original button classes preserved) -->
-     <div class="flex flex-col gap-3 sm:flex-row">
-          <button type="button" class="btn-primary flex-1 py-3" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors() && hasSigners()) {
+     <div class="alert-error mt-4">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">{{ validationErrorMessage() }}</div>
+     </div>
+     }
 
-          <button type="button" class="btn-red flex-1 py-3" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+     <!-- Action Buttons -->
+     <div class="flex flex-col gap-3 sm:flex-row">
+          <!-- Set Multi-Sign Button - Disabled if validation fails -->
+          <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+
+          <!-- Remove Multi-Sign Button - Enabled if connection is ready -->
+          <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
      </div>
 </div>

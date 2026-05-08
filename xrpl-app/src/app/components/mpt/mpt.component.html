@@ -8,9 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <app-summary [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel()" (mptSelected)="onMptSelectedFromSummary($event)"> </app-summary>
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
@@ -45,9 +42,9 @@
                          } @if (tab === 'destroyMpt') {
                          <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
                          } @if (tab === 'destroyMpt') { @if(!mptUtilService.hasNoOutstandingMpts()) {
-                         <div class="my-5 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-3">
-                              <ng-icon name="heroExclamationTriangle" size="18" class="mt-0.5 flex-shrink-0 text-red-600" />
-                              <div class="text-sm text-red-700">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
+                         <div class="alert-error">
+                              <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+                              <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
                          </div>
                          }}
                     </div>
