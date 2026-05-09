@@ -26,8 +26,19 @@
                          <div class="md:col-span-5">
                               <label for="multiSignAccount" class="field-label">Account</label>
                               <p class="text-secondary">The account address to use for multi signing</p>
-                              <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.Account && xrpl.isValidAddress(signer.Account)" [class.border-red-500]="signer.Account && !xrpl.isValidAddress(signer.Account)" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" placeholder="r..." />
-
+                              <!-- <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.Account && xrpl.isValidAddress(signer.Account)" [class.border-red-500]="signer.Account && !xrpl.isValidAddress(signer.Account)" [ngModel]="signer.Account" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)" placeholder="r..." /> -->
+<input
+     type="text"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isAddressInvalid(signer.Account) && focusedAccountIndex() !== i"
+     [class.border-green-500]="focusedAccountIndex() === i && !isAddressInvalid(signer.Account)"
+     [class.border-red-500]="isAddressInvalid(signer.Account)"
+     (focus)="focusedAccountIndex.set(i)"
+     (blur)="focusedAccountIndex.set(null)"
+     [ngModel]="signer.Account"
+     (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'Account', $event)"
+     placeholder="r..."
+/>
                               <!-- Helper text for invalid address -->
                               @if (signer.Account && !xrpl.isValidAddress(signer.Account)) {
                               <p class="form-error">Please enter a valid XRP address</p>
@@ -38,7 +49,21 @@
                          <div class="md:col-span-4">
                               <label for="multiSignSeed" class="field-label">Seed</label>
                               <p class="text-secondary">The account seed to use for multi signing</p>
-                              <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.seed && xrpl.isValidSecret(signer.seed)" [class.border-red-500]="signer.seed && !xrpl.isValidSecret(signer.seed)" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" placeholder="s..." />
+                              <!-- <input type="text" class="input-base-with-validation" [class.border-gray-200]="signer.seed && xrpl.isValidSecret(signer.seed)" [class.border-red-500]="signer.seed && !xrpl.isValidSecret(signer.seed)" [ngModel]="signer.seed" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)" placeholder="s..." /> -->
+                              
+                              <input
+     type="text"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isSeedInvalid(signer.seed) && focusedSeedIndex() !== i"
+     [class.border-green-500]="focusedSeedIndex() === i && !isSeedInvalid(signer.seed)"
+     [class.border-red-500]="isSeedInvalid(signer.seed)"
+     (focus)="focusedSeedIndex.set(i)"
+     (blur)="focusedSeedIndex.set(null)"
+     [ngModel]="signer.seed"
+     (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'seed', $event)"
+     placeholder="r..."
+/>
+                              
                               @if (signer.seed && !xrpl.isValidSecret(signer.seed)) {
                               <p class="form-error">Invalid seed</p>
                               }
@@ -48,7 +73,23 @@
                          <div class="md:col-span-3">
                               <label for="multiSignWeight" class="field-label">Weight</label>
                               <p class="text-secondary">Total weight of the signer</p>
-                              <input type="number" class="input-base-with-validation" [class.border-gray-200]="signer.SignerWeight > 0" [class.border-red-500]="signer.SignerWeight <= 0" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="utilsService.preventNegative($event)" min="1" />
+                              <!-- <input type="number" class="input-base-with-validation" [class.border-gray-200]="signer.SignerWeight > 0" [class.border-red-500]="signer.SignerWeight <= 0" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="utilsService.preventNegative($event)" min="1" /> -->
+                              
+                              <input
+     type="number"
+     class="input-base-with-validation"
+     [class.border-gray-200]="signer.SignerWeight > 0 && focusedWeightIndex() !== i"
+     [class.border-green-500]="focusedWeightIndex() === i && signer.SignerWeight > 0"
+     [class.border-red-500]="signer.SignerWeight <= 0"
+     (focus)="focusedWeightIndex.set(i)"
+     (blur)="focusedWeightIndex.set(null)"
+     [ngModel]="signer.SignerWeight"
+     (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)"
+     (keydown)="utilsService.preventNegative($event)"
+     min="1"
+/>
+                              
+                              
                               @if (signer.SignerWeight <= 0) {
                               <p class="form-error">Weight must be > 0</p>
                               }
@@ -65,7 +106,22 @@
           <div class="mt-6 border-t border-gray-100 pt-6">
                <label for="multiSignQuorum" class="label-primary">Total Signer Quorum</label>
                <p class="text-secondary">Minimum total weight required to authorize a transaction</p>
-               <input type="number" class="input-base-with-validation" [class.border-gray-200]="isQuorumValid()" [class.border-red-500]="!isQuorumValid()" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="utilsService.preventNegative($event)" min="1" />
+               <!-- <input type="number" class="input-base-with-validation" [class.border-gray-200]="isQuorumValid()" [class.border-red-500]="!isQuorumValid()" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="utilsService.preventNegative($event)" min="1" /> -->
+
+
+               <input
+     type="number"
+     class="input-base-with-validation"
+     [class.border-gray-200]="isQuorumValid() && !quorumFocused()"
+     [class.border-green-500]="quorumFocused() && isQuorumValid()"
+     [class.border-red-500]="!isQuorumValid()"
+     (focus)="quorumFocused.set(true)"
+     (blur)="quorumFocused.set(false)"
+     [ngModel]="accountConfiguratorStoreService.signerQuorum()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()"
+     (keydown)="utilsService.preventNegative($event)"
+     min="1"
+/>
 
                @if (!isQuorumValid() && totalSignerWeight() > 0) {
                <p class="form-error">Quorum ({{ accountConfiguratorStoreService.signerQuorum() }}) exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>

@@ -8,7 +8,31 @@
 
           <p class="text-secondary">Authorize another account to mint NFTs on your behalf.</p>
 
-          <input type="text" class="input-base-with-validation" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." [class.border-gray-200]="!isNftMinterInvalid()" [class.border-red-500]="isNftMinterInvalid()" />
+          <!-- <input type="text" class="input-base-with-validation" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." [class.border-gray-200]="!isNftMinterInvalid()" [class.border-red-500]="isNftMinterInvalid()" /> -->
+
+          <!-- <input
+     type="text"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isNftMinterInvalid() && !nftMinterFocused()"
+     [class.border-green-500]="nftMinterFocused() && !isNftMinterInvalid()"
+     [class.border-red-500]="isNftMinterInvalid()"
+     (focus)="nftMinterFocused.set(true)"
+     (blur)="nftMinterFocused.set(false)"
+     [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)"
+     placeholder="r..."
+/> -->
+
+<input
+     type="text"
+     class="input-base-with-validation"
+     app-focus-border
+     [isValid]="isNftMinterValid()"
+     [isInvalid]="isNftMinterInvalid()"
+     [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)"
+     placeholder="r..."
+/>
 
           @if (isNftMinterInvalid()) {
           <p class="form-error">Please enter a valid XRP address</p>
@@ -44,7 +68,51 @@
                <div>
                     <label for="accountTransferRate" class="label-primary">Transfer Rate</label>
                     <p class="text-secondary">Fee percentage for issued currencies (0 = no fee, max 100)</p>
-                    <input type="number" class="input-base-with-validation" [class.border-gray-200]="!isTransferRateInvalid()" [class.border-red-500]="isTransferRateInvalid()" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 1.5" step="0.000001" min="0" max="100" />
+                    <!-- <input 
+                         type="number" 
+                         class="input-base-with-validation" 
+                         [class.border-gray-200]="!isTransferRateInvalid()" 
+                         [class.border-red-500]="isTransferRateInvalid()" 
+                         [ngModel]="accountConfiguratorStoreService.transferRate()" 
+                         (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" 
+                         (keydown)="utilsService.preventNegative($event)" 
+                         placeholder="e.g. 1.5" 
+                         step="0.000001" 
+                         min="0" 
+                         max="100" /> -->
+                  
+                         <input
+     type="number"
+     class="input-base-with-validation"
+     app-focus-border
+     [isValid]="isTransferRateValid()"
+     [isInvalid]="isTransferRateInvalid()"
+     [ngModel]="accountConfiguratorStoreService.transferRate()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)"
+     (keydown)="utilsService.preventNegative($event)"
+     placeholder="e.g. 1.5"
+     step="0.000001"
+     min="0"
+     max="100"
+/>
+
+                    <!-- <input
+     type="number"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isTransferRateInvalid() && !transferRateFocused()"
+     [class.border-red-500]="isTransferRateInvalid()"
+     [class.border-green-500]="transferRateFocused() && !isTransferRateInvalid()"
+     (focus)="transferRateFocused.set(true)"
+     (blur)="transferRateFocused.set(false)"
+     [ngModel]="accountConfiguratorStoreService.transferRate()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)"
+     (keydown)="utilsService.preventNegative($event)"
+     placeholder="e.g. 1.5"
+     step="0.000001"
+     min="0"
+     max="100"
+/> -->
+                    
                     @if (isTransferRateInvalid()) {
                     <p class="form-error">Transfer Rate must be a number between 0 and 100</p>
                     }
@@ -53,7 +121,38 @@
                <div>
                     <label for="accountTickSize" class="label-primary">Tick Size</label>
                     <p class="text-secondary">Decimal precision for trading (3–15)</p>
-                    <input type="number" class="input-base-with-validation" [class.border-gray-200]="!isTickSizeInvalid()" [class.border-red-500]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 6" min="3" max="15" />
+                    <!-- <input type="number" class="input-base-with-validation" [class.border-gray-200]="!isTickSizeInvalid()" [class.border-red-500]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 6" min="3" max="15" /> -->
+     
+                   <input
+     type="number"
+     class="input-base-with-validation"
+     app-focus-border
+     [isValid]="isTickSizeValid()"
+     [isInvalid]="isTickSizeInvalid()"
+     [ngModel]="accountConfiguratorStoreService.tickSize()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)"
+     (keydown)="utilsService.preventNegative($event)"
+     placeholder="e.g. 6"
+     min="3"
+     max="15"
+/>
+
+<!-- <input
+     type="number"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isTickSizeInvalid() && !tickSizeFocused()"
+     [class.border-green-500]="tickSizeFocused() && !isTickSizeInvalid()"
+     [class.border-red-500]="isTickSizeInvalid()"
+     (focus)="tickSizeFocused.set(true)"
+     (blur)="tickSizeFocused.set(false)"
+     [ngModel]="accountConfiguratorStoreService.tickSize()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)"
+     (keydown)="utilsService.preventNegative($event)"
+     placeholder="e.g. 6"
+     min="3"
+     max="15"
+/> -->
+                    
                     @if (isTickSizeInvalid()) {
                     <p class="form-error">Tick Size must be a number between 3 and 15</p>
                     }
@@ -66,7 +165,29 @@
           <label for="accountDomain" class="label-primary">Domain</label>
           <p class="text-secondary">Public domain associated with this account (e.g. example.com)</p>
 
-          <input type="text" class="input-base-with-validation" [class.border-gray-200]="!isDomainTooLong()" [class.border-red-500]="isDomainTooLong()" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" />
+          <!-- <input type="text" class="input-base-with-validation" [class.border-gray-200]="!isDomainTooLong()" [class.border-red-500]="isDomainTooLong()" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" /> -->
+
+          <input
+     type="text"
+     class="input-base-with-validation"
+     app-focus-border
+     [isValid]="!isDomainTooLong()"
+     [isInvalid]="isDomainTooLong()"
+     [ngModel]="accountConfiguratorStoreService.domain()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)"
+/>
+
+          <!-- <input
+     type="text"
+     class="input-base-with-validation"
+     [class.border-gray-200]="!isDomainTooLong() && !domainFocused()"
+     [class.border-green-500]="domainFocused() && !isDomainTooLong()"
+     [class.border-red-500]="isDomainTooLong()"
+     (focus)="domainFocused.set(true)"
+     (blur)="domainFocused.set(false)"
+     [ngModel]="accountConfiguratorStoreService.domain()"
+     (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)"
+/> -->
 
           @if (accountConfiguratorStoreService.domain()) {
           <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">

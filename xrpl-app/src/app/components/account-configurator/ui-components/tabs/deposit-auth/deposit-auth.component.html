@@ -22,7 +22,17 @@
                     </div>
 
                     <p class="text-secondary">The account address to pre-authorize</p>
-                    <input type="text" class="input-base-with-validation" [class.border-gray-200]="!isAddressInvalid(depositAuthAddress.account)" [class.border-red-500]="isAddressInvalid(depositAuthAddress.account)" [ngModel]="depositAuthAddress.account" (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)" placeholder="r..." />
+                    <input type="text" 
+                         class="input-base-with-validation" 
+                        [class.border-gray-200]="!isAddressInvalid(depositAuthAddress.account) && focusedAddressIndex() !== i"
+                         [class.border-green-500]="focusedAddressIndex() === i && !isAddressInvalid(depositAuthAddress.account)"
+                         [class.border-red-500]="isAddressInvalid(depositAuthAddress.account)"
+                         (focus)="focusedAddressIndex.set(i)"
+                         (blur)="focusedAddressIndex.set(null)"
+                         [ngModel]="depositAuthAddress.account" 
+                         (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)" 
+                         placeholder="r..." />
+
 
                     <!-- Helper text for invalid address -->
                     @if (isAddressInvalid(depositAuthAddress.account)) {

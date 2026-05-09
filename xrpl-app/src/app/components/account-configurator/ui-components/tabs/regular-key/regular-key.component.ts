@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
@@ -28,16 +28,18 @@ export class RegularKeyComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+     isRegularKeyAddressFocused = signal(false);
+     isRegularKeySeedFocused = signal(false);
 
-     regularKeyAddressValid(): boolean {
+     regularKeyAddressValid = computed(() => {
           const address = this.accountConfiguratorStoreService.regularKeyAddress();
           return !!xrpl.isValidAddress(address);
-     }
+     });
 
-     regularKeyAddressInvalid(): boolean {
+     regularKeyAddressInvalid = computed(() => {
           const address = this.accountConfiguratorStoreService.regularKeyAddress();
           return !!address && !this.regularKeyAddressValid();
-     }
+     });
 
      regularKeySeedValid(): boolean {
           const seed = this.accountConfiguratorStoreService.regularKeySeed();

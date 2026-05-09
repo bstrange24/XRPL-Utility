@@ -1,6 +1,5 @@
-// deposit-auth.component.ts
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
@@ -29,6 +28,7 @@ export class DepositAuthComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+     focusedAddressIndex = signal<number | null>(null);
 
      // Simple validation methods - same as regular key page
      isAddressValid(address: string): boolean {

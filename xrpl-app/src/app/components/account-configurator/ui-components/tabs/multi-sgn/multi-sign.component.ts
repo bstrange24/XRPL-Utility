@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
@@ -30,7 +30,29 @@ export class MultiSignComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+     focusedAccountIndex = signal<number | null>(null);
+focusedSeedIndex = signal<number | null>(null);
+focusedWeightIndex = signal<number | null>(null);
+quorumFocused = signal(false);
      protected xrpl = xrpl;
+
+      isAddressValid(address: string): boolean {
+               if (!address) return false;
+               return xrpl.isValidAddress(address);
+          }
+     
+          isAddressInvalid(address: string): boolean {
+               return !!address && !xrpl.isValidAddress(address);
+          }
+
+          isSeedValid(seed: string): boolean {
+               if (!seed) return false;
+               return xrpl.isValidSecret(seed);
+          }
+     
+          isSeedInvalid(seed: string): boolean {
+               return !!seed && !xrpl.isValidSecret(seed);
+          }
 
      // Computed total signer weight
      totalSignerWeight = computed(() => {

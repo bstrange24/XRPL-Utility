@@ -51,6 +51,20 @@
                          min="0"
                     />
 
+                     <!-- <input
+     type="number"
+     class="input-base-with-validation"
+     app-focus-border
+     [isValid]="isAmountValid()"
+     [isInvalid]="isAmountInvalid()"
+     [ngModel]="accountConfiguratorStoreService.amount()"
+     (ngModelChange)="utilsService.updateAmount($event)"
+     (keydown)="utilsService.preventNegative($event)"
+     placeholder="e.g. 10.5"
+                         step="0.000001"
+                         min="0"
+/> -->
+
                     @if (isAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }

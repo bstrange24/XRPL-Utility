@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
@@ -11,11 +11,12 @@ import { NgIcon } from '@ng-icons/core';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
+import { FocusBorderDirective } from '../../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-account-metadata',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +31,10 @@ export class AccountMetadataComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
+     nftMinterFocused = signal(false);
+transferRateFocused = signal(false);
+tickSizeFocused = signal(false);
+domainFocused = signal(false);
 
      // Computed signal: the final hex that will be sent
      readonly domainHex = computed(() => {

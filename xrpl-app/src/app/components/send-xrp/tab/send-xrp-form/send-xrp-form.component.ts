@@ -12,11 +12,12 @@ import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slid
 import { NgIcon } from '@ng-icons/core';
 import * as xrpl from 'xrpl';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
