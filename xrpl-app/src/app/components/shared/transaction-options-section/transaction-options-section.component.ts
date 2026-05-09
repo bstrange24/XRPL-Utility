@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, Input, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TransactionUiService } from '../../../services/transaction-ui/transaction-ui.service';
@@ -34,6 +34,18 @@ export class TransactionOptionsSectionComponent {
 
      activeTab = input.required<'sendXrp' | 'createCredential' | 'createPaymentChannel' | 'fundPaymentChannel' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential' | 'cashCheck' | 'cancelCheck' | 'createCheck' | 'deleteAccount' | 'set' | 'delete' | 'accept' | 'verify' | 'setPermissionedDomain' | 'deletePermissionedDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
+     optionsValidationChange = output<{ hasError: boolean; message: string }>();
+     isDestinationTagFocused = signal(false);
+     isSourceTagFocused = signal(false);
+
+     constructor() {
+          effect(() => {
+               this.optionsValidationChange.emit({
+                    hasError: this.hasOptionsValidationError(),
+                    message: this.optionsErrorMessage(),
+               });
+          });
+     }
 
      // Computed signal: the final hex that will be sent
      readonly invoiceIdHex = computed(() => {
@@ -85,4 +97,94 @@ export class TransactionOptionsSectionComponent {
           this.checksStoreService.setField('checkExpirationDate', value);
           this.checksStoreService.setField('enableExpirationDate', true);
      };
+
+     isDestinationTagValid = computed(() => {
+          const amount = this.xrplTxOptionsStore.destinationTag();
+
+          // Empty is valid because field is optional
+          if (amount === null || amount === '') return true;
+
+          const numAmount = Number(amount);
+
+          return Number.isFinite(numAmount) && numAmount > 0;
+     });
+
+     isDestinationTagInvalid = computed(() => {
+          const amount = this.xrplTxOptionsStore.destinationTag();
+          if (amount === null || amount === '') return false;
+          const numAmount = parseFloat(amount);
+          return isNaN(numAmount) || numAmount <= 0;
+     });
+
+     isSourceTagValid = computed(() => {
+          const amount = this.xrplTxOptionsStore.sourceTag();
+
+          // Empty is valid because field is optional
+          if (amount === null || amount === '') return true;
+
+          const numAmount = Number(amount);
+
+          return Number.isFinite(numAmount) && numAmount > 0;
+     });
+
+     isSourceTagInvalid = computed(() => {
+          const amount = this.xrplTxOptionsStore.sourceTag();
+          if (amount === null || amount === '') return false;
+          const numAmount = parseFloat(amount);
+          return isNaN(numAmount) || numAmount <= 0;
+     });
+
+     // === VALIDATION COMPUTEDS ===
+     isInvoiceIdValid = computed(() => {
+          const tooLong = this.isInvoiceIdTooLong();
+          return !tooLong; // You can add more rules (e.g. valid hex) later
+     });
+
+     isDomainIdValid = computed(() => {
+          const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
+          // Domain ID is usually a hex string or short identifier
+          return !domain || /^[0-9A-Fa-f]{0,64}$/.test(domain);
+     });
+
+     isCredentialIDsValid = computed(() => {
+          const ids = this.credentialStore.credentialIDs();
+          if (!ids || ids.length === 0) return true;
+
+          // Simple check: all should be non-empty strings
+          return ids.every(id => typeof id === 'string' && id.trim().length > 0);
+     });
+
+     hasOptionsValidationError = computed(() => {
+          const tab = this.activeTab();
+
+          if (tab === 'sendXrp') {
+               return !this.isDomainIdValid() || !this.isCredentialIDsValid() || !this.isDestinationTagValid() || !this.isSourceTagValid();
+          }
+
+          if (tab === 'createCheck' || tab === 'createPaymentChannel') {
+               return !this.isInvoiceIdValid(); // add more as needed
+          }
+
+          return false;
+     });
+
+     // Optional: Human-readable error message per field
+     optionsErrorMessage = computed(() => {
+          if (!this.isInvoiceIdValid()) {
+               return 'Invoice ID is too long (max 256 bytes)';
+          }
+          if (!this.isDomainIdValid()) {
+               return 'Domain ID must be a valid hex string (max 64 chars)';
+          }
+          if (!this.isCredentialIDsValid()) {
+               return 'Credential IDs must be valid (comma-separated)';
+          }
+          if (!this.isDestinationTagValid()) {
+               return 'Destination Tag must be a positive number';
+          }
+          if (!this.isSourceTagValid()) {
+               return 'Source Tag must be a positive number';
+          }
+          return '';
+     });
 }

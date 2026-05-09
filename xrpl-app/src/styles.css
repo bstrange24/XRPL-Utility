@@ -688,7 +688,7 @@ body {
 }
 
 .btn-green-small {
-     @appy rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover: from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed
+     @appy rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover: from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 .btn-red {

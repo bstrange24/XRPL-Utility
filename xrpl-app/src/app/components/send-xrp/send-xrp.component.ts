@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, ViewChild, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -58,6 +58,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
      private readonly rightPanelService = inject(RightPanelService);
+     public canSendXrpFromForm = signal<boolean>(false);
      public readonly sendXrpTabs = SEND_XRP_TABS;
      public readonly tabMeta = SEND_XRP_TAB_META;
 
@@ -211,6 +212,10 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
                     info: this.sendXrpViewModelService.infoData(),
                },
           });
+     }
+
+     handleCanSendXrpChange(canSend: boolean) {
+          this.canSendXrpFromForm.set(canSend);
      }
 
      handleSearchQueryChange(query: string) {

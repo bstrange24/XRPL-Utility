@@ -29,6 +29,7 @@
                     (searchQueryChange)="handleSearchQueryChange($event)"
                     (destinationChange)="handleDestinationChange($event)"
                     (toggleOptions)="txUiService.toggleOptions($event)"
+                    (canSendXrpChange)="handleCanSendXrpChange($event)"
                >
                </app-send-xrp-form>
 
@@ -37,7 +38,7 @@
 
                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- LEFT: primary action -->
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSendXrpFromForm()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
 
                     <!-- RIGHT: secondary / utility actions -->
                     <div class="flex flex-wrap items-center justify-end gap-2">

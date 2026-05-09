@@ -94,8 +94,18 @@ export class DepositAuthComponent {
           return this.canSubmit() && this.connectionGuard.isConnectionReady();
      });
 
+     hasUserInput = computed(() => {
+          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
+
+          return addresses.some((addr: { account: string }) => {
+               return !!addr.account?.trim();
+          });
+     });
+
      // Check if there are any validation errors
      hasValidationErrors = computed(() => {
+          // Don't show validation on initial empty state
+          if (!this.hasUserInput()) return false;
           if (this.hasEmptyAddresses()) return true;
           if (this.hasInvalidAddresses()) return true;
           if (this.hasDuplicateAddresses()) return true;
@@ -105,6 +115,7 @@ export class DepositAuthComponent {
      // Get validation error message
      // Alternative: Show all validation errors
      validationErrorMessages = computed(() => {
+          if (!this.hasUserInput()) return [];
           const messages: string[] = [];
           const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
 

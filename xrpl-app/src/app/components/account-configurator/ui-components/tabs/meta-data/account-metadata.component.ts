@@ -1,4 +1,3 @@
-// account-metadata.component.ts
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
@@ -11,6 +10,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { NgIcon } from '@ng-icons/core';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
+import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-account-metadata',
@@ -23,6 +23,7 @@ import { TransactionOptionsComponent } from '../../../../shared/transaction-opti
 export class AccountMetadataComponent {
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly connectionGuard = inject(ConnectionGuardService);
+     public readonly utilsService = inject(UtilsService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
@@ -69,30 +70,30 @@ export class AccountMetadataComponent {
      isTransferRateValid = computed(() => {
           const rate = this.accountConfiguratorStoreService.transferRate();
           if (!rate) return true; // Empty is valid (0% fee)
-          const numRate = parseFloat(rate);
+          const numRate = Number.parseFloat(rate);
           return !isNaN(numRate) && numRate >= 0 && numRate <= 100;
      });
 
      isTransferRateInvalid = computed(() => {
           const rate = this.accountConfiguratorStoreService.transferRate();
           if (!rate) return false;
-          const numRate = parseFloat(rate);
+          const numRate = Number.parseFloat(rate);
           return isNaN(numRate) || numRate < 0 || numRate > 100;
      });
 
      // Check if Tick Size is valid
      isTickSizeValid = computed(() => {
           const tickSize = this.accountConfiguratorStoreService.tickSize();
-          if (!tickSize) return true; // Empty is valid (not set)
-          const numTickSize = parseInt(tickSize, 10);
-          return !isNaN(numTickSize) && numTickSize >= 3 && numTickSize <= 15;
+          if (!tickSize) return true; // empty = valid (not set)
+          const num = Number(tickSize); // better than parseInt
+          return Number.isInteger(num) && num >= 3 && num <= 15;
      });
 
      isTickSizeInvalid = computed(() => {
           const tickSize = this.accountConfiguratorStoreService.tickSize();
           if (!tickSize) return false;
-          const numTickSize = parseInt(tickSize, 10);
-          return isNaN(numTickSize) || numTickSize < 3 || numTickSize > 15;
+          const num = Number(tickSize);
+          return !Number.isInteger(num) || num < 3 || num > 15;
      });
 
      // Check if any field has changed from its original value
@@ -158,6 +159,19 @@ export class AccountMetadataComponent {
           if (!value) return '';
           if (/^[0-9A-Fa-f]+$/.test(value)) return value.toUpperCase();
           return xrpl.convertStringToHex(value);
+     }
+
+     clearFields() {
+          this.accountConfiguratorStoreService.setField('transferRate', '');
+          this.accountConfiguratorStoreService.setField('tickSize', '');
+          this.accountConfiguratorStoreService.setField('domain', '');
+          this.accountConfiguratorStoreService.setField('isMessageKey', false);
+          return;
+     }
+
+     clearMinterAddresField() {
+          this.accountConfiguratorStoreService.setField('nfTokenMinterAddress', '');
+          return;
      }
 }
 

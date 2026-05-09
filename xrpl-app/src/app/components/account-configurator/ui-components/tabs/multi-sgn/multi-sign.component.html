@@ -48,7 +48,7 @@
                          <div class="md:col-span-3">
                               <label for="multiSignWeight" class="field-label">Weight</label>
                               <p class="text-secondary">Total weight of the signer</p>
-                              <input type="number" class="input-base-with-validation" [class.border-gray-200]="signer.SignerWeight > 0" [class.border-red-500]="signer.SignerWeight <= 0" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
+                              <input type="number" class="input-base-with-validation" [class.border-gray-200]="signer.SignerWeight > 0" [class.border-red-500]="signer.SignerWeight <= 0" [ngModel]="signer.SignerWeight" (ngModelChange)="accountConfiguratorStoreService.updateSigner(i, 'SignerWeight', $event)" (keydown)="utilsService.preventNegative($event)" min="1" />
                               @if (signer.SignerWeight <= 0) {
                               <p class="form-error">Weight must be > 0</p>
                               }
@@ -65,7 +65,7 @@
           <div class="mt-6 border-t border-gray-100 pt-6">
                <label for="multiSignQuorum" class="label-primary">Total Signer Quorum</label>
                <p class="text-secondary">Minimum total weight required to authorize a transaction</p>
-               <input type="number" class="input-base-with-validation" [class.border-gray-200]="isQuorumValid()" [class.border-red-500]="!isQuorumValid()" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="accountConfiguratorUtilService.preventNegative($event)" min="1" />
+               <input type="number" class="input-base-with-validation" [class.border-gray-200]="isQuorumValid()" [class.border-red-500]="!isQuorumValid()" [ngModel]="accountConfiguratorStoreService.signerQuorum()" (ngModelChange)="accountConfiguratorStoreService.setField('signerQuorum', $event); accountConfiguratorUtilService.validateQuorum()" (keydown)="utilsService.preventNegative($event)" min="1" />
 
                @if (!isQuorumValid() && totalSignerWeight() > 0) {
                <p class="form-error">Quorum ({{ accountConfiguratorStoreService.signerQuorum() }}) exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>
@@ -86,12 +86,17 @@
      </div>
      }
 
-     <!-- Action Buttons -->
-     <div class="flex flex-col gap-3 sm:flex-row">
-          <!-- Set Multi-Sign Button - Disabled if validation fails -->
-          <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+     <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <!-- Primary Actions -->
+          <div class="flex flex-col gap-3 sm:flex-row">
+               <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
 
-          <!-- Remove Multi-Sign Button - Enabled if connection is ready -->
-          <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+               <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+          </div>
+
+          <!-- Secondary Actions -->
+          <div class="flex items-center justify-end">
+               <button type="button" (click)="clearFields()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+          </div>
      </div>
 </div>

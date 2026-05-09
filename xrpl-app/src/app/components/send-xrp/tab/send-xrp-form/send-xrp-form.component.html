@@ -11,14 +11,49 @@
                <div>
                     <label for="destination" class="label-primary">Destination</label>
                     <p class="text-secondary">The unique address receiving the XRP payment.</p>
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
+                    <app-select-search-dropdown
+                         [class.border-gray-200]="!isDestinationValid() && !isDestinationFocused()"
+                         [class.border-green-500]="isDestinationFocused() && !isDestinationInvalid()"
+                         [class.border-red-500]="isDestinationInvalid()"
+                         (focus)="isDestinationFocused.set(true)"
+                         (blur)="isDestinationFocused.set(false)"
+                         [items]="destinationItems()"
+                         [value]="selectedDestinationItem()"
+                         [searchQueryInput]="destinationSearchQuery()"
+                         (searchQueryChange)="searchQueryChange.emit($event)"
+                         (valueChange)="destinationChange.emit($event)"
+                         placeholder="Enter or select destination address"
+                    >
+                    </app-select-search-dropdown>
+
+                    @if (isDestinationInvalid()) {
+                    <p class="form-error">Please enter a valid XRP address</p>
+                    }
                </div>
 
                <!-- XRP Amount -->
                <div>
                     <label for="xrpAmount" class="label-primary">XRP Amount</label>
                     <p class="text-secondary">Amount in XRP (precision up to 0.000001).</p>
-                    <input type="number" class="input-base" [ngModel]="accountConfiguratorStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" placeholder="e.g. 10.5" step="0.000001" min="0" />
+                    <input
+                         type="number"
+                         class="input-base-with-validation"
+                         [class.border-gray-200]="!isAmountInvalid() && !isAmountFocused()"
+                         [class.border-green-500]="isAmountFocused() && !isAmountInvalid()"
+                         [class.border-red-500]="isAmountInvalid()"
+                         (focus)="isAmountFocused.set(true)"
+                         (blur)="isAmountFocused.set(false)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         [ngModel]="accountConfiguratorStoreService.amount()"
+                         (ngModelChange)="utilsService.updateAmount($event)"
+                         placeholder="e.g. 10.5"
+                         step="0.000001"
+                         min="0"
+                    />
+
+                    @if (isAmountInvalid()) {
+                    <p class="form-error">Amount must be greater than 0</p>
+                    }
                </div>
           </div>
      </div>
@@ -39,7 +74,15 @@
      <!-- Optional Fields Section -->
      @if (wantsOptions()) {
      <div class="card-base">
-          <app-transaction-options-section [activeTab]="'sendXrp'"></app-transaction-options-section>
+          <app-transaction-options-section [activeTab]="'sendXrp'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
+     </div>
+     }
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">{{ validationErrorMessage() }}</div>
      </div>
      }
 </div>

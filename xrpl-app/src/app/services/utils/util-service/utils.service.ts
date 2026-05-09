@@ -921,7 +921,8 @@ export class UtilsService {
           const type = tx.TransactionType;
 
           switch (type) {
-               case 'TrustSet': { // Non-zero limit or flags will likely create a trustline
+               case 'TrustSet': {
+                    // Non-zero limit or flags will likely create a trustline
                     const limit = Number.parseFloat(tx?.LimitAmount?.value || '0');
                     const flags = tx?.Flags || 0;
                     return limit !== 0 || flags !== 0;
@@ -1114,6 +1115,12 @@ export class UtilsService {
           } catch (error: any) {
                console.error('Error checking IOU balance:', error);
                throw new Error(`Failed to check IOU balance: ${error.message || 'Unknown error'}`);
+          }
+     }
+
+     preventNegative(event: KeyboardEvent): void {
+          if (event.key === '-' || event.key === 'e') {
+               event.preventDefault();
           }
      }
 

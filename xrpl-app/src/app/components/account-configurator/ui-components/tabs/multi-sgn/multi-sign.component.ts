@@ -10,6 +10,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import * as xrpl from 'xrpl';
+import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
 
 @Component({
      selector: 'app-multi-sign',
@@ -22,6 +23,7 @@ import * as xrpl from 'xrpl';
 export class MultiSignComponent {
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly connectionGuard = inject(ConnectionGuardService);
+     public readonly utilsService = inject(UtilsService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
@@ -103,8 +105,18 @@ export class MultiSignComponent {
           return this.canSubmit() && this.connectionGuard.isConnectionReady();
      });
 
+     hasUserInput = computed(() => {
+          const signers = this.accountConfiguratorStoreService.signers();
+
+          return signers.some((signer: { Account: string; seed: string; SignerWeight: number }) => {
+               return !!signer.Account?.trim() || !!signer.seed?.trim();
+          });
+     });
+
      // Check if there are any validation errors to show
      hasValidationErrors = computed(() => {
+          // Don't show validation on initial empty state
+          if (!this.hasUserInput()) return false;
           if (!this.hasSigners()) return true;
           if (this.hasInvalidSigners()) return true;
           if (!this.isQuorumValid()) return true;
@@ -113,6 +125,7 @@ export class MultiSignComponent {
 
      // Get validation error message
      validationErrorMessage = computed(() => {
+          if (!this.hasUserInput()) return [];
           if (!this.hasSigners()) {
                return 'Please add at least one signer.';
           }
@@ -131,4 +144,8 @@ export class MultiSignComponent {
           }
           return '';
      });
+
+     clearFields() {
+          this.accountConfiguratorStoreService.setField('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);
+     }
 }

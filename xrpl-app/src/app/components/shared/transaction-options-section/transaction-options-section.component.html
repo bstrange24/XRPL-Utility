@@ -1,27 +1,16 @@
+<!-- Pass validation state up -->
+@if(hasOptionsValidationError()) {
+<ng-container>
+     <input type="hidden" [value]="optionsErrorMessage()" #optionsError />
+</ng-container>
+}
+
+<!-- Get tab -->
 @let tab = activeTab();
 
 <!-- Check options flag to conditionally show/hide options section -->
 <!-- and determine what options to display based on tab -->
 @if(txUiService.wantsOptions()) {
-<!-- Domain ID and Credential ID -->
-<!-- @if (tab === 'setPermissionedDomain') {
-<div class="card-base">>
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div class="space-y-2">
-               <label class="label-primary">Domain ID</label>
-               <p class="text-secondary">The domain the sender intends to use. The DomainID can be included if the sender intends it to be a cross-currency payment.</p>
-               <textarea name="domainId" class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" rows="2" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)"> </textarea>
-          </div>
-
-          <div class="space-y-2">
-               <label class="label-primary">Credential IDs</label>
-               <p class="text-secondary">For credential-gated payments. Enter credential object IDs from CredentialCreate transactions.</p>
-               <textarea name="credentialIDs" class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 text-sm focus:border-green-500 focus:outline-none" rows="2" placeholder="Separate multiple credentials with commas" (input)="utilsService.adjustTextareaHeight($event)" [ngModel]="this.credentialStore.credentialIDs()" (ngModelChange)="this.credentialStore.setField('credentialIDs', $event)"> </textarea>
-          </div>
-     </div>
-</div>
-} -->
-
 <!-- Credential Expiration and URI -->
 @if(tab === 'createCredential') {
 <div class="rounded-2xl border-gray-200 bg-white p-1">
@@ -50,7 +39,25 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="text" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" class="input-base" />
+               <input
+                    type="number"
+                    class="input-base-with-validation"
+                    [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
+                    [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
+                    [class.border-red-500]="isDestinationTagInvalid()"
+                    (focus)="isDestinationTagFocused.set(true)"
+                    (blur)="isDestinationTagFocused.set(false)"
+                    (keydown)="utilsService.preventNegative($event)"
+                    [ngModel]="xrplTxOptionsStore.destinationTag()"
+                    (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                    placeholder="e.g. 1123456"
+                    step="1"
+                    min="0"
+               />
+
+               @if (isDestinationTagInvalid()) {
+               <p class="form-error">Destination Tag must be a positive number</p>
+               }
           </div>
 
           <!-- Payment Channel Expiration -->
@@ -81,13 +88,49 @@
                <div class="space-y-2">
                     <label class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input class="input-base" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+                    <input
+                         type="number"
+                         class="input-base-with-validation"
+                         [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
+                         [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
+                         [class.border-red-500]="isDestinationTagInvalid()"
+                         (focus)="isDestinationTagFocused.set(true)"
+                         (blur)="isDestinationTagFocused.set(false)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         [ngModel]="xrplTxOptionsStore.destinationTag()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                         placeholder="e.g. 1123456"
+                         step="1"
+                         min="0"
+                    />
+
+                    @if (isDestinationTagInvalid()) {
+                    <p class="form-error">Destination Tag must be a positive number</p>
+                    }
                </div>
 
                <div class="space-y-2">
                     <label class="label-primary">Source Tag</label>
                     <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-                    <input class="input-base" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
+                    <input
+                         type="number"
+                         class="input-base-with-validation"
+                         [class.border-gray-200]="!isSourceTagInvalid() && !isSourceTagFocused()"
+                         [class.border-green-500]="isSourceTagFocused() && !isSourceTagInvalid()"
+                         [class.border-red-500]="isSourceTagInvalid()"
+                         (focus)="isSourceTagFocused.set(true)"
+                         (blur)="isSourceTagFocused.set(false)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         [ngModel]="xrplTxOptionsStore.sourceTag()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
+                         placeholder="e.g. 1123456"
+                         step="1"
+                         min="0"
+                    />
+
+                    @if (isSourceTagInvalid()) {
+                    <p class="form-error">Source Tag must be a positive number</p>
+                    }
                </div>
           </div>
 
@@ -144,13 +187,49 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input class="input-base" placeholder="e.g. 123456" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" />
+               <input
+                    type="number"
+                    class="input-base-with-validation"
+                    [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
+                    [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
+                    [class.border-red-500]="isDestinationTagInvalid()"
+                    (focus)="isDestinationTagFocused.set(true)"
+                    (blur)="isDestinationTagFocused.set(false)"
+                    (keydown)="utilsService.preventNegative($event)"
+                    [ngModel]="xrplTxOptionsStore.destinationTag()"
+                    (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                    placeholder="e.g. 1123456"
+                    step="1"
+                    min="0"
+               />
+
+               @if (isDestinationTagInvalid()) {
+               <p class="form-error">Destination Tag must be a positive number</p>
+               }
           </div>
 
           <div class="space-y-2">
                <label class="label-primary">Source Tag</label>
                <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-               <input class="input-base" placeholder="e.g. 456789" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" />
+               <input
+                    type="number"
+                    class="input-base-with-validation"
+                    [class.border-gray-200]="!isSourceTagInvalid() && !isSourceTagFocused()"
+                    [class.border-green-500]="isSourceTagFocused() && !isSourceTagInvalid()"
+                    [class.border-red-500]="isSourceTagInvalid()"
+                    (focus)="isSourceTagFocused.set(true)"
+                    (blur)="isSourceTagFocused.set(false)"
+                    (keydown)="utilsService.preventNegative($event)"
+                    [ngModel]="xrplTxOptionsStore.sourceTag()"
+                    (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
+                    placeholder="e.g. 1123456"
+                    step="1"
+                    min="0"
+               />
+
+               @if (isSourceTagInvalid()) {
+               <p class="form-error">Source Tag must be a positive number</p>
+               }
           </div>
      </div>
 </div>
