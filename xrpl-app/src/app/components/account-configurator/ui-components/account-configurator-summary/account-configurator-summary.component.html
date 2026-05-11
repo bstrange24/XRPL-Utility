@@ -21,9 +21,9 @@
                <div item-content>
                     <div class="flex items-start gap-3">
                          @if (item.isIrreversible) {
-                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                         <ng-icon name="heroExclamationTriangle" size="16" class="text-red-500 flex-shrink-0 mt-1" />
                          } @else {
-                         <ng-icon name="heroCog" size="20" class="text-gray-400 flex-shrink-0 mt-0.5" />
+                         <lucide-icon name="lucideLayoutTemplate" size="16" class="text-gray-400 flex-shrink-0 mt-0.5"></lucide-icon>
                          }
                          <div class="flex-1">
                               <span [class.text-red-700]="item.isIrreversible">{{ item.text }}</span>
@@ -53,7 +53,7 @@
                } @else {
                <div>
                     <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                         <ng-icon name="heroCog" size="32" class="text-gray-400" />
+                         <lucide-icon name="lucideLayoutTemplate" size="32" class="text-gray-400"></lucide-icon>
                     </div>
                     <p class="font-medium text-gray-600">No special account configuration detected.</p>
                     <p class="text-sm text-gray-500 mt-1">All flags are set to default values.</p>

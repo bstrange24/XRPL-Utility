@@ -10,6 +10,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import * as xrpl from 'xrpl';
+import * as bip39 from 'bip39';
 
 @Component({
      selector: 'app-regular-key',
@@ -41,9 +42,38 @@ export class RegularKeyComponent {
           return !!address && !this.regularKeyAddressValid();
      });
 
+     isMnemonic(secret: string): boolean {
+          if (!secret) return false;
+          const trimmed = secret.trim();
+          return trimmed.includes(' ') && /^[a-z\s]+$/i.test(trimmed);
+     }
+
      regularKeySeedValid(): boolean {
-          const seed = this.accountConfiguratorStoreService.regularKeySeed();
-          return xrpl.isValidSecret(seed);
+          const secret = this.accountConfiguratorStoreService.regularKeySeed();
+
+          if (!secret || secret.trim().length === 0) {
+               return false;
+          }
+
+          const trimmedSecret = secret.trim();
+
+          // Check if it's a mnemonic - reject it
+          if (trimmedSecret.includes(' ') && /^[a-z\s]+$/i.test(trimmedSecret)) {
+               console.warn('Mnemonics are not supported for regular keys. Please use a family seed (starts with "s") or secret numbers.');
+               return false;
+          }
+
+          // Check if it's secret numbers (contains spaces and digits)
+          if (trimmedSecret.includes(' ') && /^[\d\s]+$/.test(trimmedSecret)) {
+               return xrpl.isValidSecret(trimmedSecret);
+          }
+
+          // Check if it's a family seed (starts with 's' and no spaces)
+          if (!trimmedSecret.includes(' ') && trimmedSecret.startsWith('s')) {
+               return xrpl.isValidSecret(trimmedSecret);
+          }
+
+          return xrpl.isValidSecret(trimmedSecret);
      }
 
      regularKeySeedInvalid(): boolean {

@@ -19,6 +19,7 @@ export interface WalletFlowConfig {
      loadingKey: keyof ButtonLoadingState;
      walletType: 'familySeed' | 'mnemonic' | 'secretNumbers';
      mode: 'generate' | 'import';
+     wordCount?: number;
      input?: () => string | string[];
      validate?: () => string | null;
      successMessage: (address: string) => string;

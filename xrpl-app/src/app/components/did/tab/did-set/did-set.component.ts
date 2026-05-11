@@ -5,11 +5,12 @@ import { DidStoreService } from '../../../../services/did/did-store/did-store.se
 import { DidUtilService } from '../../../../services/did/did-util/did-util.service';
 import { DidViewModelService } from '../../../../services/did/did-view-model/did-view-model.service';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-did-set',
      standalone: true,
-     imports: [CommonModule, JsonEditorComponent],
+     imports: [CommonModule, NgIcon, JsonEditorComponent],
      templateUrl: './did-set.component.html',
      styleUrl: './did-set.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

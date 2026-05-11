@@ -87,7 +87,7 @@ export const ACCOUNT_CONFIG_TAB_META: Record<
           icon: 'heroArrowPath',
           colorClass: 'white-button-submenu',
           title: 'Modify Deposit Auth',
-          desc: 'Modify Deposit Authorization addresses.',
+          desc: 'Modify deposit authorization addresses.',
           color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,

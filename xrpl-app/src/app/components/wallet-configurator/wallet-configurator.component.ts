@@ -59,6 +59,12 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
 
      customDestinations = signal<{ name?: string; address: string }[]>([]);
      destinations = computed(() => [...this.customDestinations()]);
+     selectedWordCount = signal<string>('24');
+
+     async onWordCountChange(event: Event) {
+          this.selectedWordCount.set((event.target as HTMLInputElement).value);
+          console.log('selectedWordCount: ', this.selectedWordCount());
+     }
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -71,17 +77,8 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
           this.walletsStoreService.resetAll();
           this.walletsStoreService.setField('secp256k1_encryption_type', true);
 
-          // NEW - Recommended
-          this.rightPanelService.setPanel({
-               mainComponent: WalletGeneratorRequirementsInfoComponent,
-               mainInputs: {
-                    activeTab: this.walletsViewModelService.activeTab,
-               },
-
-               // Add summary here when you want it (e.g. on Credentials page)
-               // summaryComponent: CredentialsSummaryComponent,
-               // summaryInputs: { ... }
-          });
+          // Initial setup
+          this.setRightPanel();
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -137,6 +134,7 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
                loadingKey: 'generateNewWalletFromMnemonic',
                walletType: 'mnemonic',
                mode: 'generate',
+               wordCount: Number.parseInt(this.selectedWordCount()),
                successMessage: addr => `Generated ${addr} wallet from a mnemonic successfully!`,
           });
           if (result.success && result.wallet) {
@@ -220,6 +218,15 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
 
      protected async refreshAccountObject(_env: any): Promise<void> {
           return;
+     }
+
+     private setRightPanel(): void {
+          this.rightPanelService.setPanel({
+               mainComponent: WalletGeneratorRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.walletsViewModelService.activeTab,
+               },
+          });
      }
 
      protected clearInputFields(): void {

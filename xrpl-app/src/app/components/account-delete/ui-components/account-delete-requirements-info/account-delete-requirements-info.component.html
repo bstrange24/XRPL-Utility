@@ -28,7 +28,10 @@
                     <!-- Transaction Requirements -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑 Account Delete</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                                   <ng-icon name="heroTrash" size="14" class="text-red-700" />
+                                   Account Delete
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
@@ -49,7 +52,10 @@
                     <!-- Ledger Preconditions -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">🔒 Ledger Preconditions</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">
+                                   <ng-icon name="heroLockClosed" size="14" class="text-amber-700" />
+                                   Ledger Preconditions
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-start">
@@ -78,7 +84,7 @@
 
           <!-- Cleanup Checklist -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
-               <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">🧹 Recommended Cleanup Before Deletion</h4>
+               <h4 class="font-semibold text-gray-900 mb-4 flex items-center gap-2">Recommended Cleanup Before Deletion</h4>
                <ul class="text-sm text-gray-700 space-y-3">
                     <li class="flex gap-3">
                          <ng-icon name="heroCheckCircle" size="18" class="text-green-500 flex-shrink-0 mt-0.5" />
@@ -105,7 +111,7 @@
 
           <!-- Important Notes + Warning -->
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>The transaction burns a <strong>special deletion fee</strong> (much higher than normal fees).</li>
                     <li>Remaining XRP is automatically sent to the Destination address.</li>
@@ -113,8 +119,10 @@
                     <li>Many exchanges <strong>do not accept</strong> funds from AccountDelete — avoid sending to exchange addresses.</li>
                     <li>Transaction will fail with <strong>tecOWNERS</strong> if any owned objects remain.</li>
                </ul>
+          </div>
 
-               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Permanent & Irreversible Action</h5>
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-5">
+               <h5 class="font-semibold text-red-800 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-red-800 flex-shrink-0 mt-0.5" />Permanent & Irreversible Action</h5>
                <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
                     <li>Once deleted, the account address <strong>can never be recreated or reused</strong>.</li>
                     <li>If the destination is wrong, the XRP may be permanently lost.</li>

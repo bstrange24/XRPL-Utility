@@ -36,7 +36,7 @@
           @if (filteredTickets().length > 0) { @for (ticket of filteredTickets(); track ticket) {
           <app-summary-item [copyValue]="ticket" copyTooltip="Copy Ticket Sequence" (onCopyClick)="copyUtilService.copyAndToast($event, 'Ticket Sequence')">
                <div item-content class="flex items-center gap-3">
-                    <ng-icon name="heroTicket" size="20" class="text-blue-500 flex-shrink-0" />
+                    <ng-icon name="heroTicket" size="20" class="text-green-500 flex-shrink-0" />
                     <div>
                          <span class="font-mono font-medium">Ticket Sequence #{{ ticket }}</span>
                     </div>

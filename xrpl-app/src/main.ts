@@ -69,6 +69,7 @@ import {
 } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
+     heroPencilSquare,
      heroSquares2x2,
      heroIdentification,
      heroMinus,
@@ -109,6 +110,7 @@ import {
      heroCalendar,
      heroLink,
      heroLinkSlash,
+     heroDocumentText,
      heroChevronUp,
      heroChevronDown,
      heroCodeBracket,
@@ -117,6 +119,7 @@ import {
      heroMagnifyingGlass,
      heroCircleStack,
      heroCog,
+     heroShieldCheck,
      heroArrowUp,
      heroArrowDown,
 } from '@ng-icons/heroicons/outline';
@@ -204,6 +207,7 @@ bootstrapApplication(AppComponent, {
                })
           ),
           provideIcons({
+               heroDocumentText,
                heroLinkSlash,
                heroCalendar,
                heroLink,
@@ -211,6 +215,7 @@ bootstrapApplication(AppComponent, {
                heroChevronDown,
                heroArrowUp,
                heroArrowDown,
+               heroPencilSquare,
                heroSquares2x2,
                heroIdentification,
                heroMinus,
@@ -254,6 +259,7 @@ bootstrapApplication(AppComponent, {
                heroMagnifyingGlass,
                heroCircleStack,
                heroCog,
+               heroShieldCheck,
           }),
      ],
 }).catch(err => console.error(err));

@@ -19,7 +19,11 @@
           <div class="space-y-2">
                <label class="label-primary">URI</label>
                <p class="text-secondary">Additional data about the credential (i.e. a link to the VC document).</p>
-               <input type="text" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI" class="input-base" />
+               <input type="text" class="input-base-with-validation" app-focus-border [isValid]="!hasInvalidUri()" [isInvalid]="hasInvalidUri()" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI" />
+
+               @if (hasInvalidUri()) {
+               <p class="form-error">Please enter a valid URI (max 256 characters)</p>
+               }
           </div>
 
           <!-- Credential Expiration -->
@@ -39,21 +43,7 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input
-                    type="number"
-                    class="input-base-with-validation"
-                    [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
-                    [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
-                    [class.border-red-500]="isDestinationTagInvalid()"
-                    (focus)="isDestinationTagFocused.set(true)"
-                    (blur)="isDestinationTagFocused.set(false)"
-                    (keydown)="utilsService.preventNegative($event)"
-                    [ngModel]="xrplTxOptionsStore.destinationTag()"
-                    (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
-                    placeholder="e.g. 1123456"
-                    step="1"
-                    min="0"
-               />
+               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
 
                @if (isDestinationTagInvalid()) {
                <p class="form-error">Destination Tag must be a positive number</p>
@@ -88,21 +78,7 @@
                <div class="space-y-2">
                     <label class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input
-                         type="number"
-                         class="input-base-with-validation"
-                         [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
-                         [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
-                         [class.border-red-500]="isDestinationTagInvalid()"
-                         (focus)="isDestinationTagFocused.set(true)"
-                         (blur)="isDestinationTagFocused.set(false)"
-                         (keydown)="utilsService.preventNegative($event)"
-                         [ngModel]="xrplTxOptionsStore.destinationTag()"
-                         (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
-                         placeholder="e.g. 1123456"
-                         step="1"
-                         min="0"
-                    />
+                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
 
                     @if (isDestinationTagInvalid()) {
                     <p class="form-error">Destination Tag must be a positive number</p>
@@ -112,21 +88,7 @@
                <div class="space-y-2">
                     <label class="label-primary">Source Tag</label>
                     <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-                    <input
-                         type="number"
-                         class="input-base-with-validation"
-                         [class.border-gray-200]="!isSourceTagInvalid() && !isSourceTagFocused()"
-                         [class.border-green-500]="isSourceTagFocused() && !isSourceTagInvalid()"
-                         [class.border-red-500]="isSourceTagInvalid()"
-                         (focus)="isSourceTagFocused.set(true)"
-                         (blur)="isSourceTagFocused.set(false)"
-                         (keydown)="utilsService.preventNegative($event)"
-                         [ngModel]="xrplTxOptionsStore.sourceTag()"
-                         (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
-                         placeholder="e.g. 1123456"
-                         step="1"
-                         min="0"
-                    />
+                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isSourceTagInvalid()" [isInvalid]="isSourceTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
 
                     @if (isSourceTagInvalid()) {
                     <p class="form-error">Source Tag must be a positive number</p>
@@ -134,23 +96,83 @@
                </div>
           </div>
 
-          <!-- Invoice ID -->
-          <div class="space-y-2">
-               <label class="label-primary">Invoice ID</label>
-               <p class="text-secondary">Arbitrary 256-bit hash representing a specific reason or identifier for this payment.</p>
-               <input class="input-base" placeholder="64 hex chars" maxlength="64" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" />
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+               <!-- Invoice ID -->
+               <div class="space-y-2">
+                    <label class="label-primary">Invoice ID</label>
+                    <p class="text-secondary">Arbitrary 256-bit hash representing a specific reason or a specific identifier for this payment.</p>
 
-               @if (xrplTxOptionsStore.invoiceId()) {
-               <div class="rounded-2xl border border-gray-100 bg-gray-50 p-3">
-                    <p class="text-secondary">Will be sent as hex:</p>
-                    <code class="mt-1 block break-all font-mono text-sm text-gray-700">{{ invoiceIdHex() || '(empty)' }}</code>
-                    <p class="mt-1 mb-3 text-sm text-gray-600">
-                         Length: {{ invoiceIdHexLengthBytes() }} bytes @if (isInvoiceIdTooLong()) {
-                         <span class="ml-1 font-medium text-red-600">→ Too long (max 256 bytes)</span>
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidInvoiceId()" [isInvalid]="hasInvalidInvoiceId()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" placeholder="e.g. 1123456" />
+
+                         @if (xrplTxOptionsStore.invoiceId()) {
+                         <button type="button" (click)="xrplTxOptionsStore.setField('invoiceId', '')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear invoice ID">
+                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                         </button>
                          }
-                    </p>
+                    </div>
+
+                    @if (xrplTxOptionsStore.invoiceId()) {
+                    <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                         <div class="flex items-start justify-between gap-4">
+                              <div class="flex-1">
+                                   <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Invoice ID (Hex)</p>
+
+                                   <code class="block break-all font-mono text-sm text-gray-700"> {{ invoiceIdHex() || '(empty)' }} </code>
+
+                                   @if (!isValidInvoiceId() && invoiceIdHex()) {
+                                   <p class="form-error">Must be exactly 64 hexadecimal characters (0-9, A-F)</p>
+                                   }
+                              </div>
+
+                              <div class="text-right">
+                                   <p class="text-secondary">Hex Length</p>
+
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="!isValidInvoiceId()" [class.text-green-600]="isValidInvoiceId()">{{ invoiceIdHexLength() }} / 64 characters</p>
+                              </div>
+                         </div>
+                    </div>
+                    }
                </div>
-               }
+
+               <!-- Domain ID -->
+               <div class="space-y-2">
+                    <label class="label-primary">Domain ID</label>
+
+                    <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
+
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidDomainId()" [isInvalid]="hasInvalidDomainId()" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" placeholder="example.com or hex value" />
+
+                         @if (permissionedDomainStoreService.domainId()) {
+                         <button type="button" (click)="permissionedDomainStoreService.setField('domainId', '')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear domain ID">
+                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (permissionedDomainStoreService.domainId()) {
+                    <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                         <div class="flex items-start justify-between gap-4">
+                              <div class="flex-1">
+                                   <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Domain Validation</p>
+
+                                   <code class="block break-all font-mono text-sm text-gray-700"> {{ permissionedDomainStoreService.domainId() }} </code>
+
+                                   @if (hasInvalidDomainId()) {
+                                   <p class="form-error">Must be a valid domain name (max 253 chars) or hex string (max 512 chars)</p>
+                                   }
+                              </div>
+
+                              <div class="text-right">
+                                   <p class="text-secondary">Length</p>
+
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="hasInvalidDomainId()" [class.text-green-600]="!hasInvalidDomainId()">{{ permissionedDomainStoreService.domainId().length || 0 }} / 512 chars</p>
+                              </div>
+                         </div>
+                    </div>
+                    }
+               </div>
           </div>
 
           <!-- Check Expiration (for createCheck only) -->
@@ -162,18 +184,40 @@
 
           <!-- Domain + Credential (for sendXrp only) -->
           @if (tab === 'sendXrp') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <div class="space-y-2">
-                    <label class="label-primary">Domain ID</label>
-                    <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
-                    <input class="input-base" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" />
-               </div>
+          <div class="space-y-2">
+               <label class="label-primary">Credential IDs</label>
+               <p class="text-secondary">Credentials associated with the sender of this transaction. The credentials included must not be expired.</p>
 
                <div class="space-y-2">
-                    <label class="label-primary">Credential IDs</label>
-                    <p class="text-secondary">Credentials associated with the sender of this transaction. The credentials included must not be expired.</p>
-                    <textarea class="w-full resize-y rounded-2xl border border-gray-200 px-4 py-3 font-mono text-sm focus:border-green-500 focus:outline-none" rows="2" placeholder="Comma separated" [ngModel]="credentialStore.credentialID()" (ngModelChange)="onCredentialIDsChange($event)"> </textarea>
+                    @for (id of credentialStore.credentialIDs(); track $index) {
+                    <div class="flex gap-2 items-center">
+                         <input type="text" class="input-base-with-validation" app-focus-border [isValid]="!isCredentialIdInvalid(id)" [isInvalid]="isCredentialIdInvalid(id)" [value]="id" (input)="updateCredentialId($index, $event)" [class.border-red-500]="isCredentialIdInvalid(id)" [class.border-gray-200]="!isCredentialIdInvalid(id)" placeholder="Credential ID" />
+                         <button type="button" (click)="removeCredentialId($index)" class="btn-icon btn-secondary" aria-label="Remove credential ID">
+                              <ng-icon name="heroTrash" size="16" />
+                         </button>
+                    </div>
+                    }
                </div>
+
+               @if (hasInvalidCredentialIDs()) {
+               <p class="form-error">Each Credential ID must be non-empty and less than 256 characters</p>
+               }
+
+               <div class="flex gap-2 items-start mt-3">
+                    <div class="relative flex-1">
+                         <input type="text" class="input-base-with-validation flex-1 pr-10" app-focus-border [isValid]="!isEnteredCredentialIdInvalid()" [isInvalid]="isEnteredCredentialIdInvalid()" [(ngModel)]="newCredentialId" (keydown.enter)="addCredentialId()" placeholder="New credential ID" maxlength="256" />
+
+                         @if (newCredentialId()) {
+                         <button type="button" (click)="newCredentialId.set('')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear credential ID">
+                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                         </button>
+                         }
+                    </div>
+
+                    <button type="button" (click)="addCredentialId()" class="btn-primary whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50" [disabled]="!canAddCredentialId()">Add</button>
+               </div>
+
+               <div class="text-xs text-gray-500">{{ credentialStore.credentialIDs().length }} credential ID(s) added</div>
           </div>
           }
      </div>
@@ -187,21 +231,7 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input
-                    type="number"
-                    class="input-base-with-validation"
-                    [class.border-gray-200]="!isDestinationTagInvalid() && !isDestinationTagFocused()"
-                    [class.border-green-500]="isDestinationTagFocused() && !isDestinationTagInvalid()"
-                    [class.border-red-500]="isDestinationTagInvalid()"
-                    (focus)="isDestinationTagFocused.set(true)"
-                    (blur)="isDestinationTagFocused.set(false)"
-                    (keydown)="utilsService.preventNegative($event)"
-                    [ngModel]="xrplTxOptionsStore.destinationTag()"
-                    (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
-                    placeholder="e.g. 1123456"
-                    step="1"
-                    min="0"
-               />
+               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
 
                @if (isDestinationTagInvalid()) {
                <p class="form-error">Destination Tag must be a positive number</p>
@@ -211,21 +241,7 @@
           <div class="space-y-2">
                <label class="label-primary">Source Tag</label>
                <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-               <input
-                    type="number"
-                    class="input-base-with-validation"
-                    [class.border-gray-200]="!isSourceTagInvalid() && !isSourceTagFocused()"
-                    [class.border-green-500]="isSourceTagFocused() && !isSourceTagInvalid()"
-                    [class.border-red-500]="isSourceTagInvalid()"
-                    (focus)="isSourceTagFocused.set(true)"
-                    (blur)="isSourceTagFocused.set(false)"
-                    (keydown)="utilsService.preventNegative($event)"
-                    [ngModel]="xrplTxOptionsStore.sourceTag()"
-                    (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
-                    placeholder="e.g. 1123456"
-                    step="1"
-                    min="0"
-               />
+               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isSourceTagInvalid()" [isInvalid]="isSourceTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
 
                @if (isSourceTagInvalid()) {
                <p class="form-error">Source Tag must be a positive number</p>

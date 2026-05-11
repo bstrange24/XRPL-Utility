@@ -20,7 +20,7 @@
                @if (byteLengthDidDocument() > 256) {
                <span class="font-medium text-red-600">❌ Exceeded limit – transaction will fail</span>
                } @else if (byteLengthDidDocument() > 200) {
-               <span class="font-medium text-amber-600">⚠️ Approaching limit</span>
+               <span class="font-medium text-amber-600"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Approaching limit</span>
                }
           </div>
      </div>
@@ -45,7 +45,7 @@
                @if (byteLengthUriData() > 256) {
                <span class="font-medium text-red-600">❌ Exceeded limit</span>
                } @else if (byteLengthUriData() > 200) {
-               <span class="font-medium text-amber-600">⚠️ Approaching limit</span>
+               <span class="font-medium text-amber-600"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Approaching limit</span>
                }
           </div>
      </div>
@@ -71,7 +71,7 @@
                @if (byteLengthDidData() > 256) {
                <span class="font-medium text-red-600">❌ Exceeded limit – transaction will fail</span>
                } @else if (byteLengthDidData() > 200) {
-               <span class="font-medium text-amber-600">⚠️ Approaching limit</span>
+               <span class="font-medium text-amber-600"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Approaching limit</span>
                }
           </div>
      </div>

@@ -32,9 +32,9 @@ export class AccountMetadataComponent {
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      nftMinterFocused = signal(false);
-transferRateFocused = signal(false);
-tickSizeFocused = signal(false);
-domainFocused = signal(false);
+     transferRateFocused = signal(false);
+     tickSizeFocused = signal(false);
+     domainFocused = signal(false);
 
      // Computed signal: the final hex that will be sent
      readonly domainHex = computed(() => {
@@ -144,19 +144,20 @@ domainFocused = signal(false);
 
      // Get validation error message
      validationErrorMessage = computed(() => {
+          const messages: string[] = [];
           if (this.isNftMinterInvalid()) {
-               return 'NFT Minter address is invalid. Please enter a valid XRP address (starting with "r").';
+               messages.push('NFT Minter address is invalid. Please enter a valid XRP address.');
           }
           if (this.isTransferRateInvalid()) {
-               return 'Transfer Rate must be a number between 0 and 100.';
+               messages.push('Transfer Rate must be a number between 0 and 100.');
           }
           if (this.isTickSizeInvalid()) {
-               return 'Tick Size must be a number between 3 and 15.';
+               messages.push('Tick Size must be a number between 3 and 15.');
           }
           if (this.isDomainTooLong()) {
-               return `Domain exceeds 256 byte limit (current: ${this.domainHexLengthBytes()}/256 bytes). Please shorten the domain.`;
+               messages.push(`Domain exceeds 256 byte limit (current: ${this.domainHexLengthBytes()}/256 bytes). Please shorten the domain.`);
           }
-          return '';
+          return messages;
      });
 
      // Helper method for template
@@ -179,65 +180,3 @@ domainFocused = signal(false);
           return;
      }
 }
-
-// import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-// import { AccountConfiguratorStoreService } from '../../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
-// import { AccountConfiguratorUtilService } from '../../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
-// import { TransactionUiService } from '../../../../../services/transaction-ui/transaction-ui.service';
-// import { LucideAngularModule } from 'lucide-angular';
-// import { FormsModule } from '@angular/forms';
-// import { CommonModule } from '@angular/common';
-// import * as xrpl from 'xrpl';
-// import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
-// import { NgIcon } from '@ng-icons/core';
-// import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
-// import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
-
-// @Component({
-//      selector: 'app-account-metadata',
-//      standalone: true,
-//      imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
-//      templateUrl: './account-metadata.component.html',
-//      styleUrl: './account-metadata.component.css',
-//      changeDetection: ChangeDetectionStrategy.OnPush,
-// })
-// export class AccountMetadataComponent {
-//      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
-//      public readonly connectionGuard = inject(ConnectionGuardService);
-//      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
-//      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
-//      protected txUiService = inject(TransactionUiService);
-
-//      readonly performAction = output<'Y' | 'N' | ''>();
-//      canSubmit = input<boolean>();
-
-//      // Computed signal: the final hex that will be sent
-//      readonly domainHex = computed(() => {
-//           const input = this.accountConfiguratorStoreService.domain()?.trim() ?? '';
-//           if (!input) return '';
-
-//           // If already hex → keep it (and uppercase for consistency)
-//           if (/^[0-9A-Fa-f]+$/.test(input)) {
-//                return input.toUpperCase();
-//           }
-
-//           // Otherwise convert string to hex
-//           return xrpl.convertStringToHex(input);
-//      });
-
-//      // Computed: length in bytes (hex chars / 2)
-//      readonly domainHexLengthBytes = computed(() => {
-//           const hex = this.domainHex();
-//           return hex ? Math.ceil(hex.length / 2) : 0;
-//      });
-
-//      // Optional: is the domain too long?
-//      readonly isDomainTooLong = computed(() => this.domainHexLengthBytes() > 256);
-
-//      // Helper method for the template if you prefer calling a function
-//      domainToHex(value: string): string {
-//           if (!value) return '';
-//           if (/^[0-9A-Fa-f]+$/.test(value)) return value.toUpperCase();
-//           return xrpl.convertStringToHex(value);
-//      }
-// }

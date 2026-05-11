@@ -26,7 +26,10 @@
                     <!-- Enable Flag -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">⚙️ Enable Flags</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                                   <lucide-icon name="lucideLayoutTemplate" size="14" class="text-green-700"></lucide-icon>
+                                   Enable Flags
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between"><span class="text-gray-700">SetFlag</span><span class="text-green-600 font-medium">Required</span></div>
@@ -37,7 +40,10 @@
                     <!-- Disable Flag -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">⚙️ Disable Flags</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                                   <lucide-icon name="lucideLayoutTemplate" size="14" class="text-red-700"></lucide-icon>
+                                   Clear Flags
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between"><span class="text-gray-700">ClearFlag</span><span class="text-green-600 font-medium">Required</span></div>
@@ -49,15 +55,17 @@
 
           <!-- Important Notes -->
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>Use <strong>SetFlag</strong> to enable or <strong>ClearFlag</strong> to disable — only one of each per transaction.</li>
                     <li>Check current flags in your <strong>AccountRoot</strong> via <code>account_info</code>.</li>
                     <li>Some flags are irreversible once enabled (see warnings below).</li>
                     <li>Transaction still costs a fee even if no change occurs.</li>
                </ul>
+          </div>
 
-               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Irreversible & Restricted Flags</h5>
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-5">
+               <h5 class="font-semibold text-red-700 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-red-700 flex-shrink-0 mt-0.5" />Irreversible & Restricted Flags</h5>
                <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
                     <li><strong>asfNoFreeze</strong>, <strong>asfAllowTrustLineClawback</strong>, <strong>asfAllowTrustLineLocking</strong> — irreversible.</li>
                     <li><strong>asfDisableMaster</strong> — requires alternative signing method first.</li>
@@ -103,7 +111,7 @@
           </div>
 
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>All fields are optional — only include what you want to change.</li>
                     <li>To clear a field, set it to empty value or 0.</li>
@@ -139,7 +147,7 @@
           </div>
 
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>Use <strong>SetFlag: 9</strong> to enable and <strong>ClearFlag: 9</strong> to disable.</li>
                     <li>Once enabled, only preauthorized accounts can send you funds.</li>
@@ -178,10 +186,12 @@
                <div class="grid grid-cols-1 gap-5 lg:grid-cols-1">
                     <!-- Create / Update -->
                     <div class="rounded-2xl border border-gray-100 p-5">
-                         <div class="mb-4 flex items-center gap-2">
-                              <span class="rounded-full bg-blue-100 px-3.5 py-1 text-sm font-medium text-blue-700"> 🗝️ Create / Update Signer List </span>
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                                   <ng-icon name="heroKey" size="14" class="text-green-700" />
+                                   Create / Update Signer List
+                              </span>
                          </div>
-
                          <div class="space-y-3 text-sm">
                               <div class="flex items-center justify-between">
                                    <span class="text-gray-700">SignerEntries</span>
@@ -197,10 +207,12 @@
 
                     <!-- Remove -->
                     <div class="rounded-2xl border border-gray-100 p-5">
-                         <div class="mb-4 flex items-center gap-2">
-                              <span class="rounded-full bg-red-100 px-3.5 py-1 text-sm font-medium text-red-700"> 🗑️ Remove Signer List </span>
+                         <div class="flex items-center gap-2 mb-4">
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                                   <ng-icon name="heroTrash" size="14" class="text-red-700" />
+                                   Remove Signer List
+                              </span>
                          </div>
-
                          <div class="space-y-3 text-sm">
                               <div class="flex items-center justify-between">
                                    <span class="text-gray-700">SignerEntries</span>
@@ -217,15 +229,17 @@
 
           <!-- Important Notes -->
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li><strong>SignerListSet</strong> replaces the entire list — you must provide the full desired list.</li>
                     <li>Maximum <strong>8 signers</strong>. Each signer has a weight (1–255).</li>
                     <li>Creating/updating a signer list increases your <strong>owner reserve</strong>.</li>
                     <li>Master key cannot be added as a signer.</li>
                </ul>
+          </div>
 
-               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Security & Lockout Risks</h5>
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-5">
+               <h5 class="font-semibold text-red-800 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-red-800 flex-shrink-0 mt-0.5" />Security & Lockout Risks</h5>
                <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
                     <li>If you disable the master key and lose access to enough signers, you may permanently lose control of the account.</li>
                     <li>Always keep access to enough signers to meet the quorum.</li>
@@ -264,7 +278,10 @@
                     <!-- Assign / Change -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🔑 Assign / Change RegularKey</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                                   <ng-icon name="heroKey" size="14" class="text-green-700" />
+                                   Assign / Change RegularKey
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
@@ -277,7 +294,10 @@
                     <!-- Remove -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">🗑️ Remove RegularKey</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                                   <ng-icon name="heroTrash" size="14" class="text-red-700" />
+                                   Remove RegularKey
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
@@ -291,14 +311,16 @@
 
           <!-- Important Notes -->
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroPencilSquare" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>Use <strong>SetRegularKey</strong> transaction to assign or remove the regular key.</li>
                     <li>The RegularKey must be a valid XRPL address with known secret.</li>
                     <li>You can use Regular Key for daily transactions while keeping Master Key offline.</li>
                </ul>
+          </div>
 
-               <h5 class="font-semibold text-red-700 mt-6 mb-3 flex items-center gap-2">⚠️ Security Risks</h5>
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-5">
+               <h5 class="font-semibold text-red-800 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-red-800 flex-shrink-0 mt-0.5" />Security Risks</h5>
                <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
                     <li>If you disable the master key and lose the regular key, you permanently lose access to the account.</li>
                     <li>Never set RegularKey to an unknown or lost secret.</li>

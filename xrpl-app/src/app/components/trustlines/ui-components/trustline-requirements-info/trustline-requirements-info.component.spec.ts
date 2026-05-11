@@ -105,12 +105,12 @@ describe('TrustlineRequirementsInfoComponent', () => {
           });
 
           it('should have important notes section', () => {
-               const notesTitle = '📝 Important Notes';
+               const notesTitle = '<ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes';
                expect(notesTitle).toContain('Important Notes');
           });
 
           it('should have common gotchas subsection', () => {
-               const gotchasTitle = '⚠️ Common Gotchas';
+               const gotchasTitle = '<ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Common Gotchas';
                expect(gotchasTitle).toContain('Common Gotchas');
           });
      });

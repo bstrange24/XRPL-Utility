@@ -193,8 +193,6 @@ export class CredentialViewModelService {
                case 'createCredential':
                     return [...s.pendingIssued, ...s.acceptedIssued];
                case 'acceptCredential':
-                    // FIXED: Only show pending to accept
-                    // return s.pendingToAccept;
                     return s.pendingToAccept.length ? s.pendingToAccept : s.acceptedByMe;
                case 'deleteCredential':
                     return s.issuedByMe;

@@ -111,7 +111,9 @@ export class CredentialsSummaryComponent {
                list = list.filter(cred => {
                     switch (quick) {
                          case 'accepted':
-                              return cred.accepted && !cred.expired;
+                              // return cred.accepted && !cred.expired;
+                              // Show both pending (can be accepted) AND already accepted credentials
+                              return true; // This will show all credentials since both pending and accepted are relevant
                          case 'expired':
                               return cred.expired;
                          case 'issued':

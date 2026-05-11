@@ -5,11 +5,12 @@ import { PermissionedDomainStoreService } from '../../../../services/permissione
 import { PermissionedDomainViewModelService } from '../../../../services/permissioned-domain/permissioned-domain-view-model/permissioned-domain-view-model.service';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-permission-domain-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, LucideAngularModule],
+     imports: [CommonModule, NgIcon, FormsModule, SelectSearchDropdownComponent, LucideAngularModule],
      templateUrl: './permission-domain-delete-form.component.html',
      styleUrl: './permission-domain-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

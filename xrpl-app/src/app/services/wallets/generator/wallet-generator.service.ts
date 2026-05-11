@@ -20,8 +20,8 @@ export class WalletGeneratorService {
      private readonly xrplService = inject(XrplService);
      private readonly utilsService = inject(UtilsService);
 
-     async generateWallet(type: WalletImportType, environment: string, algorithm: string) {
-          const wallet = await this.generateViaApi(type, environment, algorithm);
+     async generateWallet(type: WalletImportType, environment: string, algorithm: string, wordCount?: number) {
+          const wallet = await this.generateViaApi(type, environment, algorithm, wordCount);
           await this.utilsService.sleep(6000);
 
           await this.ensureAccountExists(wallet.address);
@@ -80,11 +80,22 @@ export class WalletGeneratorService {
           await this.xrplService.getAccountInfo(client, address, 'validated', '');
      }
 
-     private async generateViaApi(type: WalletImportType, environment: string, algorithm: string) {
-          return this.httpPost<any>(`/api/create-wallet/${type}/`, {
+     private async generateViaApi(type: WalletImportType, environment: string, algorithm: string, wordCount?: number) {
+          const body: any = {
                environment,
                algorithm,
-          });
+          };
+
+          // Add wordCount for mnemonic generation
+          if (type === 'mnemonic' && wordCount) {
+               body.wordCount = wordCount;
+          }
+
+          return this.httpPost<any>(`/api/create-wallet/${type}/`, body);
+          // return this.httpPost<any>(`/api/create-wallet/${type}/`, {
+          //      environment,
+          //      algorithm,
+          // });
      }
 
      private async deriveViaApi(type: WalletImportType, value: string | string[], algorithm: string) {
@@ -97,7 +108,7 @@ export class WalletGeneratorService {
 
                case 'secretNumbers':
                     return this.httpPost<any>(`/api/derive/secretNumbers`, {
-                         secretNumbers: Array.isArray(value) ? value : value.split(',').map(v => v.trim()),
+                         secretNumbers: Array.isArray(value) ? value : value.split(/[,\s]+/).map(v => v.trim()),
                          algorithm,
                     });
 

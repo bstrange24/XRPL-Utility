@@ -54,7 +54,7 @@
           </div>
 
           <div class="important-notes">
-               <h5>📝 Important Notes:</h5>
+               <h5><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes:</h5>
                <ul>
                     <li>Requires the **Delegate** amendment (or related permission delegation amendment) to be enabled on the network.</li>
                     <li>Each delegate entry creates a **Delegate** ledger object owned by your account, consuming **owner reserve** (~0.2 XRP per delegate) until removed.</li>
@@ -65,7 +65,7 @@
                     <li>Use cases: allow a hot wallet to pay bills, let a custodian manage offers, grant limited access to a service without full control.</li>
                </ul>
                <p></p>
-               <h5 class="warning-title">⚠️ Security & Revocation Risks</h5>
+               <h5 class="warning-title"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Security & Revocation Risks</h5>
                <p style="color: #92400e">Delegating permissions gives real control — a compromised delegate can misuse allowed actions until revoked.</p>
                <ul>
                     <li>Once granted, permissions are **active immediately** — if the delegate account is hacked, they can perform allowed txs until you submit a revocation DelegateSet.</li>

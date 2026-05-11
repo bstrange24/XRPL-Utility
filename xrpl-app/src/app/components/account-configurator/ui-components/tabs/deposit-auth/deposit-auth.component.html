@@ -22,17 +22,18 @@
                     </div>
 
                     <p class="text-secondary">The account address to pre-authorize</p>
-                    <input type="text" 
-                         class="input-base-with-validation" 
-                        [class.border-gray-200]="!isAddressInvalid(depositAuthAddress.account) && focusedAddressIndex() !== i"
+                    <input
+                         type="text"
+                         class="input-base-with-validation"
+                         [class.border-gray-200]="!isAddressInvalid(depositAuthAddress.account) && focusedAddressIndex() !== i"
                          [class.border-green-500]="focusedAddressIndex() === i && !isAddressInvalid(depositAuthAddress.account)"
                          [class.border-red-500]="isAddressInvalid(depositAuthAddress.account)"
                          (focus)="focusedAddressIndex.set(i)"
                          (blur)="focusedAddressIndex.set(null)"
-                         [ngModel]="depositAuthAddress.account" 
-                         (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)" 
-                         placeholder="r..." />
-
+                         [ngModel]="depositAuthAddress.account"
+                         (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)"
+                         placeholder="r..."
+                    />
 
                     <!-- Helper text for invalid address -->
                     @if (isAddressInvalid(depositAuthAddress.account)) {
@@ -51,12 +52,15 @@
 
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
-     <div class="alert-error mt-4">
+     <div class="alert-error">
           <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">
-               @for (msg of validationErrorMessages(); track $index) {
-               <div class="text-sm">{{ msg }}</div>
-               }
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
           </div>
      </div>
      }

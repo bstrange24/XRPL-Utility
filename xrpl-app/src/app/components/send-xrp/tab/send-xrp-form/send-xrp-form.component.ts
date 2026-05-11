@@ -58,27 +58,18 @@ export class SendXrpFormComponent {
 
      private readonly optionsHasError = signal(false);
      private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
 
      // Get the final destination address (from dropdown or manual entry)
      getFinalDestination = computed(() => {
-          const searchQuery = this.destinationSearchQuery()?.trim() || '';
+          const query = this.destinationSearchQuery()?.trim() || '';
 
-          // 1. If user is typing something, prioritize the search query (manual entry)
-          if (searchQuery) {
-               if (xrpl.isValidAddress(searchQuery)) {
-                    return searchQuery;
-               } else {
-                    return null; // invalid typed value
-               }
+          if (query) {
+               return xrpl.isValidAddress(query) ? query : null;
           }
 
-          // 2. Otherwise fall back to selected dropdown item
-          const selectedItem = this.selectedDestinationItem();
-          if (selectedItem?.id && xrpl.isValidAddress(selectedItem.id)) {
-               return selectedItem.id;
-          }
-
-          return null;
+          const selected = this.selectedDestinationItem();
+          return selected?.id && xrpl.isValidAddress(selected.id) ? selected.id : null;
      });
 
      // Validation methods
@@ -88,10 +79,20 @@ export class SendXrpFormComponent {
      });
 
      isDestinationInvalid = computed(() => {
-          const destination = this.getFinalDestination();
-          // Only show error if user has entered something (either selected or typed)
-          const hasInput = this.selectedDestinationAddress() || this.destinationSearchQuery();
-          return hasInput && !this.isDestinationValid();
+          const query = this.destinationSearchQuery()?.trim() || '';
+          const selected = this.selectedDestinationItem();
+
+          // If user is typing (has search query), check it directly
+          if (query.length > 0) {
+               return !xrpl.isValidAddress(query);
+          }
+
+          // If nothing selected and no query → invalid only if they tried something
+          if (!selected?.id) {
+               return false;
+          }
+
+          return !xrpl.isValidAddress(selected.id);
      });
 
      isAmountValid = computed(() => {
@@ -119,7 +120,6 @@ export class SendXrpFormComponent {
           return !Number.isFinite(numAmount) || numAmount <= 0;
      });
 
-     // Combined validation for Send button
      canSendXrp = computed(() => {
           // Must have valid destination
           if (!this.isDestinationValid()) return false;
@@ -127,13 +127,39 @@ export class SendXrpFormComponent {
           // Must have valid amount (> 0)
           if (!this.isAmountValid()) return false;
 
-          return this.canSubmit();
+          // Check options validation if enabled
+          if (this.wantsOptions() && this.optionsHasError()) return false;
+
+          return true; // ← Remove this.canSubmit()
      });
 
-     onOptionsValidationChange(validation: { hasError: boolean; message: string }) {
+     onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
           this.optionsHasError.set(validation.hasError);
           this.optionsErrorMsg.set(validation.message || '');
+          this.optionsErrors.set(validation.errors || []);
      }
+
+     // Update validationErrorMessages to include all options errors
+     validationErrorMessages = computed(() => {
+          const errors: string[] = [];
+
+          // Destination error
+          if (this.isDestinationInvalid()) {
+               errors.push('Destination address is invalid. Please enter a valid XRP address.');
+          }
+
+          // Amount error
+          if (this.isAmountInvalid()) {
+               errors.push('Amount must be a positive number greater than 0.');
+          }
+
+          // Options errors - add ALL of them
+          if (this.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors()); // Spread all errors into the array
+          }
+
+          return errors;
+     });
 
      // Check if there are any validation errors
      hasValidationErrors = computed(() => {

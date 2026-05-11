@@ -114,13 +114,7 @@ export class WalletsUtilService {
      }
 
      normalizeMnemonic(input: string): string {
-          return (
-               input
-                    // .toLowerCase()
-                    // .replaceAll(',', '') // remove commas
-                    .replaceAll(/\s+/g, ' ') // normalize spacing
-                    .trim()
-          );
+          return input.replaceAll(/\s+/g, ' ').trim();
      }
 
      normalizeSecrets(input: string): string[] {
@@ -161,24 +155,25 @@ export class WalletsUtilService {
           if (mnemonic === null || mnemonic === undefined || mnemonic === '') {
                return false;
           }
+
           const cleaned = this.normalizeMnemonic(mnemonic);
-          const words = cleaned.split(' ');
 
-          // Basic structural validation (24 words, alphabetic only)
-          if (words.length !== 24) return false;
-
-          return words.every(word => /^[a-z]+$/.test(word));
+          return bip39.validateMnemonic(cleaned);
      }
 
      isValidSecretNumber(secret: string): boolean {
           return /^\d{6}$/.test(secret);
      }
 
-     convertSecretNumberStringToArray(rawSecrets: string) {
+     convertSecretNumberStringToArray(rawSecrets: string): string[] {
+          if (!rawSecrets) {
+               return [];
+          }
+
           return rawSecrets
-               .split(',')
+               .split(/[,\s]+/)
                .map(s => s.trim())
-               .filter(s => s.length > 0);
+               .filter(Boolean);
      }
 
      truncateAddress(address: string): string {

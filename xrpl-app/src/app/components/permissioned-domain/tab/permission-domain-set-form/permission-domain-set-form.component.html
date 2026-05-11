@@ -3,7 +3,8 @@
      <!-- Domain Action Selector Card -->
      <div class="card-base">
           <h4 class="section-heading">
-               <lucide-icon name="scroll-text" class="section-heading-icon-tan"></lucide-icon>
+               <!-- <lucide-icon name="scroll-text" class="section-heading-icon-tan"></lucide-icon> -->
+               <ng-icon name="heroShieldCheck" size="18" class="text-green-700" />
                Permission Domain Details
           </h4>
 
@@ -24,7 +25,7 @@
                          <div class="font-medium text-gray-900">🔄 Update Existing Domain</div>
                          <div class="mt-1 text-sm text-gray-500">Replace credentials on an existing domain</div>
                          @if (permissionedDomainViewModelService.domainItems().length === 0) {
-                         <div class="mt-2 text-xs font-medium text-amber-600">⚠️ No domains available</div>
+                         <div class="mt-2 text-xs font-medium text-amber-600"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> No domains available</div>
                          }
                     </div>
                </label>

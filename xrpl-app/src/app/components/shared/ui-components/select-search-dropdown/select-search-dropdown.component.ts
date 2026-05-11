@@ -4,6 +4,7 @@ import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { animate, style, transition, trigger } from '@angular/animations';
+import * as xrpl from 'xrpl';
 
 export interface SelectItem {
      id: string;
@@ -34,11 +35,19 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
                const external = this.searchQueryInput();
                this.searchQuery.set(external ?? '');
           });
+
+          effect(() => {
+               const shouldClose = this.closeWhenInvalid() && this.isInvalidAddress();
+               if (shouldClose) {
+                    this.close();
+               }
+          });
      }
 
      // View children & registry
      @ViewChild('inputEl', { static: true }) inputEl!: ElementRef<HTMLInputElement>;
      @ViewChild('dropdown') dropdownTpl!: TemplateRef<any>;
+     closeWhenInvalid = input<boolean>(false);
 
      private static openInstance: SelectSearchDropdownComponent | null = null;
 
@@ -72,6 +81,8 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      disableCurrencySelection = input<boolean>(false);
      // Computed for internal use
      isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
+     xrpAddressMode = input<boolean>(false); // Enable XRP validation mode
+     showErrorOnInvalidAddress = input<boolean>(false);
 
      // Internal state
      private readonly overlay = inject(Overlay);
@@ -111,6 +122,14 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           if (!q) return this.items();
 
           return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q));
+     });
+
+     isInvalidAddress = computed(() => {
+          const query = this.searchQuery().trim();
+
+          if (!query) return false;
+
+          return !xrpl.isValidAddress(query);
      });
 
      // Lifecycle
@@ -267,3 +286,5 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.close();
      }
 }
+
+///

@@ -31,28 +31,57 @@ export class MultiSignComponent {
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      focusedAccountIndex = signal<number | null>(null);
-focusedSeedIndex = signal<number | null>(null);
-focusedWeightIndex = signal<number | null>(null);
-quorumFocused = signal(false);
+     focusedSeedIndex = signal<number | null>(null);
+     focusedWeightIndex = signal<number | null>(null);
+     quorumFocused = signal(false);
      protected xrpl = xrpl;
 
-      isAddressValid(address: string): boolean {
-               if (!address) return false;
-               return xrpl.isValidAddress(address);
-          }
-     
-          isAddressInvalid(address: string): boolean {
-               return !!address && !xrpl.isValidAddress(address);
+     isAddressValid(address: string): boolean {
+          if (!address) return false;
+          return xrpl.isValidAddress(address);
+     }
+
+     isAddressInvalid(address: string): boolean {
+          return !!address && !xrpl.isValidAddress(address);
+     }
+
+     isSeedValid(secret: string): boolean {
+          // if (!seed) return false;
+          // return xrpl.isValidSecret(seed);
+          if (!secret || secret.trim().length === 0) {
+               return false;
           }
 
-          isSeedValid(seed: string): boolean {
-               if (!seed) return false;
-               return xrpl.isValidSecret(seed);
+          const trimmedSecret = secret.trim();
+
+          // Check if it's a mnemonic - reject it
+          if (trimmedSecret.includes(' ') && /^[a-z\s]+$/i.test(trimmedSecret)) {
+               console.warn('Mnemonics are not supported for regular keys. Please use a family seed (starts with "s") or secret numbers.');
+               return false;
           }
-     
-          isSeedInvalid(seed: string): boolean {
-               return !!seed && !xrpl.isValidSecret(seed);
+
+          // Check if it's secret numbers (contains spaces and digits)
+          if (trimmedSecret.includes(' ') && /^[\d\s]+$/.test(trimmedSecret)) {
+               return xrpl.isValidSecret(trimmedSecret);
           }
+
+          // Check if it's a family seed (starts with 's' and no spaces)
+          if (!trimmedSecret.includes(' ') && trimmedSecret.startsWith('s')) {
+               return xrpl.isValidSecret(trimmedSecret);
+          }
+
+          return xrpl.isValidSecret(trimmedSecret);
+     }
+
+     isSeedInvalid(seed: string): boolean {
+          return !!seed && !this.isSeedValid(seed);
+     }
+
+     isMnemonic(secret: string): boolean {
+          if (!secret) return false;
+          const trimmed = secret.trim();
+          return trimmed.includes(' ') && /^[a-z\s]+$/i.test(trimmed);
+     }
 
      // Computed total signer weight
      totalSignerWeight = computed(() => {

@@ -7,6 +7,9 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { PermissionedDomainStoreService } from '../../permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -19,6 +22,9 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly toastService = inject(ToastService);
      public readonly didStoreService = inject(DidStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+     public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
 
      constructor() {
           super();
@@ -33,5 +39,10 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
 
      clearInputFields(): void {
           this.txUiService.wantsOptions.set(false);
+          this.xrplTxOptionsStore.setField('destinationTag', '');
+          this.xrplTxOptionsStore.setField('sourceTag', '');
+          this.xrplTxOptionsStore.setField('invoiceId', '');
+          this.permissionedDomainStoreService.setField('domainId', '');
+          this.accountConfiguratorStoreService.setField('amount', '');
      }
 }

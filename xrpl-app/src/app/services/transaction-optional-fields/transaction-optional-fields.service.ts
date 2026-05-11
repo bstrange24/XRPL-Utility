@@ -69,24 +69,33 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
           }
 
           if (txType === 'sendXrp') {
-               const domainInput = this.permissionedDomainStoreService.domainId();
-               if (domainInput && domainInput !== '') {
-                    let domainHex: string;
+               const invoiceIdInput = this.xrplTxOptionsStore.invoiceId();
+               if (invoiceIdInput && invoiceIdInput !== '') {
+                    let invoiceIdHex: string;
 
-                    if (/^[0-9A-Fa-f]+$/.test(domainInput)) {
-                         // Already hex
-                         domainHex = domainInput.toUpperCase();
-                    } else {
-                         // Convert string → hex
-                         domainHex = xrpl.convertStringToHex(domainInput);
-                    }
+                    // // Validate it's already valid hex
+                    // if (/^[0-9A-Fa-f]+$/.test(invoiceIdInput)) {
+                    //      if (invoiceIdInput.length !== 64) {
+                    //           throw new Error('InvoiceID must be exactly 64 hex characters (32 bytes)');
+                    //      }
+                    //      invoiceIdHex = invoiceIdInput.toUpperCase();
+                    // } else {
+                    //      // For InvoiceID, you typically DON'T convert strings to hex
+                    //      // Instead, you'd hash the string or generate a proper ID
+                    //      throw new Error('InvoiceID must be a valid 64-character hex string');
+                    // }
 
-                    this.utilsService.setDomainId(tx, domainHex);
+                    tx.InvoiceID = invoiceIdInput;
                }
 
                const credentials = this.credentialStore.credentialIDs();
                if (credentials && credentials.length > 0) {
                     tx.CredentialIDs = credentials;
+               }
+
+               const domanId = this.permissionedDomainStoreService.domainId();
+               if (domanId && domanId !== '') {
+                    tx.DomainID = domanId;
                }
           }
 

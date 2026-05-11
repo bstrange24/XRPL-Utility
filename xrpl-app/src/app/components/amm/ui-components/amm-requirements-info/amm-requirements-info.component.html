@@ -28,7 +28,10 @@
                     <!-- Create / Manage Liquidity -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">🏦 Create / Manage Liquidity</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                                   <ng-icon name="heroShieldCheck" size="14" class="text-green-700" />
+                                   Create / Manage Liquidity
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
@@ -49,7 +52,18 @@
                     <!-- Swap / Clawback / Delete -->
                     <div class="border border-gray-100 rounded-2xl p-5">
                          <div class="flex items-center gap-2 mb-4">
-                              <span class="px-3.5 py-1 text-sm font-medium bg-amber-100 text-amber-700 rounded-full">🔄 Swap / Clawback / Delete</span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-green-100 text-green-700 rounded-full">
+                                   <ng-icon name="heroCurrencyDollar" size="14" class="text-green-700" />
+                                   Swap
+                              </span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-blue-100 text-blue-700 rounded-full">
+                                   <ng-icon name="heroArrowUturnLeft" size="14" class="text-blue-700" />
+                                   Clawback
+                              </span>
+                              <span class="inline-flex items-center gap-1.5 px-3.5 py-1 text-sm font-medium bg-red-100 text-red-700 rounded-full">
+                                   <ng-icon name="heroTrash" size="14" class="text-red-700" />
+                                   Delete
+                              </span>
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
@@ -67,8 +81,7 @@
 
           <!-- Important Notes -->
           <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2">📝 Important Notes</h4>
-
+               <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>Requires the <strong>AMM</strong> amendment (XLS-30) to be enabled.</li>
                     <li>Each AMM pool is uniquely identified by its <strong>AMM ID</strong>.</li>
@@ -78,16 +91,16 @@
                     <li>Clawback allows issuers to remove their tokens from the pool.</li>
                     <li>Deleting an AMM requires zero outstanding LP tokens.</li>
                </ul>
+          </div>
 
-               <div class="mt-6 pt-5 border-t border-amber-200">
-                    <h5 class="font-semibold text-amber-800 mb-3">⚠️ Risks & Considerations</h5>
-                    <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
-                         <li>Impermanent loss can occur if asset prices diverge.</li>
-                         <li>TradingFee is permanent — choose carefully.</li>
-                         <li>Many pools can consume significant owner reserve.</li>
-                         <li>Always test full flows on Devnet/Testnet first.</li>
-                    </ul>
-               </div>
+          <div class="rounded-2xl border border-red-200 bg-red-50 p-5">
+               <h5 class="font-semibold text-red-800 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-red-800 flex-shrink-0 mt-0.5" /> Risks & Considerations</h5>
+               <ul class="text-sm text-red-700 space-y-2 list-disc pl-5">
+                    <li>Impermanent loss can occur if asset prices diverge.</li>
+                    <li>TradingFee is permanent — choose carefully.</li>
+                    <li>Many pools can consume significant owner reserve.</li>
+                    <li>Always test full flows on Devnet/Testnet first.</li>
+               </ul>
           </div>
      </div>
      }

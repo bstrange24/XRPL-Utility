@@ -6,6 +6,7 @@ import { SummaryContainerComponent } from '../../../shared/ui-components/summary
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
 export interface ConfigItem {
      id: string;
@@ -25,7 +26,7 @@ export interface AccountConfiguratorInfo {
 @Component({
      selector: 'app-account-configurator-summary',
      standalone: true,
-     imports: [NgIcon, FormsModule, SummaryContainerComponent, SummaryItemComponent],
+     imports: [NgIcon, FormsModule, LucideAngularModule, SummaryContainerComponent, SummaryItemComponent],
      templateUrl: './account-configurator-summary.component.html',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
