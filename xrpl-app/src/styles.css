@@ -166,6 +166,11 @@
           color: var(--icon-green);
      }
 
+     .section-heading-icon-blue {
+          @apply w-5 h-5 icon-blue-700;
+          color: var(--icon-blue);
+     }
+
      .section-heading-icon-red {
           @apply w-5 h-5 icon-red-700;
           color: var(--icon-red);
@@ -450,6 +455,7 @@ body {
      --text-secondary: #6b7280;
      --icon-tan: #d6b37a;
      --icon-green: #16a34a;
+     --icon-blue: #2563eb;
      --icon-red: #dc2626;
      --icon-cyan: #d6b37a;
      --border-color: #e5e7eb;
@@ -490,6 +496,10 @@ body {
 
 .icon-green-700 {
      color: var(--icon-green);
+}
+
+.icon-blue-700 {
+     color: var(--icon-blue);
 }
 
 .icon-red-700 {
@@ -606,6 +616,7 @@ body {
 :root {
      --color-green-600: #16a34a;
      --color-blue-600: #2563eb;
+     --color-white-600: #fff;
      --color-red-600: #dc2626;
      --color-purple-600: #9333ea;
      --color-amber-600: #d97706;
@@ -614,18 +625,24 @@ body {
 .dark {
      --color-green-400: #4ade80;
      --color-blue-400: #60a5fa;
+     --color-white-400: #fff;
      --color-red-400: #f87171;
      --color-purple-400: #c084fc;
      --color-amber-400: #fbbf24;
 }
 
 /* Text color utilities */
+
 .text-green-600 {
      color: var(--color-green-600);
 }
 
 .text-blue-600 {
      color: var(--color-blue-600);
+}
+
+.text-white-600 {
+     color: var(--color-white-600);
 }
 
 .text-red-600 {
@@ -1061,6 +1078,18 @@ pre code[class*="language-"] {
 
 .group:hover .toast-progress {
      animation-play-state: paused;
+}
+
+
+.clear-button {
+     opacity: 0;
+     transform: scale(0.8);
+     transition: all 150ms ease-out;
+}
+
+.clear-button.visible {
+     opacity: 1;
+     transform: scale(1);
 }
 
 @keyframes toastProgress {

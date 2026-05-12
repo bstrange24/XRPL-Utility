@@ -3,7 +3,6 @@
      <!-- Domain Action Selector Card -->
      <div class="card-base">
           <h4 class="section-heading">
-               <!-- <lucide-icon name="scroll-text" class="section-heading-icon-tan"></lucide-icon> -->
                <ng-icon name="heroShieldCheck" size="18" class="text-green-700" />
                Permission Domain Details
           </h4>
@@ -51,7 +50,14 @@
           <div class="mt-4">
                <label for="domainID" class="label-primary"> Domain ID</label>
                <p class="text-sm text-gray-600 mb-2">Ledger hash of the Permissioned Domain to be updated.</p>
-               <input type="text" readonly class="input-disabled" [value]="permissionedDomainStoreService.domainId()" />
+               <div class="relative">
+                    <input type="text" readonly class="input-disabled pr-10" [value]="permissionedDomainStoreService.domainId()" />
+                    @if (permissionedDomainStoreService.domainId()) {
+                    <button type="button" (click)="clearSelectedDomain()" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear selected domain">
+                         <ng-icon name="heroXMark" size="14"></ng-icon>
+                    </button>
+                    }
+               </div>
           </div>
           }
      </div>
@@ -69,20 +75,32 @@
                <div class="grid grid-cols-1 items-end gap-4 md:grid-cols-12">
                     <div class="md:col-span-5">
                          <label for="domainIssuer" class="label-primary">Issuer</label>
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="newIssuerSelectedItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="onNewIssuerSelected($event)" placeholder="Select or enter issuer address"> </app-select-search-dropdown>
+                         <p class="text-secondary">The XRPL account that issues this credential.</p>
+                         <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showInlineErrorMessage]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" (searchQueryChange)="issuerInput.set($event)" [items]="destinationItems()" [value]="issuerItem()" (valueChange)="onNewIssuerSelected($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Enter or select issuer address"> </app-select-search-dropdown>
                     </div>
 
                     <div class="md:col-span-5">
                          <label for="credentialType" class="label-primary">Credential Type</label>
-                         <input type="text" [(ngModel)]="newCredentialType" class="input-base" placeholder="e.g. KYC-Level2" />
+                         <p class="text-secondary">Unique identifier for this credential type</p>
+
+                         <div class="relative">
+                              <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="isCredentialTypeValid()" [isInvalid]="isCredentialTypeInvalid()" [value]="credentialType()" (input)="onCredentialTypeInput($event)" placeholder="Enter a credential type (e.g. KYC-Level2)" />
+
+                              @if (credentialType() && credentialType().trim().length > 0) {
+                              <button type="button" (click)="clearCredentialType()" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear credential type">
+                                   <ng-icon name="heroXMark" size="14"></ng-icon>
+                              </button>
+                              }
+                         </div>
                     </div>
 
                     <div class="md:col-span-2">
-                         <button type="button" class="w-full rounded-2xl bg-blue-600 py-3 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!newIssuer || newCredentialType.trim() === '' || credentialsArray.length >= 10" (click)="addCredential()">+ Add Credential</button>
+                         <button type="button" class="w-full rounded-2xl bg-blue-600 py-3 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!canAddCredential()" (click)="addCredential()">+ Add Credential</button>
                     </div>
                </div>
+
                <!-- Counter Footer -->
-               <div class="status-bar">
+               <div class="status-bar mt-4">
                     <span class="status-count"> Added: <strong>{{ credentialsArray.length }} / 10</strong> </span>
                     @if (credentialsArray.length >= 10) {
                     <span class="badge-warning">
@@ -107,11 +125,16 @@
 
                          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                   <label for="domainIssuer" class="label-primary">Issuer</label>
-                                   <input type="text" readonly class="input-disabled" formControlName="issuer" />
+                                   <label class="label-primary">Issuer</label>
+                                   <div class="relative">
+                                        <input type="text" readonly class="input-disabled pr-10" formControlName="issuer" />
+                                        <button type="button" (click)="copyUtilService.copyAddress(control.get('issuer')?.value)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Copy issuer address">
+                                             <lucide-icon name="copy" size="14"></lucide-icon>
+                                        </button>
+                                   </div>
                               </div>
                               <div>
-                                   <label for="credentialType" class="label-primary">Credential Type</label>
+                                   <label class="label-primary">Credential Type</label>
                                    <input type="text" readonly class="input-disabled" formControlName="credentialType" />
                               </div>
                          </div>
@@ -120,4 +143,19 @@
                </div>
           </form>
      </div>
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
+          </div>
+     </div>
+     }
 </div>

@@ -3,8 +3,8 @@ import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { animate, style, transition, trigger } from '@angular/animations';
 import * as xrpl from 'xrpl';
+import { dropDownAnimation } from '../../../../services/utils/animations/animations.service';
 
 export interface SelectItem {
      id: string;
@@ -26,9 +26,47 @@ export interface SelectItem {
      templateUrl: './select-search-dropdown.component.html',
      styleUrl: './select-search-dropdown.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
-     animations: [trigger('fadeSlideDown', [transition(':enter', [style({ opacity: 0, transform: 'translateY(-8px)' }), animate('200ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))])])],
+     animations: [dropDownAnimation],
 })
 export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
+     @ViewChild('inputEl', { static: true }) inputEl!: ElementRef<HTMLInputElement>;
+     @ViewChild('dropdown') dropdownTpl!: TemplateRef<any>;
+     private static openInstance: SelectSearchDropdownComponent | null = null;
+     private readonly overlay = inject(Overlay);
+     private readonly vcr = inject(ViewContainerRef);
+     private overlayRef: OverlayRef | null = null;
+     private portal!: TemplatePortal<any>;
+     private isDropdownOpening = false;
+
+     // Inputs / Outputs
+     items = input.required<SelectItem[]>();
+     showClearButton = input<boolean>(true);
+     clearOnEscape = input<boolean>(true);
+     closeWhenInvalid = input<boolean>(false);
+     showInlineErrorMessage = input<boolean>(true);
+     searchQueryInput = input<string>('');
+     searchQueryChange = output<string>();
+     value = input<SelectItem | null>(null);
+     valueChange = output<SelectItem | null>();
+     selected = output<SelectItem>();
+     isValid = output<boolean>();
+     validateXrpAddress = input<boolean>(false);
+     customValidation = input<(value: string) => boolean>(() => true);
+     customValidationMessage = input<string>('Invalid value');
+     validateOn = input<'blur' | 'submit' | 'realtime'>('blur');
+     validateNow = input<boolean>(false);
+     showSecondaryInInput = input<boolean>(true);
+     placeholder = input<string>('Search...');
+     emptyMessage = input<string>('No items found');
+     showShortAddress = input<boolean>(true);
+     disabled = input<boolean>(false);
+     disableCurrencySelection = input<boolean>(false);
+     isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
+     searchQuery = signal<string>('');
+     highlightedIndex = signal(-1);
+     isTouched = signal(false);
+     wasSubmitted = signal(false);
+
      constructor() {
           // Sync parent's [searchQueryInput] → internal writable searchQuery
           effect(() => {
@@ -36,65 +74,167 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
                this.searchQuery.set(external ?? '');
           });
 
+          // Close dropdown ONLY when validation fails AND field loses focus
           effect(() => {
-               const shouldClose = this.closeWhenInvalid() && this.isInvalidAddress();
+               // Only close on blur if the value is invalid and closeWhenInvalid is true
+               const shouldClose = this.closeWhenInvalid() && this.isInvalidAndShouldClose() && !this.isDropdownOpening; // Prevent closing during typing
                if (shouldClose) {
                     this.close();
                }
           });
+
+          // Emit validation status whenever it changes
+          effect(() => {
+               // Only emit false if there's an error AND we should show it
+               const shouldShowError = this.showError();
+               const isValid = !shouldShowError;
+               this.isValid.emit(isValid);
+          });
+
+          // Watch for external submit trigger
+          effect(() => {
+               if (this.validateNow()) {
+                    this.wasSubmitted.set(true);
+               }
+          });
      }
 
-     // View children & registry
-     @ViewChild('inputEl', { static: true }) inputEl!: ElementRef<HTMLInputElement>;
-     @ViewChild('dropdown') dropdownTpl!: TemplateRef<any>;
-     closeWhenInvalid = input<boolean>(false);
+     // Computed: Get the current value (selected item or manual entry)
+     getCurrentValue = computed(() => {
+          const selected = this.value();
 
-     private static openInstance: SelectSearchDropdownComponent | null = null;
-
-     private static closeAnyOther(instance: SelectSearchDropdownComponent) {
-          if (this.openInstance && this.openInstance !== instance) {
-               this.openInstance.close();
+          // Selected item takes precedence
+          if (selected?.id) {
+               return selected.id;
           }
-          this.openInstance = instance;
-     }
 
-     // Inputs / Outputs
-     items = input.required<SelectItem[]>();
+          return this.searchQuery().trim();
+     });
+     // getCurrentValue = computed(() => {
+     //      const query = this.searchQuery().trim();
 
-     // Parent can control the search query (e.g. clear it after selection/transaction)
-     searchQueryInput = input<string>('');
+     //      // If user is typing, return the query
+     //      if (query) {
+     //           return query;
+     //      }
 
-     // Emit when internal search query changes (typing, clearing)
-     searchQueryChange = output<string>();
+     //      // Otherwise return the selected item's ID
+     //      const selected = this.value();
+     //      return selected?.id || '';
+     // });
 
-     value = input<SelectItem | null>(null);
-     valueChange = output<SelectItem | null>();
-     selected = output<SelectItem>();
+     // Computed: XRP address validation
+     isXrpAddressValid = computed(() => {
+          if (!this.validateXrpAddress()) {
+               return true;
+          }
 
-     showSecondaryInInput = input<boolean>(true);
-     placeholder = input<string>('Search...');
-     emptyMessage = input<string>('No items found');
-     showShortAddress = input<boolean>(true);
+          const value = this.getCurrentValue();
 
-     disabled = input<boolean>(false);
-     // Optional: Keep backward compatibility
-     disableCurrencySelection = input<boolean>(false);
-     // Computed for internal use
-     isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
-     xrpAddressMode = input<boolean>(false); // Enable XRP validation mode
-     showErrorOnInvalidAddress = input<boolean>(false);
+          if (!value) {
+               return true;
+          }
 
-     // Internal state
-     private readonly overlay = inject(Overlay);
-     private readonly vcr = inject(ViewContainerRef);
+          return xrpl.isValidAddress(value);
+     });
+     // isXrpAddressValid = computed(() => {
+     //      if (!this.validateXrpAddress()) return true; // Skip validation if not enabled
 
-     private overlayRef: OverlayRef | null = null;
-     private portal!: TemplatePortal<any>;
+     //      const value = this.getCurrentValue();
+     //      if (!value) return true; // Empty is considered valid (no error state)
 
-     // This is the writable signal we actually use for display & filtering
-     searchQuery = signal<string>('');
+     //      // Check if it's a selected item or manually entered
+     //      const query = this.searchQuery().trim();
+     //      if (query) {
+     //           return xrpl.isValidAddress(query);
+     //      }
 
-     highlightedIndex = signal(-1);
+     //      const selected = this.value();
+     //      if (selected?.id) {
+     //           return xrpl.isValidAddress(selected.id);
+     //      }
+
+     //      return true;
+     // });
+
+     // Computed: Overall validation status (combines XRP validation and custom validation)
+     isValidValue = computed(() => {
+          const value = this.getCurrentValue();
+          if (!value) return true; // Empty is considered valid
+
+          // Check XRP validation if enabled
+          if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
+               return false;
+          }
+
+          // Check custom validation
+          if (!this.customValidation()(value)) {
+               return false;
+          }
+
+          return true;
+     });
+
+     // Computed: Whether to show the error message
+     showError = computed(() => {
+          // Check if validation is enabled and we have a value
+          const hasValue = !!this.getCurrentValue();
+          if (!hasValue) return false; // Don't show error for empty field
+
+          // Check if the value is actually invalid
+          const isActuallyInvalid = !this.isValidValue();
+          if (!isActuallyInvalid) return false;
+
+          // Determine if we should show the error based on validateOn setting
+          switch (this.validateOn()) {
+               case 'realtime':
+                    return true;
+               case 'blur':
+                    return this.isTouched();
+               case 'submit':
+                    return this.wasSubmitted() || this.validateNow();
+               default:
+                    return this.isTouched() || this.wasSubmitted();
+          }
+     });
+
+     // Computed: Error message to display
+     validationErrorMessage = computed(() => {
+          if (!this.showError()) return '';
+
+          const value = this.getCurrentValue();
+          if (!value) return '';
+
+          // Check XRP validation first
+          if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
+               return 'Please enter a valid XRP address';
+          }
+
+          // Check custom validation
+          // if (this.customValidation()(value)) {
+          //      return this.customValidationMessage();
+          // }
+          if (!this.customValidation()(value)) {
+               return this.customValidationMessage();
+          }
+
+          return 'Invalid value';
+     });
+
+     // Computed: CSS classes for the input based on validation state
+     inputClasses = computed(() => {
+          const baseClasses = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
+
+          if (this.showError()) {
+               return `${baseClasses} border-red-500 focus:border-red-500 bg-red-50`;
+          }
+
+          if (this.isValidValue() && this.getCurrentValue() && this.isTouched()) {
+               return `${baseClasses} border-green-500 focus:border-green-500`;
+          }
+
+          return `${baseClasses} border-gray-100 focus:border-green-500`;
+     });
 
      // Computed
      displayValue = computed(() => {
@@ -124,14 +264,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q));
      });
 
-     isInvalidAddress = computed(() => {
-          const query = this.searchQuery().trim();
-
-          if (!query) return false;
-
-          return !xrpl.isValidAddress(query);
-     });
-
      // Lifecycle
      ngAfterViewInit() {
           this.portal = new TemplatePortal(this.dropdownTpl, this.vcr);
@@ -144,12 +276,40 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.close();
      }
 
+     isInvalidAndShouldClose = computed(() => {
+          const value = this.getCurrentValue();
+          if (!value) return false; // Don't close on empty
+
+          // Check if the value is invalid
+          const isInvalid = !this.isValidValue();
+
+          // Only close if we're showing errors (field has been touched/submitted)
+          const shouldShowError = this.showError();
+
+          return isInvalid && shouldShowError;
+     });
+
+     onItemMouseDown(event: MouseEvent, item: SelectItem) {
+          event.preventDefault();
+
+          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) {
+               return;
+          }
+
+          this.onSelect(item);
+     }
+
      // Dropdown control
      open() {
           if (this.isDisabled()) return;
+
+          this.isDropdownOpening = true;
           SelectSearchDropdownComponent.closeAnyOther(this);
 
-          if (this.overlayRef?.hasAttached()) return;
+          if (this.overlayRef?.hasAttached()) {
+               this.isDropdownOpening = false;
+               return;
+          }
 
           if (this.overlayRef) {
                this.overlayRef.dispose();
@@ -175,22 +335,42 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.overlayRef.attach(this.portal);
           this.overlayRef.backdropClick().subscribe(() => this.close());
 
+          setTimeout(() => {
+               this.isDropdownOpening = false;
+          }, 200);
+
           this.scrollToSelected();
      }
 
      toggle() {
           if (this.isDisabled()) return;
+
+          // If dropdown is open, close it
           if (this.overlayRef?.hasAttached()) {
                this.close();
-          } else {
+          }
+          // If dropdown is closed, try to open it (will be prevented if invalid)
+          else {
                this.open();
           }
      }
 
-     close() {
+     private static closeAnyOther(instance: SelectSearchDropdownComponent) {
+          if (this.openInstance && this.openInstance !== instance) {
+               this.openInstance.close();
+          }
+          this.openInstance = instance;
+     }
+
+     close(skipTouchMarking: boolean = false) {
           this.overlayRef?.dispose();
           this.overlayRef = null;
           this.highlightedIndex.set(-1);
+
+          // Mark as touched when closing, but not if we're in the middle of typing
+          if (!skipTouchMarking && !this.isTouched() && !this.isDropdownOpening) {
+               this.isTouched.set(true);
+          }
 
           // Always emit current state when closing
           this.searchQueryChange.emit(this.searchQuery());
@@ -203,13 +383,40 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      // Event handlers
      onInput(e: Event) {
           const value = (e.target as HTMLInputElement).value;
+
+          // If user starts typing, clear selected item
+          if (this.value()) {
+               this.valueChange.emit(null);
+          }
+
           this.searchQuery.set(value);
           this.searchQueryChange.emit(value);
+
           this.open();
      }
+     // onInput(e: Event) {
+     //      const value = (e.target as HTMLInputElement).value;
+     //      this.searchQuery.set(value);
+     //      this.searchQueryChange.emit(value);
+
+     //      // Always open dropdown when typing to show filtered results
+     //      this.open();
+
+     //      // Mark as touched on input
+     //      // if (!this.isTouched()) {
+     //      // this.isTouched.set(true);
+     //      // }
+     // }
 
      onSelect(item: SelectItem) {
-          if (item.isCurrentAccount) return;
+          // Don't allow selection of disabled items
+          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) return;
+
+          // If validating XRP addresses, check if the selected item is valid
+          if (this.validateXrpAddress() && item.id && !xrpl.isValidAddress(item.id)) {
+               // Don't select invalid addresses
+               return;
+          }
 
           this.valueChange.emit(item);
           this.selected.emit(item);
@@ -217,43 +424,83 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.searchQuery.set('');
           this.searchQueryChange.emit('');
 
+          // Mark as touched on selection
+          // if (!this.isTouched()) {
+          this.isTouched.set(true);
+          // }
+
+          this.inputEl.nativeElement.blur();
+
           this.close();
+     }
+
+     onBlur() {
+          // Mark as touched on blur
+          // if (!this.isTouched()) {
+          this.isTouched.set(true);
+          // }
+
+          // Close dropdown and validate on blur
+          setTimeout(() => {
+               if (this.overlayRef?.hasAttached()) {
+                    this.close();
+               }
+          }, 150); // Small delay to allow click events on dropdown items
      }
 
      onKeydown(e: KeyboardEvent) {
           const items = this.filteredItems();
-          if (!items.length || !this.overlayRef?.hasAttached()) return;
 
-          let index = this.highlightedIndex();
-
-          switch (e.key) {
-               case 'ArrowDown':
-                    e.preventDefault();
-                    index = index < items.length - 1 ? index + 1 : 0;
-                    break;
-               case 'ArrowUp':
-                    e.preventDefault();
-                    index = index <= 0 ? items.length - 1 : index - 1;
-                    break;
-               case 'Enter':
-                    if (index >= 0) {
-                         e.preventDefault();
-                         const item = items[index];
-                         if (!item.isCurrentAccount) this.onSelect(item);
-                    }
-                    return;
-               case 'Escape':
+          // Handle Escape key to clear input
+          if (e.key === 'Escape' && this.clearOnEscape()) {
+               e.preventDefault();
+               if (this.getCurrentValue()) {
+                    this.clearInput(e);
+               } else {
                     this.close();
-                    return;
-               default:
-                    return;
+               }
+               return;
           }
 
-          this.highlightedIndex.set(index);
+          // Always handle keyboard navigation if dropdown is open
+          if (this.overlayRef?.hasAttached() && items.length > 0) {
+               let index = this.highlightedIndex();
 
+               switch (e.key) {
+                    case 'ArrowDown':
+                         e.preventDefault();
+                         index = index < items.length - 1 ? index + 1 : 0;
+                         this.highlightedIndex.set(index);
+                         this.scrollToHighlighted();
+                         break;
+                    case 'ArrowUp':
+                         e.preventDefault();
+                         index = index <= 0 ? items.length - 1 : index - 1;
+                         this.highlightedIndex.set(index);
+                         this.scrollToHighlighted();
+                         break;
+                    case 'Enter':
+                         if (index >= 0 && index < items.length) {
+                              e.preventDefault();
+                              const item = items[index];
+                              if (!item.isCurrentAccount && !item.isCurrentCode && !item.isCurrentToken) {
+                                   this.onSelect(item);
+                              }
+                         }
+                         break;
+                    case 'Tab':
+                         this.close();
+                         break;
+               }
+          }
+     }
+
+     private scrollToHighlighted() {
           requestAnimationFrame(() => {
                const el = this.overlayRef?.overlayElement.querySelector('.combobox-item.highlighted') as HTMLElement;
-               el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+               if (el) {
+                    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+               }
           });
      }
 
@@ -272,19 +519,75 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }, 0);
      }
 
-     @HostListener('document:mousedown', ['$event'])
-     handleOutsideClick(event: MouseEvent) {
-          if (!this.overlayRef?.hasAttached()) return;
+     // @HostListener('document:mousedown', ['$event'])
+     // handleOutsideClick(event: MouseEvent) {
+     //      if (!this.overlayRef?.hasAttached()) return;
 
-          const input = this.inputEl.nativeElement;
-          const overlayEl = this.overlayRef.overlayElement;
+     //      const input = this.inputEl.nativeElement;
+     //      const overlayEl = this.overlayRef.overlayElement;
 
-          if (input.contains(event.target as Node) || overlayEl.contains(event.target as Node)) {
-               return;
+     //      if (input.contains(event.target as Node) || overlayEl?.contains(event.target as Node)) {
+     //           return;
+     //      }
+
+     //      this.close();
+     // }
+
+     // Public method to trigger validation (for form submission)
+     triggerValidation(): boolean {
+          this.wasSubmitted.set(true);
+          this.isTouched.set(true);
+          return this.isValidValue();
+     }
+
+     // Public method to get current value and validation state
+     getValidationState(): { value: string; isValid: boolean; errorMessage: string; showError: boolean } {
+          return {
+               value: this.getCurrentValue(),
+               isValid: this.isValidValue(),
+               errorMessage: this.validationErrorMessage(),
+               showError: this.showError(),
+          };
+     }
+
+     // Add computed property to determine if clear button should be shown
+     private shouldShowClearButton = computed(() => {
+          if (!this.showClearButton()) return false;
+          if (this.isDisabled()) return false;
+
+          const hasContent = !!this.getCurrentValue();
+          const isSearching = !!this.searchQuery();
+
+          return hasContent || isSearching;
+     });
+
+     // Clear method
+     clearInput(event: Event) {
+          event.stopPropagation();
+
+          // Clear the search query
+          this.searchQuery.set('');
+          this.searchQueryChange.emit('');
+
+          // Clear the selected value
+          if (this.value()) {
+               this.valueChange.emit(null);
           }
 
-          this.close();
+          // Focus the input after clearing
+          // this.inputEl.nativeElement.focus();
+          this.inputEl.nativeElement.blur();
+
+          // Close dropdown if open
+          if (this.overlayRef?.hasAttached()) {
+               this.close(true);
+          }
+
+          // Mark as touched so validation runs
+          if (!this.isTouched()) {
+               this.isTouched.set(true);
+          }
+
+          // Don't auto-open, let user decide when to start typing
      }
 }
-
-///

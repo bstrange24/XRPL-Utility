@@ -4,12 +4,8 @@
           <label for="accountDeleteDestination" class="label-primary">Destination</label>
           <p class="text-secondary">The address that will receive the remaining XRP after deletion.</p>
 
-          <!-- <app-select-search-dropdown app-focus-border [isValid]="isDestinationValid()" [isInvalid]="isDestinationValid()" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown> -->
-          <app-select-search-dropdown app-focus-border [isValid]="isDestinationInvalid()" [isInvalid]="isDestinationInvalid()" [closeWhenInvalid]="isDestinationInvalid()" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
-
-          @if (isDestinationInvalid()) {
-          <p class="form-error">Please enter a valid XRP address</p>
-          }
+          <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+          </app-select-search-dropdown>
      </div>
 
      <!-- Toggle optional fields Card -->
@@ -28,18 +24,11 @@
      <!-- Optional Fields Section -->
      @if (wantsOptions()) {
      <div class="card-base">
-          <app-transaction-options-section [activeTab]="'deleteAccount'"></app-transaction-options-section>
+          <app-transaction-options-section [activeTab]="'deleteAccount'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
      </div>
      }
 
-     <!-- Transaction Options (Signing) -->
      <app-transaction-options [activeTab]="view().activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-
-     <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
-     <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
-          <div class="alert-content">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div>
-     </div>
 
      @if (hasValidationErrors()) {
      <div class="alert-error">
@@ -54,6 +43,12 @@
           </div>
      </div>
      }
+
+     <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
+     <div class="alert-error">
+          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div>
+     </div>
 
      <!-- Action Buttons -->
      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

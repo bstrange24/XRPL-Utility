@@ -17,7 +17,8 @@
           <form #theForm="ngForm">
                <!-- Dynamic Form Content -->
                @switch (tab) { @case ('setPermissionedDomain') {
-               <app-permission-domain-set-form #setForm [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" />
+               <app-permission-domain-set-form #setForm [view]="view" [destinationItems]="destinationItems()" [wantsOptions]="txUiService.wantsOptions()" [canSubmit]="canSubmit()" [tab]="tab" (performAction)="performAction()" (clearFields)="clearInputFields()" (toggleOptions)="txUiService.toggleOptions($event)" (canSetPermissionDomainChange)="onCanSetPermissionDomainChange($event)" />
+
                } @case ('deletePermissionedDomain') {
                <app-permission-domain-delete-form [view]="view" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (onDomainSelected)="permissionedDomainUtilService.onDomainSelected($event)" />
                } }
@@ -28,7 +29,7 @@
                <!-- Action Buttons -->
                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Action -->
-                    <button type="button" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="whitespace-nowrap">{{ view.infoData()?.actionButtonLabel }}</button>
+                    <button type="button" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || !canSetPermissionDomainForm()" class="whitespace-nowrap">{{ view.infoData()?.actionButtonLabel }}</button>
 
                     <!-- Secondary Actions -->
                     <div class="flex flex-wrap items-center justify-end gap-2">

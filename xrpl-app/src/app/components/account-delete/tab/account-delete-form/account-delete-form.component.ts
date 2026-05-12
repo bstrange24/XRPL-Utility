@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, input, Output, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
 import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -10,8 +10,8 @@ import { TransactionOptionsComponent } from '../../../shared/transaction-options
 import { AccountConfiguratorStoreService } from '../../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { NgIcon } from '@ng-icons/core';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
-import * as xrpl from 'xrpl';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-account-delete-form',
@@ -25,79 +25,71 @@ export class AccountDeleteFormComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
-     view = input.required<any>(); // for deleteBlockers(), deleteWalletButtonLabel()
-     info = input.required<any>(); // for canDelete
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
+     view = input.required<any>();
+     info = input.required<any>();
      destinationItems = input.required<any[]>();
      selectedDestinationItem = input.required<any>();
      destinationSearchQuery = input.required<string>();
-     wantsOptions = input.required<boolean>(); // txUiService.wantsOptions()
+     wantsOptions = input.required<boolean>();
      canSubmit = input<boolean>(false);
-     tab = input.required<string>(); // 'deleteAccount'
-     @Output() optionsToggled = new EventEmitter<boolean>();
-
+     tab = input.required<string>();
+     selectedDestinationAddress = input<string>();
+     isDestinationValid = signal(false);
      performAction = output<void>();
      clearFields = output<void>();
      searchQueryChange = output<string>();
      destinationChange = output<any>();
      toggleOptions = output<boolean>();
 
-     getFinalDestination = computed(() => {
-          const searchQuery = this.destinationSearchQuery()?.trim() || '';
+     canDeleteWallet = computed(() => {
+          // Must have valid destination (from dropdown validation)
+          if (!this.isDestinationValid()) return false;
 
-          // 1. If user is typing something, prioritize the search query (manual entry)
-          if (searchQuery) {
-               if (xrpl.isValidAddress(searchQuery)) {
-                    return searchQuery;
-               } else {
-                    return null; // invalid typed value
-               }
-          }
+          // Check options validation if enabled
+          if (this.wantsOptions() && this.optionsHasError()) return false;
 
-          // 2. Otherwise fall back to selected dropdown item
-          const selectedItem = this.selectedDestinationItem();
-          if (selectedItem?.id && xrpl.isValidAddress(selectedItem.id)) {
-               return selectedItem.id;
-          }
-
-          return null;
+          return true;
      });
 
-     isDestinationValid = computed(() => {
-          const destination = this.getFinalDestination();
-          return !!destination && xrpl.isValidAddress(destination);
-     });
+     onDestinationValidationChange(isValid: boolean) {
+          this.isDestinationValid.set(isValid);
+     }
 
-     isDestinationInvalid = computed(() => {
-          const destination = this.getFinalDestination();
-          // Only show error if user has entered something (either selected or typed)
-          const hasInput = this.selectedDestinationItem() || this.destinationSearchQuery();
-          return hasInput && !this.isDestinationValid();
-     });
+     onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
+          this.optionsHasError.set(validation.hasError);
+          this.optionsErrorMsg.set(validation.message || '');
+          this.optionsErrors.set(validation.errors || []);
+     }
 
-     // Check if there are any validation errors
-     hasValidationErrors = computed(() => {
-          if (this.isDestinationInvalid()) return true;
-          if (this.txUiService.wantsOptions()) return true;
-          return false;
-     });
-
+     // Update validation error messages
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
-          // Destination error
-          if (this.isDestinationInvalid()) {
+          // Destination error (now handled by dropdown, but we can still show summary)
+          if (!this.isDestinationValid()) {
                errors.push('Destination address is invalid. Please enter a valid XRP address.');
+          }
+
+          // Options errors
+          if (this.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors());
           }
 
           return errors;
      });
 
      // Get validation error message
-     validationErrorMessage = computed(() => {
-          if (this.isDestinationInvalid()) {
-               return 'Destination address is invalid. Please enter a valid XRP address.';
-          }
-          return '';
+     hasValidationErrors = computed(() => {
+          if (!this.isDestinationValid()) return true;
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) return true;
+          return false;
      });
+
+     hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
 }

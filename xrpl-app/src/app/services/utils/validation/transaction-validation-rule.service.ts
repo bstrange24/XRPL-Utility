@@ -998,70 +998,70 @@ export class ValidationService {
 
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    ctx => {
-                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
-                         console.log('Credentials: ', credentials);
+                    // ctx => {
+                    //      const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                    //      console.log('Credentials: ', credentials);
 
-                         if (credentials.length === 0 || credentials.length > 10) {
-                              return `Exactly 1–10 credentials required (got ${credentials.length})`;
-                         }
+                    //      if (credentials.length === 0 || credentials.length > 10) {
+                    //           return `Exactly 1–10 credentials required (got ${credentials.length})`;
+                    //      }
 
-                         const credentialTypes = credentials.map((c: { credentialType: any }) => c.credentialType);
-                         const duplicates = credentialTypes.filter((id: any, index: any) => credentialTypes.indexOf(id) !== index);
-                         if (duplicates.length > 0) {
-                              return `Duplicate credential Type found: ${duplicates.join(', ')}`;
-                         }
+                    //      const credentialTypes = credentials.map((c: { credentialType: any }) => c.credentialType);
+                    //      const duplicates = credentialTypes.filter((id: any, index: any) => credentialTypes.indexOf(id) !== index);
+                    //      if (duplicates.length > 0) {
+                    //           return `Duplicate credential Type found: ${duplicates.join(', ')}`;
+                    //      }
 
-                         for (const credential of credentials) {
-                              if (!credential.credentialType || !credential.issuer) {
-                                   return 'Each credential must have both credential Type and issuer';
-                              }
-                         }
+                    //      for (const credential of credentials) {
+                    //           if (!credential.credentialType || !credential.issuer) {
+                    //                return 'Each credential must have both credential Type and issuer';
+                    //           }
+                    //      }
 
-                         return null;
-                    },
+                    //      return null;
+                    // },
 
-                    ctx => {
-                         const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
-                         if (domainId && domainId.length > 256) {
-                              return 'Domain ID exceeds maximum length of 256 characters';
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
+                    //      if (domainId && domainId.length > 256) {
+                    //           return 'Domain ID exceeds maximum length of 256 characters';
+                    //      }
+                    //      return null;
+                    // },
 
-                    ctx => {
-                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
-                         for (const credential of credentials) {
-                              if (credential.issuer && !xrpl.isValidClassicAddress(credential.issuer)) {
-                                   return `Invalid issuer address format for credential: ${credential.credentialType}`;
-                              }
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                    //      for (const credential of credentials) {
+                    //           if (credential.issuer && !xrpl.isValidClassicAddress(credential.issuer)) {
+                    //                return `Invalid issuer address format for credential: ${credential.credentialType}`;
+                    //           }
+                    //      }
+                    //      return null;
+                    // },
 
-                    ctx => {
-                         const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
-                         const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
+                    // ctx => {
+                    //      const domainId = ctx.inputs['permissionedDomainSet']?.domainId;
+                    //      const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
 
-                         if (domainId && existingDomains?.some((domain: { DomainID: any }) => domain.DomainID === domainId)) {
-                              return `Permissioned Domain with ID ${domainId} already exists. Use modify operation instead.`;
-                         }
-                         return null;
-                    },
+                    //      if (domainId && existingDomains?.some((domain: { DomainID: any }) => domain.DomainID === domainId)) {
+                    //           return `Permissioned Domain with ID ${domainId} already exists. Use modify operation instead.`;
+                    //      }
+                    //      return null;
+                    // },
 
-                    ctx => {
-                         const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
-                         const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
+                    // ctx => {
+                    //      const credentials = ctx.inputs['permissionedDomainSet'].setAcceptedCredentials;
+                    //      const existingDomains = ctx.accountObjects?.filter((obj: { LedgerEntryType: string }) => obj.LedgerEntryType === 'PermissionedDomain');
 
-                         if (existingDomains) {
-                              const usedCredentials = new Set(existingDomains.flatMap((domain: { Credentials: any[] }) => domain.Credentials?.map(c => c.CredentialID) || []));
-                              const duplicates = credentials.filter((c: { credentialID: any }) => usedCredentials.has(c.credentialID));
-                              if (duplicates.length > 0) {
-                                   return `Credentials already used in other domains: ${duplicates.map((c: { credentialID: any }) => c.credentialID).join(', ')}`;
-                              }
-                         }
-                         return null;
-                    },
+                    //      if (existingDomains) {
+                    //           const usedCredentials = new Set(existingDomains.flatMap((domain: { Credentials: any[] }) => domain.Credentials?.map(c => c.CredentialID) || []));
+                    //           const duplicates = credentials.filter((c: { credentialID: any }) => usedCredentials.has(c.credentialID));
+                    //           if (duplicates.length > 0) {
+                    //                return `Credentials already used in other domains: ${duplicates.map((c: { credentialID: any }) => c.credentialID).join(', ')}`;
+                    //           }
+                    //      }
+                    //      return null;
+                    // },
 
                     // Master key disabled → must use Regular Key or Multi-Sign
                     this.masterKeyDisabledRequiresAltSigning(),

@@ -102,13 +102,14 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           // Reactively update TX JSON when memo is toggled on/off or memo content changes
           effect(() => {
                const isMemo = this.xrplTxOptionsStore.isMemoEnabled();
-               const memos: string[] = this.xrplTxOptionsStore.memos();
+               const memos = this.xrplTxOptionsStore.memos(); // This is now an array of objects, not strings
 
                const txJson = untracked(() => this.signTransationStoreService.txJson());
                if (!txJson.trim()) return;
 
                let updated: string;
                if (isMemo && memos.length > 0) {
+                    // Pass the memos array directly (now objects, not strings)
                     updated = this.signTransactionsOrchestratorService.applyMemoToJson(txJson, memos);
                } else if (isMemo) {
                     return;
@@ -119,6 +120,25 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                this.signTransationStoreService.setField('txJson', updated);
                this.cdr.markForCheck();
           });
+          // effect(() => {
+          //      const isMemo = this.xrplTxOptionsStore.isMemoEnabled();
+          //      const memos: string[] = this.xrplTxOptionsStore.memos();
+
+          //      const txJson = untracked(() => this.signTransationStoreService.txJson());
+          //      if (!txJson.trim()) return;
+
+          //      let updated: string;
+          //      if (isMemo && memos.length > 0) {
+          //           updated = this.signTransactionsOrchestratorService.applyMemoToJson(txJson, memos);
+          //      } else if (isMemo) {
+          //           return;
+          //      } else {
+          //           updated = this.signTransactionsOrchestratorService.removeMemoFromJson(txJson);
+          //      }
+
+          //      this.signTransationStoreService.setField('txJson', updated);
+          //      this.cdr.markForCheck();
+          // });
 
           // Sync signed field display when outputField changes externally
           effect(() => {

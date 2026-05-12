@@ -1,6 +1,12 @@
 export const CREDENTIAL_TAB = ['createCredential', 'acceptCredential', 'deleteCredential', 'verifyCredential'] as const;
 export type CredentialTab = (typeof CREDENTIAL_TAB)[number];
 
+export const CREDENTIAL_TYPE_VALADATION = {
+     CREDENTIAL_TYPE_PATTERN: /^[A-Za-z0-9\-_]{1,64}$/,
+     CREDENTIAL_TYPE_MAX_LENGTH: 64,
+     MAX_CREDENTIALS: 10,
+} as const;
+
 export const CREDENTIAL_TX_TYPE_MAP = {
      create: 'CredentialCreate',
      accept: 'CredentialAccept',

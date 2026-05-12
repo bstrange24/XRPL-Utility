@@ -169,17 +169,44 @@ export class SignTransactionUtilService {
           return this.txUiService.stepMessage();
      });
 
+     // In SignTransactionUtilService
+     jsonIsValid = computed(() => {
+          const txJson = this.signTransationStoreService.txJson();
+          const error = this.signTransationStoreService.jsonEditorError();
+
+          if (!txJson.trim()) return false;
+          return !error || error.trim().length === 0;
+     });
+
+     // In SignTransactionUtilService
      onTxJsonChange(value: string) {
           this.signTransationStoreService.setField('txJson', value);
+
+          if (!value.trim()) {
+               this.signTransationStoreService.setField('jsonEditorError', '');
+               return;
+          }
 
           try {
                JSON.parse(value);
                this.signTransationStoreService.setField('jsonEditorError', '');
           } catch (error: any) {
                console.error(`Error onTxJsonChange JSON: ${error.message}`);
-               this.signTransationStoreService.setField('jsonEditorError', 'Invalid JSON');
+               this.signTransationStoreService.setField('jsonEditorError', error.message || 'Invalid JSON');
           }
      }
+
+     // onTxJsonChange(value: string) {
+     //      this.signTransationStoreService.setField('txJson', value);
+
+     //      try {
+     //           JSON.parse(value);
+     //           this.signTransationStoreService.setField('jsonEditorError', '');
+     //      } catch (error: any) {
+     //           console.error(`Error onTxJsonChange JSON: ${error.message}`);
+     //           this.signTransationStoreService.setField('jsonEditorError', 'Invalid JSON');
+     //      }
+     // }
 
      setTxJson(json: string) {
           this.signTransationStoreService.setField('txJson', json);

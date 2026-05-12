@@ -9,11 +9,13 @@ import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 import { AccountConfiguratorStoreService } from '../../../services/account-configurator/account-configurator-store/account-configurator-store.service';
 import { WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { ToggleSliderComponent } from '../toggle-slider/toggle-slider.component';
+import { NgIcon } from '@ng-icons/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-transaction-options',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, MatSlideToggleModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon],
      templateUrl: './transaction-options.component.html',
      styleUrl: './transaction-options.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,6 +72,66 @@ export class TransactionOptionsComponent {
           return this.ticketItems().find((i: { id: string }) => i.id === selected) || null;
      });
 
+     // Memo Management Methods
+     addMemo() {
+          const currentMemos = this.xrplTxOptionsStore.memos();
+          this.xrplTxOptionsStore.updateMemos([
+               ...currentMemos,
+               {
+                    Memo: {
+                         MemoData: '',
+                         MemoType: '',
+                         MemoFormat: '',
+                    },
+               },
+          ]);
+     }
+
+     removeMemo(index: number) {
+          const currentMemos = this.xrplTxOptionsStore.memos();
+          const updatedMemos = currentMemos.filter((_: any, i: number) => i !== index);
+          this.xrplTxOptionsStore.updateMemos(updatedMemos);
+     }
+
+     updateMemoData(index: number, data: string) {
+          const currentMemos = this.xrplTxOptionsStore.memos();
+          const updatedMemos = [...currentMemos];
+          updatedMemos[index] = {
+               ...updatedMemos[index],
+               Memo: {
+                    ...updatedMemos[index].Memo,
+                    MemoData: data,
+               },
+          };
+          this.xrplTxOptionsStore.updateMemos(updatedMemos);
+     }
+
+     updateMemoType(index: number, type: string) {
+          const currentMemos = this.xrplTxOptionsStore.memos();
+          const updatedMemos = [...currentMemos];
+          updatedMemos[index] = {
+               ...updatedMemos[index],
+               Memo: {
+                    ...updatedMemos[index].Memo,
+                    MemoType: type,
+               },
+          };
+          this.xrplTxOptionsStore.updateMemos(updatedMemos);
+     }
+
+     updateMemoFormat(index: number, format: string) {
+          const currentMemos = this.xrplTxOptionsStore.memos();
+          const updatedMemos = [...currentMemos];
+          updatedMemos[index] = {
+               ...updatedMemos[index],
+               Memo: {
+                    ...updatedMemos[index].Memo,
+                    MemoFormat: format,
+               },
+          };
+          this.xrplTxOptionsStore.updateMemos(updatedMemos);
+     }
+
      // Actions
      toggleSimulate(value: boolean) {
           this.xrplTxOptionsStore.setField('isSimulateEnabled', value);
@@ -84,11 +146,37 @@ export class TransactionOptionsComponent {
           this.xrplTxOptionsStore.setField('isMemoEnabled', enabled);
 
           if (!enabled) {
-               this.xrplTxOptionsStore.addMemo('');
-          } else {
-               this.xrplTxOptionsStore.setField('memos', []);
+               this.xrplTxOptionsStore.updateMemos([]);
+          } else if (this.xrplTxOptionsStore.memos().length === 0) {
+               // Add one empty memo by default when toggling on
+               this.addMemo();
           }
+
+          // if (!enabled) {
+          //      this.xrplTxOptionsStore.addMemo('');
+          // } else {
+          //      this.xrplTxOptionsStore.setField('memos', []);
+          // }
      }
+
+     // onMemoInput(value: string) {
+     //      // This can be deprecated but kept for backward compatibility
+     //      const cleaned = value
+     //           .split(',')
+     //           .map(v => v.trim())
+     //           .filter(Boolean)
+     //           .map(text => ({
+     //                Memo: {
+     //                     MemoData: text,
+     //                     MemoType: '',
+     //                     MemoFormat: '',
+     //                },
+     //           }));
+
+     //      if (cleaned.length > 0) {
+     //           this.xrplTxOptionsStore.updateMemos(cleaned);
+     //      }
+     // }
 
      onMemoInput(value: string) {
           const cleaned = value

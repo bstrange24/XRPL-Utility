@@ -38,7 +38,8 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
      });
 
      clearInputFields(): void {
-          this.txUiService.wantsOptions.set(false);
+          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
+          this.txUiService.clearAllFields();
           this.xrplTxOptionsStore.setField('destinationTag', '');
           this.xrplTxOptionsStore.setField('sourceTag', '');
           this.xrplTxOptionsStore.setField('invoiceId', '');

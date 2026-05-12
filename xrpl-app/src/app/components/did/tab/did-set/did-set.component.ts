@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output, ViewChild } from '@angular/core';
 import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
@@ -16,24 +16,38 @@ import { NgIcon } from '@ng-icons/core';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DidSetComponent {
-     public readonly connectionGuard = inject(ConnectionGuardService);
-     didStoreService = inject(DidStoreService); // assume you have this
-     didUtilService = inject(DidUtilService);
-     didViewModelService = inject(DidViewModelService); // if needed for computed
+     @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
+     @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
+     @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;
 
-     view = input.required<any>(); // for button class/label
+     public readonly connectionGuard = inject(ConnectionGuardService);
+     public readonly didStoreService = inject(DidStoreService);
+     public readonly didUtilService = inject(DidUtilService);
+     public readonly didViewModelService = inject(DidViewModelService);
+
+     ngAfterViewInit() {
+          // Register all three editors with the service
+          if (this.didDataEditor) {
+               this.didViewModelService.setDidDataEditor(this.didDataEditor);
+          }
+          if (this.didDocumentEditor) {
+               this.didViewModelService.setDidDocumentEditor(this.didDocumentEditor);
+          }
+          if (this.uriEditor) {
+               this.didViewModelService.setUriDataEditor(this.uriEditor);
+          }
+     }
+
+     view = input.required<any>();
      canSubmit = input<boolean>(false);
 
      performAction = output<void>();
      clearFields = output<void>();
 
-     // Convenience computed for template
      hasNoExistingDid = computed(() => this.didStoreService.existingDid().length <= 0);
-
      byteLengthDidDocument = computed(() => this.didViewModelService.didDocumentDataByteLength());
      byteLengthUriData = computed(() => this.didViewModelService.uriDataByteLength());
      byteLengthDidData = computed(() => this.didViewModelService.didDataByteLength());
-
      validDidSchema = computed(() => this.didViewModelService.validDidSchema());
      hasJsonSyntaxError = computed(() => this.didViewModelService.hasJsonSyntaxError());
 }

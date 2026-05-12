@@ -142,8 +142,24 @@ export class TransactionOptionsSectionComponent {
 
      isUriValid = computed(() => {
           const uri = this.credentialStore.uri()?.trim() ?? '';
-          if (!uri) return true;
-          return uri.length > 0 && uri.length <= 256;
+          if (!uri) return true; // Optional field
+
+          // Check length
+          if (uri.length > 256) return false;
+
+          // Basic URL validation (if it looks like a URL)
+          // This is optional - URIs can be other formats too
+          try {
+               // If it starts with http:// or https://, validate as URL
+               if (uri.startsWith('http://') || uri.startsWith('https://')) {
+                    new URL(uri); // This will throw if invalid
+               }
+               return true;
+          } catch {
+               // If it's not a URL format, still allow if it's a valid format
+               // (could be a URN, custom scheme, etc.)
+               return /^[a-zA-Z][a-zA-Z0-9+\-.]+:/.test(uri) || /^[a-zA-Z0-9\-_]+$/.test(uri);
+          }
      });
 
      hasInvalidUri = computed(() => {
@@ -155,17 +171,91 @@ export class TransactionOptionsSectionComponent {
      // Credential Expiration Validation
      isCredentialExpirationValid = computed(() => {
           const expiration = this.credentialStore.credentialSubjectExpirationDate();
-          if (!expiration) return true;
-          const timestamp = Number(expiration);
-          if (isNaN(timestamp)) return false;
+
+          // Empty is valid (optional field)
+          if (!expiration || expiration === '') return true;
+
+          // Try to convert to number (timestamp)
+          let timestamp: number;
+
+          // Check if it's a numeric string
+          if (typeof expiration === 'string') {
+               // Try parsing as number
+               timestamp = Number(expiration);
+
+               // If NaN, try parsing as date string
+               if (isNaN(timestamp)) {
+                    const date = new Date(expiration);
+                    if (isNaN(date.getTime())) {
+                         return false; // Invalid date format
+                    }
+                    timestamp = Math.floor(date.getTime() / 1000); // Convert to seconds
+               }
+          } else if (typeof expiration === 'number') {
+               timestamp = expiration;
+          } else {
+               return false;
+          }
+
+          // Check if timestamp is valid
+          if (isNaN(timestamp) || !isFinite(timestamp)) return false;
+
+          // Get current time in seconds
           const now = Math.floor(Date.now() / 1000);
+
+          // Expiration must be in the future (greater than current time)
           return timestamp > now;
      });
 
      hasInvalidCredentialExpiration = computed(() => {
           const expiration = this.credentialStore.credentialSubjectExpirationDate();
-          if (!expiration) return false;
+
+          // No error for empty field
+          if (!expiration || expiration === '') return false;
+
           return !this.isCredentialExpirationValid();
+     });
+
+     // Enhanced error message for expiration
+     getCredentialExpirationErrorMessage = computed(() => {
+          const expiration = this.credentialStore.credentialSubjectExpirationDate();
+
+          if (!expiration || expiration === '') return '';
+
+          let timestamp: number = 0;
+
+          // Try to parse the expiration
+          if (typeof expiration === 'string') {
+               timestamp = Number(expiration);
+               if (isNaN(timestamp)) {
+                    const date = new Date(expiration);
+                    if (!isNaN(date.getTime())) {
+                         timestamp = Math.floor(date.getTime() / 1000);
+                    }
+               }
+          } else if (typeof expiration === 'number') {
+               timestamp = expiration;
+          }
+
+          const now = Math.floor(Date.now() / 1000);
+
+          if (timestamp <= now) {
+               // Format the date for display
+               const expirationDate = new Date(timestamp * 1000);
+               const nowDate = new Date(now * 1000);
+
+               // return `Expiration date must be in the future. ${expirationDate.toLocaleDateString()} is ${timestamp <= now ? 'in the past' : 'invalid'}.`;
+               return `Expiration date must be in the future. ${expirationDate.toLocaleString([], {
+                    year: 'numeric',
+                    month: 'numeric',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+               })} is in the past.`;
+          }
+
+          return 'Please enter a valid future date';
      });
 
      isDomainIdValid = computed(() => {
@@ -324,14 +414,17 @@ export class TransactionOptionsSectionComponent {
                if (this.hasInvalidUri()) {
                     const uri = this.credentialStore.uri()?.trim() ?? '';
                     if (uri.length > 256) {
-                         errors.push('URI exceeds 256 character limit');
+                         errors.push(`URI exceeds 256 character limit (currently ${uri.length} characters)`);
+                    } else if (uri.startsWith('http://') || uri.startsWith('https://')) {
+                         errors.push('Please enter a valid URL (e.g., https://example.com/credential)');
                     } else {
-                         errors.push('Please enter a valid URI');
+                         errors.push('Please enter a valid URI format');
                     }
                }
 
                if (this.hasInvalidCredentialExpiration()) {
-                    errors.push('Credential expiration must be a valid future date');
+                    // Use the more descriptive error message
+                    errors.push(this.getCredentialExpirationErrorMessage());
                }
           }
 
@@ -358,6 +451,15 @@ export class TransactionOptionsSectionComponent {
                }
                if (this.isEnteredCredentialIdInvalid()) {
                     errors.push('New Credential ID must be a valid 64-character hexadecimal Credential ID');
+               }
+          }
+
+          if (currentTab === 'deleteAccount') {
+               if (!this.isDestinationTagValid()) {
+                    errors.push('Destination Tag must be a positive number');
+               }
+               if (!this.isSourceTagValid()) {
+                    errors.push('Source Tag must be a positive number');
                }
           }
 

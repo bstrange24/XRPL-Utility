@@ -152,7 +152,7 @@ export class SignTransactionsOrchestratorService {
      }
 
      // Memo JSON helpers (used by component effects)
-     applyMemoToJson(txJson: string, memos: string[]): string {
+     applyMemoToJson(txJson: string, memos: any[]): string {
           try {
                const tx = JSON.parse(txJson);
                this.utilsService.addMemoField(tx, memos);
@@ -162,6 +162,16 @@ export class SignTransactionsOrchestratorService {
                return txJson;
           }
      }
+     // applyMemoToJson(txJson: string, memos: string[]): string {
+     //      try {
+     //           const tx = JSON.parse(txJson);
+     //           this.utilsService.addMemoField(tx, memos);
+     //           return JSON.stringify(tx, null, 2);
+     //      } catch (error: any) {
+     //           console.error(`Error applying memo to JSON: ${error.message}`);
+     //           return txJson;
+     //      }
+     // }
 
      removeMemoFromJson(txJson: string): string {
           try {

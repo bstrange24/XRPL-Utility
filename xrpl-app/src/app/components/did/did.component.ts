@@ -77,9 +77,9 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
           this.setRightPanel();
 
           // Force load credentials
-          if (this.hasWallets()) {
-               this.getDidForAccount(true);
-          }
+          // if (this.hasWallets()) {
+          //      this.getDidForAccount(true);
+          // }
      }
 
      ngOnDestroy() {

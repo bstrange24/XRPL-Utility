@@ -66,14 +66,15 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deleteAccount'] as const, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+          this.txUiService.wantsOptions.set(false);
 
           // Initial setup
           this.setRightPanel();
 
           // Force load credentials
-          if (this.hasWallets()) {
-               this.getAccountDetails(true);
-          }
+          // if (this.hasWallets()) {
+          //      this.getAccountDetails(true);
+          // }
      }
 
      ngOnDestroy(): void {

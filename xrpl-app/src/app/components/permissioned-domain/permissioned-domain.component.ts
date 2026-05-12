@@ -65,28 +65,29 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      public readonly permisisonDoaminTabs = PERMISSION_DOMAIN_TABS;
      public readonly tabMeta = PERMISSION_DOMAIN_TAB_META;
 
+     canSetPermissionDomainForm = signal(false);
+     activeTabForRequirements = computed(() => this.permissionedDomainViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
      }
 
-     activeTabForRequirements = computed(() => this.permissionedDomainViewModelService.activeTab());
-     readonly summaryExpanded = signal<boolean>(false);
-
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ['deletePermissionedDomain'] as const, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
           this.permissionedDomainUtilService.clearFields();
-          this.permissionedDomainUtilService.clearFields();
+          this.txUiService.wantsOptions.set(false);
 
           // Initial setup
           this.setRightPanel();
 
           // Force load credentials
-          if (this.hasWallets()) {
-               this.getPermissionedDomainForAccount(true);
-          }
+          // if (this.hasWallets()) {
+          //      this.getPermissionedDomainForAccount(true);
+          // }
      }
 
      ngOnDestroy(): void {
@@ -269,6 +270,10 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                     activeTab: this.activeTabForRequirements,
                },
           });
+     }
+
+     onCanSetPermissionDomainChange(isValid: boolean) {
+          this.canSetPermissionDomainForm.set(isValid);
      }
 
      handleSearchQueryChange(query: string) {

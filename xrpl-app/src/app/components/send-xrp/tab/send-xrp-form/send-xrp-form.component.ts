@@ -10,9 +10,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 import { NgIcon } from '@ng-icons/core';
-import * as xrpl from 'xrpl';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 
 @Component({
      selector: 'app-send-xrp-form',
@@ -23,6 +23,7 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SendXrpFormComponent {
+     public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
@@ -30,6 +31,7 @@ export class SendXrpFormComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      constructor() {
+          // Emit overall validation status whenever relevant signals change
           effect(() => {
                this.canSendXrpChange.emit(this.canSendXrp());
           });
@@ -45,8 +47,9 @@ export class SendXrpFormComponent {
      canSubmit = input<boolean>(false);
      tab = input.required<string>();
      selectedDestinationAddress = input<string>();
-     isAmountFocused = signal(false);
-     isDestinationFocused = signal(false);
+
+     // Track destination validation status from dropdown
+     isDestinationValid = signal(false);
 
      // Outputs to parent
      performAction = output<void>();
@@ -60,41 +63,7 @@ export class SendXrpFormComponent {
      private readonly optionsErrorMsg = signal('');
      private readonly optionsErrors = signal<string[]>([]);
 
-     // Get the final destination address (from dropdown or manual entry)
-     getFinalDestination = computed(() => {
-          const query = this.destinationSearchQuery()?.trim() || '';
-
-          if (query) {
-               return xrpl.isValidAddress(query) ? query : null;
-          }
-
-          const selected = this.selectedDestinationItem();
-          return selected?.id && xrpl.isValidAddress(selected.id) ? selected.id : null;
-     });
-
-     // Validation methods
-     isDestinationValid = computed(() => {
-          const destination = this.getFinalDestination();
-          return !!destination && xrpl.isValidAddress(destination);
-     });
-
-     isDestinationInvalid = computed(() => {
-          const query = this.destinationSearchQuery()?.trim() || '';
-          const selected = this.selectedDestinationItem();
-
-          // If user is typing (has search query), check it directly
-          if (query.length > 0) {
-               return !xrpl.isValidAddress(query);
-          }
-
-          // If nothing selected and no query → invalid only if they tried something
-          if (!selected?.id) {
-               return false;
-          }
-
-          return !xrpl.isValidAddress(selected.id);
-     });
-
+     // Simplified validation - just amount and options now
      isAmountValid = computed(() => {
           const amount = this.accountConfiguratorStoreService.amount();
 
@@ -103,25 +72,22 @@ export class SendXrpFormComponent {
           }
 
           const numAmount = Number(amount);
-
           return Number.isFinite(numAmount) && numAmount > 0;
      });
 
      isAmountInvalid = computed(() => {
           const amount = this.accountConfiguratorStoreService.amount();
 
-          // Don't show error on untouched empty field
           if (amount === null || amount === undefined || amount === '') {
                return false;
           }
 
           const numAmount = Number(amount);
-
           return !Number.isFinite(numAmount) || numAmount <= 0;
      });
 
      canSendXrp = computed(() => {
-          // Must have valid destination
+          // Must have valid destination (from dropdown validation)
           if (!this.isDestinationValid()) return false;
 
           // Must have valid amount (> 0)
@@ -130,8 +96,12 @@ export class SendXrpFormComponent {
           // Check options validation if enabled
           if (this.wantsOptions() && this.optionsHasError()) return false;
 
-          return true; // ← Remove this.canSubmit()
+          return true;
      });
+
+     onDestinationValidationChange(isValid: boolean) {
+          this.isDestinationValid.set(isValid);
+     }
 
      onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
           this.optionsHasError.set(validation.hasError);
@@ -139,12 +109,12 @@ export class SendXrpFormComponent {
           this.optionsErrors.set(validation.errors || []);
      }
 
-     // Update validationErrorMessages to include all options errors
+     // Validation error messages for summary
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
-          // Destination error
-          if (this.isDestinationInvalid()) {
+          // Destination error (now handled by dropdown, but we can still show summary)
+          if (!this.isDestinationValid()) {
                errors.push('Destination address is invalid. Please enter a valid XRP address.');
           }
 
@@ -153,9 +123,9 @@ export class SendXrpFormComponent {
                errors.push('Amount must be a positive number greater than 0.');
           }
 
-          // Options errors - add ALL of them
+          // Options errors
           if (this.wantsOptions() && this.optionsHasError()) {
-               errors.push(...this.optionsErrors()); // Spread all errors into the array
+               errors.push(...this.optionsErrors());
           }
 
           return errors;
@@ -163,24 +133,7 @@ export class SendXrpFormComponent {
 
      // Check if there are any validation errors
      hasValidationErrors = computed(() => {
-          if (this.isDestinationInvalid()) return true;
-          if (this.isAmountInvalid()) return true;
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) return true;
-          return false;
-     });
-
-     // Get validation error message
-     validationErrorMessage = computed(() => {
-          if (this.isDestinationInvalid()) {
-               return 'Destination address is invalid. Please enter a valid XRP address.';
-          }
-          if (this.isAmountInvalid()) {
-               return 'Amount must be a positive number greater than 0.';
-          }
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
-               return this.optionsErrorMsg();
-          }
-          return '';
+          return this.validationErrorMessages().length > 0;
      });
 
      onFocus(event: FocusEvent): void {

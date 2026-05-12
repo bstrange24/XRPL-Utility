@@ -110,10 +110,25 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
           }
 
           if (this.xrplTxOptionsStore.isMemoEnabled()) {
-               const memoField = this.xrplTxOptionsStore.memos();
-               if (memoField && memoField.length > 0) {
-                    this.utilsService.setMemoField1(tx, memoField);
+               const memos = this.xrplTxOptionsStore.memos();
+               if (memos && memos.length > 0) {
+                    // Check if it's the new format (objects with Memo property)
+                    if (memos.length > 0 && typeof memos[0] === 'object' && memos[0].Memo && memos[0].Memo.MemoData !== '') {
+                         this.utilsService.setEnhancedMemoField(tx, memos);
+                    } else {
+                         if (memos.length > 0 && memos[0].Memo && memos[0].Memo.MemoData !== '') {
+                              // Legacy format (array of strings)
+                              this.utilsService.setMemoField1(tx, memos);
+                         }
+                    }
                }
           }
+
+          // if (this.xrplTxOptionsStore.isMemoEnabled()) {
+          //      const memoField = this.xrplTxOptionsStore.memos();
+          //      if (memoField && memoField.length > 0) {
+          //           this.utilsService.setMemoField1(tx, memoField);
+          //      }
+          // }
      }
 }

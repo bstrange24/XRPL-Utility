@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
@@ -48,7 +48,7 @@ import { CredentialRequirementsInfoComponent } from './ui-components/credential-
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateCredentialsComponent extends WalletDestinationBase implements OnInit {
+export class CreateCredentialsComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -62,6 +62,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      public readonly credentialTabs = CREDENTIAL_TABS;
      public readonly tabMeta = CREDENTIAL_TAB_META;
 
+     canCreateCredential = signal(false);
      activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
@@ -73,14 +74,15 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CREDENTIAL_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+          this.txUiService.wantsOptions.set(false);
 
           // Initial setup
           this.setRightPanel();
 
           // Force load credentials
-          if (this.hasWallets()) {
-               this.getCredentialsForAccount(true);
-          }
+          // if (this.hasWallets()) {
+          //      this.getCredentialsForAccount(true);
+          // }
      }
 
      ngOnDestroy(): void {
@@ -146,7 +148,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
-                    console.error('Error in getCredentialsForAccount:', error);
+                    console.error('Error getting credential detail: ', error);
                     this.toastService.error(error.message || 'Error getting credential detail', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
@@ -367,6 +369,10 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                     tab: currentTab,
                },
           });
+     }
+
+     onCanCreateCredentialChange(isValid: boolean) {
+          this.canCreateCredential.set(isValid);
      }
 
      handleSearchQueryChange(query: string) {

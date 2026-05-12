@@ -36,15 +36,15 @@
 
                                    <!-- Signing Button (Conditional) -->
                                    @if (xrplTxOptionsStore.useMultiSign()) {
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
                                    } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
                                    <button type="button" class="btn-primary whitespace-nowrap" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
                                    } @else {
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                    }
 
                                    <!-- Submit -->
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
+                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
 
                                    <!-- Clear Fields -->
                                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
@@ -79,6 +79,10 @@
                               <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white-200 bg-white-50 px-5 py-3">
                                    <p class="text-sm font-semibold text-blue-700">Transaction JSON</p>
                                    <div class="flex flex-wrap items-center gap-2">
+                                        <button type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900" (click)="jsonEditor.format()">
+                                             <ng-icon name="heroCodeBracketSquare" size="16" class="text-blue-500"></ng-icon>
+                                             Format JSON
+                                        </button>
                                         <button (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())" title="Copy JSON" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
                                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-500"></ng-icon>
                                              Copy

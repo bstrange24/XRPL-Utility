@@ -1207,28 +1207,113 @@ export class UtilsService {
           tx.Sequence = Number(ticketSequence);
      }
 
-     addMemoField(tx: any, memoField: string | string[]) {
-          const memoArray = Array.isArray(memoField)
-               ? memoField
-               : (memoField || '')
-                      .split(',')
-                      .map(s => s.trim())
-                      .filter(Boolean);
+     addMemoField(tx: any, memoField: any | any[]) {
+          // Handle different input types
+          let memoArray: any[] = [];
 
-          if (memoArray.length > 0) {
-               tx.Memos = memoArray
-                    .filter(memo => memo && memo.trim() !== '') // Filter out empty strings
+          if (Array.isArray(memoField)) {
+               memoArray = memoField;
+          } else if (typeof memoField === 'string') {
+               // Legacy comma-separated string support
+               memoArray = memoField
+                    .split(',')
+                    .map(s => s.trim())
+                    .filter(Boolean)
                     .map(memo => ({
                          Memo: {
-                              MemoData: Buffer.from(memo, 'utf8').toString('hex'),
-                              MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+                              MemoData: memo,
+                              MemoType: 'text/plain',
+                              MemoFormat: '',
                          },
                     }));
-          } else {
-               delete tx.Memos;
+          } else if (memoField && typeof memoField === 'object') {
+               memoArray = [memoField];
           }
+
+          if (memoArray.length === 0) {
+               delete tx.Memos;
+               return;
+          }
+
+          // Process memos based on their format
+          tx.Memos = memoArray
+               .filter(memo => {
+                    // Filter out empty memos
+                    if (typeof memo === 'string') return memo && memo.trim() !== '';
+                    if (memo && memo.Memo) return memo.Memo.MemoData && memo.Memo.MemoData.trim() !== '';
+                    return false;
+               })
+               .map(memo => {
+                    // Handle string format (legacy)
+                    if (typeof memo === 'string') {
+                         return {
+                              Memo: {
+                                   MemoData: Buffer.from(memo, 'utf8').toString('hex'),
+                                   MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+                              },
+                         };
+                    }
+
+                    // Handle object format (new UI)
+                    if (memo && memo.Memo) {
+                         const memoObj: any = {
+                              Memo: {},
+                         };
+
+                         // Add MemoData if present
+                         if (memo.Memo.MemoData) {
+                              memoObj.Memo.MemoData = Buffer.from(memo.Memo.MemoData, 'utf8').toString('hex');
+                         }
+
+                         // Add MemoType if present
+                         if (memo.Memo.MemoType && memo.Memo.MemoType.trim()) {
+                              memoObj.Memo.MemoType = Buffer.from(memo.Memo.MemoType, 'utf8').toString('hex');
+                         } else {
+                              // Default to text/plain
+                              memoObj.Memo.MemoType = Buffer.from('text/plain', 'utf8').toString('hex');
+                         }
+
+                         // Add MemoFormat if present
+                         if (memo.Memo.MemoFormat && memo.Memo.MemoFormat.trim()) {
+                              memoObj.Memo.MemoFormat = Buffer.from(memo.Memo.MemoFormat, 'utf8').toString('hex');
+                         }
+
+                         return memoObj;
+                    }
+
+                    // Fallback for any other format
+                    return {
+                         Memo: {
+                              MemoData: Buffer.from('', 'utf8').toString('hex'),
+                              MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+                         },
+                    };
+               });
      }
 
+     // addMemoField(tx: any, memoField: string | string[]) {
+     //      const memoArray = Array.isArray(memoField)
+     //           ? memoField
+     //           : (memoField || '')
+     //                  .split(',')
+     //                  .map(s => s.trim())
+     //                  .filter(Boolean);
+
+     //      if (memoArray.length > 0) {
+     //           tx.Memos = memoArray
+     //                .filter(memo => memo && memo.trim() !== '') // Filter out empty strings
+     //                .map(memo => ({
+     //                     Memo: {
+     //                          MemoData: Buffer.from(memo, 'utf8').toString('hex'),
+     //                          MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+     //                     },
+     //                }));
+     //      } else {
+     //           delete tx.Memos;
+     //      }
+     // }
+
+     // Keep your existing method for backward compatibility
      setMemoField1(tx: any, memos: string[]) {
           if (!memos || memos.length === 0) return;
 
@@ -1239,6 +1324,51 @@ export class UtilsService {
                },
           }));
      }
+
+     // Add a new method for the enhanced memo format
+     setEnhancedMemoField(tx: any, memos: any[]) {
+          if (!memos || memos.length === 0) return;
+
+          tx.Memos = memos.map(memo => {
+               const memoObj: any = {
+                    Memo: {},
+               };
+
+               // Handle MemoData
+               if (memo.Memo?.MemoData) {
+                    memoObj.Memo.MemoData = Buffer.from(memo.Memo.MemoData, 'utf8').toString('hex');
+               }
+
+               // Handle MemoType
+               if (memo.Memo?.MemoType && memo.Memo.MemoType.trim()) {
+                    memoObj.Memo.MemoType = Buffer.from(memo.Memo.MemoType, 'utf8').toString('hex');
+               }
+
+               // Handle MemoFormat
+               if (memo.Memo?.MemoFormat && memo.Memo.MemoFormat.trim()) {
+                    memoObj.Memo.MemoFormat = Buffer.from(memo.Memo.MemoFormat, 'utf8').toString('hex');
+               }
+
+               // If no data, add empty memo with default type
+               if (Object.keys(memoObj.Memo).length === 0) {
+                    memoObj.Memo.MemoData = Buffer.from('', 'utf8').toString('hex');
+                    memoObj.Memo.MemoType = Buffer.from('text/plain', 'utf8').toString('hex');
+               }
+
+               return memoObj;
+          });
+     }
+
+     // setMemoField1(tx: any, memos: string[]) {
+     //      if (!memos || memos.length === 0) return;
+
+     //      tx.Memos = memos.map(memo => ({
+     //           Memo: {
+     //                MemoData: Buffer.from(memo, 'utf8').toString('hex'),
+     //                MemoType: Buffer.from('text/plain', 'utf8').toString('hex'),
+     //           },
+     //      }));
+     // }
 
      setMemoField(tx: any, memoField: string) {
           const memos = (memoField || '')

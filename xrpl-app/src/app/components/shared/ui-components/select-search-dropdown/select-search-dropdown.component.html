@@ -2,12 +2,26 @@
 <div class="combobox-container relative w-full">
      <!-- Input -->
      <div class="relative">
-          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (keydown)="onKeydown($event)" [placeholder]="placeholder()" class="w-full bg-white border border-gray-100 rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none focus:border-green-500 transition-colors" autocomplete="off" [disabled]="isDisabled()" />
+          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (blur)="onBlur()" (keydown)="onKeydown($event)" [placeholder]="placeholder()" [class]="inputClasses()" autocomplete="off" [disabled]="isDisabled()" />
 
-          <button type="button" (click)="toggle()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-               <lucide-icon name="chevron-down" size="18"></lucide-icon>
-          </button>
+          <!-- Buttons container -->
+          <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+               <!-- Clear button - only show when there's content -->
+               <button type="button" (click)="clearInput($event)" class="clear-button text-gray-400 hover:text-gray-600 transition-all p-1 rounded-full hover:bg-gray-100" [class.visible]="showClearButton()" title="Clear input">
+                    <lucide-icon name="x" size="16"></lucide-icon>
+               </button>
+
+               <!-- Chevron button -->
+               <button type="button" (click)="toggle()" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" [class.opacity-50]="isDisabled()">
+                    <lucide-icon name="chevron-down" size="18"></lucide-icon>
+               </button>
+          </div>
      </div>
+
+     <!-- Validation Error Message -->
+     @if (showInlineErrorMessage() && showError() && validationErrorMessage()) {
+     <p class="form-error mt-1 text-red-500 text-sm">{{ validationErrorMessage() }}</p>
+     }
 
      <!-- Animated Dropdown -->
      <ng-template #dropdown let-data>
@@ -19,7 +33,8 @@
                     <div class="combobox-group-header px-1 py-1 text-xs font-semibold uppercase tracking-widest text-gray-500 bg-gray-50 border-t border-b border-gray-100">{{ item.group || '' }}</div>
                     }
 
-                    <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)">
+                    <!-- <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (click)="(item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) ? null : onSelect(item)"> -->
+                    <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (mousedown)="onItemMouseDown($event, item)">
                          <div class="flex items-center justify-between">
                               <span class="font-medium text-gray-900">{{ item.display }}</span>
                               @if (item.isCurrentAccount) { <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">Current Account</span> } @if (item.isCurrentCode) { <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full">Current Code</span> } @if (item.isCurrentToken) { <span class="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full">Selected</span> } @if (item.pending) {

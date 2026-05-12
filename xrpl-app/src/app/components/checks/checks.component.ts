@@ -95,6 +95,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+          this.txUiService.wantsOptions.set(false);
 
           // Initial setup
           this.setRightPanel();

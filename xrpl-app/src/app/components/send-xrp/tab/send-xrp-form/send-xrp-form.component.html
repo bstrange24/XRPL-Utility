@@ -11,11 +11,8 @@
                <div>
                     <label for="destination" class="label-primary">Destination</label>
                     <p class="text-secondary">The unique address receiving the XRP payment.</p>
-                    <app-select-search-dropdown app-focus-border [isValid]="isDestinationValid()" [isInvalid]="isDestinationValid()" [closeWhenInvalid]="isDestinationInvalid()" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address"> </app-select-search-dropdown>
-
-                    @if (isDestinationInvalid()) {
-                    <p class="form-error">Please enter a valid XRP address</p>
-                    }
+                    <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                    </app-select-search-dropdown>
                </div>
 
                <!-- XRP Amount -->

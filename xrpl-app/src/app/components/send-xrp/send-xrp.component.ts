@@ -71,17 +71,18 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SEND_XRP_TAB, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+          this.txUiService.wantsOptions.set(false);
 
           // Initial setup
           this.setRightPanel();
 
           // Force load credentials
-          if (this.hasWallets()) {
-               this.onAccountChange(true); // force refresh from ledger
-          }
+          //if (this.hasWallets()) {
+          //this.onAccountChange(true);
+          //}
      }
 
-     ngOnDestroy() {
+     ngOnDestroy(): void {
           this.rightPanelService.clearPanel();
      }
 
@@ -124,8 +125,8 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                     this.sendXrpUtilService.clearInputFields();
                } catch (error: any) {
-                    console.error('Failed to load account:', error);
-                    this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
+                    console.error('Error getting account detail: ', error);
+                    this.toastService.error(error.message || 'Error getting account detail', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();

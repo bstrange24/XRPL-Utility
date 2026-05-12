@@ -11,7 +11,10 @@ import { DidUtilService } from '../did-util/did-util.service';
 @Injectable({ providedIn: 'root' })
 export class DidViewModelService {
      activeTab = signal<DidTab>('setDid');
+
      private readonly didDataEditor = signal<JsonEditorComponent | null>(null);
+     private readonly didDocumentEditor = signal<JsonEditorComponent | null>(null);
+     private readonly uriDataEditor = signal<JsonEditorComponent | null>(null);
 
      public readonly didStore = inject(DidStoreService);
      public readonly walletManager = inject(WalletManagerService);
@@ -112,25 +115,64 @@ export class DidViewModelService {
           return this.didDocumentDataByteLength() <= 256;
      });
 
-     hasJsonSyntaxError = computed(() => {
+     hasDidDataJsonError = computed(() => {
           const editor = this.didDataEditor();
-          const error = editor?.jsonError()?.trim();
-          return !!error;
+          if (!editor) return false;
+          const error = editor.jsonError();
+          return !!error && error.trim().length > 0;
+     });
+
+     hasDidDocumentJsonError = computed(() => {
+          const editor = this.didDocumentEditor();
+          if (!editor) return false;
+          const error = editor.jsonError();
+          return !!error && error.trim().length > 0;
+     });
+
+     hasUriDataJsonError = computed(() => {
+          const editor = this.uriDataEditor();
+          if (!editor) return false;
+          const error = editor.jsonError();
+          return !!error && error.trim().length > 0;
+     });
+
+     hasJsonSyntaxError = computed(() => {
+          return this.hasDidDataJsonError() || this.hasDidDocumentJsonError() || this.hasUriDataJsonError();
      });
 
      validDidSchema = computed(() => {
           const didData = this.didStore.didData();
-          if (!didData.trim() || this.hasJsonSyntaxError()) return false;
+          if (!didData.trim() || this.hasDidDataJsonError()) return false;
 
           const result = this.didUtilService.validateAndConvertDidJson(didData, didSchema);
           return result.success;
      });
 
+     isDidDataValid = computed(() => {
+          return this.didDataIsValid() && !this.hasDidDataJsonError() && this.validDidSchema();
+     });
+
+     isDidDocumentValid = computed(() => {
+          return this.didDocumentDataIsValid() && !this.hasDidDocumentJsonError();
+     });
+
+     isUriDataValid = computed(() => {
+          return this.uriDataIsValid() && !this.hasUriDataJsonError();
+     });
+
      allFieldsValid = computed(() => {
-          return this.didDocumentDataIsValid() && this.uriDataIsValid() && this.didDataIsValid() && !this.hasJsonSyntaxError() && this.validDidSchema();
+          return this.isDidDataValid() && this.isDidDocumentValid() && this.isUriDataValid();
      });
 
      setDidDataEditor(editor: JsonEditorComponent) {
           this.didDataEditor.set(editor);
+     }
+
+     setDidDocumentEditor(editor: JsonEditorComponent) {
+          this.didDocumentEditor.set(editor);
+     }
+
+     setUriDataEditor(editor: JsonEditorComponent) {
+          this.uriDataEditor.set(editor);
      }
 }

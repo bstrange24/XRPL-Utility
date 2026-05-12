@@ -35,7 +35,7 @@
                <!-- Action Buttons -->
                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
                     @if (tab === 'setDid') {
-                    <button type="button" class="btn-primary whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit() || didViewModelService.infoData()?.didCount! == 1">Set DID</button>
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit() || !didViewModelService.allFieldsValid() || didViewModelService.infoData()?.didCount! == 1">Set DID</button>
                     } @else if (tab === 'deleteDid') {
                     <button type="button" class="btn-red whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit() || didViewModelService.infoData()?.didCount! <= 0">Delete DID</button>
                     }
