@@ -351,6 +351,7 @@ export class FirewallComponent extends WalletDestinationBase implements OnInit {
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          // this.rightPanelService.resetFilters();
           await this.getFirewallDetails(false);
      }
 

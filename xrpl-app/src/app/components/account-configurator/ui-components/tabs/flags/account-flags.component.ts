@@ -9,6 +9,7 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import { XrplAccountFlags } from '../../../constants/account-configurator.types';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-account-flags',

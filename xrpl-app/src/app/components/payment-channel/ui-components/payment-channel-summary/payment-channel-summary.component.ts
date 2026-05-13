@@ -1,5 +1,5 @@
 // payment-channel-summary.component.ts
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { NgIcon } from '@ng-icons/core';
@@ -30,10 +30,19 @@ export class PaymentChannelSummaryComponent {
      public viewModel = inject(PaymentChannelViewModelService);
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      infoPanelExpanded = input<boolean>(false);
      info = input<any>();
      tab = input<any>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -224,6 +233,10 @@ export class PaymentChannelSummaryComponent {
 
      onSearchChange(value: string) {
           this.searchQuery.set(value);
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      setQuickFilter(filter: 'all' | 'expired' | 'active' | 'claimable') {

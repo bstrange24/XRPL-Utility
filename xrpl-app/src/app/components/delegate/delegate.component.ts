@@ -76,6 +76,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          // this.rightPanelService.resetFilters();
           await this.getAccountDetails(true);
      }
 

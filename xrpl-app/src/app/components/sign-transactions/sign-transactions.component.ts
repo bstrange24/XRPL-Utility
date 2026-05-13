@@ -188,6 +188,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getAccountDetails();
      }
 

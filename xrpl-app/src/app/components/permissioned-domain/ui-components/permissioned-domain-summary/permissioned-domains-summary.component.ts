@@ -1,4 +1,4 @@
-import { Component, input, output, inject, ChangeDetectionStrategy, computed, signal } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, computed, signal, effect } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -42,6 +42,14 @@ export class PermissionedDomainsSummaryComponent {
      public utilsService = inject(UtilsService);
      public permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      info = input.required<
           | {
@@ -56,6 +64,7 @@ export class PermissionedDomainsSummaryComponent {
      tab = input.required<PermissionedDomainTab>();
      summaryMessage = input.required<string>();
      infoPanelExpanded = input<boolean>(false);
+     resetTrigger = input<number>(0);
 
      // Computed
      infoData = computed(() => this.info() ?? null);
@@ -146,18 +155,22 @@ export class PermissionedDomainsSummaryComponent {
                return `No domains with ${filter === 'hasCredentials' ? 'credentials' : 'empty domains'}`;
           }
           if (count === 0) {
-               return currentTab === 'setPermissionedDomain' ? 'This wallet has not created any Permissioned Domains yet.' : 'This wallet has no Permissioned Domains to delete.';
+               return currentTab === 'setPermissionedDomain' ? 'This wallet has no Permissioned Domains.' : 'This wallet has no Permissioned Domains to delete.';
           }
           return '';
      });
 
      emptyStateSubMessage = computed(() => {
+          const currentTab = this.tab();
           const query = this.searchQuery();
           if (query && this.filteredDomains().length === 0) {
                return 'Try a different search term';
           }
           if (this.activeQuickFilter() !== 'all' && this.filteredDomains().length === 0) {
                return 'Try changing the filter';
+          }
+          if (this.totalCount() === 0) {
+               return 'Use the Set tab to create one.';
           }
           return '';
      });
@@ -222,5 +235,9 @@ export class PermissionedDomainsSummaryComponent {
                issuer,
                types: Array.from(types),
           }));
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 }

@@ -36,6 +36,46 @@ export class MultiSignComponent {
      quorumFocused = signal(false);
      protected xrpl = xrpl;
 
+     // Clear specific account field
+     clearAccount(index: number, event: MouseEvent) {
+          event.stopPropagation(); // Prevent event bubbling
+          this.accountConfiguratorStoreService.updateSigner(index, 'Account', '');
+
+          // Optional: Focus back on the input after clearing
+          setTimeout(() => {
+               const input = document.querySelector(`input[data-account-index="${index}"]`) as HTMLInputElement;
+               if (input) {
+                    input.focus();
+               }
+          }, 0);
+     }
+
+     // Clear specific seed field
+     clearSeed(index: number, event: MouseEvent) {
+          event.stopPropagation(); // Prevent event bubbling
+          this.accountConfiguratorStoreService.updateSigner(index, 'seed', '');
+
+          // Optional: Focus back on the input after clearing
+          setTimeout(() => {
+               const input = document.querySelector(`input[data-seed-index="${index}"]`) as HTMLInputElement;
+               if (input) {
+                    input.focus();
+               }
+          }, 0);
+     }
+
+     // Optional: Add keyboard support (Escape key to clear)
+     //   onKeydown(event: KeyboardEvent, field: 'account' | 'seed', index: number) {
+     //     if (event.key === 'Escape') {
+     //       event.preventDefault();
+     //       if (field === 'account') {
+     //         this.clearAccount(index, event);
+     //       } else {
+     //         this.clearSeed(index, event);
+     //       }
+     //     }
+     //   }
+
      isAddressValid(address: string): boolean {
           if (!address) return false;
           return xrpl.isValidAddress(address);

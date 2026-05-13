@@ -1,5 +1,5 @@
 // checks-summary.component.ts
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -45,12 +45,21 @@ export class ChecksSummaryComponent {
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
      public readonly utilsService = inject(UtilsService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs from parent
      wallet = input.required<{ address: string } | null | undefined>();
      checksLength = input.required<number>();
      tab = input.required<CheckActionTypes>();
      infoPanelExpanded = input<boolean>();
      info = input<string>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -291,6 +300,10 @@ export class ChecksSummaryComponent {
           this.expiresAfter.set('');
           this.expiresBefore.set('');
           this.activeQuickFilter.set('all');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      onCheckClick(check: any) {

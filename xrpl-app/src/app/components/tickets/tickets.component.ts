@@ -91,6 +91,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getTickets(false);
      }
 
@@ -241,6 +242,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                     tab: this.ticketsViewModelService.activeTab(),
                     walletName: this.walletName(),
                     ticketCount: this.xrplTxOptionsStore.walletTicketCount(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: TicketsRequirementsInfoComponent,

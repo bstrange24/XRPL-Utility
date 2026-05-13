@@ -23,7 +23,7 @@
                     <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="isUriValid()" [isInvalid]="hasInvalidUri()" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
 
                     @if (credentialStore.uri() && credentialStore.uri().trim().length > 0) {
-                    <button type="button" (click)="credentialUtilService.setCredentialUri('')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear URI">
+                    <button type="button" (click)="credentialUtilService.setCredentialUri('')" class="clearInputXmark" aria-label="Clear URI">
                          <ng-icon name="heroXMark" size="14"></ng-icon>
                     </button>
                     }
@@ -131,7 +131,7 @@
                          <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidInvoiceId()" [isInvalid]="hasInvalidInvoiceId()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" placeholder="e.g. 1123456" />
 
                          @if (xrplTxOptionsStore.invoiceId()) {
-                         <button type="button" (click)="xrplTxOptionsStore.setField('invoiceId', '')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear invoice ID">
+                         <button type="button" (click)="xrplTxOptionsStore.setField('invoiceId', '')" class="clearInputXmark" aria-label="Clear invoice ID">
                               <ng-icon name="heroXMark" size="14"></ng-icon>
                          </button>
                          }
@@ -167,7 +167,7 @@
                          <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidDomainId()" [isInvalid]="hasInvalidDomainId()" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" placeholder="example.com or hex value" />
 
                          @if (permissionedDomainStoreService.domainId()) {
-                         <button type="button" (click)="permissionedDomainStoreService.setField('domainId', '')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear domain ID">
+                         <button type="button" (click)="permissionedDomainStoreService.setField('domainId', '')" class="clearInputXmark" aria-label="Clear domain ID">
                               <ng-icon name="heroXMark" size="14"></ng-icon>
                          </button>
                          }
@@ -230,7 +230,7 @@
                          <input type="text" class="input-base-with-validation flex-1 pr-10" app-focus-border [isValid]="!isEnteredCredentialIdInvalid()" [isInvalid]="isEnteredCredentialIdInvalid()" [(ngModel)]="newCredentialId" (keydown.enter)="addCredentialId()" placeholder="New credential ID" maxlength="256" />
 
                          @if (newCredentialId()) {
-                         <button type="button" (click)="newCredentialId.set('')" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear credential ID">
+                         <button type="button" (click)="newCredentialId.set('')" class="clearInputXmark" aria-label="Clear credential ID">
                               <ng-icon name="heroXMark" size="14"></ng-icon>
                          </button>
                          }

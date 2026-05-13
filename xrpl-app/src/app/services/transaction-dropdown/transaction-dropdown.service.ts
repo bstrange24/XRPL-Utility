@@ -74,6 +74,26 @@ export class TransactionDropdownService {
           });
      }
 
+     // destinationItems(allDest: Signal<Destination[]>) {
+     //      return computed(() => {
+     //           const dests = allDest();
+
+     //           // Safe guard
+     //           if (dests.length === 0) {
+     //                return [];
+     //           }
+
+     //           const currentAddr = this.currentAddress(); // now returns null-safe
+
+     //           return dests.map(d => ({
+     //                id: d.address,
+     //                display: d.name ?? 'Unknown Wallet',
+     //                secondary: d.address,
+     //                isCurrentAccount: d.address === currentAddr && !!currentAddr,
+     //           }));
+     //      });
+     // }
+
      destinationItems(allDest: Signal<Destination[]>) {
           return computed(() => {
                const dests = allDest();
@@ -83,11 +103,11 @@ export class TransactionDropdownService {
                     return [];
                }
 
-               const currentAddr = this.currentAddress(); // now returns null-safe
+               const currentAddr = this.currentAddress();
 
                return dests.map(d => ({
                     id: d.address,
-                    display: d.name ?? 'Unknown Wallet',
+                    display: d.name ?? `Wallet ${d.address.slice(0, 8)}...`,
                     secondary: d.address,
                     isCurrentAccount: d.address === currentAddr && !!currentAddr,
                }));

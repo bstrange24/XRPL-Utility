@@ -133,6 +133,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineStoreService.resetOptions(); // or a new clearTrustlines() method
+          this.rightPanelService.resetFilters();
           await this.getTrustlinesForAccount(true);
      }
 
@@ -393,6 +394,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                summaryInputs: {
                     info: this.trustlineViewModelService.infoData(),
                     tab: this.trustlineViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: TrustlineRequirementsInfoComponent,

@@ -66,7 +66,6 @@ export class DidViewModelService {
 
           try {
                const hex = xrpl.convertStringToHex(meta);
-               console.log('DID JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
                return hex.length / 2;
           } catch (e) {
                console.error('Failed to convert DID JSON to hex:', e);
@@ -80,7 +79,6 @@ export class DidViewModelService {
 
           try {
                const hex = xrpl.convertStringToHex(meta);
-               console.log('URI JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
                return hex.length / 2;
           } catch (e) {
                console.error('Failed to convert URI JSON to hex:', e);
@@ -94,7 +92,6 @@ export class DidViewModelService {
 
           try {
                const hex = xrpl.convertStringToHex(meta);
-               console.log('DID Document JSON -> Hex length:', hex.length, '→ Bytes:', hex.length / 2);
                return hex.length / 2;
           } catch (e) {
                console.error('Failed to convert DID Document JSON to hex:', e);

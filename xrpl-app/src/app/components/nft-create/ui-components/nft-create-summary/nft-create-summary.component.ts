@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
@@ -41,10 +41,19 @@ export class NftCreateSummaryComponent {
      public readonly nftUtilService = inject(NftUtilService);
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      infoPanelExpanded = input<boolean>();
      info = input<string>();
      tab = input<NftCreateActionTypes>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -235,6 +244,10 @@ export class NftCreateSummaryComponent {
      clearAllFilters() {
           this.searchQuery.set('');
           this.activeQuickFilter.set('all');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      onNftClick(nft: any) {

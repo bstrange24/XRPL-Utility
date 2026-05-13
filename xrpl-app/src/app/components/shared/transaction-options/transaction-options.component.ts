@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -184,6 +184,25 @@ export class TransactionOptionsComponent {
                .map(v => v.trim())
                .filter(Boolean);
           this.xrplTxOptionsStore.updateMemos(cleaned);
+     }
+
+     clearMemoData(index: number, event: MouseEvent) {
+          event.stopPropagation();
+          this.xrplTxOptionsStore.clearMemoData(index);
+     }
+
+     clearMemoType(index: number, event: MouseEvent) {
+          event.stopPropagation();
+          this.xrplTxOptionsStore.clearMemoType(index);
+     }
+
+     clearMemoFormat(index: number, event: MouseEvent) {
+          event.stopPropagation();
+          this.xrplTxOptionsStore.clearMemoFormat(index);
+     }
+
+     clearAllMemoFields(index: number) {
+          this.xrplTxOptionsStore.clearAllMemoFields(index);
      }
 
      onMultiSignToggled(enabled: boolean) {

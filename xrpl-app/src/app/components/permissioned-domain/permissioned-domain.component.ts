@@ -102,6 +102,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getPermissionedDomainForAccount();
      }
 
@@ -263,6 +264,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                summaryInputs: {
                     info: this.permissionedDomainViewModelService.infoData(),
                     tab: this.permissionedDomainViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: PermissionedDomainRequirementsInfoComponent,

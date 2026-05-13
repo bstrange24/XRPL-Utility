@@ -39,6 +39,8 @@ export class CredentialCreateComponent {
      canSubmit = input<boolean>(false);
      tab = input.required<string>();
      selectedDestinationAddress = input<string>();
+     currentAddress = input<string>('');
+     lastIntendedDestination = input<string>('');
 
      // Track destination validation status from dropdown
      isDestinationValid = signal(false);
@@ -105,7 +107,7 @@ export class CredentialCreateComponent {
 
      isCredentialTypeValid = computed(() => {
           const type = this.credentialStore.credentialType()?.trim() ?? '';
-          if (!type) return true; // Empty is considered valid (optional field?)
+          if (!type) return true;
           if (type.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) return false;
           return CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_PATTERN.test(type);
      });
@@ -128,7 +130,6 @@ export class CredentialCreateComponent {
           return '';
      });
 
-     // Overall validation
      canCreateCredential = computed(() => {
           // Must have valid subject (XRP address)
           if (!this.isSubjectValid()) return false;
@@ -143,7 +144,6 @@ export class CredentialCreateComponent {
           return true;
      });
 
-     // Validation error messages for summary
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 

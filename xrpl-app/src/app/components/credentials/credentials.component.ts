@@ -64,11 +64,20 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      canCreateCredential = signal(false);
      activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
+     lastIntendedDestination = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
      }
 
      ngOnInit(): void {
@@ -78,11 +87,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          // if (this.hasWallets()) {
-          //      this.getCredentialsForAccount(true);
-          // }
      }
 
      ngOnDestroy(): void {
@@ -97,6 +101,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getCredentialsForAccount(false);
      }
 
@@ -367,6 +372,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                     creds: credentialVm,
                     credsLength: credentialVm.list?.length || 0,
                     tab: currentTab,
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
           });
      }

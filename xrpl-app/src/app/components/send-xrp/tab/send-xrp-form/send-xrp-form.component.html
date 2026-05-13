@@ -13,6 +13,13 @@
                     <p class="text-secondary">The unique address receiving the XRP payment.</p>
                     <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
                     </app-select-search-dropdown>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send XRP to yourself.
+                    </p>
+                    }
                </div>
 
                <!-- XRP Amount -->

@@ -110,18 +110,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           return this.searchQuery().trim();
      });
-     // getCurrentValue = computed(() => {
-     //      const query = this.searchQuery().trim();
-
-     //      // If user is typing, return the query
-     //      if (query) {
-     //           return query;
-     //      }
-
-     //      // Otherwise return the selected item's ID
-     //      const selected = this.value();
-     //      return selected?.id || '';
-     // });
 
      // Computed: XRP address validation
      isXrpAddressValid = computed(() => {
@@ -137,25 +125,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           return xrpl.isValidAddress(value);
      });
-     // isXrpAddressValid = computed(() => {
-     //      if (!this.validateXrpAddress()) return true; // Skip validation if not enabled
-
-     //      const value = this.getCurrentValue();
-     //      if (!value) return true; // Empty is considered valid (no error state)
-
-     //      // Check if it's a selected item or manually entered
-     //      const query = this.searchQuery().trim();
-     //      if (query) {
-     //           return xrpl.isValidAddress(query);
-     //      }
-
-     //      const selected = this.value();
-     //      if (selected?.id) {
-     //           return xrpl.isValidAddress(selected.id);
-     //      }
-
-     //      return true;
-     // });
 
      // Computed: Overall validation status (combines XRP validation and custom validation)
      isValidValue = computed(() => {
@@ -211,9 +180,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }
 
           // Check custom validation
-          // if (this.customValidation()(value)) {
-          //      return this.customValidationMessage();
-          // }
           if (!this.customValidation()(value)) {
                return this.customValidationMessage();
           }
@@ -223,18 +189,37 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
      // Computed: CSS classes for the input based on validation state
      inputClasses = computed(() => {
-          const baseClasses = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
+          const base = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm ' + 'focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
 
+          // Always apply green focus border
+          const focusBorder = 'focus:border-green-500';
+
+          // Error state takes priority
           if (this.showError()) {
-               return `${baseClasses} border-red-500 focus:border-red-500 bg-red-50`;
+               return `${base} border-red-500 focus:border-red-500 bg-red-50`;
           }
 
-          if (this.isValidValue() && this.getCurrentValue() && this.isTouched()) {
-               return `${baseClasses} border-green-500 focus:border-green-500`;
+          // Valid value → normal gray border when not focused, green only on focus
+          if (this.isValidValue() && this.getCurrentValue()) {
+               return `${base} border-gray-200 ${focusBorder}`;
           }
 
-          return `${baseClasses} border-gray-100 focus:border-green-500`;
+          // Default empty state
+          return `${base} border-gray-200 ${focusBorder}`;
      });
+     // inputClasses = computed(() => {
+     //      const baseClasses = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
+
+     //      if (this.showError()) {
+     //           return `${baseClasses} border-red-500 focus:border-red-500 bg-red-50`;
+     //      }
+
+     //      if (this.isValidValue() && this.getCurrentValue() && this.isTouched()) {
+     //           return `${baseClasses} border-green-500 focus:border-green-500`;
+     //      }
+
+     //      return `${baseClasses} border-gray-100 focus:border-green-500`;
+     // });
 
      // Computed
      displayValue = computed(() => {
@@ -355,6 +340,18 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }
      }
 
+     toggleWithFocus() {
+          if (this.isDisabled()) return;
+
+          if (this.overlayRef?.hasAttached()) {
+               this.close();
+          } else {
+               this.open();
+               // Force focus on input so border turns green
+               setTimeout(() => this.inputEl.nativeElement.focus(), 10);
+          }
+     }
+
      private static closeAnyOther(instance: SelectSearchDropdownComponent) {
           if (this.openInstance && this.openInstance !== instance) {
                this.openInstance.close();
@@ -394,19 +391,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           this.open();
      }
-     // onInput(e: Event) {
-     //      const value = (e.target as HTMLInputElement).value;
-     //      this.searchQuery.set(value);
-     //      this.searchQueryChange.emit(value);
-
-     //      // Always open dropdown when typing to show filtered results
-     //      this.open();
-
-     //      // Mark as touched on input
-     //      // if (!this.isTouched()) {
-     //      // this.isTouched.set(true);
-     //      // }
-     // }
 
      onSelect(item: SelectItem) {
           // Don't allow selection of disabled items
@@ -424,10 +408,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           this.searchQuery.set('');
           this.searchQueryChange.emit('');
 
-          // Mark as touched on selection
-          // if (!this.isTouched()) {
           this.isTouched.set(true);
-          // }
 
           this.inputEl.nativeElement.blur();
 
@@ -435,10 +416,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      }
 
      onBlur() {
-          // Mark as touched on blur
-          // if (!this.isTouched()) {
           this.isTouched.set(true);
-          // }
 
           // Close dropdown and validate on blur
           setTimeout(() => {
@@ -519,20 +497,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }, 0);
      }
 
-     // @HostListener('document:mousedown', ['$event'])
-     // handleOutsideClick(event: MouseEvent) {
-     //      if (!this.overlayRef?.hasAttached()) return;
-
-     //      const input = this.inputEl.nativeElement;
-     //      const overlayEl = this.overlayRef.overlayElement;
-
-     //      if (input.contains(event.target as Node) || overlayEl?.contains(event.target as Node)) {
-     //           return;
-     //      }
-
-     //      this.close();
-     // }
-
      // Public method to trigger validation (for form submission)
      triggerValidation(): boolean {
           this.wasSubmitted.set(true);
@@ -550,17 +514,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           };
      }
 
-     // Add computed property to determine if clear button should be shown
-     private shouldShowClearButton = computed(() => {
-          if (!this.showClearButton()) return false;
-          if (this.isDisabled()) return false;
-
-          const hasContent = !!this.getCurrentValue();
-          const isSearching = !!this.searchQuery();
-
-          return hasContent || isSearching;
-     });
-
      // Clear method
      clearInput(event: Event) {
           event.stopPropagation();
@@ -575,7 +528,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           }
 
           // Focus the input after clearing
-          // this.inputEl.nativeElement.focus();
           this.inputEl.nativeElement.blur();
 
           // Close dropdown if open
@@ -587,7 +539,5 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           if (!this.isTouched()) {
                this.isTouched.set(true);
           }
-
-          // Don't auto-open, let user decide when to start typing
      }
 }

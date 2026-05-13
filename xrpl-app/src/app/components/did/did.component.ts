@@ -98,6 +98,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getDidForAccount(true);
      }
 
@@ -217,6 +218,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                summaryInputs: {
                     info: this.didViewModelService.infoData(),
                     infoPanelExpanded: signal(true),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: DidRequirementsInfoComponent,

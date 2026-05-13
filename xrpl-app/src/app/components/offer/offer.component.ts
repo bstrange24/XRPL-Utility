@@ -119,6 +119,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
+          this.rightPanelService.resetFilters();
           await this.onAccountChange(true);
      }
 
@@ -293,6 +294,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                summaryInputs: {
                     info: this.offerTransactionViewModelService.infoData(),
                     tab: this.offerTransactionViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: OfferRequirementsInfoComponent,

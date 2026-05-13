@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -30,6 +30,14 @@ export class TicketsSummaryComponent {
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
      public readonly copyUtilService = inject(CopyUtilService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      info = input<any>();
      infoData = input<string | null>();
@@ -39,6 +47,7 @@ export class TicketsSummaryComponent {
      infoPanelExpanded = input<boolean>(false);
      walletName = input<string>('');
      ticketCount = input<string>('');
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -133,6 +142,10 @@ export class TicketsSummaryComponent {
      }
 
      clearAllFilters() {
+          this.searchQuery.set('');
+     }
+
+     clearSearch() {
           this.searchQuery.set('');
      }
 }

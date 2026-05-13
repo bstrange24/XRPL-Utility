@@ -212,16 +212,6 @@
                                              <label>Finish Time Unit</label>
                                              <app-select-search-dropdown [items]="timeUnitItems()" [value]="finishTimeUnit()" (valueChange)="finishTimePeriodUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                         </div>
-                                        <!-- Finish Time Unit -->
-                                        <!-- <div class="form-group">
-                                             <label>Finish Time Unit</label>
-                                             <select id="timePeriodUnit" [(ngModel)]="timePeriodUnit" name="timePeriodUnit">
-                                                  <option value="seconds">Seconds</option>
-                                                  <option value="minutes">Minutes</option>
-                                                  <option value="hours">Hours</option>
-                                                  <option value="days">Days</option>
-                                             </select>
-                                        </div> -->
                                    </div>
                                    <div class="form-row">
                                         <!-- Cancel Time -->
@@ -234,15 +224,6 @@
                                              <label>Cancel Time Unit</label>
                                              <app-select-search-dropdown [items]="timeUnitItems()" [value]="cancelTimeUnit()" (valueChange)="cancelTimePeriodUnit.set($event?.id || 'seconds')" [showShortAddress]="false" placeholder="Select unit..." emptyMessage="No units"> </app-select-search-dropdown>
                                         </div>
-                                        <!-- <div class="form-group">
-                                             <label>Cancel Time Unit</label>
-                                             <select id="timePeriodStartUnit" [(ngModel)]="timePeriodStartUnit" name="timePeriodStartUnit">
-                                                  <option value="seconds">Seconds</option>
-                                                  <option value="minutes">Minutes</option>
-                                                  <option value="hours">Hours</option>
-                                                  <option value="days">Days</option>
-                                             </select>
-                                        </div> -->
                                    </div>
                                    <div class="form-row">
                                         <!-- Total Out -->
@@ -291,12 +272,6 @@
                                                   }
                                              </div>
                                         </ng-template> -->
-                                        <!-- <div class="form-group">
-                                             <label for="destinationFields">Whitelist Addresses</label>
-                                             <select id="destinationFields" [(ngModel)]="destinationField" name="destinationFields">
-                                                  <option *ngFor="let dest of destinations; let i = index" [value]="dest.address" [disabled]="dest.address === currentWallet.address">{{dest.name || 'Wallet ' + (i + 1)}} ({{dest.address | slice:0:6}}...{{dest.address | slice:-4}})</option>
-                                             </select>
-                                        </div> -->
                                         <!-- Backup Account -->
                                         <div class="form-group">
                                              <label for="backupAccountField">Backup Account</label>

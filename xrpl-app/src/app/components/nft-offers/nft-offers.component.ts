@@ -99,6 +99,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getNFTOffers(true);
      }
 
@@ -401,6 +402,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                summaryInputs: {
                     info: this.nftOffersTransactionViewModelService.infoData(),
                     tab: this.nftOffersTransactionViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: NftOffersRequirementsInfoComponent,

@@ -109,6 +109,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getMptDetails(true);
      }
 
@@ -361,6 +362,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                summaryInputs: {
                     info: this.mptTransactionViewModelService.infoData(),
                     tab: this.mptTransactionViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: MptRequirementsInfoComponent,

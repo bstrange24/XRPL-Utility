@@ -105,6 +105,74 @@ export const XrplTxOptionsStore = signalStore(
                patchState(store, { memos: [] });
           },
 
+          clearMemoData(index: number) {
+               patchState(store, state => {
+                    const memos = [...state.memos];
+                    if (memos[index]?.Memo) {
+                         memos[index].Memo.MemoData = '';
+                    } else {
+                         memos[index] = {
+                              ...memos[index],
+                              Memo: {
+                                   ...memos[index]?.Memo,
+                                   MemoData: '',
+                              },
+                         };
+                    }
+                    return { memos };
+               });
+          },
+
+          clearMemoType(index: number) {
+               patchState(store, state => {
+                    const memos = [...state.memos];
+                    if (memos[index]?.Memo) {
+                         memos[index].Memo.MemoType = '';
+                    } else {
+                         memos[index] = {
+                              ...memos[index],
+                              Memo: {
+                                   ...memos[index]?.Memo,
+                                   MemoType: '',
+                              },
+                         };
+                    }
+                    return { memos };
+               });
+          },
+
+          clearMemoFormat(index: number) {
+               patchState(store, state => {
+                    const memos = [...state.memos];
+                    if (memos[index]?.Memo) {
+                         memos[index].Memo.MemoFormat = '';
+                    } else {
+                         memos[index] = {
+                              ...memos[index],
+                              Memo: {
+                                   ...memos[index]?.Memo,
+                                   MemoFormat: '',
+                              },
+                         };
+                    }
+                    return { memos };
+               });
+          },
+
+          clearAllMemoFields(index: number) {
+               patchState(store, state => {
+                    const memos = [...state.memos];
+                    memos[index] = {
+                         Memo: {
+                              MemoData: '',
+                              MemoType: '',
+                              MemoFormat: '',
+                         },
+                    };
+                    return { memos };
+               });
+          },
+
           reset() {
                patchState(store, initialState);
           },

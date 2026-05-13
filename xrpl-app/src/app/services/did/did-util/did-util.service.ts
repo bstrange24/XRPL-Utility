@@ -108,7 +108,6 @@ export class DidUtilService extends PerformanceBaseComponent {
                               console.error(`Document ${i} invalid:`, validate.errors);
                               return { success: false, errors: `Document ${i} invalid: ${JSON.stringify(validate.errors)}` };
                          }
-                         console.log(`Document ${i} valid!`);
                     }
                } else {
                     const valid = validate(parsed);
@@ -116,12 +115,10 @@ export class DidUtilService extends PerformanceBaseComponent {
                          console.error('DID JSON invalid:', validate.errors);
                          return { success: false, errors: `DID JSON invalid: ${JSON.stringify(validate.errors)}` };
                     }
-                    console.log('DID JSON valid');
                }
 
                // Convert JSON to hex
                const didDataHex = this.jsonToHex(parsed as object);
-               console.log('didDataHex in json', this.hexTojson(didDataHex));
                return { success: true, hexData: didDataHex };
           } catch (e: any) {
                console.error('Invalid JSON:', e.message);

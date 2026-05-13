@@ -5,7 +5,7 @@
           <div class="sticky top-0 bg-white border-b border-gray-100 p-4 z-10 space-y-4">
                <!-- Text Search -->
                <div class="relative">
-                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search by Channel ID, Sender, Destination, or Amount..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-green-500" />
+                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search by Channel ID, Sender, Destination, or Amount..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-blue-500" />
                     <ng-icon name="heroMagnifyingGlass" size="18" class="absolute left-4 top-3.5 text-gray-400" />
 
                     @if (searchQuery()) {
@@ -39,7 +39,7 @@
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
                     <ng-icon name="heroXMark" size="16" />
-                    Clear All
+                    Clear All Filters
                </button>
                }
 
@@ -113,13 +113,13 @@
           </div>
           } @else if (hasActiveFilters()) {
           <!-- Empty State for filtered results -->
-          <div class="flex-1 flex flex-col items-center justify-center py-16 text-center">
-               <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                    <ng-icon name="heroMagnifyingGlass" size="32" class="text-gray-400" />
+          <div class="empty-state">
+               <div class="empty-state-icon">
+                    <ng-icon name="heroMagnifyingGlass" size="20" class="text-gray-400" />
                </div>
-               <p class="font-medium text-gray-600">No matching payment channels</p>
-               <p class="text-sm text-gray-500 mt-1">Try adjusting your search, date range, or filters</p>
-               <button (click)="clearAllFilters()" class="mt-4 text-blue-600 hover:text-blue-700 text-sm">Clear all filters</button>
+               <p class="empty-state-title">No matching payment channels found</p>
+               <p class="empty-state-subtitle">Try adjusting your search, date range, or filters</p>
+               <!-- <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button> -->
           </div>
           }
      </div>

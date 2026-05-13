@@ -66,6 +66,11 @@ import {
      LucideSettings2,
      LucideLayoutTemplate,
      LucideBadgeInfo,
+     LucideShuffle,
+     LucidePackage,
+     LucideTag,
+     LucidePlus,
+     LucideRefreshCcw,
 } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -196,6 +201,11 @@ bootstrapApplication(AppComponent, {
                     LucideSettings2,
                     LucideLayoutTemplate,
                     LucideBadgeInfo,
+                    LucideShuffle,
+                    LucideTag,
+                    LucidePackage,
+                    LucideRefreshCcw,
+                    LucidePlus,
                     Handshake,
                })
           ),

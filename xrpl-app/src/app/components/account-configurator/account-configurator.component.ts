@@ -74,11 +74,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getAccountDetails(true);
-          }
      }
 
      ngOnDestroy(): void {
@@ -93,6 +88,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getAccountDetails(true);
      }
 
@@ -109,6 +105,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           const isValidTab = (t: string): t is AccountConfigAction => Object.values(ACCOUNT_CONFIG_ACTIONS).includes(t as AccountConfigAction);
           if (!isValidTab(tab)) return;
           this.accountConfiguratorViewModelService.activeTab.set(tab);
+          this.rightPanelService.resetFilters();
           if (this.hasWallets()) await this.getAccountDetails(true);
      }
 
@@ -234,6 +231,7 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                summaryInputs: {
                     info: this.accountConfiguratorViewModelService.infoData(),
                     tab: this.accountConfiguratorViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
           });
      }

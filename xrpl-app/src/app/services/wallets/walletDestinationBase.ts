@@ -104,6 +104,30 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
                const managerWallet = this.walletManager.currentWallet?.() ?? ({} as Wallet);
                this.currentWallet.set(managerWallet);
           });
+
+          effect(() => {
+               const currentAddr = this.currentAddress();
+               const selectedAddr = this.selectedDestinationAddress();
+
+               if (selectedAddr && currentAddr && selectedAddr === currentAddr) {
+                    // The selected destination just became the current wallet → clear it
+                    this.selectedDestinationAddress.set('');
+                    this.destinationSearchQuery.set('');
+                    this.transactionDropdownService.resetDestinationSignals(this.selectedDestinationAddress, this.destinationSearchQuery);
+               }
+          });
+
+          effect(() => {
+               const currentAddr = this.currentAddress();
+               const selectedAddr = this.selectedDestinationAddress();
+
+               if (selectedAddr && currentAddr && selectedAddr === currentAddr) {
+                    // The selected destination just became the current wallet → clear it
+                    this.selectedDestinationAddress.set('');
+                    this.destinationSearchQuery.set('');
+                    this.transactionDropdownService.resetDestinationSignals(this.selectedDestinationAddress, this.destinationSearchQuery);
+               }
+          });
      }
 
      /** Subclass must implement to refresh credentials or permissioned domains */

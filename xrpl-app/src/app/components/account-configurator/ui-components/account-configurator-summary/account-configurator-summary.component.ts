@@ -33,13 +33,21 @@ export interface AccountConfiguratorInfo {
 export class AccountConfiguratorSummaryComponent {
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly copyUtilService = inject(CopyUtilService);
-
      readonly searchQuery = signal<string>('');
+
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
 
      // Inputs
      info = input<AccountConfiguratorInfo | null>(null);
      infoPanelExpanded = input<boolean>();
      tab = input.required<ACCOUNT_ACTIONS>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -89,10 +97,7 @@ export class AccountConfiguratorSummaryComponent {
           const items = this.infoData()?.configItems ?? [];
           const query = this.searchQuery().trim().toLowerCase();
 
-          console.log('Filtering:', { itemsCount: items.length, query }); // Debug
-
           if (!query) return items;
-
           return items.filter(item => item.text.toLowerCase().includes(query) || item.id.toLowerCase().includes(query));
      });
 

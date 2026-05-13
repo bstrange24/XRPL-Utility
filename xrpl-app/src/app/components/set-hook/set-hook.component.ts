@@ -97,6 +97,7 @@ export class SetHookComponent extends WalletDestinationBase implements OnInit {
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          // this.rightPanelService.resetFilters();
           await this.onAccountChange(false);
      }
 

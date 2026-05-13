@@ -15,6 +15,9 @@ export class RightPanelService {
      readonly inputs = computed(() => this.config().mainInputs ?? {});
      readonly summaryComponent = computed(() => this.config().summaryComponent ?? null);
      readonly summaryInputs = computed(() => this.config().summaryInputs ?? {});
+     // Trigger to reset searches/filters when wallet changes
+     private readonly _resetTrigger = signal(0);
+     readonly resetTrigger = this._resetTrigger.asReadonly();
 
      setPanel(config: RightPanelConfig) {
           this.config.set({
@@ -32,8 +35,13 @@ export class RightPanelService {
           });
      }
 
+     resetFilters() {
+          this._resetTrigger.update(v => v + 1);
+     }
+
      clearPanel() {
           this.config.set({});
+          this._resetTrigger.set(0);
      }
 
      clearSummary() {

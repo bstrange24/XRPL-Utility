@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -49,6 +49,14 @@ export class CredentialsSummaryComponent {
      readonly sortBy = signal<SortKey>('expiration');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      wallet = input<{ address: string } | null | undefined>();
      view = input.required<{ walletName: string; summaryMessage: string }>();
@@ -56,6 +64,7 @@ export class CredentialsSummaryComponent {
      credsLength = input.required<number>();
      tab = input.required<CredentialActionTypes>();
      explorerUrl = this.txUiService.explorerUrl;
+     resetTrigger = input<number>(0);
 
      // Sort Options
      sortOptions: SortOption[] = [
@@ -263,5 +272,9 @@ export class CredentialsSummaryComponent {
      onCredentialClick(cred: CredentialItemVm) {
           if (this.tab() === 'createCredential') return;
           this.credentialUtilService.selectCredentialFromList(cred, this.tab(), this.wallet()?.address ?? '');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 }

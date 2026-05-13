@@ -129,6 +129,14 @@ export const AccountConfiguratorStoreService = signalStore(
                });
           },
 
+          clearDepositAuthAddress(index: number) {
+               patchState(store, state => {
+                    const addresses = [...state.depositAuthAddresses];
+                    addresses[index] = { ...addresses[index], account: '' };
+                    return { depositAuthAddresses: addresses };
+               });
+          },
+
           updateSigner(index: number, field: keyof UiSignerEntry, value: string | number) {
                patchState(store, state => {
                     const signers = [...state.signers];

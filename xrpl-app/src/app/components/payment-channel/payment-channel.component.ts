@@ -88,17 +88,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     this.paymentChannelUtilService.loadFlagsFromSignature(signature);
                }
           });
-
-          // this.rightPanelService.setPanel({
-          //      mainComponent: PaymentChannelRequirementsInfoComponent,
-          //      mainInputs: {
-          //           activeTab: this.paymentChannelViewModelService.activeTab,
-          //      },
-
-          //      // Add summary here when you want it (e.g. on Credentials page)
-          //      // summaryComponent: CredentialsSummaryComponent,
-          //      // summaryInputs: { ... }
-          // });
      }
 
      activeTabForRequirements = computed(() => this.paymentChannelViewModelService.activeTab());
@@ -158,6 +147,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getPaymentChannels(true);
      }
 
@@ -371,6 +361,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                summaryInputs: {
                     info: this.paymentChannelViewModelService.infoData(),
                     tab: this.paymentChannelViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: PaymentChannelRequirementsInfoComponent,

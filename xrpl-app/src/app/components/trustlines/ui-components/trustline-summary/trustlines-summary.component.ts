@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, computed, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, computed, input, output, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -42,11 +42,20 @@ export class TrustlinesSummaryComponent {
      private readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      info = input.required<any>();
      isExpanded = input<boolean>();
      explorerUrl = this.txUiService.explorerUrl;
      wallet = input<{ classicAddress?: string; address?: string } | null>();
+     resetTrigger = input<number>(0);
 
      // Output
      toggleExpanded = output<void>();
@@ -214,6 +223,10 @@ export class TrustlinesSummaryComponent {
      clearAllFilters() {
           this.searchQuery.set('');
           this.activeQuickFilter.set('all');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      copyIssuer(issuer: string): void {

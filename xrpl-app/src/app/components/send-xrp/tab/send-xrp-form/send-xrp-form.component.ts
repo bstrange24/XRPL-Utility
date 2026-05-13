@@ -13,11 +13,12 @@ import { NgIcon } from '@ng-icons/core';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon, LucideAngularModule],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +48,8 @@ export class SendXrpFormComponent {
      canSubmit = input<boolean>(false);
      tab = input.required<string>();
      selectedDestinationAddress = input<string>();
+     currentAddress = input<string>('');
+     lastIntendedDestination = input<string>('');
 
      // Track destination validation status from dropdown
      isDestinationValid = signal(false);

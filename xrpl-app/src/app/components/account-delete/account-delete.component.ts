@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
@@ -57,10 +57,20 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      public readonly accountDeleteTabs = ACCOUNT_DELETE_TABS;
      public readonly tabMeta = ACCOUNT_DELETE_TAB_META;
 
+     lastIntendedDestination = signal<string>('');
+
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
      }
 
      ngOnInit(): void {
@@ -70,11 +80,6 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          // if (this.hasWallets()) {
-          //      this.getAccountDetails(true);
-          // }
      }
 
      ngOnDestroy(): void {
@@ -89,6 +94,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.getAccountDetails();
      }
 
@@ -233,6 +239,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                summaryInputs: {
                     info: this.deleteAccountViewModelService.infoData(),
                     tab: this.deleteAccountViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
           });
      }

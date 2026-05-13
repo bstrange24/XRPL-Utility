@@ -55,35 +55,65 @@
                     <div class="mb-1 flex items-center justify-between">
                          <span class="label-primary">Memo #{{ $index + 1 }}</span>
 
-                         <button type="button" class="text-red-400 transition-colors hover:text-red-600" (click)="removeMemo($index)" title="Remove memo">
-                              <lucide-icon name="trash-2" size="16" />
-                         </button>
+                         <div class="flex gap-2">
+                              <!-- Remove Memo Button -->
+                              <button type="button" class="text-red-400 transition-colors hover:text-red-600" (click)="removeMemo($index)" title="Remove memo">
+                                   <lucide-icon name="trash-2" size="16" />
+                              </button>
+                         </div>
                     </div>
 
                     <div class="space-y-2">
-                         <!-- Memo Data -->
+                         <!-- Memo Data with Clear Button -->
                          <div>
                               <p class="text-secondary">Memo Data</p>
-                              <input type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none" [ngModel]="memo.Memo?.MemoData || ''" (ngModelChange)="updateMemoData($index, $event)" placeholder="Enter memo data (e.g., invoice number, reference)" />
+                              <div class="relative">
+                                   <input type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none" [class.pr-8]="memo.Memo?.MemoData && memo.Memo.MemoData.length > 0" [ngModel]="memo.Memo?.MemoData || ''" (ngModelChange)="updateMemoData($index, $event)" placeholder="Enter memo data (e.g., invoice number, reference)" />
+
+                                   <!-- Clear Memo Data button -->
+                                   @if (memo.Memo?.MemoData && memo.Memo.MemoData.length > 0) {
+                                   <button type="button" (click)="clearMemoData($index, $event)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400" aria-label="Clear memo data">
+                                        <ng-icon name="heroXMark" size="12"></ng-icon>
+                                   </button>
+                                   }
+                              </div>
                          </div>
 
-                         <!-- Memo Type (Optional) -->
-                         <div>
+                         <!-- Memo Type (Optional) with Clear Button -->
+                         <div class="space-y-1.5">
+                              <!-- Label -->
                               <p class="text-secondary mt-4">Memo Type (Optional)</p>
-                              <select class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none" [ngModel]="memo.Memo?.MemoType || ''" (ngModelChange)="updateMemoType($index, $event)">
-                                   <option value="">None</option>
-                                   <option value="text/plain">Plain Text</option>
-                                   <option value="text/markdown">Markdown</option>
-                                   <option value="application/json">JSON</option>
-                                   <option value="invoice">Invoice</option>
-                                   <option value="receipt">Receipt</option>
-                              </select>
+
+                              <!-- Select Container -->
+                              <div class="relative group">
+                                   <select class="w-full appearance-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none hover:border-gray-400 bg-no-repeat bg-right pr-10" [class.pr-10]="memo.Memo?.MemoType && memo.Memo.MemoType.length > 0 && memo.Memo.MemoType !== 'None'" [ngModel]="memo.Memo?.MemoType || ''" (ngModelChange)="updateMemoType($index, $event)">
+                                        <option value="">None</option>
+                                        <option value="text/plain">Plain Text</option>
+                                        <option value="text/markdown">Markdown</option>
+                                        <option value="application/json">JSON</option>
+                                        <option value="invoice">Invoice</option>
+                                        <option value="receipt">Receipt</option>
+                                   </select>
+
+                                   <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-green-500">
+                                        <ng-icon name="heroChevronDown" size="16"></ng-icon>
+                                   </div>
+                              </div>
                          </div>
 
-                         <!-- Memo Format (Optional) -->
+                         <!-- Memo Format (Optional) with Clear Button -->
                          <div>
                               <p class="text-secondary mt-4">Memo Format (Optional)</p>
-                              <input type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none" [ngModel]="memo.Memo?.MemoFormat || ''" (ngModelChange)="updateMemoFormat($index, $event)" placeholder="e.g., text/plain, application/json" />
+                              <div class="relative">
+                                   <input type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none" [class.pr-8]="memo.Memo?.MemoFormat && memo.Memo.MemoFormat.length > 0" [ngModel]="memo.Memo?.MemoFormat || ''" (ngModelChange)="updateMemoFormat($index, $event)" placeholder="e.g., text/plain, application/json" />
+
+                                   <!-- Clear Memo Format button -->
+                                   @if (memo.Memo?.MemoFormat && memo.Memo.MemoFormat.length > 0) {
+                                   <button type="button" (click)="clearMemoFormat($index, $event)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400" aria-label="Clear memo format">
+                                        <ng-icon name="heroXMark" size="12"></ng-icon>
+                                   </button>
+                                   }
+                              </div>
                          </div>
                     </div>
                </div>

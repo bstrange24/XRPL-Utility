@@ -2,7 +2,7 @@
      <span class="text-xs font-medium text-gray-500">Sort by:</span>
 
      <div class="relative">
-          <select [value]="sortKey()" (change)="onSortKeyChange($event)" class="text-sm border border-gray-200 rounded-xl pl-4 pr-8 py-2 bg-white focus:outline-none focus:border-blue-500 appearance-none cursor-pointer min-w-[140px]">
+          <select [value]="sortKey()" (change)="onSortKeyChange($event)" class="text-sm border border-gray-200 rounded-xl pl-4 pr-8 py-2 bg-white focus:outline-none focus:border-green-500 appearance-none cursor-pointer min-w-[140px]">
                @for (option of options(); track option.key) {
                <option [value]="option.key">{{ option.label }}</option>
                }

@@ -10,30 +10,46 @@
           <p class="text-secondary">Choose a preset configuration based on your account's primary use case.</p>
 
           <div class="flex flex-wrap gap-3">
-               <!-- Holder Template -->
-               <label class="min-w-[140px] flex-1 cursor-pointer">
+               <!-- Holder -->
+               <label class="min-w-[140px] flex-1 cursor-pointer group">
                     <input type="radio" name="configurationType" value="holder" [checked]="configurationType() === 'holder'" (change)="accountConfiguratorStoreService.setField('configurationType', 'holder'); accountConfiguratorUtilService.onConfigurationChange()" class="peer sr-only" />
-                    <div class="rounded-2xl border-2 border-gray-200 p-4 text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50">
-                         <div class="font-medium text-gray-900">📦 Holder</div>
-                         <div class="mt-1 text-xs text-gray-500">Default / Receiving assets</div>
+
+                    <div class="rounded-2xl border-2 border-gray-200 p-5 text-center transition-all duration-200 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50 hover:border-gray-300">
+                         <!-- Icon + Title -->
+                         <div class="flex items-center justify-center gap-2.5">
+                              <lucide-icon name="lucidePackage" size="22" class="text-green-700 transition-colors duration-200 peer-checked:text-green-600 group-hover:text-green-600" />
+                              <div class="font-medium text-gray-900 text-base">Holder</div>
+                         </div>
+
+                         <div class="mt-3 text-xs text-gray-500">Default / Receiving assets</div>
                     </div>
                </label>
 
-               <!-- Exchanger Template -->
-               <label class="min-w-[140px] flex-1 cursor-pointer">
+               <!-- Exchanger -->
+               <label class="min-w-[140px] flex-1 cursor-pointer group">
                     <input type="radio" name="configurationType" value="exchanger" [checked]="configurationType() === 'exchanger'" (change)="accountConfiguratorStoreService.setField('configurationType', 'exchanger'); accountConfiguratorUtilService.onConfigurationChange()" class="peer sr-only" />
-                    <div class="rounded-2xl border-2 border-gray-200 p-4 text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50">
-                         <div class="font-medium text-gray-900">🔄 Exchanger</div>
-                         <div class="mt-1 text-xs text-gray-500">Trading / Liquidity</div>
+
+                    <div class="rounded-2xl border-2 border-gray-200 p-5 text-center transition-all duration-200 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50 hover:border-gray-300">
+                         <div class="flex items-center justify-center gap-2.5">
+                              <lucide-icon name="lucideShuffle" size="22" class="text-green-700 transition-colors duration-200 peer-checked:text-green-600 group-hover:text-green-600" />
+                              <div class="font-medium text-gray-900 text-base">Exchanger</div>
+                         </div>
+
+                         <div class="mt-3 text-xs text-gray-500">Trading / Liquidity</div>
                     </div>
                </label>
 
-               <!-- Issuer Template -->
-               <label class="min-w-[140px] flex-1 cursor-pointer">
+               <!-- Issuer -->
+               <label class="min-w-[140px] flex-1 cursor-pointer group">
                     <input type="radio" name="configurationType" value="issuer" [checked]="configurationType() === 'issuer'" (change)="accountConfiguratorStoreService.setField('configurationType', 'issuer'); accountConfiguratorUtilService.onConfigurationChange()" class="peer sr-only" />
-                    <div class="rounded-2xl border-2 border-gray-200 p-4 text-center transition-all peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50">
-                         <div class="font-medium text-gray-900">🏷️ Issuer</div>
-                         <div class="mt-1 text-xs text-gray-500">Token issuance</div>
+
+                    <div class="rounded-2xl border-2 border-gray-200 p-5 text-center transition-all duration-200 peer-checked:border-green-500 peer-checked:bg-green-50 peer-checked:shadow-sm hover:bg-gray-50 hover:border-gray-300">
+                         <div class="flex items-center justify-center gap-2.5">
+                              <lucide-icon name="lucideTag" size="22" class="text-green-700 transition-colors duration-200 peer-checked:text-green-600 group-hover:text-green-600" />
+                              <div class="font-medium text-gray-900 text-base">Issuer</div>
+                         </div>
+
+                         <div class="mt-3 text-xs text-gray-500">Token issuance</div>
                     </div>
                </label>
           </div>

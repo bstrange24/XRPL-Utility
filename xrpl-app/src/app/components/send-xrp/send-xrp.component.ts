@@ -61,11 +61,20 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      public canSendXrpFromForm = signal<boolean>(false);
      public readonly sendXrpTabs = SEND_XRP_TABS;
      public readonly tabMeta = SEND_XRP_TAB_META;
+     lastIntendedDestination = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
      }
 
      ngOnInit(): void {
@@ -75,11 +84,6 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          //if (this.hasWallets()) {
-          //this.onAccountChange(true);
-          //}
      }
 
      ngOnDestroy(): void {
@@ -94,6 +98,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
+          this.rightPanelService.resetFilters();
           await this.onAccountChange();
      }
 
@@ -203,14 +208,15 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
 
      private setRightPanel(): void {
           this.rightPanelService.setPanel({
-               mainComponent: SendXrpRequirementsInfoComponent,
-               mainInputs: {
-                    activeTab: this.sendXrpViewModelService.activeTab,
-               },
-
                summaryComponent: SendXrpSummaryComponent,
                summaryInputs: {
                     info: this.sendXrpViewModelService.infoData(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
+               },
+
+               mainComponent: SendXrpRequirementsInfoComponent,
+               mainInputs: {
+                    activeTab: this.sendXrpViewModelService.activeTab,
                },
           });
      }

@@ -1,5 +1,5 @@
 // mpt-summary.component.ts
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { NgIcon } from '@ng-icons/core';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
@@ -46,8 +46,17 @@ export class MptSummaryComponent {
      public readonly mptUtilService = inject(MptUtilService);
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      infoPanelExpanded = input<boolean>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -227,6 +236,10 @@ export class MptSummaryComponent {
 
      onSearchChange(value: string) {
           this.searchQuery.set(value);
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      setQuickFilter(filter: 'all' | 'issued' | 'held' | 'locked') {

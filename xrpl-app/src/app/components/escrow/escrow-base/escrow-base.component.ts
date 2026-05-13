@@ -208,6 +208,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineCurrencyService.selectCurrency('XRP');
+          this.rightPanelService.resetFilters();
           await this.getEscrows(false);
      }
 
@@ -444,6 +445,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                summaryInputs: {
                     info: this.escrowTransactionViewModelService.infoData(),
                     tab: this.escrowTransactionViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: EscrowRequirementsInfoComponent,

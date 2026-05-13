@@ -1,5 +1,5 @@
 // escrow-summary.component.ts
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
@@ -45,12 +45,21 @@ export class EscrowSummaryComponent {
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
      public readonly utilsService = inject(UtilsService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      wallet = input.required<{ address: string } | null | undefined>();
      escrowLength = input.required<number>();
      tab = input.required<EscrowActionTypes>();
      infoPanelExpanded = input<boolean>();
      info = input<string>();
+     resetTrigger = input<number>(0);
 
      // Outputs
      toggleInfoPanel = output<void>();
@@ -275,6 +284,10 @@ export class EscrowSummaryComponent {
           this.expiresAfter.set('');
           this.expiresBefore.set('');
           this.activeQuickFilter.set('all');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      onEscrowClick(escrow: any) {

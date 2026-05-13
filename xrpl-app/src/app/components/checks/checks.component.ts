@@ -139,6 +139,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineCurrencyService.selectCurrency('XRP');
+          this.rightPanelService.resetFilters();
           await this.getChecks(false);
      }
 
@@ -412,6 +413,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                summaryInputs: {
                     info: this.checksTransactionViewModelService.infoData(),
                     tab: this.checksTransactionViewModelService.activeTab(),
+                    resetTrigger: this.rightPanelService.resetTrigger(),
                },
 
                mainComponent: ChecksRequirementInfoComponent,

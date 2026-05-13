@@ -23,7 +23,6 @@ export class DidSummaryComponent {
      private readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
 
-     // Inputs
      info = input.required<
           | {
                  walletName: string;
@@ -37,13 +36,10 @@ export class DidSummaryComponent {
 
      infoPanelExpanded = input.required<boolean>();
 
-     // Outputs
      toggleInfoPanel = output<void>();
 
-     // Helpers
      explorerUrl = this.txUiService.explorerUrl;
 
-     // hasDid = computed(() => (this.info()?.existingDid?.length ?? 0) > 0);
      did = computed(() => this.info()?.existingDid?.[0]);
 
      hasDid(): boolean {
@@ -82,9 +78,6 @@ export class DidSummaryComponent {
      }
 
      getSummaryText = computed(() => {
-          const mode = this.info()?.mode;
-          const message = mode === 'setDid' ? 'Manage your Decentralized Identifier' : 'Delete your DID';
-          // return `<br>${message}<br><span class="text-xs text-gray-500">Only one DID can exist per account</span>`;
           return `<br><span class="text-xs text-gray-500">Only one DID can exist per account</span>`;
      });
 }

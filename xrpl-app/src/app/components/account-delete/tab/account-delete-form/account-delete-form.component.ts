@@ -12,11 +12,12 @@ import { NgIcon } from '@ng-icons/core';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-account-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon, LucideAngularModule, ToggleSliderComponent],
      templateUrl: './account-delete-form.component.html',
      styleUrl: './account-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +47,8 @@ export class AccountDeleteFormComponent {
      searchQueryChange = output<string>();
      destinationChange = output<any>();
      toggleOptions = output<boolean>();
+     currentAddress = input<string>('');
+     lastIntendedDestination = input<string>('');
 
      canDeleteWallet = computed(() => {
           // Must have valid destination (from dropdown validation)

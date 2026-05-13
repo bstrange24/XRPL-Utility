@@ -1,5 +1,5 @@
 // offer-summary.component.ts
-import { Component, inject, input, output, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, input, output, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -29,11 +29,20 @@ export class OfferSummaryComponent {
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly store = inject(OfferStoreService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               this.clearSearch();
+          });
+     }
+
      // Inputs
      readonly infoPanelExpanded = input<boolean>();
      readonly toggleInfoPanel = output<void>();
      readonly info = input<any>();
      readonly tab = input<any>();
+     resetTrigger = input<number>(0);
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
@@ -246,6 +255,10 @@ export class OfferSummaryComponent {
      clearAllFilters() {
           this.searchQuery.set('');
           this.activeQuickFilter.set('all');
+     }
+
+     clearSearch() {
+          this.searchQuery.set('');
      }
 
      onOfferClick(offer: any) {
