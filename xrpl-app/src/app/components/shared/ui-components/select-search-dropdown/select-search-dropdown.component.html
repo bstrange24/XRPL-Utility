@@ -7,7 +7,7 @@
           <!-- Buttons container -->
           <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                <!-- Clear button - only show when there's content -->
-               <button type="button" (click)="clearInput($event)" class="clear-button text-gray-400 hover:text-gray-600 transition-all p-1 rounded-full hover:bg-gray-100" [class.visible]="showClearButton()" title="Clear input">
+               <button type="button" (click)="clearInput($event)" class="clear-button text-gray-400 hover:text-gray-600 transition-all p-1 rounded-full hover:bg-gray-100" [class.visible]="showClearButton()" title="Clear address">
                     <lucide-icon name="x" size="16"></lucide-icon>
                </button>
 
@@ -15,9 +15,6 @@
                <button type="button" (click)="toggleWithFocus()" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" [class.opacity-50]="isDisabled()">
                     <lucide-icon name="chevron-down" size="18"></lucide-icon>
                </button>
-               <!-- <button type="button" (click)="toggle()" class="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" [class.opacity-50]="isDisabled()">
-                    <lucide-icon name="chevron-down" size="18"></lucide-icon>
-               </button> -->
           </div>
      </div>
 
@@ -45,13 +42,27 @@
                     <div class="combobox-group-header px-1 py-1 text-xs font-semibold uppercase tracking-widest text-gray-500 bg-gray-50 border-t border-b border-gray-100">{{ item.group || '' }}</div>
                     }
 
-                    <div class="combobox-item px-6 py-3.5 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" [class.opacity-50]="item.isCurrentAccount" [class.pointer-events-none]="item.isCurrentAccount" (mousedown)="onItemMouseDown($event, item)">
+                    <div
+                         class="combobox-item px-6 py-3.5 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none"
+                         [class.highlighted]="highlightedIndex() === i || item.id === value()?.id"
+                         [class.current-account]="item.isCurrentAccount && disableCurrentAccount()"
+                         [class.opacity-50]="item.isCurrentAccount && disableCurrentAccount()"
+                         [class.current-code]="item.isCurrentCode"
+                         [class.current-token]="item.isCurrentToken"
+                         [class.pointer-events-none]="item.isCurrentAccount && disableCurrentAccount()"
+                         (mousedown)="onItemMouseDown($event, item)"
+                    >
                          <div class="flex items-center justify-between">
-                              <span class="font-medium" [class.text-gray-400]="item.isCurrentAccount" [class.text-gray-900]="!item.isCurrentAccount"> {{ item.display }} </span>
+                              <!-- <span class="font-medium" [class.text-gray-400]="item.isCurrentAccount" [class.text-gray-900]="!item.isCurrentAccount"> {{ item.display }} </span> -->
+                              <span class="font-medium" [class.text-gray-400]="item.isCurrentAccount && disableCurrentAccount()" [class.text-gray-900]="!(item.isCurrentAccount && disableCurrentAccount())"> {{ item.display }} </span>
 
-                              @if (item.isCurrentAccount) {
+                              <!-- @if (item.isCurrentAccount) { -->
                               <!-- Current selected wallet -->
-                              <span class="text-xs bg-gray-200 text-blue-500 px-2.5 py-0.5 rounded-full">Current Wallet — Cannot Select</span>
+                              <!-- <span class="text-xs bg-gray-200 text-blue-500 px-2.5 py-0.5 rounded-full">Current Wallet — Cannot Select</span> -->
+                              <!-- }  -->
+
+                              @if (item.isCurrentAccount && disableCurrentAccount()) {
+                              <span class="text-xs bg-gray-200 text-blue-500 px-2.5 py-0.5 rounded-full"> Current Wallet — Cannot Select </span>
                               } @if (item.isCurrentCode) {
                               <!-- Current selected currency code -->
                               <span class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full">Current Code</span>

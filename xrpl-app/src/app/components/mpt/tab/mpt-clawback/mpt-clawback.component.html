@@ -36,7 +36,7 @@
                     <label for="amountToClawback" class="label-primary">Amount to Clawback</label>
                     <p class="text-secondary">MPT amount to clawback from an existing holder.</p>
 
-                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" class="input-base" />
+                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" max="10000000000000000" step="1" class="input-base" />
                </div>
           </div>
      </div>

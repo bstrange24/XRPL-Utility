@@ -26,9 +26,32 @@
                <div>
                     <label for="xrpAmount" class="label-primary">XRP Amount</label>
                     <p class="text-secondary">Amount in XRP (precision up to 0.000001).</p>
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isAmountInvalid()" [isInvalid]="isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="accountConfiguratorStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" placeholder="e.g. 10.5" step="0.000001" min="0" />
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!amountValidatorService.isAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isAmountInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              [ngModel]="accountConfiguratorStoreService.amount()"
+                              (ngModelChange)="utilsService.updateAmount($event)"
+                              placeholder="e.g. 10.5"
+                         />
 
-                    @if (isAmountInvalid()) {
+                         @if (accountConfiguratorStoreService.amount() && accountConfiguratorStoreService.amount()!.trim().length > 0) {
+                         <button type="button" (click)="this.accountConfiguratorStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (amountValidatorService.isAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }
                </div>

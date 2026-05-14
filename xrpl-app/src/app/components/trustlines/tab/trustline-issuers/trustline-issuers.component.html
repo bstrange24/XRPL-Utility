@@ -8,14 +8,36 @@
                <div class="space-y-2">
                     <label for="currencyCode" class="label-primary">Currency Code</label>
                     <p class="text-secondary">Add a unique currency code to this application.</p>
-                    <input type="text" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" class="input-base" />
+
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidCurrencyCode()" [isInvalid]="hasInvalidCurrencyCode()" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" />
+
+                         <button type="button" class="clearInputXmark" aria-label="Clear currency code" (click)="currencyStoreService.setField('newCurrency', '')">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                    </div>
+
+                    @if (hasInvalidCurrencyCode()) {
+                    <p class="form-error">Invalid Currency Code</p>
+                    }
                </div>
 
                <!-- Issuer Address -->
                <div class="space-y-2">
                     <label for="issuerAddress" class="label-primary">Issuer Address</label>
                     <p class="text-secondary">Add a unique issuer address to this application.</p>
-                    <input type="text" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." class="input-base" />
+
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="hasValidAddress()" [isInvalid]="isInvalidAddress()" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." />
+
+                         <button type="button" class="clearInputXmark" aria-label="Clear issuer address" (click)="currencyStoreService.setField('newIssuer', '')">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                    </div>
+
+                    @if (isInvalidAddress()) {
+                    <p class="form-error">Please enter a valid XRP address</p>
+                    }
                </div>
           </div>
 

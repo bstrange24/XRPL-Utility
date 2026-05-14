@@ -14,6 +14,7 @@ import { AccountConfiguratorUtilService } from '../../../../services/account-con
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 
 @Component({
      selector: 'app-send-xrp-form',
@@ -30,6 +31,11 @@ export class SendXrpFormComponent {
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly amountValidatorService = inject(AmountValidatorService);
+
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -62,39 +68,12 @@ export class SendXrpFormComponent {
      toggleOptions = output<boolean>();
      canSendXrpChange = output<boolean>();
 
-     private readonly optionsHasError = signal(false);
-     private readonly optionsErrorMsg = signal('');
-     private readonly optionsErrors = signal<string[]>([]);
-
-     // Simplified validation - just amount and options now
-     isAmountValid = computed(() => {
-          const amount = this.accountConfiguratorStoreService.amount();
-
-          if (amount === null || amount === undefined || amount === '') {
-               return false;
-          }
-
-          const numAmount = Number(amount);
-          return Number.isFinite(numAmount) && numAmount > 0;
-     });
-
-     isAmountInvalid = computed(() => {
-          const amount = this.accountConfiguratorStoreService.amount();
-
-          if (amount === null || amount === undefined || amount === '') {
-               return false;
-          }
-
-          const numAmount = Number(amount);
-          return !Number.isFinite(numAmount) || numAmount <= 0;
-     });
-
      canSendXrp = computed(() => {
           // Must have valid destination (from dropdown validation)
           if (!this.isDestinationValid()) return false;
 
           // Must have valid amount (> 0)
-          if (!this.isAmountValid()) return false;
+          if (!this.amountValidatorService.isAmountValid()) return false;
 
           // Check options validation if enabled
           if (this.wantsOptions() && this.optionsHasError()) return false;
@@ -122,7 +101,7 @@ export class SendXrpFormComponent {
           }
 
           // Amount error
-          if (this.isAmountInvalid()) {
+          if (this.amountValidatorService.isAmountInvalid()) {
                errors.push('Amount must be a positive number greater than 0.');
           }
 
@@ -138,14 +117,6 @@ export class SendXrpFormComponent {
      hasValidationErrors = computed(() => {
           return this.validationErrorMessages().length > 0;
      });
-
-     onFocus(event: FocusEvent): void {
-          const input = event.target as HTMLInputElement;
-          if (input.value) {
-               const num = Number.parseFloat(input.value);
-               if (!Number.isNaN(num)) input.value = num.toFixed(6);
-          }
-     }
 
      hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
 }

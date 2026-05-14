@@ -108,7 +108,7 @@
                     <input type="text" readonly class="input-disabled pr-10" [value]="permissionedDomainStoreService.domainId()" />
                     @if (permissionedDomainStoreService.domainId()) {
                     <button type="button" (click)="clearSelectedDomain()" class="clearInputXmark" aria-label="Clear selected domain">
-                         <ng-icon name="heroXMark" size="14"></ng-icon>
+                         <lucide-icon name="x" size="16"></lucide-icon>
                     </button>
                     }
                </div>
@@ -142,7 +142,7 @@
 
                               @if (credentialType() && credentialType().trim().length > 0) {
                               <button type="button" (click)="clearCredentialType()" class="clearInputXmark" aria-label="Clear credential type">
-                                   <ng-icon name="heroXMark" size="14"></ng-icon>
+                                   <lucide-icon name="x" size="16"></lucide-icon>
                               </button>
                               }
                          </div>

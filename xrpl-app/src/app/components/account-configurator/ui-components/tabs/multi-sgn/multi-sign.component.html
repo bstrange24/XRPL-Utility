@@ -42,7 +42,7 @@
 
                                    @if (signer.Account && signer.Account.length > 0) {
                                    <button type="button" (click)="clearAccount(i, $event)" class="clearInputXmark" aria-label="Clear Account">
-                                        <ng-icon name="heroXMark" size="14"></ng-icon>
+                                        <lucide-icon name="x" size="16"></lucide-icon>
                                    </button>
                                    }
                               </div>
@@ -72,7 +72,7 @@
                                    />
                                    @if (signer.seed && signer.seed.length > 0) {
                                    <button type="button" (click)="clearSeed(i, $event)" class="clearInputXmark" aria-label="Clear Seed">
-                                        <ng-icon name="heroXMark" size="14"></ng-icon>
+                                        <lucide-icon name="x" size="16"></lucide-icon>
                                    </button>
                                    }
                               </div>

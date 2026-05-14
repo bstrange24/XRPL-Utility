@@ -12,14 +12,20 @@
           <div>
                <label for="currencyCode" class="label-primary">Currency Code</label>
                <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
-               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
+               @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
+               <p class="form-error mt-1">{{ currencyErrorMessage() }}</p>
+               }
           </div>
 
           <!-- Issuer -->
           <div>
                <label for="issuer" class="label-primary">Issuer</label>
                <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+               @if (isIssuerInvalid()) {
+               <p class="form-error mt-1">Please enter a valid XRP address</p>
+               }
           </div>
 
           <!-- Amount -->
@@ -29,14 +35,31 @@
                     @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
                     trustline. }
                </p>
-               <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
+               <div class="relative">
+                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" />
+                    <!-- @if (!isReadOnly && hasAmountValue()) {
+                    <button type="button" (click)="clearAmount()" class="absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear amount">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    } -->
+               </div>
+               @if (!isReadOnly && isAmountInvalid()) {
+               <p class="form-error mt-1">{{ amountErrorMessage() }}</p>
+               }
           </div>
 
           <!-- Currency Balance -->
           <div>
                <label for="currencyBalance" class="label-primary">Currency Balance</label>
                <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
-               <input type="text" readonly class="input-disabled" [value]="currencyBalance" />
+               <div class="relative">
+                    <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
+                    <!-- @if (currencyBalance && currencyBalance !== '0') {
+                    <button type="button" (click)="copyToClipboard(currencyBalance)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Copy balance">
+                         <lucide-icon name="copy" size="14"></lucide-icon>
+                    </button>
+                    } -->
+               </div>
           </div>
      </div>
      } @else {
@@ -46,14 +69,21 @@
           <div>
                <label for="currencyCode" class="label-primary">Currency Code</label>
                <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
-               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
+               @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
+               <p class="form-error mt-1">{{ currencyErrorMessage() }}</p>
+               }
           </div>
 
           <!-- Issuer -->
           <div>
                <label for="issuer" class="label-primary">Issuer</label>
                <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+               <!-- <app-select-search-dropdown [validateXrpAddress]="true" [disableCurrentAccount]="false" [validateOn]="'blur'" [closeWhenInvalid]="false" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" /> -->
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+               @if (isIssuerInvalid()) {
+               <p class="form-error mt-1">Please enter a valid XRP address</p>
+               }
           </div>
      </div>
 
@@ -65,89 +95,32 @@
                     @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
                     trustline. }
                </p>
-               <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" />
+               <div class="relative">
+                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" step="0.000001" max="10000000000000000" />
+                    <!-- @if (!isReadOnly && hasAmountValue()) {
+                    <button type="button" (click)="clearAmount()" class="absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear amount">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    } -->
+               </div>
+               @if (!isReadOnly && isAmountInvalid()) {
+               <p class="form-error mt-1">{{ amountErrorMessage() }}</p>
+               }
           </div>
 
           <!-- Currency Balance -->
           <div>
                <label for="currencyBalance" class="label-primary">Currency Balance</label>
                <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
-               <input type="text" readonly class="input-disabled" [value]="currencyBalance" />
+               <div class="relative">
+                    <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
+                    <!-- @if (currencyBalance && currencyBalance !== '0') {
+                    <button type="button" (click)="copyToClipboard(currencyBalance)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Copy balance">
+                         <lucide-icon name="copy" size="14"></lucide-icon>
+                    </button>
+                    } -->
+               </div>
           </div>
      </div>
      }
 </div>
-<!-- <div class="space-y-6">
-     @if (layout === 'split') {
-     <div class="space-y-6">
-          <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
-          <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
-          <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
-          <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
-     </div>
-     } @else {
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <ng-container *ngTemplateOutlet="currencyTpl"></ng-container>
-          <ng-container *ngTemplateOutlet="issuerTpl"></ng-container>
-     </div>
-
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <ng-container *ngTemplateOutlet="amountTpl"></ng-container>
-          <ng-container *ngTemplateOutlet="balanceTpl"></ng-container>
-     </div>
-     }
-</div>
-
-<ng-template #currencyTpl>
-     <div class="space-y-2">
-          <h4 class="section-heading">
-               <lucide-icon name="link" class="section-heading-icon-green"></lucide-icon>
-               Trustline Details
-          </h4>
-
-          <label for="currencyCode" class="label-primary">Currency Code</label>
-          <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
-
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" (valueChange)="currencyChange.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
-          </div>
-     </div>
-</ng-template>
-
-<ng-template #issuerTpl>
-     <div class="space-y-2">
-          <h4 class="section-heading">
-               <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
-               Issuer Details
-          </h4>
-
-          <label for="issuer" class="label-primary">Issuer</label>
-          <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-
-          <div class="h-[54px]">
-               <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="issuerChange.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
-          </div>
-     </div>
-</ng-template>
-
-<ng-template #amountTpl>
-     <div class="space-y-2" style="margin-top: 4px">
-          <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
-
-          <p class="text-secondary">
-               @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency). Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }
-          </p>
-
-          <input type="number" step="0.000001" min="0" [value]="amount" (input)="onAmountInput($event)" [readonly]="isReadOnly" [disabled]="isReadOnly" class="w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none" [class.border-gray-200]="!isReadOnly" [class.border-gray-100]="isReadOnly" [class.bg-gray-50]="isReadOnly" [class.cursor-not-allowed]="isReadOnly" [class.focus:border-green-500]="!isReadOnly" />
-     </div>
-</ng-template>
-
-<ng-template #balanceTpl>
-     <div class="space-y-2" style="margin-top: 12px">
-          <label for="currencyBalance" class="label-primary">Currency Balance</label>
-
-          <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer. } @else { Total currency balance held by this account for the selected currency code and issuer. }</p>
-
-          <input type="text"  readonly class="input-disabled"  [value]="currencyBalance" />
-     </div>
-</ng-template> -->

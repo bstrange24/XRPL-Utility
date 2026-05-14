@@ -27,7 +27,7 @@
                <div class="space-y-2">
                     <label for="xrpAmount" class="label-primary">XRP Amount</label>
                     <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
-                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="input-base" />
+                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="input-base" />
                </div>
           </div>
      </div>

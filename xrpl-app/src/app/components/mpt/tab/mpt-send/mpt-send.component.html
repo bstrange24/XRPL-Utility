@@ -36,7 +36,7 @@
                     <label for="mptAmount" class="label-primary">MPT Amount</label>
                     <p class="text-secondary">Amount of MPT to send. Make sure the receiving account is authorized.</p>
 
-                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" class="input-base" />
+                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" step="1" max="10000000000000000" class="input-base" />
                </div>
           </div>
      </div>

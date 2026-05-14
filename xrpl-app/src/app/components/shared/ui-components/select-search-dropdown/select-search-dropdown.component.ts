@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
 import { dropDownAnimation } from '../../../../services/utils/animations/animations.service';
+import { NgIcon } from '@ng-icons/core';
 
 export interface SelectItem {
      id: string;
@@ -22,7 +23,7 @@ export interface SelectItem {
 @Component({
      selector: 'app-select-search-dropdown',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule],
+     imports: [CommonModule, NgIcon, LucideAngularModule],
      templateUrl: './select-search-dropdown.component.html',
      styleUrl: './select-search-dropdown.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -66,6 +67,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      highlightedIndex = signal(-1);
      isTouched = signal(false);
      wasSubmitted = signal(false);
+     disableCurrentAccount = input<boolean>(true);
 
      constructor() {
           // Sync parent's [searchQueryInput] → internal writable searchQuery
@@ -127,12 +129,35 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      });
 
      // Computed: Overall validation status (combines XRP validation and custom validation)
+     // isValidValue = computed(() => {
+     //      const value = this.getCurrentValue();
+     //      if (!value) return true; // Empty is considered valid
+
+     //      // Check XRP validation if enabled
+     //      if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
+     //           return false;
+     //      }
+
+     //      // Check custom validation
+     //      if (!this.customValidation()(value)) {
+     //           return false;
+     //      }
+
+     //      return true;
+     // });
+
+     // Update isValidValue to include currency validation
      isValidValue = computed(() => {
           const value = this.getCurrentValue();
-          if (!value) return true; // Empty is considered valid
+          if (!value) return true;
 
           // Check XRP validation if enabled
           if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
+               return false;
+          }
+
+          // Check currency validation if enabled
+          if (this.validateCurrencyCode() && !this.isCurrencyCodeValid()) {
                return false;
           }
 
@@ -283,6 +308,34 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           this.onSelect(item);
      }
+
+     validateCurrencyCode = input<boolean>(false);
+
+     // Add currency validation computed
+     isCurrencyCodeValid = computed(() => {
+          if (!this.validateCurrencyCode()) return true;
+
+          const value = this.getCurrentValue();
+          if (!value) return true;
+
+          // Get the display value (currency code)
+          const currency = this.value()?.display || this.searchQuery();
+          if (!currency) return true;
+
+          // Validate currency code
+          if (currency.length < 3 || currency.length > 40) return false;
+
+          const validPattern = /^[A-Za-z0-9.\-_%?*@!^&~<>|{}=]+$/;
+          if (!validPattern.test(currency)) return false;
+
+          // Standard currency codes (3 uppercase letters) are valid
+          if (/^[A-Z]{3}$/.test(currency)) return true;
+
+          // Hex format (40 chars) is valid
+          if (currency.length === 40 && /^[A-Fa-f0-9]{40}$/.test(currency)) return true;
+
+          return false;
+     });
 
      // Dropdown control
      open() {

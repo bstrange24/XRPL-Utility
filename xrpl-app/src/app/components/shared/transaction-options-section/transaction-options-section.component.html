@@ -20,11 +20,11 @@
                <p class="text-secondary">Additional data about the credential (i.e. a link to the VC document).</p>
 
                <div class="relative">
-                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="isUriValid()" [isInvalid]="hasInvalidUri()" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
+                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isUriValid()" [isInvalid]="uriValidatorService.hasInvalidUri()" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
 
                     @if (credentialStore.uri() && credentialStore.uri().trim().length > 0) {
                     <button type="button" (click)="credentialUtilService.setCredentialUri('')" class="clearInputXmark" aria-label="Clear URI">
-                         <ng-icon name="heroXMark" size="14"></ng-icon>
+                         <lucide-icon name="x" size="16"></lucide-icon>
                     </button>
                     }
                </div>
@@ -37,14 +37,14 @@
                               <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">URI Value</p>
                               <code class="block break-all font-mono text-sm text-gray-700">{{ credentialStore.uri() }}</code>
 
-                              @if (hasInvalidUri()) {
+                              @if (uriValidatorService.hasInvalidUri()) {
                               <p class="form-error mt-2">@if ((credentialStore.uri().trim().length) > 256) { URI exceeds 256 character limit } @else if (credentialStore.uri().startsWith('http://') || credentialStore.uri().startsWith('https://')) { Please enter a valid URL format } @else { Please enter a valid URI format }</p>
                               }
                          </div>
 
                          <div class="text-right">
                               <p class="text-secondary">Length</p>
-                              <p class="font-mono text-sm font-semibold" [class.text-red-600]="hasInvalidUri()" [class.text-green-600]="!hasInvalidUri() && isUriValid()">{{ credentialStore.uri().length || 0 }} / 256 characters</p>
+                              <p class="font-mono text-sm font-semibold" [class.text-red-600]="uriValidatorService.hasInvalidUri()" [class.text-green-600]="!uriValidatorService.hasInvalidUri() && uriValidatorService.isUriValid()">{{ credentialStore.uri().length || 0 }} / 256 characters</p>
                          </div>
                     </div>
                </div>
@@ -68,10 +68,32 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="numeric"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!tagValidatorService.isDestinationTagInvalid()"
+                         [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
+                         (input)="tagValidatorService.onDestinationTagInput($event)"
+                         (blur)="tagValidatorService.onDestinationTagBlur($event)"
+                         [ngModel]="xrplTxOptionsStore.destinationTag()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                         placeholder="e.g. 1123456"
+                    />
 
-               @if (isDestinationTagInvalid()) {
-               <p class="form-error">Destination Tag must be a positive number</p>
+                    @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                    <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (tagValidatorService.isDestinationTagInvalid()) {
+               <p class="form-error">Destination Tag must be a positive number between 1 and 4294967295</p>
                }
           </div>
 
@@ -103,20 +125,64 @@
                <div class="space-y-2">
                     <label class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="numeric"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!tagValidatorService.isDestinationTagInvalid()"
+                              [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
+                              (input)="tagValidatorService.onDestinationTagInput($event)"
+                              (blur)="tagValidatorService.onDestinationTagBlur($event)"
+                              [ngModel]="xrplTxOptionsStore.destinationTag()"
+                              (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                              placeholder="e.g. 1123456"
+                         />
 
-                    @if (isDestinationTagInvalid()) {
-                    <p class="form-error">Destination Tag must be a positive number</p>
+                         @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                         <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (tagValidatorService.isDestinationTagInvalid()) {
+                    <p class="form-error">Destination Tag must be a positive number between 1 and 4294967295</p>
                     }
                </div>
 
                <div class="space-y-2">
                     <label class="label-primary">Source Tag</label>
                     <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isSourceTagInvalid()" [isInvalid]="isSourceTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="numeric"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!tagValidatorService.isSourceTagInvalid()"
+                              [isInvalid]="tagValidatorService.isSourceTagInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (keypress)="tagValidatorService.onSourceTagKeyPress($event)"
+                              (input)="tagValidatorService.onSourceTagInput($event)"
+                              (blur)="tagValidatorService.onSourceTagBlur($event)"
+                              [ngModel]="xrplTxOptionsStore.sourceTag()"
+                              (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
+                              placeholder="e.g. 1123456"
+                         />
 
-                    @if (isSourceTagInvalid()) {
-                    <p class="form-error">Source Tag must be a positive number</p>
+                         @if (xrplTxOptionsStore.sourceTag() && xrplTxOptionsStore.sourceTag()!.trim().length > 0) {
+                         <button type="button" (click)="this.xrplTxOptionsStore.setField('sourceTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (tagValidatorService.isSourceTagInvalid()) {
+                    <p class="form-error">Source Tag must be a positive number between 1 and 4294967295</p>
                     }
                </div>
           </div>
@@ -128,11 +194,11 @@
                     <p class="text-secondary">Arbitrary 256-bit hash representing a specific reason or a specific identifier for this payment.</p>
 
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidInvoiceId()" [isInvalid]="hasInvalidInvoiceId()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" placeholder="e.g. 1123456" />
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!invoiceIdValidatorService.hasInvalidInvoiceId()" [isInvalid]="invoiceIdValidatorService.hasInvalidInvoiceId()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" placeholder="e.g. 1123456" />
 
-                         @if (xrplTxOptionsStore.invoiceId()) {
+                         @if (xrplTxOptionsStore.invoiceId() && xrplTxOptionsStore.invoiceId()!.trim().length > 0) {
                          <button type="button" (click)="xrplTxOptionsStore.setField('invoiceId', '')" class="clearInputXmark" aria-label="Clear invoice ID">
-                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                              <lucide-icon name="x" size="16"></lucide-icon>
                          </button>
                          }
                     </div>
@@ -142,15 +208,15 @@
                          <div class="flex items-start justify-between gap-4">
                               <div class="flex-1">
                                    <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Invoice ID (Hex)</p>
-                                   <code class="block break-all font-mono text-sm text-gray-700"> {{ invoiceIdHex() || '(empty)' }} </code>
-                                   @if (!isValidInvoiceId() && invoiceIdHex()) {
+                                   <code class="block break-all font-mono text-sm text-gray-700"> {{ invoiceIdValidatorService.invoiceIdHex() || '(empty)' }} </code>
+                                   @if (!invoiceIdValidatorService.isValidInvoiceId() && invoiceIdValidatorService.invoiceIdHex()) {
                                    <p class="form-error">Must be exactly 64 hexadecimal characters (0-9, A-F)</p>
                                    }
                               </div>
 
                               <div class="text-right">
                                    <p class="text-secondary">Hex Length</p>
-                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="!isValidInvoiceId()" [class.text-green-600]="isValidInvoiceId()">{{ invoiceIdHexLength() }} / 64 characters</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="!invoiceIdValidatorService.isValidInvoiceId()" [class.text-green-600]="invoiceIdValidatorService.isValidInvoiceId()">{{ invoiceIdValidatorService.invoiceIdHexLength() }} / 64 characters</p>
                               </div>
                          </div>
                     </div>
@@ -164,11 +230,11 @@
                     <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
 
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidDomainId()" [isInvalid]="hasInvalidDomainId()" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" placeholder="example.com or hex value" />
+                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!domainIdValidatorService.hasInvalidDomainId()" [isInvalid]="domainIdValidatorService.hasInvalidDomainId()" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" placeholder="example.com or hex value" />
 
                          @if (permissionedDomainStoreService.domainId()) {
                          <button type="button" (click)="permissionedDomainStoreService.setField('domainId', '')" class="clearInputXmark" aria-label="Clear domain ID">
-                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                              <lucide-icon name="x" size="16"></lucide-icon>
                          </button>
                          }
                     </div>
@@ -181,7 +247,7 @@
 
                                    <code class="block break-all font-mono text-sm text-gray-700"> {{ permissionedDomainStoreService.domainId() }} </code>
 
-                                   @if (hasInvalidDomainId()) {
+                                   @if (domainIdValidatorService.hasInvalidDomainId()) {
                                    <p class="form-error">Must be a valid domain name (max 253 chars) or hex string (max 512 chars)</p>
                                    }
                               </div>
@@ -189,7 +255,7 @@
                               <div class="text-right">
                                    <p class="text-secondary">Length</p>
 
-                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="hasInvalidDomainId()" [class.text-green-600]="!hasInvalidDomainId()">{{ permissionedDomainStoreService.domainId().length || 0 }} / 512 chars</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="domainIdValidatorService.hasInvalidDomainId()" [class.text-green-600]="!domainIdValidatorService.hasInvalidDomainId()">{{ permissionedDomainStoreService.domainId().length || 0 }} / 512 chars</p>
                               </div>
                          </div>
                     </div>
@@ -213,15 +279,15 @@
                <div class="space-y-2">
                     @for (id of credentialStore.credentialIDs(); track $index) {
                     <div class="flex gap-2 items-center">
-                         <input type="text" class="input-base-with-validation" app-focus-border [isValid]="!isCredentialIdInvalid(id)" [isInvalid]="isCredentialIdInvalid(id)" [value]="id" (input)="updateCredentialId($index, $event)" [class.border-red-500]="isCredentialIdInvalid(id)" [class.border-gray-200]="!isCredentialIdInvalid(id)" placeholder="Credential ID" />
-                         <button type="button" (click)="removeCredentialId($index)" class="btn-icon btn-secondary" aria-label="Remove credential ID">
+                         <input type="text" class="input-base-with-validation" app-focus-border [isValid]="!credentialValidatorService.isCredentialIdInvalid(id)" [isInvalid]="credentialValidatorService.isCredentialIdInvalid(id)" [value]="id" (input)="updateCredentialId($index, $event)" [class.border-red-500]="credentialValidatorService.isCredentialIdInvalid(id)" [class.border-gray-200]="!credentialValidatorService.isCredentialIdInvalid(id)" placeholder="Credential ID" />
+                         <button type="button" (click)="credentialValidatorService.removeCredentialId($index)" class="btn-icon btn-secondary" aria-label="Remove credential ID">
                               <ng-icon name="heroTrash" size="16" />
                          </button>
                     </div>
                     }
                </div>
 
-               @if (hasInvalidCredentialIDs()) {
+               @if (credentialValidatorService.hasInvalidCredentialIDs()) {
                <p class="form-error">Each Credential ID must be non-empty and less than 256 characters</p>
                }
 
@@ -231,7 +297,7 @@
 
                          @if (newCredentialId()) {
                          <button type="button" (click)="newCredentialId.set('')" class="clearInputXmark" aria-label="Clear credential ID">
-                              <ng-icon name="heroXMark" size="14"></ng-icon>
+                              <lucide-icon name="x" size="16"></lucide-icon>
                          </button>
                          }
                     </div>
@@ -253,20 +319,64 @@
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="numeric"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!tagValidatorService.isDestinationTagInvalid()"
+                         [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
+                         (input)="tagValidatorService.onDestinationTagInput($event)"
+                         (blur)="tagValidatorService.onDestinationTagBlur($event)"
+                         [ngModel]="xrplTxOptionsStore.destinationTag()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                         placeholder="e.g. 1123456"
+                    />
 
-               @if (isDestinationTagInvalid()) {
-               <p class="form-error">Destination Tag must be a positive number</p>
+                    @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                    <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (tagValidatorService.isDestinationTagInvalid()) {
+               <p class="form-error">Destination Tag must be a positive number between 1 and 4294967295</p>
                }
           </div>
 
           <div class="space-y-2">
                <label class="label-primary">Source Tag</label>
                <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
-               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isSourceTagInvalid()" [isInvalid]="isSourceTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.sourceTag()" (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)" placeholder="e.g. 1123456" step="1" min="0" />
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="numeric"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!tagValidatorService.isSourceTagInvalid()"
+                         [isInvalid]="tagValidatorService.isSourceTagInvalid()"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (keypress)="tagValidatorService.onSourceTagKeyPress($event)"
+                         (input)="tagValidatorService.onSourceTagInput($event)"
+                         (blur)="tagValidatorService.onSourceTagBlur($event)"
+                         [ngModel]="xrplTxOptionsStore.sourceTag()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('sourceTag', $event)"
+                         placeholder="e.g. 1123456"
+                    />
 
-               @if (isSourceTagInvalid()) {
-               <p class="form-error">Source Tag must be a positive number</p>
+                    @if (xrplTxOptionsStore.sourceTag() && xrplTxOptionsStore.sourceTag()!.trim().length > 0) {
+                    <button type="button" (click)="this.xrplTxOptionsStore.setField('sourceTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (tagValidatorService.isSourceTagInvalid()) {
+               <p class="form-error">Source Tag must be a positive number between 1 and 4294967295</p>
                }
           </div>
      </div>

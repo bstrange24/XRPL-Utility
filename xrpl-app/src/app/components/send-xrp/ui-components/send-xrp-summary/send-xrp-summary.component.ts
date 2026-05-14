@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 
 @Component({
@@ -15,6 +15,12 @@ export class SendXrpSummaryComponent {
      tab = input<'sendXrp'>('sendXrp');
      summaryMessage = input<string>('');
      infoPanelExpanded = input<boolean>(false);
+     readonly searchQuery = signal<string>('');
 
      toggleInfoPanel = output<void>();
+     resetTrigger = input<number>(0);
+
+     clearSearch() {
+          this.searchQuery.set('');
+     }
 }

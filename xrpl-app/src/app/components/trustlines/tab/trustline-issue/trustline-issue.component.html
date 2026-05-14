@@ -10,14 +10,19 @@
                <p class="text-secondary">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
                }
 
-               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+               </app-select-search-dropdown>
           </div>
 
           <!-- Destination Tag -->
           <div>
                <label for="destinationTag" class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-               <input type="text" placeholder="e.g. 123456" [ngModel]="destinationTag" (ngModelChange)="destinationTagChange.emit($event)" name="destinationTagField" class="input-base" />
+               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" max="4294967295" />
+
+               @if (isDestinationTagInvalid()) {
+               <p class="form-error">Destination Tag must be a positive number</p>
+               }
           </div>
      </div>
 </div>

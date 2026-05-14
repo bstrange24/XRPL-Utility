@@ -31,7 +31,7 @@
                <div class="space-y-2">
                     <label for="escrowAmount" class="label-primary">Amount</label>
                     <p class="text-secondary">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="input-base" />
+                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="input-base" />
                </div>
           </div>
 

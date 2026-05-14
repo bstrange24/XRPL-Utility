@@ -50,7 +50,7 @@
                <div class="space-y-2">
                     <label for="amountToAuth" class="label-primary"> Amount to Authorize (XRP) </label>
                     <p class="text-sm text-gray-600">The amount the destination is allowed to claim (must not exceed remaining balance).</p>
-                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="input-base" />
+                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" class="input-base" />
                </div>
 
                <!-- Generated Signature -->
@@ -96,7 +96,7 @@
                <div class="space-y-2">
                     <label for="xrpToClaim" class="label-primary"> XRP Amount to Claim </label>
                     <p class="text-sm text-gray-600">The amount of XRP to claim from the channel (precision up to 0.000001).</p>
-                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" class="input-base" />
+                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" class="input-base" />
                </div>
 
                <!-- Signature -->

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, ViewChild, output, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, ViewChild, output, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -62,6 +62,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      public readonly sendXrpTabs = SEND_XRP_TABS;
      public readonly tabMeta = SEND_XRP_TAB_META;
      lastIntendedDestination = signal<string>('');
+     resetTrigger = input<number>(0);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -74,6 +75,12 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
                if (currentSelected) {
                     this.lastIntendedDestination.set(currentSelected);
                }
+          });
+
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
           });
      }
 

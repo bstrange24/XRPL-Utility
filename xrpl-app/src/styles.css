@@ -984,7 +984,7 @@ label:hover .toggle-label {
 }
 
 .clearInputXmark {
-     @apply absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700
+     @apply absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600
 }
 
 /* ============================================

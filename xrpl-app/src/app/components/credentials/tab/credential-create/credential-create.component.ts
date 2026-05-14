@@ -13,7 +13,7 @@ import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slid
 import { LucideAngularModule } from 'lucide-angular';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
-import { CREDENTIAL_TYPE_VALADATION } from '../../constants/credential.constants';
+import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
 
 @Component({
      selector: 'app-credential-create',
@@ -29,6 +29,7 @@ export class CredentialCreateComponent {
      public readonly credentialUtilService = inject(CredentialUtilService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly credentialValidatorService = inject(CredentialValidatorService);
 
      // Inputs from parent
      view = input.required<any>();
@@ -90,53 +91,13 @@ export class CredentialCreateComponent {
           this.optionsErrors.set(validation.errors || []);
      }
 
-     // Credential Type Validation
-     onCredentialTypeInput(event: Event) {
-          const input = event.target as HTMLInputElement;
-          let value = input.value;
-
-          // Trim whitespace and limit length
-          value = value.trim();
-          if (value.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) {
-               value = value.slice(0, CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH);
-               input.value = value;
-          }
-
-          this.credentialUtilService.setCredentialType(value);
-     }
-
-     isCredentialTypeValid = computed(() => {
-          const type = this.credentialStore.credentialType()?.trim() ?? '';
-          if (!type) return true;
-          if (type.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) return false;
-          return CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_PATTERN.test(type);
-     });
-
-     isCredentialTypeInvalid = computed(() => {
-          const type = this.credentialStore.credentialType()?.trim() ?? '';
-          if (!type) return false; // Don't show error for empty field
-          return !this.isCredentialTypeValid();
-     });
-
-     credentialTypeErrorMessage = computed(() => {
-          const type = this.credentialStore.credentialType()?.trim() ?? '';
-          if (!type) return '';
-          if (type.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) {
-               return `Credential type must be ${CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH} characters or less (currently ${type.length})`;
-          }
-          if (!CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_PATTERN.test(type)) {
-               return 'Credential type can only contain letters, numbers, hyphens, and underscores';
-          }
-          return '';
-     });
-
      canCreateCredential = computed(() => {
           // Must have valid subject (XRP address)
           if (!this.isSubjectValid()) return false;
 
           // Credential type is optional but if provided must be valid
           const type = this.credentialStore.credentialType()?.trim() ?? '';
-          if (type && !this.isCredentialTypeValid()) return false;
+          if (type && !this.credentialValidatorService.isCredentialTypeValid()) return false;
 
           // Check options validation if enabled
           if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
@@ -153,8 +114,8 @@ export class CredentialCreateComponent {
           }
 
           // Credential type validation error
-          if (this.isCredentialTypeInvalid()) {
-               errors.push(this.credentialTypeErrorMessage());
+          if (this.credentialValidatorService.isCredentialTypeInvalid()) {
+               errors.push(this.credentialValidatorService.credentialTypeErrorMessage());
           }
 
           // Options errors (URI, expiration, etc.)
@@ -168,7 +129,7 @@ export class CredentialCreateComponent {
      // Check if there are any validation errors
      hasValidationErrors = computed(() => {
           if (!this.isSubjectValid()) return true;
-          if (this.isCredentialTypeInvalid()) return true;
+          if (this.credentialValidatorService.isCredentialTypeInvalid()) return true;
           if (this.txUiService.wantsOptions() && this.optionsHasError()) return true;
           return false;
      });

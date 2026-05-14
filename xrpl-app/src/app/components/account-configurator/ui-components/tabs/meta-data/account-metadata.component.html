@@ -11,7 +11,7 @@
                <input type="text" class="input-base-with-validation" app-focus-border [isValid]="isNftMinterValid()" [isInvalid]="isNftMinterInvalid()" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
                @if (accountConfiguratorStoreService.nfTokenMinterAddress()) {
                <button type="button" (click)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', '')" class="clearInputXmark" aria-label="Clear NFT Minter Address">
-                    <ng-icon name="heroXMark" size="14"></ng-icon>
+                    <lucide-icon name="x" size="16"></lucide-icon>
                </button>
                }
           </div>
@@ -79,7 +79,7 @@
 
                @if (accountConfiguratorStoreService.domain()) {
                <button type="button" (click)="accountConfiguratorStoreService.setField('domain', '')" class="clearInputXmark" aria-label="Clear Credential Type">
-                    <ng-icon name="heroXMark" size="14"></ng-icon>
+                    <lucide-icon name="x" size="16"></lucide-icon>
                </button>
                }
           </div>

@@ -10,6 +10,7 @@ import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { FormsModule } from '@angular/forms';
+import { TrustlineActionTypes } from '../../constants/trustline.types';
 
 export interface TrustlineItem {
      currency: string;
@@ -52,6 +53,7 @@ export class TrustlinesSummaryComponent {
 
      // Inputs
      info = input.required<any>();
+     tab = input<TrustlineActionTypes>();
      isExpanded = input<boolean>();
      explorerUrl = this.txUiService.explorerUrl;
      wallet = input<{ classicAddress?: string; address?: string } | null>();

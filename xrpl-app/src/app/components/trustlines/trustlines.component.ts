@@ -108,11 +108,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getTrustlinesForAccount(true);
-          }
      }
 
      ngOnDestroy(): void {
