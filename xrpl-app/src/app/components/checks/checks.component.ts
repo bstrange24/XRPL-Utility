@@ -76,15 +76,24 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabs = CHECK_TABS;
      public readonly tabMeta = CHECK_TAB_META;
+     public canCreateCheck = signal(false);
+     public activeTabForRequirements = computed(() => this.checksTransactionViewModelService.activeTab());
+     public lastIntendedDestination = signal<string>('');
+     readonly summaryExpanded = signal<boolean>(false);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
-     }
 
-     activeTabForRequirements = computed(() => this.checksTransactionViewModelService.activeTab());
-     readonly summaryExpanded = signal<boolean>(false);
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
+     }
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, CHECK_TAB, tab => this.setTab(tab));
@@ -99,11 +108,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getChecks(true);
-          }
      }
 
      ngOnDestroy(): void {
@@ -409,18 +413,22 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
      private setRightPanel(): void {
           this.rightPanelService.setPanel({
+               mainComponent: ChecksRequirementInfoComponent,
+               mainInputs: {
+                    activeTab: this.activeTabForRequirements,
+               },
+
                summaryComponent: ChecksSummaryComponent,
                summaryInputs: {
                     info: this.checksTransactionViewModelService.infoData(),
                     tab: this.checksTransactionViewModelService.activeTab(),
                     resetTrigger: this.rightPanelService.resetTrigger(),
                },
-
-               mainComponent: ChecksRequirementInfoComponent,
-               mainInputs: {
-                    activeTab: this.activeTabForRequirements,
-               },
           });
+     }
+
+     onCanCreateCheckChange(isValid: boolean) {
+          this.canCreateCheck.set(isValid);
      }
 
      handleSearchQueryChange(query: string) {

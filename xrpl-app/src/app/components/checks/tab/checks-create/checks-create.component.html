@@ -85,13 +85,26 @@
           }
 
           <!-- Destination -->
-          <div class="space-y-2">
+          <div>
+               <label for="credentialSubject" class="label-primary">Subject</label>
+               <p class="text-secondary">The address that will receive this credential.</p>
+               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+               </app-select-search-dropdown>
+
+               @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+               <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                    <ng-icon name="heroExclamationTriangle" size="14" />
+                    This is your currently active wallet. You cannot send a credential to yourself.
+               </p>
+               }
+          </div>
+          <!-- <div class="space-y-2">
                <label for="checkDestination" class="label-primary">Destination</label>
                <p class="text-secondary">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
                <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="destinationItems" [value]="selectedDestinationItem" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
                </div>
-          </div>
+          </div> -->
      </div>
 
      <!-- Toggle optional fields Card -->

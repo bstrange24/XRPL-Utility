@@ -8,10 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <!-- @let wallet = currentWallet(); -->
-          <!-- <app-checks-summary [wallet]="wallet" [tab]="tab" [infoPanelExpanded]="infoPanelExpanded()" [checksLength]="checkUtilService.checksLength()" (toggleInfoPanel)="toggleInfoPanel()" (checkSelected)="onCheckSelectedInUi($event)"> </app-checks-summary> -->
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
@@ -21,7 +17,23 @@
           <form #theForm="ngForm">
                <!-- Dynamic Content -->
                @if (tab === 'createCheck') {
-               <app-checks-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" (optionsToggled)="toggleOptions($event)" (expirationToggled)="toggleExpiration($event)" (destinationSearchQueryChange)="handleSearchQueryChange($event)" (destinationValueChange)="handleDestinationChange($event)" />
+               <app-checks-create
+                    [destinationItems]="destinationItems()"
+                    (currencySelected)="onCurrencySelected($event)"
+                    (issuerSelected)="onIssuerSelected($event)"
+                    [selectedDestinationItem]="selectedDestinationItem()"
+                    [currentAddress]="currentAddress()"
+                    [lastIntendedDestination]="lastIntendedDestination()"
+                    [selectedDestinationAddress]="selectedDestinationAddress()"
+                    [destinationSearchQuery]="destinationSearchQuery()"
+                    [wantsOptions]="txUiService.wantsOptions()"
+                    [tab]="tab"
+                    (clearFields)="clearInputFields()"
+                    (searchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationChange)="handleDestinationChange($event)"
+                    (toggleOptions)="txUiService.toggleOptions($event)"
+                    (canCreateCheckChange)="onCanCreateCheckChange($event)"
+               />
                } @else if (tab === 'cashCheck') {
                <app-checks-cash (checkSelected)="onCheckSelected($event)"></app-checks-cash>
                } @else if (tab === 'cancelCheck') {

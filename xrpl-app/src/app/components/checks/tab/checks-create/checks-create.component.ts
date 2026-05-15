@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -22,7 +22,7 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,17 +39,36 @@ export class ChecksCreateComponent {
      public readonly checkUtilService = inject(CheckUtilService);
      public readonly amountValidatorService = inject(AmountValidatorService);
 
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
+     // Inputs from parent
+     destinationItems = input.required<any[]>();
+     selectedDestinationItem = input.required<any>();
+     destinationSearchQuery = input.required<string>();
+     wantsOptions = input.required<boolean>();
+     canSubmit = input<boolean>(false);
+     tab = input.required<string>();
+     selectedDestinationAddress = input<string>();
+     currentAddress = input<string>('');
+     lastIntendedDestination = input<string>('');
+
+     // Track destination validation status from dropdown
+     isDestinationValid = signal(false);
+
+     // Outputs to parent
+     issuerSelected = output<SelectItem | null>();
+     currencySelected = output<SelectItem | null>();
+     canCreateCheckChange = output<boolean>();
+     performAction = output<void>();
+     clearFields = output<void>();
+     searchQueryChange = output<string>();
+     destinationChange = output<any>();
+     optionsToggled = output<boolean>();
+     toggleOptions = output<boolean>();
+     canCreateCredentialChange = output<boolean>();
+
+     private isSubjectValid = signal(false);
+     private optionsHasError = signal(false);
+     private optionsErrorMsg = signal('');
+     private optionsErrors = signal<string[]>([]);
 
      public async onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
@@ -65,6 +84,10 @@ export class ChecksCreateComponent {
                await this.trustlineUtilService.loadTrustlines(false);
                await this.trustlineCurrencyService.refreshCurrentBalance();
           }
+     }
+
+     onDestinationValidationChange(isValid: boolean) {
+          this.isDestinationValid.set(isValid);
      }
 
      public currencyItems() {

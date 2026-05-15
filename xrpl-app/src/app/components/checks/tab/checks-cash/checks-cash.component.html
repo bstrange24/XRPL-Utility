@@ -6,7 +6,7 @@
           </h4>
 
           <!-- Selection Dropdown -->
-          <label for="selectCheckToCash" class="label-primary">Select Check to Cash</label>
+          <label for="selectCheckToCash" class="label-primary">Select Check to Cash <span class="text-red-500">*</span></label>
           <p class="text-secondary">Check ID generated when the check was created.</p>
           <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
      </div>
@@ -53,7 +53,7 @@
 
      <!-- Amount Input (Keep your existing editable field) -->
      <div class="card-base">
-          <label for="amountToCash" class="label-primary">Amount to Cash</label>
+          <label for="amountToCash" class="label-primary">Amount to Cash <span class="text-red-500">*</span></label>
           <p class="text-secondary">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
           <input type="number" class="input-base" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="checkStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" />
      </div>
