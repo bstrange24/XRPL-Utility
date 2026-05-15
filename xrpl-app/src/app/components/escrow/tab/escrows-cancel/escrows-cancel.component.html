@@ -7,13 +7,13 @@
           </h4>
 
           <!-- Select Escrow -->
-          <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+          <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} <span class="text-red-500">*</span></label>
           <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
           <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
      </div>
 
      <!-- Escrow Details Card -->
-     @if (viewModel.selectedFullEscrow()) {
+     @if (viewModel.selectedFullEscrow() && viewModel.selectedEscrowSequence() !== '') {
      <div class="card-base">
           <div class="space-y-6">
                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">

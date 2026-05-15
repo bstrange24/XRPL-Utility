@@ -1,4 +1,4 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { AcccountDataService } from '../../account-data/acccount-data.service';
@@ -58,6 +58,19 @@ export class EscrowTransactionViewModelService {
      private readonly _destinationMap = this.transactionDropdownService.destinationMap(this._allDestinations);
      private readonly _destinationItems = this.transactionDropdownService.destinationItems(this._allDestinations);
      private readonly _selectedDestinationItem = this.transactionDropdownService.selectedDestinationItem(this.selectedDestinationAddress, this._destinationMap, this._destinationItems);
+
+     constructor() {
+          effect(() => {
+               const currentAddr = this.walletManagerService.getSelectedWallet()?.address ?? '';
+               const selectedAddr = this.selectedDestinationAddress();
+
+               if (selectedAddr && currentAddr && selectedAddr === currentAddr) {
+                    this.selectedDestinationAddress.set('');
+                    this.destinationSearchQuery.set('');
+                    this.escrowStoreService.setField('destination', '');
+               }
+          });
+     }
 
      // Unwrapped accessors for templates
      destinationItems() {

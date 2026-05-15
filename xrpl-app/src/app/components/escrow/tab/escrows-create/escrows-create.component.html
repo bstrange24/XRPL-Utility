@@ -112,7 +112,22 @@
                <div class="space-y-2">
                     <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
                     <p class="text-secondary pb-1.5">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
-                    <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                    <app-select-search-dropdown
+                         app-focus-border
+                         [validateXrpAddress]="true"
+                         [disableCurrentAccount]="true"
+                         [showClearButton]="true"
+                         [clearOnEscape]="true"
+                         [validateOn]="'blur'"
+                         [closeWhenInvalid]="true"
+                         [items]="destinationItems()"
+                         [value]="selectedDestinationItem()"
+                         [searchQueryInput]="destinationSearchQuery()"
+                         (searchQueryChange)="searchQueryChange.emit($event)"
+                         (valueChange)="destinationChange.emit($event)"
+                         (isValid)="onDestinationValidationChange($event)"
+                         placeholder="Enter or select destination address"
+                    >
                     </app-select-search-dropdown>
 
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {

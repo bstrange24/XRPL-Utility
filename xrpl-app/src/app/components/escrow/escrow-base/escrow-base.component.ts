@@ -67,8 +67,9 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      public readonly conditionTabMeta = CONDITIONAL_ESCROW_TAB_META;
      abstract readonly isConditional: boolean;
      public canCreateEscrowForm = signal<boolean>(false);
-     public lastIntendedDestination = signal<string>('');
      public resetTrigger = input<number>(0);
+     private readonly _lastIntendedDestination = signal<string>('');
+     public readonly lastIntendedDestination = computed(() => this._lastIntendedDestination());
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -77,9 +78,22 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
 
           // Track intended destination for warning message
           effect(() => {
-               const currentSelected = this.escrowTransactionViewModelService.selectedDestinationAddress();
-               if (currentSelected) {
-                    this.lastIntendedDestination.set(currentSelected);
+               const currentAddr = this.currentAddress();
+               const selectedAddr = this.escrowTransactionViewModelService.selectedDestinationAddress();
+               const previousIntended = this._lastIntendedDestination();
+
+               if (!currentAddr) return;
+
+               if (selectedAddr && selectedAddr !== currentAddr) {
+                    // User selected a different address → remember it
+                    this._lastIntendedDestination.set(selectedAddr);
+               } else if (selectedAddr === currentAddr) {
+                    // Should not happen (cleared by viewmodel), but handle anyway
+                    this._lastIntendedDestination.set('');
+               } else if (previousIntended === currentAddr) {
+                    // We just switched TO the previously intended wallet
+               } else if (previousIntended && previousIntended !== currentAddr) {
+                    // Switched to a completely different wallet → keep old intended (for future)
                }
           });
 
@@ -238,6 +252,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.rightPanelService.resetFilters();
+          this.onEscrowSelected(null);
           await this.getEscrows(false);
      }
 
@@ -301,6 +316,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.resetInputFields();
           this.escrowStoreService.setEnableFinishAfter(false);
           this.escrowStoreService.setEnableCancelAfter(false);
+          this.onEscrowSelected(null);
           if (this.hasWallets()) await this.getEscrows(false);
      }
 
