@@ -6,6 +6,7 @@ import { TransactionUiService } from '../../../transaction-ui/transaction-ui.ser
 import { UtilsService } from '../../../utils/util-service/utils.service';
 import { ConnectionGuardService } from '../../connection-guard/connection-guard.service';
 import { PaymentChannelStoreService } from '../../../payment-channel/payment-channel-store/payment-channel-store.service';
+import { EscrowStoreService } from '../../../escrow/escrow-store/escrow-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -18,6 +19,7 @@ export class AmountValidatorService {
      public readonly accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
+     public readonly escrowStoreService = inject(EscrowStoreService);
 
      // Simplified validation - just amount and options now
      isAmountValid = computed(() => {
@@ -55,6 +57,28 @@ export class AmountValidatorService {
 
      isPaymentChannelAmountInvalid = computed(() => {
           const amount = this.paymentChannelStoreService.amount();
+
+          if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          return !Number.isFinite(numAmount) || numAmount <= 0;
+     });
+
+     isEscrowAmountValid = computed(() => {
+          const amount = this.escrowStoreService.amount();
+
+          if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          return Number.isFinite(numAmount) && numAmount > 0;
+     });
+
+     isEscrowAmountInvalid = computed(() => {
+          const amount = this.escrowStoreService.amount();
 
           if (amount === null || amount === undefined || amount === '') {
                return false;

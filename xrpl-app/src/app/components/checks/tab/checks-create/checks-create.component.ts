@@ -16,11 +16,13 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +37,7 @@ export class ChecksCreateComponent {
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly xrplDateService = inject(XrplDateService);
      public readonly checkUtilService = inject(CheckUtilService);
+     public readonly amountValidatorService = inject(AmountValidatorService);
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];

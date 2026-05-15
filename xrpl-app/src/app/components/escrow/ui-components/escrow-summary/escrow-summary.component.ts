@@ -17,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { ExpirationFilterInputComponent } from '../../../shared/expiration-filter-input/expiration-filter-input.component';
 import { NgIcon } from '@ng-icons/core';
+import { AppConstants } from '../../../../core/app.constants';
 
 const ESCROW_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'escrow',
@@ -105,8 +106,7 @@ export class EscrowSummaryComponent {
           if (!expirationValue) return 0;
 
           // Convert from Ripple time (seconds since 2000-01-01) to JS timestamp
-          const RIPPLE_EPOCH_OFFSET = 946684800;
-          return (expirationValue + RIPPLE_EPOCH_OFFSET) * 1000;
+          return (expirationValue + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
      }
 
      // Computed values
@@ -133,8 +133,7 @@ export class EscrowSummaryComponent {
                     const expirationValue = escrow.cancelAfter || escrow.finishAfter;
                     if (!expirationValue) return false;
 
-                    const RIPPLE_EPOCH_OFFSET = 946684800;
-                    const expirationDate = new Date((expirationValue + RIPPLE_EPOCH_OFFSET) * 1000);
+                    const expirationDate = new Date((expirationValue + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
 
                     if (isNaN(expirationDate.getTime())) return false;
                     if (after && expirationDate < new Date(after)) return false;
@@ -209,6 +208,7 @@ export class EscrowSummaryComponent {
 
      emptyStateMessage = computed(() => {
           const count = this.infoData()?.escrowCount ?? 0;
+          const tab = this.escrowTransactionViewModelService.activeTab();
           const query = this.searchQuery();
           const quickFilter = this.activeQuickFilter();
 
@@ -222,7 +222,7 @@ export class EscrowSummaryComponent {
                return `No ${quickFilter} escrows found`;
           }
           if (count === 0) {
-               switch (this.tab()) {
+               switch (tab) {
                     case 'createEscrow':
                          return 'This wallet has not created any Escrows yet.';
                     case 'finishEscrow':
@@ -237,12 +237,20 @@ export class EscrowSummaryComponent {
      });
 
      emptyStateSubMessage = computed(() => {
+          const tab = this.escrowTransactionViewModelService.activeTab();
           const query = this.searchQuery();
           if (query && this.filteredEscrows().length === 0) {
                return 'Try a different search term';
           }
           if ((this.expiresAfter() || this.expiresBefore()) && this.filteredEscrows().length === 0) {
                return 'Try adjusting the expiration date range';
+          }
+          console.log('Current Tab in emptyStateSubMessage:', tab);
+          if (tab !== 'finishEscrow' && this.totalCount() === 0) {
+               return 'Use the Create tab to generate one.';
+          }
+          if (tab === 'finishEscrow' && this.totalCount() === 0) {
+               return 'An escrow must be sent to this wallet to finish it.';
           }
           return '';
      });

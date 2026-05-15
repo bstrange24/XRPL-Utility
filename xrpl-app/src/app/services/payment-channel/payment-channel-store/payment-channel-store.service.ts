@@ -8,6 +8,7 @@ export interface PaymentChannelState {
      destination: string;
      publicKeyField: string;
      amount: string;
+     enableExpirationDate: boolean;
      paymentChannelIdSearchQuery: string;
      paymentChannelIdSearchTerm: string;
      channelClaimSignatureField: string;
@@ -38,6 +39,7 @@ const initialState: PaymentChannelState = {
      channelClaimSignatureField: '',
      authorizedWalletAddress: '',
      paymentChannelCancelAfterTimeField: '',
+     enableExpirationDate: false,
      isCreatorMode: false,
      isPaymentChannelOwner: false,
      isCollapsed: false,
@@ -72,6 +74,10 @@ export const PaymentChannelStoreService = signalStore(
           /** Generic setter */
           setField<K extends keyof PaymentChannelState>(field: K, value: PaymentChannelState[K]) {
                patchState(store, { [field]: value });
+          },
+
+          setEnableExpirationDate(value: boolean) {
+               patchState(store, { enableExpirationDate: value });
           },
 
           setPaymentChannelCancelAfterTime(value: string) {

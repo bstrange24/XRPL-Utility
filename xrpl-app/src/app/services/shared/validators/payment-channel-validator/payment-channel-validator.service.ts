@@ -3,6 +3,8 @@ import { ExpirationValidatorService } from '../expiration-validator/expiration-v
 import { CredentialUtilService } from '../../../credentials/credential-util/credential-util.service';
 import { PaymentChannelStoreService } from '../../../payment-channel/payment-channel-store/payment-channel-store.service';
 import { TransactionUiService } from '../../../transaction-ui/transaction-ui.service';
+import { RealTimeExpirationService } from '../../real-time-date-expiration-check/real-time-expiration.service';
+import { XrplTxOptionsStore } from '../../../../components/shared/stores/xrpl-tx-options.store';
 
 @Injectable({
      providedIn: 'root',
@@ -12,6 +14,8 @@ export class PaymentChannelValidatorService {
      public readonly credentialUtilService = inject(CredentialUtilService);
      private readonly expirationValidator = inject(ExpirationValidatorService);
      private readonly txUiService = inject(TransactionUiService);
+     private readonly realTimeService = inject(RealTimeExpirationService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      isPaymentChannelExpirationValid = computed(() => {
           const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
@@ -20,9 +24,20 @@ export class PaymentChannelValidatorService {
 
      hasInvalidPaymentChannelExpiration = computed(() => {
           const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
-          if (!expiration) return false;
-          return !this.isPaymentChannelExpirationValid();
+          const isEnabled = this.xrplTxOptionsStore.isExpirationEnabled();
+
+          if (!isEnabled || !expiration) return false;
+          // if (!expiration) return false;
+
+          // Use real-time expired check
+          return this.realTimeService.isPaymentChannelExpired();
      });
+
+     // hasInvalidPaymentChannelExpiration = computed(() => {
+     //      const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
+     //      if (!expiration) return false;
+     //      return !this.isPaymentChannelExpirationValid();
+     // });
 
      hasInvalidPaymentChannelExpirationWhenEnabled = computed(() => {
           if (!this.txUiService.wantsOptions()) return false; // Main toggle off → no error
@@ -33,9 +48,21 @@ export class PaymentChannelValidatorService {
           return !this.expirationValidator.isValid(expiration);
      });
 
+     // getPaymentChannelExpirationErrorMessage = computed(() => {
+     //      const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
+     //      return this.expirationValidator.getErrorMessage(expiration);
+     // });
+
      getPaymentChannelExpirationErrorMessage = computed(() => {
+          if (!this.hasInvalidPaymentChannelExpiration()) return '';
           const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
-          return this.expirationValidator.getErrorMessage(expiration);
+          if (!expiration) return '';
+
+          const timeRemaining = this.realTimeService.paymentChannelTimeRemaining();
+          if (timeRemaining === 'Expired') {
+               return `Payment channel expiration has passed (${new Date(expiration).toLocaleString()}). Please select a future date/time.`;
+          }
+          return `Payment channel expiration is invalid. ${timeRemaining}`;
      });
 
      isValidClaimSignature = computed(() => {

@@ -1,4 +1,5 @@
 <div class="space-y-6">
+     <!-- Escrow Details Card -->
      <div class="card-base">
           <h4 class="section-heading">
                <lucide-icon name="lock" class="section-heading-icon-green"></lucide-icon>
@@ -9,7 +10,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyCode" class="label-primary">Currency Code</label>
+                    <label for="escrowCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
                     <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
@@ -29,20 +30,46 @@
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label for="escrowAmount" class="label-primary">Amount</label>
-                    <p class="text-secondary">Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.</p>
-                    <input type="number" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="escrowStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event)" (focus)="onFocus($event)" class="input-base" />
+                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              [ngModel]="escrowStoreService.amount()"
+                              (ngModelChange)="escrowStoreService.setField('amount', $event)"
+                              placeholder="e.g. 10.5"
+                         />
+
+                         @if (escrowStoreService.amount() && escrowStoreService.amount()!.trim().length > 0) {
+                         <button type="button" (click)="this.escrowStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (amountValidatorService.isEscrowAmountInvalid()) {
+                    <p class="form-error">Amount must be greater than 0</p>
+                    }
                </div>
           </div>
 
           <!-- Issuer + Balance (non-XRP, non-MPT) -->
           @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
                <!-- Issuer -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyIssuer" class="label-primary">Issuer</label>
+                    <label for="escrowCurrencyIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
                     <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
@@ -52,7 +79,6 @@
                <div class="space-y-2">
                     <label for="escrowCurrencyBalance" class="label-primary">Currency Balance</label>
                     <p class="text-secondary">Total currency balance held by this account.</p>
-
                     <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
                </div>
           </div>
@@ -60,73 +86,171 @@
 
           <!-- MPT Section -->
           @if (currencyStoreService.currency() === 'MPT') {
-          <div class="space-y-4 mb-3">
+          <!-- <div class="space-y-2 mb-4 mt-2"> -->
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
+               <!-- Select MPT -->
                <div class="space-y-2">
-                    <label for="selectMpt" class="label-primary">Select MPT</label>
+                    <label for="selectMpt" class="label-primary">Select MPT <span class="text-red-500">*</span></label>
                     <p class="text-secondary">MPT this account holds that can be sent to another account.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                     </div>
                </div>
 
+               <!-- MPT Issuance ID -->
                <div class="space-y-2">
                     <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
                     <p class="text-secondary">Identifies the MPTokenIssuance.</p>
-                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" class="input-base" />
+                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" readonly class="input-disabled" />
                </div>
           </div>
           }
 
           <!-- Destination + Destination Tag -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-3">
                <!-- Destination -->
                <div class="space-y-2">
-                    <label for="escrowDestination" class="label-primary">Destination</label>
-                    <p class="text-secondary">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
-                    <p></p>
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="handleSearchQueryChange($event)" (valueChange)="handleDestinationChange($event)" placeholder="Enter or select destination address" />
-                    </div>
+                    <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
+                    <p class="text-secondary pb-1.5">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
+                    <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                    </app-select-search-dropdown>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send XRP to yourself.
+                    </p>
+                    }
                </div>
 
                <!-- Destination Tag -->
                <div class="space-y-2">
-                    <label for="escrowDestinationTag" class="label-primary">Destination Tag</label>
+                    <label class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <input type="text" [ngModel]="xrplTxOptionsStore.destinationTag()" class="input-base" />
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="numeric"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!tagValidatorService.isDestinationTagInvalid()"
+                              [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
+                              (input)="tagValidatorService.onDestinationTagInput($event)"
+                              (blur)="tagValidatorService.onDestinationTagBlur($event)"
+                              [ngModel]="xrplTxOptionsStore.destinationTag()"
+                              (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                              placeholder="e.g. 1123456"
+                         />
+
+                         @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                         <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
                </div>
           </div>
 
           <!-- Condition & Fulfillment (Conditional Escrow Only) -->
           @if (isConditional) {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <div class="space-y-2">
+          <!-- <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3 mb-3"> -->
+          <div>
+               <div class="mt-4">
                     <label for="escrowCondition" class="label-primary">Condition</label>
                     <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
-                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="input-base" />
+
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidCondition() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
+
+                         @if (escrowValidatorService.hasInvalidCondition() || escrowStoreService.condition()) {
+                         <button type="button" (click)="this.escrowStoreService.setField('condition', '')" class="clearInputXmark" aria-label="Clear Condition Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (escrowValidatorService.hasInvalidCondition()) {
+                    <p class="form-error">{{ escrowValidatorService.getConditionErrorMessage() }}</p>
+                    }
                </div>
 
-               <div class="space-y-2">
+               <div class="mt-4">
                     <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
                     <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="input-base" />
+
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
+
+                         @if (showClearFulfillmentButton() || escrowStoreService.fulfillment()) {
+                         <button type="button" (click)="escrowStoreService.setField('fulfillment', '')" class="clearInputXmark" aria-label="Clear Fulfillment Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (escrowValidatorService.hasInvalidFulfillment()) {
+                    <p class="form-error">{{ escrowValidatorService.getFulfillmentErrorMessage() }}</p>
+                    } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair() && !escrowValidatorService.hasInvalidCondition() && !escrowValidatorService.hasInvalidFulfillment()) {
+                    <p class="form-error">{{ escrowValidatorService.getConditionFulfillmentPairErrorMessage() }}</p>
+                    }
                </div>
           </div>
           }
 
           <!-- Time Settings -->
-          <!-- Finish After -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
+               <!-- Finish After -->
                <div class="rounded-2xl p-1 transition-shadow">
-                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)" [enableSignal]="escrowStoreService.enableEscrowFinishAfterExpirationDate" [setEnable]="escrowStoreService.setEnableFinishAfter.bind(escrowStoreService)" label="Set Escrow Finish After Time" hint="The time when the escrowed value can be released to the recipient.">
+                    <app-xrpl-expiration-input
+                         [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate"
+                         [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)"
+                         [enableSignal]="escrowStoreService.enableEscrowFinishAfterExpirationDate"
+                         [setEnable]="escrowStoreService.setEnableFinishAfter.bind(escrowStoreService)"
+                         [optionsEnabledSignal]="txUiService.wantsOptions"
+                         [resetWhenOptionsDisabled]="false"
+                         [showError]="escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()"
+                         [errorMessage]="escrowValidatorService.getFinishAfterErrorMessage()"
+                         [expirationType]="'finish'"
+                         label="Set Escrow Finish After Time"
+                         hint="The time when the escrowed value can be released to the recipient."
+                    >
                     </app-xrpl-expiration-input>
                </div>
 
                <!-- Cancel After -->
                <div class="rounded-2xl p-1 transition-shadow">
-                    <app-xrpl-expiration-input [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate" [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)" [enableSignal]="escrowStoreService.enableEscrowCancelAfterExpirationDate" [setEnable]="escrowStoreService.setEnableCancelAfter.bind(escrowStoreService)" label="Set Escrow Cancel After Time" hint="The time before the escrow can be cancelled by the sender.">
+                    <app-xrpl-expiration-input
+                         [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate"
+                         [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)"
+                         [enableSignal]="escrowStoreService.enableEscrowCancelAfterExpirationDate"
+                         [setEnable]="escrowStoreService.setEnableCancelAfter.bind(escrowStoreService)"
+                         [optionsEnabledSignal]="txUiService.wantsOptions"
+                         [resetWhenOptionsDisabled]="false"
+                         [showError]="escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()"
+                         [errorMessage]="escrowValidatorService.getCancelAfterErrorMessage()"
+                         [expirationType]="'cancel'"
+                         label="Set Escrow Cancel After Time"
+                         hint="The time before the escrow can be cancelled by the sender."
+                    >
                     </app-xrpl-expiration-input>
                </div>
           </div>
      </div>
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
+          </div>
+     </div>
+     }
 </div>

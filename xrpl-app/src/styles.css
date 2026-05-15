@@ -1184,3 +1184,36 @@ pre code[class*="language-"] {
           transform: translateY(0) scale(1);
      }
 }
+
+/* Add to your component's CSS or global styles */
+
+@keyframes pulse {
+
+     0%,
+     100% {
+          opacity: 1;
+     }
+
+     50% {
+          opacity: 0.7;
+     }
+}
+
+.animate-pulse {
+     animation: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Optional: Add smooth transitions for urgency changes */
+.countdown-urgent {
+     transition: all 0.3s ease;
+}
+
+.countdown-critical {
+     transition: all 0.3s ease;
+     font-weight: bold;
+}
+
+/* Add time button styling if not already present */
+.add-time {
+     @apply rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all;
+}

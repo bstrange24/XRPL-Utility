@@ -1,4 +1,5 @@
 <div class="space-y-6">
+     <!-- Selection Card -->
      <div class="card-base">
           <h4 class="section-heading">
                <lucide-icon name="lock" class="section-heading-icon-green"></lucide-icon>
@@ -6,66 +7,91 @@
           </h4>
 
           <!-- Select Escrow -->
-          <div class="space-y-2">
-               <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
-               <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
-
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
-               </div>
-          </div>
+          <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
+          <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+          <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
      </div>
 
+     <!-- Finish Escrow Extra Fields -->
+     @if (activeTab === 'finishEscrow' && selectedEscrowItem() && !selectedEscrowIsExpired()) {
      <div class="card-base">
-          <!-- Finish Escrow Extra Fields -->
-          @if (activeTab === 'finishEscrow' && !selectedEscrowIsExpired()) {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-               <!-- Escrow Sequence ID -->
-               <div class="space-y-2 mt-4">
-                    <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
-                    <p class="text-secondary">Sequence ID generated when the escrow was created.</p>
-                    <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+          <div class="space-y-6">
+               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <!-- Escrow Sequence ID -->
+                    <div>
+                         <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
+                         <p class="text-secondary">Sequence ID generated when the escrow was created.</p>
+                         <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                    </div>
+
+                    <!-- Escrow Owner -->
+                    <div>
+                         <label for="escrowOwner" class="label-primary">Escrow Owner</label>
+                         <p class="text-secondary">The account that originally created the escrow.</p>
+                         <input type="text" readonly class="input-disabled" [ngModel]="escrowStoreService.escrowOwner()" />
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                         <label for="escrowAmount" class="label-primary">Amount</label>
+                         <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
+                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                    </div>
                </div>
 
-               <!-- Escrow Owner -->
-               <div class="space-y-2 mt-4">
-                    <label for="escrowOwner" class="label-primary">Escrow Owner</label>
-                    <p class="text-secondary">The account that originally created the escrow.</p>
-                    <input type="text" readonly class="input-disabled" [ngModel]="escrowStoreService.escrowOwner()" />
-               </div>
+               <!-- Condition + Fulfillment (Conditional Escrow Only) -->
+               @if (isConditional) {
+               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <!-- Condition -->
+                    <div>
+                         <label for="escrowCondition" class="label-primary">Condition</label>
+                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                         <div class="relative">
+                              <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidCondition() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
 
-               <!-- Amount -->
-               <div>
-                    <label for="escrowAmount" class="label-primary">Amount</label>
-                    <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
-                    <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                              @if (escrowValidatorService.hasInvalidCondition()) {
+                              <button type="button" (click)="this.escrowStoreService.setField('condition', '')" class="clearInputXmark" aria-label="Clear Condition Field">
+                                   <lucide-icon name="x" size="16"></lucide-icon>
+                              </button>
+                              }
+                         </div>
+
+                         @if (escrowValidatorService.hasInvalidCondition()) {
+                         <p class="form-error">{{ escrowValidatorService.getConditionErrorMessage() }}</p>
+                         }
+                    </div>
+
+                    <!-- Fulfillment -->
+                    <div>
+                         <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                         <div class="relative">
+                              <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
+
+                              @if (showClearFulfillmentButton()) {
+                              <button type="button" (click)="escrowStoreService.setField('fulfillment', '')" class="clearInputXmark" aria-label="Clear Fulfillment Field">
+                                   <lucide-icon name="x" size="16"></lucide-icon>
+                              </button>
+                              }
+                         </div>
+
+                         @if (escrowValidatorService.hasInvalidFulfillment()) {
+                         <p class="form-error">{{ escrowValidatorService.getFulfillmentErrorMessage() }}</p>
+                         } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair() && !escrowValidatorService.hasInvalidCondition() && !escrowValidatorService.hasInvalidFulfillment()) {
+                         <p class="form-error">{{ escrowValidatorService.getConditionFulfillmentPairErrorMessage() }}</p>
+                         }
+                    </div>
                </div>
+               }
           </div>
-          }
-
-          <!-- Condition + Fulfillment (Conditional Escrow Only) -->
-          @if (isConditional) {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
-               <div class="space-y-2">
-                    <label for="escrowCondition" class="label-primary">Condition</label>
-                    <p class="text-secondary">Hex value matching the previously-supplied PREIMAGE-SHA-256 crypto-condition.</p>
-                    <input type="text" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" class="input-base" />
-               </div>
-
-               <div class="space-y-2">
-                    <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
-                    <p class="text-secondary">Hex value of the PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                    <input type="text" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" class="input-base" />
-               </div>
-          </div>
-          }
      </div>
+     }
 </div>
 
 <!-- Expired Warning -->
 @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
-<div class="mt-3 flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
+<div class="alert-error">
      <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
-     <span class="text-sm text-red-700"> This selected escrow has expired@if (activeTab === 'finishEscrow') { and cannot be finished. } </span>
+     <div class="alert-content">This selected escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished. }</div>
 </div>
 }

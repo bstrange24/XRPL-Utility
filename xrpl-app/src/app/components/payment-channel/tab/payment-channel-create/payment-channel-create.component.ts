@@ -115,6 +115,23 @@ export class PaymentChannelCreateComponent {
           if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
 
           if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.paymentChannelStoreService.paymentChannelCancelAfterTimeField()) {
+               // Use the real-time validator
+               if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
+                    return false;
+               }
+          }
+
+          return true;
+     });
+
+     canCreatePaymentChannel1 = computed(() => {
+          if (!this.isDestinationValid()) return false;
+          if (!this.amountValidatorService.isPaymentChannelAmountValid()) return false;
+          if (!this.paymentChannelValidatorService.isSettleDelayValid()) return false;
+
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+
+          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.paymentChannelStoreService.paymentChannelCancelAfterTimeField()) {
                if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
                     return false;
                }
@@ -124,6 +141,40 @@ export class PaymentChannelCreateComponent {
      });
 
      validationErrorMessages = computed(() => {
+          const errors: string[] = [];
+
+          if (!this.isDestinationValid()) {
+               errors.push('Destination address is invalid. Please enter a valid XRP address.');
+          }
+
+          if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
+               errors.push('Amount must be greater than 0.');
+          }
+
+          if (this.paymentChannelValidatorService.isSettleDelayInvalid()) {
+               const delay = Number(this.paymentChannelStoreService.settleDelay());
+               if (delay > 4294967295) {
+                    errors.push('Settle Delay cannot exceed 4,294,967,295 seconds');
+               } else {
+                    errors.push('Settle Delay must be a valid whole number between 0 and 4,294,967,295');
+               }
+          }
+
+          // Only show expiration error if wantsOptions is enabled AND expiration is enabled AND expiration has a value
+          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.paymentChannelStoreService.paymentChannelCancelAfterTimeField()) {
+               if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
+                    errors.push(this.paymentChannelValidatorService.getPaymentChannelExpirationErrorMessage());
+               }
+          }
+
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors());
+          }
+
+          return errors;
+     });
+
+     validationErrorMessages1 = computed(() => {
           const errors: string[] = [];
 
           if (!this.isDestinationValid()) {

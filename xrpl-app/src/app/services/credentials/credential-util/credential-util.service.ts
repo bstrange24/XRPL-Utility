@@ -149,8 +149,7 @@ export class CredentialUtilService extends PerformanceBaseComponent {
           }
 
           // Convert XRPL time (seconds since 2000-01-01) to JS timestamp
-          const RIPPLE_EPOCH_OFFSET = 946684800; // Seconds from 1970 to 2000
-          const expirationDate = new Date((cred.ExpirationRaw + RIPPLE_EPOCH_OFFSET) * 1000);
+          const expirationDate = new Date((cred.ExpirationRaw + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000);
           const now = new Date();
 
           return expirationDate < now;

@@ -14,7 +14,6 @@ import { TransactionOptionsComponent } from '../../shared/transaction-options/tr
 import { EscrowsCancelComponent } from '../tab/escrows-cancel/escrows-cancel.component';
 import { EscrowsCreateComponent } from '../tab/escrows-create/escrows-create.component';
 import { EscrowsFinishComponent } from '../tab/escrows-finish/escrows-finish.component';
-import { EscrowSummaryComponent } from '../ui-components/escrow-summary/escrow-summary.component';
 
 @Component({
      selector: 'app-conditional-escrow',

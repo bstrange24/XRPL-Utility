@@ -21,6 +21,8 @@
      <div class="space-y-4 rounded-2xl border border-gray-200 p-4">
           <!-- Preset Buttons -->
           <div class="flex flex-wrap gap-2">
+               <button type="button" (click)="setFromNow(10)" class="add-time">10s</button>
+               <button type="button" (click)="setFromNow(30)" class="add-time">30s</button>
                <button type="button" (click)="setFromNow(60)" class="add-time">1m</button>
                <button type="button" (click)="setFromNow(300)" class="add-time">5m</button>
                <button type="button" (click)="setFromNow(3600)" class="add-time">1h</button>
@@ -39,9 +41,41 @@
           </div>
           }
 
-          <!-- Relative Display -->
-          @if (expirationSignal()) {
-          <div class="text-xs text-gray-500 bg-gray-50 rounded-xl px-3 py-2">Expires <span class="font-medium text-gray-700">{{ formatted() }}</span> (<span class="text-blue-600">{{ relative() }}</span>)</div>
+          <!-- Countdown Display with Urgency Styling -->
+          @if (expirationSignal() && !showError) {
+          <div class="rounded-xl px-3 py-2 transition-all duration-300" [class.bg-amber-50]="isUrgent() && !isCritical()" [class.bg-red-50]="isCritical()" [class.bg-gray-50]="!isUrgent() && !isCritical()">
+               <div class="flex items-center justify-between">
+                    <div class="text-xs text-gray-600">Time remaining:</div>
+                    <div class="font-mono font-bold text-sm" [class.text-amber-600]="isUrgent() && !isCritical()" [class.text-red-600]="isCritical()" [class.animate-pulse]="isCritical()">{{ getCountdownDisplay() }}</div>
+               </div>
+
+               @if (isUrgent()) {
+               <div class="mt-1 text-xs" [class.text-amber-600]="!isCritical()" [class.text-red-600]="isCritical()">
+                    @if (isCritical()) {
+                    <span class="flex items-center gap-1">
+                         <ng-icon name="heroClock" size="12" />
+                         Expiring very soon!
+                    </span>
+                    } @else {
+                    <span class="flex items-center gap-1">
+                         <ng-icon name="heroClock" size="12" />
+                         Expiring in less than 20 seconds
+                    </span>
+                    }
+               </div>
+               }
+
+               <div class="mt-1 text-xs text-gray-400">Expires at: {{ formatted() }}</div>
+          </div>
+          } @else if (expirationSignal() && showError) {
+          <!-- Expired State -->
+          <div class="bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+               <div class="flex items-center justify-between">
+                    <div class="text-xs text-red-600">Status:</div>
+                    <div class="font-mono font-bold text-sm text-red-600">Expired</div>
+               </div>
+               <div class="mt-1 text-xs text-red-500">Expired at: {{ formatted() }}</div>
+          </div>
           }
 
           <!-- Action Buttons -->
@@ -55,6 +89,16 @@
           @if (!expirationSignal()) {
           <p class="text-xs text-gray-400 italic">No expiration set</p>
           }
+
+          <!-- Error Message -->
+          <!-- @if (showError && errorMessage) {
+          <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded-xl">
+               <p class="text-sm text-red-600 flex items-center gap-2">
+                    <ng-icon name="heroExclamationCircle" size="16" />
+                    {{ errorMessage }}
+               </p>
+          </div>
+          } -->
      </div>
      }
 </div>

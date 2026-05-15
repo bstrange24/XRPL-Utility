@@ -61,10 +61,9 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      private readonly rightPanelService = inject(RightPanelService);
      public readonly credentialTabs = CREDENTIAL_TABS;
      public readonly tabMeta = CREDENTIAL_TAB_META;
-
-     canCreateCredential = signal(false);
-     activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
-     lastIntendedDestination = signal<string>('');
+     public canCreateCredential = signal(false);
+     public activeTabForRequirements = computed(() => this.credentialViewModelService.activeTab());
+     public lastIntendedDestination = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);

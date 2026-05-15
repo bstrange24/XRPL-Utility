@@ -6,9 +6,9 @@
                Escrow Details
           </h4>
 
+          <!-- Select Escrow -->
           <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} </label>
           <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
-
           <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
      </div>
 
@@ -52,10 +52,11 @@
      </div>
      }
 </div>
+
 <!-- Expired Warning -->
 @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
 <div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
      <div class="alert-content">This escrow has expired and can only be cancelled.@if (activeTab === 'finishEscrow') { and cannot be finished }.</div>
 </div>
 }

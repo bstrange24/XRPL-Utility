@@ -17,6 +17,7 @@ import { FormsModule } from '@angular/forms';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { ExpirationFilterInputComponent } from '../../../shared/expiration-filter-input/expiration-filter-input.component';
 import { NftOfferActionTypes } from '../../constants/nft-offers.types';
+import { AppConstants } from '../../../../core/app.constants';
 
 const NFT_OFFERS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'active NFT offer',
@@ -97,8 +98,7 @@ export class NftOffersSummaryComponent {
      // Helper function to get expiration timestamp from XRPL time
      private getExpirationTimestamp(expiration: number | undefined): number {
           if (!expiration) return 0;
-          const RIPPLE_EPOCH_OFFSET = 946684800;
-          return (expiration + RIPPLE_EPOCH_OFFSET) * 1000;
+          return (expiration + AppConstants.RIPPLE_EPOCH_OFFSET) * 1000;
      }
 
      // Helper function to get amount value for sorting

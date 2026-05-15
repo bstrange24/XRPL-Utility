@@ -8,10 +8,6 @@
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="conditionMenuTabs" [active]="tab" [metaMap]="timeTabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
-          <!-- Info / Summary -->
-          <!-- @let wallet = currentWallet(); -->
-          <!-- <app-escrow-summary [wallet]="wallet" [tab]="viewModel.activeTab()" [infoPanelExpanded]="infoPanelExpanded()" [escrowLength]="escrowUtilService.escrowLength()" (toggleInfoPanel)="toggleInfoPanel()" (escrowSelected)="escrowUtilService.onEscrowSelectedInUi($event)"> </app-escrow-summary> -->
-
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
@@ -21,7 +17,20 @@
           <form #theForm="ngForm">
                <!-- Dynamic Form Content -->
                @if (tab === 'createEscrow') {
-               <app-escrows-create [isConditional]="true"></app-escrows-create>
+               <app-escrows-create
+                    [isConditional]="true"
+                    [currentAddress]="currentAddress()"
+                    [lastIntendedDestination]="lastIntendedDestination()"
+                    [selectedDestinationAddress]="selectedDestinationAddress()"
+                    [wantsOptions]="txUiService.wantsOptions()"
+                    [canSubmit]="canSubmit()"
+                    [tab]="tab"
+                    (clearFields)="clearInputFields()"
+                    (searchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationChange)="handleDestinationChange($event)"
+                    (toggleOptions)="txUiService.toggleOptions($event)"
+                    (canCreateEscrowChange)="handleCanCreateEscrowChange($event)"
+               ></app-escrows-create>
                } @else if (tab === 'finishEscrow') {
                <app-escrows-finish [isConditional]="true"></app-escrows-finish>
                } @else if (tab === 'cancelEscrow') {

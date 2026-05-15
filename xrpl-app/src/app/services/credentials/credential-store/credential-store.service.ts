@@ -6,6 +6,7 @@ export interface CredentialState {
      credentialID: string;
      credentialType: string;
      subject: string;
+     enableExpirationDate: boolean;
      credentialIssuer: string;
      credentialIdSearchQuery: string;
      credentialIdSearchTerm: string;
@@ -28,6 +29,7 @@ const initialState: CredentialState = {
      credentialIdSearchTerm: '',
      existingCredentials: [],
      selectedCredentials: null,
+     enableExpirationDate: false,
      subjectCredentials: [],
      uri: '',
      expirationDate: '',
@@ -52,6 +54,10 @@ export const CredentialStore = signalStore(
 
           setCredentialSubjectExpirationDate(value: string) {
                patchState(store, { expirationDate: value });
+          },
+
+          setEnableExpirationDate(value: boolean) {
+               patchState(store, { enableExpirationDate: value });
           },
 
           /** Generic updater */

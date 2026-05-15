@@ -53,7 +53,20 @@
 
           <!-- Credential Expiration -->
           <div class="rounded-2xl p-1 transition-shadow">
-               <app-xrpl-expiration-input [expirationSignal]="credentialStore.credentialSubjectExpirationDate" [setExpiration]="credentialStore.setCredentialSubjectExpirationDate.bind(credentialStore)" label="Credential Expiration" hint="Credential expiration. Leave blank for a credential that never expires."> </app-xrpl-expiration-input>
+               <app-xrpl-expiration-input
+                    [expirationSignal]="credentialStore.credentialSubjectExpirationDate"
+                    [setExpiration]="credentialStore.setCredentialSubjectExpirationDate.bind(credentialStore)"
+                    [enableSignal]="credentialStore.enableExpirationDate"
+                    [setEnable]="credentialStore.setEnableExpirationDate.bind(credentialStore)"
+                    [optionsEnabledSignal]="txUiService.wantsOptions"
+                    [resetWhenOptionsDisabled]="false"
+                    [showError]="credentialValidatorService.hasInvalidCredentialExpiration()"
+                    [errorMessage]="credentialValidatorService.getCredentialExpirationErrorMessage()"
+                    [expirationType]="'credential'"
+                    label="Credential Expiration"
+                    hint="Credential expiration. The credential will expire after this date. Leave blank for a credential that never expires."
+               >
+               </app-xrpl-expiration-input>
           </div>
      </div>
 </div>
@@ -99,7 +112,19 @@
 
           <!-- Payment Channel Expiration -->
           <div class="rounded-2xl p-1 transition-shadow">
-               <app-xrpl-expiration-input [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField" [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)" [optionsEnabledSignal]="txUiService.wantsOptions" [resetWhenOptionsDisabled]="false" label="Payment Channel Expiration" hint="Payment channel expiration. The payment channel will expire after this date. Leave blank for a channel that never expires.">
+               <app-xrpl-expiration-input
+                    [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
+                    [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
+                    [enableSignal]="xrplTxOptionsStore.isExpirationEnabled"
+                    [setEnable]="xrplTxOptionsStore.setIsExpirationEnabled.bind(xrplTxOptionsStore)"
+                    [optionsEnabledSignal]="txUiService.wantsOptions"
+                    [resetWhenOptionsDisabled]="false"
+                    [showError]="paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()"
+                    [errorMessage]="paymentChannelValidatorService.getPaymentChannelExpirationErrorMessage()"
+                    [expirationType]="'paymentChannel'"
+                    label="Payment Channel Expiration"
+                    hint="Payment channel expiration. The payment channel will expire after this date. Leave blank for a channel that never expires."
+               >
                </app-xrpl-expiration-input>
           </div>
      </div>
@@ -108,6 +133,13 @@
           <app-xrpl-expiration-input
                [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
                [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
+               [enableSignal]="xrplTxOptionsStore.isExpirationEnabled"
+               [setEnable]="xrplTxOptionsStore.setIsExpirationEnabled.bind(xrplTxOptionsStore)"
+               [optionsEnabledSignal]="txUiService.wantsOptions"
+               [resetWhenOptionsDisabled]="false"
+               [showError]="paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()"
+               [errorMessage]="paymentChannelValidatorService.getPaymentChannelExpirationErrorMessage()"
+               [expirationType]="'paymentChannel'"
                label="New Expiration Time for the Channel"
                hint="This must be later than either the current time plus the SettleDelay of the channel, or the existing Expiration of the channel. After the Expiration time, any transaction that would access the channel closes the channel without taking its normal action. Any unspent XRP is returned to the source address when the channel closes."
           >

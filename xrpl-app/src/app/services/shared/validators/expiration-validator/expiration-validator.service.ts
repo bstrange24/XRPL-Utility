@@ -78,4 +78,45 @@ export class ExpirationValidatorService {
 
           return 'Please enter a valid future date';
      }
+
+     isExpired(expirationDate: string | null | undefined): boolean {
+          if (!expirationDate) return false;
+
+          const date = new Date(expirationDate);
+          if (isNaN(date.getTime())) return true;
+
+          const now = new Date();
+          return date <= now;
+     }
+
+     // isValid(expirationDate: string | null | undefined): boolean {
+     //      if (!expirationDate) return true;
+
+     //      const date = new Date(expirationDate);
+     //      if (isNaN(date.getTime())) return false;
+
+     //      return !this.isExpired(expirationDate);
+     // }
+
+     getTimeRemaining(expirationDate: string | null | undefined): string {
+          if (!expirationDate) return '';
+
+          const date = new Date(expirationDate);
+          if (isNaN(date.getTime())) return 'Invalid date';
+
+          const now = new Date();
+          const diff = date.getTime() - now.getTime();
+
+          if (diff <= 0) return 'Expired';
+
+          const seconds = Math.floor(diff / 1000);
+          const minutes = Math.floor(seconds / 60);
+          const hours = Math.floor(minutes / 60);
+          const days = Math.floor(hours / 24);
+
+          if (days > 0) return `${days}d ${hours % 24}h remaining`;
+          if (hours > 0) return `${hours}h ${minutes % 60}m remaining`;
+          if (minutes > 0) return `${minutes}m ${seconds % 60}s remaining`;
+          return `${seconds}s remaining`;
+     }
 }

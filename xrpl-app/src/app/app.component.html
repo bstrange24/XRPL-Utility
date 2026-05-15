@@ -32,11 +32,12 @@
                     }
 
                     <!-- 2. MAIN INFO PANEL -->
-                    @if (rightPanelService.component(); as comp) {
+                    <!-- @if (rightPanelService.component(); as comp) {
                     <div class="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden min-h-0">
                          <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
                     </div>
-                    } @else if (!rightPanelService.summaryComponent()) {
+                    } @else -->
+                    @if (!rightPanelService.summaryComponent()) {
                     <!-- Only show placeholder if there's nothing at all -->
                     <div class="flex-1 bg-white rounded-2xl shadow-sm p-6 text-sm text-gray-400 flex items-center justify-center">No info available</div>
                     }

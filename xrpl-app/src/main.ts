@@ -1,3 +1,6 @@
+import { NgIconsModule } from '@ng-icons/core';
+import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
+import { RealTimeExpirationService } from './app/services/shared/real-time-date-expiration-check/real-time-expiration.service';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -131,15 +134,13 @@ import {
      heroArrowDown,
 } from '@ng-icons/heroicons/outline';
 
-import { NgIconsModule } from '@ng-icons/core';
-import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
-
 // Make Buffer and process available globally
 (globalThis as any).Buffer = Buffer;
 (globalThis as any).process = process;
 
 bootstrapApplication(AppComponent, {
      providers: [
+          RealTimeExpirationService,
           provideRouter(routes),
           provideHttpClient(),
           provideAnimations(),

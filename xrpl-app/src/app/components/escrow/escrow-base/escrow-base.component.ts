@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnInit, signal } from '@angular/core';
 import { Wallet, WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { WalletDestinationBase } from '../../../services/wallets/walletDestinationBase';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -66,15 +66,36 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      public readonly conditionMenuTabs = CONDITIONAL_ESCROW_TABS;
      public readonly conditionTabMeta = CONDITIONAL_ESCROW_TAB_META;
      abstract readonly isConditional: boolean;
+     public canCreateEscrowForm = signal<boolean>(false);
+     public lastIntendedDestination = signal<string>('');
+     public resetTrigger = input<number>(0);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.escrowTransactionViewModelService.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
+
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
+          });
      }
 
      activeTabForRequirements = computed(() => this.escrowTransactionViewModelService.activeTab());
      readonly summaryExpanded = signal<boolean>(false);
+
+     toggleSummaryPanel() {
+          this.summaryExpanded.update(expanded => !expanded);
+     }
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, ESCROW_TAB, tab => this.setTab(tab));
@@ -85,15 +106,23 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+          this.escrowStoreService.setEnableFinishAfter(false);
+          this.escrowStoreService.setEnableCancelAfter(false);
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getEscrows(true);
-          }
      }
+
+     ngOnDestroy() {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      public get activeTab() {
           return this.escrowTransactionViewModelService.activeTab();
@@ -270,6 +299,8 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           if (!ESCROW_TAB.includes(tab as any)) return;
           this.escrowTransactionViewModelService.activeTab.set(tab as EscrowActionTypes);
           this.resetInputFields();
+          this.escrowStoreService.setEnableFinishAfter(false);
+          this.escrowStoreService.setEnableCancelAfter(false);
           if (this.hasWallets()) await this.getEscrows(false);
      }
 
@@ -455,6 +486,18 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                },
           });
      }
+
+     handleCanCreateEscrowChange(canCreate: boolean) {
+          this.canCreateEscrowForm.set(canCreate);
+     }
+
+     // handleCanFinishEscrowChange(canFinish: boolean) {
+     //      this.canFinishEscrowForm.set(canFinish);
+     // }
+
+     // handleCanCancelEscrowChange(canCancel: boolean) {
+     //      this.canCancelEscrowForm.set(canCancel);
+     // }
 
      handleSearchQueryChange(query: string) {
           this.escrowTransactionViewModelService.destinationSearchQuery.set(query);

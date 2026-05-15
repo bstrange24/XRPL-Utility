@@ -7,7 +7,7 @@ import { animation, expandCollapse } from '../../../../../services/utils/animati
      selector: 'app-summary-container',
      standalone: true,
      imports: [NgIcon, LucideAngularModule],
-     animations: [animation, expandCollapse],
+     // animations: [animation, expandCollapse],
      templateUrl: './summary-container.component.html',
      styleUrl: './summary-container.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -27,8 +27,9 @@
      </div>
      <!-- Expandable Content -->
      @if (itemCount() > 0) {
-     <div [@expandCollapse] class="rounded-2xl bg-white overflow-hidden" style="margin-top: 10px">
-          <div class="max-h-[520px] overflow-y-auto">
+     <!-- <div [@expandCollapse] class="rounded-2xl bg-white overflow-hidden" style="margin-top: 10px"> -->
+     <div class="rounded-2xl bg-white overflow-hidden" style="margin-top: 10px">
+          <div class="max-h-[750px] overflow-y-auto">
                <ul class="space-y-2">
                     <ng-content select="[items-list]" />
                </ul>

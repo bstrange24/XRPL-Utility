@@ -9,6 +9,7 @@ import { EscrowTransactionViewModelService } from '../../../../services/escrow/e
 import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escrow-util.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { EscrowValidatorService } from '../../../../services/shared/validators/escrow-validator/escrow-validator.service';
 
 @Component({
      selector: 'app-escrows-finish',
@@ -23,6 +24,7 @@ export class EscrowsFinishComponent {
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly viewModel = inject(EscrowTransactionViewModelService);
      private readonly walletManager = inject(WalletManagerService);
+     public readonly escrowValidatorService = inject(EscrowValidatorService);
 
      @Input() isConditional = false;
 
@@ -60,5 +62,9 @@ export class EscrowsFinishComponent {
                this.escrowStoreService.setField('escrowSequenceNumber', escrow.EscrowSequence);
                this.escrowStoreService.setField('escrowOwner', escrow.Sender);
           }
+     }
+
+     showClearFulfillmentButton(): boolean {
+          return this.escrowValidatorService.hasInvalidFulfillment() || (this.escrowValidatorService.hasInvalidConditionFulfillmentPair() && !this.escrowValidatorService.hasInvalidCondition());
      }
 }
