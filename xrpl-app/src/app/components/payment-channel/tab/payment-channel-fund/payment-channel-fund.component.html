@@ -6,9 +6,8 @@
           </h4>
 
           <!-- Select Payment Channel to Fund -->
-          <label for="selectChannelToFund" class="label-primary">Select Payment Channel to Fund</label>
+          <label for="selectChannelToFund" class="label-primary">Select Payment Channel to Fund <span class="text-red-500">*</span></label>
           <p class="text-secondary">Select an existing payment channel to fund. The selected account must be the payment channel creator.</p>
-
           <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
      </div>
 
@@ -17,17 +16,46 @@
           <!-- Channel ID and XRP Amount - Two Column Grid -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-1">
                <!-- Channel ID -->
-               <div class="space-y-2">
+               <div>
                     <label for="channelID" class="label-primary">Channel ID</label>
                     <p class="text-secondary">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
-                    <input type="text" readonly class="input-disabled" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
+                    <div class="relative">
+                         <input type="text" readonly class="input-disabled" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
+                    </div>
                </div>
 
                <!-- XRP Amount -->
-               <div class="space-y-2">
-                    <label for="xrpAmount" class="label-primary">XRP Amount</label>
+               <div>
+                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
                     <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
-                    <input type="number" name="amountField" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" (focus)="onFocus($event)" class="input-base" />
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              [ngModel]="paymentChannelStoreService.amount()"
+                              (ngModelChange)="paymentChannelStoreService.setField('amount', $event)"
+                              placeholder="e.g. 10.5"
+                         />
+
+                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
+                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
+                    <p class="form-error">Amount must be greater than 0</p>
+                    }
                </div>
           </div>
      </div>
@@ -49,15 +77,30 @@
      <!-- Optional Fields Section -->
      @if (txUiService.wantsOptions()) {
      <div class="card-base">
-          <app-transaction-options-section [activeTab]="'fundPaymentChannel'"></app-transaction-options-section>
+          <app-transaction-options-section [activeTab]="'fundPaymentChannel'" (optionsValidationChange)="onOptionsValidationChange($event)"> </app-transaction-options-section>
      </div>
      }
 
      <!-- Expired warning -->
      @if (viewModel.selectedIsExpired()) {
-     <div class="mt-2 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
-          <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
-          <span class="text-sm text-red-700">This selected payment channel has expired.</span>
+     <div class="alert-error">
+          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">This selected payment channel has expired.</div>
+     </div>
+     }
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
+          </div>
      </div>
      }
 </div>

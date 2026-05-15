@@ -105,14 +105,14 @@ describe('PaymentChannelClaimComponent', () => {
           });
      });
 
-     describe('toggleCreatorMode1', () => {
+     describe('toggleCreatorMode', () => {
           it('should set isCreatorMode to true', () => {
-               component.toggleCreatorMode1(true);
+               component.toggleCreatorMode(true);
                expect(paymentChannelStoreService.setField).toHaveBeenCalledWith('isCreatorMode', true);
           });
 
           it('should set isCreatorMode to false', () => {
-               component.toggleCreatorMode1(false);
+               component.toggleCreatorMode(false);
                expect(paymentChannelStoreService.setField).toHaveBeenCalledWith('isCreatorMode', false);
           });
      });
@@ -306,12 +306,12 @@ describe('PaymentChannelClaimComponent', () => {
                }
           });
 
-          it('should call toggleCreatorMode1 when checkbox is toggled', () => {
+          it('should call toggleCreatorMode when checkbox is toggled', () => {
                const checkbox = fixture.debugElement.query(By.css('input[type="checkbox"]'));
                if (checkbox) {
-                    spyOn(component, 'toggleCreatorMode1');
+                    spyOn(component, 'toggleCreatorMode');
                     checkbox.triggerEventHandler('change', { target: { checked: true } });
-                    expect(component.toggleCreatorMode1).toHaveBeenCalledWith(true);
+                    expect(component.toggleCreatorMode).toHaveBeenCalledWith(true);
                }
           });
      });

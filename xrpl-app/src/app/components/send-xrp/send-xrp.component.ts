@@ -58,11 +58,11 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
      private readonly rightPanelService = inject(RightPanelService);
-     public canSendXrpFromForm = signal<boolean>(false);
      public readonly sendXrpTabs = SEND_XRP_TABS;
      public readonly tabMeta = SEND_XRP_TAB_META;
-     lastIntendedDestination = signal<string>('');
-     resetTrigger = input<number>(0);
+     public canSendXrpFrom = signal<boolean>(false);
+     public lastIntendedDestination = signal<string>('');
+     public resetTrigger = input<number>(0);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -229,7 +229,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      }
 
      handleCanSendXrpChange(canSend: boolean) {
-          this.canSendXrpFromForm.set(canSend);
+          this.canSendXrpFrom.set(canSend);
      }
 
      handleSearchQueryChange(query: string) {

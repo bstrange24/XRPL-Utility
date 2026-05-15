@@ -95,6 +95,26 @@ export const PaymentChannelStoreService = signalStore(
                patchState(store, { paymentChannelCancelAfterTimeField: '' });
           },
 
+          /** Reset fields that don't contain existing payment channels */
+          resetChannelData() {
+               patchState(store, {
+                    channelIDField: '',
+                    settleDelay: '',
+                    destination: '',
+                    publicKeyField: '',
+                    amount: '',
+                    paymentChannelIdSearchQuery: '',
+                    paymentChannelIdSearchTerm: '',
+                    channelClaimSignatureField: '',
+                    authorizedWalletAddress: '',
+                    paymentChannelCancelAfterTimeField: '',
+                    isCreatorMode: false,
+                    isPaymentChannelOwner: false,
+                    isCollapsed: false,
+                    walletPaymentChannelCount: 0,
+               });
+          },
+
           /** Reset dropdown-related fields */
           resetChannelIdSelection() {
                patchState(store, {

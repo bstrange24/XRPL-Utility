@@ -21,6 +21,7 @@ import { InvoiceIdValidatorService } from '../../../services/shared/validators/i
 import { UriValidatorService } from '../../../services/shared/validators/uri-validator/uri-validator.service';
 import { DomainIdValidatorService } from '../../../services/shared/validators/domain-id-validator/domain-id-validator.service';
 import { CredentialValidatorService } from '../../../services/shared/validators/credential-validator/credential-validator.service';
+import { PaymentChannelValidatorService } from '../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 
 @Component({
      selector: 'app-transaction-options-section',
@@ -46,6 +47,7 @@ export class TransactionOptionsSectionComponent {
      public readonly uriValidatorService = inject(UriValidatorService);
      public readonly domainIdValidatorService = inject(DomainIdValidatorService);
      public readonly credentialValidatorService = inject(CredentialValidatorService);
+     public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
 
      activeTab = input.required<'sendXrp' | 'createCredential' | 'createPaymentChannel' | 'fundPaymentChannel' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential' | 'cashCheck' | 'cancelCheck' | 'createCheck' | 'deleteAccount' | 'set' | 'delete' | 'accept' | 'verify' | 'setPermissionedDomain' | 'deletePermissionedDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
@@ -158,6 +160,11 @@ export class TransactionOptionsSectionComponent {
                if (this.credentialValidatorService.hasInvalidCredentialExpiration()) {
                     // Use the more descriptive error message
                     errors.push(this.credentialValidatorService.getCredentialExpirationErrorMessage());
+               }
+
+               if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
+                    // Use the more descriptive error message
+                    errors.push(this.paymentChannelValidatorService.getPaymentChannelExpirationErrorMessage());
                }
           }
 

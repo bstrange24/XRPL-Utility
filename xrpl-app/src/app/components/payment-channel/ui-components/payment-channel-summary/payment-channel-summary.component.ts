@@ -204,12 +204,17 @@ export class PaymentChannelSummaryComponent {
      });
 
      emptyStateSubMessage = computed(() => {
+          const currentTab = this.tab();
           const query = this.searchQuery();
           if (query && this.filteredChannels().length === 0) {
                return 'Try a different search term';
           }
           if ((this.expiresAfter() || this.expiresBefore()) && this.filteredChannels().length === 0) {
                return 'Try adjusting the expiration date range';
+          }
+
+          if (currentTab !== 'claimPaymentChannel' && this.totalCount() === 0) {
+               return 'Use the Create tab to generate one.';
           }
           return '';
      });

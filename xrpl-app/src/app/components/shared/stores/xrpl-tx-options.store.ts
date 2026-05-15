@@ -17,6 +17,7 @@ export interface XrplTxOptionsState {
      memos: any;
      isSimulateEnabled: boolean;
      showEnableTrustline: boolean;
+     isExpirationEnabled: boolean;
 
      // Tickets
      ticketSequence: string;
@@ -41,6 +42,7 @@ const initialState: XrplTxOptionsState = {
      sourceTag: '',
      invoiceId: '',
      isMemoEnabled: false,
+     isExpirationEnabled: false,
      memos: [],
      isSimulateEnabled: false,
      showEnableTrustline: false,
@@ -84,6 +86,10 @@ export const XrplTxOptionsStore = signalStore(
                patchState(store, { isMemoEnabled: enabled });
           },
 
+          setIsExpirationEnabled(enabled: boolean) {
+               patchState(store, { isExpirationEnabled: enabled });
+          },
+
           addMemo(memo: any) {
                patchState(store, { memos: [...store.memos(), memo] });
           },
@@ -99,6 +105,10 @@ export const XrplTxOptionsStore = signalStore(
                if (!enabled) {
                     patchState(store, { memos: [] });
                }
+          },
+
+          toggleIsExpirationEnabled(enabled: boolean) {
+               patchState(store, { isExpirationEnabled: enabled });
           },
 
           clearMemos() {

@@ -23,7 +23,7 @@ export interface SelectItem {
 @Component({
      selector: 'app-select-search-dropdown',
      standalone: true,
-     imports: [CommonModule, NgIcon, LucideAngularModule],
+     imports: [CommonModule, LucideAngularModule],
      templateUrl: './select-search-dropdown.component.html',
      styleUrl: './select-search-dropdown.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

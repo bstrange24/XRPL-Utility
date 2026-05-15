@@ -13,7 +13,7 @@ import { UtilsService } from '../../../services/utils/util-service/utils.service
 @Component({
      selector: 'app-currency-form-section',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

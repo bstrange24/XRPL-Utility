@@ -15,6 +15,7 @@ import { ChecksStoreService } from '../../checks/checks-store/checks-store.servi
 import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
 import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
 import { AccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
+import { PaymentChannelStoreService } from '../../payment-channel/payment-channel-store/payment-channel-store.service';
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -23,6 +24,7 @@ type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 })
 export class UtilsService {
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
+     public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplService = inject(XrplService);
      public readonly storageService = inject(StorageService);
@@ -88,6 +90,8 @@ export class UtilsService {
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(6));
           this.accountConfiguratorStoreService.setField('amount', rounded.toString());
+
+          this.paymentChannelStoreService.setField('amount', rounded.toString());
           this.checksStoreService.setField('amount', rounded.toString());
           this.escrowStoreService.setField('amount', rounded.toString());
           this.nftCreateStoreService.setField('amount', rounded.toString());

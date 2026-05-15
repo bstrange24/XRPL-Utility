@@ -99,7 +99,8 @@
 
           <!-- Payment Channel Expiration -->
           <div class="rounded-2xl p-1 transition-shadow">
-               <app-xrpl-expiration-input [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField" [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)" label="Payment Channel Expiration" hint="Payment channel expiration. The payment channel will expire after this date. Leave blank for a channel that never expires."> </app-xrpl-expiration-input>
+               <app-xrpl-expiration-input [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField" [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)" [optionsEnabledSignal]="txUiService.wantsOptions" [resetWhenOptionsDisabled]="false" label="Payment Channel Expiration" hint="Payment channel expiration. The payment channel will expire after this date. Leave blank for a channel that never expires.">
+               </app-xrpl-expiration-input>
           </div>
      </div>
      } @if(tab === 'fundPaymentChannel') {

@@ -8,7 +8,7 @@
                     <span class="sr-only">Creator Mode</span>
 
                     <div class="relative inline-flex items-center">
-                         <input type="checkbox" class="peer sr-only" aria-label="Creator Mode" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode1($event.target.checked)" />
+                         <input type="checkbox" class="peer sr-only" aria-label="Creator Mode" [checked]="paymentChannelStoreService.isCreatorMode()" (change)="toggleCreatorMode($event.target.checked)" />
                          <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
                          <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
                     </div>
@@ -28,12 +28,15 @@
                     <p class="mt-1 text-sm text-blue-800">Select one of your created channels, enter the amount to authorize, and generate a signature for the destination.</p>
                </div>
 
-               <h4 class="font-semibold text-gray-900">Payment Channel Details</h4>
+               <h4 class="section-heading">
+                    <lucide-icon name="signal" class="section-heading-icon-green"></lucide-icon>
+                    Payment Channel Details
+               </h4>
 
                <!-- Select Channel -->
                <div class="space-y-2">
-                    <label for="selectCreatedChanel" class="label-primary"> Select Your Created Channel </label>
-                    <p class="text-sm text-gray-600">Choose one of your created channels to generate a signature.</p>
+                    <label for="selectCreatedChanel" class="label-primary">Select Your Created Channel <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">Choose one of your created channels to generate a signature.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
                     </div>
@@ -41,16 +44,43 @@
 
                <!-- Channel ID -->
                <div class="space-y-2" style="margin-top: 4px">
-                    <label for="channelID" class="label-primary"> Channel ID </label>
-                    <p class="text-sm text-gray-600">The unique ID of the channel (64-character hex).</p>
+                    <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">The unique ID of the channel (64-character hex).</p>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Amount -->
-               <div class="space-y-2">
-                    <label for="amountToAuth" class="label-primary"> Amount to Authorize (XRP) </label>
-                    <p class="text-sm text-gray-600">The amount the destination is allowed to claim (must not exceed remaining balance).</p>
-                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" class="input-base" />
+               <div>
+                    <label for="xrpAmount" class="label-primary">Amount to Authorize (XRP) <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">The amount the destination is allowed to claim. Must not exceed remaining balance (precision up to 0.000001).</p>
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              [ngModel]="paymentChannelStoreService.amount()"
+                              (ngModelChange)="paymentChannelStoreService.setField('amount', $event)"
+                              placeholder="e.g. 10.5"
+                         />
+
+                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
+                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
+                    <p class="form-error">Amount must be greater than 0</p>
+                    }
                </div>
 
                <!-- Generated Signature -->
@@ -78,8 +108,8 @@
 
                <!-- Select Channel -->
                <div class="space-y-2">
-                    <label for="selectChannelToClaim" class="label-primary"> Select Payment Channel to Claim </label>
-                    <p class="text-sm text-gray-600">Select an existing payment channel to claim funds from.</p>
+                    <label for="selectChannelToClaim" class="label-primary">Select Payment Channel to Claim <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">Select an existing payment channel to claim funds from.</p>
                     <div class="h-[54px]">
                          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
                     </div>
@@ -87,30 +117,72 @@
 
                <!-- Channel ID -->
                <div class="space-y-2" style="margin-top: 4px">
-                    <label for="channelID" class="label-primary"> Channel ID </label>
-                    <p class="text-sm text-gray-600">The unique ID of the channel (64-character hex).</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="input-base" />
+                    <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">The unique ID of the channel (64-character hex).</p>
+                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
                </div>
 
                <!-- Amount to Claim -->
-               <div class="space-y-2">
-                    <label for="xrpToClaim" class="label-primary"> XRP Amount to Claim </label>
-                    <p class="text-sm text-gray-600">The amount of XRP to claim from the channel (precision up to 0.000001).</p>
-                    <input type="number" [ngModel]="paymentChannelStoreService.amount()" (ngModelChange)="paymentChannelStoreService.setField('amount', $event)" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" class="input-base" />
+               <div>
+                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">The amount of XRP to claim from the channel (precision up to 0.000001).</p>
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event)"
+                              [ngModel]="paymentChannelStoreService.amount()"
+                              (ngModelChange)="paymentChannelStoreService.setField('amount', $event)"
+                              placeholder="e.g. 10.5"
+                         />
+
+                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
+                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
+                    <p class="form-error">Amount must be greater than 0</p>
+                    }
                </div>
 
                <!-- Signature -->
                <div class="space-y-2">
-                    <label for="claimSign" class="label-primary"> Claim Signature </label>
-                    <p class="text-sm text-gray-600">The signed message from the channel creator.</p>
+                    <label for="claimSign" class="label-primary">Claim Signature <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">The signed message from the channel creator.</p>
                     <input type="text" [(ngModel)]="paymentChannelStoreService.channelClaimSignatureField" name="channelClaimSignatureField" class="input-base" />
                </div>
           </div>
      </div>
      } @if (paymentChannelUtilService.selectedPaymentChannelId() && viewModel.selectedIsExpired()) {
-     <div class="mt-6 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
-          <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
-          <span class="text-sm text-red-700">This selected payment channel has expired.</span>
+     <div class="alert-error">
+          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">This selected payment channel has expired.</div>
+     </div>
+     }
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
+          </div>
      </div>
      }
 </div>

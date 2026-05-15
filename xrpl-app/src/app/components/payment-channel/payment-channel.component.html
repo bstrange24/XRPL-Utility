@@ -22,11 +22,26 @@
                     <div class="min-w-0 flex-1">
                          <!-- Dynamic Inner Components -->
                          @if (tab === 'createPaymentChannel') {
-                         <app-payment-channel-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (destinationChanged)="selectedDestinationAddress.set($event?.id || '')" />
+                         <app-payment-channel-create
+                              [destinationItems]="destinationItems()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddress]="selectedDestinationAddress()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              [wantsOptions]="txUiService.wantsOptions()"
+                              [canSubmit]="canSubmit()"
+                              [tab]="tab"
+                              (clearFields)="clearInputFields()"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (toggleOptions)="txUiService.toggleOptions($event)"
+                              (canCreatePaymentChannelChange)="handleCanCreatePaymentChannelChange($event)"
+                         />
                          } @if (tab === 'fundPaymentChannel') {
-                         <app-payment-channel-fund />
+                         <app-payment-channel-fund [wantsOptions]="txUiService.wantsOptions()" [tab]="tab" (toggleOptions)="txUiService.toggleOptions($event)" (canFundPaymentChannelChange)="handleCanFundPaymentChannelChange($event)" />
                          } @if (tab === 'claimPaymentChannel') {
-                         <app-payment-channel-claim />
+                         <app-payment-channel-claim [wantsOptions]="txUiService.wantsOptions()" [tab]="tab" (toggleOptions)="txUiService.toggleOptions($event)" (canClaimPaymentChannelChange)="handleCanClaimPaymentChannelChange($event)" />
                          } @if (tab === 'renewPaymentChannel') {
                          <app-payment-channel-renew />
                          } @if (tab === 'closePaymentChannel') {
@@ -48,13 +63,13 @@
                <!-- Action Buttons -->
                <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     @switch (tab) { @case ('createPaymentChannel') {
-                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || !canCreatePaymentChannelForm()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
                     } @case ('fundPaymentChannel') {
-                    <button type="button" class="btn-blue whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.fundChannelButtonLabel() }}</button>
+                    <button type="button" class="btn-blue whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired() || !canFundPaymentChannelForm()">{{ paymentChannelUtilService.fundChannelButtonLabel() }}</button>
                     } @case ('claimPaymentChannel') { @if (!paymentChannelStoreService.isCreatorMode()) {
-                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.claimFundsButtonLabel() }}</button>
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || viewModel.selectedIsExpired() || !canClaimPaymentChannelForm()">{{ paymentChannelUtilService.claimFundsButtonLabel() }}</button>
                     } @else {
-                    <button type="button" class="btn-primary whitespace-nowrap" (click)="generateCreatorClaimSignature()" [disabled]="!isIdle() || viewModel.selectedIsExpired()">{{ paymentChannelUtilService.generateClaimSignatureButtonLabel() }}</button>
+                    <button type="button" class="btn-primary whitespace-nowrap" (click)="generateCreatorClaimSignature()" [disabled]="!isIdle() || viewModel.selectedIsExpired() || !canClaimPaymentChannelForm()">{{ paymentChannelUtilService.generateClaimSignatureButtonLabel() }}</button>
                     } } @case ('renewPaymentChannel') {
                     <button type="button" class="btn-blue whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle()">{{ paymentChannelUtilService.renewChannelButtonLabel() }}</button>
                     } @case ('closePaymentChannel') {

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, Signal, computed, inject, Af
 import { CommonModule } from '@angular/common';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import flatpickr from 'flatpickr';
+import { XrplTxOptionsStore } from '../stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-xrpl-expiration-input',
@@ -13,6 +14,7 @@ import flatpickr from 'flatpickr';
 })
 export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      private readonly xrplDateService = inject(XrplDateService);
+     private readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      @ViewChild('flatpickrInput', { static: false }) flatpickrInput!: ElementRef;
 
@@ -20,6 +22,8 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      @Input({ required: true }) setExpiration!: (value: string) => void;
      @Input() enableSignal!: Signal<boolean>;
      @Input() setEnable!: (enabled: boolean) => void;
+     @Input() resetWhenOptionsDisabled = false;
+     @Input() optionsEnabledSignal?: Signal<boolean>;
 
      @Input() label = 'Expiration (optional)';
      @Input() hint = '';
@@ -33,8 +37,36 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           effect(() => {
                if (this.enableSignal) {
                     this.enabled.set(this.enableSignal());
+                    this.xrplTxOptionsStore.setIsExpirationEnabled(this.enableSignal());
                }
           });
+
+          effect(() => {
+               const expiration = this.expirationSignal();
+               if (expiration && !this.enabled()) {
+                    // If there's an expiration value but enabled is false, sync it
+                    this.enabled.set(true);
+                    this.xrplTxOptionsStore.setIsExpirationEnabled(true);
+                    if (this.setEnable) {
+                         this.setEnable(true);
+                    }
+               }
+          });
+
+          // if (this.optionsEnabledSignal) {
+          //      effect(() => {
+          //           const optionsEnabled = this.optionsEnabledSignal()!;
+          //           if (this.resetWhenOptionsDisabled && !optionsEnabled) {
+          //                // Reset expiration when options are disabled
+          //                this.reset();
+          //                this.enabled.set(false);
+          //                this.xrplTxOptionsStore.setIsExpirationEnabled(false);
+          //                if (this.setEnable) {
+          //                     this.setEnable(false);
+          //                }
+          //           }
+          //      });
+          // }
      }
 
      formatted = computed(() => {
@@ -75,6 +107,8 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
                this.picker.destroy();
                this.picker = null;
           }
+
+          this.xrplTxOptionsStore.setIsExpirationEnabled(false);
      }
 
      togglePicker() {
@@ -120,6 +154,7 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
                     if (selectedDates && selectedDates.length > 0) {
                          const formatted = this.formatDateTime(selectedDates[0]);
                          this.setExpiration(formatted);
+                         this.xrplTxOptionsStore.setIsExpirationEnabled(true);
                     }
                },
           });
@@ -148,12 +183,15 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           const checked = (event.target as HTMLInputElement).checked;
           this.enabled.set(checked);
 
+          this.xrplTxOptionsStore.setIsExpirationEnabled(checked);
+
           if (this.setEnable) {
                this.setEnable(checked);
           }
 
           if (!checked) {
                this.setExpiration('');
+               this.xrplTxOptionsStore.setIsExpirationEnabled(false);
           } else if (!this.expirationSignal()) {
                this.setNow();
           }
@@ -164,6 +202,9 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           now.setMilliseconds(0);
           const formatted = this.xrplDateService.formatDateTimeLocal(now);
           this.setExpiration(formatted);
+
+          this.xrplTxOptionsStore.setIsExpirationEnabled(true);
+
           if (this.picker) {
                this.picker.setDate(now);
           }
@@ -175,6 +216,9 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           date.setMilliseconds(0);
           const formatted = this.xrplDateService.formatDateTimeLocal(date);
           this.setExpiration(formatted);
+
+          this.xrplTxOptionsStore.setIsExpirationEnabled(true);
+
           if (this.picker) {
                this.picker.setDate(date);
           }
@@ -191,6 +235,9 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           date.setMilliseconds(0);
           const formatted = this.xrplDateService.formatDateTimeLocal(date);
           this.setExpiration(formatted);
+
+          this.xrplTxOptionsStore.setIsExpirationEnabled(true);
+
           if (this.picker) {
                this.picker.setDate(date);
           }
@@ -198,6 +245,8 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
 
      clear() {
           this.setExpiration('');
+
+          this.xrplTxOptionsStore.setIsExpirationEnabled(false);
 
           if (this.picker) {
                this.picker.clear();

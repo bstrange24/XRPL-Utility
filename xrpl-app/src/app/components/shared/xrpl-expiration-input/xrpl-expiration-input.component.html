@@ -21,11 +21,11 @@
      <div class="space-y-4 rounded-2xl border border-gray-200 p-4">
           <!-- Preset Buttons -->
           <div class="flex flex-wrap gap-2">
-               <button (click)="setFromNow(60)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1m</button>
-               <button (click)="setFromNow(300)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">5m</button>
-               <button (click)="setFromNow(3600)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1h</button>
-               <button (click)="setFromNow(86400)" class="rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 transition-all">1d</button>
-               <button (click)="setNow()" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 transition-all">Now</button>
+               <button type="button" (click)="setFromNow(60)" class="add-time">1m</button>
+               <button type="button" (click)="setFromNow(300)" class="add-time">5m</button>
+               <button type="button" (click)="setFromNow(3600)" class="add-time">1h</button>
+               <button type="button" (click)="setFromNow(86400)" class="add-time">1d</button>
+               <button type="button" (click)="setNow()" class="rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 transition-all">Now</button>
           </div>
 
           <!-- Custom Picker Toggle -->

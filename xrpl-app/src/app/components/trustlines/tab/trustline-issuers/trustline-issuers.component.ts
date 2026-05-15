@@ -14,7 +14,7 @@ import { LucideAngularModule } from 'lucide-angular';
 @Component({
      selector: 'app-trustline-issuers',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
      templateUrl: './trustline-issuers.component.html',
      styleUrl: './trustline-issuers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

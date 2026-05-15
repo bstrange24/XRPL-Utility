@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal, computed, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -70,6 +70,11 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabs = PAYMENT_CHANNEL_TABS;
      public readonly tabMeta = PAYMENT_CHANNEL_TAB_META;
+     public canCreatePaymentChannelForm = signal<boolean>(false);
+     public canFundPaymentChannelForm = signal<boolean>(false);
+     public canClaimPaymentChannelForm = signal<boolean>(false);
+     public lastIntendedDestination = signal<string>('');
+     public resetTrigger = input<number>(0);
 
      readonly summaryExpanded = signal<boolean>(false);
 
@@ -87,6 +92,20 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                if (signature) {
                     this.paymentChannelUtilService.loadFlagsFromSignature(signature);
                }
+          });
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
+
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
           });
      }
 
@@ -118,11 +137,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getPaymentChannels(true);
-          }
      }
 
      ngOnDestroy() {
@@ -371,6 +385,18 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
           });
      }
 
+     handleCanCreatePaymentChannelChange(canCreate: boolean) {
+          this.canCreatePaymentChannelForm.set(canCreate);
+     }
+
+     handleCanFundPaymentChannelChange(canFund: boolean) {
+          this.canFundPaymentChannelForm.set(canFund);
+     }
+
+     handleCanClaimPaymentChannelChange(canClaim: boolean) {
+          this.canClaimPaymentChannelForm.set(canClaim);
+     }
+
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
           this.paymentChannelStoreService.setField('paymentChannelIdSearchQuery', query);
@@ -397,5 +423,6 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
      protected clearInputFields(): void {
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
+          this.paymentChannelStoreService.resetChannelData();
      }
 }
