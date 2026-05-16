@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -18,6 +18,9 @@ import { NgIcon } from '@ng-icons/core';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import { CheckValidatorService } from '../../../../services/shared/validators/check-validator/check-validator.service';
+import { TagValidatorService } from '../../../../services/shared/validators/tag-validator/tag-validator.service';
 
 @Component({
      selector: 'app-checks-create',
@@ -38,6 +41,9 @@ export class ChecksCreateComponent {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly checkUtilService = inject(CheckUtilService);
      public readonly amountValidatorService = inject(AmountValidatorService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly checkValidatorService = inject(CheckValidatorService);
+     public readonly tagValidatorService = inject(TagValidatorService);
 
      // Inputs from parent
      destinationItems = input.required<any[]>();
@@ -69,6 +75,26 @@ export class ChecksCreateComponent {
      private optionsHasError = signal(false);
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
+
+     constructor() {
+          // Emit overall validation status whenever relevant signals change
+          effect(() => {
+               this.canCreateCheckChange.emit(this.canCreateCheck());
+          });
+
+          effect(() => {
+               const wantsOptions = this.txUiService.wantsOptions();
+               if (!wantsOptions) {
+                    this.checksStoreService.setCheckExpirationDate('');
+                    this.xrplTxOptionsStore.setIsExpirationEnabled(false);
+               }
+          });
+     }
+
+     ngOnDestroy(): void {
+          this.checksStoreService.setCheckExpirationDate('');
+          this.xrplTxOptionsStore.setIsExpirationEnabled(false);
+     }
 
      public async onCurrencySelected(item: SelectItem | null) {
           const currency = item?.id ?? 'XRP';
@@ -117,4 +143,48 @@ export class ChecksCreateComponent {
                if (!Number.isNaN(num)) input.value = num.toFixed(6);
           }
      }
+
+     canCreateCheck = computed(() => {
+          if (!this.isDestinationValid()) return false;
+          if (!this.amountValidatorService.isPaymentChannelAmountValid()) return false;
+
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+
+          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
+               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
+                    return false;
+               }
+          }
+
+          return true;
+     });
+
+        validationErrorMessages = computed(() => {
+          const errors: string[] = [];
+
+          if (!this.isDestinationValid()) {
+               errors.push('Destination address is invalid. Please enter a valid XRP address.');
+          }
+
+          if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
+               errors.push('Amount must be greater than 0.');
+          }
+
+          // Only show expiration error if wantsOptions is enabled AND expiration is enabled AND expiration has a value
+          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
+               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
+                    errors.push(this.checkValidatorService.getCheckExpirationErrorMessage());
+               }
+          }
+
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors());
+          }
+
+          return errors;
+     });
+
+     hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);
+
+     hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
 }

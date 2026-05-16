@@ -9,7 +9,7 @@
           <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
                <!-- Destination -->
                <div>
-                    <label for="destination" class="label-primary">Destination</label>
+                    <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
                     <p class="text-secondary">The unique address receiving the XRP payment.</p>
                     <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
                     </app-select-search-dropdown>
@@ -24,7 +24,7 @@
 
                <!-- XRP Amount -->
                <div>
-                    <label for="xrpAmount" class="label-primary">XRP Amount</label>
+                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
                     <p class="text-secondary">Amount in XRP (precision up to 0.000001).</p>
                     <div class="relative">
                          <input

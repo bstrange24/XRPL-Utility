@@ -56,7 +56,13 @@ export const ChecksStoreService = signalStore(
           },
 
           setCheckExpirationDate(value: string) {
+               console.log('Setting check expiration date to:', value);
                patchState(store, { checkExpirationDate: value });
+          },
+
+          setEnableCheckExpirationDate(enabled: boolean) {
+               console.log('Setting check expiration date to:', enabled);
+               this.setField('enableExpirationDate', enabled);
           },
 
           /** Generic updater */

@@ -299,7 +299,21 @@
           <!-- Check Expiration (for createCheck only) -->
           @if (tab === 'createCheck') {
           <div class="rounded-2xl p-1 transition-shadow">
-               <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date" hint="Check expiration when the check will expire. Leave default/empty for no expiration (check never expires automatically)."> </app-xrpl-expiration-input>
+               <!-- <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date" hint="Check expiration when the check will expire. Leave default/empty for no expiration (check never expires automatically)."> </app-xrpl-expiration-input> -->
+               <app-xrpl-expiration-input
+                    [expirationSignal]="checksStoreService.checkExpirationDate"
+                    [setExpiration]="checksStoreService.setCheckExpirationDate.bind(checksStoreService)"
+                    [enableSignal]="checksStoreService.enableExpirationDate"
+                    [setEnable]="checksStoreService.checkExpirationDate.bind(checksStoreService)"
+                    [optionsEnabledSignal]="txUiService.wantsOptions"
+                    [resetWhenOptionsDisabled]="false"
+                    [showError]="checkValidatorService.hasInvalidCheckExpiration()"
+                    [errorMessage]="checkValidatorService.getCheckExpirationErrorMessage()"
+                    [expirationType]="'check'"
+                    label="Check Expiration Date"
+                    hint="Check expiration when the check will expire. Leave default/empty for no expiration (check never expires automatically)."
+               >
+               </app-xrpl-expiration-input>
           </div>
           }
 

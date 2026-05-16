@@ -294,7 +294,7 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      @Input() optionsEnabledSignal?: Signal<boolean>;
      @Input() showError = false;
      @Input() errorMessage = '';
-     @Input() expirationType: 'finish' | 'cancel' | 'paymentChannel' | 'credential' = 'cancel'; // NEW INPUT
+     @Input() expirationType: 'finish' | 'cancel' | 'paymentChannel' | 'check' | 'credential' = 'cancel'; // NEW INPUT
 
      @Input() label = 'Expiration (optional)';
      @Input() hint = '';
