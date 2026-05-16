@@ -4,11 +4,12 @@ import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-tra
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-mpt-clawback',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './mpt-clawback.component.html',
      styleUrl: './mpt-clawback.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

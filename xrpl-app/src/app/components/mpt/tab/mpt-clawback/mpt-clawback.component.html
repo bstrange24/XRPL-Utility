@@ -1,19 +1,21 @@
 <div class="card-base">
      <div class="space-y-6">
-          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
+          <h4 class="section-heading">
+               <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
+               MPT Details
+          </h4>
+
           <!-- Select MPT -->
-          <div class="space-y-2">
-               <label for="selectMptToClawback" class="label-primary">Select MPT to Clawback</label>
+          <div>
+               <label for="selectMptToClawback" class="label-primary">Select MPT to Clawback <span class="text-red-500">*</span></label>
                <p class="text-secondary">MPT to clawback from a holder.</p>
 
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
-               </div>
+               <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
           </div>
 
           <!-- MPT Issuance ID -->
-          <div class="space-y-2">
-               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
+          <div>
+               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
                <p class="text-secondary">Identifies the MPTokenIssuance.</p>
 
                <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="input-base" />
@@ -22,18 +24,16 @@
           <!-- MPT Holder + Amount -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- MPT Holder (Destination) -->
-               <div class="space-y-2">
-                    <label for="mptHolder" class="label-primary">MPT Holder</label>
+               <div>
+                    <label for="mptHolder" class="label-primary">MPT Holder <span class="text-red-500">*</span></label>
                     <p class="text-secondary">MPT holder address to clawback tokens from.</p>
 
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
-                    </div>
+                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
                </div>
 
                <!-- Amount to Clawback -->
-               <div class="space-y-2">
-                    <label for="amountToClawback" class="label-primary">Amount to Clawback</label>
+               <div>
+                    <label for="amountToClawback" class="label-primary">Amount to Clawback <span class="text-red-500">*</span></label>
                     <p class="text-secondary">MPT amount to clawback from an existing holder.</p>
 
                     <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" max="10000000000000000" step="1" class="input-base" />

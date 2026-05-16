@@ -21,6 +21,10 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { CheckValidatorService } from '../../../../services/shared/validators/check-validator/check-validator.service';
 import { TagValidatorService } from '../../../../services/shared/validators/tag-validator/tag-validator.service';
+import { InvoiceIdValidatorService } from '../../../../services/shared/validators/invoice-id-validator/invoice-id-validator.service';
+import { DomainIdValidatorService } from '../../../../services/shared/validators/domain-id-validator/domain-id-validator.service';
+import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
+import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 
 @Component({
      selector: 'app-checks-create',
@@ -44,6 +48,10 @@ export class ChecksCreateComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly checkValidatorService = inject(CheckValidatorService);
      public readonly tagValidatorService = inject(TagValidatorService);
+     public readonly invoiceIdValidatorService = inject(InvoiceIdValidatorService);
+     public readonly domainIdValidatorService = inject(DomainIdValidatorService);
+     public readonly credentialValidatorService = inject(CredentialValidatorService);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
      // Inputs from parent
      destinationItems = input.required<any[]>();
@@ -159,24 +167,20 @@ export class ChecksCreateComponent {
           return true;
      });
 
-        validationErrorMessages = computed(() => {
+     validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
+          // Destination validation
           if (!this.isDestinationValid()) {
                errors.push('Destination address is invalid. Please enter a valid XRP address.');
           }
 
+          // Amount validation
           if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
                errors.push('Amount must be greater than 0.');
           }
 
-          // Only show expiration error if wantsOptions is enabled AND expiration is enabled AND expiration has a value
-          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
-               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
-                    errors.push(this.checkValidatorService.getCheckExpirationErrorMessage());
-               }
-          }
-
+          // Options errors from transaction-options-section
           if (this.txUiService.wantsOptions() && this.optionsHasError()) {
                errors.push(...this.optionsErrors());
           }
@@ -187,4 +191,10 @@ export class ChecksCreateComponent {
      hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);
 
      hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
+
+     onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
+          this.optionsHasError.set(validation.hasError);
+          this.optionsErrorMsg.set(validation.message || '');
+          this.optionsErrors.set(validation.errors || []);
+     }
 }

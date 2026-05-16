@@ -52,6 +52,7 @@
      }
 
      <!-- Amount Input (Keep your existing editable field) -->
+     @if (checksTransactionViewModelService.selectedFullCheckForCash()) {
      <div class="card-base">
           <label for="amountToCash" class="label-primary">Amount to Cash <span class="text-red-500">*</span></label>
           <p class="text-secondary">Amount, in XRP or token, to cash. Use arrows for ±0.000001 precision.</p>
@@ -62,8 +63,7 @@
      <div class="card-base">
           <app-toggle-slider [checked]="checkStoreService.useDeliverMin()" (checkedChange)="checkStoreService.setField('useDeliverMin', $event)"> Use DeliverMin (partial payments) </app-toggle-slider>
      </div>
-
-     @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
+     } @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
      <div class="alert-error">
           <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">This check has expired and can only be canceled.</div>

@@ -1,22 +1,36 @@
-<div class="card-base">
-     <div class="space-y-6">
-          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
-          <!-- Select MPT to Destroy -->
-          <div class="space-y-2">
-               <label for="selectMptToDestroy" class="label-primary">Select MPT to Destroy</label>
-               <p class="text-secondary">MPT to destroy (must have zero holders).</p>
+<div class="space-y-6">
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
+               MPT Details
+          </h4>
 
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+          <!-- Select MPT to Destroy -->
+          <label for="selectMptToDestroy" class="label-primary">Select MPT to Destroy <span class="text-red-500">*</span></label>
+          <p class="text-secondary">MPT to destroy (must have zero holders).</p>
+
+          <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+     </div>
+
+     <!-- MPT Issuance ID -->
+     @if (viewModel.selectedMptItem()) {
+     <div class="card-base">
+          <div class="space-y-6">
+               <div>
+                    <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
+                    <p class="text-secondary">Identifies the MPTokenIssuance to be destroyed.</p>
+
+                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="input-base" />
                </div>
           </div>
-
-          <!-- MPT Issuance ID -->
-          <div class="space-y-2">
-               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
-               <p class="text-secondary">Identifies the MPTokenIssuance to be destroyed.</p>
-
-               <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="input-base" />
-          </div>
      </div>
+     }
+
+     <!-- Show warning for outstanding mpts -->
+     @if(!mptUtilService.hasNoOutstandingMpts()) {
+     <div class="alert-error">
+          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
+     </div>
+     }
 </div>

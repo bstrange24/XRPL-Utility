@@ -170,6 +170,37 @@ export class TransactionOptionsSectionComponent {
                }
           }
 
+          // Create Check Tab
+          if (currentTab === 'createCheck') {
+               if (this.xrplTxOptionsStore.destinationTag() && this.xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                    if (!this.tagValidatorService.isDestinationTagValid()) {
+                         errors.push('Destination Tag must be a positive number between 1 and 4294967295');
+                    }
+               }
+
+               if (this.xrplTxOptionsStore.sourceTag() && this.xrplTxOptionsStore.sourceTag()!.trim().length > 0) {
+                    if (!this.tagValidatorService.isSourceTagValid()) {
+                         errors.push('Source Tag must be a positive number between 1 and 4294967295');
+                    }
+               }
+
+               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
+                    errors.push(this.checkValidatorService.getCheckExpirationErrorMessage());
+               }
+
+               // Domain ID validation (if applicable for checks)
+               if (this.permissionedDomainStoreService.domainId() && this.permissionedDomainStoreService.domainId()!.trim().length > 0) {
+                    if (this.domainIdValidatorService.hasInvalidDomainId()) {
+                         const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
+                         if (/^[0-9A-Fa-f]+$/i.test(domain)) {
+                              errors.push(`Domain ID hex exceeds 512 character limit (256 bytes). Got ${domain.length} chars`);
+                         } else {
+                              errors.push('Domain ID must be a valid domain name (example.com) or hex string (max 512 chars)');
+                         }
+                    }
+               }
+          }
+
           // Send XRP Tab
           if (currentTab === 'sendXrp') {
                if (this.domainIdValidatorService.hasInvalidDomainId()) {
@@ -206,7 +237,7 @@ export class TransactionOptionsSectionComponent {
           }
 
           // Invoice ID (Multiple tabs)
-          if (currentTab === 'sendXrp' || currentTab === 'createCheck' || currentTab === 'createPaymentChannel') {
+          if ((currentTab === 'sendXrp' || currentTab === 'createCheck' || currentTab === 'createPaymentChannel') && this.xrplTxOptionsStore.invoiceId() && this.xrplTxOptionsStore.invoiceId()!.trim().length > 0) {
                if (this.invoiceIdValidatorService.hasInvalidInvoiceId()) {
                     errors.push(`Invoice ID must be exactly 64 hex characters (32 bytes). Got ${this.invoiceIdValidatorService.invoiceIdHexLength()} characters.`);
                }

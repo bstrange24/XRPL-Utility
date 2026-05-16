@@ -4,11 +4,12 @@ import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.se
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-mpt-send',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './mpt-send.component.html',
      styleUrl: './mpt-send.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

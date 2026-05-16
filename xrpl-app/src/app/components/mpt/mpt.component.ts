@@ -46,13 +46,12 @@ import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
 import { MptCreateComponent } from './tab/mpt-create/mpt-create.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
-import { NgIcon } from '@ng-icons/core';
 import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.component';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, NgIcon, FlagSelectorComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, FlagSelectorComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -74,6 +73,8 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      public readonly tabMeta = MPT_TAB_META;
      public readonly mptFlagsConfig = MPT_FLAGS_CONFIG;
      private _jsonEditor?: JsonEditorComponent;
+     public canCreateMpt = signal(false);
+     public mptValidationErrors = signal<string[]>([]);
 
      monacoOptions = {
           theme: 'vs',
@@ -101,11 +102,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getMptDetails(true);
-          }
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -354,6 +350,14 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      protected async refreshAccountObject(env: any): Promise<void> {
           this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+     }
+
+     onCanCreateMptChange(canCreate: boolean) {
+          this.canCreateMpt.set(canCreate);
+     }
+
+     onMptValidationErrorsChange(errors: string[]) {
+          this.mptValidationErrors.set(errors);
      }
 
      private setRightPanel(): void {

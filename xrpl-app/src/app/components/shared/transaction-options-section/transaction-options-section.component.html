@@ -259,7 +259,6 @@
                <!-- Domain ID -->
                <div class="space-y-2">
                     <label class="label-primary">Domain ID</label>
-
                     <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
 
                     <div class="relative">
@@ -304,7 +303,7 @@
                     [expirationSignal]="checksStoreService.checkExpirationDate"
                     [setExpiration]="checksStoreService.setCheckExpirationDate.bind(checksStoreService)"
                     [enableSignal]="checksStoreService.enableExpirationDate"
-                    [setEnable]="checksStoreService.checkExpirationDate.bind(checksStoreService)"
+                    [setEnable]="checksStoreService.setEnableCheckExpirationDate.bind(checksStoreService)"
                     [optionsEnabledSignal]="txUiService.wantsOptions"
                     [resetWhenOptionsDisabled]="false"
                     [showError]="checkValidatorService.hasInvalidCheckExpiration()"

@@ -17,6 +17,13 @@
           <div class="space-y-6">
                <!-- Issuer + Destination -->
                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <!-- Destination -->
+                    <div>
+                         <label for="checkDestination" class="label-primary">Destination</label>
+                         <p class="text-secondary">The address that can cash this check</p>
+                         <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckDestination()" />
+                    </div>
+
                     <!-- Issuer (only for IOU) -->
                     @if (checksTransactionViewModelService.isIOUCheck()) {
                     <div>
@@ -25,13 +32,6 @@
                          <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIssuer()" />
                     </div>
                     }
-
-                    <!-- Destination -->
-                    <div>
-                         <label for="checkDestination" class="label-primary">Destination</label>
-                         <p class="text-secondary">The address that can cash this check</p>
-                         <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckDestination()" />
-                    </div>
                </div>
 
                <!-- Check Index -->
@@ -54,7 +54,7 @@
      <!-- Show warning for expired checks -->
      @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
      <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">This check has expired and can only be canceled.</div>
      </div>
      }

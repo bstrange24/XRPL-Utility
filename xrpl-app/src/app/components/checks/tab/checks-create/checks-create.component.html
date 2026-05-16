@@ -98,13 +98,6 @@
                </p>
                }
           </div>
-          <!-- <div class="space-y-2">
-               <label for="checkDestination" class="label-primary">Destination</label>
-               <p class="text-secondary">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
-               </div>
-          </div> -->
      </div>
 
      <!-- Toggle optional fields Card -->
@@ -123,7 +116,7 @@
      <!-- Optional Fields Section (Outside the card) -->
      @if (txUiService.wantsOptions()) {
      <div class="card-base">
-          <app-transaction-options-section [activeTab]="'createCheck'"></app-transaction-options-section>
+          <app-transaction-options-section [activeTab]="'createCheck'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
      </div>
      }
      <!-- Summary of validation errors -->

@@ -4,11 +4,14 @@ import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.se
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
+import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-mpt-destroy',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, SelectSearchDropdownComponent],
      templateUrl: './mpt-destroy.component.html',
      styleUrl: './mpt-destroy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,6 +19,7 @@ import { FormsModule } from '@angular/forms';
 export class MptDestroyComponent {
      public readonly mptStoreService = inject(MptStoreService);
      public readonly viewModel = inject(MptTransactionViewModelService);
+     public readonly mptUtilService = inject(MptUtilService);
 
      readonly mptItems = input.required<SelectItem[]>();
 

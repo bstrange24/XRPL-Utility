@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -16,7 +16,9 @@ import { LucideAngularModule } from 'lucide-angular';
 })
 export class ChecksCancelComponent {
      readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
-     @Output() checkItems = new EventEmitter<SelectItem | null>();
-     @Output() checkSelected = new EventEmitter<SelectItem | null>();
-     @Output() selectedCheckItem = new EventEmitter<SelectItem | null>();
+
+     // Outputs
+     checkItems = output<SelectItem | null>();
+     checkSelected = output<SelectItem | null>();
+     selectedCheckItem = output<SelectItem | null>();
 }

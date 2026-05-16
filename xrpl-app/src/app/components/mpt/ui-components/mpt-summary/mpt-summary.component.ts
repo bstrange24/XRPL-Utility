@@ -13,6 +13,7 @@ import { SummaryTextConfig, SummaryTextConfigService } from '../../../../service
 import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/summary-key-value/summary-key-value.component';
 import { FormsModule } from '@angular/forms';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
+import { MptActionTypes } from '../../constants/mpt.types';
 
 const MPT_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'Multi-Purpose Token',
@@ -57,6 +58,10 @@ export class MptSummaryComponent {
      // Inputs
      infoPanelExpanded = input<boolean>();
      resetTrigger = input<number>(0);
+
+     info = input.required<string | null>();
+
+     tab = input<MptActionTypes>('createMpt');
 
      // Outputs
      toggleInfoPanel = output<void>();

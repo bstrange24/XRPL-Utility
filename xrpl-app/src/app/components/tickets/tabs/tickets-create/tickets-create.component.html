@@ -5,10 +5,48 @@
                Ticket Details
           </h4>
 
-          <div class="space-y-2">
-               <label for="ticketToCreate" class="label-primary">Number of Tickets to Create</label>
+          <div>
+               <label for="xrpAmount" class="label-primary">Number of Tickets to Create <span class="text-red-500">*</span></label>
                <p class="text-secondary">Number of Tickets to create for the selected account.</p>
-               <input type="number" [ngModel]="xrplTxOptionsStore.ticketCountField()" (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)" placeholder="1 - 250 (max per account)" min="1" max="250" class="input-base" />
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="decimal"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!amountValidatorService.isTicketCreateAmountInvalid()"
+                         [isInvalid]="amountValidatorService.isTicketCreateAmountInvalid()"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         [ngModel]="xrplTxOptionsStore.ticketCountField()"
+                         (ngModelChange)="xrplTxOptionsStore.setField('ticketCountField', $event)"
+                         placeholder="e.g. 11"
+                    />
+
+                    @if (xrplTxOptionsStore.ticketCountField() && xrplTxOptionsStore.ticketCountField()!.trim().length > 0) {
+                    <button type="button" (click)="this.xrplTxOptionsStore.setField('ticketCountField', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
           </div>
      </div>
+
+     <!-- Summary of validation errors -->
+     @if (hasValidationErrors()) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of validationErrorMessages(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
+          </div>
+     </div>
+     }
 </div>

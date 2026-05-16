@@ -7,10 +7,11 @@
 
           <!-- Ticket Selection Input -->
           <div>
-               <div class="space-y-2">
-                    <label for="ticketsToDelete" class="label-primary">Select Tickets to Delete</label>
+               <div>
+                    <label for="ticketsToDelete" class="label-primary">Select Tickets to Delete <span class="text-red-500">*</span></label>
                     <p class="text-secondary">Select available tickets to delete for the selected account.</p>
                </div>
+
                <div class="relative mt-2" (clickOutside)="closeTicketDropdown()">
                     <div class="relative">
                          <input

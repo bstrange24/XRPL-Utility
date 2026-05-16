@@ -3,6 +3,7 @@ import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.servi
 import { PaymentChannelStoreService } from '../../payment-channel/payment-channel-store/payment-channel-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
+import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -12,14 +13,15 @@ export class RealTimeExpirationService implements OnDestroy {
      private readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly credentialStore = inject(CredentialStore);
+     private readonly checksStoreService = inject(ChecksStoreService);
      private intervalId: any = null;
 
-     // Escrow Finish After Signals (Separate)
+     // Escrow Finish After Signals
      public isEscrowFinishAfterExpired = signal(false);
      public escrowFinishAfterTimeRemaining = signal('');
      public escrowFinishAfterSecondsRemaining = signal(0);
 
-     // Escrow Cancel After Signals (Separate)
+     // Escrow Cancel After Signals
      public isEscrowCancelAfterExpired = signal(false);
      public escrowCancelAfterTimeRemaining = signal('');
      public escrowCancelAfterSecondsRemaining = signal(0);
@@ -33,6 +35,11 @@ export class RealTimeExpirationService implements OnDestroy {
      public isCredentialExpired = signal(false);
      public credentialTimeRemaining = signal('');
      public credentialSecondsRemaining = signal(0);
+
+     // Check Signals (NEW)
+     public isCheckExpired = signal(false);
+     public checkTimeRemaining = signal('');
+     public checkSecondsRemaining = signal(0);
 
      constructor() {
           this.startRealTimeCheck();
@@ -83,6 +90,16 @@ export class RealTimeExpirationService implements OnDestroy {
                this.updateCredentialExpirationStatus(credentialDate);
           } else {
                this.resetCredentialExpirationStatus();
+          }
+
+          // Check Check Expiration (NEW)
+          const checkDate = this.checksStoreService?.checkExpirationDate();
+          const checkEnabled = this.checksStoreService?.enableExpirationDate();
+
+          if (checkEnabled && checkDate) {
+               this.updateCheckExpirationStatus(checkDate);
+          } else {
+               this.resetCheckExpirationStatus();
           }
      }
 
@@ -176,6 +193,30 @@ export class RealTimeExpirationService implements OnDestroy {
           this.isCredentialExpired.set(false);
           this.credentialTimeRemaining.set('');
           this.credentialSecondsRemaining.set(0);
+     }
+
+     // NEW: Check expiration methods
+     private updateCheckExpirationStatus(date: string) {
+          const targetDate = new Date(date);
+          const now = new Date();
+          const isExpired = targetDate <= now;
+
+          this.isCheckExpired.set(isExpired);
+
+          if (!isExpired) {
+               const secondsRemaining = this.getSecondsRemaining(targetDate);
+               this.checkSecondsRemaining.set(secondsRemaining);
+               this.checkTimeRemaining.set(this.getTimeRemainingString(targetDate));
+          } else {
+               this.checkSecondsRemaining.set(0);
+               this.checkTimeRemaining.set('Expired');
+          }
+     }
+
+     private resetCheckExpirationStatus() {
+          this.isCheckExpired.set(false);
+          this.checkTimeRemaining.set('');
+          this.checkSecondsRemaining.set(0);
      }
 
      private getSecondsRemaining(targetDate: Date): number {

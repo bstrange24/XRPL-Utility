@@ -17,7 +17,7 @@
           <form #theForm="ngForm">
                <!-- Dynamic Content -->
                @if (tab === 'createTicket') {
-               <app-tickets-create></app-tickets-create>
+               <app-tickets-create (canCreateTicketChange)="onCanCreateTicketChange($event)"></app-tickets-create>
                } @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
                <app-tickets-delete></app-tickets-delete>
                }
@@ -29,7 +29,7 @@
                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Button -->
                     @if (tab === 'createTicket') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ ticketsUtilService.createButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateTicket()" class="btn-primary whitespace-nowrap">{{ ticketsUtilService.createButtonLabel() }}</button>
                     } @else if (tab === 'deleteTicket') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }

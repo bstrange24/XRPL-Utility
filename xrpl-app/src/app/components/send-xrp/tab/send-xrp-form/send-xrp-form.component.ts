@@ -95,7 +95,7 @@ export class SendXrpFormComponent {
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
-          // Destination error (now handled by dropdown, but we can still show summary)
+          // Destination error
           if (!this.isDestinationValid()) {
                errors.push('Destination address is invalid. Please enter a valid XRP address.');
           }

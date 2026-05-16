@@ -1,43 +1,240 @@
-<div class="space-y-6">
-     <div class="card-base">
-          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
-          <!-- Asset Scale -->
-          <div class="space-y-2">
-               <label for="mptAssetScale" class="label-primary">Asset Scale</label>
-               <p class="text-secondary">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
-               <input type="number" [ngModel]="mptStoreService.assetScale()" (ngModelChange)="mptStoreService.setField('assetScale', $event)" placeholder="Value between 0 and 15" min="0" max="15" step="1" class="input-base" />
-          </div>
+<div class="card-base">
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
+               MPT Details
+          </h4>
 
           <!-- Maximum Tokens -->
-          <div class="space-y-2">
-               <label for="mptMaxTokens" class="label-primary">Maximum Tokens</label>
+          <div>
+               <div class="flex justify-between items-baseline">
+                    <label for="mptMaxTokens" class="label-primary">Maximum Tokens<span class="text-red-500">*</span> </label>
+                    <div class="flex gap-2">
+                         @for (preset of tokenCountPresets; track preset) {
+                         <button type="button" (click)="setPresetTokenCount(preset)" class="preset-amount-btn">{{ preset | number }}</button>
+                         }
+                    </div>
+               </div>
+
                <p class="text-secondary">Maximum tokens that can ever be issued (supply cap).</p>
-               <input type="number" [ngModel]="mptStoreService.tokenCount()" (ngModelChange)="mptStoreService.setField('tokenCount', $event)" placeholder="Enter maximum tokens to create" min="1" step="1" max="10000000000000000" class="input-base" />
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="decimal"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!(mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined)"
+                         [isInvalid]="(mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         [ngModel]="tokenCount"
+                         (ngModelChange)="tokenCount = $event"
+                         placeholder="e.g. 10"
+                    />
+
+                    <!-- @if (tokenCount !== null && tokenCount !== undefined && (mptValidator.isTokenCountValid() || mptValidator.isTokenCountInvalid())) {
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                         @if (mptValidator.isTokenCountValid()) {
+                         <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
+                         } @else if (mptValidator.isTokenCountInvalid()) {
+                         <ng-icon name="heroXCircle" size="16" class="text-red-500" />
+                         }
+                    </div>
+                    }  -->
+                    @if (tokenCount !== null && tokenCount !== undefined) {
+                    <button type="button" (click)="clearField('tokenCount')" class="clearInputXmark right-8" aria-label="Clear token count">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
+               <p class="form-error mt-1">{{ mptValidator.getTokenCountErrorMessage() }}</p>
+               }
+
+               <!-- Token count helper -->
+               <!-- @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountValid()) {
+               <p class="text-xs text-green-600 mt-1">✓ Supply cap of {{ tokenCount | number }} tokens will be created</p>
+               } -->
+          </div>
+
+          <!-- Asset Scale -->
+          <div>
+               <div class="flex justify-between items-baseline">
+                    <label for="mptAssetScale" class="label-primary">Asset Scale</label>
+                    <div class="flex gap-2">
+                         @for (preset of assetScalePresets; track preset) {
+                         <button type="button" (click)="setPresetAssetScale(preset)" class="preset-amount-btn">{{ preset }}</button>
+                         }
+                    </div>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
+                    <button type="button" (click)="toggleAssetScaleHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="decimal"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!(mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined)"
+                         [isInvalid]="(mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         [ngModel]="assetScale"
+                         (ngModelChange)="assetScale = $event"
+                         placeholder="e.g. 10"
+                    />
+
+                    <!-- @if (assetScale !== null && assetScale !== undefined && (mptValidator.isAssetScaleValid() || mptValidator.isAssetScaleInvalid())) {
+                         <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                              @if (mptValidator.isAssetScaleValid()) {
+                              <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
+                              } @else if (mptValidator.isAssetScaleInvalid()) {
+                              <ng-icon name="heroXCircle" size="16" class="text-red-500" />
+                              }
+                         </div>
+                         }  -->
+
+                    @if (assetScale !== null && assetScale !== undefined) {
+                    <button type="button" (click)="clearField('assetScale')" class="clearInputXmark right-8" aria-label="Clear asset scale">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (showAssetScaleHelper()) {
+               <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
+                    <p class="font-semibold mb-1">Asset Scale Examples:</p>
+                    <ul class="space-y-1">
+                         <li>• Scale 0: 1 token (no decimals)</li>
+                         <li>• Scale 2: 0.01 token precision</li>
+                         <li>• Scale 6: 0.000001 token precision (XRP standard)</li>
+                         <li>• Scale 8: 0.00000001 token precision</li>
+                         <li>• Scale 15: Maximum precision (0.000000000000001)</li>
+                    </ul>
+               </div>
+               } @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
+               <p class="form-error mt-1">{{ mptValidator.getAssetScaleErrorMessage() }}</p>
+               }
           </div>
 
           <!-- Transfer Fee -->
-          <div class="space-y-2">
-               <label for="mptTransferFee" class="label-primary">
-                    Transfer Fee
-                    <span class="ml-1 text-xs font-normal text-gray-500">(0-50,000 = 0%-50%)</span>
-               </label>
-               <p class="text-secondary">Fee for secondary sales. Only available if Can Transfer is enabled.</p>
-               <input type="number" [ngModel]="mptStoreService.transferFee()" (ngModelChange)="mptStoreService.setField('transferFee', $event)" placeholder="Enter fee percentage (0-50000)" min="0" max="50000" step="1" class="input-base" />
+          <div>
+               <div class="flex justify-between items-baseline">
+                    <label for="mptTransferFee" class="label-primary">Transfer Fee</label>
+                    <div class="flex gap-2">
+                         @for (preset of transferFeePresets; track preset) {
+                         <button type="button" (click)="setPresetTransferFee(preset)" class="preset-amount-btn">{{ preset }}</button>
+                         }
+                    </div>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Fee for secondary sales. Only available if Can Transfer is enabled. (0-50,000 = 0%-50%)</p>
+                    <button type="button" (click)="toggleTransferFeeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="decimal"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="!(mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined)"
+                         [isInvalid]="(mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined)"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                         (input)="amountValidatorService.onAmountInput($event)"
+                         [ngModel]="transferFee"
+                         (ngModelChange)="transferFee = $event"
+                         placeholder="e.g. 10"
+                    />
+
+                    <!-- @if (transferFee !== null && transferFee !== undefined && (mptValidator.isTransferFeeValid() || mptValidator.isTransferFeeInvalid())) {
+                         <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                              @if (mptValidator.isTransferFeeValid()) {
+                              <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
+                              } @else if (mptValidator.isTransferFeeInvalid()) {
+                              <ng-icon name="heroXCircle" size="16" class="text-red-500" />
+                              }
+                         </div>
+                         }  -->
+
+                    @if (transferFee !== null && transferFee !== undefined) {
+                    <button type="button" (click)="clearField('transferFee')" class="clearInputXmark right-8" aria-label="Clear transfer fee">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (showTransferFeeHelper()) {
+               <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
+                    <p class="font-semibold mb-1">Transfer Fee Examples:</p>
+                    <ul class="space-y-1">
+                         <li>• 0 = 0% fee (no fee)</li>
+                         <li>• 500 = 0.5% fee</li>
+                         <li>• 5000 = 5% fee</li>
+                         <li>• 50000 = 50% fee (maximum)</li>
+                    </ul>
+               </div>
+               } @if (transferFee !== null && transferFee !== undefined && mptValidator.isTransferFeeInvalid()) {
+               <p class="form-error mt-1">{{ mptValidator.getTransferFeeErrorMessage() }}</p>
+               } @if (transferFee && transferFee > 0 && !mptUtil.flags().canTransfer) {
+               <p class="form-warning mt-2 flex items-center gap-1">
+                    <ng-icon name="heroExclamationTriangle" size="14" />
+                    Transfer Fee requires "Can Transfer" to be enabled in the flags section.
+               </p>
+               }
           </div>
 
           <!-- Token Metadata -->
-          <div class="space-y-2">
-               <div class="flex items-center gap-1">
-                    <label for="mptMetaData" class="label-primary">Token Metadata</label>
-                    <span class="text-xs text-gray-500">(XLS-89)</span>
-               </div>
-               <p class="text-xs text-gray-500 pb-2">JSON metadata for this MPT issuance (immutable after creation).</p>
+          <div>
+               <div class="flex items-center justify-between mb-3">
+                    <label for="mptMetaData" class="label-primary flex items-center gap-2">
+                         Token Metadata
+                         <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline text-sm font-medium"> (XLS-89) </a>
+                    </label>
 
-               <app-json-editor [value]="mptStoreService.metaData()" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
+                    <div class="flex items-center gap-2">
+                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="jsonEditor.format()">Format JSON</button>
+                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="this.mptStoreService.setField('metaData', '');">Clear Metadata</button>
+                    </div>
+               </div>
+
+               <p class="text-secondary">JSON metadata for this MPT issuance (immutable after creation).</p>
+
+               <div class="mt-2">
+                    <app-json-editor [value]="metaData" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>
+               </div>
+
+               <!-- Metadata validation -->
+               @if (metaData && metaData.trim().length > 0) { @if (mptValidator.isMetadataInvalid()) {
+               <p class="form-error mt-2">{{ mptValidator.getMetadataErrorMessage() }}</p>
+               } @else {
+               <p class="text-xs text-green-600 mt-2">✓ Valid JSON format</p>
+               } }
 
                <!-- Metadata Info -->
                <div class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs">
                     <span class="text-gray-600"> Metadata size: <strong class="font-semibold text-gray-900">{{ viewModel.metadataByteLength() }} / 1024 bytes</strong> </span>
+
                     @if (viewModel.metadataByteLength() > 1024) {
                     <span class="flex items-center gap-1 font-medium text-red-600">
                          <ng-icon name="heroExclamationTriangle" size="14" />
@@ -53,3 +250,18 @@
           </div>
      </div>
 </div>
+
+<!-- Summary of validation errors -->
+@if (mptValidator.getAllValidationErrors().length > 0) {
+<div class="alert-error mb-0">
+     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <div class="alert-content">
+          <p class="font-semibold mb-1">Please fix the following issues:</p>
+          <ul class="list-disc list-inside space-y-0.5">
+               @for (error of mptValidator.getAllValidationErrors(); track $index) {
+               <li class="text-sm">{{ error }}</li>
+               }
+          </ul>
+     </div>
+</div>
+}

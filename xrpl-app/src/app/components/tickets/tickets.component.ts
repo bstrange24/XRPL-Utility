@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, computed, effect, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, computed, effect, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -57,6 +57,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      public readonly cdr = inject(ChangeDetectorRef);
      public readonly tabs = TICKET_TABS;
      public readonly tabMeta = TICKET_TAB_META;
+     public canCreateTicket = signal(false);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -72,11 +73,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getTickets(true);
-          }
      }
 
      ngOnDestroy(): void {
@@ -250,6 +246,10 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                     activeTab: this.activeTabForRequirements,
                },
           });
+     }
+
+     onCanCreateTicketChange(isValid: boolean) {
+          this.canCreateTicket.set(isValid);
      }
 
      protected clearInputFields(): void {

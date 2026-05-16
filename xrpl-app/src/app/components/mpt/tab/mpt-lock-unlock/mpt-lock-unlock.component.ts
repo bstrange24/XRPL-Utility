@@ -4,11 +4,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-mpt-lock-unlock',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent],
      templateUrl: './mpt-lock-unlock.component.html',
      styleUrl: './mpt-lock-unlock.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,6 +1,10 @@
 <div class="card-base">
      <div class="space-y-6">
-          <h4 class="mb-5 font-semibold text-gray-900">MPT Details</h4>
+          <h4 class="section-heading">
+               <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
+               MPT Details
+          </h4>
+
           <!-- Action Selection -->
           <div>
                <label for="mptAction" class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
@@ -33,18 +37,16 @@
           </div>
 
           <!-- MPT Issuer -->
-          <div class="space-y-2">
-               <label for="mptIssuer" class="label-primary">MPT Issuer</label>
+          <div>
+               <label for="mptIssuer" class="label-primary">MPT Issuer <span class="text-red-500">*</span></label>
                <p class="text-secondary">Account that issued the MPT.</p>
 
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
-               </div>
+               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
           </div>
 
           <!-- MPT Issuance ID -->
-          <div class="space-y-2">
-               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
+          <div>
+               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
                <p class="text-secondary">Identifies the MPTokenIssuance.</p>
 
                <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="input-base" />

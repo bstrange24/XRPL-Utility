@@ -7,6 +7,7 @@ import { UtilsService } from '../../../utils/util-service/utils.service';
 import { ConnectionGuardService } from '../../connection-guard/connection-guard.service';
 import { PaymentChannelStoreService } from '../../../payment-channel/payment-channel-store/payment-channel-store.service';
 import { EscrowStoreService } from '../../../escrow/escrow-store/escrow-store.service';
+import { ChecksStoreService } from '../../../checks/checks-store/checks-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -20,6 +21,7 @@ export class AmountValidatorService {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly escrowStoreService = inject(EscrowStoreService);
+     public readonly checksStoreService = inject(ChecksStoreService);
 
      // Simplified validation - just amount and options now
      isAmountValid = computed(() => {
@@ -57,6 +59,28 @@ export class AmountValidatorService {
 
      isPaymentChannelAmountInvalid = computed(() => {
           const amount = this.paymentChannelStoreService.amount();
+
+          if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          return !Number.isFinite(numAmount) || numAmount <= 0;
+     });
+
+     isTicketCreateAmountInvalid = computed(() => {
+          const amount = this.xrplTxOptionsStore.ticketCountField();
+
+          if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          return !Number.isFinite(numAmount) || numAmount <= 0 || numAmount > 250;
+     });
+
+     isCheckAmountInvalid = computed(() => {
+          const amount = this.checksStoreService.amount();
 
           if (amount === null || amount === undefined || amount === '') {
                return false;

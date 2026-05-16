@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output } from '@angular/core';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
@@ -27,10 +27,13 @@ export class ChecksCashComponent {
      readonly trustlineStoreService = inject(TrustlineStoreService);
      readonly checkStoreService = inject(ChecksStoreService);
 
-     @Input() showEnableTrustline = false;
-     @Output() checkItems = new EventEmitter<SelectItem | null>();
-     @Output() checkSelected = new EventEmitter<SelectItem | null>();
-     @Output() selectedCheckItem = new EventEmitter<SelectItem | null>();
+     // Input
+     showEnableTrustline = input<boolean>(false);
+
+     // Outputs
+     checkItems = output<SelectItem | null>();
+     checkSelected = output<SelectItem | null>();
+     selectedCheckItem = output<SelectItem | null>();
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;

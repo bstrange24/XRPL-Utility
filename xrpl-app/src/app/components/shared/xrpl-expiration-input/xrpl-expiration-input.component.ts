@@ -350,6 +350,10 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
                          secondsRemaining = this.realTimeService.paymentChannelSecondsRemaining();
                          timeRemainingText = this.realTimeService.paymentChannelTimeRemaining();
                          break;
+                    case 'check':
+                         secondsRemaining = this.realTimeService.checkSecondsRemaining();
+                         timeRemainingText = this.realTimeService.checkTimeRemaining();
+                         break;
                     default:
                          secondsRemaining = this.realTimeService.escrowCancelAfterSecondsRemaining();
                          timeRemainingText = this.realTimeService.escrowCancelAfterTimeRemaining();

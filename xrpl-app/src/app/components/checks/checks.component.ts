@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, effect, computed, signal } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, effect, computed, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -77,6 +77,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      public readonly tabs = CHECK_TABS;
      public readonly tabMeta = CHECK_TAB_META;
      public canCreateCheck = signal(false);
+     public resetTrigger = input<number>(0);
      public activeTabForRequirements = computed(() => this.checksTransactionViewModelService.activeTab());
      public lastIntendedDestination = signal<string>('');
      readonly summaryExpanded = signal<boolean>(false);
@@ -92,6 +93,11 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                if (currentSelected) {
                     this.lastIntendedDestination.set(currentSelected);
                }
+          });
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
           });
      }
 
@@ -144,6 +150,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.rightPanelService.resetFilters();
+          this.clearInputFields;
           await this.getChecks(false);
      }
 
@@ -449,6 +456,8 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      protected clearInputFields(): void {
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
+          this.checksStoreService.setField('amount', '');
+          this.checksStoreService.setField('checkIdField', '');
           this.checksStoreService.resetCheckFields();
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
