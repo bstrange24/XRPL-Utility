@@ -41,7 +41,7 @@ export class MptAuthorizeUnauthorizeComponent {
      isMptIssuanceIdFocused = signal(false);
 
      // Preset examples for MPT Issuance ID
-     readonly mptIdExamples = ['0000000000000000000000000000000000000000000000000000000000000000', '0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'];
+     readonly mptIdExamples = ['000000000000000000000000000000000000000000000000', '0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'];
 
      constructor() {
           // Emit validation status changes
@@ -140,8 +140,8 @@ export class MptAuthorizeUnauthorizeComponent {
           return {
                id: mpt.mpt_issuance_id || mpt.id,
                assetScale: mpt.AssetScale || mpt.assetScale || 0,
-               maxAmount: mpt.MaximumAmount || mpt.maximumAmount || 'Unlimited',
-               outstanding: mpt.OutstandingAmount || mpt.outstandingAmount || '0',
+               maxAmount: mpt.MaximumAmount || mpt.maximumAmount || mpt.formattedMaxAmount || 'Unlimited',
+               outstanding: mpt.formattedAmount || mpt.formattedOutstanding || '0',
           };
      }
 }

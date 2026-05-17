@@ -91,7 +91,7 @@
                               (ngModelChange)="setMptIssuanceId($event)"
                               (blur)="onMptIssuanceIdBlur()"
                               (focus)="onMptIssuanceIdFocus()"
-                              placeholder="Enter 64-character hex MPT Issuance ID"
+                              placeholder="Enter 48-character hex MPT Issuance ID"
                               class="input-base-with-validation pr-24 font-mono text-sm"
                               app-focus-border
                               [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)"
@@ -106,7 +106,8 @@
                               <ng-icon name="heroXCircle" size="16" class="text-red-500" />
                               }
                          </div>
-                         } @if (mptIssuanceId && mptIssuanceId.length > 0) {
+                         } 
+                         @if (mptIssuanceId && mptIssuanceId.length > 0) {
                          <button type="button" (click)="clearMptIssuanceId()" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
                               <lucide-icon name="x" size="16"></lucide-icon>
                          </button>
@@ -117,7 +118,7 @@
                     <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
                          <p class="font-semibold mb-1">MPT Issuance ID Format:</p>
                          <ul class="space-y-1 mb-2">
-                              <li>• Exactly 64 characters in length</li>
+                              <li>• Exactly 48 characters in length</li>
                               <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
                               <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
                          </ul>
@@ -133,7 +134,7 @@
 
                     <!-- MPT ID length indicator -->
                     @if (mptIssuanceId && mptIssuanceId.length > 0) {
-                    <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 64" [class.text-red-600]="mptIssuanceId.length !== 64 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 64</div>
+                    <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
                     }
                </div>
           </div>
@@ -168,26 +169,28 @@
                          <div class="grid grid-cols-2 gap-2 text-xs">
                               <div>
                                    <span class="font-semibold">Asset Scale:</span>
-                                   <span class="ml-1">{{ getMptDisplayInfo()?.assetScale || 'N/A' }}</span>
+                                   <span class="ml-2">{{ getMptDisplayInfo()?.assetScale || 'N/A' }}</span>
                               </div>
                               <div>
                                    <span class="font-semibold">Max Supply:</span>
-                                   <span class="ml-1">{{ getMptDisplayInfo()?.maxAmount || 'Unlimited' }}</span>
+                                   <span class="ml-2">{{ getMptDisplayInfo()?.maxAmount || 'Unlimited' }}</span>
                               </div>
                               <div>
                                    <span class="font-semibold">Outstanding:</span>
-                                   <span class="ml-1">{{ getMptDisplayInfo()?.outstanding || '0' }}</span>
+                                   <span class="ml-2">{{ getMptDisplayInfo()?.outstanding || '0' }}</span>
                               </div>
                               <div>
                                    <span class="font-semibold">Action:</span>
-                                   <span class="ml-1 capitalize">{{ authAction }}</span>
+                                   <span class="ml-2 capitalize">{{ authAction }}</span>
                               </div>
                          </div>
                     </div>
                </div>
           </div>
      </div>
-     } @else if (mptIssuanceId && mptIssuanceId.length > 0 && mptAuthorizeValidator.isMptIssuanceIdValid()) {
+     <!-- } @else if (mptAuthorizeValidator.isCheckingMpt()) { -->
+               } @else if (mptIssuanceId && mptIssuanceId.length > 0 && mptAuthorizeValidator.isMptIssuanceIdValid()) {
+
      <!-- Loading state when MPT ID is entered but not yet validated -->
      <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-center">
           <div class="flex items-center justify-center gap-2">
@@ -197,10 +200,19 @@
      </div>
      } @else if (!mptIssuanceId || mptIssuanceId.length === 0) {
      <!-- No MPT selected -->
-     <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-center">
-          <ng-icon name="heroInformationCircle" size="18" class="text-gray-400 mb-2" />
-          <p class="text-sm text-gray-500">Enter an MPT Issuance ID above to see authorization requirements and details.</p>
+   <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+     <div class="flex items-center justify-center gap-2">
+          <ng-icon
+               name="heroInformationCircle"
+               size="18"
+               class="text-gray-400"
+          />
+
+          <p class="text-sm text-gray-500">
+               Enter an MPT Issuance ID above to see authorization requirements and details.
+          </p>
      </div>
+</div>
      }
 
      <!-- Summary of validation errors -->

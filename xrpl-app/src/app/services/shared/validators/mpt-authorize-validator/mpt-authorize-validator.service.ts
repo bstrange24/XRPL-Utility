@@ -1,8 +1,13 @@
-// mpt-authorize-validator.service.ts
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { MptStoreService } from '../../../mpt/mpt-store/mpt-store.service';
 import { MptUtilService } from '../../../mpt/mpt-util/mpt-util.service';
 import * as xrpl from 'xrpl';
+import { XrplService } from '../../../xrpl-services/xrpl.service';
+
+type AsyncState<T> = {
+     loading: boolean;
+     value: T | null;
+};
 
 @Injectable({
      providedIn: 'root',
@@ -10,10 +15,73 @@ import * as xrpl from 'xrpl';
 export class MptAuthorizeValidatorService {
      public readonly mptStoreService = inject(MptStoreService);
      public readonly mptUtil = inject(MptUtilService);
+     public readonly xrplService = inject(XrplService);
 
-     // Track if MPT ID exists in the system
-     private mptExists = signal<boolean | null>(null);
      private mptCheckPending = signal(false);
+     readonly mptExists = computed(() => this.mptExistsState().value);
+     readonly isCheckingMpt = computed(() => this.mptExistsState().loading);
+     private readonly issuanceId = this.mptStoreService.mptIssuanceId;
+
+     constructor() {
+          this.setupMptLookup();
+     }
+
+     mptExistsState = signal<AsyncState<boolean>>({
+          loading: false,
+          value: null,
+     });
+
+     readonly validIssuanceId = computed(() => {
+          const id = this.issuanceId()?.trim();
+
+          return !!id && /^[A-F0-9]{48}$/i.test(id);
+     });
+
+     readonly mptLookupTrigger = computed(() => {
+          const id = this.issuanceId()?.trim();
+
+          if (!id || !this.validIssuanceId()) {
+               return null;
+          }
+
+          return id;
+     });
+
+     private setupMptLookup() {
+          const trigger = this.mptLookupTrigger;
+
+          let lastValue: string | null = null;
+
+          computed(async () => {
+               const id = trigger();
+
+               // ignore invalid or unchanged
+               if (!id || id === lastValue) return;
+
+               lastValue = id;
+
+               this.mptExistsState.set({
+                    loading: true,
+                    value: null,
+               });
+
+               try {
+                    const client = await this.xrplService.getClient();
+                    const exists = await this.xrplService.doesMptExist(client, id);
+                    console.log(`MPT ID ${id} existence: ${exists}`);
+
+                    this.mptExistsState.set({
+                         loading: false,
+                         value: exists,
+                    });
+               } catch (e) {
+                    this.mptExistsState.set({
+                         loading: false,
+                         value: false,
+                    });
+               }
+          });
+     }
 
      // MPT Issuance ID Validation
      isMptIssuanceIdValid = computed(() => {
@@ -22,10 +90,12 @@ export class MptAuthorizeValidatorService {
           if (!issuanceId || issuanceId.trim().length === 0) {
                return false;
           }
+          // return true;
 
-          // MPT Issuance ID should be a 64-character hex string
-          const hexRegex = /^[0-9A-Fa-f]{64}$/;
-          return hexRegex.test(issuanceId.trim());
+          const normalized = issuanceId.trim().toUpperCase()
+          return /^[A-F0-9]{48}$/.test(normalized);
+          // const hexRegex = /^[0-9A-Fa-f]{64}$/;
+          // return hexRegex.test(issuanceId.trim());
      });
 
      isMptIssuanceIdInvalid = computed(() => {
@@ -39,14 +109,18 @@ export class MptAuthorizeValidatorService {
      });
 
      getMptIssuanceIdErrorMessage = computed(() => {
-          const issuanceId = this.mptStoreService.mptIssuanceId();
+          const id = this.issuanceId();
 
-          if (!issuanceId || issuanceId.trim().length === 0) {
+          if (!id || id.trim().length === 0) {
                return 'MPT Issuance ID is required.';
           }
 
-          if (!this.isMptIssuanceIdValid()) {
-               return 'MPT Issuance ID must be a 64-character hexadecimal string (0-9, A-F).';
+          if (!this.validIssuanceId()) {
+               return 'MPT Issuance ID must be a 48-character hexadecimal string (0-9, A-F).';
+          }
+
+          if (this.isCheckingMpt()) {
+               return '';
           }
 
           if (this.mptExists() === false) {
@@ -81,7 +155,8 @@ export class MptAuthorizeValidatorService {
           const destination = this.mptStoreService.destination();
 
           if (!destination || destination.trim().length === 0) {
-               return 'Destination address is required.';
+               // return 'Destination address is required.';
+               return '';
           }
 
           if (!this.isDestinationValid()) {
@@ -144,7 +219,7 @@ export class MptAuthorizeValidatorService {
      // Async validation - check if MPT ID exists
      async validateMptIssuanceId(issuanceId: string) {
           if (!this.isMptIssuanceIdValid()) {
-               this.mptExists.set(null);
+               // this.mptExists.set(null);
                return false;
           }
 
@@ -153,10 +228,10 @@ export class MptAuthorizeValidatorService {
           try {
                // Check if MPT exists in the system
                const exists = await this.checkMptExists(issuanceId);
-               this.mptExists.set(exists);
+               // this.mptExists.set(exists);
                return exists;
           } catch (error) {
-               this.mptExists.set(false);
+               // this.mptExists.set(false);
                return false;
           } finally {
                this.mptCheckPending.set(false);
