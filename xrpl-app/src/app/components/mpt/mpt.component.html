@@ -32,15 +32,77 @@
                               </div>
                          </div>
                          } @if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                         <app-mpt-authorize-unauthorize [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-authorize-unauthorize>
+                         <app-mpt-authorize-unauthorize
+                              [destinationItems]="destinationItems()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddr]="selectedDestinationAddress()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
+                              (canAuthorizeChange)="onCanAuthorizeMptChange($event)"
+                         >
+                         </app-mpt-authorize-unauthorize>
                          } @if (tab === 'lockMpt' || tab === 'unlockMpt') {
-                         <app-mpt-lock-unlock [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)"> </app-mpt-lock-unlock>
+                         <app-mpt-lock-unlock
+                              [destinationItems]="destinationItems()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddr]="selectedDestinationAddress()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
+                         >
+                         </app-mpt-lock-unlock>
                          } @if (tab === 'sendMpt') {
-                         <app-mpt-send [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-send>
+                         <app-mpt-send
+                              [destinationItems]="destinationItems()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddr]="selectedDestinationAddress()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              [mptItems]="viewModel.mptItems()"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
+                              (onMptSelected)="onMptSelected($event)"
+                         >
+                         </app-mpt-send>
                          } @if (tab === 'clawbackMpt') {
-                         <app-mpt-clawback [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [mptItems]="viewModel.mptItems()" (selectedDestinationAddress)="selectedDestinationAddress.set($event)" (onMptSelected)="onMptSelected($event)"> </app-mpt-clawback>
+                         <app-mpt-clawback
+                              [destinationItems]="destinationItems()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddr]="selectedDestinationAddress()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              [mptItems]="viewModel.mptItems()"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
+                              (onMptSelected)="onMptSelected($event)"
+                         >
+                         </app-mpt-clawback>
                          } @if (tab === 'destroyMpt') {
-                         <app-mpt-destroy [mptItems]="viewModel.mptItems()" (onMptSelected)="onMptSelected($event)"> </app-mpt-destroy>
+                         <app-mpt-destroy
+                              [destinationItems]="destinationItems()"
+                              [currentAddress]="currentAddress()"
+                              [lastIntendedDestination]="lastIntendedDestination()"
+                              [selectedDestinationAddr]="selectedDestinationAddress()"
+                              [selectedDestinationItem]="selectedDestinationItem()"
+                              [destinationSearchQuery]="destinationSearchQuery()"
+                              (destinationChange)="handleDestinationChange($event)"
+                              (searchQueryChange)="handleSearchQueryChange($event)"
+                              (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
+                              [mptItems]="viewModel.mptItems()"
+                              (onMptSelected)="onMptSelected($event)"
+                         >
+                         </app-mpt-destroy>
                          }
                     </div>
                </div>
@@ -52,9 +114,9 @@
                <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <!-- Primary Action -->
                     @if (tab === 'createMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.createMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateMpt()" class="btn-primary whitespace-nowrap">{{ mptUtilService.createMptButtonLabel() }}</button>
                     } @else if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-amber-600 hover:bg-amber-700': mptStoreService.authAction() === 'authorize', '!bg-red-600 hover:bg-red-700': mptStoreService.authAction() === 'unauthorize'}">{{ mptUtilService.authorizeButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canAuthorizeMpt()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-amber-600 hover:bg-amber-700': mptStoreService.authAction() === 'authorize', '!bg-red-600 hover:bg-red-700': mptStoreService.authAction() === 'unauthorize'}">{{ mptUtilService.authorizeButtonLabel() }}</button>
                     } @else if (tab === 'sendMpt') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.sendMptButtonLabel() }}</button>
                     } @else if (tab === 'lockMpt' || tab === 'unlockMpt') {

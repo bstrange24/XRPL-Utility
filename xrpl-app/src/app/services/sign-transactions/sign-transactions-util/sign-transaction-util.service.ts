@@ -170,15 +170,6 @@ export class SignTransactionUtilService {
      });
 
      // In SignTransactionUtilService
-     jsonIsValid = computed(() => {
-          const txJson = this.signTransationStoreService.txJson();
-          const error = this.signTransationStoreService.jsonEditorError();
-
-          if (!txJson.trim()) return false;
-          return !error || error.trim().length === 0;
-     });
-
-     // In SignTransactionUtilService
      onTxJsonChange(value: string) {
           this.signTransationStoreService.setField('txJson', value);
 
@@ -196,17 +187,38 @@ export class SignTransactionUtilService {
           }
      }
 
-     // onTxJsonChange(value: string) {
-     //      this.signTransationStoreService.setField('txJson', value);
+     getBlobLength(): number {
+          return this.signTransationStoreService.outputField()?.length || 0;
+     }
 
-     //      try {
-     //           JSON.parse(value);
-     //           this.signTransationStoreService.setField('jsonEditorError', '');
-     //      } catch (error: any) {
-     //           console.error(`Error onTxJsonChange JSON: ${error.message}`);
-     //           this.signTransationStoreService.setField('jsonEditorError', 'Invalid JSON');
-     //      }
-     // }
+     // Get formatted blob size (KB/MB)
+     getBlobSize(): string {
+          const length = this.getBlobLength();
+          if (length === 0) return '0 B';
+
+          const bytes = length; // Assuming UTF-16 characters, adjust if needed
+          if (bytes < 1024) return `${bytes} Bytes`;
+          if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+          return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+     }
+
+     // Download signed blob as .txt or .bin file
+     downloadSignedBlob() {
+          const blobContent = this.signTransationStoreService.outputField();
+          if (!blobContent) return;
+
+          // Detect if it looks like a hex blob (only 0-9a-fA-F)
+          const isHexBlob = /^[0-9a-fA-F]+$/.test(blobContent.trim());
+          const fileExtension = isHexBlob ? 'hex' : 'txt';
+
+          const blob = new Blob([blobContent], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `signed-transaction-${Date.now()}.${fileExtension}`;
+          a.click();
+          URL.revokeObjectURL(url);
+     }
 
      setTxJson(json: string) {
           this.signTransationStoreService.setField('txJson', json);

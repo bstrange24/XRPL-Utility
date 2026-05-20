@@ -5,132 +5,177 @@
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <div class="mt-4">
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-          </div>
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->
           <form #theForm="ngForm">
-               <div class="flex flex-col gap-6 lg:flex-row">
+               <div class="flex flex-col lg:flex-row gap-6">
                     <!-- Main Content Area -->
-                    <div class="min-w-0 flex-1 space-y-6">
+                    <div class="flex-1 min-w-0">
                          <!-- Transaction Type Card -->
-                         <div class="card-base">
-                              <label for="transactionType" class="label-primary">Transaction Type</label>
-                              <p class="mb-3 text-xs text-gray-500">Select a transaction type to sign and submit.</p>
+                         <div class="space-y-6">
+                              <div class="card-base">
+                                   <h4 class="section-heading">
+                                        <lucide-icon name="signature" class="section-heading-icon-green"></lucide-icon>
+                                        Transaction Details
+                                   </h4>
 
-                              <div class="h-[54px]">
-                                   <app-select-search-dropdown [items]="signTransactionUtilService.transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available" />
+                                   <label for="transactionType" class="label-primary">Transaction Type</label>
+                                   <p class="mb-3 text-xs text-gray-500">Select a transaction type to sign and submit.</p>
+                                   <app-select-search-dropdown [showClearButton]="false" [items]="signTransactionUtilService.transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available" />
+
+                                   <!-- Transaction JSON Card -->
+                                   <div class="mb-4 mt-6">
+                                        <div class="flex items-center justify-between mb-2">
+                                             <label for="transactionJson" class="label-primary">Transaction JSON</label>
+                                             <div class="flex items-center gap-2">
+                                                  <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="jsonEditor.format()">
+                                                       <ng-icon name="heroCodeBracketSquare" size="16" class="text-gray-500"></ng-icon>
+                                                       Format JSON
+                                                  </button>
+                                                  <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())">
+                                                       <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500"></ng-icon>
+                                                       Copy
+                                                  </button>
+                                                  <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.txJson())">
+                                                       <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-gray-500"></ng-icon>
+                                                       Download
+                                                  </button> -->
+                                                  <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="format-btn-small">
+                                                       <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                                                       Format JSON
+                                                  </button>
+                                                  <button type="button" (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())" title="Copy Transaction" class="format-btn-small">
+                                                       <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                                                       Copy
+                                                  </button>
+                                                  <button type="button" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.txJson())" title="Download Transaction" class="format-btn-small">
+                                                       <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-blue-600"></ng-icon>
+                                                       Download
+                                                  </button>
+                                             </div>
+                                        </div>
+                                        <p class="text-secondary">Manually build or edit a raw XRPL transaction JSON. Must include <span class="font-medium">TransactionType</span>, <span class="font-medium">Account</span>, and other required fields.</p>
+                                   </div>
+
+                                   <app-json-editor [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
+
+                                   <!-- Signed Transaction Card -->
+                                   <div class="relative">
+                                        <div class="mb-4 mt-6">
+                                             <div class="flex items-center justify-between mb-2">
+                                                  <label class="label-primary">Signed Transaction</label>
+                                                  <div class="flex items-center gap-2">
+                                                       <button type="button" (click)="populateTxDetails()" title="Decode JSON" class="format-btn-small">
+                                                            <ng-icon name="heroCodeBracket" size="16" class="text-blue-600"></ng-icon>
+                                                            Decode
+                                                       </button>
+                                                       <button type="button" (click)="copyUtilService.copySignedTx(signTransationStoreService.outputField())" title="Copy Transaction" class="format-btn-small">
+                                                            <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                                                            Copy
+                                                       </button>
+                                                       <button type="button" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.outputField())" title="Download Transaction" class="format-btn-small">
+                                                            <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-blue-600"></ng-icon>
+                                                            Download
+                                                       </button>
+                                                       <button type="button" (click)="clearSignedJsonField()" title="Clear JSON" class="format-btn-small">
+                                                            <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                                                            Clear JSON
+                                                       </button>
+                                                  </div>
+                                             </div>
+                                             <p class="text-secondary mb-3">Signed transaction blob after signing. Copy or download the blob for submission to the XRPL.</p>
+                                        </div>
+
+                                        <div
+                                             #signedEditable
+                                             contenteditable="true"
+                                             (keydown)="preventTyping($event)"
+                                             (paste)="onPaste($event)"
+                                             class="signed-transaction-editor w-full min-h-[160px] rounded-2xl border border-gray-200 bg-white p-4 font-mono text-sm text-gray-900 transition-colors duration-200 focus:outline-none focus:border-green-500 resize-y overflow-auto break-words whitespace-pre-wrap cursor-text"
+                                             [class.border-amber-300]="isExternallySignedTx()"
+                                             [class.bg-amber-50]="isExternallySignedTx()"
+                                             [innerHTML]="signTransationStoreService.outputField()"
+                                             (input)="onSignedTxInput($event)"
+                                             (blur)="onSignedTxBlur()"
+                                             placeholder="Paste signed transaction blob here..."
+                                        ></div>
+
+                                        @if (signTransationStoreService.outputField()) {
+                                        <div class="mt-2 flex justify-end">
+                                             <div class="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                                  <ng-icon name="heroDocumentText" size="12" />
+                                                  <span>{{ signTransactionUtilService.getBlobLength() }} characters</span>
+                                                  <span class="w-1 h-1 rounded-full bg-gray-400"></span>
+                                                  <span>{{ signTransactionUtilService.getBlobSize() }}</span>
+                                             </div>
+                                        </div>
+                                        } @if (isExternallySignedTx()) {
+                                        <div class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+                                             <div class="flex items-center gap-2">
+                                                  <ng-icon name="heroCheckCircle" size="18" class="text-amber-600" />
+                                                  <p class="text-sm text-amber-800">This is a signed transaction from an external source. You can submit it directly.</p>
+                                             </div>
+                                        </div>
+                                        }
+                                   </div>
                               </div>
-                         </div>
 
-                         <!-- Transaction Options (Component handles its own card) -->
-                         <app-transaction-options [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+                              <!-- Transaction Options (Component handles its own card) -->
+                              <app-transaction-options [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
-                         <!-- Action Buttons Card -->
-                         <div class="rounded-2xl bg-white p-0 transition-shadow hover:shadow-card">
-                              <div class="flex flex-wrap gap-3">
-                                   <!-- Get JSON -->
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
+                              <!-- Action Buttons Card -->
+                              <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                   <!-- <div class="flex flex-wrap gap-3"> -->
+                                   <div class="flex flex-col gap-3 sm:flex-row">
+                                        <!-- Get JSON -->
+                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
 
-                                   <!-- Signing Button (Conditional) -->
-                                   @if (xrplTxOptionsStore.useMultiSign()) {
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
-                                   } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
-                                   } @else {
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
-                                   }
+                                        <!-- Signing Button (Conditional) -->
+                                        @if (xrplTxOptionsStore.useMultiSign()) {
+                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                        } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
+                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                        } @else {
+                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+                                        }
 
-                                   <!-- Submit -->
-                                   <button type="button" class="btn-primary whitespace-nowrap" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionUtilService.jsonIsValid() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
-
+                                        <!-- Submit -->
+                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
+                                   </div>
                                    <!-- Clear Fields -->
-                                   <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-                              </div>
-                         </div>
-
-                         <!-- Execution Time -->
-                         <div class="text-sm text-gray-500">
-                              <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
-                         </div>
-
-                         <!-- Loading State Card -->
-                         @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
-                         <div class="flex flex-col items-center gap-3 p-4 bg-white rounded-2xl shadow-lg border border-blue-200 mt-3 mb-5">
-                              <div class="relative">
-                                   <div class="w-8 h-8 border-2 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
-                                   <lucide-icon name="loader" size="16" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"> </lucide-icon>
-                              </div>
-
-                              <div class="text-center">
-                                   <p class="text-xs font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
-
-                                   @if (txUiService.detailedStatus()) {
-                                   <p class="text-[11px] text-blue-500 mt-0.5">{{ txUiService.detailedStatus() }}</p>
-                                   }
-                              </div>
-                         </div>
-                         }
-
-                         <!-- Transaction JSON Card -->
-                         <div class="overflow-hidden rounded-2xl border border-white-200 bg-white shadow-sm transition-shadow hover:shadow-card">
-                              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white-200 bg-white-50 px-5 py-3">
-                                   <p class="text-sm font-semibold text-blue-700">Transaction JSON</p>
-                                   <div class="flex flex-wrap items-center gap-2">
-                                        <button type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900" (click)="jsonEditor.format()">
-                                             <ng-icon name="heroCodeBracketSquare" size="16" class="text-blue-500"></ng-icon>
-                                             Format JSON
-                                        </button>
-                                        <button (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())" title="Copy JSON" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
-                                             <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-500"></ng-icon>
-                                             Copy
-                                        </button>
-                                        <button (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.txJson())" title="Download JSON" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
-                                             <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-blue-500"></ng-icon>
-                                             Download
-                                        </button>
-                                   </div>
-                              </div>
-                              <app-json-editor [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
-                         </div>
-
-                         <!-- Signed Transaction Card -->
-                         <div class="overflow-hidden rounded-2xl border border-white-200 bg-white shadow-sm transition-shadow hover:shadow-card">
-                              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white-100 bg-white-50 px-5 py-3">
-                                   <p class="text-sm font-semibold text-blue-700">Signed Transaction</p>
-                                   <div class="flex flex-wrap items-center gap-2">
-                                        <button (click)="copyUtilService.copySignedTx(signTransationStoreService.outputField())" title="Copy Signed Transaction" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
-                                             <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-500"></ng-icon>
-                                             Copy
-                                        </button>
-                                        <button (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.outputField())" title="Download JSON" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
-                                             <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-blue-500"></ng-icon>
-                                             Download
-                                        </button>
-                                        <button (click)="populateTxDetails()" title="Decode to JSON" class="inline-flex items-center gap-1.5 rounded-xl border border-grey-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-900">
-                                             <ng-icon name="heroCodeBracket" size="16" class="text-blue-500"></ng-icon>
-                                             Decode
-                                        </button>
+                                   <div class="flex items-center justify-end">
+                                        <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                                    </div>
                               </div>
 
-                              <div #signedEditable contenteditable="true" class="w-full min-h-[140px] rounded-b-2xl bg-white p-4 font-mono text-sm text-cyan-700 focus:outline-none focus:ring-2 focus:ring-blue-500" [innerHTML]="signTransationStoreService.outputField()" (input)="onSignedTxInput($event)" (blur)="onSignedTxBlur()"></div>
-                         </div>
-
-                         <!-- External Signed Transaction Warning -->
-                         @if (isExternallySignedTx()) {
-                         <div class="rounded-2xl border border-grey-200 bg-grey-50 p-4">
-                              <div class="flex items-center gap-2">
-                                   <ng-icon name="heroCheckCircle" size="18" class="text-green-600" />
-                                   <p class="text-sm text-green-800">✓ This is a signed transaction from an external source. You can submit it directly.</p>
+                              <!-- Execution Time -->
+                              <div class="text-sm text-gray-500">
+                                   <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                               </div>
-                         </div>
-                         }
 
-                         <!-- Transaction Preview -->
-                         <app-transaction-preview></app-transaction-preview>
+                              <!-- Loading State Card -->
+                              @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed') {
+                              <div class="flex flex-col items-center gap-3 p-4 bg-white rounded-2xl shadow-lg border border-blue-200 mt-3 mb-5">
+                                   <div class="relative">
+                                        <div class="w-8 h-8 border-2 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
+                                        <lucide-icon name="loader" size="16" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"> </lucide-icon>
+                                   </div>
+
+                                   <div class="text-center">
+                                        <p class="text-xs font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
+
+                                        @if (txUiService.detailedStatus()) {
+                                        <p class="text-[11px] text-blue-500 mt-0.5">{{ txUiService.detailedStatus() }}</p>
+                                        }
+                                   </div>
+                              </div>
+                              }
+
+                              <!-- Transaction Preview -->
+                              <app-transaction-preview></app-transaction-preview>
+                         </div>
                     </div>
                </div>
           </form>

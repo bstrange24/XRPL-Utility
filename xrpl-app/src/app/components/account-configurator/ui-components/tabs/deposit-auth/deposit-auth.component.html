@@ -69,7 +69,7 @@
      <div class="alert-error">
           <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">
-               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <p class="helper-text-paragraph">Please fix the following issues:</p>
                <ul class="list-disc list-inside space-y-0.5">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
@@ -85,7 +85,7 @@
           <button type="button" (click)="clearFields()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
      </div> -->
 
-     <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
                <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>

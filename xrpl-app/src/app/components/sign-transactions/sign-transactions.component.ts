@@ -34,6 +34,7 @@ import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/
 import { SIGN_TRANSACTION_TAB } from './constants/sign-transaction.constants';
 import { NgIcon } from '@ng-icons/core';
 import { expandCollapse } from '../../services/utils/animations/animations.service';
+import { SignTransactionValidatorService } from '../../services/shared/validators/sign-transaction-validator/sign-transaction-validator.service';
 
 @Component({
      selector: 'app-sign-transactions',
@@ -45,31 +46,20 @@ import { expandCollapse } from '../../services/utils/animations/animations.servi
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignTransactionsComponent extends WalletDestinationBase implements OnInit {
+     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
+     @ViewChild('signedEditable') signedEditable!: ElementRef<HTMLDivElement>;
+
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
      public readonly signTransactionUtilService = inject(SignTransactionUtilService);
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
      public readonly signTransationStoreService = inject(SignTransationStoreService);
+     public readonly signTransactionValidatorService = inject(SignTransactionValidatorService);
      private readonly rightPanelService = inject(RightPanelService);
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTxTabs = SIGN_TRANSACTION_TABS;
      public readonly tabMeta = SIGN_TRANSACTION_TAB_META;
-
-     @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
-     @ViewChild('signedEditable') signedEditable!: ElementRef<HTMLDivElement>;
-
-     selectedTransactionItem = computed(() => {
-          const id = this.signTransationStoreService.selectedTransaction();
-          if (!id) return null;
-          return this.signTransactionUtilService.transactionTypeItems().find(i => i.id === id) || null;
-     });
-
-     async onTransactionSelected(item: SelectItem | null) {
-          const tx = item?.id || '';
-          this.signTransationStoreService.setField('selectedTransaction', tx);
-          await this.onTransactionChange();
-     }
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -156,6 +146,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                // summaryInputs: { ... }
           });
      }
+
+     selectedTransactionItem = computed(() => {
+          const id = this.signTransationStoreService.selectedTransaction();
+          if (!id) return null;
+          return this.signTransactionUtilService.transactionTypeItems().find(i => i.id === id) || null;
+     });
 
      isExternallySignedTx = computed(() => {
           const output = this.signTransationStoreService.outputField().trim();
@@ -466,6 +462,12 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           });
      }
 
+     async onTransactionSelected(item: SelectItem | null) {
+          const tx = item?.id || '';
+          this.signTransationStoreService.setField('selectedTransaction', tx);
+          await this.onTransactionChange();
+     }
+
      populateTxDetails(): void {
           const output = this.signTransationStoreService.outputField().trim();
           if (!output) {
@@ -496,42 +498,60 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           }
      }
 
-     populateTxDetails1(): void {
-          const output = this.signTransationStoreService.outputField().trim();
-          if (!output) {
-               this.toastService.error('Signed transaction field is empty');
-               return;
+     preventTyping(event: KeyboardEvent): boolean {
+          // Allow all Ctrl/Cmd shortcuts
+          if (event.ctrlKey || event.metaKey) {
+               return true;
           }
 
-          try {
-               const decodedTx = xrpl.decode(output);
-               const formattedJson = JSON.stringify(decodedTx, null, 3);
+          // Allow navigation keys
+          const allowedKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown', 'Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'];
 
-               // Update the store (this will flow to the JSON editor via the [value] binding)
-               this.signTransationStoreService.setField('txJson', formattedJson);
+          if (allowedKeys.includes(event.key)) {
+               return true;
+          }
 
-               // Also trigger the valueChange handler to clear any error state
-               this.signTransactionUtilService.onTxJsonChange(formattedJson);
+          // Block everything else
+          event.preventDefault();
+          return false;
+     }
 
-               this.cdr.markForCheck();
-               this.toastService.success('Signed TX successfully decoded to JSON editor');
-          } catch (e) {
-               console.error(e);
-               this.toastService.error('Failed to decode signed transaction. Invalid blob.', AppConstants.TOAST.ERROR);
+     // Handle paste event
+     onPaste(event: ClipboardEvent) {
+          event.preventDefault();
+
+          // Get pasted content
+          const pastedText = event.clipboardData?.getData('text/plain');
+
+          if (pastedText) {
+               // Validate it's a proper blob (hex string)
+               const trimmed = pastedText.trim();
+               if (this.signTransactionValidatorService.isValidBlob(trimmed)) {
+                    // Update the store
+                    this.signTransationStoreService.setField('outputField', trimmed);
+                    // Update the editor content
+                    this.updateSignedEditorContent(trimmed);
+                    // Optional: Show success message
+                    this.toastService.success('Valid transaction blob pasted', AppConstants.TOAST.SUCCESS);
+               } else {
+                    // Show error for invalid blob
+                    this.toastService.error('Invalid transaction blob format. Expected hex string.', AppConstants.TOAST.ERROR);
+               }
           }
      }
 
-     // populateTxDetails(): void {
-     //      const output = this.signTransationStoreService.outputField().trim();
-     //      if (!output) return;
-     //      try {
-     //           const decodedTx = xrpl.decode(output);
-     //           this.signTransationStoreService.setField('txJson', JSON.stringify(decodedTx, null, 3));
-     //           this.cdr.markForCheck();
-     //      } catch (e) {
-     //           // ignore decode errors
-     //      }
-     // }
+     private updateSignedEditorContent(content: string) {
+          if (this.signedEditable) {
+               this.signedEditable.nativeElement.innerText = content;
+          }
+     }
+
+     clearSignedJsonField(): void {
+          this.signTransationStoreService.setField('outputField', '');
+          this.signTransationStoreService.setAppSigned(false);
+          this.txUiService.isSignedTx.set(false);
+          this.cdr.markForCheck();
+     }
 
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);

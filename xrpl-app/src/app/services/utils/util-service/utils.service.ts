@@ -16,6 +16,8 @@ import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.servi
 import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
 import { AccountFlags } from '../../../components/account-configurator/constants/account-configurator.types';
 import { PaymentChannelStoreService } from '../../payment-channel/payment-channel-store/payment-channel-store.service';
+import { MptStoreService } from '../../mpt/mpt-store/mpt-store.service';
+import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -35,6 +37,8 @@ export class UtilsService {
      public readonly checksStoreService = inject(ChecksStoreService);
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
+     public readonly mptStoreService = inject(MptStoreService);
+     public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      result: string = '';
      isError: boolean = false;
@@ -59,7 +63,6 @@ export class UtilsService {
      }
 
      isCurrencyCode(value: string): boolean {
-          // Heuristic: XRP-style currency codes are either "XRP" or 3+ chars / 160-bit hex
           return value !== 'XRP' && value.length > 3;
      }
 
@@ -79,22 +82,107 @@ export class UtilsService {
           return `${(Number.parseInt(value) / 1000000).toFixed(6)} XRP`;
      };
 
-     updateAmount(value: string | number) {
+     updateAmount(value: string | number, type: string) {
           let num = typeof value === 'string' ? Number.parseFloat(value) : value;
 
-          if (Number.isNaN(num) || num < 0) {
-               this.checksStoreService.setField('amount', '');
-               return;
+          if (type === 'checks') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.checksStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.checksStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'paymentChannel') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.paymentChannelStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.paymentChannelStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'escrow') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.escrowStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.escrowStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'nftCreate') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.nftCreateStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.nftCreateStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'mptCreate') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.mptStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.mptStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'mptAssetScale') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.mptStoreService.setField('assetScale', 0);
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.mptStoreService.setField('assetScale', rounded);
+               }
+          }
+
+          if (type === 'mpttransferFee') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.mptStoreService.setField('transferFee', 0);
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.mptStoreService.setField('transferFee', rounded);
+               }
+          }
+
+          if (type === 'accountConfig') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.accountConfiguratorStoreService.setField('amount', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.accountConfiguratorStoreService.setField('amount', rounded.toString());
+               }
+          }
+
+          if (type === 'ticketCreate') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.xrplTxOptionsStore.setField('ticketCountField', '');
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.xrplTxOptionsStore.setField('ticketCountField', rounded.toString());
+               }
           }
 
           // Round to 6 decimal places (XRP precision)
-          const rounded = Number(num.toFixed(6));
-          this.accountConfiguratorStoreService.setField('amount', rounded.toString());
+          // const rounded = Number(num.toFixed(6));
+          // this.accountConfiguratorStoreService.setField('amount', rounded.toString());
 
-          this.paymentChannelStoreService.setField('amount', rounded.toString());
-          this.checksStoreService.setField('amount', rounded.toString());
-          this.escrowStoreService.setField('amount', rounded.toString());
-          this.nftCreateStoreService.setField('amount', rounded.toString());
+          // this.paymentChannelStoreService.setField('amount', rounded.toString());
+          // this.checksStoreService.setField('amount', rounded.toString());
+          // this.escrowStoreService.setField('amount', rounded.toString());
+          // this.nftCreateStoreService.setField('amount', rounded.toString());
      }
 
      updateTransferFee(value: string | number) {
@@ -598,30 +686,6 @@ export class UtilsService {
           }
           this.storageService.removeValue(`${account}regularKeySeed`);
      }
-
-     // validateQuorum(signers: any, signerQuorum: any) {
-     //      const totalWeight = signers.reduce((sum: any, s: { weight: any }) => sum + (s.weight || 0), 0);
-     //      if (signerQuorum > totalWeight) {
-     //           return totalWeight;
-     //      }
-     // }
-
-     // async toggleUseMultiSign(multiSignAddress: string, multiSignSeeds: string) {
-     //      if (multiSignAddress === 'No Multi-Sign address configured for account') {
-     //           multiSignSeeds = '';
-     //           return { multiSignSeeds };
-     //      }
-     //      return null;
-     // }
-
-     // onTicketToggle(event: any, ticket: string, selectedTickets: any) {
-     //      if (event.target.checked) {
-     //           selectedTickets = [...selectedTickets, ticket];
-     //      } else {
-     //           selectedTickets = selectedTickets.filter((t: string) => t !== ticket);
-     //      }
-     //      return selectedTickets;
-     // }
 
      async toggleMultiSign(useMultiSign: boolean, signers: any, walletClassicAddress: string) {
           try {

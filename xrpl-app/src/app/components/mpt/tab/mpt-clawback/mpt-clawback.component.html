@@ -1,4 +1,5 @@
 <div class="card-base">
+     <!-- Clawback Card -->
      <div class="space-y-6">
           <h4 class="section-heading">
                <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
@@ -7,37 +8,202 @@
 
           <!-- Select MPT -->
           <div>
-               <label for="selectMptToClawback" class="label-primary">Select MPT to Clawback <span class="text-red-500">*</span></label>
-               <p class="text-secondary">MPT to clawback from a holder.</p>
+               <div class="flex justify-between items-baseline">
+                    <label for="selectMptToClawback" class="label-primary">Select MPT to Clawback <span class="text-red-500">*</span></label>
+               </div>
 
-               <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelected.emit($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">MPT to clawback from a holder.</p>
+                    <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+               </div>
+
+               @if (showMptHelper()) {
+               <div class="helper-text-main-div">
+                    <p class="helper-text-paragraph">Selecting an MPT:</p>
+                    <ul class="space-y-1">
+                         <li>• Only MPTs you currently hold are shown</li>
+                    </ul>
+               </div>
+               } @if (mptSendValidator.getMptSelectedErrorMessage()) {
+               <p class="form-error mt-2">{{ mptSendValidator.getMptSelectedErrorMessage() }}</p>
+               }
           </div>
 
           <!-- MPT Issuance ID -->
           <div>
-               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
-               <p class="text-secondary">Identifies the MPTokenIssuance.</p>
+               <div class="flex justify-between items-baseline">
+                    <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
+               </div>
 
-               <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" (ngModelChange)="mptStoreService.setField('mptIssuanceId', $event)" class="input-base" />
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Unique identifier of the MPTokenIssuance.</p>
+                    <div class="flex gap-2">
+                         <button type="button" (click)="toggleMptIssuanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+               </div>
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         [ngModel]="mptIssuanceId"
+                         (ngModelChange)="setMptIssuanceId($event)"
+                         (blur)="onMptIssuanceIdBlur()"
+                         (focus)="onMptIssuanceIdFocus()"
+                         placeholder="Enter 48-character hex MPT Issuance ID"
+                         class="input-base-with-validation pr-24 font-mono text-sm"
+                         app-focus-border
+                         [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)"
+                         [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
+                    />
+
+                    @if (mptIssuanceId && mptIssuanceId.length > 0) {
+                    <button type="button" (click)="clearField('mptIssuanceId')" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               @if (showMptIssuanceHelper()) {
+               <div class="helper-text-main-div">
+                    <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
+                    <ul class="helper-text-ul">
+                         <li>• Exactly 48 characters in length</li>
+                         <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
+                         <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
+                    </ul>
+                    <!-- <div class="flex gap-2 mt-2">
+                         @for (example of mptIdExamples; track example) {
+                         <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
+                         }
+                    </div> -->
+               </div>
+               }
+
+               <!-- @if (mptSendValidator.getMptIssuanceIdErrorMessage()) {
+               <p class="form-error mt-2">{{ mptSendValidator.getMptIssuanceIdErrorMessage() }}</p>
+               }  -->
+               @if (mptIssuanceId && mptIssuanceId.length > 0) {
+               <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
+               }
           </div>
 
           <!-- MPT Holder + Amount -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- MPT Holder (Destination) -->
                <div>
-                    <label for="mptHolder" class="label-primary">MPT Holder <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">MPT holder address to clawback tokens from.</p>
+                    <div class="flex justify-between items-baseline">
+                         <label for="mptHolder" class="label-primary">MPT Holder <span class="text-red-500">*</span></label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">MPT holder address to clawback tokens from.</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
+                    <div>
+                         <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [showInlineErrorMessage]="false" [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                         </app-select-search-dropdown>
+                    </div>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send XRP to yourself.
+                    </p>
+                    } @if (showDestinationHelper()) {
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">About the Destination:</p>
+                         <ul class="space-y-1">
+                              <li>• Must be a valid XRP address starting with 'r'</li>
+                              <li>• Cannot be your own account</li>
+                              <li>• The destination may need authorization to receive this MPT</li>
+                         </ul>
+                    </div>
+                    } @if (mptSendValidator.getDestinationErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptSendValidator.getDestinationErrorMessage() }}</p>
+                    }
                </div>
 
                <!-- Amount to Clawback -->
                <div>
-                    <label for="amountToClawback" class="label-primary">Amount to Clawback <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">MPT amount to clawback from an existing holder.</p>
+                    <div class="flex justify-between items-baseline">
+                         <label for="amountToClawback" class="label-primary">Amount to Clawback <span class="text-red-500">*</span></label>
+                         <!-- <div class="flex gap-2">
+                              @for (preset of amountPresets; track preset) {
+                              <button type="button" (click)="setPresetAmount(preset)" class="preset-amount-btn">{{ preset }}</button>
+                              }
+                         </div> -->
+                    </div>
 
-                    <input type="number" [ngModel]="mptStoreService.amount()" (ngModelChange)="mptStoreService.setField('amount', $event)" placeholder="e.g. 1000" min="1" max="10000000000000000" step="1" class="input-base" />
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">MPT amount to clawback from an existing holder.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!!(mptSendValidator.isAmountValid() && amount && amount.length > 0)" [isInvalid]="!!(mptSendValidator.isAmountInvalid() && amount && amount.length > 0)" (keydown)="utilsService.preventNegative($event)" [ngModel]="amount" (ngModelChange)="amount = $event" placeholder="e.g. 1000" />
+
+                         @if (amount && amount.length > 0) {
+                         <button type="button" (click)="clearField('amount')" class="clearInputXmark right-8" aria-label="Clear amount">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
+
+                    @if (showAmountHelper()) {
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">Amount Information:</p>
+                         <ul class="space-y-1">
+                              <li>• Available balance: <strong>{{ getAvailableBalance() }}</strong> tokens</li>
+                              <li>• You cannot send more than your available balance</li>
+                              <li>• Amount will be sent with the token's asset scale precision</li>
+                         </ul>
+                    </div>
+                    } @if (mptSendValidator.getAmountErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptSendValidator.getAmountErrorMessage() }}</p>
+                    }
+
+                    <!-- Show formatted amount with asset scale -->
+                    <!-- @if (amount && mptSendValidator.isAmountValid() && mptIssuanceId) {
+                    <p class="text-xs text-green-600 mt-2">✓ Will send {{ formatAmountWithScale(amount) }} tokens ({{ amount }} base units)</p>
+                    } -->
                </div>
           </div>
+
+          <!-- Authorization Warning -->
+          @if (mptSendValidator.getAuthorizationWarning()) {
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-3">
+               <div class="flex items-start gap-2">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="text-amber-600 flex-shrink-0" />
+                    <p class="text-sm text-amber-800">{{ mptSendValidator.getAuthorizationWarning() }}</p>
+               </div>
+          </div>
+          }
      </div>
 </div>
+
+<!-- Summary of validation errors -->
+@if (mptSendValidator.getAllValidationErrors().length > 0) {
+<div class="alert-error mb-0">
+     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <div class="alert-content">
+          <p class="helper-text-paragraph">Please fix the following issues:</p>
+          <ul class="list-disc list-inside space-y-0.5">
+               @for (error of mptSendValidator.getAllValidationErrors(); track $index) {
+               <li class="text-sm">{{ error }}</li>
+               }
+          </ul>
+     </div>
+</div>
+}

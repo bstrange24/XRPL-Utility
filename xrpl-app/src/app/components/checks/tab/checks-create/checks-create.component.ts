@@ -154,7 +154,7 @@ export class ChecksCreateComponent {
 
      canCreateCheck = computed(() => {
           if (!this.isDestinationValid()) return false;
-          if (!this.amountValidatorService.isPaymentChannelAmountValid()) return false;
+          if (this.amountValidatorService.isCheckAmountInvalid()) return false;
 
           if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
 

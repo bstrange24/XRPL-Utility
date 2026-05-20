@@ -276,10 +276,10 @@ describe('MptTransactionViewModelService', () => {
           // });
      });
 
-     describe('infoData1', () => {
+     describe('infoData', () => {
           it('should return null when no wallet is selected', () => {
                mockWalletManagerService.getSelectedWallet.and.returnValue(null);
-               expect(service.infoData1()).toBeNull();
+               expect(service.infoData()).toBeNull();
           });
 
           it('should return wallet info with MPTs', () => {
@@ -301,7 +301,7 @@ describe('MptTransactionViewModelService', () => {
                existingMptsSignal.set(mptData);
                mockXrplWrapper.decodeMPTokenMetadata.and.returnValue({ ticker: 'TEST', uris: [] });
 
-               const result = service.infoData1();
+               const result = service.infoData();
 
                expect(result).toBeTruthy();
                expect(result?.mptCount).toBe(1);
@@ -312,7 +312,7 @@ describe('MptTransactionViewModelService', () => {
           it('should handle empty MPTs list', () => {
                existingMptsSignal.set([]);
 
-               const result = service.infoData1();
+               const result = service.infoData();
 
                expect(result?.mptsToShow).toEqual([]);
           });

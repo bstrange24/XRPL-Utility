@@ -1,55 +1,155 @@
-<div class="card-base">
-     <div class="space-y-6">
-          <h4 class="section-heading">
-               <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
-               MPT Details
-          </h4>
+<div class="space-y-6">
+     <!-- Lock/Unlock Card -->
+     <div class="card-base">
+          <div class="space-y-6">
+               <h4 class="section-heading">
+                    <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
+                    MPT Details
+               </h4>
 
-          <!-- Action Selection -->
-          <div>
-               <label for="mptAction" class="mb-3 block text-sm font-semibold text-gray-900">Action</label>
+               <!-- Action Selection -->
+               <div>
+                    <label class="mb-3 block text-sm font-semibold text-gray-900"> Action <span class="text-red-500">*</span> </label>
 
-               <div class="flex flex-wrap gap-6">
-                    <!-- Unlock Radio -->
-                    <label class="relative flex cursor-pointer items-center gap-2 group">
-                         <input type="radio" name="lockAction" value="unlock" [checked]="mptStoreService.lockAction() === 'unlock'" (change)="mptStoreService.setField('lockAction', 'unlock')" class="hidden" />
+                    <div class="flex flex-wrap gap-6">
+                         <!-- Unlock Radio -->
+                         <label class="relative flex cursor-pointer items-center gap-2 group">
+                              <input type="radio" name="lockAction" value="unlock" [checked]="mptStoreService.lockAction() === 'unlock'" (change)="mptStoreService.setField('lockAction', 'unlock')" class="hidden" />
 
-                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-purple-500]="mptStoreService.lockAction() === 'unlock'" [class.border-gray-300]="mptStoreService.lockAction() !== 'unlock'">
-                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-purple-500" [class.scale-100]="mptStoreService.lockAction() === 'unlock'" [class.scale-0]="mptStoreService.lockAction() !== 'unlock'"></div>
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-purple-500]="mptStoreService.lockAction() === 'unlock'" [class.border-gray-300]="mptStoreService.lockAction() !== 'unlock'">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-purple-500" [class.scale-100]="mptStoreService.lockAction() === 'unlock'" [class.scale-0]="mptStoreService.lockAction() !== 'unlock'"></div>
+                              </div>
+
+                              <ng-icon name="heroLockOpen" size="18" class="text-purple-600 transition-colors group-hover:text-purple-700"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Unlock</span>
+                         </label>
+
+                         <!-- Lock Radio -->
+                         <label class="relative flex cursor-pointer items-center gap-2 group">
+                              <input type="radio" name="lockAction" value="lock" [checked]="mptStoreService.lockAction() === 'lock'" (change)="mptStoreService.setField('lockAction', 'lock')" class="hidden" />
+
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-red-500]="mptStoreService.lockAction() === 'lock'" [class.border-gray-300]="mptStoreService.lockAction() !== 'lock'">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-red-500" [class.scale-100]="mptStoreService.lockAction() === 'lock'" [class.scale-0]="mptStoreService.lockAction() !== 'lock'"></div>
+                              </div>
+
+                              <ng-icon name="heroLockClosed" size="18" class="text-red-600 transition-colors group-hover:text-red-700"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Lock</span>
+                         </label>
+                    </div>
+               </div>
+
+               <!-- MPT Issuer (Destination) -->
+               <div>
+                    <div class="flex justify-between items-baseline">
+                         <label class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Account that issued the MPT (the holder's account that needs authorization).</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div>
+                         <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [showInlineErrorMessage]="false" [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                         </app-select-search-dropdown>
+                    </div>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send the remaining XRP to yourself.
+                    </p>
+                    } @if (showDestinationHelper()) {
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">About the Destination:</p>
+                         <ul class="space-y-1">
+                              <li>• This is the holder's account that needs authorization</li>
+                              <li>• Must be a valid XRP address starting with 'r'</li>
+                              <li>• The issuer account (your current wallet) will grant or revoke authorization</li>
+                         </ul>
+                    </div>
+                    } @if (mptAuthorizeValidator.getDestinationErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getDestinationErrorMessage() }}</p>
+                    }
+               </div>
+
+               <!-- MPT Issuance ID -->
+               <div>
+                    <div class="flex justify-between items-baseline">
+                         <label class="label-primary"> MPT Issuance ID <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Unique identifier of the MPTokenIssuance to lock/unlock.</p>
+                         <div class="flex gap-2">
+                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
                          </div>
+                    </div>
 
-                         <ng-icon name="heroLockOpen" size="18" class="text-purple-600 transition-colors group-hover:text-purple-700"></ng-icon>
-                         <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Unlock</span>
-                    </label>
+                    <div class="relative">
+                         <input
+                              type="text"
+                              [ngModel]="mptIssuanceId"
+                              (ngModelChange)="setMptIssuanceId($event)"
+                              (blur)="onMptIssuanceIdBlur()"
+                              (focus)="onMptIssuanceIdFocus()"
+                              placeholder="Enter 48-character hex MPT Issuance ID"
+                              class="input-base-with-validation pr-24 font-mono text-sm"
+                              app-focus-border
+                              [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)"
+                              [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
+                         />
 
-                    <!-- Lock Radio -->
-                    <label class="relative flex cursor-pointer items-center gap-2 group">
-                         <input type="radio" name="lockAction" value="lock" [checked]="mptStoreService.lockAction() === 'lock'" (change)="mptStoreService.setField('lockAction', 'lock')" class="hidden" />
+                         @if (mptIssuanceId && mptIssuanceId.length > 0) {
+                         <button type="button" (click)="clearMptIssuanceId()" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
+                              <lucide-icon name="x" size="16"></lucide-icon>
+                         </button>
+                         }
+                    </div>
 
-                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-red-500]="mptStoreService.lockAction() === 'lock'" [class.border-gray-300]="mptStoreService.lockAction() !== 'lock'">
-                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-red-500" [class.scale-100]="mptStoreService.lockAction() === 'lock'" [class.scale-0]="mptStoreService.lockAction() !== 'lock'"></div>
+                    @if (showMptHelper()) {
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
+                         <ul class="helper-text-ul">
+                              <li>• Exactly 48 characters in length</li>
+                              <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
+                              <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
+                         </ul>
+                         <div class="flex gap-2 mt-2">
+                              @for (example of mptIdExamples; track example) {
+                              <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
+                              }
                          </div>
+                    </div>
+                    }
+                    <!-- @if (mptAuthorizeValidator.getMptIssuanceIdErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getMptIssuanceIdErrorMessage() }}</p>
+                    } -->
 
-                         <ng-icon name="heroLockClosed" size="18" class="text-red-600 transition-colors group-hover:text-red-700"></ng-icon>
-                         <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Lock</span>
-                    </label>
+                    <!-- MPT ID length indicator -->
+                    @if (mptIssuanceId && mptIssuanceId.length > 0) {
+                    <div class="mt-2 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
+                    }
                </div>
           </div>
+     </div>
 
-          <!-- MPT Issuer -->
-          <div>
-               <label for="mptIssuer" class="label-primary">MPT Issuer <span class="text-red-500">*</span></label>
-               <p class="text-secondary">Account that issued the MPT.</p>
-
-               <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" placeholder="Enter or select destination address" />
-          </div>
-
-          <!-- MPT Issuance ID -->
-          <div>
-               <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
-               <p class="text-secondary">Identifies the MPTokenIssuance.</p>
-
-               <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" name="mptIssuanceIdField" placeholder="Enter MPT Issuance ID" class="input-base" />
+     <!-- Summary of validation errors -->
+     @if (mptAuthorizeValidator.getAllValidationErrors().length > 0) {
+     <div class="alert-error">
+          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <div class="alert-content">
+               <p class="helper-text-paragraph">Please fix the following issues:</p>
+               <ul class="list-disc list-inside space-y-0.5">
+                    @for (error of mptAuthorizeValidator.getAllValidationErrors(); track $index) {
+                    <li class="text-sm">{{ error }}</li>
+                    }
+               </ul>
           </div>
      </div>
+     }
 </div>

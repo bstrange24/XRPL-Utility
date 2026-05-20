@@ -18,6 +18,8 @@ import { ActivatedRoute } from '@angular/router';
 import { WalletsStoreService } from '../../../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsViewModelService } from '../../../../services/wallets/wallets-view-model/wallets-view-model.service';
 import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
+import { AppConstants } from '../../../../core/app.constants';
+import { DialogService } from '../../../../services/shared/dialog/dialog.service';
 
 @Component({
      selector: 'app-wallet-remove-custom-wallet',
@@ -31,6 +33,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsViewModelService = inject(WalletsViewModelService);
      public readonly WalletConfiguratorComponent = inject(WalletConfiguratorComponent);
+     private readonly dialogService = inject(DialogService);
      typedDestination = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
@@ -98,10 +101,14 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           return;
      }
 
-     confirmRemoveWallet(): void {
-          const walletAddress = this.walletsStoreService.selectedAddress();
-          if (confirm(`Are you sure you want to remove wallet ${walletAddress}? This action cannot be undone.`)) {
-               this.WalletConfiguratorComponent.removeCustomWallet();
+     async confirmRemoveWallet(): Promise<void> {
+          const confirmed = await this.dialogService.confirm('\n\nRemove this wallet? This cannot be undone and the wallet will need to be imported again.', 'Confirm Removal');
+
+          if (!confirmed) {
+               this.toastService.info('Wallet Removal cancelled', AppConstants.TOAST.INFO);
+               return;
           }
+
+          this.WalletConfiguratorComponent.removeCustomWallet();
      }
 }

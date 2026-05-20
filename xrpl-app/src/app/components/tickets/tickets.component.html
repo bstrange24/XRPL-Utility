@@ -20,6 +20,11 @@
                <app-tickets-create (canCreateTicketChange)="onCanCreateTicketChange($event)"></app-tickets-create>
                } @if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() > 0) {
                <app-tickets-delete></app-tickets-delete>
+               } @else if (tab === 'deleteTicket' && xrplTxOptionsStore.walletTicketCount() <= 0) {
+               <div class="mt-2 mb-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="flex-shrink-0 text-amber-600" />
+                    <p class="text-sm text-amber-800">This wallet has no Tickets to delete.</p>
+               </div>
                }
 
                <!-- Transaction Options -->
@@ -31,7 +36,7 @@
                     @if (tab === 'createTicket') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateTicket()" class="btn-primary whitespace-nowrap">{{ ticketsUtilService.createButtonLabel() }}</button>
                     } @else if (tab === 'deleteTicket') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ ticketsUtilService.deleteButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || xrplTxOptionsStore.walletTicketCount() <= 0" class="btn-red whitespace-nowrap">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }
 
                     <!-- Secondary Button -->

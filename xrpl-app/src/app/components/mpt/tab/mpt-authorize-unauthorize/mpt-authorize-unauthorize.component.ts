@@ -9,6 +9,7 @@ import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-tra
 import { LucideAngularModule } from 'lucide-angular';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt-authorize-validator/mpt-authorize-validator.service';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
@@ -28,6 +29,9 @@ export class MptAuthorizeUnauthorizeComponent {
      readonly destinationItems = input.required<SelectItem[]>();
      readonly selectedDestinationItem = input<SelectItem | null>(null);
      readonly availableMpts = input<any[]>([]);
+     readonly currentAddress = input<string>('');
+     readonly selectedDestinationAddr = input<string>();
+     readonly lastIntendedDestination = input<string>('');
 
      // Outputs to parent
      readonly selectedDestinationAddress = output<string>();
@@ -35,13 +39,22 @@ export class MptAuthorizeUnauthorizeComponent {
      readonly canAuthorizeChange = output<boolean>();
      readonly validationErrorsChange = output<string[]>();
 
+     readonly clearFields = output<void>();
+     readonly searchQueryChange = output<string>();
+     readonly destinationChange = output<any>();
+     readonly toggleOptions = output<boolean>();
+     readonly canSendXrpChange = output<boolean>();
+     readonly destinationSearchQuery = input<string>();
+
      // UI State
-     showMptHelper = signal(false);
      showDestinationHelper = signal(false);
+     showAmountHelper = signal(false);
+     showMptHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
+     isDestinationValid = signal(false);
 
      // Preset examples for MPT Issuance ID
-     readonly mptIdExamples = ['000000000000000000000000000000000000000000000000', '0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'];
+     readonly mptIdExamples = AppConstants.MPT_ID_EXAMPLES;
 
      constructor() {
           // Emit validation status changes
@@ -49,14 +62,51 @@ export class MptAuthorizeUnauthorizeComponent {
                this.canAuthorizeChange.emit(this.mptAuthorizeValidator.canAuthorize());
                this.validationErrorsChange.emit(this.mptAuthorizeValidator.getAllValidationErrors());
           });
+
+          effect(() => {
+               const mpt = this.selectedMpt();
+               const details = this.mptAuthorizeValidator.mptDetails();
+               console.log('[AUTH DEBUG]', {
+                    issuanceId: this.mptIssuanceId,
+                    hasDetails: !!details,
+                    flags: details?.Flags,
+                    requiresAuth: this.mptAuthorizeValidator.requiresAuth(),
+                    mode: this.mptAuthorizeValidator.authorizationMode(),
+                    isCurrentIssuer: this.mptAuthorizeValidator.isCurrentUserIssuer(),
+               });
+          });
      }
 
      readonly selectedMpt = computed(() => {
           const issuanceId = this.mptStoreService.mptIssuanceId();
           if (!issuanceId) return null;
 
+          // 1. Try local cache (current wallet)
+          const localMpts = this.mptTransactionViewModelService?.infoData()?.mptsToShow || this.availableMpts();
+          let mpt = localMpts.find(m => m.mpt_issuance_id === issuanceId || m.id === issuanceId);
+
+          // 2. Fallback to validator's fresh fetch (works across wallets)
+          if (!mpt) {
+               mpt = this.mptAuthorizeValidator.mptDetails();
+          }
+
+          // 3. Fallback to validator's raw fetched object
+          if (!mpt) {
+               const fetched = this.mptAuthorizeValidator.fetchedMptDetails();
+               if (fetched) mpt = fetched.node || fetched;
+          }
+
+          console.log('Final selectedMpt resolved:', mpt ? 'FOUND' : 'NULL', issuanceId);
+          return mpt || null;
+     });
+
+     readonly selectedMpt2 = computed(() => {
+          const issuanceId = this.mptStoreService.mptIssuanceId();
+          if (!issuanceId) return null;
+
           // Get the full MPT object from the summary data
           const mpts = this.mptTransactionViewModelService?.infoData()?.mptsToShow || this.availableMpts();
+          console.log('Finding MPT for issuance ID:', issuanceId, 'in MPTs:', mpts);
           return mpts.find(m => m.mpt_issuance_id === issuanceId || m.id === issuanceId) || null;
      });
 
@@ -91,14 +141,30 @@ export class MptAuthorizeUnauthorizeComponent {
           this.mptStoreService.setField('authAction', action);
      }
 
-     // Handle destination change
-     onDestinationChange(item: SelectItem | null) {
-          const address = item?.id || '';
-          this.selectedDestinationAddress.emit(address);
-          this.mptStoreService.setField('destination', address);
+     get destination() {
+          return this.mptStoreService.destination();
      }
 
-     // MPT Issuance ID handlers
+     set destination(value: string) {
+          this.mptStoreService.setField('destination', value);
+     }
+
+     onDestinationValidationChange(isValid: boolean) {
+          this.isDestinationValid.set(isValid);
+          this.mptAuthorizeValidator.setDestinationValidation(isValid);
+     }
+
+     onDestinationChange(item: SelectItem | null) {
+          const address = item?.id || '';
+          this.destination = address;
+          this.selectedDestinationAddress.emit(address);
+     }
+
+     onSearchQueryChange(query: string) {
+          this.searchQueryChange.emit(query);
+          this.mptStoreService.setField('destination', query);
+     }
+
      get mptIssuanceId() {
           return this.mptStoreService.mptIssuanceId();
      }
@@ -132,8 +198,15 @@ export class MptAuthorizeUnauthorizeComponent {
           this.showDestinationHelper.set(!this.showDestinationHelper());
      }
 
-     // Get MPT display info for the info box
+     // Get MPT display info for the info box - now uses validator's formatted details
      getMptDisplayInfo() {
+          // First try to get from validator (which includes XRPL fetched data)
+          const formattedDetails = this.mptAuthorizeValidator.getFormattedMptDetails();
+          if (formattedDetails) {
+               return formattedDetails;
+          }
+
+          // Fallback to local MPT from cache
           const mpt = this.selectedMpt();
           if (!mpt) return null;
 
@@ -145,76 +218,3 @@ export class MptAuthorizeUnauthorizeComponent {
           };
      }
 }
-
-// import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-// import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-// import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
-// import { NgIcon } from '@ng-icons/core';
-// import { CommonModule } from '@angular/common';
-// import { FormsModule } from '@angular/forms';
-// import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
-// import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-// import { LucideAngularModule } from 'lucide-angular';
-
-// @Component({
-//      selector: 'app-mpt-authorize-unauthorize',
-//      standalone: true,
-//      imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent],
-//      templateUrl: './mpt-authorize-unauthorize.component.html',
-//      styleUrl: './mpt-authorize-unauthorize.component.css',
-//      changeDetection: ChangeDetectionStrategy.OnPush,
-// })
-// export class MptAuthorizeUnauthorizeComponent {
-//      private readonly mptStoreService = inject(MptStoreService);
-//      public readonly mptUtilService = inject(MptUtilService);
-//      public readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
-
-//      // Inputs from parent
-//      readonly destinationItems = input.required<SelectItem[]>();
-//      readonly selectedDestinationItem = input<SelectItem | null>(null);
-
-//      // Outputs to parent
-//      readonly selectedDestinationAddress = output<string>();
-//      readonly onMptSelected = output<SelectItem | null>(); // if needed
-
-//      readonly selectedMpt = computed(() => {
-//           const issuanceId = this.mptStoreService.mptIssuanceId();
-//           if (!issuanceId) return null;
-
-//           // Get the full MPT object from the summary data
-//           const mpts = this.mptTransactionViewModelService?.infoData()?.mptsToShow || [];
-//           return mpts.find(m => m.mpt_issuance_id === issuanceId) || null;
-//      });
-
-//      readonly requiresIssuerAuth = computed(() => {
-//           const mpt = this.selectedMpt();
-//           if (!mpt) return false;
-
-//           // You can check by flag name or by numeric flags value
-//           return !!mpt.flags?.includes('isRequireAuth') || !!(mpt.flags && (Number.parseInt(mpt.flags) & 0x00000004) !== 0); // tfMPTRequireAuth = 0x00000004
-//      });
-
-//      // Local getters for cleaner template
-//      get authAction() {
-//           return this.mptStoreService.authAction();
-//      }
-
-//      setAuthAction(action: 'authorize' | 'unauthorize') {
-//           this.mptStoreService.setField('authAction', action);
-//      }
-
-//      // Handle destination change
-//      onDestinationChange(item: SelectItem | null) {
-//           const address = item?.id || '';
-//           this.selectedDestinationAddress.emit(address);
-//      }
-
-//      // Optional: expose store directly if you prefer
-//      get mptIssuanceId() {
-//           return this.mptStoreService.mptIssuanceId();
-//      }
-
-//      setMptIssuanceId(value: string) {
-//           this.mptStoreService.setField('mptIssuanceId', value);
-//      }
-// }

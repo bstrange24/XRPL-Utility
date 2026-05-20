@@ -1,4 +1,3 @@
-// escrow-summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -239,19 +238,12 @@ export class EscrowSummaryComponent {
      emptyStateSubMessage = computed(() => {
           const tab = this.escrowTransactionViewModelService.activeTab();
           const query = this.searchQuery();
-          if (query && this.filteredEscrows().length === 0) {
-               return 'Try a different search term';
-          }
-          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredEscrows().length === 0) {
-               return 'Try adjusting the expiration date range';
-          }
-          console.log('Current Tab in emptyStateSubMessage:', tab);
-          if (tab !== 'finishEscrow' && this.totalCount() === 0) {
-               return 'Use the Create tab to generate one.';
-          }
-          if (tab === 'finishEscrow' && this.totalCount() === 0) {
-               return 'An escrow must be sent to this wallet to finish it.';
-          }
+
+          if (query && this.filteredEscrows().length === 0) return 'Try a different search term';
+          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredEscrows().length === 0) return 'Try adjusting the expiration date range';
+          if (tab !== 'finishEscrow' && this.totalCount() === 0) return 'Use the Create tab to generate one.';
+          if (tab === 'finishEscrow' && this.totalCount() === 0) return 'An escrow must be sent to this wallet to finish it.';
+
           return '';
      });
 

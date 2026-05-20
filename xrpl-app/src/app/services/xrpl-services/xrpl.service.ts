@@ -806,24 +806,22 @@ export class XrplService {
           }
      }
 
-     async doesMptExist(client: Client, mptIssuanceId: string): Promise<boolean> {
+     async doesMptExist(client: Client, mptIssuanceId: string): Promise<any> {
           try {
                const response = await client.request({
                     command: 'ledger_entry',
                     mpt_issuance: mptIssuanceId,
-                    ledger_index: "validated"
+                    ledger_index: 'validated',
                } as any);
 
-                console.log("MPT found:", response.result);
+               console.log('MPT found:', response.result);
 
-               return true;
+               // return true;
+               return response.result;
           } catch (error: any) {
-                 if (
-               error?.data?.error === "objectNotFound" ||
-               error?.data?.error === "entryNotFound"
-          ) {
-               return false;
-          }
+               if (error?.data?.error === 'objectNotFound' || error?.data?.error === 'entryNotFound') {
+                    return [];
+               }
 
                console.error('Error fetching MPT info:', error);
                throw new Error(`Failed to fetch MPT info: ${error.message || 'Unknown error'}`);

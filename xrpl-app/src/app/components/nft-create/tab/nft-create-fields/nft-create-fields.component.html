@@ -59,7 +59,7 @@
                     [selectedIssuerItem]="nftOffersTransactionViewModelService.selectedIssuerItem()"
                     [balance]="currencyStoreService.balance()"
                     (currencySelected)="currencySelected.emit($event)"
-                    (amountChange)="utilsService.updateAmount($event)"
+                    (amountChange)="utilsService.updateAmount($event, 'nftCreate')"
                     (issuerSelected)="issuerSelected.emit($event)"
                     [disableCurrencySelection]="onlyXrpEnabled()"
                     [showXrpOnlyBadge]="onlyXrpEnabled()"

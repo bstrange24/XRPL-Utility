@@ -4,7 +4,7 @@
           <div class="space-y-6">
                <h4 class="section-heading">
                     <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
-                    MPT Authorization
+                    MPT Details
                </h4>
 
                <!-- Action Selection -->
@@ -42,24 +42,32 @@
                     }
                </div>
 
-               <!-- MPT Issuer (Destination) -->
+               <!-- MPT Issuer (Issuer) -->
                <div>
                     <div class="flex justify-between items-baseline">
-                         <label class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
-                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600">
+                         <label class="label-primary">MPT Issuer <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Account that issued the MPT (the holder's account that needs authorization).</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
                     </div>
 
-                    <p class="text-secondary">Account that issued the MPT (the holder's account that needs authorization).</p>
-
-                    <div class="mt-2">
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" (valueChange)="onDestinationChange($event)" [validateXrpAddress]="true" [showClearButton]="true" placeholder="Enter or select destination address" />
+                    <div>
+                         <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [showInlineErrorMessage]="false" [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
+                         </app-select-search-dropdown>
                     </div>
 
-                    @if (showDestinationHelper()) {
-                    <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
-                         <p class="font-semibold mb-1">About the Destination:</p>
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send the remaining XRP to yourself.
+                    </p>
+                    } @if (showDestinationHelper()) {
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">About the Destination:</p>
                          <ul class="space-y-1">
                               <li>• This is the holder's account that needs authorization</li>
                               <li>• Must be a valid XRP address starting with 'r'</li>
@@ -75,16 +83,18 @@
                <div>
                     <div class="flex justify-between items-baseline">
                          <label class="label-primary"> MPT Issuance ID <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Unique identifier of the MPTokenIssuance to authorize/unauthorize.</p>
                          <div class="flex gap-2">
-                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600">
+                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>
                     </div>
 
-                    <p class="text-secondary">Unique identifier of the MPTokenIssuance to authorize/unauthorize.</p>
-
-                    <div class="relative mt-2">
+                    <div class="relative">
                          <input
                               type="text"
                               [ngModel]="mptIssuanceId"
@@ -98,15 +108,6 @@
                               [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
                          />
 
-                         @if (mptIssuanceId && mptIssuanceId.length > 0 && (mptAuthorizeValidator.isMptIssuanceIdValid() || mptAuthorizeValidator.isMptIssuanceIdInvalid())) {
-                         <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                              @if (mptAuthorizeValidator.isMptIssuanceIdValid()) {
-                              <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                              } @else if (mptAuthorizeValidator.isMptIssuanceIdInvalid()) {
-                              <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                              }
-                         </div>
-                         } 
                          @if (mptIssuanceId && mptIssuanceId.length > 0) {
                          <button type="button" (click)="clearMptIssuanceId()" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
                               <lucide-icon name="x" size="16"></lucide-icon>
@@ -115,61 +116,93 @@
                     </div>
 
                     @if (showMptHelper()) {
-                    <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
-                         <p class="font-semibold mb-1">MPT Issuance ID Format:</p>
-                         <ul class="space-y-1 mb-2">
+                    <div class="helper-text-main-div">
+                         <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
+                         <ul class="helper-text-ul">
                               <li>• Exactly 48 characters in length</li>
                               <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
                               <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
                          </ul>
-                         <div class="flex gap-2 mt-2">
+                         <!-- <div class="flex gap-2 mt-2">
                               @for (example of mptIdExamples; track example) {
                               <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
                               }
-                         </div>
+                         </div> -->
                     </div>
-                    } @if (mptAuthorizeValidator.getMptIssuanceIdErrorMessage()) {
-                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getMptIssuanceIdErrorMessage() }}</p>
                     }
+                    <!-- @if (mptAuthorizeValidator.getMptIssuanceIdErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getMptIssuanceIdErrorMessage() }}</p>
+                    } -->
 
                     <!-- MPT ID length indicator -->
                     @if (mptIssuanceId && mptIssuanceId.length > 0) {
-                    <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
+                    <div class="mt-2 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
                     }
                </div>
           </div>
      </div>
 
      <!-- MPT Information Box (when MPT is selected and valid) -->
-     @if (selectedMpt(); as mpt) {
-     <div class="rounded-2xl border p-4 transition-all duration-200" [class.border-blue-200]="requiresIssuerAuth()" [class.border-amber-200]="!requiresIssuerAuth()" [class.bg-blue-50]="requiresIssuerAuth()" [class.bg-amber-50]="!requiresIssuerAuth()">
+     @if (mptAuthorizeValidator.mptDetails(); as mpt) {
+     <div
+          class="rounded-2xl border p-4 transition-all duration-200"
+          [class.border-blue-200]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()"
+          [class.border-amber-200]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()"
+          [class.bg-blue-50]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()"
+          [class.bg-amber-50]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()"
+     >
           <div class="flex items-start gap-3">
-               <ng-icon [name]="requiresIssuerAuth() ? 'heroInformationCircle' : 'heroExclamationTriangle'" size="18" class="mt-0.5 flex-shrink-0" [class.text-blue-600]="requiresIssuerAuth()" [class.text-amber-600]="!requiresIssuerAuth()" />
+               <ng-icon [name]="(mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()) ? 'heroInformationCircle' : 'heroExclamationTriangle'" size="18" class="mt-0.5 flex-shrink-0" [class.text-blue-600]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()" [class.text-amber-600]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()" />
 
                <div class="flex-1">
-                    <p class="text-sm font-medium mb-2" [class.text-blue-800]="requiresIssuerAuth()" [class.text-amber-800]="!requiresIssuerAuth()">
-                         @if (requiresIssuerAuth()) { This MPT requires <strong>Issuer + Holder authorization</strong> } @else { This MPT does <strong>not require Issuer authorization</strong>
+                    <!-- <p class="text-sm font-medium mb-2" [class.text-blue-800]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()" [class.text-amber-800]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()">
+                         @if (mptAuthorizeValidator.requiresIssuerAction()) { This MPT requires <strong>Issuer + Holder authorization</strong> } @else if (mptAuthorizeValidator.requiresHolderAction()) { This MPT requires <strong>Holder self-authorization</strong> } @else { This MPT does <strong>not require Issuer authorization</strong>
+                         }
+                    </p> -->
+                    <p class="text-sm font-medium mb-2" [class.text-blue-800]="mptAuthorizeValidator.requiresAuth()" [class.text-amber-800]="!mptAuthorizeValidator.requiresAuth()">
+                         @if (mptAuthorizeValidator.authorizationMode() === 'issuer') { This MPT requires <strong>Issuer + Holder authorization</strong> } @else if (mptAuthorizeValidator.authorizationMode() === 'holder') { This MPT requires <strong>Holder self-authorization</strong> } @else { This MPT does <strong>not require Issuer authorization</strong>
                          }
                     </p>
 
-                    <div class="text-xs space-y-1" [class.text-blue-700]="requiresIssuerAuth()" [class.text-amber-700]="!requiresIssuerAuth()">
-                         @if (requiresIssuerAuth()) {
-                         <p>• Use this form from the <strong>Issuer wallet</strong> to grant or revoke authorization to holders</p>
+                    <div class="text-xs space-y-1" [class.text-blue-700]="mptAuthorizeValidator.requiresAuth()" [class.text-amber-700]="!mptAuthorizeValidator.requiresAuth()">
+                         @if (mptAuthorizeValidator.authorizationMode() === 'issuer') {
+                         <p>• Use this form from the <strong>Issuer wallet</strong> to grant or revoke authorization</p>
                          <p>• The holder will need to self-authorize on their end</p>
-                         <p>• Both issuer authorization AND holder self-authorization are required to hold this MPT</p>
+                         <p>• Both issuer authorization AND holder self-authorization are required</p>
+                         } @else if (mptAuthorizeValidator.authorizationMode() === 'holder') {
+                         <p>• You are the <strong>holder</strong>. Use this form to self-authorize holding this MPT.</p>
+                         <p>• No issuer action is needed for this step</p>
+                         <p>• After authorization, you can receive and hold the MPT</p>
                          } @else {
                          <p>• Only the recipient (holder) needs to self-authorize</p>
-                         <p>• The issuer does not need to take any action for authorization</p>
-                         <p>• This form is not applicable for this MPT type</p>
+                         <p>• The issuer does not need to take any action</p>
                          }
                     </div>
 
-                    <!-- MPT Details -->
+                    <!-- <div class="text-xs space-y-1" [class.text-blue-700]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()" [class.text-amber-700]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()">
+                         @if (mptAuthorizeValidator.requiresIssuerAction()) {
+
+                         <p>• Use this form from the <strong>Issuer wallet</strong> to grant or revoke authorization</p>
+                         <p>• The holder will need to self-authorize on their end</p>
+                         <p>• Both issuer authorization AND holder self-authorization are required</p>
+                         } @else if (mptAuthorizeValidator.requiresHolderAction()) {
+
+                         <p>• You are the <strong>holder</strong>. Use this form to self-authorize holding this MPT.</p>
+                         <p>• No issuer action is needed for this step</p>
+                         <p>• After authorization, you can receive and hold the MPT</p>
+                         } @else {
+
+                         <p>• Only the recipient (holder) needs to self-authorize</p>
+                         <p>• The issuer does not need to take any action</p>
+                         }
+                    </div> -->
+
+                    <!-- MPT Details (same as before) -->
                     <div class="mt-3 pt-2 border-t" [class.border-blue-200]="requiresIssuerAuth()" [class.border-amber-200]="!requiresIssuerAuth()">
                          <div class="grid grid-cols-2 gap-2 text-xs">
                               <div>
                                    <span class="font-semibold">Asset Scale:</span>
-                                   <span class="ml-2">{{ getMptDisplayInfo()?.assetScale || 'N/A' }}</span>
+                                   <span class="ml-2">{{ getMptDisplayInfo()?.assetScale || '0' }}</span>
                               </div>
                               <div>
                                    <span class="font-semibold">Max Supply:</span>
@@ -188,31 +221,22 @@
                </div>
           </div>
      </div>
-     <!-- } @else if (mptAuthorizeValidator.isCheckingMpt()) { -->
-               } @else if (mptIssuanceId && mptIssuanceId.length > 0 && mptAuthorizeValidator.isMptIssuanceIdValid()) {
-
-     <!-- Loading state when MPT ID is entered but not yet validated -->
+     } @else if (mptAuthorizeValidator.isCheckingMpt()) {
      <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 text-center">
           <div class="flex items-center justify-center gap-2">
                <div class="spinner-border animate-spin h-4 w-4 border-2 border-gray-600 rounded-full"></div>
-               <p class="text-sm text-gray-600">Checking MPT existence...</p>
+               <p class="text-sm text-gray-600">Fetching MPT details from XRPL...</p>
           </div>
      </div>
      } @else if (!mptIssuanceId || mptIssuanceId.length === 0) {
      <!-- No MPT selected -->
-   <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
-     <div class="flex items-center justify-center gap-2">
-          <ng-icon
-               name="heroInformationCircle"
-               size="18"
-               class="text-gray-400"
-          />
+     <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+          <div class="flex items-center justify-center gap-2">
+               <ng-icon name="heroInformationCircle" size="18" class="text-gray-400" />
 
-          <p class="text-sm text-gray-500">
-               Enter an MPT Issuance ID above to see authorization requirements and details.
-          </p>
+               <p class="text-sm text-gray-500">Enter an MPT Issuance ID above to see authorization requirements and details.</p>
+          </div>
      </div>
-</div>
      }
 
      <!-- Summary of validation errors -->
@@ -220,7 +244,7 @@
      <div class="alert-error">
           <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">
-               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <p class="helper-text-paragraph">Please fix the following issues:</p>
                <ul class="list-disc list-inside space-y-0.5">
                     @for (error of mptAuthorizeValidator.getAllValidationErrors(); track $index) {
                     <li class="text-sm">{{ error }}</li>

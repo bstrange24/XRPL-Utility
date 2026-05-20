@@ -35,11 +35,12 @@ import { TicketsDeleteComponent } from './tabs/tickets-delete/tickets-delete.com
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { TicketsSummaryComponent } from './ui-components/tickets-summary/tickets-summary.component';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -174,6 +175,11 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                const ticketsToDelete = this.xrplTxOptionsStore.selectedTicketSequences();
                if (ticketsToDelete.length === 0) {
                     this.toastService.error('No tickets selected to delete.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               if (ticketsToDelete.length >= 30) {
+                    this.toastService.error(`Maximum tickets to delete at one time is 30. You selected ${ticketsToDelete.length}`, AppConstants.TOAST.ERROR);
                     return;
                }
           }

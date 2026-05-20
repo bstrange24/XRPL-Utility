@@ -50,4 +50,13 @@ export class DidSetComponent {
      byteLengthDidData = computed(() => this.didViewModelService.didDataByteLength());
      validDidSchema = computed(() => this.didViewModelService.validDidSchema());
      hasJsonSyntaxError = computed(() => this.didViewModelService.hasJsonSyntaxError());
+
+     // For DID Document
+     didDocumentError = computed(() => this.didViewModelService.getJsonObjectError(this.didStoreService.didDocumentData(), 'DID Document'));
+
+     // For URI Data
+     uriDataError = computed(() => this.didViewModelService.getJsonObjectError(this.didStoreService.uriData(), 'URI Data'));
+
+     // For DID Data
+     didDataError = computed(() => this.didViewModelService.getJsonObjectError(this.didStoreService.didData(), 'DID Data'));
 }

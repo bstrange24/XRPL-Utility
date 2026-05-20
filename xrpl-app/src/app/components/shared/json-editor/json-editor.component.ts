@@ -6,10 +6,11 @@ import { json, jsonParseLinter } from '@codemirror/lang-json';
 import { vscodeLight } from '@uiw/codemirror-theme-vscode';
 import { linter, lintGutter } from '@codemirror/lint';
 import { basicSetup } from 'codemirror';
+import { NgIcon } from '@ng-icons/core';
 
 @Component({
      selector: 'app-json-editor',
-     imports: [],
+     imports: [NgIcon],
      templateUrl: './json-editor.component.html',
      styleUrl: './json-editor.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

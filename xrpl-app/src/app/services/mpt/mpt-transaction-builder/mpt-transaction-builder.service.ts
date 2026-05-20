@@ -91,12 +91,21 @@ export class MptTransactionBuilderService {
      }
 
      buildMptSendTransaction(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, mpt: any, account?: any, txOptions?: any): xrpl.Payment {
+          let assetScale = 0;
+          if (!mpt.assetScale) {
+               const cachedScale = mpt.assetScaleCache.get(mpt.mptIssuanceId);
+               assetScale = cachedScale;
+          } else {
+               assetScale = mpt.assetScale;
+          }
+
+          const baseUnitsAmount = this.convertToBaseUnits(mpt.amount.toString(), assetScale);
           const tx: xrpl.Payment = {
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
                Amount: {
                     mpt_issuance_id: mpt.mptIssuanceId,
-                    value: mpt.amount.toString(),
+                    value: baseUnitsAmount,
                },
                Destination: mpt.destination,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -107,7 +116,21 @@ export class MptTransactionBuilderService {
      }
 
      buildMptClawbackTransaction(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, mpt: any, account?: any, txOptions?: any): xrpl.Clawback {
-          const amount: xrpl.ClawbackAmount = { value: mpt.amount.toString(), mpt_issuance_id: mpt.mptIssuanceId };
+          // Convert amount to base units
+          let assetScale = 0;
+          if (!mpt.assetScale) {
+               const cachedScale = mpt.assetScaleCache.get(mpt.mptIssuanceId);
+               assetScale = cachedScale;
+          } else {
+               assetScale = mpt.assetScale;
+          }
+
+          const baseUnitsAmount = this.convertToBaseUnits(mpt.amount.toString(), assetScale);
+          const amount: xrpl.ClawbackAmount = {
+               value: baseUnitsAmount,
+               mpt_issuance_id: mpt.mptIssuanceId,
+          };
+
           const tx: xrpl.Clawback = {
                TransactionType: 'Clawback',
                Account: wallet.classicAddress,
@@ -131,5 +154,37 @@ export class MptTransactionBuilderService {
           };
 
           return tx;
+     }
+
+     private convertToBaseUnits(amount: string, assetScale: number): string {
+          if (!amount || amount === '0') return '0';
+
+          // Remove any commas and trim whitespace
+          const cleanAmount = amount.toString().trim().replace(/,/g, '');
+
+          // Split into integer and decimal parts
+          const parts = cleanAmount.split('.');
+          let integerPart = parts[0];
+          let decimalPart = parts[1] || '';
+
+          // Remove leading zeros from integer part
+          integerPart = integerPart.replace(/^0+/, '') || '0';
+
+          // Pad or truncate decimal part to match asset scale
+          if (decimalPart.length > assetScale) {
+               // Truncate to asset scale (no rounding for blockchain precision)
+               decimalPart = decimalPart.slice(0, assetScale);
+          } else {
+               // Pad with zeros to reach asset scale
+               decimalPart = decimalPart.padEnd(assetScale, '0');
+          }
+
+          // Combine and remove leading zeros
+          let baseUnits = integerPart + decimalPart;
+          baseUnits = baseUnits.replace(/^0+/, '') || '0';
+
+          console.log(`Converting ${cleanAmount} with scale ${assetScale} → ${baseUnits} base units`);
+
+          return baseUnits;
      }
 }

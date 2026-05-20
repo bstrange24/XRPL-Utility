@@ -217,9 +217,13 @@ export class MptSummaryComponent {
 
      emptyStateSubMessage = computed(() => {
           const query = this.searchQuery();
-          if (query && this.filteredMpts().length === 0) {
-               return 'Try a different search term';
-          }
+          if (query && this.filteredMpts().length === 0) return 'Try a different search term';
+
+          const activeTab = this.viewModel.activeTab();
+          if ((activeTab === 'createMpt' || activeTab === 'clawbackMpt' || activeTab === 'destroyMpt' || activeTab === 'sendMpt') && this.totalCount() === 0) return 'Use the Create tab to generate one.';
+          if ((activeTab === 'authorizeMpt' || activeTab === 'unauthorizeMpt') && this.totalCount() === 0) return 'Enter an MPT to authorize/unauthorize.';
+          if ((activeTab === 'lockMpt' || activeTab === 'unlockMpt') && this.totalCount() === 0) return 'Enter an MPT to lock/unlock.';
+
           return '';
      });
 
@@ -265,8 +269,10 @@ export class MptSummaryComponent {
      }
 
      onMptClick(mpt: any) {
+          if (!mpt) return;
           const currentTab = this.viewModel.activeTab();
           if (currentTab === 'createMpt') return;
+          this.mptUtilService.selectMptFromList(mpt);
           this.mptSelected.emit(mpt);
           this.toggleInfoPanel.emit();
      }

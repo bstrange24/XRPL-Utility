@@ -96,6 +96,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      }
 
      selectPaymentChannelFromList(channel: UnifiedPaymentChannel, tab: string): void {
+          console.log('✅ selectPaymentChannelFromList called with:', channel.id, tab);
           const isCreateTab = tab === 'createPaymentChannel';
 
           if (isCreateTab) {

@@ -37,7 +37,8 @@ export class MptValidatorService {
 
      getTokenCountErrorMessage = computed(() => {
           const count = this.mptStoreService.tokenCount();
-          if (count === null || count === undefined) return 'Maximum Tokens is required.';
+          // if (count === null || count === undefined) return 'Maximum Tokens is required.';
+          if (count === null || count === undefined) return '';
 
           const num = Number(count);
           if (!Number.isInteger(num)) return 'Maximum Tokens must be a whole number.';
@@ -189,7 +190,7 @@ export class MptValidatorService {
           if (!this.isTokenCountValid()) return false;
           if (this.isAssetScaleInvalid()) return false;
           if (this.isTransferFeeInvalid()) return false;
-          if (this.isMetadataInvalid()) return false;
+          // if (this.isMetadataInvalid()) return false;
           if (this.isMetadataSizeInvalid()) return false;
 
           // Additional check: Transfer fee requires Can Transfer flag
@@ -214,12 +215,12 @@ export class MptValidatorService {
           const transferFeeError = this.getTransferFeeErrorMessage();
           if (transferFeeError) errors.push(`Transfer Fee: ${transferFeeError}`);
 
-          const metadataError = this.getMetadataErrorMessage();
-          if (metadataError) errors.push(`Metadata: ${metadataError}`);
+          // const metadataError = this.getMetadataErrorMessage();
+          // if (metadataError) errors.push(`Metadata: ${metadataError}`);
 
-          if (this.isMetadataSizeInvalid()) {
-               errors.push(`Metadata exceeds 1024 byte limit (current: ${this.viewModel.metadataByteLength()} bytes)`);
-          }
+          // if (this.isMetadataSizeInvalid()) {
+          //      errors.push(`Metadata exceeds 1024 byte limit (current: ${this.viewModel.metadataByteLength()} bytes)`);
+          // }
 
           // Check transfer fee dependency
           const transferFee = this.mptStoreService.transferFee();

@@ -18,6 +18,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { NgIcon } from '@ng-icons/core';
 import { ThemeService } from '../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { DialogService } from '../../services/shared/dialog/dialog.service';
 
 @Component({
      selector: 'app-wallet-panel',
@@ -40,6 +41,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletConfiguratorOrchestratorService = inject(WalletConfiguratorOrchestratorService);
      public readonly themeService = inject(ThemeService);
+     private readonly dialogService = inject(DialogService);
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
 
      ngOnInit() {
@@ -186,8 +188,14 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
           }
      }
 
-     deleteWallet(index: number) {
-          if (!confirm('Delete this wallet? This cannot be undone.')) return;
+     async deleteWallet(index: number) {
+          const confirmed = await this.dialogService.confirm('\n\nDelete this wallet? This cannot be undone and the wallet will need to be imported again.', 'Confirm Deletion');
+
+          if (!confirmed) {
+               this.toastService.info('Wallet Deletion cancelled', AppConstants.TOAST.INFO);
+               return;
+          }
+
           this.walletManagerService.deleteWallet(index);
      }
 

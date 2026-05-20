@@ -20,6 +20,7 @@ export class DidViewModelService {
      public readonly walletManager = inject(WalletManagerService);
      public readonly utilsService = inject(UtilsService);
      public readonly didUtilService = inject(DidUtilService);
+     public readonly didStoreService = inject(DidStoreService);
 
      constructor() {}
 
@@ -172,4 +173,39 @@ export class DidViewModelService {
      setUriDataEditor(editor: JsonEditorComponent) {
           this.uriDataEditor.set(editor);
      }
+
+     getJsonObjectError = (value: string | null | undefined, fieldName: string = 'Data'): string => {
+          if (!value || value.trim() === '') return '';
+
+          try {
+               const parsed = JSON.parse(value);
+
+               if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+                    return `${fieldName} must be a valid JSON object (not an array or primitive value).`;
+               }
+
+               return ''; // valid
+          } catch (e) {
+               return `Invalid JSON format in ${fieldName}. Please check your syntax.`;
+          }
+     };
+
+     // getMetadataErrorMessage = computed(() => {
+     //      const metadata = this.didStoreService.didDocumentData();
+     //      if (!metadata || metadata.trim() === '') return '';
+
+     //      try {
+     //           JSON.parse(metadata);
+
+     //           // Check if it's an object
+     //           const parsed = JSON.parse(metadata);
+     //           if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+     //                return 'Metadata must be a valid JSON object (not an array or primitive value).';
+     //           }
+
+     //           return '';
+     //      } catch (e) {
+     //           return 'Invalid JSON format. Please check your syntax.';
+     //      }
+     // });
 }

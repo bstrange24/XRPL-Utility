@@ -38,13 +38,13 @@
                               inputmode="decimal"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isValid]="!amountValidatorService.isCheckAmountInvalid()"
+                              [isInvalid]="amountValidatorService.isCheckAmountInvalid()"
                               (keydown)="utilsService.preventNegative($event)"
-                              (input)="amountValidatorService.onAmountInput($event)"
-                              (blur)="amountValidatorService.onAmountBlur($event)"
+                              (input)="amountValidatorService.onAmountInput($event, 'checks')"
+                              (blur)="amountValidatorService.onAmountBlur($event, 'checks')"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              (input)="amountValidatorService.onAmountInput($event)"
+                              (input)="amountValidatorService.onAmountInput($event, 'checks')"
                               [ngModel]="checksStoreService.amount()"
                               (ngModelChange)="checksStoreService.setField('amount', $event)"
                               placeholder="e.g. 10.5"
@@ -57,7 +57,7 @@
                          }
                     </div>
 
-                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
+                    @if (amountValidatorService.isCheckAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }
                </div>
@@ -124,7 +124,7 @@
      <div class="alert-error">
           <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">
-               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <p class="helper-text-paragraph">Please fix the following issues:</p>
                <ul class="list-disc list-inside space-y-0.5">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>

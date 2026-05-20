@@ -219,7 +219,6 @@ export class PaymentChannelSummaryComponent {
           return '';
      });
 
-     // Methods
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;
           const baseClass = 'px-4 py-2 text-sm font-medium rounded-2xl transition-all border hover:shadow-sm active:scale-[0.985] inline-flex items-center gap-2';
@@ -264,10 +263,24 @@ export class PaymentChannelSummaryComponent {
      }
 
      onPaymentChannelClick(channel: UnifiedPaymentChannel) {
-          this.paymentChannelSelected.emit(channel);
+          this.paymentChannelSelected.emit(channel); // keep this for parent
+
           const currentTab = this.viewModel.activeTab();
+
           if (currentTab !== 'createPaymentChannel') {
+               // ← This is the key line (mirrors what you did for checks)
+               this.paymentChannelUtilService.selectPaymentChannelFromList(channel, currentTab);
+
                this.toggleInfoPanel.emit();
           }
      }
+
+     // onPaymentChannelClick(channel: UnifiedPaymentChannel) {
+     //      this.paymentChannelSelected.emit(channel);
+     //      const currentTab = this.viewModel.activeTab();
+     //      if (currentTab !== 'createPaymentChannel') {
+     //           this.paymentChannelUtilService.onChannelSelected(channel);
+     //           this.toggleInfoPanel.emit();
+     //      }
+     // }
 }

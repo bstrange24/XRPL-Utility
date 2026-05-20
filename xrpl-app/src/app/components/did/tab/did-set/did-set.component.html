@@ -6,8 +6,22 @@
                <div class="flex items-center justify-between mb-2">
                     <label for="didDocument" class="label-primary">DID Document</label>
                     <div class="flex items-center gap-2">
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDocumentEditor.format()">Format JSON</button>
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('document')">Clear DID Document</button>
+                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDocumentEditor.format()">
+                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-gray-500"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('document')">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500"></ng-icon>
+                              Clear DID Document
+                         </button> -->
+                         <button type="button" (click)="didDocumentEditor.format()" title="Format JSON" class="format-btn-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" (click)="didUtilService.clearJsonField('document')" title="Clear DID Document" class="format-btn-small">
+                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                              Clear DID Document
+                         </button>
                     </div>
                </div>
                <p class="text-secondary">Main DID document containing context, id, verificationMethod, etc.</p>
@@ -27,7 +41,21 @@
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-amber-600 ml-2" />
                     <p class="text-sm text-amber-800 pr-2">Approaching limit...</p>
                </div>
-               }
+               } @let docError = didDocumentError(); @if (docError) {
+               <!-- <p class="form-error mt-2">{{ docError }}</p> -->
+               } @else {
+               <!-- Checking if JSON is empty to avoid showing "Valid JSON" message when there's no content -->
+               @if(didStoreService.didDocumentData() === '') {
+               <p class="text-xs text-amber-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroExclamationTriangle" class="w-4 h-4"></ng-icon>
+                    JSON is empty
+               </p>
+               } @else {
+               <p class="text-xs text-green-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroCheck" class="w-4 h-4"></ng-icon>
+                    Valid JSON format
+               </p>
+               }}
           </div>
      </div>
 
@@ -37,8 +65,18 @@
                <div class="flex items-center justify-between mb-2">
                     <label for="uriData" class="label-primary">URI Data</label>
                     <div class="flex items-center gap-2">
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="uriEditor.format()">Format JSON</button>
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('uri')">Clear URI Data</button>
+                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="uriEditor.format()">
+                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-blue-500"></ng-icon>
+                              Format JSON
+                         </button> -->
+                         <button type="button" (click)="uriEditor.format()" title="Format JSON" class="format-btn-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" (click)="didUtilService.clearJsonField('uri')" title="Clear URI Data" class="format-btn-small">
+                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                              Clear URI Data
+                         </button>
                     </div>
                </div>
                <p class="text-secondary">Additional URI-linked data for the DID.</p>
@@ -58,7 +96,21 @@
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-amber-600 ml-2" />
                     <p class="text-sm text-amber-800 pr-2">Approaching limit...</p>
                </div>
-               }
+               } @let uriError = uriDataError(); @if (uriError) {
+               <!-- <p class="form-error mt-2">{{ uriError }}</p> -->
+               } @else {
+               <!-- Checking if JSON is empty to avoid showing "Valid JSON" message when there's no content -->
+               @if(didStoreService.uriData() === '') {
+               <p class="text-xs text-amber-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroExclamationTriangle" class="w-4 h-4"></ng-icon>
+                    JSON is empty
+               </p>
+               } @else {
+               <p class="text-xs text-green-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroCheck" class="w-4 h-4"></ng-icon>
+                    Valid JSON format
+               </p>
+               }}
           </div>
      </div>
 
@@ -68,8 +120,23 @@
                <div class="flex items-center justify-between mb-2">
                     <label for="didData" class="label-primary">DID Data</label>
                     <div class="flex items-center gap-2">
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDataEditor.format()">Format JSON</button>
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('data')">Clear DID Data</button>
+                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDataEditor.format()">
+                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-gray-500"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('data')">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500"></ng-icon>
+                              Clear DID Data
+                         </button> -->
+
+                         <button type="button" (click)="didDataEditor.format()" title="Format JSON" class="format-btn-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" (click)="didUtilService.clearJsonField('data')" title="Clear DID Data" class="format-btn-small">
+                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                              Clear DID Data
+                         </button>
                          <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer" class="text-xs text-green-600 hover:text-green-800"> W3C Spec → </a>
                     </div>
                </div>
@@ -90,12 +157,26 @@
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-amber-600 ml-2" />
                     <p class="text-sm text-amber-800 pr-2">Approaching limit...</p>
                </div>
-               }
+               } @let didError = didDataError(); @if (didError) {
+               <!-- <p class="form-error mt-2">{{ didError }}</p> -->
+               } @else {
+               <!-- Checking if JSON is empty to avoid showing "Valid JSON" message when there's no content -->
+               @if(didStoreService.didData() === '') {
+               <p class="text-xs text-amber-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroExclamationTriangle" class="w-4 h-4"></ng-icon>
+                    JSON is empty
+               </p>
+               } @else {
+               <p class="text-xs text-green-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroCheck" class="w-4 h-4"></ng-icon>
+                    Valid JSON format
+               </p>
+               }}
           </div>
      </div>
 </div>
 } @else {
-<div class="mt-4 mb-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+<div class="mt-2 mb-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
      <ng-icon name="heroExclamationTriangle" size="20" class="flex-shrink-0 text-amber-600" />
      <p class="text-sm text-amber-800">DID existing for the selected account.</p>
 </div>

@@ -50,12 +50,12 @@
           </div>
      </div>
      }
-
-     <!-- Show warning for expired checks -->
-     @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
-     <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
-          <div class="alert-content">This check has expired and can only be canceled.</div>
-     </div>
-     }
 </div>
+
+<!-- Show warning for expired checks -->
+@if (checksTransactionViewModelService.selectedCheckIsExpired()) {
+<div class="alert-error">
+     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
+     <div class="alert-content">This check has expired and can only be canceled.</div>
+</div>
+}

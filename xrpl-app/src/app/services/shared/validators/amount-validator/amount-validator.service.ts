@@ -158,7 +158,7 @@ export class AmountValidatorService {
      }
 
      // Add this method to handle input events and validate precision
-     onAmountInput(event: Event): void {
+     onAmountInput(event: Event, type: string): void {
           const input = event.target as HTMLInputElement;
           let value = input.value;
 
@@ -206,18 +206,18 @@ export class AmountValidatorService {
           // Update the store with the value
           // For empty or invalid values, pass empty string or null
           if (!value || value === '.' || (numericValue !== null && isNaN(numericValue))) {
-               this.utilsService.updateAmount('');
+               this.utilsService.updateAmount('', type);
           } else if (numericValue !== null && !isNaN(numericValue)) {
                // For valid numbers, update with the numeric value
                // But keep the string representation for display
-               this.utilsService.updateAmount(numericValue.toString());
+               this.utilsService.updateAmount(numericValue.toString(), type);
           } else {
-               this.utilsService.updateAmount(value);
+               this.utilsService.updateAmount(value, type);
           }
      }
 
      // Optional: Add a method to handle blur events for formatting
-     onAmountBlur(event: FocusEvent): void {
+     onAmountBlur(event: FocusEvent, type: string): void {
           const input = event.target as HTMLInputElement;
           let value = input.value;
 
@@ -227,12 +227,12 @@ export class AmountValidatorService {
                const formatted = num.toFixed(6).replace(/\.?0+$/, '');
                if (formatted !== value) {
                     input.value = formatted;
-                    this.utilsService.updateAmount(formatted);
+                    this.utilsService.updateAmount(formatted, type);
                }
           } else if (value === '.' || (value && isNaN(parseFloat(value)))) {
                // Clear invalid input
                input.value = '';
-               this.utilsService.updateAmount('');
+               this.utilsService.updateAmount('', '');
           }
      }
 

@@ -15,7 +15,7 @@
                [selectedIssuerItem]="checksTransactionViewModelService.selectedIssuerItem()"
                [balance]="currencyStoreService.balance()"
                (currencySelected)="currencySelected.emit($event)"
-               (amountChange)="utilsService.updateAmount($event)"
+               (amountChange)="utilsService.updateAmount($event, 'nftCreate')"
                (issuerSelected)="issuerSelected.emit($event)"
           >
           </app-currency-amount-form>

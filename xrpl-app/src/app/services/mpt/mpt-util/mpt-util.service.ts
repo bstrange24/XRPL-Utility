@@ -109,6 +109,166 @@ export class MptUtilService extends PerformanceBaseComponent {
           const issuances = new Map<string, any>();
           const holdings: any[] = [];
 
+          (accountObjects.result.account_objects ?? []).forEach(obj => {
+               const o = obj as any;
+
+               if (o.LedgerEntryType === 'MPTokenIssuance') {
+                    issuances.set(o.mpt_issuance_id, o);
+                    this.mptStoreService.updateField('assetScaleCache', cache => {
+                         const newCache = new Map(cache);
+                         newCache.set(o.mpt_issuance_id, o.AssetScale ?? 0);
+                         return newCache;
+                    });
+               } else if (o.LedgerEntryType === 'MPToken' && o.Account === classicAddress) {
+                    holdings.push(o);
+               }
+          });
+
+          const result: any[] = [];
+
+          // Holdings (you hold tokens)
+          for (const holding of holdings) {
+               const issuance = issuances.get(holding.MPTokenIssuanceID);
+               const assetScale = issuance?.AssetScale ?? this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID) ?? 0;
+
+               result.push({
+                    LedgerEntryType: 'MPToken',
+                    id: holding.index,
+                    mpt_issuance_id: holding.MPTokenIssuanceID,
+                    MPTAmount: holding.MPTAmount || '0',
+                    AssetScale: assetScale,
+                    OutstandingAmount: '0',
+                    MaximumAmount: 'Unlimited',
+                    TransferFee: '0',
+                    MPTokenMetadata: 'N/A',
+                    Flags: holding.Flags || 0, // ← Important
+                    Issuer: issuance?.Account || 'Unknown',
+                    isHolder: true,
+                    amount: holding.MPTAmount || '0',
+               });
+          }
+
+          // Issuances you own
+          for (const [id, issuance] of issuances.entries()) {
+               const alreadyAdded = result.some(r => r.mpt_issuance_id === id);
+               if (!alreadyAdded) {
+                    result.push({
+                         LedgerEntryType: 'MPTokenIssuance',
+                         id: issuance.index,
+                         mpt_issuance_id: issuance.mpt_issuance_id,
+                         MPTAmount: '0',
+                         AssetScale: issuance.AssetScale ?? 0,
+                         OutstandingAmount: issuance.OutstandingAmount || '0',
+                         MaximumAmount: issuance.MaximumAmount || 'Unlimited',
+                         TransferFee: issuance.TransferFee || '0',
+                         MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
+                         Flags: issuance.Flags || 0, // ← CRITICAL FIX
+                         Issuer: issuance.Account || 'Unknown',
+                         isHolder: false,
+                         amount: issuance.OutstandingAmount || '0',
+                    });
+               }
+          }
+
+          return result;
+     }
+
+     getMpts2(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const issuances = new Map<string, any>();
+          const holdings: any[] = [];
+
+          // 1. Collect all issuances and cache their asset scales
+          (accountObjects.result.account_objects ?? []).forEach(obj => {
+               const o = obj as any;
+               if (o.LedgerEntryType === 'MPTokenIssuance') {
+                    issuances.set(o.mpt_issuance_id, o);
+                    // Cache the asset scale immediately
+                    const assetScale = o.AssetScale ?? 0;
+                    this.mptStoreService.updateField('assetScaleCache', cache => {
+                         const newCache = new Map(cache);
+                         newCache.set(o.mpt_issuance_id, assetScale);
+                         return newCache;
+                    });
+               } else if (o.LedgerEntryType === 'MPToken' && o.Account === classicAddress) {
+                    holdings.push(o);
+               }
+          });
+
+          const result: any[] = [];
+
+          // 2. Add holdings with proper asset scale from cache
+          for (const holding of holdings) {
+               // Always try cache first
+               let assetScale = this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID);
+
+               // Fallback to issuance if not in cache
+               if (assetScale === undefined) {
+                    const issuance = issuances.get(holding.MPTokenIssuanceID);
+                    const issuanceAssetScale = issuance?.AssetScale ?? 0;
+                    assetScale = issuanceAssetScale;
+                    // Cache it for next time
+                    if (issuance) {
+                         this.mptStoreService.updateField('assetScaleCache', cache => {
+                              const newCache = new Map(cache);
+                              newCache.set(holding.MPTokenIssuanceID, issuanceAssetScale);
+                              return newCache;
+                         });
+                    }
+               }
+
+               const assetScaleValue = assetScale ?? 0;
+
+               result.push({
+                    LedgerEntryType: 'MPToken',
+                    id: holding.index,
+                    mpt_issuance_id: holding.MPTokenIssuanceID,
+                    MPTAmount: holding.MPTAmount || '0',
+                    AssetScale: assetScaleValue, // Now consistently using cached value
+                    OutstandingAmount: '0',
+                    MaximumAmount: 'Unlimited',
+                    TransferFee: '0',
+                    MPTokenMetadata: 'N/A',
+                    Flags: holding.Flags || 0,
+                    Issuer: 'Unknown',
+                    isHolder: true,
+                    amount: holding.MPTAmount || '0',
+               });
+          }
+
+          // 3. Add issuances that you own (these already have asset scale from issuance)
+          for (const [id, issuance] of issuances.entries()) {
+               const alreadyAddedAsHolder = result.some(r => r.mpt_issuance_id === id);
+               if (!alreadyAddedAsHolder) {
+                    result.push({
+                         LedgerEntryType: 'MPTokenIssuance',
+                         id: issuance.index,
+                         mpt_issuance_id: issuance.mpt_issuance_id,
+                         MPTAmount: '0',
+                         AssetScale: issuance.AssetScale ?? 0,
+                         OutstandingAmount: issuance.OutstandingAmount || '0',
+                         MaximumAmount: issuance.MaximumAmount || 'Unlimited',
+                         TransferFee: issuance.TransferFee || '0',
+                         MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
+                         Flags: issuance.Flags || 0,
+                         Issuer: issuance.Account || 'Unknown',
+                         isHolder: false,
+                         amount: issuance.OutstandingAmount || '0',
+                    });
+               }
+          }
+
+          const allIssuances = Array.from(issuances.keys());
+          for (const issuanceId of allIssuances) {
+               this.getAuthorizedHolders(issuanceId, accountObjects);
+          }
+
+          return result;
+     }
+
+     getMpts1(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+          const issuances = new Map<string, any>();
+          const holdings: any[] = [];
+
           // 1. Collect all issuances and holdings
           (accountObjects.result.account_objects ?? []).forEach(obj => {
                const o = obj as any;
@@ -260,6 +420,16 @@ export class MptUtilService extends PerformanceBaseComponent {
           });
      }
 
+     selectMptFromList(mpt: any) {
+          const id = mpt.mpt_issuance_id || mpt.id || '';
+          if (!id) return;
+
+          this.mptStoreService.setField('mptIssuanceId', id);
+
+          // You can pre-fill amount or other fields here in the future if needed
+          console.log('✅ MPT selected from summary:', id);
+     }
+
      getMetadataByteLength(metaDataField: any) {
           return computed(() => {
                const meta = metaDataField().trim();
@@ -347,12 +517,14 @@ export class MptUtilService extends PerformanceBaseComponent {
      }
 
      resetFlags() {
-          this.flags().canLock = false;
-          this.flags().isRequireAuth = false;
-          this.flags().canEscrow = false;
-          this.flags().canTrade = false;
-          this.flags().canTransfer = false;
-          this.flags().canClawback = false;
+          this.flags.update(current => ({
+               canLock: false,
+               isRequireAuth: false,
+               canEscrow: false,
+               canTrade: false,
+               canTransfer: false,
+               canClawback: false,
+          }));
           this.updateFlagTotal();
      }
 
@@ -419,27 +591,6 @@ export class MptUtilService extends PerformanceBaseComponent {
           return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
      }
 
-     decodeMptFlagsForUi1(flags: number): string {
-          const flagDefinitions = [
-               { value: 2, name: 'canLock' },
-               { value: 4, name: 'isRequireAuth' },
-               { value: 8, name: 'canEscrow' },
-               { value: 10, name: 'canTrade' },
-               { value: 16, name: 'canTransfer' },
-               { value: 40, name: 'canClawback' },
-          ];
-
-          const activeFlags: string[] = [];
-
-          for (const flag of flagDefinitions) {
-               if ((flags & flag.value) === flag.value) {
-                    activeFlags.push(flag.name);
-               }
-          }
-
-          return activeFlags.length > 0 ? activeFlags.join(', ') : 'None';
-     }
-
      formatMptAmount(rawAmount: string | number, assetScale: number | string | undefined): string {
           if (!rawAmount || rawAmount === '0') return '0';
 
@@ -482,4 +633,77 @@ export class MptUtilService extends PerformanceBaseComponent {
           const outstandingAmount = selectedMpt.OutstandingAmount || '0';
           return outstandingAmount === '0';
      });
+
+     // Add computed signal for canDestroy with authorization check
+     readonly canDestroyMpt = computed(() => {
+          const hasNoOutstanding = this.hasNoOutstandingMpts();
+          if (!hasNoOutstanding) return false;
+
+          const selectedMptId = this.mptStoreService.mptIssuanceId();
+          if (!selectedMptId) return false;
+
+          // Get authorized holders for this MPT
+          const authorizedHolders = this.mptStoreService.getAuthorizedHolders(selectedMptId);
+
+          // If there are authorized holders, show warning but allow destruction
+          if (authorizedHolders.length > 0) {
+               return true; // Allow destruction but with warning
+          }
+
+          return true;
+     });
+
+     getAuthorizedHolders(issuanceId: string, accountObjects: xrpl.AccountObjectsResponse): string[] {
+          const holders: string[] = [];
+
+          // Safety check
+          if (!accountObjects?.result?.account_objects) {
+               return holders;
+          }
+
+          // Find all MPToken entries for this issuance
+          const mptTokens = accountObjects.result.account_objects.filter(obj => {
+               const anyObj = obj as any;
+               return (anyObj.LedgerEntryType === 'MPToken' || anyObj.LedgerEntryType === 'MPTokenIssuance') && anyObj.MPTokenIssuanceID === issuanceId;
+          });
+
+          // Check which ones have the authorized flag
+          for (const token of mptTokens) {
+               const anyToken = token as any;
+               const flags = anyToken.Flags || 0;
+               const isAuthorized = (flags & 0x00000002) !== 0; // tfMPTAuthorized flag
+
+               const account = anyToken.Account;
+               if (isAuthorized && account) {
+                    holders.push(account);
+               }
+          }
+
+          // Cache this for later use (using Record)
+          if (holders.length > 0) {
+               const currentHolders = this.mptStoreService.authorizedHolders();
+               this.mptStoreService.setAuthorizedHolders(issuanceId, holders);
+          }
+
+          return holders;
+     }
+
+     // Update getDestroyWarningMessage to use the Record
+     getDestroyWarningMessage(): string | null {
+          const selectedMptId = this.mptStoreService.mptIssuanceId();
+          if (!selectedMptId) return null;
+
+          const authorizedHolders = this.mptStoreService.getAuthorizedHolders(selectedMptId);
+
+          if (authorizedHolders.length > 0) {
+               const holdersList = authorizedHolders.slice(0, 3).join(', ');
+               const moreText = authorizedHolders.length > 3 ? ` and ${authorizedHolders.length - 3} others` : '';
+               // return `This MPT has ${authorizedHolders.length} authorized holder(s) (${holdersList}${moreText}).
+               return `This MPT has ${authorizedHolders.length} authorized holder(s). 
+            Destroying it will orphan these authorizations. 
+            Recommended: Revoke all authorizations first.`;
+          }
+
+          return null;
+     }
 }

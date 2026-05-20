@@ -1,4 +1,3 @@
-// checks-summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { CheckUtilService } from '../../../../services/checks/checks-util/check-util.service';
@@ -254,12 +253,12 @@ export class ChecksSummaryComponent {
 
      emptyStateSubMessage = computed(() => {
           const query = this.searchQuery();
-          if (query && this.filteredChecks().length === 0) {
-               return 'Try a different search term';
-          }
-          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredChecks().length === 0) {
-               return 'Try adjusting the expiration date range';
-          }
+
+          if (query && this.filteredChecks().length === 0) return 'Try a different search term';
+          if ((this.expiresAfter() || this.expiresBefore()) && this.filteredChecks().length === 0) return 'Try adjusting the expiration date range';
+          if ((this.tab() === 'createCheck' || this.tab() === 'cancelCheck') && this.totalCount() === 0) return 'Use the Create tab to generate one.';
+          if (this.tab() === 'cashCheck' && this.totalCount() === 0) return 'An check must be sent to this wallet to cash it.';
+
           return '';
      });
 
@@ -308,6 +307,7 @@ export class ChecksSummaryComponent {
 
      onCheckClick(check: any) {
           if (this.tab() === 'createCheck') return;
+          this.checkUtilService.onCheckSelectedInUi(check);
           this.checkSelected.emit(check);
           this.toggleInfoPanel.emit();
      }

@@ -41,7 +41,7 @@
      <div class="alert-error">
           <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
           <div class="alert-content">
-               <p class="font-semibold mb-1">Please fix the following issues:</p>
+               <p class="helper-text-paragraph">Please fix the following issues:</p>
                <ul class="list-disc list-inside space-y-0.5">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
@@ -54,7 +54,8 @@
      <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
      <div class="alert-error">
           <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
-          <div class="alert-content">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div>
+          <!-- <div class="alert-content">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div> -->
+          <div class="alert-content">Deleting this account will permanently remove it from the active XRP Ledger state. Make sure you have a secure backup of your secret key/seed. Transfer or burn all assets first, and specify a destination address to receive any remaining XRP (minus the deletion fee of currently ~0.2 XRP). The account can later be re-created by sending at least the base reserve (~1 XRP), but it will be treated as a brand-new account.</div>
      </div>
 
      <!-- Action Buttons -->

@@ -1,4 +1,5 @@
 <div class="card-base">
+     <!-- MPT Creation Form -->
      <div class="space-y-6">
           <h4 class="section-heading">
                <lucide-icon name="gem" class="section-heading-icon-green"></lucide-icon>
@@ -8,7 +9,7 @@
           <!-- Maximum Tokens -->
           <div>
                <div class="flex justify-between items-baseline">
-                    <label for="mptMaxTokens" class="label-primary">Maximum Tokens<span class="text-red-500">*</span> </label>
+                    <label for="mptMaxTokens" class="label-primary">Maximum Tokens <span class="text-red-500">*</span> </label>
                     <div class="flex gap-2">
                          @for (preset of tokenCountPresets; track preset) {
                          <button type="button" (click)="setPresetTokenCount(preset)" class="preset-amount-btn">{{ preset | number }}</button>
@@ -27,10 +28,10 @@
                          [isValid]="!(mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined)"
                          [isInvalid]="(mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined)"
                          (keydown)="utilsService.preventNegative($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
-                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mptCreate')"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mptCreate')"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mptCreate')"
                          [ngModel]="tokenCount"
                          (ngModelChange)="tokenCount = $event"
                          placeholder="e.g. 10"
@@ -89,10 +90,10 @@
                          [isValid]="!(mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined)"
                          [isInvalid]="(mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined)"
                          (keydown)="utilsService.preventNegative($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
-                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mptAssetScale')"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mptAssetScale')"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mptAssetScale')"
                          [ngModel]="assetScale"
                          (ngModelChange)="assetScale = $event"
                          placeholder="e.g. 10"
@@ -116,8 +117,8 @@
                </div>
 
                @if (showAssetScaleHelper()) {
-               <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
-                    <p class="font-semibold mb-1">Asset Scale Examples:</p>
+               <div class="helper-text-main-div">
+                    <p class="helper-text-paragraph">Asset Scale Examples:</p>
                     <ul class="space-y-1">
                          <li>• Scale 0: 1 token (no decimals)</li>
                          <li>• Scale 2: 0.01 token precision</li>
@@ -158,10 +159,10 @@
                          [isValid]="!(mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined)"
                          [isInvalid]="(mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined)"
                          (keydown)="utilsService.preventNegative($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
-                         (blur)="amountValidatorService.onAmountBlur($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mpttransferFee')"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mpttransferFee')"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event)"
+                         (input)="amountValidatorService.onAmountInput($event,'mpttransferFee')"
                          [ngModel]="transferFee"
                          (ngModelChange)="transferFee = $event"
                          placeholder="e.g. 10"
@@ -185,8 +186,8 @@
                </div>
 
                @if (showTransferFeeHelper()) {
-               <div class="mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800">
-                    <p class="font-semibold mb-1">Transfer Fee Examples:</p>
+               <div class="helper-text-main-div">
+                    <p class="helper-text-paragraph">Transfer Fee Examples:</p>
                     <ul class="space-y-1">
                          <li>• 0 = 0% fee (no fee)</li>
                          <li>• 500 = 0.5% fee</li>
@@ -228,7 +229,10 @@
                @if (metaData && metaData.trim().length > 0) { @if (mptValidator.isMetadataInvalid()) {
                <p class="form-error mt-2">{{ mptValidator.getMetadataErrorMessage() }}</p>
                } @else {
-               <p class="text-xs text-green-600 mt-2">✓ Valid JSON format</p>
+               <p class="text-xs text-green-600 mt-2 flex items-center gap-1.5">
+                    <ng-icon name="heroCheck" class="w-4 h-4"></ng-icon>
+                    Valid JSON format
+               </p>
                } }
 
                <!-- Metadata Info -->
@@ -256,7 +260,7 @@
 <div class="alert-error mb-0">
      <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
      <div class="alert-content">
-          <p class="font-semibold mb-1">Please fix the following issues:</p>
+          <p class="helper-text-paragraph">Please fix the following issues:</p>
           <ul class="list-disc list-inside space-y-0.5">
                @for (error of mptValidator.getAllValidationErrors(); track $index) {
                <li class="text-sm">{{ error }}</li>
