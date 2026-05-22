@@ -128,6 +128,17 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.setRightPanel();
      }
 
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
+
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
+
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
           this.mptTransactionViewModelService.clearMetadataCache();
@@ -211,9 +222,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.isSummaryLoading.set(true);
           if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getMptDetails', true, async () => {
+               this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
-               this.txUiService.resetCurrentStepToIdle();
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 

@@ -1,8 +1,8 @@
 // mpt-validator.service.ts
 import { computed, inject, Injectable } from '@angular/core';
-import { MptStoreService } from '../../../mpt/mpt-store/mpt-store.service';
-import { MptTransactionViewModelService } from '../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-import { MptUtilService } from '../../../mpt/mpt-util/mpt-util.service';
+import { MptStoreService } from '../../../../mpt/mpt-store/mpt-store.service';
+import { MptTransactionViewModelService } from '../../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
+import { MptUtilService } from '../../../../mpt/mpt-util/mpt-util.service';
 
 @Injectable({
      providedIn: 'root',
@@ -207,13 +207,13 @@ export class MptValidatorService {
           const errors: string[] = [];
 
           const tokenCountError = this.getTokenCountErrorMessage();
-          if (tokenCountError) errors.push(`Maximum Tokens: ${tokenCountError}`);
+          if (tokenCountError) errors.push(`${tokenCountError}`);
 
           const assetScaleError = this.getAssetScaleErrorMessage();
-          if (assetScaleError) errors.push(`Asset Scale: ${assetScaleError}`);
+          if (assetScaleError) errors.push(`${assetScaleError}`);
 
           const transferFeeError = this.getTransferFeeErrorMessage();
-          if (transferFeeError) errors.push(`Transfer Fee: ${transferFeeError}`);
+          if (transferFeeError) errors.push(`${transferFeeError}`);
 
           // const metadataError = this.getMetadataErrorMessage();
           // if (metadataError) errors.push(`Metadata: ${metadataError}`);

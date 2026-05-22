@@ -4,6 +4,7 @@ import { PaymentChannelStoreService } from '../../payment-channel/payment-channe
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 import { ChecksStoreService } from '../../checks/checks-store/checks-store.service';
+import { CreateNftStoreService } from '../../nft/nft-store/nft-store.service';
 
 @Injectable({
      providedIn: 'root',
@@ -14,6 +15,8 @@ export class RealTimeExpirationService implements OnDestroy {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly credentialStore = inject(CredentialStore);
      private readonly checksStoreService = inject(ChecksStoreService);
+     private readonly createNftStoreService = inject(CreateNftStoreService);
+
      private intervalId: any = null;
 
      // Escrow Finish After Signals
@@ -35,6 +38,11 @@ export class RealTimeExpirationService implements OnDestroy {
      public isCredentialExpired = signal(false);
      public credentialTimeRemaining = signal('');
      public credentialSecondsRemaining = signal(0);
+
+     // Nft Offer
+     public isNftOfferExpired = signal(false);
+     public nftOfferTimeRemaining = signal('');
+     public nftOfferSecondsRemaining = signal(0);
 
      // Check Signals (NEW)
      public isCheckExpired = signal(false);
@@ -90,6 +98,16 @@ export class RealTimeExpirationService implements OnDestroy {
                this.updateCredentialExpirationStatus(credentialDate);
           } else {
                this.resetCredentialExpirationStatus();
+          }
+
+          // Check Nft Offer Expiration
+          const nftOfferDate = this.createNftStoreService?.nftOfferexpirationDate();
+          const nftOfferEnabled = this.createNftStoreService?.enableExpirationDate();
+
+          if (nftOfferEnabled && nftOfferDate) {
+               this.updateNftOfferExpirationStatus(nftOfferDate);
+          } else {
+               this.resetNftOfferExpirationStatus();
           }
 
           // Check Check Expiration (NEW)
@@ -193,6 +211,29 @@ export class RealTimeExpirationService implements OnDestroy {
           this.isCredentialExpired.set(false);
           this.credentialTimeRemaining.set('');
           this.credentialSecondsRemaining.set(0);
+     }
+
+     private updateNftOfferExpirationStatus(date: string) {
+          const targetDate = new Date(date);
+          const now = new Date();
+          const isExpired = targetDate <= now;
+
+          this.isCredentialExpired.set(isExpired);
+
+          if (!isExpired) {
+               const secondsRemaining = this.getSecondsRemaining(targetDate);
+               this.nftOfferSecondsRemaining.set(secondsRemaining);
+               this.nftOfferTimeRemaining.set(this.getTimeRemainingString(targetDate));
+          } else {
+               this.nftOfferSecondsRemaining.set(0);
+               this.nftOfferTimeRemaining.set('Expired');
+          }
+     }
+
+     private resetNftOfferExpirationStatus() {
+          this.isNftOfferExpired.set(false);
+          this.nftOfferTimeRemaining.set('');
+          this.nftOfferSecondsRemaining.set(0);
      }
 
      // NEW: Check expiration methods

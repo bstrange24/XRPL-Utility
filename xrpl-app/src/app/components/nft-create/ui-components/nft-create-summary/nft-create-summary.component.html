@@ -52,9 +52,9 @@
                          <div class="flex items-start gap-3">
                               <!-- Status Icon based on URI presence -->
                               @if (nft.uri && nft.uri !== 'None') {
-                              <ng-icon name="heroLink" size="20" class="text-green-500 mt-0.5 flex-shrink-0" />
+                              <ng-icon name="heroLink" size="18" class="text-green-500 mt-0.5 flex-shrink-0" />
                               } @else {
-                              <ng-icon name="heroCog" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+                              <lucide-icon name="lucideImageOff" size="18" class="text-gray-400 mt-0.5 flex-shrink-0" />
                               }
 
                               <div class="flex-1 min-w-0">
@@ -82,7 +82,7 @@
                                              <span class="font-mono break-all">{{ nft.uri || 'None' }}</span>
                                         </app-summary-key-value>
 
-                                        @if (nft.transferFee) {
+                                        @if (nft.transferFee && nft.transferFee > 0) {
                                         <app-summary-key-value label="Transfer Fee">
                                              <span class="font-mono">{{ nft.transferFee / 1000 }}%</span>
                                         </app-summary-key-value>

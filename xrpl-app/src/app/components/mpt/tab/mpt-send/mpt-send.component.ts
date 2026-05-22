@@ -6,12 +6,12 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
-import { MptSendValidatorService } from '../../../../services/shared/validators/mpt-send-validator/mpt-send-validator.service';
+import { MptSendValidatorService } from '../../../../services/shared/validators/mpt/mpt-send-validator/mpt-send-validator.service';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
 import { NgIcon } from '@ng-icons/core';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
-import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt-authorize-validator/mpt-authorize-validator.service';
+import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 
 @Component({

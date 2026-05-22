@@ -1,8 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { MptStoreService } from '../../../mpt/mpt-store/mpt-store.service';
-import { MptTransactionViewModelService } from '../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-import { MptUtilService } from '../../../mpt/mpt-util/mpt-util.service';
-import { XrplTransactionService } from '../../../xrpl-transactions/xrpl-transaction.service';
+import { MptStoreService } from '../../../../mpt/mpt-store/mpt-store.service';
+import { MptTransactionViewModelService } from '../../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
+import { MptUtilService } from '../../../../mpt/mpt-util/mpt-util.service';
+import { XrplTransactionService } from '../../../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
 
 @Injectable({

@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, signal } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -68,11 +68,30 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      public readonly tabs = NFT_CREATE_TABS;
      public readonly tabMeta = NFT_CREATE_TAB_META;
      public readonly nftFlagsConfig = NFT_FLAGS_CONFIG;
+     public canCreatNft = signal(false);
+     public canModifyNft = signal(false);
+     public canBurnNft = signal(false);
+     public lastIntendedDestination = signal<string>('');
+     public resetTrigger = input<number>(0);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+
+          // Track intended destination for warning message
+          effect(() => {
+               const currentSelected = this.selectedDestinationAddress();
+               if (currentSelected) {
+                    this.lastIntendedDestination.set(currentSelected);
+               }
+          });
+
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
+          });
      }
 
      activeTabForRequirements = computed(() => this.nftCreateTransactionViewModelService.activeTab());
@@ -87,14 +106,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.transactionDropdownService.loadCustomDestinations();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.refreshCurrentBalance();
+          this.nftUtilService.resetFlags();
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getNFT(true);
-          }
      }
 
      ngOnDestroy(): void {
@@ -151,12 +166,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
           this.trustlineCurrencyService.refreshCurrentBalance();
+          this.nftUtilService.resetFlags();
           this.populateDefaultDateTime();
      }
 
@@ -185,7 +198,9 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      }
 
      async getNFT(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getNFT', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -308,6 +323,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           }
 
           await this.handleTxResult(txResult, env.client, env.wallet, nftState.nftCreator, this.nftCreateStoreService.destination(), '', { includeNftObjects: true });
+          // this.nftUtilService.resetFlags();
           this.txUiService.resetCurrentStepToIdle();
      }
 
@@ -316,8 +332,20 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           this.nftCreateStoreService.setField('existingNfts', this.nftCreateTransactionViewModelService.getExistingNfts(accountNfts, this.currentWallet().address));
      }
 
+     onCanCreateNftChange(canCreate: boolean) {
+          this.canCreatNft.set(canCreate);
+     }
+
+     onCanModifyNftChange(canModify: boolean) {
+          this.canModifyNft.set(canModify);
+     }
+
+     onCanBurnNftChange(canBurn: boolean) {
+          this.canBurnNft.set(canBurn);
+     }
+
      toggleOptions(enabled: boolean): void {
-          this.txUiService.wantsOptions.set(enabled);
+          this.nftCreateStoreService.setField('enableSellOnNftCreation', enabled);
      }
 
      toggleExpiration(enabled: boolean): void {

@@ -7,15 +7,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
-import { MptValidatorService } from '../../../../services/shared/validators/mpt-validator/mpt-validator.service';
+import { MptValidatorService } from '../../../../services/shared/validators/mpt/mpt-validator/mpt-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, JsonEditorComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, JsonEditorComponent, NgIcon],
      templateUrl: './mpt-create.component.html',
      styleUrl: './mpt-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -39,12 +41,18 @@ export class MptCreateComponent {
      validationErrorsChange = output<string[]>();
 
      // Preset values for quick selection
-     readonly assetScalePresets = [0, 2, 6, 8, 15];
-     readonly tokenCountPresets = [10, 100, 1000, 10000, 100000, 1000000, 10000000];
-     readonly transferFeePresets = [0, 500, 5000, 50000];
+     readonly assetScalePresets = AppConstants.ASSET_SCALE_PRESETS;
+     readonly tokenCountPresets = AppConstants.MPT_TOKEN_COUNT_PRESETS;
+     readonly transferFeePresets = AppConstants.TRANSFER_RATE_PRESETS;
+     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
+     readonly assetScaleHelperItems = AppConstants.ASSET_SCALE_HELPER_ITEMS;
+     readonly mptMetadataHelperItems = AppConstants.MPT_META_DATA_HELPER;
+     readonly mptMaxTokenHelperItems = AppConstants.MPT_MAX_TOKEN_HELPER;
 
      showAssetScaleHelper = signal(false);
      showTransferFeeHelper = signal(false);
+     showMptMetadataHelper = signal(false);
+     showMaxTokensHelper = signal(false);
 
      constructor() {
           // Emit validation status changes
@@ -65,6 +73,7 @@ export class MptCreateComponent {
      get tokenCount() {
           return this.mptStoreService.tokenCount();
      }
+
      set tokenCount(value: number) {
           this.mptStoreService.setField('tokenCount', value);
      }
@@ -72,6 +81,7 @@ export class MptCreateComponent {
      get transferFee() {
           return this.mptStoreService.transferFee();
      }
+
      set transferFee(value: number) {
           this.mptStoreService.setField('transferFee', value);
      }
@@ -115,6 +125,14 @@ export class MptCreateComponent {
 
      toggleTransferFeeHelper() {
           this.showTransferFeeHelper.set(!this.showTransferFeeHelper());
+     }
+
+     toggleMptMetadataHelper() {
+          this.showMptMetadataHelper.update(v => !v);
+     }
+
+     toggleMaxTokensHelper() {
+          this.showMaxTokensHelper.update(v => !v);
      }
 
      formatSecondsToHuman(seconds: string): string {

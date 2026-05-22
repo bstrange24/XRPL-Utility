@@ -73,7 +73,31 @@ export const AppConstants = {
           INFO: 2000,
           WARN: 3000,
      },
+
      MPT_ID_EXAMPLES: ['0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF', '000000000000000000000000000000000000000000000000'],
+     MPT_META_DATA_HELPER: [
+          'Must be a valid JSON object',
+          'Immutable after MPT issuance — you cannot change it later',
+          'Recommended fields: <code>name</code>, <code>description</code>, <code>image</code>, <code>decimals</code>',
+          'Maximum size: <strong>1024 bytes</strong> (after UTF-8 encoding)',
+          'Follows the <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" class="text-blue-600 hover:underline">XLS-89 Metadata Schema</a>',
+     ],
+     MPT_MAX_TOKEN_HELPER: ['This is the hard cap on total tokens that can ever be issued', 'Once reached, no more tokens can be minted', 'Must be a positive integer (no decimals)', 'Common values: 1,000 / 10,000 / 100,000 / 1,000,000 / 1,000,000,000', 'Set a high number (e.g. 10<sup>15</sup>) if you want effectively unlimited supply'],
+     TRANSFER_FEE_HELPER_ITEMS: ['0 = 0% fee (no fee)', '500 = 0.5% fee', '5000 = 5% fee', '50000 = 50% fee (maximum)'],
+     URI_HELPER_ITEMS: ['Must be a valid URI (usually starts with <code>https://</code>)', 'Will be automatically converted to hex by the client', 'Maximum 256 bytes after hex encoding', 'Common use: link to JSON metadata (IPFS, Arweave, HTTP, etc.)'],
+     MINTER_HELPER_ITEMS: ['Optional field', 'If set, only this account can mint this NFT', 'Useful for royalty enforcement or delegated minting', 'Leave empty to allow anyone with minting rights'],
+     NFT_OWNER_HELPER_ITEMS: ['Optional field', 'If set, the current owner of the NFT must match this address to modify the NFT', 'Useful for ensuring only the owner can update metadata or burn the NFT', 'Leave empty to allow any holder to modify (if they have the rights based on flags)'],
+     ASSET_SCALE_HELPER_ITEMS: ['Scale 0: 1 token (no decimals)', 'Scale 2: 0.01 token precision', 'Scale 6: 0.000001 token precision (XRP standard)', 'Scale 8: 0.00000001 token precision', 'Scale 15: Maximum precision (0.000000000000001)'],
+     TAXON_HELPER_ITEMS: ['A number chosen by the minter to group or categorize NFTs', 'Commonly used to identify collections or series', 'Value can be any integer from <strong>0</strong> to <strong>4,294,967,295</strong>', 'Most minters use small numbers like 0, 1, 10, 100, etc.', 'The combination of <strong>Issuer + Taxon</strong> helps wallets and marketplaces group NFTs'],
+     NFT_ID_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)', 'Usually starts with "0008..." or similar pattern'],
+     DESTINATION_HELPER_ITEMS: ['The unique address of the account receiving the token', 'Must be a valid XRPL address (starts with r...)', 'If sending to an exchange, make sure to include the correct destination tag if required by the exchange'],
+     MPT_ISSUANCE_ID_HELPER_ITEMS: ['The unique identifier of the MPT issuance you want to send', 'Must be a valid MPT Issuance ID (64-character hexadecimal string)', 'You can find this ID in your wallet or on the transaction that created the MPT issuance'],
+     AMOUNT_HELPER_ITEMS: ['The amount of tokens to send', 'Must be a positive number', 'If the token has decimals (scale), you can include up to that many decimal places', 'Example: If the token has scale 6, you can send 0.000001 tokens (1 microtoken) or more'],
+
+     MPT_TOKEN_COUNT_PRESETS: [10, 100, 1000, 10000, 100000, 1000000, 10000000],
+     ASSET_SCALE_PRESETS: [0, 2, 6, 8, 15],
+     TAXON_PRESETS: [0, 5, 10, 15, 20],
+     TRANSFER_RATE_PRESETS: [0, 500, 5000, 50000],
 
      ENCRYPTION: {
           ED25519: 'ed25519' as ECDSA,

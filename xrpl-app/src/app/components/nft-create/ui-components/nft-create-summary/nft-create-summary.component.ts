@@ -114,9 +114,9 @@ export class NftCreateSummaryComponent {
                          case 'noUri':
                               return !nft.uri || nft.uri === 'None' || nft.uri === '';
                          case 'hasTransferFee':
-                              return nft.transferFee && nft.transferFee > 0;
+                              return this.hasTransferFee(nft);
                          case 'noTransferFee':
-                              return !nft.transferFee || nft.transferFee === 0;
+                              return this.hasNoTransferFee(nft);
                          default:
                               return true;
                     }
@@ -206,6 +206,20 @@ export class NftCreateSummaryComponent {
           }
           return '';
      });
+
+     private hasTransferFee(nft: any): boolean {
+          if (!nft.transferFee) return false;
+          if (nft.transferFee === 'None' || nft.transferFee === 'N/A') return false;
+          const fee = Number(nft.transferFee);
+          return !isNaN(fee) && fee > 0;
+     }
+
+     private hasNoTransferFee(nft: any): boolean {
+          if (!nft.transferFee) return true;
+          if (nft.transferFee === 'None' || nft.transferFee === 'N/A') return true;
+          const fee = Number(nft.transferFee);
+          return isNaN(fee) || fee === 0;
+     }
 
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;

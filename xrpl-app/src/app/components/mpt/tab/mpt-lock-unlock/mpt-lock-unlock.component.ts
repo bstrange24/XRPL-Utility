@@ -7,7 +7,7 @@ import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.se
 import { LucideAngularModule } from 'lucide-angular';
 import { MptUtilService } from '../../../../services/mpt/mpt-util/mpt-util.service';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
-import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt-authorize-validator/mpt-authorize-validator.service';
+import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AppConstants } from '../../../../core/app.constants';
 

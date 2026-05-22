@@ -21,7 +21,7 @@ import { TagValidatorService } from '../../../../services/shared/validators/tag-
 import { NgIcon } from '@ng-icons/core';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { EscrowValidatorService } from '../../../../services/shared/validators/escrow-validator/escrow-validator.service';
-import { MptValidatorService } from '../../../../services/shared/validators/mpt-validator/mpt-validator.service';
+import { MptValidatorService } from '../../../../services/shared/validators/mpt/mpt-validator/mpt-validator.service';
 
 @Component({
      selector: 'app-escrows-create',

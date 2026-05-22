@@ -1239,7 +1239,7 @@ pre code[class*="language-"] {
 
 /* Info Text below dropdowns */
 .helper-text-main-div {
-     @apply mt-3 p-3 bg-blue-50 rounded-lg text-xs text-blue-800;
+     @apply mt-2 p-3 bg-blue-50 rounded-lg text-xs text-blue-800;
 }
 
 .helper-text-paragraph {

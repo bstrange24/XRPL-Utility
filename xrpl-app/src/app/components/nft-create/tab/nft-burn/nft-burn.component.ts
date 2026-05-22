@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -15,11 +15,18 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { LucideAngularModule } from 'lucide-angular';
+import { NgIcon } from '@ng-icons/core';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
+import { NftCreateValidatorService } from '../../../../services/shared/validators/nft/nft-create-validator/nft-create-validator.service';
+import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
+import { NftBurnValidatorService } from '../../../../services/shared/validators/nft/nft-burn-validator/nft-burn-validator.service';
 
 @Component({
      selector: 'app-nft-burn',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
      templateUrl: './nft-burn.component.html',
      styleUrl: './nft-burn.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +43,27 @@ export class NftBurnComponent {
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftTransactionOrchestrator = inject(NftTransactionOrchestrator);
+     public readonly nftCreateValidator = inject(NftCreateValidatorService);
+     public readonly nftValidatorService = inject(NftValidatorService);
+     public readonly nftBurnValidatorService = inject(NftBurnValidatorService);
+
+     // Helpler info
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+
+     // Outputs
+     canBurnNftChange = output<boolean>();
+     validationErrorsChange = output<string[]>();
+
+     // Signals
+     showNftHelper = signal(false);
+
+     constructor() {
+          // Emit validation status changes
+          effect(() => {
+               this.canBurnNftChange.emit(this.nftBurnValidatorService.canBurnNft());
+               this.validationErrorsChange.emit(this.nftValidatorService.getAllValidationErrors());
+          });
+     }
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];
@@ -61,5 +89,9 @@ export class NftBurnComponent {
 
      onNftSelected(item: SelectItem | null) {
           this.nftCreateStoreService.setField('nftId', item?.id || '');
+     }
+
+     toggleNftHelper() {
+          this.showNftHelper.update(v => !v);
      }
 }

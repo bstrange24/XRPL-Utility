@@ -1,0 +1,10 @@
+@if (show()) {
+<div class="helper-text-main-div">
+     <p class="helper-text-paragraph">{{ title }}</p>
+     <ul class="helper-text-ul">
+          @for (item of items; track $index) {
+          <li [innerHTML]="item"></li>
+          }
+     </ul>
+</div>
+}

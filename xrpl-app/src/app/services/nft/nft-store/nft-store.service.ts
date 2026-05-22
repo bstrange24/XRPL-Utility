@@ -1,4 +1,5 @@
-import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
+import { computed } from '@angular/core';
+import { signalStore, withState, withMethods, patchState, withComputed } from '@ngrx/signals';
 
 export interface NFtState {
      nftId: string;
@@ -73,9 +74,9 @@ export const CreateNftStoreService = signalStore(
 
      withState(initialState),
 
-     // withComputed(store => ({
-     //      expiration: computed(() => store.expiration()),
-     // })),
+     withComputed(store => ({
+          nftOfferexpirationDate: computed(() => store.expiration()),
+     })),
 
      withMethods(store => ({
           /** Generic setter */
@@ -84,7 +85,18 @@ export const CreateNftStoreService = signalStore(
           },
 
           setExpiration(value: string) {
+               console.log('Setting check expiration date to:', value);
                patchState(store, { expiration: value });
+          },
+
+          setEnableExpirationDate(enabled: boolean) {
+               console.log('Setting check expiration date to:', enabled);
+               patchState(store, { enableExpirationDate: enabled });
+          },
+
+          setEnableSellOnNftCreation(enabled: boolean) {
+               console.log('Setting check enableSellOnNftCreation to:', enabled);
+               patchState(store, { enableSellOnNftCreation: enabled });
           },
 
           /** Generic updater */

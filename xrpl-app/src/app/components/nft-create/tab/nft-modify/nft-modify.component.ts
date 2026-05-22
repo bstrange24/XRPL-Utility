@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -16,11 +16,18 @@ import { WalletManagerService } from '../../../../services/wallets/manager/walle
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
+import { UriValidatorService } from '../../../../services/shared/validators/uri-validator/uri-validator.service';
+import { NftCreateValidatorService } from '../../../../services/shared/validators/nft/nft-create-validator/nft-create-validator.service';
+import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
+import { NftModifyValidatorService } from '../../../../services/shared/validators/nft/nft-modify-validator/nft-modify-validator.service';
 
 @Component({
      selector: 'app-nft-modify',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
      templateUrl: './nft-modify.component.html',
      styleUrl: './nft-modify.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +44,35 @@ export class NftModifyComponent {
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftTransactionOrchestrator = inject(NftTransactionOrchestrator);
+     public readonly nftCreateValidator = inject(NftCreateValidatorService);
+     public readonly nftValidatorService = inject(NftValidatorService);
+     public readonly uriValidatorService = inject(UriValidatorService);
+     public readonly nftModifyValidatorService = inject(NftModifyValidatorService);
+
+     // Helpler info
+     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
+     readonly uriHelperItems = AppConstants.URI_HELPER_ITEMS;
+     readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
+     readonly nftOwnerHelperItems = AppConstants.NFT_OWNER_HELPER_ITEMS;
+     readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+
+     // Outputs
+     canModifyNftChange = output<boolean>();
+     validationErrorsChange = output<string[]>();
+
+     // Signals
+     showUriHelper = signal(false);
+     showNftOwnerHelper = signal(false);
+     showNftHelper = signal(false);
+
+     constructor() {
+          // Emit validation status changes
+          effect(() => {
+               this.canModifyNftChange.emit(this.nftModifyValidatorService.canModifyNft());
+               this.validationErrorsChange.emit(this.nftValidatorService.getAllValidationErrors());
+          });
+     }
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];
@@ -78,10 +114,15 @@ export class NftModifyComponent {
           return false;
      }
 
-     uriByteLength(): number {
-          const uri = this.nftCreateStoreService.initialURI;
-          if (!uri) return 0;
-          // For hex-encoded URI, each character is 4 bits, so length / 2 = bytes
-          return uri.length / 2;
+     toggleNftOwnerHelper() {
+          this.showNftOwnerHelper.update(v => !v);
+     }
+
+     toggleUriHelper() {
+          this.showUriHelper.update(v => !v);
+     }
+
+     toggleNftHelper() {
+          this.showNftHelper.update(v => !v);
      }
 }

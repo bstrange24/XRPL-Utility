@@ -6,8 +6,8 @@
                MPT Details
           </h4>
 
-          <!-- Maximum Tokens -->
           <div>
+               <!-- Maximum Tokens -->
                <div class="flex justify-between items-baseline">
                     <label for="mptMaxTokens" class="label-primary">Maximum Tokens <span class="text-red-500">*</span> </label>
                     <div class="flex gap-2">
@@ -17,7 +17,12 @@
                     </div>
                </div>
 
-               <p class="text-secondary">Maximum tokens that can ever be issued (supply cap).</p>
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Maximum tokens that can ever be issued (supply cap).</p>
+                    <button type="button" (click)="toggleMaxTokensHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
 
                <div class="relative">
                     <input
@@ -52,6 +57,8 @@
                     </button>
                     }
                </div>
+
+               <app-field-helper title="Maximum Tokens (Supply Cap)" [items]="mptMaxTokenHelperItems" [show]="showMaxTokensHelper" />
 
                @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
                <p class="form-error mt-1">{{ mptValidator.getTokenCountErrorMessage() }}</p>
@@ -116,18 +123,9 @@
                     }
                </div>
 
-               @if (showAssetScaleHelper()) {
-               <div class="helper-text-main-div">
-                    <p class="helper-text-paragraph">Asset Scale Examples:</p>
-                    <ul class="space-y-1">
-                         <li>• Scale 0: 1 token (no decimals)</li>
-                         <li>• Scale 2: 0.01 token precision</li>
-                         <li>• Scale 6: 0.000001 token precision (XRP standard)</li>
-                         <li>• Scale 8: 0.00000001 token precision</li>
-                         <li>• Scale 15: Maximum precision (0.000000000000001)</li>
-                    </ul>
-               </div>
-               } @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
+               <app-field-helper title="Asset Scale Guidelines" [items]="assetScaleHelperItems" [show]="showAssetScaleHelper" />
+
+               @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
                <p class="form-error mt-1">{{ mptValidator.getAssetScaleErrorMessage() }}</p>
                }
           </div>
@@ -159,10 +157,10 @@
                          [isValid]="!(mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined)"
                          [isInvalid]="(mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined)"
                          (keydown)="utilsService.preventNegative($event)"
-                         (input)="amountValidatorService.onAmountInput($event,'mpttransferFee')"
-                         (blur)="amountValidatorService.onAmountBlur($event,'mpttransferFee')"
+                         (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mptTransferFee')"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event,'mpttransferFee')"
+                         (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
                          [ngModel]="transferFee"
                          (ngModelChange)="transferFee = $event"
                          placeholder="e.g. 10"
@@ -185,17 +183,9 @@
                     }
                </div>
 
-               @if (showTransferFeeHelper()) {
-               <div class="helper-text-main-div">
-                    <p class="helper-text-paragraph">Transfer Fee Examples:</p>
-                    <ul class="space-y-1">
-                         <li>• 0 = 0% fee (no fee)</li>
-                         <li>• 500 = 0.5% fee</li>
-                         <li>• 5000 = 5% fee</li>
-                         <li>• 50000 = 50% fee (maximum)</li>
-                    </ul>
-               </div>
-               } @if (transferFee !== null && transferFee !== undefined && mptValidator.isTransferFeeInvalid()) {
+               <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
+
+               @if (transferFee !== null && transferFee !== undefined && mptValidator.isTransferFeeInvalid()) {
                <p class="form-error mt-1">{{ mptValidator.getTransferFeeErrorMessage() }}</p>
                } @if (transferFee && transferFee > 0 && !mptUtil.flags().canTransfer) {
                <p class="form-warning mt-2 flex items-center gap-1">
@@ -214,12 +204,28 @@
                     </label>
 
                     <div class="flex items-center gap-2">
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="jsonEditor.format()">Format JSON</button>
-                         <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="this.mptStoreService.setField('metaData', '');">Clear Metadata</button>
+                         <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="format-btn-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                              Format JSON
+                         </button>
+                         <button type="button" (click)="this.mptStoreService.setField('metaData', '');" title="Clear DID Document" class="format-btn-small">
+                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                              Clear Metadata
+                         </button>
+                         <!-- <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="jsonEditor.format()">Format JSON</button> -->
+                         <!-- <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="this.mptStoreService.setField('metaData', '');">Clear Metadata</button> -->
                     </div>
                </div>
 
-               <p class="text-secondary">JSON metadata for this MPT issuance (immutable after creation).</p>
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary pb-0 mb-0">JSON metadata for this MPT issuance (immutable after creation).</p>
+                    <button type="button" (click)="toggleMptMetadataHelper()" class="text-gray-400 hover:text-gray-600 pb-0 pt-1 mb-0">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <!-- MPT JSON Helper -->
+               <app-field-helper title="MPT Metadata (XLS-89)" [items]="mptMetadataHelperItems" [show]="showMptMetadataHelper" />
 
                <div class="mt-2">
                     <app-json-editor [value]="metaData" (valueChange)="onMetadataChanged($event)" #jsonEditor> </app-json-editor>

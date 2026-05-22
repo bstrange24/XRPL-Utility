@@ -27,14 +27,21 @@
                               <div class="lg:col-span-2">
                                    <app-nft-create-fields
                                         [destinationItems]="destinationItems()"
+                                        [currentAddress]="currentAddress()"
+                                        [lastIntendedDestination]="lastIntendedDestination()"
+                                        [selectedDestinationAddr]="selectedDestinationAddress()"
                                         [selectedDestinationItem]="selectedDestinationItem()"
                                         [destinationSearchQuery]="destinationSearchQuery()"
+                                        (destinationChange)="handleDestinationChange($event)"
+                                        (searchQueryChange)="handleSearchQueryChange($event)"
+                                        (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
                                         (currencySelected)="onCurrencySelected($event)"
                                         (issuerSelected)="onIssuerSelected($event)"
                                         (optionsToggled)="toggleOptions($event)"
                                         (expirationToggled)="toggleExpiration($event)"
                                         (destinationSearchQueryChange)="handleSearchQueryChange($event)"
                                         (destinationValueChange)="handleDestinationChange($event)"
+                                        (canCreateNftChange)="onCanCreateNftChange($event)"
                                    >
                                    </app-nft-create-fields>
                               </div>
@@ -44,10 +51,10 @@
                                    <app-flag-selector [title]="'NFT Flags'" [flagsConfig]="nftFlagsConfig" [flags]="nftUtilService.nftFlags()" [totalValue]="nftUtilService.totalFlagsValue()" [totalHex]="nftUtilService.totalFlagsHex()" [toggleFlag]="nftUtilService.toggleFlag.bind(nftUtilService)" />
                               </div>
                          </div>
-                         } @if (tab === 'burnNft') {
-                         <app-nft-burn></app-nft-burn>
                          } @if (tab === 'updateNFTMetadata') {
-                         <app-nft-modify></app-nft-modify>
+                         <app-nft-modify (canModifyNftChange)="onCanModifyNftChange($event)"></app-nft-modify>
+                         } @if (tab === 'burnNft') {
+                         <app-nft-burn (canBurnNftChange)="onCanBurnNftChange($event)"></app-nft-burn>
                          }
                     </div>
                </div>
@@ -61,11 +68,11 @@
                <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <!-- Primary Button -->
                     @if (tab === 'createNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreatNft()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftButtonLabel() }}</button>
                     } @else if (tab === 'updateNFTMetadata') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue whitespace-nowrap">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canModifyNft()" class="btn-blue whitespace-nowrap">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
                     } @else if (tab === 'burnNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ nftUtilService.burnNftButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canBurnNft()" class="btn-red whitespace-nowrap">{{ nftUtilService.burnNftButtonLabel() }}</button>
                     }
 
                     <!-- Clear Fields -->

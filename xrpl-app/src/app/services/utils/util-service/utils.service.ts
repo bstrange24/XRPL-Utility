@@ -125,6 +125,16 @@ export class UtilsService {
                }
           }
 
+          if (type === 'nftTransferFee') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.nftCreateStoreService.setField('transferFee', 0);
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.nftCreateStoreService.setField('transferFee', rounded);
+               }
+          }
+
           if (type === 'mptCreate') {
                if (Number.isNaN(num) || num < 0) {
                     this.mptStoreService.setField('amount', '');
@@ -145,7 +155,7 @@ export class UtilsService {
                }
           }
 
-          if (type === 'mpttransferFee') {
+          if (type === 'mptTransferFee') {
                if (Number.isNaN(num) || num < 0) {
                     this.mptStoreService.setField('transferFee', 0);
                     return;

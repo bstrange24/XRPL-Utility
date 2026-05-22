@@ -1,9 +1,9 @@
 import { computed, DestroyRef, effect, inject, Injectable, signal } from '@angular/core';
-import { MptStoreService } from '../../../mpt/mpt-store/mpt-store.service';
-import { MptUtilService } from '../../../mpt/mpt-util/mpt-util.service';
+import { MptStoreService } from '../../../../mpt/mpt-store/mpt-store.service';
+import { MptUtilService } from '../../../../mpt/mpt-util/mpt-util.service';
 import * as xrpl from 'xrpl';
-import { XrplService } from '../../../xrpl-services/xrpl.service';
-import { WalletManagerService } from '../../../wallets/manager/wallet-manager.service';
+import { XrplService } from '../../../../xrpl-services/xrpl.service';
+import { WalletManagerService } from '../../../../wallets/manager/wallet-manager.service';
 
 type AsyncState<T> = {
      loading: boolean;
