@@ -2067,7 +2067,8 @@ export class ValidationService {
           // SellNft Actions
           this.registerRule({
                transactionType: 'SellNft',
-               requiredFields: ['sellNft.nftId'],
+               // requiredFields: ['sellNft.nftId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
@@ -2089,7 +2090,8 @@ export class ValidationService {
           // BuyNft Actions
           this.registerRule({
                transactionType: 'BuyNft',
-               requiredFields: ['buyNft.nftId', 'buyNft.nftOfferId'],
+               // requiredFields: ['buyNft.nftId', 'buyNft.nftOfferId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
@@ -2111,7 +2113,8 @@ export class ValidationService {
           // BuyNftOffer Actions
           this.registerRule({
                transactionType: 'BuyNftOffer',
-               requiredFields: ['buyNftOffer.nftId', 'buyNftOffer.nftOfferId'],
+               // requiredFields: ['buyNftOffer.nftId', 'buyNftOffer.nftOfferId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
@@ -2133,7 +2136,8 @@ export class ValidationService {
           // SellNftOffer Actions
           this.registerRule({
                transactionType: 'SellNftOffer',
-               requiredFields: ['sellNftOffer.nftId', 'sellNftOffer.nftOfferId'],
+               // requiredFields: ['sellNftOffer.nftId', 'sellNftOffer.nftOfferId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
@@ -2155,7 +2159,8 @@ export class ValidationService {
           // CancelNftOffer Actions
           this.registerRule({
                transactionType: 'CancelNftOffer',
-               requiredFields: ['cancelNftOffer.nftOfferId'],
+               // requiredFields: ['cancelNftOffer.nftOfferId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     ctx => (ctx.accountInfo ? null : 'Account info not loaded'),

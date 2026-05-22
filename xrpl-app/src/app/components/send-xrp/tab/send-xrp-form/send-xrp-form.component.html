@@ -38,7 +38,6 @@
                               (input)="amountValidatorService.onAmountInput($event,'accountConfig')"
                               (blur)="amountValidatorService.onAmountBlur($event,'accountConfig')"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              (input)="amountValidatorService.onAmountInput($event,'accountConfig')"
                               [ngModel]="accountConfiguratorStoreService.amount()"
                               (ngModelChange)="utilsService.updateAmount($event, 'accountConfig')"
                               placeholder="e.g. 10.5"

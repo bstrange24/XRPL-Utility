@@ -50,7 +50,7 @@
                </div>
 
                @if (taxon !== null && taxon !== undefined && nftValidatorService.isTaxonInvalid()) {
-               <p class="form-error mt-1">{{ nftValidatorService.getTaxonErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ nftValidatorService.getTaxonErrorMessage() }}</p>
                }
 
                <app-field-helper title="Taxon" [items]="taxonHelperItems" [show]="showTaxonHelper" />
@@ -102,7 +102,7 @@
                <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
 
                @if (transferFee !== null && transferFee !== undefined && nftValidatorService.isTransferFeeInvalid()) {
-               <p class="form-error mt-1">{{ nftValidatorService.getTransferFeeErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ nftValidatorService.getTransferFeeErrorMessage() }}</p>
                } @if (transferFee && transferFee > 0 && !nftUtilService.nftFlags().transferableNft) {
                <p class="form-warning mt-2 flex items-center gap-1">
                     <ng-icon name="heroExclamationTriangle" size="14" />
@@ -268,7 +268,7 @@
                               [errorMessage]="nftValidatorService.getNftOfferExpirationErrorMessage()"
                               [expirationType]="'nftOffer'"
                               label="NFT Offer Expiration"
-                              hint="NFT offer expiration. The credential will expire after this date. Leave blank for a credential that never expires."
+                              hint="NFT offer expiration. The offer will expire after this date. Leave blank for a offer that never expires."
                          >
                          </app-xrpl-expiration-input>
                     </div>
@@ -291,6 +291,4 @@
           </ul>
      </div>
 </div>
-}@else {
-<div class="text-xs text-gray-400 mt-2">No validation errors (debug)</div>
 }

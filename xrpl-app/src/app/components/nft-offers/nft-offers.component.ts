@@ -69,6 +69,11 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      private readonly rightPanelService = inject(RightPanelService);
      public readonly tabs = NFT_OFFERS_TABS;
      public readonly tabMeta = NFT_OFFERS_TAB_META;
+     public canBuyNft = signal(false);
+     public canSellNft = signal(false);
+     public canSellNftOffer = signal(false);
+     public canBuyNftOffer = signal(false);
+     public canCancelNftOffer = signal(false);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -91,11 +96,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
           // Initial setup
           this.setRightPanel();
-
-          // Force load credentials
-          if (this.hasWallets()) {
-               this.getNFTOffers(true);
-          }
      }
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
@@ -378,6 +378,26 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.nftUtilService.getExistingSellOffers(accountObjects, ledgerInfo);
           this.nftUtilService.getExistingBuyOffers(accountObjects, ledgerInfo);
           this.nftUtilService.getExistingNfts(accountObjects, env.wallet.classicAddress);
+     }
+
+     onCanBuyNftChange(canBuy: boolean) {
+          this.canBuyNft.set(canBuy);
+     }
+
+     onCanSellNftChange(canSellNft: boolean) {
+          this.canSellNft.set(canSellNft);
+     }
+
+     onCanSellNftOfferChange(canSellNftOffer: boolean) {
+          this.canSellNftOffer.set(canSellNftOffer);
+     }
+
+     onCanBuyNftOfferChange(canBuyNftOffer: boolean) {
+          this.canBuyNftOffer.set(canBuyNftOffer);
+     }
+
+     onCanCancelNftOfferChange(canCancelNftOffer: boolean) {
+          this.canCancelNftOffer.set(canCancelNftOffer);
      }
 
      toggleOptions(enabled: boolean): void {

@@ -85,17 +85,14 @@ export const CreateNftStoreService = signalStore(
           },
 
           setExpiration(value: string) {
-               console.log('Setting check expiration date to:', value);
                patchState(store, { expiration: value });
           },
 
           setEnableExpirationDate(enabled: boolean) {
-               console.log('Setting check expiration date to:', enabled);
                patchState(store, { enableExpirationDate: enabled });
           },
 
           setEnableSellOnNftCreation(enabled: boolean) {
-               console.log('Setting check enableSellOnNftCreation to:', enabled);
                patchState(store, { enableSellOnNftCreation: enabled });
           },
 

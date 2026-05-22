@@ -89,11 +89,26 @@ export const AppConstants = {
      NFT_OWNER_HELPER_ITEMS: ['Optional field', 'If set, the current owner of the NFT must match this address to modify the NFT', 'Useful for ensuring only the owner can update metadata or burn the NFT', 'Leave empty to allow any holder to modify (if they have the rights based on flags)'],
      ASSET_SCALE_HELPER_ITEMS: ['Scale 0: 1 token (no decimals)', 'Scale 2: 0.01 token precision', 'Scale 6: 0.000001 token precision (XRP standard)', 'Scale 8: 0.00000001 token precision', 'Scale 15: Maximum precision (0.000000000000001)'],
      TAXON_HELPER_ITEMS: ['A number chosen by the minter to group or categorize NFTs', 'Commonly used to identify collections or series', 'Value can be any integer from <strong>0</strong> to <strong>4,294,967,295</strong>', 'Most minters use small numbers like 0, 1, 10, 100, etc.', 'The combination of <strong>Issuer + Taxon</strong> helps wallets and marketplaces group NFTs'],
-     NFT_ID_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)', 'Usually starts with "0008..." or similar pattern'],
+     NFT_ID_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)'],
+     NFT_OFFER_INDEX_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)', 'The offer index is returned when you create an NFT offer'],
+
      DESTINATION_HELPER_ITEMS: ['The unique address of the account receiving the token', 'Must be a valid XRPL address (starts with r...)', 'If sending to an exchange, make sure to include the correct destination tag if required by the exchange'],
      MPT_ISSUANCE_ID_HELPER_ITEMS: ['The unique identifier of the MPT issuance you want to send', 'Must be a valid MPT Issuance ID (64-character hexadecimal string)', 'You can find this ID in your wallet or on the transaction that created the MPT issuance'],
-     AMOUNT_HELPER_ITEMS: ['The amount of tokens to send', 'Must be a positive number', 'If the token has decimals (scale), you can include up to that many decimal places', 'Example: If the token has scale 6, you can send 0.000001 tokens (1 microtoken) or more'],
+     MPT_AMOUNT_HELPER_ITEMS: ['The amount of tokens to send', 'Must be a positive number', 'If the token has decimals (scale), you can include up to that many decimal places', 'Example: If the token has scale 6, you can send 0.000001 tokens (1 microtoken) or more'],
 
+     CURRENCY_CODE_HELPER_ITEMS: [
+          '<code>XRP</code> is the native currency of the XRPL and does not require an issuer',
+          'User-created currencies are issued by XRPL accounts and are identified by both the currency code and issuer address',
+          'Common currency codes: <code>USD</code>, <code>EUR</code>, <code>BTC</code>, <code>RLUSD</code>',
+          'Standard currency codes are typically 3–20 characters long',
+          'Currency codes are case-sensitive (<code>usd</code> and <code>USD</code> are different)',
+          'Non-standard currency codes may appear as 160-bit hexadecimal values',
+          'Receiving issued currencies requires a trust line to the issuer',
+          'Always verify the issuer address to avoid counterfeit or scam tokens',
+     ],
+     AMOUNT_HELPER_ITEMS: ['For XRP, amounts are entered in whole XRP units (not drops)', 'Issued token amounts may contain decimal values', 'Must be greater than 0', 'Very small XRP amounts may fail because of reserve or fee requirements', 'Examples: <code>1</code>, <code>10.5</code>, <code>2500</code>, <code>0.001</code>', 'Scientific notation (for example <code>1e6</code>) is not recommended', 'Large issued currency amounts may lose precision if too many decimal places are used'],
+
+     ISSUER_HELPER_ITEMS: ['The issuer is the XRPL account that created and controls the currency', 'The combination of currency code + issuer uniquely identifies a token', 'Different issuers may create tokens with the same currency code', 'Always verify the issuer address before sending or accepting tokens', 'XRP does not have or require an issuer', 'Receiving issued currencies requires a trust line to the issuer account', 'Some issuers may freeze tokens or enforce transfer restrictions'],
      MPT_TOKEN_COUNT_PRESETS: [10, 100, 1000, 10000, 100000, 1000000, 10000000],
      ASSET_SCALE_PRESETS: [0, 2, 6, 8, 15],
      TAXON_PRESETS: [0, 5, 10, 15, 20],

@@ -1,44 +1,138 @@
 <div class="card-base">
-     <h4 class="section-heading">
-          <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
-          NFT Offer Details
-     </h4>
-
      <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
+               NFT Offer Details
+          </h4>
+
           <!-- Currency + Amount -->
-          <app-currency-amount-form
-               [currencyItems]="checksTransactionViewModelService.currencyItems()"
-               [selectedCurrencyItem]="checksTransactionViewModelService.selectedCurrencyItem()"
-               [amount]="nftCreateStoreService.amount()"
-               [currency]="currencyStoreService.currency()"
-               [issuerItems]="checksTransactionViewModelService.issuerItems()"
-               [selectedIssuerItem]="checksTransactionViewModelService.selectedIssuerItem()"
-               [balance]="currencyStoreService.balance()"
-               (currencySelected)="currencySelected.emit($event)"
-               (amountChange)="utilsService.updateAmount($event, 'nftCreate')"
-               (issuerSelected)="issuerSelected.emit($event)"
-          >
-          </app-currency-amount-form>
+          <div>
+               <app-currency-amount-form
+                    [currencyItems]="nftOffersTransactionViewModelService.currencyItems()"
+                    [selectedCurrencyItem]="nftOffersTransactionViewModelService.selectedCurrencyItem()"
+                    [amount]="nftCreateStoreService.amount()"
+                    [currency]="currencyStoreService.currency()"
+                    [issuerItems]="nftOffersTransactionViewModelService.issuerItems()"
+                    [selectedIssuerItem]="nftOffersTransactionViewModelService.selectedIssuerItem()"
+                    [balance]="currencyStoreService.balance()"
+                    (currencySelected)="currencySelected.emit($event)"
+                    (amountChange)="utilsService.updateAmount($event, 'nftCreate')"
+                    (issuerSelected)="issuerSelected.emit($event)"
+               />
+
+               <!-- Amount Error Message -->
+               @if (nftOfferValidatorService.getAmountErrorMessage()) {
+               <p class="form-error mt-2">{{ nftOfferValidatorService.getAmountErrorMessage() }}</p>
+               }
+
+               <!-- Balance Info -->
+               <div class="mt-2 text-xs text-gray-500">Available balance: <strong>{{ getFormattedBalance() }}</strong></div>
+          </div>
 
           <!-- NFT Token ID -->
-          <div class="space-y-2">
-               <label for="nftTokenID" class="label-primary">NFT Token ID</label>
-               <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
+          <div>
+               <div class="flex justify-between items-baseline">
+                    <label for="nftTokenID" class="label-primary"> NFT Token ID <span class="text-red-500">*</span> </label>
+               </div>
 
-               <input type="text" [(ngModel)]="nftCreateStoreService.nftId" name="nftIdField" class="input-base" />
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
+                    <button type="button" (click)="toggleNftIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         [(ngModel)]="nftCreateStoreService.nftId"
+                         (focus)="onNftIdFocus()"
+                         (blur)="onNftIdBlur()"
+                         placeholder="Enter 64-character hex NFT Token ID"
+                         class="input-base-with-validation font-mono text-sm"
+                         app-focus-border
+                         [isValid]="!!(nftOfferValidatorService.isNftTokenIdValid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
+                         [isInvalid]="!!(nftOfferValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
+                    />
+
+                    <!-- Validation Icon -->
+                    <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && (nftOfferValidatorService.isNftTokenIdValid() || nftOfferValidatorService.isNftTokenIdInvalid())) {
+                    <div class="absolute right-2 top-1/2 -translate-y-1/2">
+                         @if (nftOfferValidatorService.isNftTokenIdValid()) {
+                         <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
+                         } @else if (nftOfferValidatorService.isNftTokenIdInvalid()) {
+                         <ng-icon name="heroXCircle" size="16" class="text-red-500" />
+                         }
+                    </div>
+                    } -->
+
+                    <!-- Clear Button -->
+                    @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
+                    <button type="button" (click)="clearNftId()" class="clearInputXmark right-8" aria-label="Clear NFT Token ID">
+                         <lucide-icon name="x" size="16"></lucide-icon>
+                    </button>
+                    }
+               </div>
+
+               <!-- Helper Text -->
+               <app-field-helper title="NFT Token ID Guidelines" [items]="nftIdHelperItems" [show]="showNftIdHelper" />
+
+               <!-- Character Counter -->
+               <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
+               <div class="mt-1 text-xs flex justify-between items-center">
+                    <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftId().length }} / 64</span>
+                    @if (nftCreateStoreService.nftId().length === 64 && nftOfferValidatorService.isNftTokenIdValid()) {
+                    <span class="text-green-600 flex items-center gap-1">
+                         <ng-icon name="heroCheckCircle" size="12" />
+                         Valid format
+                    </span>
+                    } @else if (nftCreateStoreService.nftId().length === 64 && nftOfferValidatorService.isNftTokenIdInvalid()) {
+                    <span class="text-red-600 flex items-center gap-1">
+                         <ng-icon name="heroXCircle" size="12" />
+                         Invalid hex characters
+                    </span>
+                    }
+               </div>
+               } -->
+
+               <!-- Error Message -->
+               @if (nftOfferValidatorService.getNftTokenIdErrorMessage()) {
+               <p class="form-error mt-2">{{ nftOfferValidatorService.getNftTokenIdErrorMessage() }}</p>
+               }
+
+               <!-- Success Message -->
+               @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && nftOfferValidatorService.isNftTokenIdValid()) {
+               <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
+                    <ng-icon name="heroCheckCircle" size="12" />
+                    Valid NFT Token ID format
+               </p>
+               }
           </div>
 
           <!-- Expiration + Owner -->
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                <!-- Expiration -->
                <div class="rounded-2xl p-1 transition-shadow">
-                    <app-xrpl-expiration-input [expirationSignal]="nftCreateStoreService.expiration" [setExpiration]="setNftExpirationDate" label="NFT Offer Expiration Date (optional)" hint="NFT offer expiration when the offer will expire."> </app-xrpl-expiration-input>
+                    <app-xrpl-expiration-input
+                         [expirationSignal]="nftCreateStoreService.expiration"
+                         [setExpiration]="nftCreateStoreService.setExpiration.bind(nftCreateStoreService)"
+                         [enableSignal]="nftCreateStoreService.enableExpirationDate"
+                         [setEnable]="nftCreateStoreService.setEnableExpirationDate.bind(nftCreateStoreService)"
+                         [optionsEnabledSignal]="nftCreateStoreService.enableSellOnNftCreation"
+                         [resetWhenOptionsDisabled]="false"
+                         [showError]="nftValidatorService.hasInvalidNftSellExpiration()"
+                         [errorMessage]="nftValidatorService.getNftOfferExpirationErrorMessage()"
+                         [expirationType]="'nftOffer'"
+                         label="NFT Offer Expiration"
+                         hint="NFT offer expiration. The offer will expire after this date. Leave blank for a offer that never expires."
+                    >
+                    </app-xrpl-expiration-input>
                </div>
 
                <!-- Owner -->
                <div class="space-y-2">
                     <label for="nftOwner" class="label-primary">Owner</label>
-                    <p class="text-secondary">Owner of the NFT (usually your own address for sell offers).</p>
+                    <p class="text-secondary">Owner of the NFT.</p>
 
                     <input type="text" [(ngModel)]="nftCreateStoreService.nftOwnerAddress" name="ownerField" class="input-base" />
                </div>

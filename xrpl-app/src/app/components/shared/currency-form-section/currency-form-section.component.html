@@ -14,7 +14,7 @@
                <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
                @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
-               <p class="form-error mt-1">{{ currencyErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ currencyErrorMessage() }}</p>
                }
           </div>
 
@@ -24,7 +24,7 @@
                <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                @if (isIssuerInvalid()) {
-               <p class="form-error mt-1">Please enter a valid XRP address</p>
+               <p class="form-error mt-2">Please enter a valid XRP address</p>
                }
           </div>
 
@@ -44,7 +44,7 @@
                     } -->
                </div>
                @if (!isReadOnly && isAmountInvalid()) {
-               <p class="form-error mt-1">{{ amountErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
                }
           </div>
 
@@ -71,7 +71,7 @@
                <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
                @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
-               <p class="form-error mt-1">{{ currencyErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ currencyErrorMessage() }}</p>
                }
           </div>
 
@@ -82,7 +82,7 @@
                <!-- <app-select-search-dropdown [validateXrpAddress]="true" [disableCurrentAccount]="false" [validateOn]="'blur'" [closeWhenInvalid]="false" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" /> -->
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                @if (isIssuerInvalid()) {
-               <p class="form-error mt-1">Please enter a valid XRP address</p>
+               <p class="form-error mt-2">Please enter a valid XRP address</p>
                }
           </div>
      </div>
@@ -104,7 +104,7 @@
                     } -->
                </div>
                @if (!isReadOnly && isAmountInvalid()) {
-               <p class="form-error mt-1">{{ amountErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
                }
           </div>
 

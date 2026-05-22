@@ -1,35 +1,84 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { XrplDateService } from '../../../../core/xrpl-date.service';
-import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
-import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
-import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
-import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { TrustlineCurrencyService } from '../../../../services/trustlines/trustline-currency/trustline-currency.service';
-import { TrustlineUtilService } from '../../../../services/trustlines/trustline-utils/trustline-util.service';
-import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { AppConstants } from '../../../../core/app.constants';
+import { NftOfferValidatorService } from '../../../../services/shared/validators/nft-offer/nft-offer-validator/nft-offer-validator.service';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { NgIcon } from '@ng-icons/core';
+import { NftBuyService } from '../../../../services/shared/validators/nft-offer/nft-buy/nft-buy.service';
 
 @Component({
      selector: 'app-nft-buy',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule, FormsModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon],
      templateUrl: './nft-buy.component.html',
      styleUrl: './nft-buy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NftBuyComponent {
-     public readonly txUiService = inject(TransactionUiService);
-     public readonly checksStoreService = inject(ChecksStoreService);
-     public readonly currencyStoreService = inject(CurrencyStoreService);
-     public readonly checksTransactionViewModelService = inject(ChecksTransactionViewModelService);
-     public readonly utilsService = inject(UtilsService);
-     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
-     public readonly trustlineUtilService = inject(TrustlineUtilService);
-     public readonly xrplDateService = inject(XrplDateService);
-     public readonly nftUtilService = inject(NftUtilService);
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
+     public readonly nftUtilService = inject(NftUtilService);
+     public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
+     public readonly nftBuyService = inject(NftBuyService);
+
+     // Helper info items
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
+
+     constructor() {
+          // Emit validation status changes
+          effect(() => {
+               this.canBuyNftChange.emit(this.nftBuyService.canBuyOffer());
+               this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
+          });
+     }
+
+     // Outputs
+     canBuyNftChange = output<boolean>();
+     validationErrorsChange = output<string[]>();
+
+     // UI State
+     showOfferIndexHelper = signal(false);
+     showNftIdHelper = signal(false);
+     isOfferIndexFocused = signal(false);
+     isNftIdFocused = signal(false);
+
+     // Clear methods
+     clearOfferIndex() {
+          this.nftCreateStoreService.setField('nftOfferId', '');
+     }
+
+     clearNftId() {
+          this.nftCreateStoreService.setField('nftId', '');
+     }
+
+     // Helper toggles
+     toggleOfferIndexHelper() {
+          this.showOfferIndexHelper.set(!this.showOfferIndexHelper());
+     }
+
+     toggleNftIdHelper() {
+          this.showNftIdHelper.set(!this.showNftIdHelper());
+     }
+
+     // Focus handlers
+     onOfferIndexFocus() {
+          this.isOfferIndexFocused.set(true);
+     }
+
+     onOfferIndexBlur() {
+          this.isOfferIndexFocused.set(false);
+     }
+
+     onNftIdFocus() {
+          this.isNftIdFocused.set(true);
+     }
+
+     onNftIdBlur() {
+          this.isNftIdFocused.set(false);
+     }
 }
