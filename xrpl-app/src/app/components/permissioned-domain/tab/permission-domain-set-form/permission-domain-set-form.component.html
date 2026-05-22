@@ -149,7 +149,7 @@
                     </div>
 
                     <div class="md:col-span-2">
-                         <button type="button" class="w-full rounded-2xl bg-blue-600 py-3 font-medium text-white transition-all hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!canAddCredential()" (click)="addCredential()">+ Add Credential</button>
+                         <button type="button" class="btn-blue mb-1.5" [disabled]="!canAddCredential()" (click)="addCredential()">+ Add Credential</button>
                     </div>
                </div>
 
@@ -201,10 +201,10 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }

@@ -3,7 +3,7 @@
 <div class="card-base">
      <div class="space-y-6">
           <!-- Taker Gets (Buy Side) / Taker Pays (Sell Side) Headers -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div>
                     <label for="recieve" class="label-primary">Taker Gets – What You Receive</label>
                </div>
@@ -13,7 +13,7 @@
           </div>
 
           <!-- Currency Code -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="currencyCode" class="label-primary">Currency Code</label>
                     <p class="text-secondary">The token you want to receive.</p>
@@ -34,7 +34,7 @@
           </div>
 
           <!-- Issuer -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="issuer" class="label-primary">Issuer</label>
                     <p class="text-secondary">The XRPL account that issues the token you want to receive.</p>
@@ -55,7 +55,7 @@
           </div>
 
           <!-- Your Balances -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="balance1" class="label-primary">Your Balance – Asset 1</label>
                     <p class="text-secondary">How much of the first token your connected wallet currently holds.</p>
@@ -70,7 +70,7 @@
           </div>
 
           <!-- Amounts -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="amountTakerGets" class="label-primary">Amount – Taker Gets</label>
                     <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event); weWantAmountChange.emit()" placeholder="e.g. 10.5" class="input-base" />

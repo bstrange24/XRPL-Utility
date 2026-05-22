@@ -61,7 +61,7 @@
                     </div>
 
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                    <p class="same-addrress-as-selected-account">
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send the remaining XRP to yourself.
                     </p>
@@ -151,7 +151,7 @@
           [class.bg-blue-50]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()"
           [class.bg-amber-50]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()"
      >
-          <div class="flex items-start gap-3">
+          <div class="summary-item-content">
                <ng-icon [name]="(mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()) ? 'heroInformationCircle' : 'heroExclamationTriangle'" size="18" class="mt-0.5 flex-shrink-0" [class.text-blue-600]="mptAuthorizeValidator.requiresIssuerAction() || mptAuthorizeValidator.requiresHolderAction()" [class.text-amber-600]="!mptAuthorizeValidator.requiresIssuerAction() && !mptAuthorizeValidator.requiresHolderAction()" />
 
                <div class="flex-1">
@@ -242,10 +242,10 @@
      <!-- Summary of validation errors -->
      @if (mptAuthorizeValidator.getAllValidationErrors().length > 0) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of mptAuthorizeValidator.getAllValidationErrors(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }

@@ -65,7 +65,7 @@
                </div>
 
                <!-- Action Buttons -->
-               <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+               <div class="main-button-section mt-6">
                     <!-- Primary Button -->
                     @if (tab === 'createNft') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreatNft()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftButtonLabel() }}</button>

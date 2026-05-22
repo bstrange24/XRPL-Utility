@@ -97,7 +97,7 @@
                }
 
                <!-- Action Buttons -->
-               <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+               <div class="main-button-section mt-6">
                     @if (tab === 'setTrustline') {
                     <button type="button" class="btn-primary whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || trustlineStore.trustlineAlreadyExist()">{{ view.trustlineSetButtonLabel() }}</button>
                     } @else if (tab === 'removeTrustline') {

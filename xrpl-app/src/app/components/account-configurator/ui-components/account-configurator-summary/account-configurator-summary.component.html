@@ -19,7 +19,7 @@
           @if (filteredConfigItems().length > 0) { @for (item of filteredConfigItems(); track item.id) {
           <app-summary-item [copyValue]="item.text" copyTooltip="Copy configuration text" (onCopyClick)="copyUtilService.copyAndToast($event, 'Configuration text')" [class.border-red-200]="!!item.isIrreversible" [class.bg-red-50]="!!item.isIrreversible">
                <div item-content>
-                    <div class="flex items-start gap-3">
+                    <div class="summary-item-content">
                          @if (item.isIrreversible) {
                          <ng-icon name="heroExclamationTriangle" size="16" class="text-red-500 flex-shrink-0 mt-1" />
                          } @else {

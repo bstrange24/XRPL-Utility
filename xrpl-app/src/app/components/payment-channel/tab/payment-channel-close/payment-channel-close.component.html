@@ -23,7 +23,7 @@
      <!-- Expired Warning -->
      @if ((viewModel.activeTab() === 'claimPaymentChannel' && viewModel.selectedIsExpired()) || (viewModel.activeTab() === 'closePaymentChannel' && viewModel.selectedIsExpired())) {
      <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
           <div class="alert-content">This selected payment channel has expired.</div>
      </div>
      }

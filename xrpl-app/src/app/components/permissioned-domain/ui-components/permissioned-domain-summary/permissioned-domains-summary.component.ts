@@ -198,17 +198,44 @@ export class PermissionedDomainsSummaryComponent {
 
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;
-          const baseClass = 'px-4 py-2 text-sm font-medium rounded-2xl transition-all border hover:shadow-sm active:scale-[0.985] inline-flex items-center gap-2';
+
+          let colorClass = '';
 
           switch (filterKey) {
+               case 'all':
+                    colorClass = 'btn-filter-blue';
+                    break;
                case 'hasCredentials':
-                    return `${baseClass} ${isActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'border-gray-200 text-gray-600 hover:bg-emerald-50'}`;
+                    colorClass = 'btn-filter-green'; // Using green for "Has"
+                    break;
                case 'noCredentials':
-                    return `${baseClass} ${isActive ? 'bg-amber-100 text-amber-700 border-amber-200' : 'border-gray-200 text-gray-600 hover:bg-amber-50'}`;
+                    colorClass = 'btn-filter-amber';
+                    break;
                default:
-                    return `${baseClass} ${isActive ? 'bg-blue-600 text-white border-blue-200' : 'border-gray-200 text-gray-600 hover:bg-blue-50'}`;
+                    colorClass = 'btn-filter-blue';
           }
+
+          // Add active state
+          if (isActive) {
+               return `${colorClass} btn-filter-active`;
+          }
+
+          return colorClass;
      }
+
+     // getQuickFilterClass(filterKey: string): string {
+     //      const isActive = this.activeQuickFilter() === filterKey;
+     //      const baseClass = 'px-4 py-2 text-sm font-medium rounded-2xl transition-all border hover:shadow-sm active:scale-[0.985] inline-flex items-center gap-2';
+
+     //      switch (filterKey) {
+     //           case 'hasCredentials':
+     //                return `${baseClass} ${isActive ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'border-gray-200 text-gray-600 hover:bg-emerald-50'}`;
+     //           case 'noCredentials':
+     //                return `${baseClass} ${isActive ? 'bg-amber-100 text-amber-700 border-amber-200' : 'border-gray-200 text-gray-600 hover:bg-amber-50'}`;
+     //           default:
+     //                return `${baseClass} ${isActive ? 'bg-blue-600 text-white border-blue-200' : 'border-gray-200 text-gray-600 hover:bg-blue-50'}`;
+     //      }
+     // }
 
      isSelected(domainIndex: string): boolean {
           if (this.tab() === 'setPermissionedDomain') return false;

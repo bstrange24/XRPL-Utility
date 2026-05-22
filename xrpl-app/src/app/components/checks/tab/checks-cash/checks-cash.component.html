@@ -16,7 +16,7 @@
      <div class="card-base">
           <div class="space-y-6">
                <!-- Creator + Issuer -->
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Check Creator (Sender) -->
                     <div>
                          <label for="checkCreator" class="label-primary">Check Creator</label>
@@ -65,7 +65,7 @@
      </div>
      } @if (checksTransactionViewModelService.selectedCheckIsExpired()) {
      <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
           <div class="alert-content">This check has expired and can only be canceled.</div>
      </div>
      }
@@ -80,7 +80,7 @@
                <h4 class="text-sm font-semibold text-amber-800">Missing Trustline Detected</h4>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="checkCurrencyCode" class="label-primary">Currency Code</label>
                     <p class="text-xs text-amber-700">Issued asset combined with the issuer to uniquely define a token.</p>

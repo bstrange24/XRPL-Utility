@@ -8,7 +8,7 @@
           </app-select-search-dropdown>
 
           @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-          <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+          <p class="same-addrress-as-selected-account">
                <ng-icon name="heroExclamationTriangle" size="14" />
                This is your currently active wallet. You cannot send the remaining XRP to yourself.
           </p>
@@ -17,7 +17,7 @@
 
      <!-- Toggle optional fields Card -->
      <div class="card-base">
-          <div class="flex items-center justify-between">
+          <div class="options">
                <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
 
                <div class="flex items-center gap-2">
@@ -39,10 +39,10 @@
 
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }
@@ -53,17 +53,17 @@
 
      <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
      <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
           <!-- <div class="alert-content">Deleting your account will permanently remove it from the XRP Ledger. Ensure you have a backup of your keys and have transferred any assets.</div> -->
           <div class="alert-content">Deleting this account will permanently remove it from the active XRP Ledger state. Make sure you have a secure backup of your secret key/seed. Transfer or burn all assets first, and specify a destination address to receive any remaining XRP (minus the deletion fee of currently ~0.2 XRP). The account can later be re-created by sending at least the base reserve (~1 XRP), but it will be treated as a brand-new account.</div>
      </div>
 
      <!-- Action Buttons -->
-     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+     <div class="main-button-section">
           <!-- Delete Button (Destructive) -->
-          <button type="button" (click)="performAction.emit()" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" class="w-full rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed sm:w-auto">{{ view().deleteWalletButtonLabel() }}</button>
+          <button type="button" (click)="performAction.emit()" [disabled]="!canSubmit() || view().deleteBlockers().length > 0 || !connectionGuard.isConnectionReady()" class="btn-red">{{ view().deleteWalletButtonLabel() }}</button>
 
           <!-- Clear Fields Button (Secondary) -->
-          <button type="button" (click)="clearFields.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="rounded-2xl border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed">Clear Fields</button>
+          <button type="button" (click)="clearFields.emit()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary">Clear Fields</button>
      </div>
 </div>

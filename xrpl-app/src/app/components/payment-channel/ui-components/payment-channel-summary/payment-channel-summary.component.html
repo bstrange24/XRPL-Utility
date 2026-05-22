@@ -32,7 +32,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -55,7 +55,7 @@
                @for (channel of sortedChannels(); track channel.id) {
                <app-summary-item [selected]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()" [isExpired]="channel.isExpired" [copyValue]="channel.id" copyTooltip="Copy Channel ID" (onClick)="onPaymentChannelClick(channel)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Channel ID')">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Status Icon -->
                               @if (channel.isExpired) {
                               <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />

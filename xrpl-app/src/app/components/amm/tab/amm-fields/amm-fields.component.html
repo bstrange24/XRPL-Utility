@@ -9,7 +9,7 @@
                <h4 class="mb-4 text-sm font-semibold text-gray-900">Pool Assets</h4>
 
                <!-- Asset 1 + Asset 2 -->
-               <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Asset 1 -->
                     <div class="space-y-2">
                          <label for="asset1" class="label-primary">Asset 1</label>
@@ -67,7 +67,7 @@
 
           <!-- Amount Fields (except Delete) -->
           @if (tab() !== 'deleteAMM') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="amountAsset1" class="label-primary">Amount – Asset 1</label>
                     <p class="text-secondary">Amount of Asset 1 to use in the pool.</p>
@@ -82,7 +82,7 @@
           }
 
           <!-- Pool Totals -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="poolTotalAsset1" class="label-primary">Pool Total – Asset 1</label>
                     <input type="text" readonly class="input-disabled" [value]="store.assetPool1Balance() || '0'" />
@@ -96,7 +96,7 @@
 
           <!-- Create AMM Specific Fields -->
           @if (tab() === 'createAMM') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="ammTradingFee" class="label-primary">Trading Fee (%)</label>
                     <p class="text-secondary">Fee charged on every swap (0% – 1%).</p>
@@ -179,7 +179,7 @@
           <!-- Withdrawal Options -->
           @if (tab() === 'withdrawalFromAMM') {
           <div class="space-y-6">
-               <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <div class="space-y-2">
                          <label for="lpTokenBalanceWithdrawl" class="label-primary">LP Token Balance</label>
                          <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
@@ -260,7 +260,7 @@
 
           <!-- Clawback -->
           @if (tab() === 'clawbackFromAMM') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label for="lpTokenClawback" class="label-primary">LP Token Balance</label>
                     <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />

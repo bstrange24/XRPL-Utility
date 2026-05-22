@@ -26,7 +26,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -49,7 +49,7 @@
                @for (tl of trustlinesWithBalance(); track tl.currency + tl.issuer) {
                <app-summary-item [copyValue]="tl.issuer" copyTooltip="Copy Issuer Address" (onCopyClick)="copyIssuer(tl.issuer)">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Use pre-calculated balanceNum -->
                               @if (tl.balanceNum > 0) {
                               <ng-icon name="heroArrowUp" size="20" class="text-green-500 mt-0.5 flex-shrink-0" />

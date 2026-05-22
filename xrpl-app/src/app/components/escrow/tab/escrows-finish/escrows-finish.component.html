@@ -16,7 +16,7 @@
      @if (activeTab === 'finishEscrow' && selectedEscrowItem() && !selectedEscrowIsExpired() && viewModel.selectedEscrowSequence() !== '') {
      <div class="card-base">
           <div class="space-y-6">
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Escrow Sequence ID -->
                     <div>
                          <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
@@ -41,7 +41,7 @@
 
                <!-- Condition + Fulfillment (Conditional Escrow Only) -->
                @if (isConditional) {
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Condition -->
                     <div>
                          <label for="escrowCondition" class="label-primary">Condition</label>
@@ -91,7 +91,7 @@
 <!-- Expired Warning -->
 @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && selectedEscrowIsExpired()) {
 <div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroExclamationTriangle" size="16" class="alert-icon" />
      <div class="alert-content">This selected escrow has expired @if (activeTab === 'finishEscrow') { and cannot be finished. }</div>
 </div>
 }

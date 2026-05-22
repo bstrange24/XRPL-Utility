@@ -24,6 +24,14 @@
                     </button>
                     }
                </div>
+               <!-- <div class="flex flex-wrap gap-2">
+                    @for (filter of quickFilters; track filter.key) {
+                    <button (click)="setQuickFilter(filter.key)" [class]="getQuickFilterClass(filter.key)">
+                         <ng-icon [name]="filter.icon" size="16" />
+                         <span>{{ filter.label }}</span>
+                    </button>
+                    }
+               </div> -->
 
                <!-- Date Filters -->
                <div class="grid grid-cols-2 gap-4">
@@ -32,7 +40,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 

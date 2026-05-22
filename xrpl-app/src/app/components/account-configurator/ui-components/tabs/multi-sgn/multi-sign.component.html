@@ -56,7 +56,7 @@
                          <!-- Seed -->
                          <div class="md:col-span-4">
                               <label for="multiSignSeed" class="field-label">Seed</label>
-                              <p class="text-secondary">Family seed (s...) or secret numbers (8 groups of 6 digits)</p>
+                              <p class="text-secondary">Family seed (s...) or secret numbers</p>
                               <div class="relative">
                                    <input
                                         type="text"
@@ -112,10 +112,9 @@
           </div>
 
           <!-- Add Signer Button -->
-          <!-- <button type="button" (click)="accountConfiguratorUtilService.addSigner()" class="mt-5 w-full rounded-2xl border border-dashed border-gray-300 py-2 font-medium text-gray-700 transition-all hover:border-gray-400 hover:text-gray-900">+ Add Another Signer</button> -->
-          <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="main-button-section">
                <div class="flex flex-col gap-3 sm:flex-row">
-                    <button type="button" class="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="accountConfiguratorUtilService.addSigner()">+ Add Another Signer</button>
+                    <button type="button" class="btn-blue" (click)="accountConfiguratorUtilService.addSigner()">+ Add Another Signer</button>
                </div>
           </div>
 
@@ -151,22 +150,21 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors() && hasSigners()) {
      <div class="alert-error mt-4">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">{{ validationErrorMessage() }}</div>
      </div>
      }
 
-     <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+     <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
-
-               <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+               <button type="button" class="btn-green-small" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+               <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
           </div>
 
           <!-- Secondary Actions -->
           <div class="flex items-center justify-end">
-               <button type="button" (click)="clearFields()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+               <button type="button" (click)="clearFields()" class="btn-secondary">Clear Fields</button>
           </div>
      </div>
 </div>

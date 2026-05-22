@@ -7,7 +7,7 @@
           </h4>
 
           <!-- Currency + Amount -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <!-- Currency Code -->
                <div class="space-y-2">
                     <label for="escrowCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
@@ -65,7 +65,7 @@
 
           <!-- Issuer + Balance (non-XRP, non-MPT) -->
           @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
+          <div class="side-by-side-fields mt-3">
                <!-- Issuer -->
                <div class="space-y-2">
                     <label for="escrowCurrencyIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
@@ -87,7 +87,7 @@
           <!-- MPT Section -->
           @if (currencyStoreService.currency() === 'MPT') {
           <!-- <div class="space-y-2 mb-4 mt-2"> -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3">
+          <div class="side-by-side-fields mt-3">
                <!-- Select MPT -->
                <div class="space-y-2">
                     <label for="selectMpt" class="label-primary">Select MPT <span class="text-red-500">*</span></label>
@@ -107,11 +107,11 @@
           }
 
           <!-- Destination + Destination Tag -->
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mt-3">
+          <div class="side-by-side-fields mt-3">
                <!-- Destination -->
                <div class="space-y-2">
                     <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
-                    <p class="text-secondary pb-1.5">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
+                    <p class="text-secondary pb-2">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
                     <app-select-search-dropdown
                          app-focus-border
                          [validateXrpAddress]="true"
@@ -131,7 +131,7 @@
                     </app-select-search-dropdown>
 
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                    <p class="same-addrress-as-selected-account">
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send XRP to yourself.
                     </p>
@@ -170,7 +170,6 @@
 
           <!-- Condition & Fulfillment (Conditional Escrow Only) -->
           @if (isConditional) {
-          <!-- <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-3 mb-3"> -->
           <div>
                <div class="mt-4">
                     <label for="escrowCondition" class="label-primary">Condition</label>
@@ -215,9 +214,9 @@
           }
 
           <!-- Time Settings -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 mt-4">
+          <div class="side-by-side-fields mt-4">
                <!-- Finish After -->
-               <div class="rounded-2xl p-1 transition-shadow">
+               <div class="expiration-field">
                     <app-xrpl-expiration-input
                          [expirationSignal]="escrowStoreService.escrowFinishAfterExpirationDate"
                          [setExpiration]="escrowStoreService.setEscrowFinishAfterExpirationDate.bind(escrowStoreService)"
@@ -235,7 +234,7 @@
                </div>
 
                <!-- Cancel After -->
-               <div class="rounded-2xl p-1 transition-shadow">
+               <div class="expiration-field">
                     <app-xrpl-expiration-input
                          [expirationSignal]="escrowStoreService.escrowCancelAfterExpirationDate"
                          [setExpiration]="escrowStoreService.setEscrowCancelAfterExpirationDate.bind(escrowStoreService)"
@@ -257,10 +256,10 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }

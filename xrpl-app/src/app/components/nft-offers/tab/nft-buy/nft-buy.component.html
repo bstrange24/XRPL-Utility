@@ -170,10 +170,10 @@
 <!-- Summary of validation errors -->
 @if (nftOfferValidatorService.getAllValidationErrors().length > 0) {
 <div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
      <div class="alert-content">
           <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="list-disc list-inside space-y-0.5">
+          <ul class="alert-content-list">
                @for (error of nftOfferValidatorService.getAllValidationErrors(); track $index) {
                <li class="text-sm">{{ error }}</li>
                }

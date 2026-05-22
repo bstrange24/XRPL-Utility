@@ -61,7 +61,7 @@
                <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+               <div class="main-button-section mt-6">
                     @switch (tab) { @case ('createPaymentChannel') {
                     <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || !canCreatePaymentChannelForm()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
                     } @case ('fundPaymentChannel') {

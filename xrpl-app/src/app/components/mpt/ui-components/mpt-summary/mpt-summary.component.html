@@ -27,7 +27,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -50,7 +50,7 @@
                @for (mpt of sortedMpts(); track mpt.id) {
                <app-summary-item [selected]="mpt.mpt_issuance_id === mptUtilService.selectedMptIssuanceId()" [copyValue]="mpt.mpt_issuance_id" copyTooltip="Copy MPT Issuance ID" (onClick)="onMptClick(mpt)" (onCopyClick)="copyUtilService.copyAndToast($event, 'MPT Issuance ID')">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Status Icon based on type -->
                               @if (!mpt.isHolder) {
                               <ng-icon name="heroPlusCircle" size="20" class="text-green-500 mt-0.5 flex-shrink-0" />

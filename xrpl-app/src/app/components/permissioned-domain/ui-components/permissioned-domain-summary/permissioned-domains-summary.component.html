@@ -26,7 +26,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -49,7 +49,7 @@
                @for (domain of filteredDomains(); track domain.index) {
                <app-summary-item [selected]="isSelected(domain.index)" [copyValue]="domain.index" copyTooltip="Copy Domain ID" (onClick)="selectDomain(domain)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Domain ID')">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <ng-icon name="heroCog" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
 
                               <div class="flex-1 min-w-0">

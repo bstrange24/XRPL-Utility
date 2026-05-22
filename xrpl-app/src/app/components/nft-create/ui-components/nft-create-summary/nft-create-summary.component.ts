@@ -223,20 +223,35 @@ export class NftCreateSummaryComponent {
 
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;
-          const baseClass = 'px-4 py-2 text-sm font-medium rounded-2xl transition-all border hover:shadow-sm active:scale-[0.985] inline-flex items-center gap-2';
+
+          let colorClass = '';
 
           switch (filterKey) {
+               case 'all':
+                    colorClass = 'btn-filter-blue';
+                    break;
                case 'hasUri':
-                    return `${baseClass} ${isActive ? 'bg-green-100 text-green-700 border-green-200' : 'border-gray-200 text-gray-600 hover:bg-green-50'}`;
+                    colorClass = 'btn-filter-green';
+                    break;
                case 'noUri':
-                    return `${baseClass} ${isActive ? 'bg-gray-100 text-gray-700 border-gray-300' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`;
+                    colorClass = 'btn-filter-gray';
+                    break;
                case 'hasTransferFee':
-                    return `${baseClass} ${isActive ? 'bg-purple-100 text-purple-700 border-purple-200' : 'border-gray-200 text-gray-600 hover:bg-purple-50'}`;
+                    colorClass = 'btn-filter-purple';
+                    break;
                case 'noTransferFee':
-                    return `${baseClass} ${isActive ? 'bg-amber-100 text-amber-700 border-amber-200' : 'border-gray-200 text-gray-600 hover:bg-amber-50'}`;
+                    colorClass = 'btn-filter-amber';
+                    break;
                default:
-                    return `${baseClass} ${isActive ? 'bg-blue-600 text-white border-blue-200' : 'border-gray-200 text-gray-600 hover:bg-blue-50'}`;
+                    colorClass = 'btn-filter-blue';
           }
+
+          // Add active state
+          if (isActive) {
+               return `${colorClass} btn-filter-active`;
+          }
+
+          return colorClass;
      }
 
      onSearchChange(value: string) {

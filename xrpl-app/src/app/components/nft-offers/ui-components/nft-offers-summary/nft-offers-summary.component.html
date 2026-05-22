@@ -33,7 +33,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -56,7 +56,7 @@
                @for (offer of sortedOffers(); track offer.index) {
                <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired" [copyValue]="offer.index" [copyTooltip]="'Copy Offer ID'" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" [secondaryCopyValue]="offer.nftId" [secondaryCopyTooltip]="'Copy NFT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')" (onClick)="onNftClick(offer)">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Status Icon -->
                               @if (offer.isExpired) {
                               <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />

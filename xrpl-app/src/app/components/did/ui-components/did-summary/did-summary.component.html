@@ -3,60 +3,74 @@
      <!-- Items List -->
      <div items-list class="flex flex-col h-full">
           @if (hasDid() && did(); as d) {
-          <!-- DID Details -->
-          <div class="p-4 space-y-6">
-               <!-- Index -->
-               <div class="flex justify-between items-start">
-                    <div>
-                         <div class="text-sm text-gray-500 mb-3">DID Index</div>
+          <div class="card-base p-6 space-y-8">
+               <!-- Header -->
+               <div class="section-heading">
+                    <ng-icon name="heroIdentification" size="24" class="section-heading-icon-green" />
+                    Decentralized Identifier (DID)
+               </div>
+
+               <!-- DID Index -->
+               <div class="space-y-2">
+                    <label class="label-primary">DID Index</label>
+                    <div class="flex items-center gap-3">
                          <app-tooltip-link [href]="explorerUrl() + 'entry/' + d.index" tooltipText="View on XRPL Explorer">
-                              <div class="font-mono text-sm text-gray-900 hover:text-blue-600 cursor-pointer break-all">{{ d.index.slice(0, 15) }}...{{ d.index.slice(-15) }}</div>
+                              <div class="font-mono text-sm text-gray-900 hover:text-blue-600 cursor-pointer break-all">{{ d.index.slice(0, 16) }}...{{ d.index.slice(-16) }}</div>
                          </app-tooltip-link>
+                         <button (click)="copyField('index')" class="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap">Copy Index</button>
                     </div>
-                    <button (click)="copyField('index')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy Index</button>
                </div>
 
                <!-- URI -->
                @if (d.URI && d.URI !== 'N/A') {
-               <div>
-                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
-                         <span>DID URI</span>
-                         <button (click)="copyField('URI')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy URI</button>
+               <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                         <label class="label-primary">DID URI</label>
+                         <button (click)="copyField('URI')" class="btn-secondary text-xs px-3 py-1.5">Copy URI</button>
                     </div>
-                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.URI) }}</pre>
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+{{ prettyJson(d.URI) }}
+            </pre
+                    >
                </div>
                }
 
                <!-- Data -->
                @if (d.Data && d.Data !== 'N/A') {
-               <div>
-                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
-                         <span>DID Data</span>
-                         <button (click)="copyField('Data')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy DID Data</button>
+               <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                         <label class="label-primary">DID Data</label>
+                         <button (click)="copyField('Data')" class="btn-secondary text-xs px-3 py-1.5">Copy Data</button>
                     </div>
-                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.Data) }}</pre>
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+{{ prettyJson(d.Data) }}
+            </pre
+                    >
                </div>
                }
 
                <!-- DID Document -->
                @if (d.DIDDocument && d.DIDDocument !== 'N/A') {
-               <div>
-                    <div class="text-sm text-gray-500 mb-3 flex justify-between">
-                         <span>DID Document</span>
-                         <button (click)="copyField('DIDDocument')" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-small text-gray-700 transition-colors hover:bg-gray-200">Copy DID Document</button>
+               <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                         <label class="label-primary">DID Document</label>
+                         <button (click)="copyField('DIDDocument')" class="btn-secondary text-xs px-3 py-1.5">Copy Document</button>
                     </div>
-                    <pre class="bg-gray-50 border border-gray-100 rounded-2xl p-4 text-xs overflow-auto font-mono">{{ prettyJson(d.DIDDocument) }}</pre>
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
+{{ prettyJson(d.DIDDocument) }}
+            </pre
+                    >
                </div>
                }
           </div>
           } @else {
           <!-- Empty State -->
           <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-               <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
-                    <ng-icon name="heroIdentification" size="32" class="text-gray-400" />
+               <div class="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-3xl flex items-center justify-center mb-6">
+                    <ng-icon name="heroIdentification" size="40" class="text-gray-400" />
                </div>
-               <p class="text-gray-600 font-medium">No DID Found</p>
-               <p class="text-sm text-gray-500 mt-1 max-w-[240px]">This wallet doesn't have a Decentralized Identifier yet.</p>
+               <p class="text-xl font-semibold text-gray-900 dark:text-white">No DID Found</p>
+               <p class="text-gray-500 mt-2 max-w-xs">This wallet doesn't have a Decentralized Identifier yet.</p>
           </div>
           }
      </div>

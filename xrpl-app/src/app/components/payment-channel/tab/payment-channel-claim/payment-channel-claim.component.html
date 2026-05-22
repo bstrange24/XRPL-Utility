@@ -166,7 +166,7 @@
      </div>
      } @if (paymentChannelUtilService.selectedPaymentChannelId() && viewModel.selectedIsExpired()) {
      <div class="alert-error">
-          <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
           <div class="alert-content">This selected payment channel has expired.</div>
      </div>
      }
@@ -174,10 +174,10 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }

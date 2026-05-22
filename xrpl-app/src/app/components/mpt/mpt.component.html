@@ -111,25 +111,25 @@
                <app-transaction-options [showWhenTab]="['createMpt', 'authorizeMpt', 'unauthorizeMpt', 'sendMpt', 'lockMpt', 'unlockMpt', 'clawbackMpt', 'destroyMpt']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="main-button-section">
                     <!-- Primary Action -->
                     @if (tab === 'createMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateMpt()" class="btn-primary whitespace-nowrap">{{ mptUtilService.createMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateMpt()" class="btn-primary">{{ mptUtilService.createMptButtonLabel() }}</button>
                     } @else if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canAuthorizeMpt()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-amber-600 hover:bg-amber-700': mptStoreService.authAction() === 'authorize', '!bg-red-600 hover:bg-red-700': mptStoreService.authAction() === 'unauthorize'}">{{ mptUtilService.authorizeButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canAuthorizeMpt()" class="btn-primary" [ngClass]="{'btn-amber': mptStoreService.authAction() === 'authorize', 'btn-red': mptStoreService.authAction() === 'unauthorize'}">{{ mptUtilService.authorizeButtonLabel() }}</button>
                     } @else if (tab === 'sendMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap">{{ mptUtilService.sendMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">{{ mptUtilService.sendMptButtonLabel() }}</button>
                     } @else if (tab === 'lockMpt' || tab === 'unlockMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary whitespace-nowrap" [ngClass]="{'!bg-red-600 hover:bg-red-700': mptStoreService.lockAction() === 'lock', '!bg-purple-600 hover:bg-purple-700': mptStoreService.lockAction() === 'unlock'}">{{ mptUtilService.lockMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary" [ngClass]="{'btn-red': mptStoreService.lockAction() === 'lock', 'btn-purple': mptStoreService.lockAction() === 'unlock'}">{{ mptUtilService.lockMptButtonLabel() }}</button>
                     } @else if (tab === 'clawbackMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue whitespace-nowrap">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-blue">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
                     } @else if (tab === 'destroyMpt') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !mptUtilService.hasNoOutstandingMpts()" class="btn-red whitespace-nowrap">{{ mptUtilService.destroyMptButtonLabel() }}</button>
+                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !mptUtilService.hasNoOutstandingMpts()" class="btn-red">{{ mptUtilService.destroyMptButtonLabel() }}</button>
                     }
 
                     <!-- Clear Fields -->
-                    <div class="flex flex-wrap items-center justify-end gap-2">
-                         <button type="button" (click)="clearFields(true)" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                    <div class="right-buttons">
+                         <button type="button" (click)="clearFields(true)" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
                     </div>
                </div>
 

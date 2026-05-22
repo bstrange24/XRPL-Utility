@@ -192,7 +192,7 @@
 
           <!-- Create Sell Offer on Mint Toggle -->
           <div class="card-base">
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-toggle-slider [checked]="nftCreateStoreService.enableSellOnNftCreation()" (checkedChange)="optionsToggled.emit($event)"> Create Sell Offer on NFT Creation </app-toggle-slider>
 
                     <div class="flex items-center gap-2">
@@ -246,7 +246,7 @@
                          <app-field-helper title="Destination Address Examples" [items]="destinationHelperItems" [show]="showDestinationHelper" />
 
                          @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                         <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                         <p class="same-addrress-as-selected-account">
                               <ng-icon name="heroExclamationTriangle" size="14" />
                               This is your currently active wallet. You cannot send XRP to yourself.
                          </p>
@@ -256,7 +256,7 @@
                     </div>
 
                     <!-- Expiration -->
-                    <div class="rounded-2xl p-1 transition-shadow">
+                    <div class="expiration-field">
                          <app-xrpl-expiration-input
                               [expirationSignal]="nftCreateStoreService.expiration"
                               [setExpiration]="nftCreateStoreService.setExpiration.bind(nftCreateStoreService)"
@@ -281,10 +281,10 @@
 <!-- Summary of validation errors -->
 @if (nftValidatorService.getAllValidationErrors().length > 0) {
 <div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
      <div class="alert-content">
           <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="list-disc list-inside space-y-0.5">
+          <ul class="alert-content-list">
                @for (error of nftValidatorService.getAllValidationErrors(); track $index) {
                <li class="text-sm">{{ error }}</li>
                }

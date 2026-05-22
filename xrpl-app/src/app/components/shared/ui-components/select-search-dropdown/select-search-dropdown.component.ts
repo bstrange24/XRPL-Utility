@@ -214,7 +214,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
      // Computed: CSS classes for the input based on validation state
      inputClasses = computed(() => {
-          const base = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm ' + 'focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
+          const base = 'w-full bg-white border rounded-2xl px-3.5 py-3 text-sm ' + 'focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
 
           // Always apply green focus border
           const focusBorder = 'focus:border-green-500';
@@ -232,6 +232,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           // Default empty state
           return `${base} border-gray-200 ${focusBorder}`;
      });
+
      // inputClasses = computed(() => {
      //      const baseClasses = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
 

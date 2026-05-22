@@ -16,7 +16,7 @@
      @if (viewModel.selectedFullEscrow() && viewModel.selectedEscrowSequence() !== '') {
      <div class="card-base">
           <div class="space-y-6">
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Sequence Number -->
                     <div>
                          <label for="escrowSequence" class="label-primary">Escrow Sequence</label>
@@ -33,7 +33,7 @@
                </div>
 
                <!-- Creator / Destination -->
-               <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+               <div class="side-by-side-fields">
                     <!-- Creator (Sender) -->
                     <div>
                          <label for="escrowCreator" class="label-primary">Creator</label>
@@ -56,7 +56,7 @@
 <!-- Expired Warning -->
 @if ((activeTab === 'cancelEscrow' || activeTab === 'finishEscrow') && viewModel.selectedEscrowIsExpired()) {
 <div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroExclamationTriangle" size="16" class="alert-icon" />
      <div class="alert-content">This escrow has expired and can only be cancelled.@if (activeTab === 'finishEscrow') { and cannot be finished }.</div>
 </div>
 }

@@ -39,12 +39,12 @@
                <!-- Options -->
                <app-transaction-options [showWhenTab]="['sendXrp']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
-               <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+               <div class="main-button-section">
                     <!-- LEFT: primary action -->
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSendXrpFrom()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
 
                     <!-- RIGHT: secondary / utility actions -->
-                    <div class="flex flex-wrap items-center justify-end gap-2">
+                    <div class="right-buttons">
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear All Fields</button>
                     </div>
                </div>

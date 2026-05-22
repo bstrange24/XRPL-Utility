@@ -8,7 +8,7 @@
                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <!-- ED25519 Option -->
                     <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.bg-green-50]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-200]="!walletsStoreService.ed25519_encryption_type()" (click)="walletsUtilService.setEncryption('ed25519')">
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <div class="mt-0.5 flex-shrink-0">
                                    <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-300]="!walletsStoreService.ed25519_encryption_type()">
                                         <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="walletsStoreService.ed25519_encryption_type()" [class.scale-0]="!walletsStoreService.ed25519_encryption_type()"></div>
@@ -24,7 +24,7 @@
 
                     <!-- SECP256K1 Option -->
                     <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.bg-green-50]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-200]="!walletsStoreService.secp256k1_encryption_type()" (click)="walletsUtilService.setEncryption('secp256k1')">
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <div class="mt-0.5 flex-shrink-0">
                                    <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-300]="!walletsStoreService.secp256k1_encryption_type()">
                                         <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="walletsStoreService.secp256k1_encryption_type()" [class.scale-0]="!walletsStoreService.secp256k1_encryption_type()"></div>

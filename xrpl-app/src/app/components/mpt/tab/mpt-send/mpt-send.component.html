@@ -105,7 +105,7 @@
           </div>
 
           <!-- Destination + Amount -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <!-- Destination -->
                <div>
                     <div class="flex justify-between items-baseline">
@@ -124,7 +124,7 @@
                     </div>
 
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                    <p class="same-addrress-as-selected-account">
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send XRP to yourself.
                     </p>
@@ -205,10 +205,10 @@
 <!-- Summary of validation errors -->
 @if (mptSendValidator.getAllValidationErrors().length > 0) {
 <div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
      <div class="alert-content">
           <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="list-disc list-inside space-y-0.5">
+          <ul class="alert-content-list">
                @for (error of mptSendValidator.getAllValidationErrors(); track $index) {
                <li class="text-sm">{{ error }}</li>
                }

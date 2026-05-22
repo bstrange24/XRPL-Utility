@@ -13,7 +13,7 @@
 <!-- Credential Expiration and URI -->
 @if(tab === 'createCredential') {
 <div class="rounded-2xl border-gray-200 bg-white p-1">
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+     <div class="side-by-side-fields">
           <!-- URI Section - Update to show validation properly -->
           <div class="space-y-2">
                <label class="label-primary">URI</label>
@@ -52,7 +52,7 @@
           </div>
 
           <!-- Credential Expiration -->
-          <div class="rounded-2xl p-1 transition-shadow">
+          <div class="expiration-field">
                <app-xrpl-expiration-input
                     [expirationSignal]="credentialStore.credentialSubjectExpirationDate"
                     [setExpiration]="credentialStore.setCredentialSubjectExpirationDate.bind(credentialStore)"
@@ -76,7 +76,7 @@
 @else if(tab === 'createPaymentChannel' || tab === 'fundPaymentChannel') {
 <div class="rounded-2xl bg-white p-1">
      @if(tab === 'createPaymentChannel') {
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+     <div class="side-by-side-fields">
           <!-- Destination Tag -->
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
@@ -111,7 +111,7 @@
           </div>
 
           <!-- Payment Channel Expiration -->
-          <div class="rounded-2xl p-1 transition-shadow">
+          <div class="expiration-field">
                <app-xrpl-expiration-input
                     [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
                     [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
@@ -129,7 +129,7 @@
           </div>
      </div>
      } @if(tab === 'fundPaymentChannel') {
-     <div class="rounded-2xl p-1 transition-shadow">
+     <div class="expiration-field">
           <app-xrpl-expiration-input
                [expirationSignal]="paymentChannelStoreService.paymentChannelCancelAfterTimeField"
                [setExpiration]="paymentChannelStoreService.setPaymentChannelCancelAfterTime.bind(paymentChannelStoreService)"
@@ -154,7 +154,7 @@
 <div class="rounded-2xl border-gray-200 bg-white p-1">
      <div class="space-y-6">
           <!-- Tags Row -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <div class="space-y-2">
                     <label class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
@@ -220,7 +220,7 @@
                </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <!-- Invoice ID -->
                <div class="space-y-2">
                     <label class="label-primary">Invoice ID</label>
@@ -297,7 +297,7 @@
 
           <!-- Check Expiration (for createCheck only) -->
           @if (tab === 'createCheck') {
-          <div class="rounded-2xl p-1 transition-shadow">
+          <div class="expiration-field">
                <!-- <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date" hint="Check expiration when the check will expire. Leave default/empty for no expiration (check never expires automatically)."> </app-xrpl-expiration-input> -->
                <app-xrpl-expiration-input
                     [expirationSignal]="checksStoreService.checkExpirationDate"
@@ -361,7 +361,7 @@
 <!-- Delete Account -->
 @else if (tab === 'deleteAccount') {
 <div class="rounded-2xl bg-white p-1">
-     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+     <div class="side-by-side-fields">
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>

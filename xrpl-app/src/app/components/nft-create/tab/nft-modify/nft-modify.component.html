@@ -165,7 +165,7 @@
           <!-- Warning for non-mutable NFTs -->
           @if (selectedNftIsNotMutable()) {
           <div class="flex items-start gap-2 rounded-2xl border border-red-200 bg-red-50 p-3">
-               <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 alert-icon" />
+               <ng-icon name="heroExclamationTriangle" size="16" class="alert-icon" />
                <span class="text-sm text-red-700">This NFT is not mutable. Only NFTs with the Mutable flag can have their URI updated.</span>
           </div>
           }
@@ -183,10 +183,10 @@
 <!-- Summary of validation errors -->
 @if (nftValidatorService.getAllValidationErrors().length > 0) {
 <div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
      <div class="alert-content">
           <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="list-disc list-inside space-y-0.5">
+          <ul class="alert-content-list">
                @for (error of nftValidatorService.getAllValidationErrors(); track $index) {
                <li class="text-sm">{{ error }}</li>
                }

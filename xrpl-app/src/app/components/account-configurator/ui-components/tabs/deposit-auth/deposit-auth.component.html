@@ -6,14 +6,14 @@
                Deposit Authorization Addresses
           </h4>
 
-          <p class="mb-5 text-sm text-gray-600">These addresses are pre-authorized to send funds to your account when DepositAuth is enabled.</p>
+          <p class="text-secondary">These addresses are pre-authorized to send funds to your account when DepositAuth is enabled.</p>
 
           <!-- Dynamic List -->
           <div class="space-y-4">
                @for (depositAuthAddress of accountConfiguratorStoreService.depositAuthAddresses(); track trackByIndex($index, depositAuthAddress); let i = $index) {
                <div class="card-base">
-                    <div class="mb-1 flex items-center justify-between">
-                         <label for="depAuthAddress" class="label-primary">Address {{ i + 1 }}</label>
+                    <div class="mb-4 flex items-center justify-between">
+                         <label for="depAuthAddress" class="text-sm font-medium text-gray-800">Address {{ i + 1 }}</label>
                          @if (accountConfiguratorStoreService.depositAuthAddresses().length > 1) {
                          <button type="button" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="text-red-400 transition-colors hover:text-red-600">
                               <lucide-icon name="trash-2" size="16" />
@@ -52,11 +52,9 @@
           </div>
 
           <!-- Add Button -->
-          <!-- <button type="button" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()" class="mt-5 w-full rounded-2xl border border-dashed border-gray-300 py-2 font-medium text-gray-700 transition-all hover:border-gray-400 hover:text-gray-900">+ Add Another Authorized Address</button> -->
-
-          <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="main-button-section">
                <div class="flex flex-col gap-3 sm:flex-row">
-                    <button type="button" class="rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()">+ Add Another Authorized Address</button>
+                    <button type="button" class="btn-blue" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()">+ Add Another Authorized Address</button>
                </div>
           </div>
      </div>
@@ -67,10 +65,10 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }
@@ -79,31 +77,16 @@
      </div>
      }
 
-     <!-- <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-          <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
-          <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('N')" [disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
-          <button type="button" (click)="clearFields()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-     </div> -->
-
-     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+     <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
-               <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('N')" [disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+               <button type="button" class="btn-green-small" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+               <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
           </div>
 
           <!-- Secondary Actions -->
           <div class="flex items-center justify-end">
-               <button type="button" (click)="clearFields()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+               <button type="button" (click)="clearFields()" class="btn-secondary">Clear Fields</button>
           </div>
      </div>
-
-     <!-- Action Buttons -->
-     <!-- <div class="flex flex-col gap-3 sm:flex-row"> -->
-     <!-- Set Deposit Auth Button -->
-     <!-- <button type="button" class="rounded-2xl bg-gradient-to-r from-green-600 to-green-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-green-700 hover:to-green-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button> -->
-
-     <!-- Remove Deposit Auth Button -->
-     <!-- <button type="button" class="rounded-2xl bg-gradient-to-r from-red-600 to-red-700 px-8 py-3 text-base font-semibold text-white shadow-md transition-all hover:from-red-700 hover:to-red-800 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed" (click)="performAction.emit('N')" [disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button> -->
-     <!-- </div> -->
 </div>

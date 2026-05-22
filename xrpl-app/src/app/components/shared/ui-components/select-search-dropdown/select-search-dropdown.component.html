@@ -35,7 +35,9 @@
      <!-- Animated Dropdown -->
      <ng-template #dropdown let-data>
           <div class="combobox-wrapper-stop mt-2 w-full">
-               <div class="combobox-dropdown-overlay bg-white border border-gray-200 rounded-3xl shadow-2xl py-2 max-h-[340px] overflow-auto z-50 w-full" [@fadeSlideDown]>
+               <!-- <div class="combobox-dropdown-overlay bg-white border border-gray-200 rounded-3xl shadow-2xl py-2 max-h-[340px] overflow-auto z-50 w-full" [@fadeSlideDown]> -->
+               <!-- <div class="combobox-dropdown-overlay bg-white border border-gray-200 rounded-3xl shadow-2xl py-2 max-h-[260px] overflow-auto z-50 w-full" [@fadeSlideDown]> -->
+               <div class="combobox-dropdown-overlay bg-white border border-gray-200 rounded-3xl shadow-2xl py-1 max-h-[340px] overflow-auto z-50 w-full" [@fadeSlideDown]>
                     @if (filteredItems().length === 0) {
                     <div class="px-6 py-8 text-center text-gray-500">{{ emptyMessage() }}</div>
                     } @for (item of filteredItems(); track item.id + item.display; let i = $index) { @if (i === 0 || item.group !== (filteredItems()[i - 1]?.group ?? null)) {
@@ -52,7 +54,7 @@
                          [class.pointer-events-none]="item.isCurrentAccount && disableCurrentAccount()"
                          (mousedown)="onItemMouseDown($event, item)"
                     >
-                         <div class="flex items-center justify-between">
+                         <div class="options">
                               <!-- <span class="font-medium" [class.text-gray-400]="item.isCurrentAccount" [class.text-gray-900]="!item.isCurrentAccount"> {{ item.display }} </span> -->
                               <span class="font-medium" [class.text-gray-400]="item.isCurrentAccount && disableCurrentAccount()" [class.text-gray-900]="!(item.isCurrentAccount && disableCurrentAccount())"> {{ item.display }} </span>
 
@@ -81,7 +83,7 @@
                     </div>
 
                     <!-- <div class="combobox-item px-6 py-3.5 hover:bg-gray-50 cursor-pointer transition-all flex flex-col gap-1 border-b border-gray-100 last:border-none" [class.highlighted]="highlightedIndex() === i || item.id === value()?.id" [class.current-account]="item.isCurrentAccount" [class.current-code]="item.isCurrentCode" [class.current-token]="item.isCurrentToken" (mousedown)="onItemMouseDown($event, item)">
-                         <div class="flex items-center justify-between">
+                         <div class="options">
                               <span class="font-medium text-gray-900">{{ item.display }}</span>
                               @if (item.isCurrentAccount) {
                               <span class="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full">Current Account</span>

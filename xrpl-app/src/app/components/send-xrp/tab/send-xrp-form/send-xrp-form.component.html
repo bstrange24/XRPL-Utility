@@ -6,7 +6,7 @@
                Payment Details
           </h4>
 
-          <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div class="side-by-side-fields">
                <!-- Destination -->
                <div>
                     <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
@@ -15,7 +15,7 @@
                     </app-select-search-dropdown>
 
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                    <p class="mt-3 text-xs text-amber-600 flex items-center gap-1.5">
+                    <p class="same-addrress-as-selected-account">
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send XRP to yourself.
                     </p>
@@ -59,7 +59,7 @@
 
      <!-- Toggle optional fields Card -->
      <div class="card-base">
-          <div class="flex items-center justify-between">
+          <div class="options">
                <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
 
                <div class="flex items-center gap-2">
@@ -80,10 +80,10 @@
      <!-- Summary of validation errors -->
      @if (hasValidationErrors()) {
      <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="flex-shrink-0 alert-icon" />
+          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
           <div class="alert-content">
                <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="list-disc list-inside space-y-0.5">
+               <ul class="alert-content-list">
                     @for (error of validationErrorMessages(); track $index) {
                     <li class="text-sm">{{ error }}</li>
                     }

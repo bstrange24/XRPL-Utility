@@ -110,9 +110,9 @@
           </div>
 
           <!-- Expiration + Owner -->
-          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="side-by-side-fields">
                <!-- Expiration -->
-               <div class="rounded-2xl p-1 transition-shadow">
+               <div class="expiration-field">
                     <app-xrpl-expiration-input
                          [expirationSignal]="nftCreateStoreService.expiration"
                          [setExpiration]="nftCreateStoreService.setExpiration.bind(nftCreateStoreService)"

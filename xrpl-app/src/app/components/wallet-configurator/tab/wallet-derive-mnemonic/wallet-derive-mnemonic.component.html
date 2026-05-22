@@ -94,12 +94,12 @@
           </div>
 
           <!-- Buttons -->
-          <div class="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="main-button-section">
                <!-- LEFT: primary action -->
                <button type="button" class="btn-blue disabled:cursor-not-allowed disabled:opacity-50" (click)="deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading || !isMnemonicValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
 
                <!-- RIGHT: secondary / utility actions -->
-               <div class="flex flex-wrap items-center justify-end gap-2">
+               <div class="right-buttons">
                     <button type="button" class="btn-secondary" (click)="clearMnemonic()">Clear Mnemonic</button>
                </div>
           </div>

@@ -126,8 +126,7 @@
                               <app-transaction-options [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
                               <!-- Action Buttons Card -->
-                              <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                   <!-- <div class="flex flex-wrap gap-3"> -->
+                              <div class="main-button-section">
                                    <div class="flex flex-col gap-3 sm:flex-row">
                                         <!-- Get JSON -->
                                         <button type="button" class="btn-primary whitespace-nowrap" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>

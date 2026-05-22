@@ -27,7 +27,7 @@
                </div>
 
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -91,7 +91,7 @@
                @for (offer of sortedOffers(); track offer.index) {
                <app-summary-item [selected]="false" [copyValue]="offer.index" copyTooltip="Copy Offer Index" (onClick)="onOfferClick(offer)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer Index')">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Status Icon based on offer type -->
                               @if (getOfferType(offer) === 'buy') {
                               <ng-icon name="heroArrowDown" size="20" class="text-green-500 mt-0.5 flex-shrink-0" />

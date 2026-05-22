@@ -65,7 +65,7 @@
 <!-- Outstanding MPT Warning -->
 @if (!mptUtilService.hasNoOutstandingMpts()) {
 <div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon"> </ng-icon>
+     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon"> </ng-icon>
      <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
 </div>
 }
@@ -73,7 +73,7 @@
 <!-- Show warning for outstanding mpts -->
 @if(!mptUtilService.hasNoOutstandingMpts()) {
 <div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon" />
+     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
      <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
 </div>
 }
@@ -81,7 +81,7 @@
 <!-- Authorized Holder Warning -->
 @if (destroyWarningMessage()) {
 <div class="alert-warning">
-     <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 alert-icon"> </ng-icon>
+     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon"> </ng-icon>
 
      <div class="alert-content">
           <div [innerHTML]="destroyWarningMessage()"></div>

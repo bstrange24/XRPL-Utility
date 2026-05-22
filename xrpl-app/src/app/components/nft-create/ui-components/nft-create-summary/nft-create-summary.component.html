@@ -24,9 +24,8 @@
                     </button>
                     }
                </div>
-
                <!-- Sort Control & Clear Button -->
-               <div class="flex items-center justify-between">
+               <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
                </div>
 
@@ -49,7 +48,7 @@
                @for (nft of sortedNfts(); track nft.id) {
                <app-summary-item [selected]="nft.id === nftUtilService.selectedNftItem()" [copyValue]="nft.id" copyTooltip="Copy NFT ID" (onClick)="onNftClick(nft)" (onCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')">
                     <div item-content>
-                         <div class="flex items-start gap-3">
+                         <div class="summary-item-content">
                               <!-- Status Icon based on URI presence -->
                               @if (nft.uri && nft.uri !== 'None') {
                               <ng-icon name="heroLink" size="18" class="text-green-500 mt-0.5 flex-shrink-0" />
