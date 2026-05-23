@@ -16,11 +16,12 @@ import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { CREDENTIAL_TYPE_VALADATION } from '../../../credentials/constants/credential.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-permission-domain-set-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, ReactiveFormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, ReactiveFormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +36,9 @@ export class PermissionDomainSetFormComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      private readonly fb = inject(FormBuilder);
+
+     readonly issuerHelperItems = AppConstants.CREDENTIAL_ISSUER_HELPER_ITEMS;
+     readonly credentialTypeHelperItems = AppConstants.CREDENTIAL_TYPE_HELPER_ITEMS;
 
      view = input.required<any>();
      issuerInput = signal('');
@@ -52,12 +56,15 @@ export class PermissionDomainSetFormComponent {
           credentials: this.fb.array([]),
      });
 
+     // UI State
      issuerItem = signal<SelectItem | null>(null);
      issuerAddress = computed(() => {
           return this.issuerItem()?.id?.trim() ?? '';
      });
      credentialType = signal('');
      isIssuerValid = signal(true);
+     showIssuerHelper = signal(false);
+     showCredentialTypeHelper = signal(false);
 
      private optionsHasError = signal(false);
      private optionsErrors = signal<string[]>([]);
@@ -350,6 +357,15 @@ export class PermissionDomainSetFormComponent {
 
           this.optionsErrors.set(validation.errors || []);
      }
+
+     toggleIssuerHelper() {
+          this.showIssuerHelper.set(!this.showIssuerHelper());
+     }
+
+     toggleCredentialTypeHelper() {
+          this.showCredentialTypeHelper.set(!this.showCredentialTypeHelper());
+     }
+
 
      getPendingCredential(): { issuer: string; credentialType: string } | null {
           const issuer = this.issuerAddress().trim();

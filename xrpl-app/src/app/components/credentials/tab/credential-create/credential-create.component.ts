@@ -14,11 +14,13 @@ import { LucideAngularModule } from 'lucide-angular';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-credential-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon, ToggleSliderComponent, LucideAngularModule, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon, ToggleSliderComponent, LucideAngularModule, FocusBorderDirective],
      templateUrl: './credential-create.component.html',
      styleUrl: './credential-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +32,9 @@ export class CredentialCreateComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly credentialValidatorService = inject(CredentialValidatorService);
+
+     readonly subjectHelperItems = AppConstants.SUBJECT_HELPER_ITEMS;
+     readonly credentialTypeHelperItems = AppConstants.CREDENTIAL_TYPE_HELPER_ITEMS;
 
      // Inputs from parent
      view = input.required<any>();
@@ -55,10 +60,13 @@ export class CredentialCreateComponent {
      toggleOptions = output<boolean>();
      canCreateCredentialChange = output<boolean>();
 
+     // UI State
      private isSubjectValid = signal(false);
      private optionsHasError = signal(false);
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
+     showSubjectHelper = signal(false);
+     showCredentialTypeHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -83,6 +91,14 @@ export class CredentialCreateComponent {
      onOptionsToggled(enabled: boolean) {
           this.txUiService.toggleOptions(enabled);
           this.optionsToggled.emit(enabled);
+     }
+
+     toggleSubjectHelper() {
+          this.showSubjectHelper.set(!this.showSubjectHelper());
+     }
+
+     toggleCredentialTypeHelper() {
+          this.showCredentialTypeHelper.set(!this.showCredentialTypeHelper());
      }
 
      onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
