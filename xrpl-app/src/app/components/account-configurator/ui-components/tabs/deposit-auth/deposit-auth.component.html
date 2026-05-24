@@ -6,14 +6,19 @@
                Deposit Authorization Addresses
           </h4>
 
-          <p class="text-secondary">These addresses are pre-authorized to send funds to your account when DepositAuth is enabled.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">These addresses are pre-authorized to send funds to your account when DepositAuth is enabled.</p>
+               <button type="button" (click)="toggleDepositAuthHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
 
           <!-- Dynamic List -->
           <div class="space-y-4">
                @for (depositAuthAddress of accountConfiguratorStoreService.depositAuthAddresses(); track trackByIndex($index, depositAuthAddress); let i = $index) {
                <div class="card-base">
-                    <div class="mb-4 flex items-center justify-between">
-                         <label for="depAuthAddress" class="text-sm font-medium text-gray-800">Address {{ i + 1 }}</label>
+                    <div class="options mb-4">
+                         <label for="depAuthAddress" class="text-sm font-medium text-gray-800">Address {{ i + 1 }} <span class="text-red-500">*</span></label>
                          @if (accountConfiguratorStoreService.depositAuthAddresses().length > 1) {
                          <button type="button" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="text-red-400 transition-colors hover:text-red-600">
                               <lucide-icon name="trash-2" size="16" />
@@ -57,6 +62,8 @@
                     <button type="button" class="btn-blue" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()">+ Add Another Authorized Address</button>
                </div>
           </div>
+
+          <app-field-helper title="Deposit Authorization" [items]="depositAuthHelperItems" [show]="showDepositAuthHelper" />
      </div>
 
      <!-- Transaction Options -->
@@ -77,16 +84,22 @@
      </div>
      }
 
+     <!-- Action Buttons -->
      <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="btn-green-small" (click)="performAction.emit('Y')" [disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
-               <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+               <app-button-tooltip [tooltipText]="!canSetDepositAuth() ? 'Cannot set deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-green" (click)="(canSetDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('Y') : null" [disabled]="false" [class.opacity-50]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+               </app-button-tooltip>
+
+               <app-button-tooltip [tooltipText]="!canRemoveDepositAuth() ? 'Cannot remove deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-red" (click)="(canRemoveDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('N') : null" [disabled]="false" [class.opacity-50]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+               </app-button-tooltip>
           </div>
 
           <!-- Secondary Actions -->
-          <div class="flex items-center justify-end">
-               <button type="button" (click)="clearFields()" class="btn-secondary">Clear Fields</button>
+          <div class="right-buttons">
+               <button type="button" class="btn-secondary" (click)="clearFields()">Clear Fields</button>
           </div>
      </div>
 </div>

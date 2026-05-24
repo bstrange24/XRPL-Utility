@@ -9,8 +9,17 @@
           <div class="side-by-side-fields">
                <!-- XRP Amount -->
                <div>
-                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
+                    <div class="field-label">
+                         <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
                     <div class="relative">
                          <input
                               type="text"
@@ -39,12 +48,22 @@
                     @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }
+
+                    <app-field-helper title="XRP Amount" [items]="paymentChannelAmountHelperItems" [show]="showPaymentChannelAmountHelper" />
                </div>
 
                <!-- Settle Delay -->
                <div>
-                    <label class="label-primary">Settle Delay <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Seconds the source must wait before closing the channel with unclaimed XRP. Unclaimed XRP will be returned to the source.</p>
+                    <div class="field-label">
+                         <label class="label-primary">Settle Delay <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Seconds the source must wait before closing the channel with unclaimed XRP. Unclaimed XRP will be returned to the source.</p>
+                         <button type="button" (click)="toggleSettleDelayHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <!-- Quick Presets + Input in one row -->
                     <div class="flex gap-2 items-end">
@@ -67,13 +86,24 @@
                     @if (paymentChannelValidatorService.isSettleDelayInvalid()) {
                     <p class="form-error mt-1.5">@if (paymentChannelValidatorService.isSettleDelayTooLarge()) { Settle Delay cannot exceed 4,294,967,295 seconds } @else { Settle Delay must be a valid whole number (0 – 4,294,967,295) }</p>
                     }
+
+                    <app-field-helper title="Settle Delay" [items]="settleDelayHelperItems" [show]="showSettleDelayHelper" />
                </div>
           </div>
 
           <!-- Destination -->
           <div>
-               <label for="destination" class="mb-2 mt-4 block text-sm font-semibold text-gray-900">Destination <span class="text-red-500">*</span></label>
-               <p class="text-secondary">The unique address to receive XRP claims against this channel. Select destination from the dropdown or manually enter a new destination.</p>
+               <div class="field-label">
+                    <label for="destination" class="mb-2 mt-4 block text-sm font-semibold text-gray-900">Destination <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">The unique address to receive XRP claims against this channel. Select destination from the dropdown or manually enter a new destination.</p>
+                    <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
                </app-select-search-dropdown>
 
@@ -83,11 +113,24 @@
                     This is your currently active wallet. You cannot send XRP to yourself.
                </p>
                }
+
+               <app-field-helper title="Destination" [items]="paymentChannelDestinationHelperItems" [show]="showPaymentChannelDestinationHelper" />
           </div>
      </div>
 
      <!-- Toggle optional fields Card -->
-     <div class="card-base">
+     <div class="card-base pt-2.5 pb-2.5">
+          <div class="options">
+               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
+
+               <button type="button" (click)="toggleOptionalFieldsHelper()" class="text-gray-400 hover:text-gray-600" title="Include optional fields in transaction ">
+                    <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
+               </button>
+          </div>
+
+          <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
+     </div>
+     <!-- <div class="card-base">
           <div class="options">
                <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
 
@@ -97,7 +140,7 @@
                     </button>
                </div>
           </div>
-     </div>
+     </div> -->
 
      <!-- Optional Fields Section -->
      @if (txUiService.wantsOptions()) {

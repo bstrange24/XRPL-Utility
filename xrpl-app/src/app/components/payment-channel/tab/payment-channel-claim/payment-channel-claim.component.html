@@ -34,25 +34,57 @@
                </h4>
 
                <!-- Select Channel -->
-               <div class="space-y-2">
-                    <label for="selectCreatedChanel" class="label-primary">Select Your Created Channel <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Choose one of your created channels to generate a signature.</p>
-                    <div class="h-[54px]">
+               <div>
+                    <div class="field-label">
+                         <label for="selectCreatedChanel" class="label-primary">Select Your Created Channel <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Choose one of your created channels to generate a signature.</p>
+                         <button type="button" (click)="toggleChannelSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+                    <div class="relative">
                          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
                     </div>
+
+                    <app-field-helper title="Channel Selection" [items]="fundPaymentChannelSelectionHelperItems" [show]="showFundPaymentSelectionDetailsHelper" />
                </div>
 
                <!-- Channel ID -->
-               <div class="space-y-2" style="margin-top: 4px">
-                    <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The unique ID of the channel (64-character hex).</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+               <div>
+                    <div class="field-label">
+                         <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
+                         <button type="button" (click)="toggleChannelIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" readonly class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                    </div>
+
+                    <app-field-helper title="Channel ID" [items]="paymentChannelIdHelperItems" [show]="showPaymentChannelIdHelper" />
                </div>
 
                <!-- Amount -->
                <div>
-                    <label for="xrpAmount" class="label-primary">Amount to Authorize (XRP) <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The amount the destination is allowed to claim. Must not exceed remaining balance (precision up to 0.000001).</p>
+                    <div class="field-label">
+                         <label for="xrpAmount" class="label-primary">XRP Amount to Authorize <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The amount the destination is allowed to claim. Must not exceed remaining balance (precision up to 0.000001).</p>
+                         <button type="button" (click)="toggleFundAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
                     <div class="relative">
                          <input
                               type="text"
@@ -81,6 +113,7 @@
                     @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }
+                    <app-field-helper title="XRP Amount to Authorize" [items]="fundPaymentChannelAmountHelperItems" [show]="showFundPaymentChannelAmountHelper" />
                </div>
 
                <!-- Generated Signature -->
@@ -107,25 +140,57 @@
                </h4>
 
                <!-- Select Channel -->
-               <div class="space-y-2">
-                    <label for="selectChannelToClaim" class="label-primary">Select Payment Channel to Claim <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Select an existing payment channel to claim funds from.</p>
-                    <div class="h-[54px]">
+               <div>
+                    <div class="field-label">
+                         <label for="selectChannelToClaim" class="label-primary">Select Payment Channel to Claim <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select an existing payment channel to claim funds from.</p>
+                         <button type="button" (click)="toggleChannelSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+                    <div class="relative">
                          <app-select-search-dropdown [items]="viewModel.channelItems()" [value]="viewModel.selectedChannelItem()" (valueChange)="paymentChannelUtilService.setChannelId($event)" placeholder="Search by amount or channel Id..." emptyMessage="No Payment Channels available" />
                     </div>
+
+                    <app-field-helper title="Channel Selection" [items]="fundPaymentChannelSelectionHelperItems" [show]="showFundPaymentSelectionDetailsHelper" />
                </div>
 
                <!-- Channel ID -->
-               <div class="space-y-2" style="margin-top: 4px">
-                    <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The unique ID of the channel (64-character hex).</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+               <div>
+                    <div class="field-label">
+                         <label for="channelID" class="label-primary">Channel ID <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The unique Channel ID of the channel as a 64-character hexadecimal string.</p>
+                         <button type="button" (click)="toggleChannelIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="text" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" class="w-full cursor-not-allowed rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                    </div>
+
+                    <app-field-helper title="Channel ID" [items]="paymentChannelIdHelperItems" [show]="showPaymentChannelIdHelper" />
                </div>
 
                <!-- Amount to Claim -->
                <div>
-                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The amount of XRP to claim from the channel (precision up to 0.000001).</p>
+                    <div class="field-label">
+                         <label for="xrpAmount" class="label-primary">XRP Amount to Claim <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The amount of XRP to claim from the channel (precision up to 0.000001).</p>
+                         <button type="button" (click)="toggleFundAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
                     <div class="relative">
                          <input
                               type="text"
@@ -154,6 +219,7 @@
                     @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
                     <p class="form-error">Amount must be greater than 0</p>
                     }
+                    <app-field-helper title="XRP Amount to Claim" [items]="fundPaymentChannelAmountHelperItems" [show]="showFundPaymentChannelAmountHelper" />
                </div>
 
                <!-- Signature -->

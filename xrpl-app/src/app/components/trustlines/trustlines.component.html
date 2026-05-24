@@ -98,6 +98,25 @@
 
                <!-- Action Buttons -->
                <div class="main-button-section mt-6">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'setTrustline') {
+                         <button type="button" class="btn-green" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ view.trustlineSetButtonLabel() }}</button>
+                         } @else if (tab === 'removeTrustline') {
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ view.trustlineRemoveButtonLabel() }}</button>
+                         } @else if (tab === 'issueCurrency') {
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ view.actionButtonLabel() }}</button>
+                         } @else if (tab === 'clawbackTokens') {
+                         <button type="button" class="btn-blue" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ view.clawbackButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
+
+                    @if (tab !== 'addNewIssuers') {
+                    <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!canSubmit()">Clear Fields</button>
+                    }
+               </div>
+
+               <!-- Action Buttons -->
+               <!-- <div class="main-button-section mt-6">
                     @if (tab === 'setTrustline') {
                     <button type="button" class="btn-primary whitespace-nowrap" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || trustlineStore.trustlineAlreadyExist()">{{ view.trustlineSetButtonLabel() }}</button>
                     } @else if (tab === 'removeTrustline') {
@@ -109,7 +128,7 @@
                     } @if (tab !== 'addNewIssuers') {
                     <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!canSubmit()">Clear Fields</button>
                     }
-               </div>
+               </div> -->
 
                <!-- Execution Time -->
                <div class="mt-3 text-sm text-gray-500">

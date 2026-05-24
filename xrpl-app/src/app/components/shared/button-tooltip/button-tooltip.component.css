@@ -1,0 +1,53 @@
+  .button-tooltip-trigger {
+       display: inline-block;
+  }
+
+  .app-button-tooltip {
+       position: fixed;
+       padding: 8px 12px;
+       border-radius: 8px;
+       font-size: 0.85rem;
+       font-weight: 500;
+       background: #ffffff;
+       color: #1f2937;
+       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05);
+       white-space: pre-wrap;
+       max-width: 340px;
+       overflow-wrap: break-word;
+       opacity: 0;
+       transform: translateY(4px) scale(0.95);
+       transition: opacity 150ms ease, transform 150ms ease;
+       pointer-events: none;
+       z-index: 999999;
+       border: 1px solid #e5e7eb;
+       line-height: 1.4;
+  }
+
+  .app-button-tooltip.show {
+       opacity: 1;
+       transform: translateY(0) scale(1);
+  }
+
+  /* Optional: Add a small arrow/pointer to the tooltip */
+  .app-button-tooltip::before {
+       content: '';
+       position: absolute;
+       left: 50%;
+       transform: translateX(-50%);
+       border-width: 6px;
+       border-style: solid;
+  }
+
+  /* Arrow pointing up when tooltip is below the element */
+  .app-button-tooltip[data-placement="bottom"]::before {
+       top: -12px;
+       border-color: transparent transparent #ffffff transparent;
+       border-bottom-color: #e5e7eb;
+  }
+
+  /* Arrow pointing down when tooltip is above the element */
+  .app-button-tooltip[data-placement="top"]::before {
+       bottom: -12px;
+       border-color: #ffffff transparent transparent transparent;
+       border-top-color: #e5e7eb;
+  }

@@ -10,11 +10,12 @@ import { NgIcon } from '@ng-icons/core';
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-destroy',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
      templateUrl: './mpt-destroy.component.html',
      styleUrl: './mpt-destroy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,10 +47,16 @@ export class MptDestroyComponent {
      readonly canSendXrpChange = output<boolean>();
      readonly destinationSearchQuery = input<string>();
 
+     // Helper Items
+     readonly mptDestroySelectHelperItems = AppConstants.MPT_DESTROY_SELECT_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_DESTROY_ISSUANCE_ID_HELPER_ITEMS;
+
      // UI State
      showDestinationHelper = signal(false);
      showAmountHelper = signal(false);
      showMptHelper = signal(false);
+     showMptDestroySelectHelper = signal(false);
+     showMptIssuanceIdHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
 
@@ -142,6 +149,15 @@ export class MptDestroyComponent {
 
      toggleDestinationHelper() {
           this.showDestinationHelper.set(!this.showDestinationHelper());
+     }
+
+     // Toggle Methods
+     toggleMptSelectHelper() {
+          this.showMptDestroySelectHelper.set(!this.showMptDestroySelectHelper());
+     }
+
+     toggleMptIssuanceHelper() {
+          this.showMptIssuanceIdHelper.set(!this.showMptIssuanceIdHelper());
      }
 
      // Add computed for tracked holders

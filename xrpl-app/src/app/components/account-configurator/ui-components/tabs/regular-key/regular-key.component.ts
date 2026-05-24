@@ -11,11 +11,14 @@ import { TransactionOptionsComponent } from '../../../../shared/transaction-opti
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import * as xrpl from 'xrpl';
 import * as bip39 from 'bip39';
+import { AppConstants } from '../../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-regular-key',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
      templateUrl: './regular-key.component.html',
      styleUrl: './regular-key.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,10 +30,16 @@ export class RegularKeyComponent {
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
 
+     // === Helper Items ===
+     readonly regularKeyHelperItems = AppConstants.REGULAR_KEY_HELPER_ITEMS;
+
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      isRegularKeyAddressFocused = signal(false);
      isRegularKeySeedFocused = signal(false);
+
+     // UI State
+     showRegularKeyHelper = signal(false);
 
      regularKeyAddressValid = computed(() => {
           const address = this.accountConfiguratorStoreService.regularKeyAddress();
@@ -123,6 +132,11 @@ export class RegularKeyComponent {
 
           return false;
      });
+
+     // Toggle Method
+     toggleRegularKeyHelper() {
+          this.showRegularKeyHelper.set(!this.showRegularKeyHelper());
+     }
 
      clearFields() {
           this.accountConfiguratorStoreService.setField('regularKeyAddress', '');

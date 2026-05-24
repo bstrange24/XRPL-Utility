@@ -23,12 +23,13 @@
      <div class="flex items-center justify-between px-6 py-4 bg-white-50 border-b border-white-200">
           <p class="text-sm font-semibold text-blue-700 p-0 m-0" style="margin: 0">Transaction JSON</p>
           <div class="flex items-center gap-2">
-               <button (click)="copyUtilService.copyTxSignal()" title="Copy JSON" class="format-btn-tx">
-                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon>
+               <button (click)="copyUtilService.copyTxSignal()" title="Copy JSON" class="btn-utility-small">
+                    <!-- <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon> -->
+                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-gray-500 mr-1"></ng-icon>
                     Copy
                </button>
-               <button (click)="downloadUtilService.downloadTxSignal()" title="Download JSON" class="format-btn-tx">
-                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-blue-600"></ng-icon>
+               <button (click)="downloadUtilService.downloadTxSignal()" title="Download JSON" class="btn-utility-small">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-gray-500 mr-1"></ng-icon>
                     Download
                </button>
           </div>
@@ -46,12 +47,13 @@
      <div class="flex items-center justify-between px-6 py-4 bg-white-50 border-b border-white-200">
           <p class="text-sm font-semibold text-blue-700 p-0 m-0" style="margin: 0">Transaction Result</p>
           <div class="flex items-center gap-2">
-               <button (click)="copyUtilService.copyTxResultSignal()" title="Copy JSON" class="format-btn-tx">
-                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon>
+               <button (click)="copyUtilService.copyTxResultSignal()" title="Copy JSON" class="btn-utility-small">
+                    <!-- <ng-icon name="heroClipboardDocumentList" size="18" class="text-blue-600"></ng-icon> -->
+                    <ng-icon name="heroClipboardDocumentList" size="18" class="text-gray-500 mr-1"></ng-icon>
                     Copy
                </button>
-               <button (click)="downloadUtilService.downloadTxResultSignal()" title="Download JSON" class="format-btn-tx">
-                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-blue-600"></ng-icon>
+               <button (click)="downloadUtilService.downloadTxResultSignal()" title="Download JSON" class="btn-utility-small">
+                    <ng-icon name="heroArrowDownOnSquareStack" size="18" class="text-gray-500 mr-1"></ng-icon>
                     Download
                </button>
           </div>

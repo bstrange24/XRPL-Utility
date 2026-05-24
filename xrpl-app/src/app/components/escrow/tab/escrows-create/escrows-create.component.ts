@@ -22,11 +22,13 @@ import { NgIcon } from '@ng-icons/core';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { EscrowValidatorService } from '../../../../services/shared/validators/escrow-validator/escrow-validator.service';
 import { MptValidatorService } from '../../../../services/shared/validators/mpt/mpt-validator/mpt-validator.service';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-escrows-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, LucideAngularModule, NgIcon, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
      templateUrl: './escrows-create.component.html',
      styleUrl: './escrows-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,6 +49,26 @@ export class EscrowsCreateComponent {
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly escrowValidatorService = inject(EscrowValidatorService);
      public readonly mptValidatorService = inject(MptValidatorService);
+
+     // Helper Items
+     readonly escrowCurrencyCodeHelperItems = AppConstants.ESCROW_CURRENCY_CODE_HELPER_ITEMS;
+     readonly escrowAmountHelperItems = AppConstants.ESCROW_AMOUNT_HELPER_ITEMS;
+     readonly escrowIssuerHelperItems = AppConstants.ESCROW_ISSUER_HELPER_ITEMS;
+     readonly escrowMptHelperItems = AppConstants.ESCROW_MPT_HELPER_ITEMS;
+     readonly escrowDestinationHelperItems = AppConstants.ESCROW_DESTINATION_HELPER_ITEMS;
+     readonly escrowDestTagHelperItems = AppConstants.ESCROW_DEST_TAG_HELPER_ITEMS;
+     readonly escrowConditionHelperItems = AppConstants.ESCROW_CONDITION_HELPER_ITEMS;
+     readonly escrowFulfillmentHelperItems = AppConstants.ESCROW_FULFILLMENT_HELPER_ITEMS;
+
+     // Signals
+     showEscrowCurrencyCodeHelper = signal(false);
+     showEscrowAmountHelper = signal(false);
+     showEscrowIssuerHelper = signal(false);
+     showEscrowMptHelper = signal(false);
+     showEscrowDestinationHelper = signal(false);
+     showEscrowDestTagHelper = signal(false);
+     showEscrowConditionHelper = signal(false);
+     showEscrowFulfillmentHelper = signal(false);
 
      @Input() isConditional = false;
 
@@ -289,5 +311,37 @@ export class EscrowsCreateComponent {
 
      onDestinationValidationChange(isValid: boolean) {
           this.isDestinationValid.set(isValid);
+     }
+
+     toggleCurrencyCodeHelper() {
+          this.showEscrowCurrencyCodeHelper.set(!this.showEscrowCurrencyCodeHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showEscrowAmountHelper.set(!this.showEscrowAmountHelper());
+     }
+
+     toggleIssuerHelper() {
+          this.showEscrowIssuerHelper.set(!this.showEscrowIssuerHelper());
+     }
+
+     toggleMptHelper() {
+          this.showEscrowMptHelper.set(!this.showEscrowMptHelper());
+     }
+
+     toggleDestinationHelper() {
+          this.showEscrowDestinationHelper.set(!this.showEscrowDestinationHelper());
+     }
+
+     toggleDestinationTagHelper() {
+          this.showEscrowDestTagHelper.set(!this.showEscrowDestTagHelper());
+     }
+
+     toggleConditionHelper() {
+          this.showEscrowConditionHelper.set(!this.showEscrowConditionHelper());
+     }
+
+     toggleFulfillmentHelper() {
+          this.showEscrowFulfillmentHelper.set(!this.showEscrowFulfillmentHelper());
      }
 }

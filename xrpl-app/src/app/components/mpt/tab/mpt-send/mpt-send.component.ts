@@ -13,11 +13,12 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-send',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective, NgIcon],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective, NgIcon],
      templateUrl: './mpt-send.component.html',
      styleUrl: './mpt-send.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,13 +53,19 @@ export class MptSendComponent {
      readonly canSendXrpChange = output<boolean>();
      readonly destinationSearchQuery = input<string>();
 
+     // Helper Items
+     readonly mptSelectHelperItems = AppConstants.MPT_SEND_SELECT_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_SEND_HELPER_ITEMS;
+     readonly mptDestinationHelperItems = AppConstants.MPT_DESTINATION_SEND_HELPER_ITEMS;
+     readonly mptAmountHelperItems = AppConstants.MPT_AMOUNT_SEND_HELPER_ITEMS;
+
      // UI State
-     showDestinationHelper = signal(false);
-     showAmountHelper = signal(false);
-     showMptHelper = signal(false);
-     showMptIssuanceHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
+     showMptSelectHelper = signal(false);
+     showMptIssuanceIdHelper = signal(false);
+     showMptDestinationHelper = signal(false);
+     showMptAmountHelper = signal(false);
 
      // Preset amounts
      readonly amountPresets = [10, 100, 1000, 10000, 100000];
@@ -166,20 +173,20 @@ export class MptSendComponent {
           this.amount = amount.toString();
      }
 
-     toggleDestinationHelper() {
-          this.showDestinationHelper.set(!this.showDestinationHelper());
-     }
-
-     toggleAmountHelper() {
-          this.showAmountHelper.set(!this.showAmountHelper());
-     }
-
      toggleMptHelper() {
-          this.showMptHelper.set(!this.showMptHelper());
+          this.showMptSelectHelper.set(!this.showMptSelectHelper());
      }
 
      toggleMptIssuanceHelper() {
-          this.showMptIssuanceHelper.set(!this.showMptIssuanceHelper());
+          this.showMptIssuanceIdHelper.set(!this.showMptIssuanceIdHelper());
+     }
+
+     toggleDestinationHelper() {
+          this.showMptDestinationHelper.set(!this.showMptDestinationHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showMptAmountHelper.set(!this.showMptAmountHelper());
      }
 
      // Get available balance for selected MPT

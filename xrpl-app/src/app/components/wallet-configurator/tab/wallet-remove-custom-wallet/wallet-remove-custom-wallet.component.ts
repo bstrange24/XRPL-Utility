@@ -20,11 +20,14 @@ import { WalletsViewModelService } from '../../../../services/wallets/wallets-vi
 import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
 import { AppConstants } from '../../../../core/app.constants';
 import { DialogService } from '../../../../services/shared/dialog/dialog.service';
+import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
+import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-wallet-remove-custom-wallet',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, FieldHelperComponent, LucideAngularModule, OverlayModule, ButtonTooltipComponent, FocusBorderDirective],
      templateUrl: './wallet-remove-custom-wallet.component.html',
      styleUrl: './wallet-remove-custom-wallet.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,8 +44,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      }
 
      onCustomWalletSelected(event: any) {
-          console.log('[REMOVE DROPDOWN] Selection event:', event);
-
           let address: string | undefined;
 
           if (typeof event === 'string') {
@@ -54,9 +55,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
           if (address?.trim()) {
                const trimmed = address.trim();
                this.walletsStoreService.setField('selectedAddress', trimmed);
-               console.log('[REMOVE CHILD] Stored address:', trimmed);
-          } else {
-               console.warn('[REMOVE] No valid address extracted from event');
           }
      }
 
@@ -67,7 +65,6 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
                name: dest.name,
                address: dest.address,
           }));
-          console.log('customWallets', customWallets);
           return customWallets;
      });
 
@@ -98,6 +95,7 @@ export class WalletRemoveCustomWalletComponent extends WalletDestinationBase {
      }
 
      protected clearInputFields(): void {
+          this.walletsStoreService.setField('selectedAddress', '');
           return;
      }
 

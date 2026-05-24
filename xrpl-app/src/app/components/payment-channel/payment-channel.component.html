@@ -61,7 +61,27 @@
                <app-transaction-options [showWhenTab]="['createPaymentChannel', 'fundPaymentChannel', 'claimPaymentChannel', 'renewPaymentChannel', 'closePaymentChannel']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
+               <!-- Action Buttons -->
                <div class="main-button-section mt-6">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @switch (tab) { @case ('createPaymentChannel') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? handlePaymentChannelAction() : null" [disabled]="false">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
+                         } @case ('fundPaymentChannel') {
+                         <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? handlePaymentChannelAction() : null" [disabled]="false">{{ paymentChannelUtilService.fundChannelButtonLabel() }}</button>
+                         } @case ('claimPaymentChannel') { @if (!paymentChannelStoreService.isCreatorMode()) {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? handlePaymentChannelAction() : null" [disabled]="false">{{ paymentChannelUtilService.claimFundsButtonLabel() }}</button>
+                         } @else {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? generateCreatorClaimSignature() : null" [disabled]="false">{{ paymentChannelUtilService.generateClaimSignatureButtonLabel() }}</button>
+                         }} @case ('renewPaymentChannel') {
+                         <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? handlePaymentChannelAction() : null" [disabled]="false">{{ paymentChannelUtilService.renewChannelButtonLabel() }}</button>
+                         } @case ('closePaymentChannel') {
+                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? handlePaymentChannelAction() : null" [disabled]="false">{{ paymentChannelUtilService.closeChannelButtonLabel() }}</button>
+                         }}
+                    </app-button-tooltip>
+
+                    <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!isIdle()">Clear Fields</button>
+               </div>
+               <!-- <div class="main-button-section mt-6">
                     @switch (tab) { @case ('createPaymentChannel') {
                     <button type="button" class="btn-primary whitespace-nowrap" (click)="handlePaymentChannelAction()" [disabled]="!isIdle() || !canCreatePaymentChannelForm()">{{ paymentChannelUtilService.createChannelButtonLabel() }}</button>
                     } @case ('fundPaymentChannel') {
@@ -77,7 +97,7 @@
                     } }
 
                     <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!isIdle()">Clear Fields</button>
-               </div>
+               </div> -->
 
                <!-- Execution Time -->
                <div class="mt-3 text-sm text-gray-500">

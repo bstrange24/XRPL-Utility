@@ -13,11 +13,12 @@ import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-clawback',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, LucideAngularModule, NgIcon, FocusBorderDirective, SelectSearchDropdownComponent],
      templateUrl: './mpt-clawback.component.html',
      styleUrl: './mpt-clawback.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,11 +53,17 @@ export class MptClawbackComponent {
      readonly canSendXrpChange = output<boolean>();
      readonly destinationSearchQuery = input<string>();
 
-     // UI State
-     showDestinationHelper = signal(false);
-     showAmountHelper = signal(false);
-     showMptHelper = signal(false);
-     showMptIssuanceHelper = signal(false);
+     // Helper Items
+     readonly mptClawbackSelectHelperItems = AppConstants.MPT_CLAWBACK_SELECT_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_CLAWBACK_HELPER_ITEMS;
+     readonly mptHolderHelperItems = AppConstants.MPT_HOLDER_HELPER_ITEMS;
+     readonly mptClawbackAmountHelperItems = AppConstants.MPT_CLAWBACK_AMOUNT_HELPER_ITEMS;
+
+     // UI Signals
+     showMptClawbackSelectHelper = signal(false);
+     showMptIssuanceIdHelper = signal(false);
+     showMptHolderHelper = signal(false);
+     showMptClawbackAmountHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
 
@@ -165,20 +172,20 @@ export class MptClawbackComponent {
           this.amount = amount.toString();
      }
 
-     toggleDestinationHelper() {
-          this.showDestinationHelper.set(!this.showDestinationHelper());
-     }
-
-     toggleAmountHelper() {
-          this.showAmountHelper.set(!this.showAmountHelper());
-     }
-
      toggleMptHelper() {
-          this.showMptHelper.set(!this.showMptHelper());
+          this.showMptClawbackSelectHelper.set(!this.showMptClawbackSelectHelper());
      }
 
      toggleMptIssuanceHelper() {
-          this.showMptIssuanceHelper.set(!this.showMptIssuanceHelper());
+          this.showMptIssuanceIdHelper.set(!this.showMptIssuanceIdHelper());
+     }
+
+     toggleDestinationHelper() {
+          this.showMptHolderHelper.set(!this.showMptHolderHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showMptClawbackAmountHelper.set(!this.showMptClawbackAmountHelper());
      }
 
      // Get available balance for selected MPT

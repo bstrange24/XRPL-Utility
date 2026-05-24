@@ -57,7 +57,7 @@
      @if (permissionedDomainStoreService.domainMode() === 'update') {
      <div class="card-base">
           <div class="mb-4">
-               <label for="selectPDomainToUpdate" class="label-primary"> Select Domain to Update </label>
+               <label for="selectPDomainToUpdate" class="label-primary"> Select Domain to Update <span class="text-red-500">*</span></label>
                <p class="text-sm text-gray-600">Choose one of your existing Permissioned Domains. This will <strong class="font-semibold text-amber-600">replace</strong> its AcceptedCredentials list.</p>
           </div>
 
@@ -94,8 +94,8 @@
           <div class="mb-6 rounded-2xl border border-dashed border-gray-300 bg-gray-50/30 p-5">
                <div class="grid grid-cols-1 items-start gap-4 md:grid-cols-12">
                     <div class="md:col-span-5">
-                         <div class="flex justify-between items-baseline">
-                              <label for="domainIssuer" class="label-primary"> Issuer <span class="text-red-500">*</span> </label>
+                         <div class="field-label">
+                              <label for="domainIssuer" class="label-primary"> Issuer <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -113,11 +113,11 @@
                     </div>
 
                     <div class="md:col-span-5">
-                         <div class="flex justify-between items-baseline">
+                         <div class="field-label">
                               <label for="credentialSubject" class="label-primary"> Credential Type <span class="text-red-500">*</span> </label>
                          </div>
 
-                          <div class="flex items-center gap-2">
+                         <div class="flex items-center gap-2">
                               <p class="text-secondary">Unique identifier for this credential type.</p>
                               <button type="button" (click)="toggleCredentialTypeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
@@ -138,7 +138,7 @@
                     </div>
 
                     <div class="md:col-span-2 flex items-start pt-[58px]">
-                    <!-- <div class="md:col-span-2"> -->
+                         <!-- <div class="md:col-span-2"> -->
                          <button type="button" class="btn-blue" [disabled]="!canAddCredential()" (click)="addCredential()">+ Add Credential</button>
                     </div>
                </div>

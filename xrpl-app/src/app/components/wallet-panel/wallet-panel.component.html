@@ -8,7 +8,7 @@
                          <span class="font-semibold" [class.text-gray-900]="!isDark()" [class.text-gray-100]="isDark()">Accounts</span>
                     </div>
 
-                    <button (click)="isWalletPanelExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }}" [disabled]="wallets.length === 0">
+                    <button (click)="isWalletPanelExpanded()" class="btn-ghost-small flex items-center gap-2" title="{{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }}" [disabled]="wallets.length === 0">
                          <lucide-icon [name]="isWalletPanelExpanded() ? 'chevron-up' : 'chevron-down'" size="16" />
                          <span class="hidden sm:inline"> {{ isWalletPanelExpanded() ? 'Collapse Panel' : 'Expand Panel' }} </span>
                     </button>
@@ -30,12 +30,12 @@
                <!-- Action Buttons Row -->
                <div class="p-4 flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-3">
-                         <button (click)="generateNewAccount()" class="btn-primary flex items-center gap-2">
+                         <button (click)="generateNewAccount()" class="btn-green-small flex items-center gap-1">
                               <lucide-icon name="plus" size="16" />
-                              Generate
+                              Generate New Wallet
                          </button>
 
-                         <button (click)="toggleAllWallets()" class="btn-ghost flex items-center gap-2" title="{{ areAllCollapsed() ? 'Expand All' : 'Collapse All' }}" [disabled]="wallets.length === 0">
+                         <button (click)="toggleAllWallets()" class="btn-ghost-small flex items-center gap-2" title="{{ areAllCollapsed() ? 'Expand All' : 'Collapse All' }}" [disabled]="wallets.length === 0">
                               <lucide-icon [name]="areAllCollapsed() ? 'chevron-down' : 'chevron-up'" size="16" />
                               <span class="hidden sm:inline"> {{ areAllCollapsed() ? 'Expand All Wallets' : 'Collapse All Wallets' }} </span>
                          </button>

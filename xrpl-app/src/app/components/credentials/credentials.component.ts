@@ -39,11 +39,12 @@ import { StorageService } from '../../services/shared/local-storage/storage.serv
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { CredentialRequirementsInfoComponent } from './ui-components/credential-requirements-info/credential-requirements-info.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-credentials',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, ButtonTooltipComponent, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, CredentialDeleteComponent, CredentialVerifyComponent, CredentialCreateComponent, CredentialAcceptComponent],
      templateUrl: './credentials.component.html',
      styleUrl: './credentials.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -130,6 +131,26 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           this.clearInputFields();
           if (this.hasWallets()) await this.getCredentialsForAccount();
      }
+
+     public canPerformAction = computed(() => {
+          const tab = this.credentialViewModelService.activeTab();
+          const idle = this.isIdle(); // from WalletDestinationBase
+
+          if (!idle) return false;
+
+          switch (tab) {
+               case 'createCredential':
+                    return this.canCreateCredential(); // uses validation from Create component
+
+               case 'acceptCredential':
+               case 'deleteCredential':
+               case 'verifyCredential':
+                    return !!this.credentialStore.credentialID(); // just needs a selection
+
+               default:
+                    return false;
+          }
+     });
 
      async getCredentialsForAccount(forceRefresh = false): Promise<void> {
           const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
@@ -406,6 +427,22 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           if (source === 'list' && activeTab !== 'createCredential') {
                this.infoPanelExpanded.set(false);
           }
+     }
+
+     getButtonTooltip(): string {
+          const tab = this.credentialViewModelService.activeTab();
+          if (!this.canPerformAction()) {
+               if (tab === 'createCredential') {
+                    return 'Subject and Credential Type are required';
+               }
+               return 'Please select a credential';
+          }
+
+          if (tab === 'acceptCredential' && this.credentialViewModelService.selectedCredentialIsExpired?.()) {
+               return 'Cannot accept expired credential.';
+          }
+
+          return '';
      }
 
      protected clearInputFields(): void {

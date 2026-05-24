@@ -10,11 +10,12 @@ import { WalletConfiguratorComponent } from '../../wallet-configurator.component
 import { NgIcon } from '@ng-icons/core';
 import * as bip39 from 'bip39';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-wallet-derive-mnemonic',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule, NgIcon, ButtonTooltipComponent],
      templateUrl: './wallet-derive-mnemonic.component.html',
      styleUrl: './wallet-derive-mnemonic.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

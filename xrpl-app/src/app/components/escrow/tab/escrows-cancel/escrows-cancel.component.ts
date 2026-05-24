@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, Input, signal } from '@angular/core';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -9,11 +9,13 @@ import { EscrowTransactionViewModelService } from '../../../../services/escrow/e
 import { EscrowUtilService } from '../../../../services/escrow/escrow-util/escrow-util.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-escrows-cancel',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, MatSlideToggleModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, LucideAngularModule, MatSlideToggleModule, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './escrows-cancel.component.html',
      styleUrl: './escrows-cancel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,6 +25,19 @@ export class EscrowsCancelComponent {
      public readonly escrowUtilService = inject(EscrowUtilService);
      public readonly viewModel = inject(EscrowTransactionViewModelService);
      private readonly walletManager = inject(WalletManagerService);
+
+     readonly escrowSelectorHelperItems = AppConstants.ESCROW_SELECTOR_HELPER_ITEMS;
+     readonly escrowSequenceHelperItems = AppConstants.ESCROW_SEQUENCE_HELPER_ITEMS;
+     readonly escrowAmountHelperItems = AppConstants.ESCROW_AMOUNT_FINISH_HELPER_ITEMS;
+     readonly escrowCreatorHelperItems = AppConstants.ESCROW_CREATOR_HELPER_ITEMS;
+     readonly escrowDestinationHelperItems = AppConstants.ESCROW_DESTINATION_FINISH_HELPER_ITEMS;
+
+     // UI Signals
+     showEscrowSelectorHelper = signal(false);
+     showEscrowSequenceHelper = signal(false);
+     showEscrowAmountHelper = signal(false);
+     showEscrowCreatorHelper = signal(false);
+     showEscrowDestinationHelper = signal(false);
 
      @Input() isConditional = false;
 
@@ -60,5 +75,26 @@ export class EscrowsCancelComponent {
           if (escrow) {
                this.escrowStoreService.setField('escrowOwner', escrow.Sender);
           }
+     }
+
+     // Toggle Methods
+     toggleEscrowSelectorHelper() {
+          this.showEscrowSelectorHelper.set(!this.showEscrowSelectorHelper());
+     }
+
+     toggleEscrowSequenceHelper() {
+          this.showEscrowSequenceHelper.set(!this.showEscrowSequenceHelper());
+     }
+
+     toggleEscrowAmountHelper() {
+          this.showEscrowAmountHelper.set(!this.showEscrowAmountHelper());
+     }
+
+     toggleEscrowCreatorHelper() {
+          this.showEscrowCreatorHelper.set(!this.showEscrowCreatorHelper());
+     }
+
+     toggleEscrowDestinationHelper() {
+          this.showEscrowDestinationHelper.set(!this.showEscrowDestinationHelper());
      }
 }

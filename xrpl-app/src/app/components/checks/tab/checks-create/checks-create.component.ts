@@ -25,11 +25,13 @@ import { InvoiceIdValidatorService } from '../../../../services/shared/validator
 import { DomainIdValidatorService } from '../../../../services/shared/validators/domain-id-validator/domain-id-validator.service';
 import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,13 @@ export class ChecksCreateComponent {
      public readonly domainIdValidatorService = inject(DomainIdValidatorService);
      public readonly credentialValidatorService = inject(CredentialValidatorService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+     readonly checkCurrencyCodeHelperItems = AppConstants.CHECK_CURRENCY_CODE_HELPER_ITEMS;
+     readonly checkAmountHelperItems = AppConstants.CHECK_AMOUNT_HELPER_ITEMS;
+     readonly checkIssuerHelperItems = AppConstants.CHECK_ISSUER_HELPER_ITEMS;
+     readonly checkDestinationHelperItems = AppConstants.CHECK_DESTINATION_HELPER_ITEMS;
+     readonly checkCurrencyBalanceHelperItems = AppConstants.CHECK_CURRENCY_BALANCE_HELPER_ITEMS;
 
      // Inputs from parent
      destinationItems = input.required<any[]>();
@@ -83,6 +92,14 @@ export class ChecksCreateComponent {
      private optionsHasError = signal(false);
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
+
+     // UI Signals
+     showCheckCurrencyCodeHelper = signal(false);
+     showCheckAmountHelper = signal(false);
+     showCheckIssuerHelper = signal(false);
+     showCheckDestinationHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
+     showCheckCurrencyBalanceHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -196,5 +213,30 @@ export class ChecksCreateComponent {
           this.optionsHasError.set(validation.hasError);
           this.optionsErrorMsg.set(validation.message || '');
           this.optionsErrors.set(validation.errors || []);
+     }
+
+     // Toggle Methods
+     toggleCurrencyCodeHelper() {
+          this.showCheckCurrencyCodeHelper.set(!this.showCheckCurrencyCodeHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showCheckAmountHelper.set(!this.showCheckAmountHelper());
+     }
+
+     toggleIssuerHelper() {
+          this.showCheckIssuerHelper.set(!this.showCheckIssuerHelper());
+     }
+
+     toggleDestinationHelper() {
+          this.showCheckDestinationHelper.set(!this.showCheckDestinationHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
+     }
+
+     toggleCurrencyBalanceHelper() {
+          this.showCheckCurrencyBalanceHelper.set(!this.showCheckCurrencyBalanceHelper());
      }
 }

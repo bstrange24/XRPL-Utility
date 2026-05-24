@@ -2,35 +2,39 @@
 <div class="space-y-6">
      <!-- DID Document Card -->
      <div class="card-base">
-          <div class="mb-4">
+          <div class="mb-2">
                <div class="flex items-center justify-between mb-2">
-                    <label for="didDocument" class="label-primary">DID Document</label>
+                    <div class="flex justify-between items-baseline flex-1">
+                         <div class="field-label">
+                              <label for="didDocument" class="label-primary">DID Document <span class="text-red-500">*</span></label>
+                         </div>
+                    </div>
                     <div class="flex items-center gap-2">
-                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDocumentEditor.format()">
-                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-gray-500"></ng-icon>
+                         <button type="button" (click)="didDocumentEditor.format()" title="Format JSON" class="btn-utility-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Format JSON
                          </button>
-                         <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('document')">
-                              <ng-icon name="heroTrash" size="16" class="text-gray-500"></ng-icon>
-                              Clear DID Document
-                         </button> -->
-                         <button type="button" (click)="didDocumentEditor.format()" title="Format JSON" class="format-btn-small">
-                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
-                              Format JSON
-                         </button>
-                         <button type="button" (click)="didUtilService.clearJsonField('document')" title="Clear DID Document" class="format-btn-small">
-                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="didUtilService.clearJsonField('document')" title="Clear DID Document" class="btn-utility-small">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Clear DID Document
                          </button>
                     </div>
                </div>
-               <p class="text-secondary">Main DID document containing context, id, verificationMethod, etc.</p>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Main DID document containing context, id, verificationMethod, etc.</p>
+                    <button type="button" (click)="toggleDidDocumentHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
           </div>
 
           <app-json-editor [value]="didStoreService.didDocumentData()" (valueChange)="didUtilService.onDidDocumentDataChange($event)" #didDocumentEditor> </app-json-editor>
 
+          <app-field-helper title="DID Document" [items]="didDocumentHelperItems" [show]="showDidDocumentHelper" />
+
           <div class="mt-3 flex items-center justify-between text-xs">
-               <span class="text-gray-500">Size: {{ byteLengthDidDocument() }} / 256 bytes</span>
+               <span class="text-gray-500 mr-1">Size: {{ byteLengthDidDocument() }} / 256 bytes</span>
                @if (byteLengthDidDocument() > 256) {
                <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-2">
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-red-600 ml-2" />
@@ -61,31 +65,37 @@
 
      <!-- URI Data Card -->
      <div class="card-base">
-          <div class="mb-4">
+          <div class="mb-2">
                <div class="flex items-center justify-between mb-2">
-                    <label for="uriData" class="label-primary">URI Data</label>
+                    <div class="field-label">
+                         <label for="uriData" class="label-primary">URI Data <span class="text-red-500">*</span></label>
+                    </div>
                     <div class="flex items-center gap-2">
-                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="uriEditor.format()">
-                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-blue-500"></ng-icon>
-                              Format JSON
-                         </button> -->
-                         <button type="button" (click)="uriEditor.format()" title="Format JSON" class="format-btn-small">
-                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="uriEditor.format()" title="Format JSON" class="btn-utility-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Format JSON
                          </button>
-                         <button type="button" (click)="didUtilService.clearJsonField('uri')" title="Clear URI Data" class="format-btn-small">
-                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="didUtilService.clearJsonField('uri')" title="Clear URI Data" class="btn-utility-small">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Clear URI Data
                          </button>
                     </div>
                </div>
-               <p class="text-secondary">Additional URI-linked data for the DID.</p>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Additional URI-linked data for the DID.</p>
+                    <button type="button" (click)="toggleUriDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
           </div>
 
           <app-json-editor [value]="didStoreService.uriData()" (valueChange)="didUtilService.onUriDataChange($event)" #uriEditor> </app-json-editor>
 
+          <app-field-helper title="URI Data" [items]="uriDataHelperItems" [show]="showUriDataHelper" />
+
           <div class="mt-3 flex items-center justify-between text-xs">
-               <span class="text-gray-500">Size: {{ byteLengthUriData() }} / 256 bytes</span>
+               <span class="text-gray-500 mr-1">Size: {{ byteLengthUriData() }} / 256 bytes</span>
                @if (byteLengthUriData() > 256) {
                <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-2">
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-red-600 ml-2" />
@@ -118,35 +128,36 @@
      <div class="card-base">
           <div class="mb-4">
                <div class="flex items-center justify-between mb-2">
-                    <label for="didData" class="label-primary">DID Data</label>
+                    <div class="field-label">
+                         <label for="didData" class="label-primary">DID Data <span class="text-red-500">*</span></label>
+                    </div>
                     <div class="flex items-center gap-2">
-                         <!-- <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didDataEditor.format()">
-                              <ng-icon name="heroCodeBracketSquare" size="16" class="text-gray-500"></ng-icon>
+                         <button type="button" (click)="didDataEditor.format()" title="Format JSON" class="btn-utility-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Format JSON
                          </button>
-                         <button type="button" class="flex items-center gap-1.5 rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200" (click)="didUtilService.clearJsonField('data')">
-                              <ng-icon name="heroTrash" size="16" class="text-gray-500"></ng-icon>
-                              Clear DID Data
-                         </button> -->
-
-                         <button type="button" (click)="didDataEditor.format()" title="Format JSON" class="format-btn-small">
-                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
-                              Format JSON
-                         </button>
-                         <button type="button" (click)="didUtilService.clearJsonField('data')" title="Clear DID Data" class="format-btn-small">
-                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="didUtilService.clearJsonField('data')" title="Clear DID Data" class="btn-utility-small">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Clear DID Data
                          </button>
                          <a href="https://www.w3.org/TR/did-1.0/" target="_blank" rel="noopener noreferrer" class="text-xs text-green-600 hover:text-green-800"> W3C Spec → </a>
                     </div>
                </div>
-               <p class="text-secondary">Core DID data and custom properties.</p>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Core DID data and custom properties.</p>
+                    <button type="button" (click)="toggleDidDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
           </div>
 
           <app-json-editor [value]="didStoreService.didData()" (valueChange)="didUtilService.onDidDataChange($event)" #didDataEditor> </app-json-editor>
 
+          <app-field-helper title="DID Data" [items]="didDataHelperItems" [show]="showDidDataHelper" />
+
           <div class="mt-3 flex items-center justify-between text-xs">
-               <span class="text-gray-500">Size: {{ byteLengthDidData() }} / 256 bytes</span>
+               <span class="text-gray-500 mr-1">Size: {{ byteLengthDidData() }} / 256 bytes</span>
                @if (byteLengthDidData() > 256) {
                <div class="flex gap-3 rounded-2xl border border-red-200 bg-red-50 p-2">
                     <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-red-600 ml-2" />
@@ -176,8 +187,10 @@
      </div>
 </div>
 } @else {
-<div class="mt-2 mb-4 flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-     <ng-icon name="heroExclamationTriangle" size="20" class="flex-shrink-0 text-amber-600" />
-     <p class="text-sm text-amber-800">DID existing for the selected account.</p>
+<div class="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+     <div class="flex items-center gap-2">
+          <ng-icon name="heroCheckCircle" size="20" class="text-blue-600" />
+          <p class="text-sm text-blue-800">DID existing for the selected account.</p>
+     </div>
 </div>
 }

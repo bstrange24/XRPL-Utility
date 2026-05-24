@@ -10,11 +10,12 @@ import { WalletConfiguratorComponent } from '../../wallet-configurator.component
 import * as xrpl from 'xrpl';
 import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-wallet-derive-seed',
      standalone: true,
-     imports: [CommonModule, NgIcon, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule],
+     imports: [CommonModule, NgIcon, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule, ButtonTooltipComponent],
      templateUrl: './wallet-derive-seed.component.html',
      styleUrl: './wallet-derive-seed.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

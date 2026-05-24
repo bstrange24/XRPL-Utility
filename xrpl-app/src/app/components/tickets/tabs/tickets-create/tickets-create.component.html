@@ -6,8 +6,17 @@
           </h4>
 
           <div>
-               <label for="xrpAmount" class="label-primary">Number of Tickets to Create <span class="text-red-500">*</span></label>
-               <p class="text-secondary">Number of Tickets to create for the selected account.</p>
+               <div class="field-label">
+                    <label for="xrpAmount" class="label-primary">Number of Tickets to Create <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Number of Tickets to create for the selected account.</p>
+                    <button type="button" (click)="toggleTicketCountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <div class="relative">
                     <input
                          type="text"
@@ -31,6 +40,8 @@
                          <lucide-icon name="x" size="16"></lucide-icon>
                     </button>
                     }
+
+                    <app-field-helper title="Number of Tickets" [items]="ticketCountHelperItems" [show]="showTicketCountHelper" />
                </div>
           </div>
      </div>

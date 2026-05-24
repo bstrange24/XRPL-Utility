@@ -15,11 +15,13 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 import { LucideAngularModule } from 'lucide-angular';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon, LucideAngularModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, FieldHelperComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon, LucideAngularModule],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +38,9 @@ export class SendXrpFormComponent {
      private readonly optionsHasError = signal(false);
      private readonly optionsErrorMsg = signal('');
      private readonly optionsErrors = signal<string[]>([]);
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+     readonly sendXrpDestinationHelperItems = AppConstants.SEND_XRP_DESTINATION_HELPER_ITEMS;
+     readonly sendXrpAmountHelperItems = AppConstants.SEND_XRP_AMOUNT_HELPER_ITEMS;
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -56,6 +61,11 @@ export class SendXrpFormComponent {
      selectedDestinationAddress = input<string>();
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
+
+     // UI State
+     showSendXrpDestinationHelper = signal(false);
+     showSendXrpAmountHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      // Track destination validation status from dropdown
      isDestinationValid = signal(false);
@@ -119,4 +129,17 @@ export class SendXrpFormComponent {
      });
 
      hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
+
+     // Toggle Methods
+     toggleDestinationHelper() {
+          this.showSendXrpDestinationHelper.set(!this.showSendXrpDestinationHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showSendXrpAmountHelper.set(!this.showSendXrpAmountHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
+     }
 }

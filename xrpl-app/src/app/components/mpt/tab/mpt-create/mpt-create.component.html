@@ -8,7 +8,7 @@
 
           <div>
                <!-- Maximum Tokens -->
-               <div class="flex justify-between items-baseline">
+               <div class="field-label">
                     <label for="mptMaxTokens" class="label-primary">Maximum Tokens <span class="text-red-500">*</span> </label>
                     <div class="flex gap-2">
                          @for (preset of tokenCountPresets; track preset) {
@@ -72,7 +72,7 @@
 
           <!-- Asset Scale -->
           <div>
-               <div class="flex justify-between items-baseline">
+               <div class="field-label">
                     <label for="mptAssetScale" class="label-primary">Asset Scale</label>
                     <div class="flex gap-2">
                          @for (preset of assetScalePresets; track preset) {
@@ -132,7 +132,7 @@
 
           <!-- Transfer Fee -->
           <div>
-               <div class="flex justify-between items-baseline">
+               <div class="field-label">
                     <label for="mptTransferFee" class="label-primary">Transfer Fee</label>
                     <div class="flex gap-2">
                          @for (preset of transferFeePresets; track preset) {
@@ -204,16 +204,14 @@
                     </label>
 
                     <div class="flex items-center gap-2">
-                         <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="format-btn-small">
-                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="btn-utility-small">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Format JSON
                          </button>
-                         <button type="button" (click)="this.mptStoreService.setField('metaData', '');" title="Clear DID Document" class="format-btn-small">
-                              <ng-icon name="heroTrash" size="16" class="text-blue-600"></ng-icon>
+                         <button type="button" (click)="this.mptStoreService.setField('metaData', '');" title="Clear DID Document" class="btn-utility-small">
+                              <ng-icon name="heroTrash" size="16" class="text-gray-500 mr-1"></ng-icon>
                               Clear Metadata
                          </button>
-                         <!-- <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="jsonEditor.format()">Format JSON</button> -->
-                         <!-- <button type="button" class="rounded-xl bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 active:bg-gray-300" (click)="this.mptStoreService.setField('metaData', '');">Clear Metadata</button> -->
                     </div>
                </div>
 

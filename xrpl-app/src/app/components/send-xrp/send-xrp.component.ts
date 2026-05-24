@@ -38,11 +38,12 @@ import { SendXrpSummaryComponent } from './ui-components/send-xrp-summary/send-x
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-send-xrp',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ButtonTooltipComponent, TransactionOptionsComponent, SendXrpFormComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, MatSlideToggleModule],
      templateUrl: './send-xrp.component.html',
      styleUrl: './send-xrp.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -246,5 +247,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
           this.credentialStore.setField('credentialIDs', []);
+          // this.txUiService.clearTxSignal();
+          // this.txUiService.clearTxResultSignal();
      }
 }

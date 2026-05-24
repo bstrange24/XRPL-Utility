@@ -10,9 +10,18 @@
           <div class="side-by-side-fields">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                    <div class="h-[54px]">
+                    <div>
+                         <div class="field-label">
+                              <label for="escrowCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+                              <button type="button" (click)="toggleCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                               <ng-template #itemTemplate let-item>
                                    <div class="flex items-center gap-2">
@@ -26,60 +35,86 @@
                               </ng-template>
                          </app-select-search-dropdown>
                     </div>
+                    <app-field-helper title="Currency Code" [items]="escrowCurrencyCodeHelperItems" [show]="showEscrowCurrencyCodeHelper" />
                </div>
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
-                    <div class="relative">
-                         <input
-                              type="text"
-                              inputmode="decimal"
-                              class="input-base-with-validation"
-                              app-focus-border
-                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
-                              (keydown)="utilsService.preventNegative($event)"
-                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
-                              (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
-                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
-                              [ngModel]="escrowStoreService.amount()"
-                              (ngModelChange)="escrowStoreService.setField('amount', $event)"
-                              placeholder="e.g. 10.5"
-                         />
+                    <div>
+                         <div class="field-label">
+                              <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
+                         </div>
 
-                         @if (escrowStoreService.amount() && escrowStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.escrowStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The amount the destination is allowed to claim.</p>
+                              <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="decimal"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
+                                   [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                                   (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
+                                   (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                                   (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                                   [ngModel]="escrowStoreService.amount()"
+                                   (ngModelChange)="escrowStoreService.setField('amount', $event)"
+                                   placeholder="e.g. 10.5"
+                              />
+
+                              @if (escrowStoreService.amount() && escrowStoreService.amount()!.trim().length > 0) {
+                              <button type="button" (click)="this.escrowStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                                   <lucide-icon name="x" size="16"></lucide-icon>
+                              </button>
+                              }
+                         </div>
+
+                         @if (amountValidatorService.isEscrowAmountInvalid()) {
+                         <p class="form-error">Amount must be greater than 0</p>
                          }
+                         <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
                     </div>
-
-                    @if (amountValidatorService.isEscrowAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
                </div>
           </div>
 
           <!-- Issuer + Balance (non-XRP, non-MPT) -->
           @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
           <div class="side-by-side-fields mt-3">
-               <!-- Issuer -->
-               <div class="space-y-2">
-                    <label for="escrowCurrencyIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-                    <div class="h-[54px]">
+               <div>
+                    <!-- Issuer -->
+                    <div class="field-label">
+                         <label for="escrowCurrencyIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+                         <button type="button" (click)="toggleIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
+
+                    <app-field-helper title="Issuer" [items]="escrowIssuerHelperItems" [show]="showEscrowIssuerHelper" />
                </div>
 
                <!-- Currency Balance -->
                <div class="space-y-2">
-                    <label for="escrowCurrencyBalance" class="label-primary">Currency Balance</label>
-                    <p class="text-secondary">Total currency balance held by this account.</p>
-                    <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
+                    <div>
+                         <label for="escrowCurrencyBalance" class="label-primary">Currency Balance</label>
+                         <p class="text-secondary">Total currency balance held by this account.</p>
+                         <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
+                    </div>
                </div>
           </div>
           }
@@ -90,11 +125,23 @@
           <div class="side-by-side-fields mt-3">
                <!-- Select MPT -->
                <div class="space-y-2">
-                    <label for="selectMpt" class="label-primary">Select MPT <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">MPT this account holds that can be sent to another account.</p>
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+                    <div>
+                         <div class="field-label">
+                              <label for="selectMpt" class="label-primary">Select MPT <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">MPT this account holds that can be sent to another account.</p>
+                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+                         </div>
                     </div>
+                    <app-field-helper title="MPT" [items]="escrowMptHelperItems" [show]="showEscrowMptHelper" />
                </div>
 
                <!-- MPT Issuance ID -->
@@ -110,61 +157,87 @@
           <div class="side-by-side-fields mt-3">
                <!-- Destination -->
                <div class="space-y-2">
-                    <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
-                    <p class="text-secondary pb-2">The unique address of the account receiving the XRP, IOU token,<br />or MPT token escrow.</p>
-                    <app-select-search-dropdown
-                         app-focus-border
-                         [validateXrpAddress]="true"
-                         [disableCurrentAccount]="true"
-                         [showClearButton]="true"
-                         [clearOnEscape]="true"
-                         [validateOn]="'blur'"
-                         [closeWhenInvalid]="true"
-                         [items]="destinationItems()"
-                         [value]="selectedDestinationItem()"
-                         [searchQueryInput]="destinationSearchQuery()"
-                         (searchQueryChange)="searchQueryChange.emit($event)"
-                         (valueChange)="destinationChange.emit($event)"
-                         (isValid)="onDestinationValidationChange($event)"
-                         placeholder="Enter or select destination address"
-                    >
-                    </app-select-search-dropdown>
+                    <div>
+                         <div class="field-label">
+                              <label for="destination" class="label-primary">Destination <span class="text-red-500">*</span></label>
+                         </div>
 
-                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-                    <p class="same-addrress-as-selected-account">
-                         <ng-icon name="heroExclamationTriangle" size="14" />
-                         This is your currently active wallet. You cannot send XRP to yourself.
-                    </p>
-                    }
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The unique address of the account receiving the XRP, IOU, or MPT escrow.</p>
+                              <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <app-select-search-dropdown
+                                   app-focus-border
+                                   [validateXrpAddress]="true"
+                                   [disableCurrentAccount]="true"
+                                   [showClearButton]="true"
+                                   [clearOnEscape]="true"
+                                   [validateOn]="'blur'"
+                                   [closeWhenInvalid]="true"
+                                   [items]="destinationItems()"
+                                   [value]="selectedDestinationItem()"
+                                   [searchQueryInput]="destinationSearchQuery()"
+                                   (searchQueryChange)="searchQueryChange.emit($event)"
+                                   (valueChange)="destinationChange.emit($event)"
+                                   (isValid)="onDestinationValidationChange($event)"
+                                   placeholder="Enter or select destination address"
+                              >
+                              </app-select-search-dropdown>
+                         </div>
+
+                         @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                         <p class="same-addrress-as-selected-account">
+                              <ng-icon name="heroExclamationTriangle" size="14" />
+                              This is your currently active wallet. You cannot send XRP to yourself.
+                         </p>
+                         }
+                    </div>
+                    <app-field-helper title="Destination" [items]="escrowDestinationHelperItems" [show]="showEscrowDestinationHelper" />
                </div>
 
                <!-- Destination Tag -->
                <div class="space-y-2">
-                    <label class="label-primary">Destination Tag</label>
-                    <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <div class="relative">
-                         <input
-                              type="text"
-                              inputmode="numeric"
-                              class="input-base-with-validation"
-                              app-focus-border
-                              [isValid]="!tagValidatorService.isDestinationTagInvalid()"
-                              [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
-                              (keydown)="utilsService.preventNegative($event)"
-                              (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
-                              (input)="tagValidatorService.onDestinationTagInput($event)"
-                              (blur)="tagValidatorService.onDestinationTagBlur($event)"
-                              [ngModel]="xrplTxOptionsStore.destinationTag()"
-                              (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
-                              placeholder="e.g. 1123456"
-                         />
+                    <div>
+                         <div class="field-label">
+                              <label class="label-primary">Destination Tag</label>
+                         </div>
 
-                         @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
-                         <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Destination Tag identifies the recipient within a shared address.</p>
+                              <button type="button" (click)="toggleDestinationTagHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="numeric"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="!tagValidatorService.isDestinationTagInvalid()"
+                                   [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
+                                   (input)="tagValidatorService.onDestinationTagInput($event)"
+                                   (blur)="tagValidatorService.onDestinationTagBlur($event)"
+                                   [ngModel]="xrplTxOptionsStore.destinationTag()"
+                                   (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)"
+                                   placeholder="e.g. 1123456"
+                              />
+
+                              @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
+                              <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
+                                   <lucide-icon name="x" size="16"></lucide-icon>
+                              </button>
+                              }
+                         </div>
                     </div>
+                    <app-field-helper title="Destination Tag" [items]="escrowDestTagHelperItems" [show]="showEscrowDestTagHelper" />
                </div>
           </div>
 
@@ -172,8 +245,16 @@
           @if (isConditional) {
           <div>
                <div class="mt-4">
-                    <label for="escrowCondition" class="label-primary">Condition</label>
-                    <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                    <div class="field-label">
+                         <label for="escrowCondition" class="label-primary">Condition</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                         <button type="button" (click)="toggleConditionHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <div class="relative">
                          <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidCondition() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
@@ -188,11 +269,20 @@
                     @if (escrowValidatorService.hasInvalidCondition()) {
                     <p class="form-error">{{ escrowValidatorService.getConditionErrorMessage() }}</p>
                     }
+                    <app-field-helper title="Condition" [items]="escrowConditionHelperItems" [show]="showEscrowConditionHelper" />
                </div>
 
                <div class="mt-4">
-                    <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
-                    <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                    <div class="field-label">
+                         <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                         <button type="button" (click)="toggleFulfillmentHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <div class="relative">
                          <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
@@ -209,6 +299,7 @@
                     } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair() && !escrowValidatorService.hasInvalidCondition() && !escrowValidatorService.hasInvalidFulfillment()) {
                     <p class="form-error">{{ escrowValidatorService.getConditionFulfillmentPairErrorMessage() }}</p>
                     }
+                    <app-field-helper title="Fulfillment" [items]="escrowFulfillmentHelperItems" [show]="showEscrowFulfillmentHelper" />
                </div>
           </div>
           }

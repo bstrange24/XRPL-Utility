@@ -10,11 +10,12 @@ import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-tra
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-lock-unlock',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
      templateUrl: './mpt-lock-unlock.component.html',
      styleUrl: './mpt-lock-unlock.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,14 +48,19 @@ export class MptLockUnlockComponent {
      readonly destinationSearchQuery = input<string>();
 
      // UI State
-     showDestinationHelper = signal(false);
      showAmountHelper = signal(false);
      showMptHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
+     showMptLockActionHelper = signal(false);
+     showMptDestinationHelper = signal(false);
+     showMptIssuanceIdHelper = signal(false);
 
      // Preset examples for MPT Issuance ID
      readonly mptIdExamples = AppConstants.MPT_ID_EXAMPLES;
+     readonly mptLockActionHelperItems = AppConstants.MPT_LOCK_ACTION_HELPER_ITEMS;
+     readonly mptDestinationHelperItems = AppConstants.MPT_DESTINATION_LOCK_UNLOCK_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_LOCK_UNLOCK_HELPER_ITEMS;
 
      constructor() {
           // Emit validation status changes
@@ -137,8 +143,17 @@ export class MptLockUnlockComponent {
           this.showMptHelper.set(!this.showMptHelper());
      }
 
+     // Toggle Methods
+     toggleActionHelper() {
+          this.showMptLockActionHelper.set(!this.showMptLockActionHelper());
+     }
+
      toggleDestinationHelper() {
-          this.showDestinationHelper.set(!this.showDestinationHelper());
+          this.showMptDestinationHelper.set(!this.showMptDestinationHelper());
+     }
+
+     toggleMptIssuanceHelper() {
+          this.showMptIssuanceIdHelper.set(!this.showMptIssuanceIdHelper());
      }
 
      // Get MPT display info for the info box

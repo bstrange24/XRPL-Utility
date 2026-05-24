@@ -10,11 +10,14 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import * as xrpl from 'xrpl';
+import { AppConstants } from '../../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-deposit-auth',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
      templateUrl: './deposit-auth.component.html',
      styleUrl: './deposit-auth.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,9 +29,15 @@ export class DepositAuthComponent {
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
 
+     // === Helper Items ===
+     readonly depositAuthHelperItems = AppConstants.DEPOSIT_AUTH_HELPER_ITEMS;
+
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      focusedAddressIndex = signal<number | null>(null);
+
+     // UI State
+     showDepositAuthHelper = signal(false);
 
      // Simple validation methods - same as regular key page
      isAddressValid(address: string): boolean {
@@ -91,6 +100,18 @@ export class DepositAuthComponent {
 
      // Remove button
      canRemoveDepositAuth = computed(() => {
+          // Must have no empty addresses
+          if (this.hasEmptyAddresses()) return false;
+
+          // Must have no invalid addresses
+          if (this.hasInvalidAddresses()) return false;
+
+          // Must have at least one valid address
+          if (!this.hasAtLeastOneValidAddress()) return false;
+
+          // Must have no duplicates
+          if (this.hasDuplicateAddresses()) return false;
+
           return this.canSubmit() && this.connectionGuard.isConnectionReady();
      });
 
@@ -158,6 +179,10 @@ export class DepositAuthComponent {
      // Track by index for better performance
      trackByIndex(index: number, item: any): number {
           return index;
+     }
+
+     toggleDepositAuthHelper() {
+          this.showDepositAuthHelper.set(!this.showDepositAuthHelper());
      }
 
      clearFields() {

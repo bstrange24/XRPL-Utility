@@ -1,7 +1,7 @@
 <div class="space-y-6">
      <!-- Currency Code -->
      <div>
-          <div class="flex justify-between items-baseline">
+          <div class="field-label">
                <label for="nftTokenID" class="label-primary"> Currency Code <span class="text-red-500">*</span> </label>
           </div>
 
@@ -25,7 +25,7 @@
      <!-- Amount (when not using custom amount mode) -->
      @if (!showAmount) {
      <div>
-          <div class="flex justify-between items-baseline">
+          <div class="field-label">
                <label for="amount" class="label-primary">Amount</label>
           </div>
 
@@ -69,7 +69,7 @@
      <!-- Issuer + Balance (when not XRP) -->
      @if (currency !== 'XRP') {
      <div>
-          <div class="flex justify-between items-baseline">
+          <div class="field-label">
                <label for="amount" class="label-primary">Issuer</label>
           </div>
 
@@ -96,7 +96,7 @@
      <!-- Custom Amount (when showAmount = true) -->
      @if (showAmount) {
      <div>
-          <div class="flex justify-between items-baseline">
+          <div class="field-label">
                <label for="amount" class="label-primary">Amount</label>
           </div>
 

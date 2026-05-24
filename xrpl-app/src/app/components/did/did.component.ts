@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, ChangeDetectionStrategy, Component, effect, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -36,11 +36,12 @@ import { StorageService } from '../../services/shared/local-storage/storage.serv
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { DidRequirementsInfoComponent } from './ui-components/did-requirements-info/did-requirements-info.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-did',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidDeleteComponent, DidSetComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, DidDeleteComponent, DidSetComponent],
      templateUrl: './did.component.html',
      styleUrl: './did.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -96,6 +97,25 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                this.setRightPanel();
           }
      });
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle(); // from WalletDestinationBase
+          if (!idle) return false;
+
+          const tab = this.didViewModelService.activeTab();
+
+          if (tab === 'setDid') {
+               return this.didViewModelService.allFieldsValid();
+          }
+
+          if (tab === 'deleteDid') {
+               return this.didViewModelService.infoData()?.didCount! > 0;
+          }
+
+          return false;
+     });
+
+     hasNoExistingDid = computed(() => this.didStoreService.existingDid().length <= 0);
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
@@ -210,6 +230,21 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.didUtilService.getExistingDid(env.accountObjects);
+     }
+
+     getButtonTooltip(): string {
+          const tab = this.didViewModelService.activeTab();
+
+          if (!this.canPerformAction()) {
+               if (tab === 'setDid') {
+                    return 'Please fill all required DID fields (Document, URI, Data)';
+               }
+               if (tab === 'deleteDid') {
+                    return 'No DID exists to delete';
+               }
+          }
+
+          return '';
      }
 
      private setRightPanel(): void {

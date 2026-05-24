@@ -6,11 +6,13 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-tickets-create',
      standalone: true,
-     imports: [FormsModule, NgIcon, LucideAngularModule, FocusBorderDirective],
+     imports: [FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, FocusBorderDirective],
      templateUrl: './tickets-create.component.html',
      styleUrl: './tickets-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +26,12 @@ export class TicketsCreateComponent {
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
      canCreateTicketChange = output<boolean>();
+
+     // Helper Item
+     readonly ticketCountHelperItems = AppConstants.TICKET_COUNT_HELPER_ITEMS;
+
+     // UI State
+     showTicketCountHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -70,4 +78,9 @@ export class TicketsCreateComponent {
 
      // Check if there are any validation errors
      hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);
+
+     // Toggle Method
+     toggleTicketCountHelper() {
+          this.showTicketCountHelper.set(!this.showTicketCountHelper());
+     }
 }

@@ -45,11 +45,12 @@ import { Subscription } from 'rxjs';
 import { PaymentChannelSignatureContextService } from '../../services/payment-channel/payment-channel-signature-context/payment-channel-signature-context.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-account',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, PaymentChannelCreateComponent, PaymentChannelFundComponent, PaymentChannelRenewComponent, PaymentChannelClaimComponent, PaymentChannelCloseComponent, PaymentChannelFlagsComponent, WarningMessageComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, PaymentChannelCreateComponent, PaymentChannelFundComponent, PaymentChannelRenewComponent, PaymentChannelClaimComponent, PaymentChannelCloseComponent, PaymentChannelFlagsComponent, WarningMessageComponent],
      templateUrl: './payment-channel.component.html',
      styleUrl: './payment-channel.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -157,6 +158,32 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
           const wallet = this.currentWallet();
           if (wallet?.address) {
                this.setRightPanel();
+          }
+     });
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          if (!idle) return false;
+
+          const tab = this.paymentChannelViewModelService.activeTab();
+          const hasChannelSelected = !!this.paymentChannelStoreService.channelIDField();
+
+          switch (tab) {
+               case 'createPaymentChannel':
+                    return this.canCreatePaymentChannelForm();
+
+               case 'fundPaymentChannel':
+                    return this.canFundPaymentChannelForm() && !this.paymentChannelViewModelService.selectedIsExpired();
+
+               case 'claimPaymentChannel':
+                    return this.canClaimPaymentChannelForm() && !this.paymentChannelViewModelService.selectedIsExpired();
+
+               case 'renewPaymentChannel':
+               case 'closePaymentChannel':
+                    return hasChannelSelected;
+
+               default:
+                    return false;
           }
      });
 
@@ -383,6 +410,25 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     activeTab: this.activeTabForRequirements,
                },
           });
+     }
+
+     getButtonTooltip(): string {
+          const tab = this.paymentChannelViewModelService.activeTab();
+
+          if (!this.canPerformAction()) {
+               if (tab === 'createPaymentChannel') {
+                    return 'Please fill all required fields';
+               }
+               if (tab === 'fundPaymentChannel' || tab === 'claimPaymentChannel') {
+                    return this.paymentChannelViewModelService.selectedIsExpired() ? 'This payment channel has expired' : 'Please fill required fields';
+               }
+               if (tab === 'renewPaymentChannel' || tab === 'closePaymentChannel') {
+                    return 'Please select a Payment Channel';
+               }
+               return 'Action not available';
+          }
+
+          return '';
      }
 
      handleCanCreatePaymentChannelChange(canCreate: boolean) {

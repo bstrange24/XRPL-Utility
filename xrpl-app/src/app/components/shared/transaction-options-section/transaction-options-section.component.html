@@ -13,6 +13,16 @@
 <!-- Credential Expiration and URI -->
 @if(tab === 'createCredential') {
 <div class="rounded-2xl border-gray-200 bg-white p-1">
+     <div class="flex justify-between items-start">
+          <h2 class="section-heading">
+               <lucide-icon name="settings" class="section-heading-icon-green"></lucide-icon>
+               Credential Options
+          </h2>
+          <button type="button" (click)="toggleCredentialOptionsHelper()" class="text-gray-400 hover:text-gray-600">
+               <ng-icon name="heroQuestionMarkCircle" size="14" />
+          </button>
+     </div>
+
      <div class="side-by-side-fields">
           <!-- URI Section - Update to show validation properly -->
           <div class="space-y-2">
@@ -69,6 +79,8 @@
                </app-xrpl-expiration-input>
           </div>
      </div>
+
+     <app-field-helper title="Credential Options" [items]="credentialOptionsHelperItems" [show]="showCredentialOptionsHelper" />
 </div>
 }
 
@@ -76,6 +88,16 @@
 @else if(tab === 'createPaymentChannel' || tab === 'fundPaymentChannel') {
 <div class="rounded-2xl bg-white p-1">
      @if(tab === 'createPaymentChannel') {
+     <div class="flex justify-between items-start">
+          <h3 class="section-heading">
+               <lucide-icon name="settings" class="section-heading-icon-green"></lucide-icon>
+               Payment Channel Options
+          </h3>
+          <button type="button" (click)="togglePaymentChannelHelper()" class="text-gray-400 hover:text-gray-600">
+               <ng-icon name="heroQuestionMarkCircle" size="14" />
+          </button>
+     </div>
+
      <div class="side-by-side-fields">
           <!-- Destination Tag -->
           <div class="space-y-2">
@@ -127,6 +149,7 @@
                >
                </app-xrpl-expiration-input>
           </div>
+          <app-field-helper title="Payment Channel Options" [items]="paymentChannelHelperItems" [show]="showPaymentChannelHelper" />
      </div>
      } @if(tab === 'fundPaymentChannel') {
      <div class="expiration-field">
@@ -152,6 +175,23 @@
 <!-- Send XRP / Create Check / Cash Check -->
 @else if (tab === 'sendXrp' || tab === 'createCheck' || tab === 'cashCheck') {
 <div class="rounded-2xl border-gray-200 bg-white p-1">
+     <div class="flex justify-between items-start">
+          @if (tab === 'sendXrp') {
+          <h3 class="section-heading">
+               <lucide-icon name="settings" class="section-heading-icon-green"></lucide-icon>
+               Payment Options
+          </h3>
+          } @else {
+          <h3 class="section-heading">
+               <lucide-icon name="settings" class="section-heading-icon-green"></lucide-icon>
+               Check Options
+          </h3>
+          }
+          <button type="button" (click)="togglePaymentOptionsHelper()" class="text-gray-400 hover:text-gray-600">
+               <ng-icon name="heroQuestionMarkCircle" size="14" />
+          </button>
+     </div>
+
      <div class="space-y-6">
           <!-- Tags Row -->
           <div class="side-by-side-fields">
@@ -355,12 +395,22 @@
           </div>
           }
      </div>
+     <app-field-helper title="Payment Options" [items]="paymentOptionsHelperItems" [show]="showPaymentOptionsHelper" />
 </div>
 }
 
 <!-- Delete Account -->
 @else if (tab === 'deleteAccount') {
 <div class="rounded-2xl bg-white p-1">
+     <div class="flex justify-between items-start">
+          <h3 class="section-heading">
+               <lucide-icon name="settings" class="section-heading-icon-green"></lucide-icon>
+               Delete Account Options
+          </h3>
+          <button type="button" (click)="toggleDeleteOptionsHelper()" class="text-gray-400 hover:text-gray-600">
+               <ng-icon name="heroQuestionMarkCircle" size="14" />
+          </button>
+     </div>
      <div class="side-by-side-fields">
           <div class="space-y-2">
                <label class="label-primary">Destination Tag</label>
@@ -426,5 +476,8 @@
                }
           </div>
      </div>
+     <app-field-helper title="Delete Account Options" [items]="deleteOptionsHelperItems" [show]="showDeleteOptionsHelper" />
 </div>
-} }
+}
+<!-- Global Optional Fields Helper -->
+<app-field-helper title="Optional Transaction Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />}

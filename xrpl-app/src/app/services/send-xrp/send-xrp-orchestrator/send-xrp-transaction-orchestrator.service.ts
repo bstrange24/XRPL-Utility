@@ -9,17 +9,14 @@ import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orche
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../utils/toast/toast.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { SendXrpTransactionBuilderService } from '../send-xrp-transaction-builder/send-xrp-transaction-builder.service';
 import { CredentialStore } from '../../credentials/credential-store/credential-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
-import { SEND_XRP_TX_TYPES, SEND_XRP_VALIDATION_RULES, SendXrpTxType } from '../../../components/send-xrp/constants/send-xrp.constants';
+import { SendXrpTxType } from '../../../components/send-xrp/constants/send-xrp.constants';
 import { XrpPaymentConfig } from '../../../components/send-xrp/constants/send-xrp.types';
 import { AppConstants } from '../../../core/app.constants';
 
 type SendXrpTxMeta = {
-     validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; account: any; txOptions: any }) => any;
      buildTx: (args: { orchestrator: SendXrpTransactionOrchestratorService; env: any; wallet: any; account: any }) => xrpl.Transaction;
      simulationToastMessage: (args: { orchestrator: SendXrpTransactionOrchestratorService; account: any }) => string;
      successMessage: (args: { orchestrator: SendXrpTransactionOrchestratorService; account: any }) => string;
@@ -27,25 +24,6 @@ type SendXrpTxMeta = {
 
 const SEND_XRP_META: Record<SendXrpTxType, SendXrpTxMeta> = {
      sendXrp: {
-          validationRule: SEND_XRP_VALIDATION_RULES[SEND_XRP_TX_TYPES.SEND],
-          buildValidationInputs: ({ wallet, env, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               paymentXrp: {
-                    amount: account.amount,
-                    destination: account.destination,
-               },
-          }),
           buildTx: ({ orchestrator, env, wallet, account }) => orchestrator.sendXrpTransactionBuilderService.buildSendXrpTransaction(env.wallet || wallet, env, account),
           simulationToastMessage: () => `Successfully simulated Sending XRP`,
           successMessage: () => `Successfully Sent XRP`,
@@ -90,13 +68,8 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-
-               // Validation
+               // Meta
                const meta = SEND_XRP_META[type];
-
-               const validationInputs = meta.buildValidationInputs({ wallet, env, account, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Build transaction
                const tx = meta.buildTx({ orchestrator: this, env, wallet, account });

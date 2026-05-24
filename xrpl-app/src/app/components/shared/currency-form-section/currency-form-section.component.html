@@ -10,31 +10,61 @@
      <div class="space-y-6">
           <!-- Currency Code -->
           <div>
-               <label for="currencyCode" class="label-primary">Currency Code</label>
-               <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+               <div class="field-label">
+                    <label for="currencyCode" class="label-primary">Currency Code</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+                    <button type="button" (click)="toggleCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
+
                @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
                <p class="form-error mt-2">{{ currencyErrorMessage() }}</p>
                }
+
+               <app-field-helper title="Currency Code" [items]="currencyCodeHelperItems" [show]="showCurrencyCodeHelper" />
           </div>
 
           <!-- Issuer -->
           <div>
-               <label for="issuer" class="label-primary">Issuer</label>
-               <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+               <div class="field-label">
+                    <label for="issuer" class="label-primary">Issuer</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+                    <button type="button" (click)="toggleIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+
                @if (isIssuerInvalid()) {
                <p class="form-error mt-2">Please enter a valid XRP address</p>
                }
+
+               <app-field-helper title="Issuer" [items]="issuerHelperItems" [show]="showIssuerHelper" />
           </div>
 
           <!-- Amount -->
           <div>
-               <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
-               <p class="text-secondary">
-                    @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
-                    trustline. }
-               </p>
+               <div class="field-label">
+                    <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">@if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }</p>
+                    <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <div class="relative">
                     <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" />
                     <!-- @if (!isReadOnly && hasAmountValue()) {
@@ -46,12 +76,23 @@
                @if (!isReadOnly && isAmountInvalid()) {
                <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
                }
+
+               <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />
           </div>
 
           <!-- Currency Balance -->
           <div>
-               <label for="currencyBalance" class="label-primary">Currency Balance</label>
-               <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
+               <div class="field-label">
+                    <label for="currencyBalance" class="label-primary">Currency Balance</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected code and issuer combination. }</p>
+                    <button type="button" (click)="toggleCurrencyBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <div class="relative">
                     <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
                     <!-- @if (currencyBalance && currencyBalance !== '0') {
@@ -60,6 +101,8 @@
                     </button>
                     } -->
                </div>
+
+               <app-field-helper title="Currency Balance" [items]="currencyBalanceHelperItems" [show]="showCurrencyBalanceHelper" />
           </div>
      </div>
      } @else {
@@ -67,34 +110,63 @@
      <div class="side-by-side-fields">
           <!-- Currency Code -->
           <div>
-               <label for="currencyCode" class="label-primary">Currency Code</label>
-               <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+               <div class="field-label">
+                    <label for="currencyCode" class="label-primary">Currency Code</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+                    <button type="button" (click)="toggleCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="currencyItems" [value]="selectedCurrency" [showShortAddress]="false" [validateCurrencyCode]="false" (valueChange)="onCurrencyChange($event)" (isValid)="onCurrencyValidationChange($event)" emptyMessage="No currencies available" placeholder="Search currency code..." />
+
                @if (isCurrencyCodeInvalid() && currencyErrorMessage()) {
                <p class="form-error mt-2">{{ currencyErrorMessage() }}</p>
                }
+
+               <app-field-helper title="Currency Code" [items]="currencyCodeHelperItems" [show]="showCurrencyCodeHelper" />
           </div>
 
           <!-- Issuer -->
           <div>
-               <label for="issuer" class="label-primary">Issuer</label>
-               <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-               <!-- <app-select-search-dropdown [validateXrpAddress]="true" [disableCurrentAccount]="false" [validateOn]="'blur'" [closeWhenInvalid]="false" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" /> -->
+               <div class="field-label">
+                    <label for="issuer" class="label-primary">Issuer</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+                    <button type="button" (click)="toggleIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+
                @if (isIssuerInvalid()) {
                <p class="form-error mt-2">Please enter a valid XRP address</p>
                }
+
+               <app-field-helper title="Issuer" [items]="issuerHelperItems" [show]="showIssuerHelper" />
           </div>
      </div>
 
      <div class="side-by-side-fields">
           <!-- Amount -->
           <div>
-               <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
-               <p class="text-secondary">
-                    @if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. Use arrows for ±0.000001 precision. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. Use arrows for ±0.000001 precision. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. Use arrows for precision. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove
-                    trustline. }
-               </p>
+               <div class="field-label">
+                    <label for="limitLabel" class="label-primary">{{ limitLabel }}</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">@if (activeTab === 'issueCurrency') { Amount to issue / send (in selected currency) to the destination account. } @else if (activeTab === 'clawbackTokens') { Amount the issuer wants to clawback from the destination. } @else if (activeTab === 'setTrustline') { Maximum amount you're willing to hold. } @else if (activeTab === 'removeTrustline') { Balance must be 0 to remove trustline. }</p>
+                    <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <div class="relative">
                     <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" step="0.000001" max="10000000000000000" />
                     <!-- @if (!isReadOnly && hasAmountValue()) {
@@ -103,15 +175,27 @@
                     </button>
                     } -->
                </div>
+
                @if (!isReadOnly && isAmountInvalid()) {
                <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
                }
+
+               <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />
           </div>
 
           <!-- Currency Balance -->
           <div>
-               <label for="currencyBalance" class="label-primary">Currency Balance</label>
-               <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected currency code and issuer combination. }</p>
+               <div class="field-label">
+                    <label for="currencyBalance" class="label-primary">Currency Balance</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected code/issuer combination. }</p>
+                    <button type="button" (click)="toggleCurrencyBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <div class="relative">
                     <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
                     <!-- @if (currencyBalance && currencyBalance !== '0') {
@@ -120,6 +204,8 @@
                     </button>
                     } -->
                </div>
+
+               <app-field-helper title="Currency Balance" [items]="currencyBalanceHelperItems" [show]="showCurrencyBalanceHelper" />
           </div>
      </div>
      }

@@ -6,46 +6,108 @@
           </h4>
 
           <!-- Selection Dropdown -->
-          <label for="selectCheckToCancel" class="label-primary">Select Check to Cancel <span class="text-red-500">*</span></label>
-          <p class="text-secondary">Check ID generated when the check was created.</p>
-          <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+          <div>
+               <div class="field-label">
+                    <label for="selectCheckToCancel" class="label-primary">Select Check to Cancel <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Check ID generated when the check was created.</p>
+                    <button type="button" (click)="toggleCheckSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               <app-field-helper title="Select Check" [items]="checkCancelSelectorHelperItems" [show]="showCheckCancelSelectorHelper" />
+          </div>
      </div>
 
      <!-- Check Details -->
      @if (checksTransactionViewModelService.selectedFullCheck()) {
      <div class="card-base">
           <div class="space-y-6">
+               <!-- Check Index -->
+               <div class="side-by-side-fields">
+                    <div>
+                         <div class="field-label">
+                              <label for="checkID" class="label-primary">Check Index (ID)</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Unique ledger identifier of the Check</p>
+                              <button type="button" (click)="toggleCheckIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIndex()" />
+                         </div>
+                         <app-field-helper title="Check ID" [items]="checkIdHelperItems" [show]="showCheckIdHelper" />
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                         <div class="field-label">
+                              <label for="checkAmount" class="label-primary">Amount</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Amount to be delivered by this check</p>
+                              <button type="button" (click)="toggleCheckAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckAmount()" />
+                         </div>
+                         <app-field-helper title="Check Amount" [items]="checkAmountHelperItems" [show]="showCheckAmountHelper" />
+                    </div>
+               </div>
+
                <!-- Issuer + Destination -->
                <div class="side-by-side-fields">
                     <!-- Destination -->
                     <div>
-                         <label for="checkDestination" class="label-primary">Destination</label>
-                         <p class="text-secondary">The address that can cash this check</p>
-                         <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckDestination()" />
+                         <div class="field-label">
+                              <label for="checkDestination" class="label-primary">Destination</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The address that can cash this check</p>
+                              <button type="button" (click)="toggleCheckDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckDestination()" />
+                         </div>
+                         <app-field-helper title="Destination" [items]="checkDestinationHelperItems" [show]="showCheckDestinationHelper" />
                     </div>
 
                     <!-- Issuer (only for IOU) -->
                     @if (checksTransactionViewModelService.isIOUCheck()) {
                     <div>
-                         <label for="checkIssuer" class="label-primary">Issuer</label>
-                         <p class="text-secondary">The issuer of this IOU</p>
-                         <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIssuer()" />
+                         <div class="field-label">
+                              <label for="checkIssuer" class="label-primary">Issuer</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The issuer of this IOU</p>
+                              <button type="button" (click)="toggleCheckIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIssuer()" />
+                         </div>
+                         <app-field-helper title="Issuer" [items]="checkIssuerHelperItems" [show]="showCheckIssuerHelper" />
                     </div>
                     }
-               </div>
-
-               <!-- Check Index -->
-               <div>
-                    <label for="checkID" class="label-primary">Check Index (ID)</label>
-                    <p class="text-secondary">Unique ledger identifier of the Check</p>
-                    <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIndex()" />
-               </div>
-
-               <!-- Amount -->
-               <div>
-                    <label for="checkAmount" class="label-primary">Amount</label>
-                    <p class="text-secondary">Amount to be delivered by this check</p>
-                    <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckAmount()" />
                </div>
           </div>
      </div>

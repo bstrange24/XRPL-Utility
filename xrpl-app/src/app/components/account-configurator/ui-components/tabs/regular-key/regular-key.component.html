@@ -6,12 +6,17 @@
                Regular Key Configuration
           </h4>
 
-          <p class="text-secondary">A secondary key that can sign transactions for your account. Useful for daily operations while keeping your master key secure.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">A secondary key that can sign transactions for your account. Useful for daily operations while keeping your master key secure.</p>
+               <button type="button" (click)="toggleRegularKeyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
 
           <div class="grid grid-cols-1 gap-6 mt-5 md:grid-cols-2">
                <!-- Regular Key Address -->
                <div>
-                    <label for="regularKeyAddress" class="label-primary">Regular Key Address</label>
+                    <label for="regularKeyAddress" class="label-primary">Regular Key Address <span class="text-red-500">*</span></label>
                     <p class="text-secondary">The account address to use as your regular key</p>
                     <div class="relative">
                          <input
@@ -42,7 +47,7 @@
 
                <!-- Regular Key Seed -->
                <div>
-                    <label for="regularKeySeed" class="label-primary">Regular Key Seed</label>
+                    <label for="regularKeySeed" class="label-primary">Regular Key Seed <span class="text-red-500">*</span></label>
                     <p class="text-secondary">Family seed (s...) or secret numbers</p>
                     <div class="relative">
                          <input
@@ -81,6 +86,8 @@
                <div class="alert-content">Address is required to set the regular key. Enter an address or clear the seed.</div>
           </div>
           }
+
+          <app-field-helper title="Regular Key Configuration" [items]="regularKeyHelperItems" [show]="showRegularKeyHelper" />
      </div>
 
      <!-- Transaction Options -->
@@ -97,8 +104,13 @@
      <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="btn-green-small" (click)="performAction.emit('Y')" [disabled]="!canSetRegularKey()|| !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
-               <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canRemoveRegularKey()|| !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
+               <app-button-tooltip [tooltipText]="(!canSetRegularKey() || !connectionGuard.isConnectionReady()) ? 'Cannot set regular key at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-green" (click)="(canSetRegularKey() && connectionGuard.isConnectionReady()) ? performAction.emit('Y') : null" [class.opacity-50]="!canSetRegularKey() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSetRegularKey() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setRegularKeyButtonLabel() }}</button>
+               </app-button-tooltip>
+
+               <app-button-tooltip [tooltipText]="(!canRemoveRegularKey() || !connectionGuard.isConnectionReady()) ? 'Cannot remove regular key at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-red" (click)="(canRemoveRegularKey() && connectionGuard.isConnectionReady()) ? performAction.emit('N') : null" [disabled]="false" [class.opacity-50]="!canRemoveRegularKey() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canRemoveRegularKey() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeRegularKeyButtonLabel() }}</button>
+               </app-button-tooltip>
           </div>
 
           <!-- Secondary Actions -->

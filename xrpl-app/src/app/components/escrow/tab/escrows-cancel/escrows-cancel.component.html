@@ -7,9 +7,23 @@
           </h4>
 
           <!-- Select Escrow -->
-          <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} <span class="text-red-500">*</span></label>
-          <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
-          <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+          <div>
+               <div class="field-label">
+                    <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+                    <button type="button" (click)="toggleEscrowSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="viewModel.escrowItems()" [value]="viewModel.selectedEscrowItem()" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+               </div>
+               <app-field-helper title="Select Escrow" [items]="escrowSelectorHelperItems" [show]="showEscrowSelectorHelper" />
+          </div>
      </div>
 
      <!-- Escrow Details Card -->
@@ -19,16 +33,40 @@
                <div class="side-by-side-fields">
                     <!-- Sequence Number -->
                     <div>
-                         <label for="escrowSequence" class="label-primary">Escrow Sequence</label>
-                         <p class="text-secondary">Sequence number of the escrow</p>
-                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowSequence()" />
+                         <div class="field-label">
+                              <label for="escrowSequence" class="label-primary">Escrow Sequence</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Sequence number of the escrow</p>
+                              <button type="button" (click)="toggleEscrowSequenceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowSequence()" />
+                         </div>
+                         <app-field-helper title="Escrow Sequence" [items]="escrowSequenceHelperItems" [show]="showEscrowSequenceHelper" />
                     </div>
 
                     <!-- Amount -->
                     <div>
-                         <label for="escrowAmount" class="label-primary">Amount</label>
-                         <p class="text-secondary">Amount held in this escrow</p>
-                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                         <div class="field-label">
+                              <label for="escrowAmount" class="label-primary">Amount</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Amount held in this escrow</p>
+                              <button type="button" (click)="toggleEscrowAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                         </div>
+                         <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
                     </div>
                </div>
 
@@ -36,16 +74,40 @@
                <div class="side-by-side-fields">
                     <!-- Creator (Sender) -->
                     <div>
-                         <label for="escrowCreator" class="label-primary">Creator</label>
-                         <p class="text-secondary">The account that created this escrow</p>
-                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowCreator()" />
+                         <div class="field-label">
+                              <label for="escrowCreator" class="label-primary">Creator</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The account that created this escrow</p>
+                              <button type="button" (click)="toggleEscrowCreatorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowCreator()" />
+                         </div>
+                         <app-field-helper title="Escrow Creator" [items]="escrowCreatorHelperItems" [show]="showEscrowCreatorHelper" />
                     </div>
 
                     <!-- Destination -->
                     <div>
-                         <label for="escrowDestination" class="label-primary">Destination</label>
-                         <p class="text-secondary">The recipient of the escrow</p>
-                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowDestination()" />
+                         <div class="field-label">
+                              <label for="escrowDestination" class="label-primary">Destination</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The recipient of the escrow</p>
+                              <button type="button" (click)="toggleEscrowDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowDestination()" />
+                         </div>
+                         <app-field-helper title="Escrow Destination" [items]="escrowDestinationHelperItems" [show]="showEscrowDestinationHelper" />
                     </div>
                </div>
           </div>

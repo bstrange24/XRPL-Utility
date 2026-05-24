@@ -6,8 +6,16 @@
           <div class="side-by-side-fields">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="currencyCode" class="label-primary">Currency Code</label>
-                    <p class="text-secondary">Add a unique currency code to this application.</p>
+                    <div class="field-label">
+                         <label for="currencyCode" class="label-primary">Currency Code</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Add a unique currency code to this application.</p>
+                         <button type="button" (click)="toggleNewCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <div class="relative">
                          <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!hasInvalidCurrencyCode()" [isInvalid]="hasInvalidCurrencyCode()" [ngModel]="currencyStoreService.newCurrency()" (ngModelChange)="currencyStoreService.setField('newCurrency', $event)" placeholder="e.g. USDC, EUR, BTC" />
@@ -20,12 +28,22 @@
                     @if (hasInvalidCurrencyCode()) {
                     <p class="form-error">Invalid Currency Code</p>
                     }
+
+                    <app-field-helper title="Currency Code" [items]="newCurrencyCodeHelperItems" [show]="showNewCurrencyCodeHelper" />
                </div>
 
                <!-- Issuer Address -->
                <div class="space-y-2">
-                    <label for="issuerAddress" class="label-primary">Issuer Address</label>
-                    <p class="text-secondary">Add a unique issuer address to this application.</p>
+                    <div class="field-label">
+                         <label for="issuerAddress" class="label-primary">Issuer Address</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Add a unique issuer address to this application.</p>
+                         <button type="button" (click)="toggleNewIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <div class="relative">
                          <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="hasValidAddress()" [isInvalid]="isInvalidAddress()" [ngModel]="currencyStoreService.newIssuer()" (ngModelChange)="currencyStoreService.setField('newIssuer', $event)" placeholder="r..." />
@@ -38,6 +56,8 @@
                     @if (isInvalidAddress()) {
                     <p class="form-error">Please enter a valid XRP address</p>
                     }
+
+                    <app-field-helper title="Issuer Address" [items]="newIssuerHelperItems" [show]="showNewIssuerHelper" />
                </div>
           </div>
 
@@ -51,33 +71,49 @@
           <div class="side-by-side-fields">
                <!-- Select Currency -->
                <div class="space-y-2">
-                    <label for="selectCurrency" class="label-primary">Select Currency</label>
-                    <p class="text-secondary">Remove a unique currency code from this application.</p>
-
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
-                              <ng-template #itemTemplate let-item>
-                                   <div class="flex items-center gap-2">
-                                        @if (item.id === 'XRP') {
-                                        <span class="font-bold text-yellow-500">XRP</span>
-                                        } @else {
-                                        <span>{{ item.display }}</span>
-                                        }
-                                        <span class="text-xs text-gray-500">({{ item.secondary }})</span>
-                                   </div>
-                              </ng-template>
-                         </app-select-search-dropdown>
+                    <div class="field-label">
+                         <label for="selectCurrency" class="label-primary">Select Currency</label>
                     </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Remove a unique currency code from this application.</p>
+                         <button type="button" (click)="toggleRemoveCurrencyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <app-select-search-dropdown [items]="trustlineViewModelService.currencyItems()" [value]="trustlineViewModelService.selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No saved currencies">
+                         <ng-template #itemTemplate let-item>
+                              <div class="flex items-center gap-2">
+                                   @if (item.id === 'XRP') {
+                                   <span class="font-bold text-yellow-500">XRP</span>
+                                   } @else {
+                                   <span>{{ item.display }}</span>
+                                   }
+                                   <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                              </div>
+                         </ng-template>
+                    </app-select-search-dropdown>
+
+                    <app-field-helper title="Select Currency" [items]="removeCurrencyHelperItems" [show]="showRemoveCurrencyHelper" />
                </div>
 
                <!-- Select Issuer -->
                <div class="space-y-2">
-                    <label for="selectIssuer" class="label-primary">Select Issuer</label>
-                    <p class="text-secondary">Remove a unique issuer address from this application.</p>
-
-                    <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
+                    <div class="field-label">
+                         <label for="selectIssuer" class="label-primary">Select Issuer</label>
                     </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Remove a unique issuer address from this application.</p>
+                         <button type="button" (click)="toggleRemoveIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <app-select-search-dropdown [items]="trustlineViewModelService.issuerItems()" [value]="trustlineViewModelService.selectedIssuerItem()" (valueChange)="issuerSelected.emit($event)" placeholder="Select issuer to remove..." emptyMessage="No issuers for this currency" />
+
+                    <app-field-helper title="Select Issuer" [items]="removeIssuerHelperItems" [show]="showRemoveIssuerHelper" />
                </div>
           </div>
 

@@ -3,26 +3,56 @@
           <!-- Destination -->
           <div>
                @if (activeTab === 'issueCurrency') {
-               <label for="formTitle" class="label-primary">{{ viewModel.formTitle() }}</label>
-               <p class="text-secondary">{{ viewModel.hintText() }}</p>
+               <div class="field-label">
+                    <label for="formTitle" class="label-primary">{{ viewModel.formTitle() }}</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">{{ viewModel.hintText() }}</p>
+                    <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                } @else {
-               <label for="destination" class="label-primary">Destination</label>
-               <p class="text-secondary">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
+               <div class="field-label">
+                    <label for="destination" class="label-primary">Destination</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">The unique address of the account receiving the IOU payment. Select destination from the dropdown or manually enter a new destination.</p>
+                    <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
                }
 
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
                </app-select-search-dropdown>
+
+               <app-field-helper title="{{ activeTab === 'issueCurrency' ? 'Issue To' : 'Destination' }}" [items]="iouDestinationHelperItems" [show]="showIouDestinationHelper" />
           </div>
 
           <!-- Destination Tag -->
           <div>
-               <label for="destinationTag" class="label-primary">Destination Tag</label>
-               <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+               <div class="field-label">
+                    <label for="destinationTag" class="label-primary">Destination Tag</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+                    <button type="button" (click)="toggleDestinationTagHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
                <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" max="4294967295" />
 
                @if (isDestinationTagInvalid()) {
                <p class="form-error">Destination Tag must be a positive number</p>
                }
+
+               <app-field-helper title="Destination Tag" [items]="iouDestinationTagHelperItems" [show]="showIouDestinationTagHelper" />
           </div>
      </div>
 </div>

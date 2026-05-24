@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component'; // ← adjust path if needed
@@ -10,11 +10,13 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import * as xrpl from 'xrpl';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-trustline-issuers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
      templateUrl: './trustline-issuers.component.html',
      styleUrl: './trustline-issuers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +31,18 @@ export class TrustlineIssuersComponent {
 
      @Output() currencySelected = new EventEmitter<SelectItem | null>();
      @Output() issuerSelected = new EventEmitter<SelectItem | null>();
+
+     // Helper Items
+     readonly newCurrencyCodeHelperItems = AppConstants.NEW_CURRENCY_CODE_HELPER_ITEMS;
+     readonly newIssuerHelperItems = AppConstants.NEW_ISSUER_HELPER_ITEMS;
+     readonly removeCurrencyHelperItems = AppConstants.REMOVE_CURRENCY_HELPER_ITEMS;
+     readonly removeIssuerHelperItems = AppConstants.REMOVE_ISSUER_HELPER_ITEMS;
+
+     // UI Signals
+     showNewCurrencyCodeHelper = signal(false);
+     showNewIssuerHelper = signal(false);
+     showRemoveCurrencyHelper = signal(false);
+     showRemoveIssuerHelper = signal(false);
 
      hasValidCurrencyCode = computed(() => {
           const code = this.currencyStoreService.newCurrency()?.trim();
@@ -64,4 +78,21 @@ export class TrustlineIssuersComponent {
           if (!addr) return false;
           return !xrpl.isValidAddress(addr);
      });
+
+     // Toggle Methods
+     toggleNewCurrencyCodeHelper() {
+          this.showNewCurrencyCodeHelper.set(!this.showNewCurrencyCodeHelper());
+     }
+
+     toggleNewIssuerHelper() {
+          this.showNewIssuerHelper.set(!this.showNewIssuerHelper());
+     }
+
+     toggleRemoveCurrencyHelper() {
+          this.showRemoveCurrencyHelper.set(!this.showRemoveCurrencyHelper());
+     }
+
+     toggleRemoveIssuerHelper() {
+          this.showRemoveIssuerHelper.set(!this.showRemoveIssuerHelper());
+     }
 }

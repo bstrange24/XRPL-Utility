@@ -18,11 +18,13 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { PaymentChannelValidatorService } from '../../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-payment-channel-claim',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
      templateUrl: './payment-channel-claim.component.html',
      styleUrl: './payment-channel-claim.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +45,13 @@ export class PaymentChannelClaimComponent {
 
      readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
+     // === Helper Items ===
+     readonly fundPaymentChannelSelectionHelperItems = AppConstants.CHANNEL_SELECTOR_HELPER_ITEMS;
+     readonly fundPaymentChannelDetailsHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_DETAILS_HELPER_ITEMS;
+     readonly paymentChannelIdHelperItems = AppConstants.PAYMENT_CHANNEL_ID_HELPER_ITEMS;
+     readonly fundPaymentChannelAmountHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_AMOUNT_HELPER_ITEMS;
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+
      // Inputs from parent
      wantsOptions = input.required<boolean>();
      canSubmit = input<boolean>(false);
@@ -58,6 +67,13 @@ export class PaymentChannelClaimComponent {
      private optionsHasError = signal(false);
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
+
+     // UI State
+     showFundPaymentSelectionDetailsHelper = signal(false);
+     showFundPaymentChannelDetailsHelper = signal(false);
+     showPaymentChannelIdHelper = signal(false);
+     showFundPaymentChannelAmountHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -108,5 +124,26 @@ export class PaymentChannelClaimComponent {
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;
           if (input) input.select();
+     }
+
+     // Toggle Methods
+     toggleFundPaymentChannelDetailsHelper() {
+          this.showFundPaymentChannelDetailsHelper.set(!this.showFundPaymentChannelDetailsHelper());
+     }
+
+     toggleChannelSelectorHelper() {
+          this.showFundPaymentSelectionDetailsHelper.set(!this.showFundPaymentSelectionDetailsHelper());
+     }
+
+     toggleChannelIdHelper() {
+          this.showPaymentChannelIdHelper.set(!this.showPaymentChannelIdHelper());
+     }
+
+     toggleFundAmountHelper() {
+          this.showFundPaymentChannelAmountHelper.set(!this.showFundPaymentChannelAmountHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
      }
 }

@@ -10,9 +10,18 @@
           <div class="side-by-side-fields">
                <!-- Currency Code -->
                <div class="space-y-2">
-                    <label for="checkCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token. For XRP there is no issuer.</p>
-                    <div class="h-[54px]">
+                    <div>
+                         <div class="field-label">
+                              <label for="checkCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+                              <button type="button" (click)="toggleCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
                               <ng-template #itemTemplate let-item>
                                    <div class="flex items-center gap-2">
@@ -26,91 +35,156 @@
                               </ng-template>
                          </app-select-search-dropdown>
                     </div>
+                    <app-field-helper title="Currency Code" [items]="checkCurrencyCodeHelperItems" [show]="showCheckCurrencyCodeHelper" />
                </div>
 
                <!-- Amount -->
                <div class="space-y-2">
-                    <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
-                    <div class="relative">
-                         <input
-                              type="text"
-                              inputmode="decimal"
-                              class="input-base-with-validation"
-                              app-focus-border
-                              [isValid]="!amountValidatorService.isCheckAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isCheckAmountInvalid()"
-                              (keydown)="utilsService.preventNegative($event)"
-                              (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                              (blur)="amountValidatorService.onAmountBlur($event, 'checks')"
-                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                              [ngModel]="checksStoreService.amount()"
-                              (ngModelChange)="checksStoreService.setField('amount', $event)"
-                              placeholder="e.g. 10.5"
-                         />
+                    <div>
+                         <div class="field-label">
+                              <label for="xrpAmount" class="label-primary">XRP Amount <span class="text-red-500">*</span></label>
+                         </div>
 
-                         @if (checksStoreService.amount() && checksStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.checksStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Amount of XRP to deduct from the sender's balance.</p>
+                              <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="decimal"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="!amountValidatorService.isCheckAmountInvalid()"
+                                   [isInvalid]="amountValidatorService.isCheckAmountInvalid()"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (input)="amountValidatorService.onAmountInput($event, 'checks')"
+                                   (blur)="amountValidatorService.onAmountBlur($event, 'checks')"
+                                   (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                                   (input)="amountValidatorService.onAmountInput($event, 'checks')"
+                                   [ngModel]="checksStoreService.amount()"
+                                   (ngModelChange)="checksStoreService.setField('amount', $event)"
+                                   placeholder="e.g. 10.5"
+                              />
+
+                              @if (checksStoreService.amount() && checksStoreService.amount()!.trim().length > 0) {
+                              <button type="button" (click)="this.checksStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
+                                   <lucide-icon name="x" size="16"></lucide-icon>
+                              </button>
+                              }
+                         </div>
+
+                         @if (amountValidatorService.isCheckAmountInvalid()) {
+                         <p class="form-error">Amount must be greater than 0</p>
                          }
+                         <app-field-helper title="Check Amount" [items]="checkAmountHelperItems" [show]="showCheckAmountHelper" />
                     </div>
-
-                    @if (amountValidatorService.isCheckAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
                </div>
           </div>
 
           <!-- Issuer + Balance (only when not XRP) -->
           @if (currencyStoreService.currency() !== 'XRP') {
-          <div class="side-by-side-fields">
-               <!-- Issuer -->
-               <div class="space-y-2">
-                    <label for="checkIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
-                    <div class="h-[54px]">
+          <div class="side-by-side-fields mt-3">
+               <div>
+                    <!-- Issuer -->
+                    <div class="field-label">
+                         <label for="checkIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+                         <button type="button" (click)="toggleIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
+                    <app-field-helper title="Issuer" [items]="checkIssuerHelperItems" [show]="showCheckIssuerHelper" />
                </div>
 
                <!-- Currency Balance -->
                <div class="space-y-2">
-                    <label for="checkCurrencyBalance" class="label-primary">Currency Balance</label>
-                    <p class="text-secondary">Total currency balance held by this account.</p>
-                    <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
+                    <div>
+                         <div class="field-label">
+                              <label for="checkCurrencyBalance" class="label-primary">Currency Balance</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Total currency balance held by this account.</p>
+                              <button type="button" (click)="toggleCurrencyBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
+                         </div>
+                         <app-field-helper title="Currency Balance" [items]="checkCurrencyBalanceHelperItems" [show]="showCheckCurrencyBalanceHelper" />
+                    </div>
                </div>
           </div>
           }
 
           <!-- Destination -->
-          <div>
-               <label for="checkDestination" class="label-primary">Destination <span class="text-red-500">*</span></label>
-               <p class="text-secondary">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
-               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
-               </app-select-search-dropdown>
+          <div class="space-y-2 mt-3">
+               <div>
+                    <div class="field-label">
+                         <label for="checkDestination" class="label-primary">Destination <span class="text-red-500">*</span></label>
+                    </div>
 
-               @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
-               <p class="same-addrress-as-selected-account">
-                    <ng-icon name="heroExclamationTriangle" size="14" />
-                    This is your currently active wallet. You cannot send a check to yourself.
-               </p>
-               }
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The unique address of the account receiving the check. Select destination from the dropdown or manually enter a new destination.</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown
+                              app-focus-border
+                              [validateXrpAddress]="true"
+                              [showClearButton]="true"
+                              [clearOnEscape]="true"
+                              [validateOn]="'blur'"
+                              [closeWhenInvalid]="true"
+                              [items]="destinationItems()"
+                              [value]="selectedDestinationItem()"
+                              [searchQueryInput]="destinationSearchQuery()"
+                              (searchQueryChange)="searchQueryChange.emit($event)"
+                              (valueChange)="destinationChange.emit($event)"
+                              (isValid)="onDestinationValidationChange($event)"
+                              placeholder="Enter or select destination address"
+                         >
+                         </app-select-search-dropdown>
+                    </div>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="same-addrress-as-selected-account">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot send a check to yourself.
+                    </p>
+                    }
+                    <app-field-helper title="Destination" [items]="checkDestinationHelperItems" [show]="showCheckDestinationHelper" />
+               </div>
           </div>
      </div>
 
      <!-- Toggle optional fields Card -->
-     <div class="card-base">
+     <div class="card-base pt-2.5 pb-2.5">
           <div class="options">
                <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
 
-               <div class="flex items-center gap-2">
-                    <button type="button" class="btn-optional-fields" title="Destination Tag, Source Tag, Invoice ID and expiration date are optional XRPL transaction fields">
-                         <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
-                    </button>
-               </div>
+               <button type="button" (click)="toggleOptionalFieldsHelper()" class="text-gray-400 hover:text-gray-600" title="Include optional fields in transaction ">
+                    <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
+               </button>
           </div>
+
+          <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
      </div>
 
      <!-- Optional Fields Section (Outside the card) -->

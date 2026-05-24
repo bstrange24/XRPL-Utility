@@ -8,8 +8,16 @@
           <!-- Ticket Selection Input -->
           <div>
                <div>
-                    <label for="ticketsToDelete" class="label-primary">Select Tickets to Delete <span class="text-red-500">*</span></label>
-                    <p class="text-secondary">Select available tickets to delete for the selected account.</p>
+                    <div class="field-label">
+                         <label for="ticketsToDelete" class="label-primary">Select Tickets to Delete <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select available tickets to delete for the selected account.</p>
+                         <button type="button" (click)="toggleDeleteTicketHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
                </div>
 
                <div class="relative mt-2" (clickOutside)="closeTicketDropdown()">
@@ -30,6 +38,7 @@
                          </button>
                     </div>
                </div>
+               <app-field-helper title="Select Tickets to Delete" [items]="deleteTicketHelperItems" [show]="showDeleteTicketHelper" />
           </div>
 
           <!-- Selected Tickets Chips -->

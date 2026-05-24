@@ -77,7 +77,19 @@
           <!-- Action Buttons -->
           <div class="main-button-section">
                <!-- LEFT: primary action -->
-               <button type="button" class="btn-blue disabled:cursor-not-allowed disabled:opacity-50" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading || !isSeedValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button>
+               <!-- <button type="button" class="btn-blue" (click)="walletConfiguratorComponent.deriveWalletFromFamilySeed()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading || !isSeedValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}</button> -->
+               <app-button-tooltip [tooltipText]="!isSeedValid() ? 'Please enter a valid family seed.' : ''">
+                    <button
+                         type="button"
+                         class="btn-blue"
+                         (click)="isSeedValid() && !walletsStoreService.buttonLoading().deriveWalletFromFamilySeed && !walletsUtilService.isAnyButtonLoading ? walletConfiguratorComponent.deriveWalletFromFamilySeed() : null"
+                         [disabled]="false"
+                         [class.opacity-50]="!isSeedValid() || walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading"
+                         [attr.aria-disabled]="!isSeedValid() || walletsStoreService.buttonLoading().deriveWalletFromFamilySeed || walletsUtilService.isAnyButtonLoading"
+                    >
+                         {{ walletsStoreService.buttonLoading().deriveWalletFromFamilySeed ? 'Processing...' : 'Derive Wallet from Family Seed' }}
+                    </button>
+               </app-button-tooltip>
 
                <!-- RIGHT: secondary / utility actions -->
                <div class="right-buttons">

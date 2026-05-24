@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy, ElementRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, ViewChild, inject, computed, effect, untracked, ChangeDetectionStrategy, ElementRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -35,11 +35,13 @@ import { SIGN_TRANSACTION_TAB } from './constants/sign-transaction.constants';
 import { NgIcon } from '@ng-icons/core';
 import { expandCollapse } from '../../services/utils/animations/animations.service';
 import { SignTransactionValidatorService } from '../../services/shared/validators/sign-transaction-validator/sign-transaction-validator.service';
+import { FieldHelperComponent } from '../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, FieldHelperComponent, ButtonTooltipComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
      animations: [expandCollapse],
@@ -60,6 +62,10 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTxTabs = SIGN_TRANSACTION_TABS;
      public readonly tabMeta = SIGN_TRANSACTION_TAB_META;
+     // === Helper Items ===
+     readonly signTransactionDetailsHelperItems = AppConstants.SIGN_TRANSACTION_DETAILS_HELPER_ITEMS;
+     // UI State
+     showSignTransactionDetailsHelper = signal(false);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -614,5 +620,55 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           const target = this.signedEditable.nativeElement;
           const value = target.textContent?.trim() || '';
           this.signTransationStoreService.setField('outputField', value);
+     }
+
+     // Toggle Method
+     toggleTransactionDetailsHelper() {
+          this.showSignTransactionDetailsHelper.set(!this.showSignTransactionDetailsHelper());
+     }
+
+     // ====================== BUTTON ENABLE LOGIC ======================
+
+     canGetJson = computed(() => {
+          return this.isIdle() && this.hasWallets();
+     });
+
+     canSign = computed(() => {
+          return this.isIdle() && this.hasWallets() && this.signTransactionValidatorService.jsonIsValid() && !this.isExternallySignedTx();
+     });
+
+     canSubmitTx = computed(() => {
+          return this.isIdle() && this.hasWallets() && this.signTransactionValidatorService.jsonIsValid();
+     });
+
+     // ====================== TOOLTIPS ======================
+
+     getJsonTooltip(): string {
+          if (!this.hasWallets()) return 'No wallet selected';
+          if (!this.isIdle()) return 'Please wait...';
+          return '';
+     }
+
+     signTooltip(): string {
+          if (!this.hasWallets()) return 'No wallet selected';
+          if (!this.isIdle()) return 'Please wait...';
+          if (!this.signTransactionValidatorService.jsonIsValid()) return 'Invalid Transaction JSON';
+          if (this.isExternallySignedTx()) return 'This transaction is already signed externally';
+          return '';
+     }
+
+     signMultiSignTooltip(): string {
+          return this.signTooltip();
+     }
+
+     signRegularKeyTooltip(): string {
+          return this.signTooltip();
+     }
+
+     submitTooltip(): string {
+          if (!this.hasWallets()) return 'No wallet selected';
+          if (!this.isIdle()) return 'Please wait...';
+          if (!this.signTransactionValidatorService.jsonIsValid()) return 'Invalid Transaction JSON';
+          return '';
      }
 }

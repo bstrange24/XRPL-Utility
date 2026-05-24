@@ -9,11 +9,12 @@ import { AppConstants } from '../../../core/app.constants';
 import * as xrpl from 'xrpl';
 import { FocusBorderDirective } from '../../../services/shared/focus-border/focus-border.directive';
 import { UtilsService } from '../../../services/utils/util-service/utils.service';
+import { FieldHelperComponent } from '../field-helper/field-helper.component';
 
 @Component({
      selector: 'app-currency-form-section',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, LucideAngularModule, FocusBorderDirective, NgIcon, FieldHelperComponent, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,6 +39,18 @@ export class CurrencyFormSectionComponent {
      @Output() issuerChange = new EventEmitter<any>();
      @Output() amountChange = new EventEmitter<number>();
      @Output() validationChange = new EventEmitter<{ isValid: boolean; errors: string[] }>();
+
+     // Helper Items
+     readonly currencyCodeHelperItems = AppConstants.CURRENCY_FORM_CODE_HELPER_ITEMS;
+     readonly issuerHelperItems = AppConstants.CURRENCY_FORM_ISSUER_HELPER_ITEMS;
+     readonly amountHelperItems = AppConstants.CURRENCY_FORM_AMOUNT_HELPER_ITEMS;
+     readonly currencyBalanceHelperItems = AppConstants.CURRENCY_FORM_CURRENCY_BALANCE_HELPER_ITEMS;
+
+     // UI Signals
+     showCurrencyCodeHelper = signal(false);
+     showIssuerHelper = signal(false);
+     showAmountHelper = signal(false);
+     showCurrencyBalanceHelper = signal(false);
 
      // Validation signals - make these public for template access
      public isCurrencyValid = signal(true);
@@ -280,5 +293,22 @@ export class CurrencyFormSectionComponent {
      public validate(): boolean {
           this.isAmountTouched.set(true);
           return this.isCurrencyValid() && this.isIssuerValid() && this.isAmountValid();
+     }
+
+     // Toggle Methods
+     toggleCurrencyCodeHelper() {
+          this.showCurrencyCodeHelper.set(!this.showCurrencyCodeHelper());
+     }
+
+     toggleIssuerHelper() {
+          this.showIssuerHelper.set(!this.showIssuerHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showAmountHelper.set(!this.showAmountHelper());
+     }
+
+     toggleCurrencyBalanceHelper() {
+          this.showCurrencyBalanceHelper.set(!this.showCurrencyBalanceHelper());
      }
 }

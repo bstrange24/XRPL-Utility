@@ -6,11 +6,14 @@ import { SelectSearchDropdownComponent } from '../../../shared/ui-components/sel
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import { NgIcon } from '@ng-icons/core';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-trustline-issue',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon],
      templateUrl: './trustline-issue.component.html',
      styleUrl: './trustline-issue.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,6 +22,10 @@ export class TrustlineIssueComponent {
      public readonly viewModel = inject(TrustlineViewModelService);
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+
+     // === Helper Items ===
+     readonly iouDestinationHelperItems = AppConstants.IOU_DESTINATION_HELPER_ITEMS;
+     readonly iouDestinationTagHelperItems = AppConstants.IOU_DESTINATION_TAG_HELPER_ITEMS;
 
      @Input() activeTab!: 'issueCurrency' | 'clawbackTokens';
      @Input() destinationTag: string = '';
@@ -37,6 +44,10 @@ export class TrustlineIssueComponent {
      destinationChange = output<any>();
 
      isDestinationValid = signal(false);
+
+     // UI Signals
+     showIouDestinationHelper = signal(false);
+     showIouDestinationTagHelper = signal(false);
 
      onDestinationValidationChange(isValid: boolean) {
           this.isDestinationValid.set(isValid);
@@ -62,5 +73,14 @@ export class TrustlineIssueComponent {
 
      handleDestinationChange(item: any) {
           this.destinationChange.emit(item);
+     }
+
+     // Toggle Methods
+     toggleDestinationHelper() {
+          this.showIouDestinationHelper.set(!this.showIouDestinationHelper());
+     }
+
+     toggleDestinationTagHelper() {
+          this.showIouDestinationTagHelper.set(!this.showIouDestinationTagHelper());
      }
 }

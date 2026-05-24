@@ -13,11 +13,14 @@ import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slid
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { LucideAngularModule } from 'lucide-angular';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-account-delete-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon, LucideAngularModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, ButtonTooltipComponent, MatSlideToggleModule, TransactionOptionsComponent, NgIcon, LucideAngularModule, ToggleSliderComponent, FieldHelperComponent],
      templateUrl: './account-delete-form.component.html',
      styleUrl: './account-delete-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +34,10 @@ export class AccountDeleteFormComponent {
      private readonly optionsHasError = signal(false);
      private readonly optionsErrorMsg = signal('');
      private readonly optionsErrors = signal<string[]>([]);
+
+     // === Helper Items ===
+     readonly deleteDestinationHelperItems = AppConstants.DELETE_DESTINATION_HELPER_ITEMS;
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
 
      view = input.required<any>();
      info = input.required<any>();
@@ -49,6 +56,10 @@ export class AccountDeleteFormComponent {
      toggleOptions = output<boolean>();
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
+
+     // UI State
+     showDeleteDestinationHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      canDeleteWallet = computed(() => {
           // Must have valid destination (from dropdown validation)
@@ -95,4 +106,13 @@ export class AccountDeleteFormComponent {
      });
 
      hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
+
+     // Toggle Methods
+     toggleDestinationHelper() {
+          this.showDeleteDestinationHelper.set(!this.showDeleteDestinationHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
+     }
 }

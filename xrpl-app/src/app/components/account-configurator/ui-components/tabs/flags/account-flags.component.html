@@ -6,7 +6,12 @@
                Configuration Templates
           </h4>
 
-          <p class="text-secondary">Choose a preset configuration based on your account's primary use case.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Choose a preset configuration based on your account's primary use case.</p>
+               <button type="button" (click)="toggleConfigTemplatesHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
 
           <div class="flex flex-wrap gap-3">
                <!-- Holder -->
@@ -52,6 +57,8 @@
                     </div>
                </label>
           </div>
+
+          <app-field-helper title="Configuration Templates" [items]="configTemplatesHelperItems" [show]="showConfigTemplatesHelper" />
      </div>
 
      <!-- Account Flags Card -->
@@ -61,7 +68,18 @@
                Account Flags
           </h4>
 
-          <p class="mb-4 text-sm text-gray-600">Enable or disable specific features for this account</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Enable or disable specific features for this account.</p>
+               <button type="button" (click)="toggleAccountFlagsHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
+          @if(showAccountFlagsHelper()) {
+          <div class="mb-3">
+               <app-field-helper title="Account Flags" [items]="accountFlagsHelperItems" [show]="showAccountFlagsHelper" />
+          </div>
+          }
 
           <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                @for (flag of accountConfiguratorUtilService.accountFlagsConfig; track flag.key) {
@@ -106,7 +124,7 @@
      <!-- Action Button -->
      <div class="main-button-section">
           <!-- LEFT: primary action -->
-          <button type="button" class="btn-green-small" (click)="performAction.emit('')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
+          <button type="button" class="btn-green" (click)="performAction.emit('')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.modifyAccountFlagsButtonLabel() }}</button>
 
           <!-- RIGHT: secondary / utility actions -->
           <div class="right-buttons">

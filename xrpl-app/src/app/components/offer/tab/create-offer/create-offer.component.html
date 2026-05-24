@@ -1,84 +1,179 @@
 @let store = offerStoreService; @let vm = view;
 
-<div class="card-base">
-     <div class="space-y-6">
+<div class="space-y-6">
+     <!-- DEX Offer Details Card -->
+     <div class="card-base">
           <!-- Taker Gets (Buy Side) / Taker Pays (Sell Side) Headers -->
           <div class="side-by-side-fields">
-               <div>
-                    <label for="recieve" class="label-primary">Taker Gets – What You Receive</label>
-               </div>
-               <div>
-                    <label for="give" class="label-primary">Taker Pays – What You Give</label>
-               </div>
+               <h4 class="section-heading">
+                    <!-- <ng-icon name="heroCurrencyDollar" class="section-heading-icon-green" size="20"></ng-icon> -->
+                    <lucide-icon name="dollarSign" class="section-heading-icon-green"></lucide-icon>
+                    Taker Gets – What You Receive
+               </h4>
+
+               <h4 class="section-heading">
+                    <lucide-icon name="dollarSign" class="section-heading-icon-green"></lucide-icon>
+                    Taker Pays – What You Give
+               </h4>
           </div>
 
           <!-- Currency Code -->
           <div class="side-by-side-fields">
                <div class="space-y-2">
-                    <label for="currencyCode" class="label-primary">Currency Code</label>
-                    <p class="text-secondary">The token you want to receive.</p>
+                    <div>
+                         <div class="field-label">
+                              <label for="currencyCode" class="label-primary">Currency Code</label>
+                         </div>
 
-                    <div class="h-[54px]">
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The token you want to receive.</p>
+                              <button type="button" (click)="toggleTakerGetsCurrencyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
                     </div>
+                    <app-field-helper title="Taker Gets Currency" [items]="takerGetsCurrencyHelperItems" [show]="showTakerGetsCurrencyHelper" />
                </div>
 
                <div class="space-y-2">
-                    <label for="currencyCodeSpend" class="label-primary">Currency Code</label>
-                    <p class="text-secondary">The token you want to spend.</p>
+                    <div>
+                         <div class="field-label">
+                              <label for="currencyCodeSpend" class="label-primary">Currency Code</label>
+                         </div>
 
-                    <div class="h-[54px]">
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The token you want to spend.</p>
+                              <button type="button" (click)="toggleTakerPaysCurrencyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
                     </div>
+                    <app-field-helper title="Taker Pays Currency" [items]="takerPaysCurrencyHelperItems" [show]="showTakerPaysCurrencyHelper" />
                </div>
           </div>
 
           <!-- Issuer -->
           <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="issuer" class="label-primary">Issuer</label>
-                    <p class="text-secondary">The XRPL account that issues the token you want to receive.</p>
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="issuer" class="label-primary">Issuer</label>
+                         </div>
 
-                    <div class="h-[54px]">
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The XRPL account that issues the token you want to receive.</p>
+                              <button type="button" (click)="toggleTakerGetsIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
                     </div>
+                    <app-field-helper title="Taker Gets Issuer" [items]="takerGetsIssuerHelperItems" [show]="showTakerGetsIssuerHelper" />
                </div>
 
-               <div class="space-y-2">
-                    <label for="issuerSpend" class="label-primary">Issuer</label>
-                    <p class="text-secondary">The XRPL account that issues the token you want to spend.</p>
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="issuerSpend" class="label-primary">Issuer</label>
+                         </div>
 
-                    <div class="h-[54px]">
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The XRPL account that issues the token you want to spend.</p>
+                              <button type="button" (click)="toggleTakerPaysCurrencyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
                     </div>
+                    <app-field-helper title="Taker Pays Issuer" [items]="takerPaysIssuerHelperItems" [show]="showTakerPaysIssuerHelper" />
                </div>
           </div>
 
           <!-- Your Balances -->
           <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="balance1" class="label-primary">Your Balance – Asset 1</label>
-                    <p class="text-secondary">How much of the first token your connected wallet currently holds.</p>
-                    <input type="text" readonly class="input-disabled" [value]="vm.weWantUserBalance() || '0'" />
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="balance1" class="label-primary">Your Balance – Asset 1</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">How much of the first token your connected wallet currently holds.</p>
+                              <button type="button" (click)="toggleBalance1Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="vm.weWantUserBalance() || '0'" />
+                         </div>
+                    </div>
+                    <app-field-helper title="Your Balance (Receive)" [items]="balance1HelperItems" [show]="showBalance1Helper" />
                </div>
 
-               <div class="space-y-2">
-                    <label for="balance2" class="label-primary">Your Balance – Asset 2</label>
-                    <p class="text-secondary">How much of the second token your connected wallet currently holds.</p>
-                    <input type="text" readonly class="input-disabled" [value]="vm.weSpendUserBalance() || '0'" />
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="balance2" class="label-primary">Your Balance – Asset 2</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">How much of the second token your connected wallet currently holds.</p>
+                              <button type="button" (click)="toggleBalance2Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="vm.weSpendUserBalance() || '0'" />
+                         </div>
+                    </div>
+                    <app-field-helper title="Your Balance (Spend)" [items]="balance2HelperItems" [show]="showBalance2Helper" />
                </div>
           </div>
 
           <!-- Amounts -->
           <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="amountTakerGets" class="label-primary">Amount – Taker Gets</label>
-                    <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event); weWantAmountChange.emit()" placeholder="e.g. 10.5" class="input-base" />
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="amountTakerGets" class="label-primary">Amount – Taker Gets</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The amount the taker is will to pay.</p>
+                              <button type="button" (click)="toggleTakerGetsAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event); weWantAmountChange.emit()" placeholder="e.g. 10.5" class="input-base" />
+                    </div>
+                    <app-field-helper title="Taker Gets Amount" [items]="takerGetsAmountHelperItems" [show]="showTakerGetsAmountHelper" />
                </div>
 
-               <div class="space-y-2">
-                    <label for="amountTakerPays" class="label-primary">Amount – Taker Pays</label>
-                    <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event); weSpendAmountChange.emit()" placeholder="e.g. 10.5" class="input-base" />
+               <div class="space-y-2 mt-3">
+                    <div>
+                         <div class="field-label">
+                              <label for="amountTakerPays" class="label-primary">Amount – Taker Pays</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The amount the taker is will to pay.</p>
+                              <button type="button" (click)="toggleTakerPaysAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event); weSpendAmountChange.emit()" placeholder="e.g. 10.5" class="input-base" />
+                    </div>
+                    <app-field-helper title="Taker Pays Amount" [items]="takerPaysAmountHelperItems" [show]="showTakerPaysAmountHelper" />
                </div>
           </div>
 
@@ -91,7 +186,7 @@
           }
 
           <!-- Offer Flags -->
-          <div class="mt-4">
+          <div class="mt-6">
                <div class="mb-4 flex items-center gap-2">
                     <lucide-icon name="flag" size="18" class="section-heading-icon-green" />
                     <span class="text-sm font-semibold text-gray-900">Offer Flags</span>

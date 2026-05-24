@@ -41,16 +41,19 @@
 
                <div class="main-button-section">
                     <!-- LEFT: primary action -->
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSendXrpFrom()" class="btn-primary whitespace-nowrap">{{ sendXrpUtilService.sendButtonLabel() }}</button>
+                    <!-- <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSendXrpFrom()" class="btn-green">{{ sendXrpUtilService.sendButtonLabel() }}</button> -->
+                    <app-button-tooltip [tooltipText]="!canSendXrpFrom() ? 'Cannot send XRP at this time. Check for missing or invalid fields.' : !isIdle() ? 'Wallet is busy. Please wait.' : !hasWallets() ? 'No wallets available.' : ''">
+                         <button type="button" class="btn-green" (click)="canSendXrpFrom() && isIdle() && hasWallets() ? performAction() : null" [disabled]="false" [class.opacity-50]="!canSendXrpFrom() || !isIdle() || !hasWallets()" [attr.aria-disabled]="!canSendXrpFrom() || !isIdle() || !hasWallets()">{{ sendXrpUtilService.sendButtonLabel() }}</button>
+                    </app-button-tooltip>
 
                     <!-- RIGHT: secondary / utility actions -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear All Fields</button>
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear All Fields</button>
                     </div>
                </div>
 
                <!-- Execution Time -->
-               <div class="text-sm text-gray-500 mt-3">
+               <div class="execution-time">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 

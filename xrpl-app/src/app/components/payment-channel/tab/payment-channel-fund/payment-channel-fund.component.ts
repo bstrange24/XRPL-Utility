@@ -17,11 +17,13 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { PaymentChannelValidatorService } from '../../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 import { AccountConfiguratorUtilService } from '../../../../services/account-configurator/account-configurator-util/account-configurator-util.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-payment-channel-fund',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
      templateUrl: './payment-channel-fund.component.html',
      styleUrl: './payment-channel-fund.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +38,13 @@ export class PaymentChannelFundComponent {
      public readonly paymentChannelUtilService = inject(PaymentChannelUtilService);
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
+
+     // === Helper Items ===
+     readonly fundPaymentChannelSelectionHelperItems = AppConstants.CHANNEL_SELECTOR_HELPER_ITEMS;
+     readonly fundPaymentChannelDetailsHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_DETAILS_HELPER_ITEMS;
+     readonly paymentChannelIdHelperItems = AppConstants.PAYMENT_CHANNEL_ID_HELPER_ITEMS;
+     readonly fundPaymentChannelAmountHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_AMOUNT_HELPER_ITEMS;
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
 
      // Inputs from parent
      wantsOptions = input.required<boolean>();
@@ -52,6 +61,13 @@ export class PaymentChannelFundComponent {
      private optionsHasError = signal(false);
      private optionsErrorMsg = signal('');
      private optionsErrors = signal<string[]>([]);
+
+     // UI State
+     showFundPaymentSelectionDetailsHelper = signal(false);
+     showFundPaymentChannelDetailsHelper = signal(false);
+     showPaymentChannelIdHelper = signal(false);
+     showFundPaymentChannelAmountHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -121,4 +137,25 @@ export class PaymentChannelFundComponent {
      hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);
 
      hasAnyOptionEnabled = computed(() => this.xrplTxOptionsStore.isMemoEnabled() || this.xrplTxOptionsStore.useMultiSign() || this.xrplTxOptionsStore.isRegularKeyAddress() || this.xrplTxOptionsStore.isTicket() || this.xrplTxOptionsStore.isSimulateEnabled());
+
+     // Toggle Methods
+     toggleFundPaymentChannelDetailsHelper() {
+          this.showFundPaymentChannelDetailsHelper.set(!this.showFundPaymentChannelDetailsHelper());
+     }
+
+     toggleChannelSelectorHelper() {
+          this.showFundPaymentSelectionDetailsHelper.set(!this.showFundPaymentSelectionDetailsHelper());
+     }
+
+     toggleChannelIdHelper() {
+          this.showPaymentChannelIdHelper.set(!this.showPaymentChannelIdHelper());
+     }
+
+     toggleFundAmountHelper() {
+          this.showFundPaymentChannelAmountHelper.set(!this.showFundPaymentChannelAmountHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
+     }
 }

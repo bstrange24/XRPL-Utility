@@ -9,11 +9,12 @@ import { WalletsViewModelService } from '../../../../services/wallets/wallets-vi
 import { WalletConfiguratorComponent } from '../../wallet-configurator.component';
 import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-wallet-derive-secret-numbers',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, OverlayModule, NgIcon, ButtonTooltipComponent],
      templateUrl: './wallet-derive-secret-numbers.component.html',
      styleUrl: './wallet-derive-secret-numbers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

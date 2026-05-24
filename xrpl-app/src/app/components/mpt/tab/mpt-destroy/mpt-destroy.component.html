@@ -9,11 +9,19 @@
 
                <!-- Select MPT to Destroy -->
                <div>
-                    <div class="flex justify-between items-baseline">
+                    <div class="field-label">
                          <label class="label-primary">Select MPT to Destroy <span class="text-red-500">*</span> </label>
                     </div>
-                    <p class="text-secondary">MPT to destroy (must have zero holders).</p>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">MPT to destroy (must have zero holders).</p>
+                         <button type="button" (click)="toggleMptSelectHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
                     <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                    <app-field-helper title="Select MPT" [items]="mptDestroySelectHelperItems" [show]="showMptDestroySelectHelper" />
                </div>
           </div>
      </div>
@@ -21,14 +29,14 @@
      <!-- MPT Issuance ID -->
      @if (viewModel.selectedMptItem()) {
      <div class="card-base">
-          <div class="flex justify-between items-baseline">
+          <div class="field-label">
                <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
           </div>
 
           <div class="flex items-center gap-2">
                <p class="text-secondary">Unique identifier of the MPTokenIssuance to be destroyed.</p>
                <div class="flex gap-2">
-                    <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <button type="button" (click)="toggleMptIssuanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
                </div>
@@ -44,7 +52,7 @@
                } -->
           </div>
 
-          @if (showMptHelper()) {
+          <!-- @if (showMptHelper()) {
           <div class="helper-text-main-div">
                <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
                <ul class="helper-text-ul">
@@ -52,12 +60,14 @@
                     <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
                </ul>
           </div>
-          }
+          } -->
 
           <!-- MPT ID length indicator -->
           @if (mptIssuanceId && mptIssuanceId.length > 0) {
           <div class="mt-2 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
           }
+
+          <app-field-helper title="MPT Issuance ID" [items]="mptIssuanceIdHelperItems" [show]="showMptIssuanceIdHelper" />
      </div>
      }
 </div>

@@ -45,7 +45,7 @@ export class CurrencyAmountFormComponent {
      @Input() balance: string = '';
 
      @Input() amountLabel = 'Amount';
-     @Input() amountHint = 'Amount, in XRP or IOU token, to send to the destination. Use arrows for ±0.000001 precision.';
+     @Input() amountHint = 'Amount, in XRP or IOU token, to send to the destination.';
      @Input() amountPlaceholder = 'e.g. 10.5';
      @Input() showAmount = true; // Allows hiding amount if needed in future
 

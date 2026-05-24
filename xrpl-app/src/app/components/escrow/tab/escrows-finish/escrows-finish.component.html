@@ -7,9 +7,23 @@
           </h4>
 
           <!-- Select Escrow -->
-          <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} <span class="text-red-500">*</span></label>
-          <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
-          <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+          <div>
+               <div class="field-label">
+                    <label for="selectEscrow" class="label-primary"> Select Escrow to {{ activeTab === 'finishEscrow' ? 'Finish' : 'Cancel' }} <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing escrow to {{ activeTab === 'finishEscrow' ? 'finish' : 'cancel' }}.</p>
+                    <button type="button" (click)="toggleEscrowSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="escrowItems()" [value]="selectedEscrowItem()" [showShortAddress]="false" (valueChange)="onEscrowSelected($event)" placeholder="Search by amount, address, or sequence..." emptyMessage="No escrows available" />
+               </div>
+               <app-field-helper title="Select Escrow" [items]="escrowFinishSelectorHelperItems" [show]="showEscrowFinishSelectorHelper" />
+          </div>
      </div>
 
      <!-- Finish Escrow Extra Fields -->
@@ -19,23 +33,59 @@
                <div class="side-by-side-fields">
                     <!-- Escrow Sequence ID -->
                     <div>
-                         <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
-                         <p class="text-secondary">Sequence ID generated when the escrow was created.</p>
-                         <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                         <div class="field-label">
+                              <label for="escrowID" class="label-primary">Escrow Sequence ID</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Sequence ID generated when the escrow was created.</p>
+                              <button type="button" (click)="toggleEscrowSequenceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" [ngModel]="escrowStoreService.escrowSequenceNumber()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                         </div>
+                         <app-field-helper title="Escrow Sequence ID" [items]="escrowSequenceHelperItems" [show]="showEscrowSequenceHelper" />
                     </div>
 
                     <!-- Escrow Owner -->
                     <div>
-                         <label for="escrowOwner" class="label-primary">Escrow Owner</label>
-                         <p class="text-secondary">The account that originally created the escrow.</p>
-                         <input type="text" readonly class="input-disabled" [ngModel]="escrowStoreService.escrowOwner()" />
+                         <div class="field-label">
+                              <label for="escrowOwner" class="label-primary">Escrow Owner</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The account that originally created the escrow.</p>
+                              <button type="button" (click)="toggleEscrowOwnerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [ngModel]="escrowStoreService.escrowOwner()" />
+                         </div>
+                         <app-field-helper title="Escrow Owner" [items]="escrowOwnerHelperItems" [show]="showEscrowOwnerHelper" />
                     </div>
 
                     <!-- Amount -->
                     <div>
-                         <label for="escrowAmount" class="label-primary">Amount</label>
-                         <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
-                         <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                         <div class="field-label">
+                              <label for="escrowAmount" class="label-primary">Amount</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="mb-2 text-xs text-gray-500">Amount held in this escrow</p>
+                              <button type="button" (click)="toggleEscrowAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedEscrowAmount()" />
+                         </div>
+                         <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
                     </div>
                </div>
 
@@ -44,8 +94,17 @@
                <div class="side-by-side-fields">
                     <!-- Condition -->
                     <div>
-                         <label for="escrowCondition" class="label-primary">Condition</label>
-                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                         <div class="field-label">
+                              <label for="escrowCondition" class="label-primary">Condition</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
+                              <button type="button" (click)="toggleConditionHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <div class="relative">
                               <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidCondition() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
 
@@ -55,6 +114,7 @@
                               </button>
                               }
                          </div>
+                         <app-field-helper title="Condition" [items]="escrowConditionHelperItems" [show]="showEscrowConditionHelper" />
 
                          @if (escrowValidatorService.hasInvalidCondition()) {
                          <p class="form-error">{{ escrowValidatorService.getConditionErrorMessage() }}</p>
@@ -63,8 +123,17 @@
 
                     <!-- Fulfillment -->
                     <div>
-                         <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
-                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                         <div class="field-label">
+                              <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
+                              <button type="button" (click)="toggleFulfillmentHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
                          <div class="relative">
                               <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
 
@@ -80,6 +149,8 @@
                          } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair() && !escrowValidatorService.hasInvalidCondition() && !escrowValidatorService.hasInvalidFulfillment()) {
                          <p class="form-error">{{ escrowValidatorService.getConditionFulfillmentPairErrorMessage() }}</p>
                          }
+
+                         <app-field-helper title="Fulfillment" [items]="escrowFulfillmentHelperItems" [show]="showEscrowFulfillmentHelper" />
                     </div>
                </div>
                }

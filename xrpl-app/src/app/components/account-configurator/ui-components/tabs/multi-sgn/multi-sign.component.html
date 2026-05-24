@@ -6,7 +6,14 @@
                Multi-Signer Configuration
           </h4>
 
-          <p class="text-secondary">Add signers and set the required quorum. Each signer must meet the total weight threshold to authorize a transaction.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Add signers and set the required quorum. Each signer must meet the total weight threshold to authorize a transaction.</p>
+               <button type="button" (click)="toggleMultiSignHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
+          <!-- <p class="text-secondary">Add signers and set the required quorum. Each signer must meet the total weight threshold to authorize a transaction.</p> -->
 
           <!-- Signers List -->
           <div class="space-y-4">
@@ -24,7 +31,7 @@
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-12">
                          <!-- Account -->
                          <div class="md:col-span-5">
-                              <label for="multiSignAccount" class="field-label">Account</label>
+                              <label for="multiSignAccount" class="multi-sign-field-label">Account <span class="text-red-500">*</span></label>
                               <p class="text-secondary">The account address to use for multi signing</p>
                               <div class="relative">
                                    <input
@@ -55,7 +62,7 @@
 
                          <!-- Seed -->
                          <div class="md:col-span-4">
-                              <label for="multiSignSeed" class="field-label">Seed</label>
+                              <label for="multiSignSeed" class="multi-sign-field-label">Seed <span class="text-red-500">*</span></label>
                               <p class="text-secondary">Family seed (s...) or secret numbers</p>
                               <div class="relative">
                                    <input
@@ -86,7 +93,7 @@
 
                          <!-- Weight -->
                          <div class="md:col-span-3">
-                              <label for="multiSignWeight" class="field-label">Weight</label>
+                              <label for="multiSignWeight" class="multi-sign-field-label">Weight <span class="text-red-500">*</span></label>
                               <p class="text-secondary">Total weight of the signer</p>
                               <input
                                    type="number"
@@ -142,6 +149,8 @@
                <p class="form-error">Quorum exceeds total signer weight ({{ totalSignerWeight() }}). Transactions cannot be authorized.</p>
                }
           </div>
+
+          <app-field-helper title="Multi-Signer Configuration" [items]="multiSignHelperItems" [show]="showMultiSignHelper" />
      </div>
 
      <!-- Transaction Options -->
@@ -158,8 +167,13 @@
      <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="btn-green-small" (click)="performAction.emit('Y')" [disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
-               <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+               <app-button-tooltip [tooltipText]="!canSetMultiSign() ? 'Cannot set multi-sign at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-green" (click)="(canSetMultiSign() && connectionGuard.isConnectionReady()) ? performAction.emit('Y') : null" [disabled]="false" [class.opacity-50]="!canSetMultiSign() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSetMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setMultiSignButtonLabel() }}</button>
+               </app-button-tooltip>
+
+               <app-button-tooltip [tooltipText]="!canRemoveMultiSign() ? 'Cannot remove multi-sign at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-red" (click)="(canRemoveMultiSign() && connectionGuard.isConnectionReady()) ? performAction.emit('N') : null" [disabled]="false" [class.opacity-50]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canRemoveMultiSign() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeMultiSignButtonLabel() }}</button>
+               </app-button-tooltip>
           </div>
 
           <!-- Secondary Actions -->

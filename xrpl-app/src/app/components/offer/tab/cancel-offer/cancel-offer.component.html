@@ -1,33 +1,47 @@
 @if (offerStoreService.existingOffers().length > 0) {
 <div class="space-y-4">
      <div class="card-base">
-          <h4 class="mb-5 font-semibold text-gray-900">Offer Details</h4>
+          <h4 class="section-heading">
+               <lucide-icon name="dollarSign" class="section-heading-icon-green"></lucide-icon>
+               Offer Details
+          </h4>
+
           <!-- Label + Hint -->
-          <div>
-               <div class="space-y-1">
-                    <label for="selectOfferToCancel" class="label-primary"> Select Offers to Cancel </label>
-                    <p class="text-secondary">Select existing offers to cancel for the selected account.</p>
-               </div>
-               <div class="relative mt-2" (clickOutside)="closeOfferDropdown()">
-                    <div class="relative">
-                         <input
-                              #offerDropdownInput
-                              type="text"
-                              [value]="offerSearchQuery()"
-                              (input)="onOfferSearchInput($event)"
-                              (focus)="openOfferDropdown()"
-                              (keydown)="onOfferKeyDown($event)"
-                              [placeholder]="selectedOfferSequences().length > 0 ? 
-                      selectedOfferSequences().length + ' offer(s) selected' : 
-                      'Search offers by sequence...'"
-                              class="w-full rounded-2xl border border-gray-200 px-4 py-3 pr-10 text-sm focus:border-green-500 focus:outline-none"
-                              autocomplete="off"
-                         />
-                         <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600" (click)="toggleOfferDropdown()">
-                              <lucide-icon name="chevron-down" size="18"></lucide-icon>
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="selectOfferToCancel" class="label-primary"> Select Offers to Cancel </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select existing offers to cancel for the selected account.</p>
+                         <button type="button" (click)="toggleOfferSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
                     </div>
+
+                    <div class="relative mt-2" (clickOutside)="closeOfferDropdown()">
+                         <div class="relative">
+                              <input
+                                   #offerDropdownInput
+                                   type="text"
+                                   [value]="offerSearchQuery()"
+                                   (input)="onOfferSearchInput($event)"
+                                   (focus)="openOfferDropdown()"
+                                   (keydown)="onOfferKeyDown($event)"
+                                   [placeholder]="selectedOfferSequences().length > 0 ? 
+                      selectedOfferSequences().length + ' offer(s) selected' : 
+                      'Search offers by sequence...'"
+                                   class="w-full rounded-2xl border border-gray-200 px-4 py-3 pr-10 text-sm focus:border-green-500 focus:outline-none"
+                                   autocomplete="off"
+                              />
+                              <button type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600" (click)="toggleOfferDropdown()">
+                                   <lucide-icon name="chevron-down" size="18"></lucide-icon>
+                              </button>
+                         </div>
+                    </div>
                </div>
+               <app-field-helper title="Select Offers to Cancel" [items]="cancelOfferSelectorHelperItems" [show]="showCancelOfferSelectorHelper" />
           </div>
 
           <!-- Selected Offers Chips -->

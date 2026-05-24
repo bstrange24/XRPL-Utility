@@ -10,11 +10,12 @@ import { LucideAngularModule } from 'lucide-angular';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,9 +53,15 @@ export class MptAuthorizeUnauthorizeComponent {
      showMptHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
+     showMptActionHelper = signal(false);
+     showMptDestinationHelper = signal(false);
+     showMptIssuanceIdHelper = signal(false);
 
      // Preset examples for MPT Issuance ID
      readonly mptIdExamples = AppConstants.MPT_ID_EXAMPLES;
+     readonly mptActionHelperItems = AppConstants.MPT_ACTION_HELPER_ITEMS;
+     readonly mptDestinationHelperItems = AppConstants.MPT_DESTINATION_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_HELPER_ITEMS;
 
      constructor() {
           // Emit validation status changes
@@ -194,8 +201,21 @@ export class MptAuthorizeUnauthorizeComponent {
           this.showMptHelper.set(!this.showMptHelper());
      }
 
+     // toggleDestinationHelper() {
+     //      this.showDestinationHelper.set(!this.showDestinationHelper());
+     // }
+
+     // Toggle Methods
+     toggleActionHelper() {
+          this.showMptActionHelper.set(!this.showMptActionHelper());
+     }
+
      toggleDestinationHelper() {
-          this.showDestinationHelper.set(!this.showDestinationHelper());
+          this.showMptDestinationHelper.set(!this.showMptDestinationHelper());
+     }
+
+     toggleMptIssuanceIdHelper() {
+          this.showMptIssuanceIdHelper.set(!this.showMptIssuanceIdHelper());
      }
 
      // Get MPT display info for the info box - now uses validator's formatted details

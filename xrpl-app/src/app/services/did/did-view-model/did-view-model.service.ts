@@ -159,8 +159,20 @@ export class DidViewModelService {
      });
 
      allFieldsValid = computed(() => {
-          return this.isDidDataValid() && this.isDidDocumentValid() && this.isUriDataValid();
+          const hasDocument = (this.didStoreService.didDocumentData()?.trim() || '').length > 0;
+          const hasUri = (this.didStoreService.uriData()?.trim() || '').length > 0;
+          const hasData = (this.didStoreService.didData()?.trim() || '').length > 0;
+
+          // All three must have content
+          if (!hasDocument || !hasUri || !hasData) return false;
+
+          // Plus your existing validation (size, JSON validity, etc.)
+          return !this.hasJsonSyntaxError() && this.didDocumentDataByteLength() <= 256 && this.uriDataByteLength() <= 256 && this.didDataByteLength() <= 256;
      });
+
+     // allFieldsValid = computed(() => {
+     //      return this.isDidDataValid() && this.isDidDocumentValid() && this.isUriDataValid();
+     // });
 
      setDidDataEditor(editor: JsonEditorComponent) {
           this.didDataEditor.set(editor);

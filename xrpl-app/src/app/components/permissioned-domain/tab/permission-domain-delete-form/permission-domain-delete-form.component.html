@@ -9,17 +9,39 @@
           </h4>
 
           <!-- Permission Domain dropdown -->
-          <label for="selectPDomainToDelete" class="label-primary"> Select Permissioned Domain to Delete </label>
-          <p class="text-secondary">Select an existing permissioned domain attached to the current wallet.</p>
+          <div class="field-label">
+               <label for="selectPDomainToDelete" class="label-primary"> Select Permissioned Domain to Delete </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Select an existing permissioned domain attached to the current wallet.</p>
+               <button type="button" (click)="togglePDomainSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
           <app-select-search-dropdown [items]="permissionedDomainViewModelService.domainItems()" [value]="permissionedDomainViewModelService.selectedDomainItem()" (valueChange)="onDomainSelected.emit($event)" placeholder="Search by Domain ID..." emptyMessage="No domains found"> </app-select-search-dropdown>
+          <app-field-helper title="Select Permissioned Domain" [items]="pDomainDeleteSelectorHelperItems" [show]="showPDomainDeleteSelectorHelper" />
      </div>
 
      <!-- Selected Domain ID -->
      @if (permissionedDomainStoreService.selectedDomainId()) {
      <div class="card-base">
-          <label for="domainID" class="label-primary"> Domain ID </label>
-          <p class="text-secondary">Ledger hash of the Permissioned Domain to be deleted.</p>
-          <input type="text" readonly class="input-disabled" [value]="permissionedDomainStoreService.selectedDomainId()" />
+          <div class="field-label">
+               <label for="domainID" class="label-primary"> Domain ID </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Ledger hash of the Permissioned Domain to be deleted.</p>
+               <button type="button" (click)="togglePDomainIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
+          <div class="relative">
+               <input type="text" readonly class="input-disabled" [value]="permissionedDomainStoreService.selectedDomainId()" />
+          </div>
+          <app-field-helper title="Domain ID" [items]="pDomainIdHelperItems" [show]="showPDomainIdHelper" />
      </div>
      } }
 </div>

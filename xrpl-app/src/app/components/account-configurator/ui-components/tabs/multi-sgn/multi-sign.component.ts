@@ -11,11 +11,14 @@ import { AccountConfiguratorViewModelService } from '../../../../../services/acc
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import * as xrpl from 'xrpl';
 import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
+import { AppConstants } from '../../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-multi-sign',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, ButtonTooltipComponent, FieldHelperComponent],
      templateUrl: './multi-sign.component.html',
      styleUrl: './multi-sign.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -28,6 +31,9 @@ export class MultiSignComponent {
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
 
+     // === Helper Items ===
+     readonly multiSignHelperItems = AppConstants.MULTI_SIGN_HELPER_ITEMS;
+
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      focusedAccountIndex = signal<number | null>(null);
@@ -35,6 +41,9 @@ export class MultiSignComponent {
      focusedWeightIndex = signal<number | null>(null);
      quorumFocused = signal(false);
      protected xrpl = xrpl;
+
+     // UI State
+     showMultiSignHelper = signal(false);
 
      // Clear specific account field
      clearAccount(index: number, event: MouseEvent) {
@@ -235,6 +244,11 @@ export class MultiSignComponent {
           }
           return '';
      });
+
+     // Toggle Method
+     toggleMultiSignHelper() {
+          this.showMultiSignHelper.set(!this.showMultiSignHelper());
+     }
 
      clearFields() {
           this.accountConfiguratorStoreService.setField('signers', [{ Account: '', seed: '', SignerWeight: 1 }]);

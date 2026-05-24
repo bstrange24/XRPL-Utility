@@ -12,26 +12,24 @@
 
                <!-- DID Index -->
                <div class="space-y-2">
-                    <label class="label-primary">DID Index</label>
-                    <div class="flex items-center gap-3">
-                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + d.index" tooltipText="View on XRPL Explorer">
-                              <div class="font-mono text-sm text-gray-900 hover:text-blue-600 cursor-pointer break-all">{{ d.index.slice(0, 16) }}...{{ d.index.slice(-16) }}</div>
-                         </app-tooltip-link>
-                         <button (click)="copyField('index')" class="btn-secondary text-xs px-3 py-1.5 whitespace-nowrap">Copy Index</button>
+                    <div class="flex items-center justify-between">
+                         <label class="label-primary flex items-center mb-0">DID Index</label>
+                         <button (click)="copyField('index')" class="btn-ghost-small flex items-center">Copy Index</button>
                     </div>
+                    <app-tooltip-link [href]="explorerUrl() + 'entry/' + d.index" tooltipText="View on XRPL Explorer">
+                         <div class="font-mono text-sm text-gray-900 hover:text-blue-600 cursor-pointer break-all">{{ d.index.slice(0, 16) }}...{{ d.index.slice(-16) }}</div>
+                    </app-tooltip-link>
                </div>
 
                <!-- URI -->
                @if (d.URI && d.URI !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary">DID URI</label>
-                         <button (click)="copyField('URI')" class="btn-secondary text-xs px-3 py-1.5">Copy URI</button>
+                         <label class="label-primary flex items-center mb-0">DID URI</label>
+                         <button (click)="copyField('URI')" class="btn-ghost-small flex items-center">Copy URI</button>
                     </div>
-                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-{{ prettyJson(d.URI) }}
-            </pre
-                    >
+
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-100 rounded-2xl border border-gray-100">{{ prettyJson(d.URI) }}</pre>
                </div>
                }
 
@@ -39,13 +37,10 @@
                @if (d.Data && d.Data !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary">DID Data</label>
-                         <button (click)="copyField('Data')" class="btn-secondary text-xs px-3 py-1.5">Copy Data</button>
+                         <label class="label-primary flex items-center mb-0">DID Data</label>
+                         <button (click)="copyField('Data')" class="btn-ghost-small">Copy Data</button>
                     </div>
-                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-{{ prettyJson(d.Data) }}
-            </pre
-                    >
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-100 rounded-2xl border border-gray-100">{{ prettyJson(d.Data) }}</pre>
                </div>
                }
 
@@ -53,13 +48,10 @@
                @if (d.DIDDocument && d.DIDDocument !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary">DID Document</label>
-                         <button (click)="copyField('DIDDocument')" class="btn-secondary text-xs px-3 py-1.5">Copy Document</button>
+                         <label class="label-primary flex items-center mb-0">DID Document</label>
+                         <button (click)="copyField('DIDDocument')" class="btn-ghost-small">Copy Document</button>
                     </div>
-                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-{{ prettyJson(d.DIDDocument) }}
-            </pre
-                    >
+                    <pre class="input-mono p-4 text-xs overflow-auto bg-gray-100 rounded-2xl border border-gray-100">{{ prettyJson(d.DIDDocument) }}</pre>
                </div>
                }
           </div>

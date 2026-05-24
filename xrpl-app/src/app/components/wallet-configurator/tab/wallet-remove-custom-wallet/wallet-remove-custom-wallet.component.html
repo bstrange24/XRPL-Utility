@@ -8,7 +8,7 @@
                     <label for="customWallets" class="label-primary">Custom Wallets</label>
                     <p class="text-secondary">Remove a custom wallet manually added in a dropdown.</p>
                     <div class="h-[54px]">
-                         <app-select-search-dropdown [items]="customOnlyItems()" [value]="selectedCustomItem()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
+                         <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="false" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [items]="customOnlyItems()" [value]="selectedCustomItem()" [searchQueryInput]="destinationSearchQuery()" (valueChange)="onCustomWalletSelected($event)" placeholder="Select custom wallet to remove" class="w-full" />
                     </div>
                </div>
 
@@ -20,7 +20,18 @@
           </div>
 
           <!-- Button Row -->
-          <button type="button" class="btn-red" (click)="confirmRemoveWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button>
+          <!-- <button type="button" class="btn-red" (click)="confirmRemoveWallet()" [disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">{{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}</button> -->
+          <div class="main-button-section">
+               <app-button-tooltip [tooltipText]="!walletsStoreService.selectedAddress() ? 'Please select a wallet to remove.' : ''">
+                    <button type="button" class="btn-red" (click)="walletsStoreService.selectedAddress() && !walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? confirmRemoveWallet() : null" [disabled]="false" [class.opacity-50]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers" [attr.aria-disabled]="!walletsStoreService.selectedAddress() || walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers">
+                         {{ walletsStoreService.buttonLoading().deriveWalletFromSecretNumbers ? 'Processing...' : 'Remove Custom Wallet' }}
+                    </button>
+               </app-button-tooltip>
+
+               <div class="right-buttons">
+                    <button type="button" class="btn-secondary" (click)="clearInputFields()">Clear Wallet</button>
+               </div>
+          </div>
      </div>
 </div>
 }

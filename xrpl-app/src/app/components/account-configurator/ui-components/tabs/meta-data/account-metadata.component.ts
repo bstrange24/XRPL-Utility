@@ -12,11 +12,14 @@ import { AccountConfiguratorViewModelService } from '../../../../../services/acc
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import { UtilsService } from '../../../../../services/utils/util-service/utils.service';
 import { FocusBorderDirective } from '../../../../../services/shared/focus-border/focus-border.directive';
+import { AppConstants } from '../../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
+import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-account-metadata',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,12 +32,24 @@ export class AccountMetadataComponent {
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
      protected txUiService = inject(TransactionUiService);
 
+     // === Helper Constants ===
+     readonly nftMinterHelperItems = AppConstants.NFT_MINTER_HELPER_ITEMS;
+     readonly transferSettingsHelperItems = AppConstants.TRANSFER_SETTINGS_HELPER_ITEMS;
+     readonly domainHelperItems = AppConstants.DOMAIN_HELPER_ITEMS;
+     readonly messageKeyHelperItems = AppConstants.MESSAGE_KEY_HELPER_ITEMS;
+
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
      nftMinterFocused = signal(false);
      transferRateFocused = signal(false);
      tickSizeFocused = signal(false);
      domainFocused = signal(false);
+
+     // UI State
+     showNftMinterHelper = signal(false);
+     showTransferSettingsHelper = signal(false);
+     showDomainHelper = signal(false);
+     showMessageKeyHelper = signal(false);
 
      // Computed signal: the final hex that will be sent
      readonly domainHex = computed(() => {
@@ -178,5 +193,22 @@ export class AccountMetadataComponent {
      clearMinterAddresField() {
           this.accountConfiguratorStoreService.setField('nfTokenMinterAddress', '');
           return;
+     }
+
+     // Toggle Methods
+     toggleNftMinterHelper() {
+          this.showNftMinterHelper.set(!this.showNftMinterHelper());
+     }
+
+     toggleTransferSettingsHelper() {
+          this.showTransferSettingsHelper.set(!this.showTransferSettingsHelper());
+     }
+
+     toggleDomainHelper() {
+          this.showDomainHelper.set(!this.showDomainHelper());
+     }
+
+     toggleMessageKeyHelper() {
+          this.showMessageKeyHelper.set(!this.showMessageKeyHelper());
      }
 }

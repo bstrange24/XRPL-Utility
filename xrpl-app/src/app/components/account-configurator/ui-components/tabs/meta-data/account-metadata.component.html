@@ -6,7 +6,13 @@
                NFT Minter Address
           </h4>
 
-          <p class="text-secondary">Authorize another account to mint NFTs on your behalf.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Authorize another account to mint NFTs on your behalf.</p>
+               <button type="button" (click)="toggleNftMinterHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
           <div class="relative">
                <input type="text" class="input-base-with-validation" app-focus-border [isValid]="isNftMinterValid()" [isInvalid]="isNftMinterInvalid()" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
                @if (accountConfiguratorStoreService.nfTokenMinterAddress()) {
@@ -20,12 +26,18 @@
           <p class="form-error">Please enter a valid XRP address</p>
           }
 
+          <app-field-helper title="NFT Minter Address" [items]="nftMinterHelperItems" [show]="showNftMinterHelper" />
+
           <div class="main-button-section">
                <!-- Primary Actions -->
                <div class="flex flex-col gap-3 sm:flex-row">
-                    <button type="button" class="btn-primary" (click)="performAction.emit('Y')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || isNftMinterInvalid()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+                    <app-button-tooltip [tooltipText]="!canSubmit() ? 'Cannot set NFT minter. Form is invalid.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : isNftMinterInvalid() ? 'NFT minter configuration is invalid. Check your settings.' : ''">
+                         <button type="button" class="btn-primary" (click)="(canSubmit() && connectionGuard.isConnectionReady() && !isNftMinterInvalid()) ? performAction.emit('Y') : null" [disabled]="false" [class.opacity-50]="!canSubmit() || !connectionGuard.isConnectionReady() || isNftMinterInvalid()" [attr.aria-disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || isNftMinterInvalid()">{{ accountConfiguratorUtilService.setNftMinterButtonLabel() }}</button>
+                    </app-button-tooltip>
 
-                    <button type="button" class="btn-red" (click)="performAction.emit('N')" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+                    <app-button-tooltip [tooltipText]="!canSubmit() ? 'Cannot remove NFT minter. Form is invalid.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                         <button type="button" class="btn-red" (click)="(canSubmit() && connectionGuard.isConnectionReady() && !isNftMinterInvalid()) ? performAction.emit('N') : null" [disabled]="false" [class.opacity-50]="!canSubmit() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeNftMinterButtonLabel() }}</button>
+                    </app-button-tooltip>
                </div>
 
                <!-- Secondary Actions -->
@@ -44,9 +56,20 @@
 
           <div class="side-by-side-fields">
                <div>
-                    <label for="accountTransferRate" class="label-primary">Transfer Rate</label>
-                    <p class="text-secondary">Fee percentage for issued currencies (0 = no fee, max 100)</p>
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTransferRateValid()" [isInvalid]="isTransferRateInvalid()" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 1.5" step="0.001" min="0" max="100" />
+                    <div class="field-label">
+                         <label for="credentialSubject" class="label-primary">Transfer Rate</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Fee percentage for issued currencies (0 = no fee, max 100).</p>
+                         <button type="button" (click)="toggleTransferSettingsHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTransferRateValid()" [isInvalid]="isTransferRateInvalid()" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 1.5" step="0.001" min="0" max="100" />
+                    </div>
 
                     @if (isTransferRateInvalid()) {
                     <p class="form-error">Transfer Rate must be a number between 0 and 100</p>
@@ -54,21 +77,42 @@
                </div>
 
                <div>
-                    <label for="accountTickSize" class="label-primary">Tick Size</label>
-                    <p class="text-secondary">Decimal precision for trading (3–15)</p>
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTickSizeValid()" [isInvalid]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 6" min="3" max="15" />
+                    <div class="field-label">
+                         <label for="credentialSubject" class="label-primary">Tick Size</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Decimal precision for trading (3–15).</p>
+                         <button type="button" (click)="toggleTransferSettingsHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTickSizeValid()" [isInvalid]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 6" min="3" max="15" />
+                    </div>
 
                     @if (isTickSizeInvalid()) {
                     <p class="form-error">Tick Size must be a number between 3 and 15</p>
                     }
                </div>
           </div>
+
+          <app-field-helper title="Transfer Settings" [items]="transferSettingsHelperItems" [show]="showTransferSettingsHelper" />
      </div>
 
      <!-- Domain Card -->
      <div class="card-base">
-          <label for="accountDomain" class="label-primary">Domain</label>
-          <p class="text-secondary">Public domain associated with this account</p>
+          <div class="field-label">
+               <label for="credentialSubject" class="label-primary">Domain</label>
+          </div>
+
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">Public domain associated with this account.</p>
+               <button type="button" (click)="toggleDomainHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
 
           <div class="relative">
                <input type="text" class="input-base-with-validation" placeholder="e.g. example.com" app-focus-border [isValid]="!isDomainTooLong()" [isInvalid]="isDomainTooLong()" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" />
@@ -79,6 +123,8 @@
                </button>
                }
           </div>
+
+          <app-field-helper title="Domain" [items]="domainHelperItems" [show]="showDomainHelper" />
 
           @if (accountConfiguratorStoreService.domain()) {
           <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
@@ -117,10 +163,20 @@
                     </div>
 
                     <div class="flex-1">
-                         <div class="text-sm font-medium text-gray-900">Save Message Key</div>
-                         <div class="mt-0.5 text-xs text-gray-600">Public key for receiving encrypted messages.</div>
+                         <div class="field-label">
+                              <label for="credentialSubject" class="label-primary"> Save Message Key </label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Public key for receiving encrypted messages.</p>
+                              <button type="button" (click)="toggleMessageKeyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
                     </div>
                </label>
+
+               <app-field-helper title="Message Key" [items]="messageKeyHelperItems" [show]="showMessageKeyHelper" />
           </div>
      </div>
 
@@ -145,7 +201,10 @@
      <!-- Main Action Button -->
      <div class="main-button-section">
           <!-- LEFT: primary action -->
-          <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="performAction.emit('')" [disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+          <!-- <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="performAction.emit('')" [disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button> -->
+          <app-button-tooltip [tooltipText]="!canModifyMetadata() ? 'Cannot modify metadata at this time. Check for missing or invalid fields.' : ''">
+               <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="canModifyMetadata() ? performAction.emit('') : null" [disabled]="false" [class.opacity-50]="!canModifyMetadata()" [attr.aria-disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
+          </app-button-tooltip>
 
           <!-- RIGHT: secondary / utility actions -->
           <div class="right-buttons">

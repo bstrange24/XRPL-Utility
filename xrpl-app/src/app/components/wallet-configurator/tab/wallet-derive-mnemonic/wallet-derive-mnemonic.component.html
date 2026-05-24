@@ -96,7 +96,19 @@
           <!-- Buttons -->
           <div class="main-button-section">
                <!-- LEFT: primary action -->
-               <button type="button" class="btn-blue disabled:cursor-not-allowed disabled:opacity-50" (click)="deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading || !isMnemonicValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button>
+               <!-- <button type="button" class="btn-blue" (click)="deriveWalletFromMnemonic()" [disabled]="walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading || !isMnemonicValid()">{{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}</button> -->
+               <app-button-tooltip [tooltipText]="!isMnemonicValid() ? 'Please enter a valid mnemonic phrase.' : ''">
+                    <button
+                         type="button"
+                         class="btn-blue"
+                         (click)="isMnemonicValid() && !walletsStoreService.buttonLoading().deriveWalletFromMnemonic && !walletsUtilService.isAnyButtonLoading ? deriveWalletFromMnemonic() : null"
+                         [disabled]="false"
+                         [class.opacity-50]="!isMnemonicValid() || walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading"
+                         [attr.aria-disabled]="!isMnemonicValid() || walletsStoreService.buttonLoading().deriveWalletFromMnemonic || walletsUtilService.isAnyButtonLoading"
+                    >
+                         {{ walletsStoreService.buttonLoading().deriveWalletFromMnemonic ? 'Processing...' : 'Derive Wallet from Mnemonic' }}
+                    </button>
+               </app-button-tooltip>
 
                <!-- RIGHT: secondary / utility actions -->
                <div class="right-buttons">

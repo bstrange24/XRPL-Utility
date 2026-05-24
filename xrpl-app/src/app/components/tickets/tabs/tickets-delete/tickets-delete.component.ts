@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, ViewContainerRef, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, ElementRef, inject, ViewContainerRef, TemplateRef, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TicketsViewModelService } from '../../../../services/tickets/tickets-view-model/tickets-view-model.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
@@ -10,11 +10,13 @@ import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-tickets-delete',
      standalone: true,
-     imports: [FormsModule, NgIcon, LucideAngularModule],
+     imports: [FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule],
      templateUrl: './tickets-delete.component.html',
      styleUrl: './tickets-delete.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +31,12 @@ export class TicketsDeleteComponent {
      public ticketsUtilService = inject(TicketsUtilService);
      public ticketsViewModelService = inject(TicketsViewModelService);
      public txUiService = inject(TransactionUiService);
+
+     // Helper Item
+     readonly deleteTicketHelperItems = AppConstants.DELETE_TICKET_HELPER_ITEMS;
+
+     // UI State
+     showDeleteTicketHelper = signal(false);
 
      @ViewChild('dropdownTemplate') dropdownTemplate!: TemplateRef<any>;
      @ViewChild('dropdownOrigin') dropdownOrigin!: ElementRef;
@@ -150,4 +158,9 @@ export class TicketsDeleteComponent {
                (ticket: string) => ticket.toLowerCase().includes(q) // String comparison
           );
      });
+
+     // Toggle Method
+     toggleDeleteTicketHelper() {
+          this.showDeleteTicketHelper.set(!this.showDeleteTicketHelper());
+     }
 }

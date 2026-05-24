@@ -16,11 +16,13 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { PaymentChannelValidatorService } from '../../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'app-payment-channel-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
      templateUrl: './payment-channel-create.component.html',
      styleUrl: './payment-channel-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -35,6 +37,12 @@ export class PaymentChannelCreateComponent {
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
 
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+     readonly paymentChannelDetailsHelperItems = AppConstants.PAYMENT_CHANNEL_DETAILS_HELPER_ITEMS;
+     readonly paymentChannelAmountHelperItems = AppConstants.PAYMENT_CHANNEL_AMOUNT_HELPER_ITEMS;
+     readonly settleDelayHelperItems = AppConstants.SETTLE_DELAY_HELPER_ITEMS;
+     readonly paymentChannelDestinationHelperItems = AppConstants.PAYMENT_CHANNEL_DESTINATION_HELPER_ITEMS;
+
      // Inputs from parent
      destinationItems = input.required<any[]>();
      selectedDestinationItem = input.required<any>();
@@ -48,6 +56,13 @@ export class PaymentChannelCreateComponent {
 
      // Track destination validation status from dropdown
      isDestinationValid = signal(false);
+
+     // UI State
+     showPaymentChannelDetailsHelper = signal(false);
+     showPaymentChannelAmountHelper = signal(false);
+     showSettleDelayHelper = signal(false);
+     showPaymentChannelDestinationHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      // Outputs to parent
      performAction = output<void>();
@@ -214,5 +229,26 @@ export class PaymentChannelCreateComponent {
 
      onDestinationValidationChange(isValid: boolean) {
           this.isDestinationValid.set(isValid);
+     }
+
+     // Toggle Methods
+     togglePaymentChannelDetailsHelper() {
+          this.showPaymentChannelDetailsHelper.set(!this.showPaymentChannelDetailsHelper());
+     }
+
+     toggleAmountHelper() {
+          this.showPaymentChannelAmountHelper.set(!this.showPaymentChannelAmountHelper());
+     }
+
+     toggleSettleDelayHelper() {
+          this.showSettleDelayHelper.set(!this.showSettleDelayHelper());
+     }
+
+     toggleDestinationHelper() {
+          this.showPaymentChannelDestinationHelper.set(!this.showPaymentChannelDestinationHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
      }
 }

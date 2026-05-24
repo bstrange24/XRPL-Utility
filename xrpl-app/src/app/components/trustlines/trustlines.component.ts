@@ -46,11 +46,12 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { TrustlinesSummaryComponent } from './ui-components/trustline-summary/trustlines-summary.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -118,6 +119,32 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           const wallet = this.currentWallet();
           if (wallet?.address) {
                this.setRightPanel();
+          }
+     });
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          const ready = this.connectionGuard.isConnectionReady();
+
+          if (!idle || !ready) return false;
+
+          const tab = this.trustlineViewModelService.activeTab();
+
+          switch (tab) {
+               case 'setTrustline':
+                    return !this.trustlineStoreService.trustlineAlreadyExist();
+
+               case 'removeTrustline':
+                    return this.trustlineStoreService.removeTrustlineAvailable();
+
+               case 'issueCurrency':
+                    return true; // let child component + connection guard handle it
+
+               case 'clawbackTokens':
+                    return this.trustlineViewModelService.isIssuerForSelected();
+
+               default:
+                    return false;
           }
      });
 
@@ -397,6 +424,29 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     activeTab: this.activeTabForRequirements,
                },
           });
+     }
+
+     getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
+          if (!this.canPerformAction()) {
+               const tab = this.trustlineViewModelService.activeTab();
+
+               if (tab === 'setTrustline') {
+                    return 'Trustline already exists for this pair';
+               }
+               if (tab === 'removeTrustline') {
+                    return 'Cannot remove trustline (balance > 0 or other restrictions)';
+               }
+               if (tab === 'clawbackTokens') {
+                    return 'You must be the issuer to clawback tokens';
+               }
+               return 'Please fill required fields';
+          }
+
+          return '';
      }
 
      handleSearchQueryChange(query: string) {

@@ -9,7 +9,16 @@
 
                <!-- Action Selection -->
                <div>
-                    <label class="mb-3 block text-sm font-semibold text-gray-900"> Action <span class="text-red-500">*</span> </label>
+                    <div class="field-label">
+                         <label class="label-primary"> Action <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select whether to lock or unlock the MPT.</p>
+                         <button type="button" (click)="toggleActionHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
 
                     <div class="flex flex-wrap gap-6">
                          <!-- Unlock Radio -->
@@ -36,11 +45,12 @@
                               <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Lock</span>
                          </label>
                     </div>
+                    <app-field-helper title="Action" [items]="mptLockActionHelperItems" [show]="showMptLockActionHelper" />
                </div>
 
                <!-- MPT Issuer (Destination) -->
                <div>
-                    <div class="flex justify-between items-baseline">
+                    <div class="field-label">
                          <label class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
                     </div>
 
@@ -61,30 +71,23 @@
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send the remaining XRP to yourself.
                     </p>
-                    } @if (showDestinationHelper()) {
-                    <div class="helper-text-main-div">
-                         <p class="helper-text-paragraph">About the Destination:</p>
-                         <ul class="space-y-1">
-                              <li>• This is the holder's account that needs authorization</li>
-                              <li>• Must be a valid XRP address starting with 'r'</li>
-                              <li>• The issuer account (your current wallet) will grant or revoke authorization</li>
-                         </ul>
-                    </div>
                     } @if (mptAuthorizeValidator.getDestinationErrorMessage()) {
                     <p class="form-error mt-2">{{ mptAuthorizeValidator.getDestinationErrorMessage() }}</p>
                     }
+
+                    <app-field-helper title="MPT Issuer (Destination)" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
                </div>
 
                <!-- MPT Issuance ID -->
                <div>
-                    <div class="flex justify-between items-baseline">
+                    <div class="field-label">
                          <label class="label-primary"> MPT Issuance ID <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
                          <p class="text-secondary">Unique identifier of the MPTokenIssuance to lock/unlock.</p>
                          <div class="flex gap-2">
-                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <button type="button" (click)="toggleMptIssuanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>
@@ -111,21 +114,6 @@
                          }
                     </div>
 
-                    @if (showMptHelper()) {
-                    <div class="helper-text-main-div">
-                         <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
-                         <ul class="helper-text-ul">
-                              <li>• Exactly 48 characters in length</li>
-                              <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
-                              <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
-                         </ul>
-                         <div class="flex gap-2 mt-2">
-                              @for (example of mptIdExamples; track example) {
-                              <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
-                              }
-                         </div>
-                    </div>
-                    }
                     <!-- @if (mptAuthorizeValidator.getMptIssuanceIdErrorMessage()) {
                     <p class="form-error mt-2">{{ mptAuthorizeValidator.getMptIssuanceIdErrorMessage() }}</p>
                     } -->
@@ -134,6 +122,8 @@
                     @if (mptIssuanceId && mptIssuanceId.length > 0) {
                     <div class="mt-2 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
                     }
+
+                    <app-field-helper title="MPT Issuance ID" [items]="mptIssuanceIdHelperItems" [show]="showMptIssuanceIdHelper" />
                </div>
           </div>
      </div>

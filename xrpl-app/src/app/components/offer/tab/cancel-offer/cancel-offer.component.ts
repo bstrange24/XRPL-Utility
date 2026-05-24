@@ -8,12 +8,14 @@ import { OfferStoreService } from '../../../../services/offer/offer-store/offer-
 import { OfferTransactionViewModelService } from '../../../../services/offer/offer-transaction-view-model/offer-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { LucideAngularModule } from 'lucide-angular';
+import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-cancel-offer',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, OverlayModule],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, OverlayModule],
      templateUrl: './cancel-offer.component.html',
      styleUrl: './cancel-offer.component.css',
 })
@@ -36,6 +38,9 @@ export class CancelOfferTabComponent {
      readonly offerSearchQuery = signal<string>('');
      readonly selectedOfferSequences = signal<number[]>([]);
      readonly highlightedOfferIndex = signal<number>(-1);
+
+     readonly cancelOfferSelectorHelperItems = AppConstants.CANCEL_OFFER_SELECTOR_HELPER_ITEMS;
+     showCancelOfferSelectorHelper = signal(false);
 
      readonly filteredOffers = computed(() => {
           const query = this.offerSearchQuery().trim().toLowerCase();
@@ -153,5 +158,10 @@ export class CancelOfferTabComponent {
                const el = document.querySelector('.offer-item.highlighted') as HTMLElement;
                el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
           });
+     }
+
+     // Toggle Method
+     toggleOfferSelectorHelper() {
+          this.showCancelOfferSelectorHelper.set(!this.showCancelOfferSelectorHelper());
      }
 }

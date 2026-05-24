@@ -8,7 +8,7 @@
 
           <!-- Select MPT -->
           <div>
-               <div class="flex justify-between items-baseline">
+               <div class="field-label">
                     <label for="selectMptToClawback" class="label-primary">Select MPT to Clawback <span class="text-red-500">*</span></label>
                </div>
 
@@ -23,21 +23,16 @@
                     <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                </div>
 
-               @if (showMptHelper()) {
-               <div class="helper-text-main-div">
-                    <p class="helper-text-paragraph">Selecting an MPT:</p>
-                    <ul class="space-y-1">
-                         <li>• Only MPTs you currently hold are shown</li>
-                    </ul>
-               </div>
-               } @if (mptSendValidator.getMptSelectedErrorMessage()) {
+               @if (mptSendValidator.getMptSelectedErrorMessage()) {
                <p class="form-error mt-2">{{ mptSendValidator.getMptSelectedErrorMessage() }}</p>
                }
+
+               <app-field-helper title="Select MPT" [items]="mptClawbackSelectHelperItems" [show]="showMptClawbackSelectHelper" />
           </div>
 
           <!-- MPT Issuance ID -->
           <div>
-               <div class="flex justify-between items-baseline">
+               <div class="field-label">
                     <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>
                </div>
 
@@ -71,35 +66,21 @@
                     }
                </div>
 
-               @if (showMptIssuanceHelper()) {
-               <div class="helper-text-main-div">
-                    <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
-                    <ul class="helper-text-ul">
-                         <li>• Exactly 48 characters in length</li>
-                         <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
-                         <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
-                    </ul>
-                    <!-- <div class="flex gap-2 mt-2">
-                         @for (example of mptIdExamples; track example) {
-                         <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
-                         }
-                    </div> -->
-               </div>
-               }
-
                <!-- @if (mptSendValidator.getMptIssuanceIdErrorMessage()) {
                <p class="form-error mt-2">{{ mptSendValidator.getMptIssuanceIdErrorMessage() }}</p>
                }  -->
                @if (mptIssuanceId && mptIssuanceId.length > 0) {
                <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
                }
+
+               <app-field-helper title="MPT Issuance ID" [items]="mptIssuanceIdHelperItems" [show]="showMptIssuanceIdHelper" />
           </div>
 
           <!-- MPT Holder + Amount -->
           <div class="side-by-side-fields">
                <!-- MPT Holder (Destination) -->
                <div>
-                    <div class="flex justify-between items-baseline">
+                    <div class="field-label">
                          <label for="mptHolder" class="label-primary">MPT Holder <span class="text-red-500">*</span></label>
                     </div>
                     <div class="flex items-center gap-2">
@@ -119,7 +100,8 @@
                          <ng-icon name="heroExclamationTriangle" size="14" />
                          This is your currently active wallet. You cannot send XRP to yourself.
                     </p>
-                    } @if (showDestinationHelper()) {
+                    }
+                    <!-- @if (showDestinationHelper()) {
                     <div class="helper-text-main-div">
                          <p class="helper-text-paragraph">About the Destination:</p>
                          <ul class="space-y-1">
@@ -128,14 +110,17 @@
                               <li>• The destination may need authorization to receive this MPT</li>
                          </ul>
                     </div>
-                    } @if (mptSendValidator.getDestinationErrorMessage()) {
+                    } -->
+                    @if (mptSendValidator.getDestinationErrorMessage()) {
                     <p class="form-error mt-2">{{ mptSendValidator.getDestinationErrorMessage() }}</p>
                     }
+
+                    <app-field-helper title="MPT Holder" [items]="mptHolderHelperItems" [show]="showMptHolderHelper" />
                </div>
 
                <!-- Amount to Clawback -->
                <div>
-                    <div class="flex justify-between items-baseline">
+                    <div class="field-label">
                          <label for="amountToClawback" class="label-primary">Amount to Clawback <span class="text-red-500">*</span></label>
                          <!-- <div class="flex gap-2">
                               @for (preset of amountPresets; track preset) {
@@ -161,7 +146,7 @@
                          }
                     </div>
 
-                    @if (showAmountHelper()) {
+                    <!-- @if (showAmountHelper()) {
                     <div class="helper-text-main-div">
                          <p class="helper-text-paragraph">Amount Information:</p>
                          <ul class="space-y-1">
@@ -170,7 +155,8 @@
                               <li>• Amount will be sent with the token's asset scale precision</li>
                          </ul>
                     </div>
-                    } @if (mptSendValidator.getAmountErrorMessage()) {
+                    }  -->
+                    @if (mptSendValidator.getAmountErrorMessage()) {
                     <p class="form-error mt-2">{{ mptSendValidator.getAmountErrorMessage() }}</p>
                     }
 
@@ -178,6 +164,7 @@
                     <!-- @if (amount && mptSendValidator.isAmountValid() && mptIssuanceId) {
                     <p class="text-xs text-green-600 mt-2">✓ Will send {{ formatAmountWithScale(amount) }} tokens ({{ amount }} base units)</p>
                     } -->
+                    <app-field-helper title="Amount to Clawback" [items]="mptClawbackAmountHelperItems" [show]="showMptClawbackAmountHelper" />
                </div>
           </div>
 

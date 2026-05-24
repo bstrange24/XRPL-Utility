@@ -39,11 +39,12 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { PermissionedDomainRequirementsInfoComponent } from './ui-components/permissioned-domain-requirements-info/permissioned-domain-requirements-info.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-permissioned-domain',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, PermissionDomainDeleteFormComponent, PermissionDomainSetFormComponent],
      templateUrl: './permissioned-domain.component.html',
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -121,6 +122,24 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
           this.clearInputFields();
           if (this.hasWallets()) await this.getPermissionedDomainForAccount();
      }
+
+     public canPerformAction = computed(() => {
+          const tab = this.permissionedDomainViewModelService.activeTab();
+          const idle = this.isIdle(); // from WalletDestinationBase
+
+          if (!idle) return false;
+
+          switch (tab) {
+               case 'setPermissionedDomain':
+                    return this.canSetPermissionDomainForm();
+
+               case 'deletePermissionedDomain':
+                    return !!this.permissionedDomainStoreService.selectedDomainId(); // needs selection
+
+               default:
+                    return false;
+          }
+     });
 
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
           this.isSummaryLoading.set(true);
@@ -304,6 +323,29 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      toggleSummaryPanel() {
           this.summaryExpanded.update(expanded => !expanded);
+     }
+
+     getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
+          if (!this.canPerformAction()) {
+               const tab = this.permissionedDomainViewModelService.activeTab();
+               if (tab === 'setPermissionedDomain') {
+                    if (this.permissionedDomainStoreService.domainMode() === 'create') {
+                         return 'Please fill in the required fields (Issuer + Credential Type)';
+                    } else {
+                         return 'Please fill in the required fields (Issuer + Credential Type + Domain to update)';
+                    }
+               }
+               if (tab === 'deletePermissionedDomain') {
+                    return 'Please select a Permissioned Domain to delete';
+               }
+               return 'Cannot perform action at this time';
+          }
+
+          return '';
      }
 
      readonly currentInfo = computed(

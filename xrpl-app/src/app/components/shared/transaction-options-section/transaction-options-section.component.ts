@@ -23,11 +23,12 @@ import { DomainIdValidatorService } from '../../../services/shared/validators/do
 import { CredentialValidatorService } from '../../../services/shared/validators/credential-validator/credential-validator.service';
 import { PaymentChannelValidatorService } from '../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 import { CheckValidatorService } from '../../../services/shared/validators/check-validator/check-validator.service';
+import { FieldHelperComponent } from '../field-helper/field-helper.component';
 
 @Component({
      selector: 'app-transaction-options-section',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent, FieldHelperComponent],
      templateUrl: './transaction-options-section.component.html',
      styleUrl: './transaction-options-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -51,6 +52,13 @@ export class TransactionOptionsSectionComponent {
      public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
      public readonly checkValidatorService = inject(CheckValidatorService);
 
+     // === Helper Items ===
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+     readonly credentialOptionsHelperItems = AppConstants.CREDENTIAL_OPTIONS_HELPER_ITEMS;
+     readonly paymentChannelHelperItems = AppConstants.PAYMENT_CHANNEL_HELPER_ITEMS;
+     readonly paymentOptionsHelperItems = AppConstants.PAYMENT_OPTIONS_HELPER_ITEMS;
+     readonly deleteOptionsHelperItems = AppConstants.DELETE_OPTIONS_HELPER_ITEMS;
+
      activeTab = input.required<'sendXrp' | 'createCredential' | 'createPaymentChannel' | 'fundPaymentChannel' | 'acceptCredential' | 'deleteCredential' | 'verifyCredential' | 'cashCheck' | 'cancelCheck' | 'createCheck' | 'deleteAccount' | 'set' | 'delete' | 'accept' | 'verify' | 'setPermissionedDomain' | 'deletePermissionedDomain'>();
      @Input() wantsOptions: boolean = this.txUiService.wantsOptions();
      optionsValidationChange = output<{
@@ -63,6 +71,13 @@ export class TransactionOptionsSectionComponent {
      isSourceTagFocused = signal(false);
      isInvoiceIdFocused = signal(false);
      newCredentialId = signal('');
+
+     // UI State
+     showOptionalFieldsHelper = signal(false);
+     showCredentialOptionsHelper = signal(false);
+     showPaymentChannelHelper = signal(false);
+     showPaymentOptionsHelper = signal(false);
+     showDeleteOptionsHelper = signal(false);
 
      constructor() {
           effect(() => {
@@ -253,4 +268,25 @@ export class TransactionOptionsSectionComponent {
      hasOptionsValidationError = computed(() => {
           return this.optionsErrorMessages().length > 0;
      });
+
+     // Toggle Methods
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
+     }
+
+     toggleCredentialOptionsHelper() {
+          this.showCredentialOptionsHelper.set(!this.showCredentialOptionsHelper());
+     }
+
+     togglePaymentChannelHelper() {
+          this.showPaymentChannelHelper.set(!this.showPaymentChannelHelper());
+     }
+
+     togglePaymentOptionsHelper() {
+          this.showPaymentOptionsHelper.set(!this.showPaymentOptionsHelper());
+     }
+
+     toggleDeleteOptionsHelper() {
+          this.showDeleteOptionsHelper.set(!this.showDeleteOptionsHelper());
+     }
 }
