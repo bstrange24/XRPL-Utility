@@ -63,6 +63,18 @@
                <div class="relative">
                     <input
                          type="text"
+                         [ngModel]="nftCreateStoreService.nftId()"
+                         (ngModelChange)="nftCreateStoreService.setField('nftId', $event)"
+                         (focus)="onNftIdFocus()"
+                         (blur)="onNftIdBlur()"
+                         placeholder="Enter 64-character hex NFT Token ID"
+                         class="input-base-with-validation font-mono text-sm"
+                         app-focus-border
+                         [isValid]="!!(nftOfferValidatorService.isNftTokenIdValid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
+                         [isInvalid]="!!(nftOfferValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
+                    />
+                    <!-- <input
+                         type="text"
                          app-focus-border
                          class="input-base-with-validation font-mono text-sm"
                          [isValid]="!!(nftOfferValidatorService.isNftTokenIdValid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
@@ -71,7 +83,7 @@
                          (focus)="onNftIdFocus()"
                          (blur)="onNftIdBlur()"
                          placeholder="Enter 64-character hex NFT Token ID"
-                    />
+                    /> -->
 
                     <!-- Validation Icon -->
                     <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && (nftOfferValidatorService.isNftTokenIdValid() || nftOfferValidatorService.isNftTokenIdInvalid())) {

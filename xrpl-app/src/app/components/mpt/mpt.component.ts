@@ -140,43 +140,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           }
      });
 
-     public canPerformAction = computed(() => {
-  const idle = this.isIdle();
-  if (!idle || !this.hasWallets()) return false;
-
-  const tab = this.mptTransactionViewModelService.activeTab();
-
-  // Force strong reactivity by reading ALL key signals
-  const mptId = this.mptStoreService.mptIssuanceId() ?? '';
-  const storeDestination = this.mptStoreService.destination() ?? '';
-  const selectedDestination = this.selectedDestinationAddress() ?? '';
-  const amount = this.mptStoreService.amount() ?? '';
-  const hasOutstanding = !this.mptUtilService.hasNoOutstandingMpts();
-
-  switch (tab) {
-    case 'createMpt':
-      return this.canCreateMpt();
-
-    case 'authorizeMpt':
-    case 'unauthorizeMpt':
-      return this.canAuthorizeMpt();
-
-    case 'sendMpt':
-    case 'clawbackMpt':
-      return !!mptId && !!(storeDestination || selectedDestination) && !!amount.trim();
-
-    case 'lockMpt':
-    case 'unlockMpt':
-      return !!mptId && !!(storeDestination || selectedDestination);
-
-    case 'destroyMpt':
-      return !!mptId && !hasOutstanding;
-
-    default:
-      return false;
-  }
-});
-
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
           this.mptTransactionViewModelService.clearMetadataCache();
@@ -221,10 +184,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      });
 
      onMptSelected(item: SelectItem | null) {
-  const id = item?.id || '';
-  this.mptStoreService.setField('mptIssuanceId', id);
-}
-
+          const id = item?.id || '';
+          this.mptStoreService.setField('mptIssuanceId', id);
+     }
 
      // onMptSelected(item: SelectItem | null) {
      //      if (!item) return;
@@ -487,15 +449,15 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
      }
 
      handleDestinationChange(item: SelectItem | null) {
-  const addr = item?.id || '';
-  this.selectedDestinationAddress.set(addr);
-  this.mptStoreService.setField('destination', addr);
-}
+          const addr = item?.id || '';
+          this.selectedDestinationAddress.set(addr);
+          this.mptStoreService.setField('destination', addr);
+     }
 
-handleSearchQueryChange(query: string) {
-  this.destinationSearchQuery.set(query);
-  this.mptStoreService.setField('destination', query);   // important for typed input
-}
+     handleSearchQueryChange(query: string) {
+          this.destinationSearchQuery.set(query);
+          this.mptStoreService.setField('destination', query); // important for typed input
+     }
 
      // handleDestinationChange(item: SelectItem | null) {
      //      const addr = item?.id || '';
@@ -543,51 +505,86 @@ handleSearchQueryChange(query: string) {
           });
      }
 
-     getButtonTooltip(): string {
-  if (!this.isIdle() || !this.hasWallets()) {
-    return 'Please wait or select a wallet';
-  }
-
-  const tab = this.mptTransactionViewModelService.activeTab();
-  const mptId = this.mptStoreService.mptIssuanceId() ?? '';
-  const destination = this.mptStoreService.destination() || this.selectedDestinationAddress() || '';
-  const amount = this.mptStoreService.amount() ?? '';
-
-  if (!this.canPerformAction()) {
-    switch (tab) {
-      case 'createMpt':
-        return 'Please fill all required MPT fields';
-      case 'authorizeMpt':
-      case 'unauthorizeMpt':
-        return 'Please select MPT and Destination';
-      case 'sendMpt':
-      case 'clawbackMpt':
-        if (!mptId) return 'Please select an MPT';
-        if (!destination) return 'Please enter a Destination';
-        if (!amount.trim()) return 'Please enter an Amount';
-        return 'Please fill MPT, Destination and Amount';
-      case 'lockMpt':
-      case 'unlockMpt':
-        if (!mptId) return 'Please select an MPT';
-        if (!destination) return 'Please enter a Destination';
-        return 'Please fill MPT and Destination';
-      case 'destroyMpt':
-        return this.mptUtilService.hasNoOutstandingMpts() 
-          ? 'Please select MPT to destroy' 
-          : 'Cannot destroy MPT with outstanding tokens';
-      default:
-        return 'Cannot perform this action';
-    }
-  }
-  return '';
-}
-
      protected clearInputFields() {
           if (this.mptTransactionViewModelService.activeTab() !== 'createMpt') {
                this.mptUtilService.resetFlags();
           }
           this.selectedDestinationAddress.set('');
           this.mptStoreService.resetMptFields();
+     }
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          if (!idle || !this.hasWallets()) return false;
+
+          const tab = this.mptTransactionViewModelService.activeTab();
+
+          // Force strong reactivity by reading ALL key signals
+          const mptId = this.mptStoreService.mptIssuanceId() ?? '';
+          const storeDestination = this.mptStoreService.destination() ?? '';
+          const selectedDestination = this.selectedDestinationAddress() ?? '';
+          const amount = this.mptStoreService.amount() ?? '';
+          const hasOutstanding = !this.mptUtilService.hasNoOutstandingMpts();
+
+          switch (tab) {
+               case 'createMpt':
+                    return this.canCreateMpt();
+
+               case 'authorizeMpt':
+               case 'unauthorizeMpt':
+                    return this.canAuthorizeMpt();
+
+               case 'sendMpt':
+               case 'clawbackMpt':
+                    return !!mptId && !!(storeDestination || selectedDestination) && !!amount.trim();
+
+               case 'lockMpt':
+               case 'unlockMpt':
+                    return !!mptId && !!(storeDestination || selectedDestination);
+
+               case 'destroyMpt':
+                    return !!mptId && !hasOutstanding;
+
+               default:
+                    return false;
+          }
+     });
+
+     getButtonTooltip(): string {
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
+          const tab = this.mptTransactionViewModelService.activeTab();
+          const mptId = this.mptStoreService.mptIssuanceId() ?? '';
+          const destination = this.mptStoreService.destination() || this.selectedDestinationAddress() || '';
+          const amount = this.mptStoreService.amount() ?? '';
+
+          if (!this.canPerformAction()) {
+               switch (tab) {
+                    case 'createMpt':
+                         return 'Please fill all required MPT fields';
+                    case 'authorizeMpt':
+                    case 'unauthorizeMpt':
+                         return 'Please select MPT and Destination';
+                    case 'sendMpt':
+                    case 'clawbackMpt':
+                         if (!mptId) return 'Please select an MPT';
+                         if (!destination) return 'Please enter a Destination';
+                         if (!amount.trim()) return 'Please enter an Amount';
+                         return 'Please fill MPT, Destination and Amount';
+                    case 'lockMpt':
+                    case 'unlockMpt':
+                         if (!mptId) return 'Please select an MPT';
+                         if (!destination) return 'Please enter a Destination';
+                         return 'Please fill MPT and Destination';
+                    case 'destroyMpt':
+                         return this.mptUtilService.hasNoOutstandingMpts() ? 'Please select MPT to destroy' : 'Cannot destroy MPT with outstanding tokens';
+                    default:
+                         return 'Cannot perform this action';
+               }
+          }
+          return '';
      }
 
      clearFields(clearAllFields: boolean) {

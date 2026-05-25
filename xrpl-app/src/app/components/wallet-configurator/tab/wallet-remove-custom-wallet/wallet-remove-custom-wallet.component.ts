@@ -22,12 +22,11 @@ import { AppConstants } from '../../../../core/app.constants';
 import { DialogService } from '../../../../services/shared/dialog/dialog.service';
 import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
-import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-wallet-remove-custom-wallet',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, FieldHelperComponent, LucideAngularModule, OverlayModule, ButtonTooltipComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, LucideAngularModule, OverlayModule, ButtonTooltipComponent, FocusBorderDirective],
      templateUrl: './wallet-remove-custom-wallet.component.html',
      styleUrl: './wallet-remove-custom-wallet.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

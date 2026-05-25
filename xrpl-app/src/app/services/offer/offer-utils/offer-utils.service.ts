@@ -424,13 +424,13 @@ export class OfferUtilsService {
      }
 
      canCreateOffer = computed(() => {
-  const weWantAmount = this.offerStoreService.weWantAmount() ?? '';
-  const weSpendAmount = this.offerStoreService.weSpendAmount() ?? '';
-  return !!weWantAmount.trim() && !!weSpendAmount.trim();
-});
+          const weWantAmount = this.offerStoreService.weWantAmount() ?? '';
+          const weSpendAmount = this.offerStoreService.weSpendAmount() ?? '';
+          return !!weWantAmount.trim() && !!weSpendAmount.trim();
+     });
 
-canCancelOffer = computed(() => {
-//   return this.offerStoreService.selectedOfferSequences?.().length > 0;
-return;
-});
+     canCancelOffer = computed(() => {
+          //   return this.offerStoreService.selectedOfferSequences?.().length > 0;
+          return;
+     });
 }

@@ -22,15 +22,15 @@ export class TicketsCreateComponent {
      public amountValidatorService = inject(AmountValidatorService);
      public utilsService = inject(UtilsService);
 
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
-     canCreateTicketChange = output<boolean>();
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
 
      // Helper Item
      readonly ticketCountHelperItems = AppConstants.TICKET_COUNT_HELPER_ITEMS;
 
      // UI State
+     canCreateTicketChange = output<boolean>();
      showTicketCountHelper = signal(false);
 
      constructor() {
@@ -46,62 +46,31 @@ export class TicketsCreateComponent {
           this.optionsErrors.set(validation.errors || []);
      }
 
-     // canCreateTicket = computed(() => {
-     //      const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
-     //      if (!countStr) return false;
-
-     //      const count = Number(countStr);
-     //      return count > 0 && count <= 250 && Number.isInteger(count);
-     // });
-
      canCreateTicket = computed(() => {
-  const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
-  if (!countStr) return false;
+          const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
+          if (!countStr) return false;
 
-  const count = Number(countStr);
-  return count > 0 && count <= 250 && Number.isInteger(count);
-});
+          const count = Number(countStr);
+          return count > 0 && count <= 250 && Number.isInteger(count);
+     });
 
+     validationErrorMessages = computed(() => {
+          const errors: string[] = [];
+          const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
 
-validationErrorMessages = computed(() => {
-  const errors: string[] = [];
-  const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
+          if (countStr) {
+               const count = Number(countStr);
+               if (Number.isNaN(count) || !Number.isInteger(count)) {
+                    errors.push('Ticket count must be a valid whole number.');
+               } else if (count <= 0) {
+                    errors.push('Ticket count must be greater than 0.');
+               } else if (count > 250) {
+                    errors.push('Maximum 250 tickets can be created at once.');
+               }
+          }
 
-  if (countStr) {
-    const count = Number(countStr);
-    if (isNaN(count) || !Number.isInteger(count)) {
-      errors.push('Ticket count must be a valid whole number.');
-    } else if (count <= 0) {
-      errors.push('Ticket count must be greater than 0.');
-    } else if (count > 250) {
-      errors.push('Maximum 250 tickets can be created at once.');
-    }
-  }
-
-  return errors;
-});
-
-     // validationErrorMessages = computed(() => {
-     //      const errors: string[] = [];
-     //      const countStr = this.xrplTxOptionsStore.ticketCountField()?.trim() ?? '';
-
-     //      // if (!countStr) {
-     //      //      errors.push('Ticket count is required.');
-     //      //      return errors;
-     //      // }
-
-     //      const count = Number(countStr);
-
-     //      if (isNaN(count) || !Number.isInteger(count)) {
-     //           errors.push('Ticket count must be a valid whole number.');
-     //      } else if (countStr !== '' && count <= 0) {
-     //           errors.push('Ticket count must be greater than 0.');
-     //      } else if (count > 250) {
-     //           errors.push('Maximum 250 tickets can be created at once.');
-     //      }
-
-     //      return errors;
-     // });
+          return errors;
+     });
 
      // Check if there are any validation errors
      hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);

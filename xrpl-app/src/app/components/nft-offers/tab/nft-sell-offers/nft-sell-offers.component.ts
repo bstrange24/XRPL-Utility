@@ -60,6 +60,7 @@ export class NftSellOffersComponent {
      // Outputs
      canSellNftOfferChange = output<boolean>();
      validationErrorsChange = output<string[]>();
+     nftSelected = output<any>();
 
      // UI State
      showNftIdHelper = signal(false);
@@ -97,10 +98,11 @@ export class NftSellOffersComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {   // called from child components
-  const id = item?.id || '';
-  this.nftCreateStoreService.setField('nftId', id);
-}
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+          this.nftCreateStoreService.setField('nftId', id);
+          this.nftSelected.emit(item); // ← Forward to parent
+     }
 
      // Clear methods
      clearNftId() {

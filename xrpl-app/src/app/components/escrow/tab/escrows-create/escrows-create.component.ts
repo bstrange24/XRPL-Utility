@@ -62,7 +62,15 @@ export class EscrowsCreateComponent {
      readonly escrowConditionHelperItems = AppConstants.ESCROW_CONDITION_HELPER_ITEMS;
      readonly escrowFulfillmentHelperItems = AppConstants.ESCROW_FULFILLMENT_HELPER_ITEMS;
 
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
+     @Input() isConditional = false;
+
      // Signals
+     // Track destination validation status from dropdown
+     isDestinationValid = signal(false);
      showEscrowCurrencyCodeHelper = signal(false);
      showEscrowAmountHelper = signal(false);
      showEscrowIssuerHelper = signal(false);
@@ -72,8 +80,6 @@ export class EscrowsCreateComponent {
      showEscrowConditionHelper = signal(false);
      showEscrowFulfillmentHelper = signal(false);
 
-     @Input() isConditional = false;
-
      // Inputs from parent
      wantsOptions = input<boolean>(true);
      canSubmit = input<boolean>(false);
@@ -81,9 +87,6 @@ export class EscrowsCreateComponent {
      selectedDestinationAddress = input<string>();
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
-
-     // Track destination validation status from dropdown
-     isDestinationValid = signal(false);
 
      // Outputs to parent
      performAction = output<void>();
@@ -95,10 +98,6 @@ export class EscrowsCreateComponent {
      canCreateEscrowChange = output<boolean>();
      canFinishEscrowChange = output<boolean>();
      canCancelEscrowChange = output<boolean>();
-
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -234,36 +233,34 @@ export class EscrowsCreateComponent {
      }
 
      canCreateEscrow = computed(() => {
-  // 1. Destination must be selected AND valid
-  const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
-  if (!destAddr || !this.isDestinationValid()) return false;
+          // 1. Destination must be selected AND valid
+          const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
+          if (!destAddr || !this.isDestinationValid()) return false;
 
-  // 2. Amount must be > 0
-  if (this.amountValidatorService.isEscrowAmountInvalid()) return false;
+          // 2. Amount must be > 0
+          if (this.amountValidatorService.isEscrowAmountInvalid()) return false;
 
-  // 3. Conditional escrow checks
-  if (this.isConditional) {
-    if (this.escrowValidatorService.hasInvalidCondition()) return false;
-    if (this.escrowValidatorService.hasInvalidFulfillment()) return false;
-    if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) return false;
-  }
+          // 3. Conditional escrow checks
+          if (this.isConditional) {
+               if (this.escrowValidatorService.hasInvalidCondition()) return false;
+               if (this.escrowValidatorService.hasInvalidFulfillment()) return false;
+               if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) return false;
+          }
 
-  // 4. Expiration validation (if enabled)
- if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && 
-      this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-    return false;
-  }
+          // 4. Expiration validation (if enabled)
+          if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+               return false;
+          }
 
-    if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && 
-      this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-    return false;
-  }
+          if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+               return false;
+          }
 
-  // 5. Options validation
-  if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+          // 5. Options validation
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
 
-  return true;
-});
+          return true;
+     });
 
      // canCreateEscrow = computed(() => {
      //      // Must have valid subject (XRP address)
@@ -292,48 +289,44 @@ export class EscrowsCreateComponent {
      // });
 
      validationErrorMessages = computed(() => {
-  const errors: string[] = [];
-  const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
+          const errors: string[] = [];
+          const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
 
-  // Only show error if user has typed something but it's invalid
-  if (destAddr && !this.isDestinationValid()) {
-    errors.push('Destination address is invalid. Please enter a valid XRP address.');
-  }
+          // Only show error if user has typed something but it's invalid
+          if (destAddr && !this.isDestinationValid()) {
+               errors.push('Destination address is invalid. Please enter a valid XRP address.');
+          }
 
-  // Amount error only if something was entered
-  if (this.escrowStoreService.amount() && 
-      this.escrowStoreService.amount()!.trim() !== '' && 
-      this.amountValidatorService.isEscrowAmountInvalid()) {
-    errors.push('Amount must be greater than 0.');
-  }
+          // Amount error only if something was entered
+          if (this.escrowStoreService.amount() && this.escrowStoreService.amount()!.trim() !== '' && this.amountValidatorService.isEscrowAmountInvalid()) {
+               errors.push('Amount must be greater than 0.');
+          }
 
-  if (this.isConditional) {
-    if (this.escrowValidatorService.hasInvalidCondition()) {
-      errors.push(this.escrowValidatorService.getConditionErrorMessage());
-    }
-    if (this.escrowValidatorService.hasInvalidFulfillment()) {
-      errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
-    }
-  }
+          if (this.isConditional) {
+               if (this.escrowValidatorService.hasInvalidCondition()) {
+                    errors.push(this.escrowValidatorService.getConditionErrorMessage());
+               }
+               if (this.escrowValidatorService.hasInvalidFulfillment()) {
+                    errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
+               }
+          }
 
-  // Finish After (only if enabled)
-  if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && 
-      this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-    errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
-  }
+          // Finish After (only if enabled)
+          if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+               errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
+          }
 
-  // Cancel After (only if enabled)
-  if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && 
-      this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-    errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
-  }
+          // Cancel After (only if enabled)
+          if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+               errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
+          }
 
-  if (this.txUiService.wantsOptions() && this.optionsHasError()) {
-    errors.push(...this.optionsErrors());
-  }
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors());
+          }
 
-  return errors;
-});
+          return errors;
+     });
 
      // validationErrorMessages = computed(() => {
      //      const errors: string[] = [];

@@ -62,6 +62,10 @@ export class ChecksCreateComponent {
      readonly checkDestinationHelperItems = AppConstants.CHECK_DESTINATION_HELPER_ITEMS;
      readonly checkCurrencyBalanceHelperItems = AppConstants.CHECK_CURRENCY_BALANCE_HELPER_ITEMS;
 
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
      // Inputs from parent
      destinationItems = input.required<any[]>();
      selectedDestinationItem = input.required<any>();
@@ -72,9 +76,6 @@ export class ChecksCreateComponent {
      selectedDestinationAddress = input<string>();
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
-
-     // Track destination validation status from dropdown
-     isDestinationValid = signal(false);
 
      // Outputs to parent
      issuerSelected = output<SelectItem | null>();
@@ -88,12 +89,9 @@ export class ChecksCreateComponent {
      toggleOptions = output<boolean>();
      canCreateCredentialChange = output<boolean>();
 
-     private isSubjectValid = signal(false);
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
-
      // UI Signals
+     // Track destination validation status from dropdown
+     isDestinationValid = signal(false);
      showCheckCurrencyCodeHelper = signal(false);
      showCheckAmountHelper = signal(false);
      showCheckIssuerHelper = signal(false);
@@ -169,87 +167,49 @@ export class ChecksCreateComponent {
           }
      }
 
-     // canCreateCheck = computed(() => {
-     //      if (!this.isDestinationValid()) return false;
-     //      if (this.amountValidatorService.isCheckAmountInvalid()) return false;
-
-     //      if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
-
-     //      if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
-     //           if (this.checkValidatorService.hasInvalidCheckExpiration()) {
-     //                return false;
-     //           }
-     //      }
-
-     //      return true;
-     // });
-
      canCreateCheck = computed(() => {
-  const destAddr = this.selectedDestinationAddress?.() ?? '';
-  
-  // 1. Destination must be filled AND valid
-  if (!destAddr || !this.isDestinationValid()) return false;
+          const destAddr = this.selectedDestinationAddress?.() ?? '';
 
-  // 2. Amount must be filled AND > 0
-  const amountStr = this.checksStoreService.amount()?.trim() ?? '';
-  if (!amountStr || this.amountValidatorService.isCheckAmountInvalid()) return false;
+          // 1. Destination must be filled AND valid
+          if (!destAddr || !this.isDestinationValid()) return false;
 
-  // 3. Expiration (if enabled)
-  if (this.txUiService.wantsOptions() && 
-      this.xrplTxOptionsStore.isExpirationEnabled() && 
-      this.checksStoreService.checkExpirationDate()) {
-    if (this.checkValidatorService.hasInvalidCheckExpiration()) {
-      return false;
-    }
-  }
+          // 2. Amount must be filled AND > 0
+          const amountStr = this.checksStoreService.amount()?.trim() ?? '';
+          if (!amountStr || this.amountValidatorService.isCheckAmountInvalid()) return false;
 
-  // 4. Options validation
-  if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+          // 3. Expiration (if enabled)
+          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
+               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
+                    return false;
+               }
+          }
 
-  return true;
-});
+          // 4. Options validation
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
 
-validationErrorMessages = computed(() => {
-  const errors: string[] = [];
-  const destAddr = this.selectedDestinationAddress?.() ?? '';
-  const amountStr = this.checksStoreService.amount()?.trim() ?? '';
+          return true;
+     });
 
-  // Only show error if user has entered something
-  if (destAddr && !this.isDestinationValid()) {
-    errors.push('Destination address is invalid.');
-  }
+     validationErrorMessages = computed(() => {
+          const errors: string[] = [];
+          const destAddr = this.selectedDestinationAddress?.() ?? '';
+          const amountStr = this.checksStoreService.amount()?.trim() ?? '';
 
-  if (amountStr && this.amountValidatorService.isCheckAmountInvalid()) {
-    errors.push('Amount must be greater than 0.');
-  }
+          // Only show error if user has entered something
+          if (destAddr && !this.isDestinationValid()) {
+               errors.push('Destination address is invalid.');
+          }
 
-  if (this.txUiService.wantsOptions() && this.optionsHasError()) {
-    errors.push(...this.optionsErrors());
-  }
+          if (amountStr && this.amountValidatorService.isCheckAmountInvalid()) {
+               errors.push('Amount must be greater than 0.');
+          }
 
-  return errors;
-});
+          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
+               errors.push(...this.optionsErrors());
+          }
 
-     // validationErrorMessages = computed(() => {
-     //      const errors: string[] = [];
-
-     //      // Destination validation
-     //      if (!this.isDestinationValid()) {
-     //           errors.push('Destination address is invalid. Please enter a valid XRP address.');
-     //      }
-
-     //      // Amount validation
-     //      if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
-     //           errors.push('Amount must be greater than 0.');
-     //      }
-
-     //      // Options errors from transaction-options-section
-     //      if (this.txUiService.wantsOptions() && this.optionsHasError()) {
-     //           errors.push(...this.optionsErrors());
-     //      }
-
-     //      return errors;
-     // });
+          return errors;
+     });
 
      hasValidationErrors = computed(() => this.validationErrorMessages().length > 0);
 

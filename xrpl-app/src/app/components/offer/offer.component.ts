@@ -117,28 +117,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           }
      });
 
-     public canPerformAction = computed(() => {
-  const idle = this.isIdle();
-  if (!idle || !this.hasWallets()) return false;
-
-  const tab = this.offerTransactionViewModelService.activeTab();
-
-  switch (tab) {
-    case 'createOffer':
-      // Use your existing validation from offerUtils or store
-      return this.offerUtilsService.canCreateOffer?.() ?? true; // adjust if you have a specific validator
-
-    case 'cancelOffer':
-      return this.offerUtilsService.canCancelOffer?.() ?? false;
-
-    case 'getOrderBook':
-      return true; // always enabled when idle + wallet
-
-    default:
-      return false;
-  }
-});
-
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
@@ -327,26 +305,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           });
      }
 
-     getButtonTooltip(): string {
-  if (!this.isIdle() || !this.hasWallets()) {
-    return 'Please wait or select a wallet';
-  }
-
-  const tab = this.offerTransactionViewModelService.activeTab();
-
-  if (!this.canPerformAction()) {
-    if (tab === 'createOffer') {
-      return 'Please fill both sides (Taker Gets + Taker Pays)';
-    }
-    if (tab === 'cancelOffer') {
-      return 'Please select at least one offer to cancel';
-    }
-    return 'Cannot perform this action';
-  }
-
-  return '';
-}
-
      onWeWantCurrencySelected(item: SelectItem | null): void {
           this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
      }
@@ -377,6 +335,48 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
      override toggleInfoPanel(): void {
           this.infoPanelExpanded.update(v => !v);
+     }
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          if (!idle || !this.hasWallets()) return false;
+
+          const tab = this.offerTransactionViewModelService.activeTab();
+
+          switch (tab) {
+               case 'createOffer':
+                    // Use your existing validation from offerUtils or store
+                    return this.offerUtilsService.canCreateOffer?.() ?? true; // adjust if you have a specific validator
+
+               case 'cancelOffer':
+                    return this.offerUtilsService.canCancelOffer?.() ?? false;
+
+               case 'getOrderBook':
+                    return true; // always enabled when idle + wallet
+
+               default:
+                    return false;
+          }
+     });
+
+     getButtonTooltip(): string {
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
+          const tab = this.offerTransactionViewModelService.activeTab();
+
+          if (!this.canPerformAction()) {
+               if (tab === 'createOffer') {
+                    return 'Please fill both sides (Taker Gets + Taker Pays)';
+               }
+               if (tab === 'cancelOffer') {
+                    return 'Please select at least one offer to cancel';
+               }
+               return 'Cannot perform this action';
+          }
+
+          return '';
      }
 
      protected clearInputFields(): void {

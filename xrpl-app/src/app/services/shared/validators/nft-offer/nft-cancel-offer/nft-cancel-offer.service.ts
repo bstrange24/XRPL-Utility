@@ -12,16 +12,10 @@ export class NftCancelOfferService {
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
 
      canCancelOffer = computed(() => {
-  const nftOfferId = this.nftCreateStoreService.nftOfferId()?.trim() ?? '';
-  if (!nftOfferId) return false;
+          const nftOfferId = this.nftCreateStoreService.nftOfferId()?.trim() ?? '';
+          if (!nftOfferId) return false;
 
-  if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
-  return true;
-});
-
-     // Overall Form Validation
-     // canCancelOffer = computed(() => {
-     //      if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
-     //      return true;
-     // });
+          if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
+          return true;
+     });
 }

@@ -88,25 +88,6 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           }
      });
 
-     public canPerformAction = computed(() => {
-  const idle = this.isIdle();
-  if (!idle || !this.hasWallets()) return false;
-
-  const tab = this.ticketsViewModelService.activeTab();
-
-  switch (tab) {
-    case 'createTicket':
-      return this.canCreateTicket();
-
-    case 'deleteTicket':
-      return this.xrplTxOptionsStore.walletTicketCount() > 0 &&
-             this.xrplTxOptionsStore.selectedTicketSequences().length > 0;
-
-    default:
-      return false;
-  }
-});
-
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
           await this.getTickets(false);
@@ -274,31 +255,49 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
           });
      }
 
-     getButtonTooltip(): string {
-  if (!this.isIdle() || !this.hasWallets()) {
-    return 'Please wait or select a wallet';
-  }
-
-  const tab = this.ticketsViewModelService.activeTab();
-
-  if (!this.canPerformAction()) {
-    if (tab === 'createTicket') {
-      return 'Please enter a valid number of tickets (1-250)';
-    }
-    if (tab === 'deleteTicket') {
-      if (this.xrplTxOptionsStore.walletTicketCount() <= 0) {
-        return 'This wallet has no tickets to delete';
-      }
-      return 'Please select at least one ticket to delete';
-    }
-    return 'Cannot perform this action';
-  }
-
-  return '';
-}
-
      onCanCreateTicketChange(isValid: boolean) {
           this.canCreateTicket.set(isValid);
+     }
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          if (!idle || !this.hasWallets()) return false;
+
+          const tab = this.ticketsViewModelService.activeTab();
+
+          switch (tab) {
+               case 'createTicket':
+                    return this.canCreateTicket();
+
+               case 'deleteTicket':
+                    return this.xrplTxOptionsStore.walletTicketCount() > 0 && this.xrplTxOptionsStore.selectedTicketSequences().length > 0;
+
+               default:
+                    return false;
+          }
+     });
+
+     getButtonTooltip(): string {
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
+          const tab = this.ticketsViewModelService.activeTab();
+
+          if (!this.canPerformAction()) {
+               if (tab === 'createTicket') {
+                    return 'Please enter a valid number of tickets (1-250)';
+               }
+               if (tab === 'deleteTicket') {
+                    if (this.xrplTxOptionsStore.walletTicketCount() <= 0) {
+                         return 'This wallet has no tickets to delete';
+                    }
+                    return 'Please select at least one ticket to delete';
+               }
+               return 'Cannot perform this action';
+          }
+
+          return '';
      }
 
      protected clearInputFields(): void {

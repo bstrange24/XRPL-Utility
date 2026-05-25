@@ -54,6 +54,16 @@ export class NftCancelOffersComponent {
      showOfferIndexHelper = signal(false);
      isOfferIndexFocused = signal(false);
 
+     nftSelected = output<any>();
+
+     constructor() {
+          // Emit validation status changes
+          effect(() => {
+               this.canCancelNftOfferChange.emit(this.nftCancelService.canCancelOffer());
+               this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
+          });
+     }
+
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];
      @Input() selectedDestinationItem: SelectItem | null = null;
@@ -65,14 +75,6 @@ export class NftCancelOffersComponent {
      @Output() expirationToggled = new EventEmitter<boolean>();
      @Output() destinationSearchQueryChange = new EventEmitter<string>();
      @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
-
-     constructor() {
-          // Emit validation status changes
-          effect(() => {
-               this.canCancelNftOfferChange.emit(this.nftCancelService.canCancelOffer());
-               this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
-          });
-     }
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;
@@ -92,10 +94,15 @@ export class NftCancelOffersComponent {
           return this.nftOffersTransactionViewModelService.offerItems().find(i => i.id === id) || null;
      });
 
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+
+          this.nftCreateStoreService.setField('nftId', id);
+     }
+
      onOfferSelected(item: SelectItem | null) {
-          if (item) {
-               this.nftCreateStoreService.setField('nftOfferId', item?.id || '');
-          }
+          const id = item?.id || '';
+          this.nftCreateStoreService.setField('nftOfferId', id);
      }
 
      // Clear methods

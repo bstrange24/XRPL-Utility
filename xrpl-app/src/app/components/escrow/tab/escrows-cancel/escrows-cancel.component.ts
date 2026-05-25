@@ -46,8 +46,8 @@ export class EscrowsCancelComponent {
      }
 
      canCancelEscrow = computed(() => {
-  return !!this.escrowStoreService.escrowSequenceNumber();
-});
+          return !!this.escrowStoreService.escrowSequenceNumber();
+     });
 
      // Uses allEscrowsRaw filtered to Sender === currentWallet (cancel = creator)
      public escrowItems() {

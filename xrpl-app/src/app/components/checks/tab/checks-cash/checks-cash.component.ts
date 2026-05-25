@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
@@ -15,6 +15,8 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
 import { AppConstants } from '../../../../core/app.constants';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
+import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 @Component({
      selector: 'app-checks-cash',
@@ -32,6 +34,8 @@ export class ChecksCashComponent {
      readonly checkStoreService = inject(ChecksStoreService);
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly checksStoreService = inject(ChecksStoreService);
+     private readonly currencyStoreService = inject(CurrencyStoreService);
+     private readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      // Input
      showEnableTrustline = input<boolean>(false);
@@ -58,6 +62,37 @@ export class ChecksCashComponent {
      showCheckIndexHelper = signal(false);
      showCashAmountHelper = signal(false);
      showDeliverMinHelper = signal(false);
+
+     // Add this method to the ChecksCashComponent class
+     onCheckSelected(item: SelectItem | null) {
+          if (!item?.id) {
+               // Clear the check details
+               this.checksStoreService.setField('checkIdField', '');
+               this.checksStoreService.setField('checkCreator', '');
+               this.checksStoreService.setField('amount', '');
+               this.currencyStoreService?.setField('currencyCode', '');
+               this.currencyStoreService?.setField('currencyIssuer', '');
+               return;
+          }
+
+          const id = item?.id || '';
+          this.checksStoreService.setField('checkIdField', id);
+
+          // Parse the display string to get amount and currency
+          const parts = item.display?.split(' ') || [];
+          this.checksStoreService.setField('checkCreator', parts[3] || '');
+
+          if (this.currencyStoreService) {
+               this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(parts[1]) || '');
+               this.currencyStoreService.setField('currencyIssuer', item.issuer || '');
+          }
+
+          if (parts[1] === AppConstants.XRP_CURRENCY) {
+               this.xrplTxOptionsStore?.setField('showEnableTrustline', false);
+          } else {
+               this.xrplTxOptionsStore?.setField('showEnableTrustline', true);
+          }
+     }
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;

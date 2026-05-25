@@ -18,7 +18,7 @@
                     </button>
                </div>
 
-               <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
                <app-field-helper title="Select Check to Cash" [items]="checkCashSelectorHelperItems" [show]="showCheckCashSelectorHelper" />
           </div>
      </div>

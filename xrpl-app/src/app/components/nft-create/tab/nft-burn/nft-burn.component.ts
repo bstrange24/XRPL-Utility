@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -53,9 +53,7 @@ export class NftBurnComponent {
      // Outputs
      canBurnNftChange = output<boolean>();
      validationErrorsChange = output<string[]>();
-
-     // Signals
-     showNftHelper = signal(false);
+     nftSelected = output<any>();
 
      constructor() {
           // Emit validation status changes
@@ -64,6 +62,9 @@ export class NftBurnComponent {
                this.validationErrorsChange.emit(this.nftValidatorService.getAllValidationErrors());
           });
      }
+
+     // Signals
+     showNftHelper = signal(false);
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];
@@ -87,10 +88,20 @@ export class NftBurnComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {   // called from child components
-  const id = item?.id || '';
-  this.nftCreateStoreService.setField('nftId', id);
-}
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+
+          this.nftCreateStoreService.setField('nftId', id);
+
+          if (id) {
+               this.nftUtilService.onNftSelectedInUi(item); // reuse the util
+          } else {
+               this.nftCreateStoreService.setField('initialURI', '');
+               this.nftCreateStoreService.setField('nftOwnerAddress', '');
+          }
+
+          this.nftSelected.emit(item); // forward to parent if needed
+     }
 
      toggleNftHelper() {
           this.showNftHelper.update(v => !v);

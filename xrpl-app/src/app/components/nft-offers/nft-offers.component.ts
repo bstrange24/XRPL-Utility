@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, computed, ChangeDetectionStrategy, signal } from '@angular/core';
+import { OnInit, Component, inject, computed, ChangeDetectionStrategy, signal, output, ChangeDetectorRef, effect, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -68,6 +68,8 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly nftUtilService = inject(NftUtilService);
      private readonly rightPanelService = inject(RightPanelService);
+     private readonly cdr = inject(ChangeDetectorRef);
+
      public readonly tabs = NFT_OFFERS_TABS;
      public readonly tabMeta = NFT_OFFERS_TAB_META;
      public canBuyNft = signal(false);
@@ -75,11 +77,18 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      public canSellNftOffer = signal(false);
      public canBuyNftOffer = signal(false);
      public canCancelNftOffer = signal(false);
+     public resetTrigger = input<number>(0);
+     nftSelected = output<any>();
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+               // this.clearSearch();
+          });
      }
 
      activeTabForRequirements = computed(() => this.nftOffersTransactionViewModelService.activeTab());
@@ -99,38 +108,16 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.setRightPanel();
      }
 
-     public canPerformAction = computed(() => {
-  const idle = this.isIdle();
-  if (!idle || !this.hasWallets()) return false;
+     ngOnDestroy(): void {
+          this.rightPanelService.clearPanel();
+     }
 
-  const tab = this.nftOffersTransactionViewModelService.activeTab();
-
-  // Force reactivity by reading key signals
-  const nftId = this.nftCreateStoreService.nftId() ?? '';
-  const nftOfferId = this.nftCreateStoreService.nftOfferId() ?? '';
-  const amount = this.nftCreateStoreService.amount() ?? '';
-  const destination = this.nftCreateStoreService.destination() ?? '';
-
-  switch (tab) {
-    case 'buyNft':
-      return this.canBuyNft();
-
-    case 'sellNft':
-      return this.canSellNft();
-
-    case 'buyNftOffer':
-      return this.canBuyNftOffer();
-
-    case 'sellNftOffer':
-      return this.canSellNftOffer();
-
-    case 'cancelNftOffer':
-      return this.canCancelNftOffer() && !!nftOfferId;
-
-    default:
-      return false;
-  }
-});
+     private readonly updateRightPanelEffect = effect(() => {
+          const wallet = this.currentWallet();
+          if (wallet?.address) {
+               this.setRightPanel();
+          }
+     });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
@@ -173,11 +160,26 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           return this.nftOffersTransactionViewModelService.offerItems().find(i => i.id === id) || null;
      });
 
-     onNftSelected(item: any | null) {
-          if (item) {
-               this.nftCreateStoreService.setField('nftId', item?.nftId || '');
-               this.nftCreateStoreService.setField('nftOfferId', item?.index || '');
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+          this.nftCreateStoreService.setField('nftId', id);
+          this.nftSelected.emit(item); // ← Forward to parent
+     }
+
+     onNftOfferSelectedFromSummary(data: any) {
+          // Handle multiple possible shapes
+          const nftId = data?.nftId || data?.NFTokenID || data?.id;
+          const offerId = data?.index || data?.OfferIndex || data?.nftOfferIndex || data?.id;
+
+          if (nftId) {
+               this.nftCreateStoreService.setField('nftId', nftId.toString().trim());
           }
+          if (offerId) {
+               this.nftCreateStoreService.setField('nftOfferId', offerId.toString().trim());
+          }
+
+          this.cdr.detectChanges();
+          this.cdr.markForCheck();
      }
 
      onSelectNftOfferIndex(nftOfferIndex: string | null) {
@@ -187,11 +189,8 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
-
           this.currentWallet.set(wallet);
-
           if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
           this.trustlineCurrencyService.refreshCurrentBalance();
           this.populateDefaultDateTime();
      }
@@ -466,36 +465,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           });
      }
 
-     getButtonTooltip(): string {
-  if (!this.isIdle() || !this.hasWallets()) {
-    return 'Please wait or select a wallet';
-  }
-
-  const tab = this.nftOffersTransactionViewModelService.activeTab();
-  const nftId = this.nftCreateStoreService.nftId() ?? '';
-  const nftOfferId = this.nftCreateStoreService.nftOfferId() ?? '';
-  const amount = this.nftCreateStoreService.amount() ?? '';
-
-  if (!this.canPerformAction()) {
-    switch (tab) {
-      case 'buyNft':
-      case 'sellNft':
-        return 'Please fill all required fields (NFT ID, Amount, etc.)';
-      case 'buyNftOffer':
-      case 'sellNftOffer':
-        if (!nftId) return 'Please select an NFT';
-        if (!amount.trim()) return 'Please enter an Amount';
-        return 'Please fill NFT and Amount';
-      case 'cancelNftOffer':
-        return !nftOfferId ? 'Please select an offer to cancel' : 'Cannot cancel offer';
-      default:
-        return 'Cannot perform this action';
-    }
-  }
-
-  return '';
-}
-
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
           this.nftCreateStoreService.setField('nftIdSearchQuery', query);
@@ -509,6 +478,69 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      populateDefaultDateTime() {
           this.nftCreateStoreService.setField('expiration', '');
+     }
+
+     public canPerformAction = computed(() => {
+          const idle = this.isIdle();
+          if (!idle || !this.hasWallets()) return false;
+
+          const tab = this.nftOffersTransactionViewModelService.activeTab();
+
+          // Force reactivity by reading key signals
+          const nftId = this.nftCreateStoreService.nftId() ?? '';
+          const nftOfferId = this.nftCreateStoreService.nftOfferId() ?? '';
+          const amount = this.nftCreateStoreService.amount() ?? '';
+          const destination = this.nftCreateStoreService.destination() ?? '';
+
+          switch (tab) {
+               case 'buyNft':
+                    return this.canBuyNft();
+
+               case 'sellNft':
+                    return this.canSellNft();
+
+               case 'buyNftOffer':
+                    return this.canBuyNftOffer();
+
+               case 'sellNftOffer':
+                    return this.canSellNftOffer();
+
+               case 'cancelNftOffer':
+                    return this.canCancelNftOffer() && !!nftOfferId;
+
+               default:
+                    return false;
+          }
+     });
+
+     getButtonTooltip(): string {
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
+          const tab = this.nftOffersTransactionViewModelService.activeTab();
+          const nftId = this.nftCreateStoreService.nftId() ?? '';
+          const nftOfferId = this.nftCreateStoreService.nftOfferId() ?? '';
+          const amount = this.nftCreateStoreService.amount() ?? '';
+
+          if (!this.canPerformAction()) {
+               switch (tab) {
+                    case 'buyNft':
+                    case 'sellNft':
+                         return 'Please fill all required fields (NFT ID, Amount, etc.)';
+                    case 'buyNftOffer':
+                    case 'sellNftOffer':
+                         if (!nftId) return 'Please select an NFT';
+                         if (!amount.trim()) return 'Please enter an Amount';
+                         return 'Please fill NFT and Amount';
+                    case 'cancelNftOffer':
+                         return !nftOfferId ? 'Please select an offer to cancel' : 'Cannot cancel offer';
+                    default:
+                         return 'Cannot perform this action';
+               }
+          }
+
+          return '';
      }
 
      protected clearInputFields(): void {

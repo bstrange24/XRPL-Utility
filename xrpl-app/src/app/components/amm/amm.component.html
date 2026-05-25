@@ -13,9 +13,7 @@
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <div class="mt-4">
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-          </div>
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->
@@ -50,7 +48,7 @@
                </div>
 
                <!-- Execution Time -->
-               <div class="mt-3 text-sm text-gray-500">
+               <div class="execution-time">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 

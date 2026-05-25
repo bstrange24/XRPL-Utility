@@ -48,21 +48,21 @@ export class EscrowsFinishComponent {
      @Input() isConditional = false;
 
      constructor() {
-  effect(() => {
-    this.canFinishEscrowChange.emit(this.canFinishEscrow());   // if you have this output
-  });
-}
+          effect(() => {
+               this.canFinishEscrowChange.emit(this.canFinishEscrow());
+          });
+     }
 
      public get activeTab() {
           return this.viewModel.activeTab();
      }
 
      canFinishEscrow = computed(() => {
-  const hasSelection = !!this.escrowStoreService.escrowSequenceNumber();
-  const notExpired = !this.viewModel.selectedEscrowIsExpired();
+          const hasSelection = !!this.escrowStoreService.escrowSequenceNumber();
+          const notExpired = !this.viewModel.selectedEscrowIsExpired();
 
-  return hasSelection && notExpired;
-});
+          return hasSelection && notExpired;
+     });
 
      // Uses allEscrowsRaw filtered to Destination === currentWallet (finish = receiver)
      public escrowItems() {

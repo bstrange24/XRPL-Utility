@@ -1,11 +1,12 @@
 <div class="space-y-6">
+     <!-- Selection Card -->
      <div class="card-base">
           <h4 class="section-heading">
                <lucide-icon name="file-check" class="section-heading-icon-green"></lucide-icon>
                Check Details
           </h4>
 
-          <!-- Selection Dropdown -->
+          <!-- Select Check -->
           <div>
                <div class="field-label">
                     <label for="selectCheckToCancel" class="label-primary">Select Check to Cancel <span class="text-red-500">*</span></label>
@@ -18,17 +19,19 @@
                     </button>
                </div>
 
-               <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="checkSelected.emit($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               <div class="relative">
+                    <app-select-search-dropdown [items]="viewModel.checkItems()" [value]="viewModel.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               </div>
                <app-field-helper title="Select Check" [items]="checkCancelSelectorHelperItems" [show]="showCheckCancelSelectorHelper" />
           </div>
      </div>
 
      <!-- Check Details -->
-     @if (checksTransactionViewModelService.selectedFullCheck()) {
+     @if (viewModel.selectedFullCheck()) {
      <div class="card-base">
           <div class="space-y-6">
-               <!-- Check Index -->
                <div class="side-by-side-fields">
+                    <!-- Check Index -->
                     <div>
                          <div class="field-label">
                               <label for="checkID" class="label-primary">Check Index (ID)</label>
@@ -42,7 +45,7 @@
                          </div>
 
                          <div class="relative">
-                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIndex()" />
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedCheckIndex()" />
                          </div>
                          <app-field-helper title="Check ID" [items]="checkIdHelperItems" [show]="showCheckIdHelper" />
                     </div>
@@ -61,7 +64,7 @@
                          </div>
 
                          <div class="relative">
-                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckAmount()" />
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedCheckAmount()" />
                          </div>
                          <app-field-helper title="Check Amount" [items]="checkAmountHelperItems" [show]="showCheckAmountHelper" />
                     </div>
@@ -83,13 +86,13 @@
                          </div>
 
                          <div class="relative">
-                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckDestination()" />
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedCheckDestination()" />
                          </div>
                          <app-field-helper title="Destination" [items]="checkDestinationHelperItems" [show]="showCheckDestinationHelper" />
                     </div>
 
                     <!-- Issuer (only for IOU) -->
-                    @if (checksTransactionViewModelService.isIOUCheck()) {
+                    @if (viewModel.isIOUCheck()) {
                     <div>
                          <div class="field-label">
                               <label for="checkIssuer" class="label-primary">Issuer</label>
@@ -103,7 +106,7 @@
                          </div>
 
                          <div class="relative">
-                              <input type="text" readonly class="input-disabled" [value]="checksTransactionViewModelService.selectedCheckIssuer()" />
+                              <input type="text" readonly class="input-disabled" [value]="viewModel.selectedCheckIssuer()" />
                          </div>
                          <app-field-helper title="Issuer" [items]="checkIssuerHelperItems" [show]="showCheckIssuerHelper" />
                     </div>
@@ -115,7 +118,7 @@
 </div>
 
 <!-- Show warning for expired checks -->
-@if (checksTransactionViewModelService.selectedCheckIsExpired()) {
+@if (viewModel.selectedCheckIsExpired()) {
 <div class="alert-error">
      <ng-icon name="heroExclamationTriangle" size="16" class="alert-icon" />
      <div class="alert-content">This check has expired and can only be canceled.</div>

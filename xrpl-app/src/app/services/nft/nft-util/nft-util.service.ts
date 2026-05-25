@@ -141,13 +141,15 @@ export class NftUtilService {
 
      selectedNftItem = computed(() => {
           const id = this.nftCreateStoreService.nftId();
+
           if (!id) return null;
-          return this.nftItems().find((i: { id: string }) => i.id === id) || null;
+          const found = this.nftItems().find((i: any) => i.id === id);
+          return found || null;
      });
 
      // NFT Dropdown Items
      nftItems = computed(() => {
-          return this.nftCreateStoreService.existingNfts().map((nft: { NFTokenID: string; URI: any }) => ({
+          const items = this.nftCreateStoreService.existingNfts().map((nft: { NFTokenID: string; URI: any }) => ({
                id: nft.NFTokenID,
                display: nft.URI ? `NFT • ${nft.URI}` : 'NFT • No URI',
                secondary: nft.NFTokenID.slice(0, 12) + '...' + nft.NFTokenID.slice(-10),
@@ -155,6 +157,7 @@ export class NftUtilService {
                isCurrentCode: false,
                isCurrentToken: false,
           }));
+          return items;
      });
 
      decodeNftFlagsForUi(flags: number): string {
@@ -624,5 +627,20 @@ export class NftUtilService {
           const ids = idsString.split(',').map(id => id.trim());
           const validIds = ids.filter(id => /^[0-9A-Fa-f]{64}$/.test(id));
           return validIds;
+     }
+
+     onNftSelectedInUi(nft: any) {
+          if (!nft?.NFTokenID) return;
+
+          const id = nft.NFTokenID.trim();
+          this.nftCreateStoreService.setField('nftId', id);
+
+          // Auto-fill related fields if available
+          if (nft.URI) {
+               this.nftCreateStoreService.setField('initialURI', nft.URI);
+          }
+          if (nft.Issuer || nft.Owner) {
+               this.nftCreateStoreService.setField('nftOwnerAddress', nft.Issuer || nft.Owner);
+          }
      }
 }

@@ -136,7 +136,6 @@ export const MptStoreService = signalStore(
 
                if (Object.keys(authorizedHolders).length > 0) {
                     patchState(store, { authorizedHolders });
-                    console.log(`📦 Loaded ${Object.keys(authorizedHolders).length} MPT authorization records from localStorage`);
                }
           };
 

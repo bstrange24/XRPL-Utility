@@ -63,6 +63,8 @@ export class NftSellComponent {
      showNftIdHelper = signal(false);
      isNftIdFocused = signal(false);
 
+     nftSelected = output<any>();
+
      // Destination dropdown – passed from parent (keeps logic in the main page)
      @Input() destinationItems: SelectItem[] = [];
      @Input() selectedDestinationItem: SelectItem | null = null;
@@ -95,10 +97,16 @@ export class NftSellComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {   // called from child components
-  const id = item?.id || '';
-  this.nftCreateStoreService.setField('nftId', id);
-}
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+          this.nftCreateStoreService.setField('nftId', id);
+          this.nftSelected.emit(item); // ← Forward to parent
+     }
+
+     // onNftSelected(item: SelectItem | null) {
+     //      const id = item?.id || '';
+     //      this.nftCreateStoreService.setField('nftId', id);
+     // }
 
      // Clear methods
      clearNftId() {

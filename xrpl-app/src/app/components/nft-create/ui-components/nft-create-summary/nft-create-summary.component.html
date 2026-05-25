@@ -46,7 +46,7 @@
           @if (sortedNfts().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (nft of sortedNfts(); track nft.id) {
-               <app-summary-item [selected]="nft.id === nftUtilService.selectedNftItem()" [copyValue]="nft.id" copyTooltip="Copy NFT ID" (onClick)="onNftClick(nft)" (onCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')">
+               <app-summary-item [selected]="(tab() === 'updateNFTMetadata' || tab() === 'burnNft') && nft.id === nftUtilService.selectedNftItem()?.id" [copyValue]="nft.id" copyTooltip="Copy NFT ID" (onClick)="onNftClick(nft)" (onCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')">
                     <div item-content>
                          <div class="summary-item-content">
                               <!-- Status Icon based on URI presence -->

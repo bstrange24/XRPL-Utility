@@ -73,14 +73,6 @@ export class MptAuthorizeUnauthorizeComponent {
           effect(() => {
                const mpt = this.selectedMpt();
                const details = this.mptAuthorizeValidator.mptDetails();
-               console.log('[AUTH DEBUG]', {
-                    issuanceId: this.mptIssuanceId,
-                    hasDetails: !!details,
-                    flags: details?.Flags,
-                    requiresAuth: this.mptAuthorizeValidator.requiresAuth(),
-                    mode: this.mptAuthorizeValidator.authorizationMode(),
-                    isCurrentIssuer: this.mptAuthorizeValidator.isCurrentUserIssuer(),
-               });
           });
      }
 

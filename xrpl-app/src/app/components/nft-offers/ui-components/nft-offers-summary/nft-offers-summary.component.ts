@@ -18,6 +18,7 @@ import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shar
 import { ExpirationFilterInputComponent } from '../../../shared/expiration-filter-input/expiration-filter-input.component';
 import { NftOfferActionTypes } from '../../constants/nft-offers.types';
 import { AppConstants } from '../../../../core/app.constants';
+import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 
 const NFT_OFFERS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'active NFT offer',
@@ -49,6 +50,7 @@ export class NftOffersSummaryComponent {
      public readonly xrplDateService = inject(XrplDateService);
      public readonly utilsService = inject(UtilsService);
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
+     public readonly nftCreateStoreService = inject(CreateNftStoreService);
 
      constructor() {
           // Auto-clear search when parent tells us to reset
@@ -325,9 +327,16 @@ export class NftOffersSummaryComponent {
      }
 
      onNftClick(offer: any) {
-          const currentTab = this.nftOffersTransactionViewModelService.activeTab();
-          if (currentTab === 'sellNft') return;
-          this.nftSelected.emit(offer);
+          const nftId = offer.nftId || offer.NFTokenID;
+          const offerId = offer.index || offer.OfferIndex || offer.id;
+
+          if (nftId) {
+               this.nftCreateStoreService.setField('nftId', nftId.trim());
+          }
+          if (offerId) {
+               this.nftCreateStoreService.setField('nftOfferId', offerId.trim());
+          }
+
           this.toggleInfoPanel.emit();
      }
 
@@ -342,4 +351,11 @@ export class NftOffersSummaryComponent {
           }
           return `${amount}`;
      }
+
+     isHighlightEnabled = computed(() => {
+          const t = this.nftOffersTransactionViewModelService.activeTab();
+          return t === 'cancelNftOffer' || t === 'buyNftOffer' || t === 'sellNftOffer';
+     });
+
+     selectedOfferIndex = computed(() => this.nftCreateStoreService.nftOfferId() || '');
 }

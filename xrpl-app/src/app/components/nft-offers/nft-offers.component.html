@@ -28,10 +28,11 @@
                     (destinationSearchQueryChange)="handleSearchQueryChange($event)"
                     (destinationValueChange)="handleDestinationChange($event)"
                     (canSellNftChange)="onCanSellNftChange($event)"
+                    (nftSelected)="onNftOfferSelectedFromSummary($event)"
                >
                </app-nft-sell>
                } @if (tab === 'buyNft') {
-               <app-nft-buy (canBuyNftChange)="onCanBuyNftChange($event)"></app-nft-buy>
+               <app-nft-buy (canBuyNftChange)="onCanBuyNftChange($event)" (nftSelected)="onNftOfferSelectedFromSummary($event)"></app-nft-buy>
                } @if (tab === 'buyNftOffer') {
                <app-nft-buy-offers
                     [destinationItems]="destinationItems()"
@@ -44,6 +45,7 @@
                     (destinationSearchQueryChange)="handleSearchQueryChange($event)"
                     (destinationValueChange)="handleDestinationChange($event)"
                     (canBuyNftOfferChange)="onCanBuyNftOfferChange($event)"
+                    (nftSelected)="onNftOfferSelectedFromSummary($event)"
                >
                </app-nft-buy-offers>
                } @if (tab === 'sellNftOffer') {
@@ -58,6 +60,7 @@
                     (destinationSearchQueryChange)="handleSearchQueryChange($event)"
                     (destinationValueChange)="handleDestinationChange($event)"
                     (canSellNftOfferChange)="onCanSellNftOfferChange($event)"
+                    (nftSelected)="onNftOfferSelectedFromSummary($event)"
                >
                </app-nft-sell-offers>
                } @if (tab === 'cancelNftOffer') {
@@ -72,8 +75,23 @@
                     (destinationSearchQueryChange)="handleSearchQueryChange($event)"
                     (destinationValueChange)="handleDestinationChange($event)"
                     (canCancelNftOfferChange)="onCanCancelNftOfferChange($event)"
+                    (nftSelected)="onNftOfferSelectedFromSummary($event)"
                >
                </app-nft-cancel-offers>
+               <!-- <app-nft-cancel-offers
+                    [destinationItems]="destinationItems()"
+                    [selectedDestinationItem]="selectedDestinationItem()"
+                    [destinationSearchQuery]="destinationSearchQuery()"
+                    (currencySelected)="onCurrencySelected($event)"
+                    (issuerSelected)="onIssuerSelected($event)"
+                    (optionsToggled)="toggleOptions($event)"
+                    (expirationToggled)="toggleExpiration($event)"
+                    (destinationSearchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationValueChange)="handleDestinationChange($event)"
+                    (canCancelNftOfferChange)="onCanCancelNftOfferChange($event)"
+                    (nftSelected)="onNftOfferSelectedFromSummary($event)"
+               >
+               </app-nft-cancel-offers> -->
                }
 
                <!-- Transaction Options -->
@@ -82,105 +100,29 @@
                </div>
 
                <!-- Action Buttons -->
-<!-- Action Buttons -->
-<div class="main-button-section mt-6">
-     <app-button-tooltip [tooltipText]="getButtonTooltip()">
+               <div class="main-button-section mt-6">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'buyNft') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
+                         } @else if (tab === 'sellNft') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellButtonLabel() }}</button>
+                         } @else if (tab === 'buyNftOffer') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
+                         } @else if (tab === 'sellNftOffer') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
+                         } @else if (tab === 'cancelNftOffer') {
+                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
 
-          @if (tab === 'buyNft') {
-          <button
-               type="button"
-               class="btn-primary whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftBuyButtonLabel() }}
-          </button>
-          } @else if (tab === 'sellNft') {
-          <button
-               type="button"
-               class="btn-primary whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftSellButtonLabel() }}
-          </button>
-          } @else if (tab === 'buyNftOffer') {
-          <button
-               type="button"
-               class="btn-primary whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftBuyOfferButtonLabel() }}
-          </button>
-          } @else if (tab === 'sellNftOffer') {
-          <button
-               type="button"
-               class="btn-primary whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftSellOfferButtonLabel() }}
-          </button>
-          } @else if (tab === 'cancelNftOffer') {
-          <button
-               type="button"
-               class="btn-red whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftCancelOfferButtonLabel() }}
-          </button>
-          }
-
-     </app-button-tooltip>
-
-     <!-- Clear Fields -->
-     <div class="right-buttons">
-          <button 
-               type="button" 
-               (click)="clearInputFields()" 
-               [disabled]="!isIdle() || !hasWallets()" 
-               class="btn-secondary whitespace-nowrap">
-               Clear Fields
-          </button>
-     </div>
-</div>
-
-               <!-- Action Buttons -->
-               <!-- <div class="main-button-section mt-6">
-                    @if (tab === 'buyNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canBuyNft()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
-                    } @else if (tab === 'sellNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSellNft()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftSellButtonLabel() }}</button>
-                    } @else if (tab === 'buyNftOffer') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canBuyNftOffer()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
-                    } @else if (tab === 'sellNftOffer') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canSellNftOffer()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
-                    } @else if (tab === 'cancelNftOffer') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCancelNftOffer()" class="btn-red whitespace-nowrap">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
-                    }
-
-                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-               </div> -->
+                    <!-- Clear Fields -->
+                    <div class="right-buttons">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                    </div>
+               </div>
 
                <!-- Execution Time -->
-               <div class="mt-3 text-sm text-gray-500">
+               <div class="execution-time">
                     <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
                </div>
 

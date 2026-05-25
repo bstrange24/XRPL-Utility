@@ -54,7 +54,7 @@
           @if (sortedOffers().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (offer of sortedOffers(); track offer.index) {
-               <app-summary-item [selected]="offer.index === nftUtilService.selectedNftItem()" [isExpired]="offer.isExpired" [copyValue]="offer.index" [copyTooltip]="'Copy Offer ID'" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" [secondaryCopyValue]="offer.nftId" [secondaryCopyTooltip]="'Copy NFT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')" (onClick)="onNftClick(offer)">
+               <app-summary-item [selected]="isHighlightEnabled() && offer.index === selectedOfferIndex()" [isExpired]="offer.isExpired" [copyValue]="offer.index" [copyTooltip]="'Copy Offer ID'" (onCopyClick)="copyUtilService.copyAndToast($event, 'Offer ID')" [secondaryCopyValue]="offer.nftId" [secondaryCopyTooltip]="'Copy NFT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'NFT ID')" (onClick)="onNftClick(offer)">
                     <div item-content>
                          <div class="summary-item-content">
                               <!-- Status Icon -->

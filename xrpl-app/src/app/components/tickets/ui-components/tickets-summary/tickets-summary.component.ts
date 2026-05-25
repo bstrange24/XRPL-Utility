@@ -88,7 +88,6 @@ export class TicketsSummaryComponent {
      // Filtered info based on search query
      filteredInfo = computed(() => {
           const info = this.infoData();
-          console.log('info: ', info);
           const query = this.searchQuery().trim().toLowerCase();
 
           if (!info) return null;

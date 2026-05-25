@@ -13,6 +13,7 @@ import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/
 import { FormsModule } from '@angular/forms';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { NftCreateActionTypes } from '../../constants/nft-create.types';
+import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 
 const NFT_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'NFT',
@@ -83,6 +84,24 @@ export class NftCreateSummaryComponent {
      ];
 
      explorerUrl = this.txUiService.explorerUrl;
+
+     selectNft(nft: any) {
+          const item: SelectItem = {
+               id: nft.NFTokenID || nft.id,
+               display: nft.URI || nft.uri ? `NFT • ${nft.URI || nft.uri}` : 'NFT',
+               secondary: (nft.NFTokenID || nft.id).slice(0, 12) + '...' + (nft.NFTokenID || nft.id).slice(-10),
+          };
+          this.nftSelected.emit(item); // or emit normalizedNft if you prefer
+     }
+
+     // selectNft(nft: any) {
+     //      const item: SelectItem = {
+     //           id: nft.NFTokenID,
+     //           display: nft.URI ? `NFT • ${nft.URI}` : 'NFT',
+     //           secondary: nft.NFTokenID.slice(0, 12) + '...' + nft.NFTokenID.slice(-10),
+     //      };
+     //      this.nftSelected.emit(item);
+     // }
 
      // Helper function to get transfer fee value for sorting
      private getTransferFeeValue(nft: any): number {
@@ -280,7 +299,19 @@ export class NftCreateSummaryComponent {
      }
 
      onNftClick(nft: any) {
-          this.nftSelected.emit(nft);
+          const normalized = {
+               ...nft,
+               NFTokenID: nft.id || nft.NFTokenID,
+          };
+
+          this.nftSelected.emit(normalized);
+
+          // Force store update directly as backup
+          const id = normalized.NFTokenID;
+          if (id) {
+               this.nftUtilService.onNftSelectedInUi(normalized);
+          }
+
           const currentTab = this.nftTransactionViewModelService.activeTab();
           if (currentTab !== 'createNft') {
                this.toggleInfoPanel.emit();

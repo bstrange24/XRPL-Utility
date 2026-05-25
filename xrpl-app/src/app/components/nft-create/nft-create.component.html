@@ -10,9 +10,7 @@
 
           <!-- Warning Message -->
           @if (txUiService.warningMessage) {
-          <div class="mt-4">
-               <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
-          </div>
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
           <!-- Form -->
@@ -52,9 +50,9 @@
                               </div>
                          </div>
                          } @if (tab === 'updateNFTMetadata') {
-                         <app-nft-modify (canModifyNftChange)="onCanModifyNftChange($event)"></app-nft-modify>
+                         <app-nft-modify (canModifyNftChange)="onCanModifyNftChange($event)" (nftSelected)="onNftSelectedFromSummary($event)"></app-nft-modify>
                          } @if (tab === 'burnNft') {
-                         <app-nft-burn (canBurnNftChange)="onCanBurnNftChange($event)"></app-nft-burn>
+                         <app-nft-burn (canBurnNftChange)="onCanBurnNftChange($event)" (nftSelected)="onNftSelectedFromSummary($event)"></app-nft-burn>
                          }
                     </div>
                </div>
@@ -65,74 +63,22 @@
                </div>
 
                <!-- Action Buttons -->
-<!-- Action Buttons -->
-<div class="main-button-section mt-6">
-     <app-button-tooltip [tooltipText]="getButtonTooltip()">
+               <div class="main-button-section mt-6">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'createNft') {
+                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftButtonLabel() }}</button>
+                         } @else if (tab === 'updateNFTMetadata') {
+                         <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
+                         } @else if (tab === 'burnNft') {
+                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.burnNftButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
 
-          @if (tab === 'createNft') {
-          <button
-               type="button"
-               class="btn-primary whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.createNftButtonLabel() }}
-          </button>
-          } @else if (tab === 'updateNFTMetadata') {
-          <button
-               type="button"
-               class="btn-blue whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.updateNftMetadataButtonLabel() }}
-          </button>
-          } @else if (tab === 'burnNft') {
-          <button
-               type="button"
-               class="btn-red whitespace-nowrap"
-               [class.opacity-50]="!canPerformAction()"
-               [attr.aria-disabled]="!canPerformAction()"
-               [attr.tabindex]="!canPerformAction() ? 0 : null"
-               (click)="canPerformAction() ? performAction() : null"
-               [disabled]="false"
-          >
-               {{ nftUtilService.burnNftButtonLabel() }}
-          </button>
-          }
-
-     </app-button-tooltip>
-
-     <!-- Clear Fields -->
-     <div class="right-buttons">
-          <button 
-               type="button" 
-               (click)="clearFields()" 
-               [disabled]="!isIdle() || !hasWallets()" 
-               class="btn-secondary whitespace-nowrap">
-               Clear Fields
-          </button>
-     </div>
-</div>
-
-               <!-- Action Buttons -->
-               <!-- <div class="main-button-section mt-6">
-                    @if (tab === 'createNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreatNft()" class="btn-primary whitespace-nowrap">{{ nftUtilService.createNftButtonLabel() }}</button>
-                    } @else if (tab === 'updateNFTMetadata') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canModifyNft()" class="btn-blue whitespace-nowrap">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
-                    } @else if (tab === 'burnNft') {
-                    <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canBurnNft()" class="btn-red whitespace-nowrap">{{ nftUtilService.burnNftButtonLabel() }}</button>
-                    }
-
-                    <button type="button" (click)="clearFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-               </div> -->
+                    <!-- Clear Fields -->
+                    <div class="right-buttons">
+                         <button type="button" (click)="clearFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                    </div>
+               </div>
 
                <!-- Execution Time -->
                <div class="execution-time">

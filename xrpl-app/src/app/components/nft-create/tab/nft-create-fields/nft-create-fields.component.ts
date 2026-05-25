@@ -107,8 +107,6 @@ export class NftCreateFieldsComponent {
      isDestinationValid = signal(false);
 
      // Destination dropdown – passed from parent (keeps logic in the main page)
-     // @Input() destinationItems: SelectItem[] = [];
-     // @Input() selectedDestinationItem: SelectItem | null = null;
      @Input() destinationSearchQuery: string | null = null;
      @Output() destinationChanged = new EventEmitter<SelectItem | null>();
      @Output() currencySelected = new EventEmitter<SelectItem | null>();

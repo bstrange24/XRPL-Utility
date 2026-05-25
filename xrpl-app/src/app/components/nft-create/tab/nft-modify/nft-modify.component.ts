@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -60,6 +60,7 @@ export class NftModifyComponent {
      // Outputs
      canModifyNftChange = output<boolean>();
      validationErrorsChange = output<string[]>();
+     nftSelected = output<any>();
 
      // Signals
      showUriHelper = signal(false);
@@ -96,10 +97,26 @@ export class NftModifyComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {   // called from child components
-  const id = item?.id || '';
-  this.nftCreateStoreService.setField('nftId', id);
-}
+     onNftSelected(item: SelectItem | null) {
+          const id = item?.id || '';
+
+          this.nftCreateStoreService.setField('nftId', id);
+
+          if (id) {
+               this.nftUtilService.onNftSelectedInUi(item); // reuse the util
+          } else {
+               // Clear when X is clicked
+               this.nftCreateStoreService.setField('initialURI', '');
+               this.nftCreateStoreService.setField('nftOwnerAddress', '');
+          }
+
+          this.nftSelected.emit(item); // forward to parent if needed
+     }
+
+     // onNftSelected(item: SelectItem | null) {
+     //      const id = item?.id || '';
+     //      this.nftCreateStoreService.setField('nftId', id);
+     // }
 
      // For NFT Burn
      selectedNftIsNotBurnable(): boolean {
