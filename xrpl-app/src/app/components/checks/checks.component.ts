@@ -47,11 +47,12 @@ import { ValidationService } from '../../services/utils/validation/transaction-v
 import { ChecksSummaryComponent } from './ui-components/checks-summary/checks-summary.component';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-checks',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, ChecksCreateComponent, ChecksCashComponent, ChecksCancelComponent, ChecksCreateComponent, ChecksCashComponent],
      templateUrl: './checks.component.html',
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -126,6 +127,32 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                this.setRightPanel();
           }
      });
+
+     public canPerformAction = computed(() => {
+  const idle = this.isIdle();
+  if (!idle || !this.hasWallets()) return false;
+
+  const tab = this.checksTransactionViewModelService.activeTab();
+
+  // Force reactivity by reading key signals
+  const selectedCheckId = this.checksStoreService.checkIdField?.() ?? '';
+  const isExpired = this.checksTransactionViewModelService.selectedCheckIsExpired?.() ?? false;
+
+  switch (tab) {
+    case 'createCheck':
+      return this.canCreateCheck();
+
+    case 'cashCheck':
+      return !!selectedCheckId && !isExpired;
+
+    case 'cancelCheck':
+      return !!selectedCheckId;                    // Must have a selected check
+
+    default:
+      return false;
+  }
+});
+
 
      public currencyItems() {
           return this.trustlineCurrencyService.currencyItems();
@@ -437,6 +464,32 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      onCanCreateCheckChange(isValid: boolean) {
           this.canCreateCheck.set(isValid);
      }
+
+     getButtonTooltip(): string {
+  if (!this.isIdle() || !this.hasWallets()) {
+    return 'Please wait or select a wallet';
+  }
+
+  const tab = this.checksTransactionViewModelService.activeTab();
+  const hasSelection = !!this.checksStoreService.checkIdField?.();
+
+  if (!this.canPerformAction()) {
+    if (tab === 'createCheck') {
+      return 'Please fill Destination and Amount';
+    }
+    if (tab === 'cashCheck' || tab === 'cancelCheck') {
+      if (!hasSelection) {
+        return 'Please select a check from the dropdown';
+      }
+      if (tab === 'cashCheck' && this.checksTransactionViewModelService.selectedCheckIsExpired?.()) {
+        return 'This check has expired';
+      }
+    }
+    return 'Cannot perform this action';
+  }
+
+  return '';
+}
 
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);

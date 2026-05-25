@@ -37,11 +37,12 @@ import { OfferRequirementsInfoComponent } from './ui-components/offer-requiremen
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
 import { OfferCurrencyService } from '../../services/offer/offer-currency/offer-currency.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-offer',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionPreviewComponent, OfferFieldsComponent],
      templateUrl: './offer.component.html',
      styleUrl: './offer.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -115,6 +116,28 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                this.setRightPanel();
           }
      });
+
+     public canPerformAction = computed(() => {
+  const idle = this.isIdle();
+  if (!idle || !this.hasWallets()) return false;
+
+  const tab = this.offerTransactionViewModelService.activeTab();
+
+  switch (tab) {
+    case 'createOffer':
+      // Use your existing validation from offerUtils or store
+      return this.offerUtilsService.canCreateOffer?.() ?? true; // adjust if you have a specific validator
+
+    case 'cancelOffer':
+      return this.offerUtilsService.canCancelOffer?.() ?? false;
+
+    case 'getOrderBook':
+      return true; // always enabled when idle + wallet
+
+    default:
+      return false;
+  }
+});
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
@@ -303,6 +326,26 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                },
           });
      }
+
+     getButtonTooltip(): string {
+  if (!this.isIdle() || !this.hasWallets()) {
+    return 'Please wait or select a wallet';
+  }
+
+  const tab = this.offerTransactionViewModelService.activeTab();
+
+  if (!this.canPerformAction()) {
+    if (tab === 'createOffer') {
+      return 'Please fill both sides (Taker Gets + Taker Pays)';
+    }
+    if (tab === 'cancelOffer') {
+      return 'Please select at least one offer to cancel';
+    }
+    return 'Cannot perform this action';
+  }
+
+  return '';
+}
 
      onWeWantCurrencySelected(item: SelectItem | null): void {
           this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());

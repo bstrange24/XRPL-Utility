@@ -97,10 +97,9 @@ export class NftBuyOffersComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {
-          if (item) {
-               this.nftCreateStoreService.setField('nftId', item?.id || '');
-          }
+     onNftSelected(item: SelectItem | null) {   // called from child components
+       const id = item?.id || '';
+       this.nftCreateStoreService.setField('nftId', id);
      }
 
      // Clear methods

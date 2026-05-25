@@ -67,6 +67,8 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      public readonly conditionTabMeta = CONDITIONAL_ESCROW_TAB_META;
      abstract readonly isConditional: boolean;
      public canCreateEscrowForm = signal<boolean>(false);
+     public canFinishEscrowForm = signal<boolean>(false);
+     public canCancelEscrowForm = signal<boolean>(false);
      public resetTrigger = input<number>(0);
      private readonly _lastIntendedDestination = signal<string>('');
      public readonly lastIntendedDestination = computed(() => this._lastIntendedDestination());
@@ -137,6 +139,31 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                this.setRightPanel();
           }
      });
+
+     public canPerformAction = computed(() => {
+  const idle = this.isIdle();
+  if (!idle || !this.hasWallets()) return false;
+
+  const tab = this.escrowTransactionViewModelService.activeTab();
+
+  // Force reading the key signals so they trigger reactivity
+  const selectedSequence = this.escrowStoreService.escrowSequenceNumber();
+  const isExpired = this.escrowTransactionViewModelService.selectedEscrowIsExpired?.() ?? false;
+
+  switch (tab) {
+    case 'createEscrow':
+      return this.canCreateEscrowForm();
+
+    case 'finishEscrow':
+      return !!selectedSequence && !isExpired;
+
+    case 'cancelEscrow':
+      return !!selectedSequence;           // Must have a selected escrow
+
+    default:
+      return false;
+  }
+});
 
      public get activeTab() {
           return this.escrowTransactionViewModelService.activeTab();
@@ -514,6 +541,32 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      // handleCanCancelEscrowChange(canCancel: boolean) {
      //      this.canCancelEscrowForm.set(canCancel);
      // }
+
+     getButtonTooltip(): string {
+  if (!this.isIdle() || !this.hasWallets()) {
+    return 'Please wait or select a wallet';
+  }
+
+  const tab = this.escrowTransactionViewModelService.activeTab();
+  const hasSelection = !!this.escrowStoreService.escrowSequenceNumber();
+
+  if (!this.canPerformAction()) {
+    if (tab === 'createEscrow') {
+      return 'Please fill all required fields';
+    }
+    if (tab === 'finishEscrow' || tab === 'cancelEscrow') {
+      if (!hasSelection) {
+        return 'Please select an escrow from the dropdown';
+      }
+      if (tab === 'finishEscrow' && this.escrowTransactionViewModelService.selectedEscrowIsExpired?.()) {
+        return 'This escrow has expired';
+      }
+    }
+    return 'Cannot perform this action';
+  }
+
+  return '';
+}
 
      handleSearchQueryChange(query: string) {
           this.escrowTransactionViewModelService.destinationSearchQuery.set(query);

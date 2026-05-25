@@ -43,11 +43,12 @@ import { CurrencyStoreService } from '../../services/currency/currency-store/cur
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-nft-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, FlagSelectorComponent],
+     imports: [CommonModule, FormsModule, ButtonTooltipComponent, LucideAngularModule, OverlayModule, TransactionOptionsComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, TransactionPreviewComponent, NftCreateFieldsComponent, NftModifyComponent, NftBurnComponent, WarningMessageComponent, FlagSelectorComponent],
      templateUrl: './nft-create.component.html',
      styleUrl: './nft-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -123,6 +124,30 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           }
      });
 
+     public canPerformAction = computed(() => {
+  const idle = this.isIdle();
+  if (!idle || !this.hasWallets()) return false;
+
+  const tab = this.nftCreateTransactionViewModelService.activeTab();
+
+  // Force reactivity by reading key signals
+  const nftId = this.nftCreateStoreService.nftId() ?? '';
+
+  switch (tab) {
+    case 'createNft':
+      return this.canCreatNft();
+
+    case 'updateNFTMetadata':
+      return this.canModifyNft() && !!nftId;
+
+    case 'burnNft':
+      return this.canBurnNft() && !!nftId;
+
+    default:
+      return false;
+  }
+});
+
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
           await this.getNFT(false);
@@ -158,11 +183,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           }
      }
 
-     onNftSelected(item: SelectItem | null) {
-          if (item) {
-               this.nftCreateStoreService.setField('nftId', item?.id || '');
-          }
-     }
+     onNftSelected(item: SelectItem | null) {   // called from child components
+  const id = item?.id || '';
+  this.nftCreateStoreService.setField('nftId', id);
+}
 
      selectWallet(wallet: Wallet): void {
           if (wallet?.address === this.currentWallet()?.address) return;
@@ -400,6 +424,32 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      populateDefaultDateTime() {
           this.nftCreateStoreService.setField('expiration', '');
      }
+
+     getButtonTooltip(): string {
+  if (!this.isIdle() || !this.hasWallets()) {
+    return 'Please wait or select a wallet';
+  }
+
+  const tab = this.nftCreateTransactionViewModelService.activeTab();
+  const nftId = this.nftCreateStoreService.nftId() ?? '';
+
+  if (!this.canPerformAction()) {
+    if (tab === 'createNft') {
+      return 'Please fill required fields (Taxon, URI, etc.)';
+    }
+    if (tab === 'updateNFTMetadata' || tab === 'burnNft') {
+      if (!nftId) {
+        return 'Please select a valid NFT from the dropdown';
+      }
+      return tab === 'updateNFTMetadata' 
+        ? 'Please select NFT to update metadata' 
+        : 'Please select NFT to burn';
+    }
+    return 'Cannot perform this action';
+  }
+
+  return '';
+}
 
      protected clearInputFields() {
           this.clearFields();

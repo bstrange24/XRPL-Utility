@@ -24,6 +24,7 @@ import { EscrowValidatorService } from '../../../../services/shared/validators/e
 import { MptValidatorService } from '../../../../services/shared/validators/mpt/mpt-validator/mpt-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 
 @Component({
      selector: 'app-escrows-create',
@@ -49,6 +50,7 @@ export class EscrowsCreateComponent {
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly escrowValidatorService = inject(EscrowValidatorService);
      public readonly mptValidatorService = inject(MptValidatorService);
+     public readonly copyUtilService = inject(CopyUtilService);
 
      // Helper Items
      readonly escrowCurrencyCodeHelperItems = AppConstants.ESCROW_CURRENCY_CODE_HELPER_ITEMS;
@@ -232,64 +234,140 @@ export class EscrowsCreateComponent {
      }
 
      canCreateEscrow = computed(() => {
-          // Must have valid subject (XRP address)
-          if (!this.isDestinationValid()) return false;
+  // 1. Destination must be selected AND valid
+  const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
+  if (!destAddr || !this.isDestinationValid()) return false;
 
-          // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowCancelAfterExpirationDate()) {
-          if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-               return false;
-          }
-          // }
+  // 2. Amount must be > 0
+  if (this.amountValidatorService.isEscrowAmountInvalid()) return false;
 
-          // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowFinishAfterExpirationDate()) {
-          if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-               return false;
-          }
+  // 3. Conditional escrow checks
+  if (this.isConditional) {
+    if (this.escrowValidatorService.hasInvalidCondition()) return false;
+    if (this.escrowValidatorService.hasInvalidFulfillment()) return false;
+    if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) return false;
+  }
 
-          if (this.amountValidatorService.isEscrowAmountInvalid()) {
-               return false;
-          }
-          // }
+  // 4. Expiration validation (if enabled)
+ if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && 
+      this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+    return false;
+  }
 
-          // Check options validation if enabled
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+    if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && 
+      this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+    return false;
+  }
 
-          return true;
-     });
+  // 5. Options validation
+  if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+
+  return true;
+});
+
+     // canCreateEscrow = computed(() => {
+     //      // Must have valid subject (XRP address)
+     //      if (!this.isDestinationValid()) return false;
+
+     //      // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowCancelAfterExpirationDate()) {
+     //      if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+     //           return false;
+     //      }
+     //      // }
+
+     //      // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowFinishAfterExpirationDate()) {
+     //      if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+     //           return false;
+     //      }
+
+     //      if (this.amountValidatorService.isEscrowAmountInvalid()) {
+     //           return false;
+     //      }
+     //      // }
+
+     //      // Check options validation if enabled
+     //      if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+
+     //      return true;
+     // });
 
      validationErrorMessages = computed(() => {
-          const errors: string[] = [];
+  const errors: string[] = [];
+  const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
 
-          if (!this.isDestinationValid()) {
-               errors.push('Destination address is invalid. Please enter a valid XRP address.');
-          }
+  // Only show error if user has typed something but it's invalid
+  if (destAddr && !this.isDestinationValid()) {
+    errors.push('Destination address is invalid. Please enter a valid XRP address.');
+  }
 
-          if (this.amountValidatorService.isEscrowAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
-          }
+  // Amount error only if something was entered
+  if (this.escrowStoreService.amount() && 
+      this.escrowStoreService.amount()!.trim() !== '' && 
+      this.amountValidatorService.isEscrowAmountInvalid()) {
+    errors.push('Amount must be greater than 0.');
+  }
 
-          // Conditional escrow validations
-          if (this.isConditional) {
-               if (this.escrowValidatorService.hasInvalidCondition()) {
-                    errors.push(this.escrowValidatorService.getConditionErrorMessage());
-               }
-               if (this.escrowValidatorService.hasInvalidFulfillment()) {
-                    errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
-               }
-               if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) {
-                    errors.push(this.escrowValidatorService.getConditionFulfillmentPairErrorMessage());
-               }
-          }
+  if (this.isConditional) {
+    if (this.escrowValidatorService.hasInvalidCondition()) {
+      errors.push(this.escrowValidatorService.getConditionErrorMessage());
+    }
+    if (this.escrowValidatorService.hasInvalidFulfillment()) {
+      errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
+    }
+  }
 
-          if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-               errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
-          }
-          if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-               errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
-          }
+  // Finish After (only if enabled)
+  if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && 
+      this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+    errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
+  }
 
-          return errors;
-     });
+  // Cancel After (only if enabled)
+  if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && 
+      this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+    errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
+  }
+
+  if (this.txUiService.wantsOptions() && this.optionsHasError()) {
+    errors.push(...this.optionsErrors());
+  }
+
+  return errors;
+});
+
+     // validationErrorMessages = computed(() => {
+     //      const errors: string[] = [];
+
+     //      if (!this.isDestinationValid()) {
+     //           errors.push('Destination address is invalid. Please enter a valid XRP address.');
+     //      }
+
+     //      if (this.amountValidatorService.isEscrowAmountInvalid()) {
+     //           errors.push('Amount must be greater than 0.');
+     //      }
+
+     //      // Conditional escrow validations
+     //      if (this.isConditional) {
+     //           if (this.escrowValidatorService.hasInvalidCondition()) {
+     //                errors.push(this.escrowValidatorService.getConditionErrorMessage());
+     //           }
+     //           if (this.escrowValidatorService.hasInvalidFulfillment()) {
+     //                errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
+     //           }
+     //           if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) {
+     //                errors.push(this.escrowValidatorService.getConditionFulfillmentPairErrorMessage());
+     //           }
+     //      }
+
+     //      if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+     //           errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
+     //      }
+     //      if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+     //           errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
+     //      }
+
+     //      return errors;
+     // });
 
      validationErrorMessages1 = computed(() => {
           const errors: string[] = [];

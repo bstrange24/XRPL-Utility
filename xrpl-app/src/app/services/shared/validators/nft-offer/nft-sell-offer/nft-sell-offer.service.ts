@@ -11,12 +11,22 @@ export class NftSellOfferService {
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
 
-     // Overall Form Validation
      canSellNftOffer = computed(() => {
-          if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
-          if (this.nftOfferValidatorService.isAmountInvalid()) return false;
-          if (!this.nftOfferValidatorService.isCurrencyValid()) return false;
-          if (!this.nftOfferValidatorService.isNftSellExpirationValid()) return false;
-          return true;
-     });
+  const nftId = this.nftCreateStoreService.nftId()?.trim() ?? '';
+  const amount = this.nftCreateStoreService.amount()?.trim() ?? '';
+  if (!nftId || !amount) return false;
+
+  if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
+  if (this.nftOfferValidatorService.isAmountInvalid()) return false;
+  if (!this.nftOfferValidatorService.isCurrencyValid()) return false;
+  return true;
+});
+     // Overall Form Validation
+     // canSellNftOffer = computed(() => {
+     //      if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
+     //      if (this.nftOfferValidatorService.isAmountInvalid()) return false;
+     //      if (!this.nftOfferValidatorService.isCurrencyValid()) return false;
+     //      if (!this.nftOfferValidatorService.isNftSellExpirationValid()) return false;
+     //      return true;
+     // });
 }

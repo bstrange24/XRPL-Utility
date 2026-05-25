@@ -249,10 +249,26 @@
                          <label for="escrowCondition" class="label-primary">Condition</label>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition of the created escrow.</p>
-                         <button type="button" (click)="toggleConditionHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    <div class="flex items-center justify-between mb-1">
+                         <!-- Left side: centered text + info button -->
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">
+                                   PREIMAGE-SHA-256 crypto-condition of the created escrow.
+                              </p>
+                              <button type="button" (click)="toggleConditionHelper()"
+                                        class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
+                              </button>
+                         </div>
+
+                         <!-- Right side: copy button -->
+                         <button
+                              type="button"
+                              (click)="copyUtilService.copyAndToast(escrowStoreService.condition(), 'Condition')"
+                              title="Copy Condition"
+                              class="btn-utility-small -mt-1">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                              Copy Condition
                          </button>
                     </div>
 
@@ -277,12 +293,35 @@
                          <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-between mb-1">
+                         <!-- Left side: centered text + info button -->
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">
+                                   PREIMAGE-SHA-256 crypto-condition fulfillment.
+                              </p>
+                              <button type="button" (click)="toggleFulfillmentHelper()"
+                                        class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
+                              </button>
+                         </div>
+
+                         <!-- Right side: copy button -->
+                         <button
+                              type="button"
+                              (click)="copyUtilService.copyAndToast(escrowStoreService.fulfillment(), 'Fulfillment')"
+                              title="Copy Fulfillment"
+                              class="btn-utility-small -mt-1">
+                              <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                              Copy Fulfillment
+                         </button>
+                    </div>
+
+                    <!-- <div class="flex items-center gap-2">
                          <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
                          <button type="button" (click)="toggleFulfillmentHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
-                    </div>
+                    </div> -->
 
                     <div class="relative">
                          <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />

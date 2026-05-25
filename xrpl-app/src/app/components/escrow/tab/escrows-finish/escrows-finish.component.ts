@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, Input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, Input, output, signal } from '@angular/core';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -43,12 +43,26 @@ export class EscrowsFinishComponent {
      showEscrowAmountHelper = signal(false);
      showEscrowConditionHelper = signal(false);
      showEscrowFulfillmentHelper = signal(false);
+     canFinishEscrowChange = output<boolean>();
 
      @Input() isConditional = false;
+
+     constructor() {
+  effect(() => {
+    this.canFinishEscrowChange.emit(this.canFinishEscrow());   // if you have this output
+  });
+}
 
      public get activeTab() {
           return this.viewModel.activeTab();
      }
+
+     canFinishEscrow = computed(() => {
+  const hasSelection = !!this.escrowStoreService.escrowSequenceNumber();
+  const notExpired = !this.viewModel.selectedEscrowIsExpired();
+
+  return hasSelection && notExpired;
+});
 
      // Uses allEscrowsRaw filtered to Destination === currentWallet (finish = receiver)
      public escrowItems() {

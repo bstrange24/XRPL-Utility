@@ -44,8 +44,63 @@
                <app-transaction-options [showWhenTab]="['createCheck', 'cashCheck', 'cancelCheck']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="main-button-section">
-                    <!-- Primary Action -->
+<div class="main-button-section">
+     <app-button-tooltip [tooltipText]="getButtonTooltip()">
+
+          @if (tab === 'createCheck') {
+          <button
+               type="button"
+               class="btn-primary whitespace-nowrap"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ viewModel.createCheckButtonLabel() }}
+          </button>
+          } @else if (tab === 'cashCheck') {
+          <button
+               type="button"
+               class="btn-blue whitespace-nowrap"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ viewModel.cashCheckButtonLabel() }}
+          </button>
+          } @else if (tab === 'cancelCheck') {
+          <button
+               type="button"
+               class="btn-red whitespace-nowrap"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ viewModel.cancelCheckButtonLabel() }}
+          </button>
+          }
+
+     </app-button-tooltip>
+
+     <!-- Clear Fields -->
+     <div class="right-buttons">
+          <button 
+               type="button" 
+               (click)="clearInputFields()" 
+               [disabled]="!isIdle() || !hasWallets()" 
+               class="btn-secondary whitespace-nowrap">
+               Clear Fields
+          </button>
+     </div>
+</div>
+
+               <!-- Action Buttons -->
+               <!-- <div class="main-button-section">
                     @if (tab === 'createCheck') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateCheck()" class="btn-primary whitespace-nowrap">{{ viewModel.createCheckButtonLabel() }}</button>
                     } @else if (tab === 'cashCheck') {
@@ -54,11 +109,10 @@
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()" class="btn-red whitespace-nowrap">{{ viewModel.cancelCheckButtonLabel() }}</button>
                     }
 
-                    <!-- Clear Fields -->
                     <div class="right-buttons">
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
-               </div>
+               </div> -->
 
                <!-- Execution Time -->
                <div class="execution-time">

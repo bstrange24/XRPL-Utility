@@ -13,16 +13,26 @@ export class NftCreateValidatorService {
      public readonly uriValidatorService = inject(UriValidatorService);
      public readonly nftUtilService = inject(NftUtilService);
 
-     // Overall Form Validation
      canCreateNft = computed(() => {
-          if (this.nftValidatorService.isTaxonInvalid()) return false;
-          if (this.uriValidatorService.hasNftCreateInvalidUri()) return false;
-          if (this.nftValidatorService.isTransferFeeInvalid()) return false;
-          if (this.nftValidatorService.isNftMinterInvalid()) return false;
-          if (this.nftValidatorService.isNftOwnerInvalid()) return false;
-          if (this.nftValidatorService.isNftTokenIdInvalid()) return false;
-          if (this.nftValidatorService.hasInvalidNftSellExpiration()) return false;
-          if (this.nftValidatorService.checkForTransferFeeAndTransferFlag()) return false;
-          return true;
-     });
+  if (!this.nftValidatorService.isTaxonValid()) return false;
+  if (this.uriValidatorService.hasNftCreateInvalidUri()) return false;
+  if (this.nftValidatorService.isTransferFeeInvalid()) return false;
+  if (this.nftValidatorService.isNftMinterInvalid()) return false;
+  if (this.nftValidatorService.isNftOwnerInvalid()) return false;
+  if (this.nftValidatorService.checkForTransferFeeAndTransferFlag()) return false;
+
+  return true;
+});
+     // Overall Form Validation
+     // canCreateNft = computed(() => {
+     //      if (this.nftValidatorService.isTaxonInvalid()) return false;
+     //      if (this.uriValidatorService.hasNftCreateInvalidUri()) return false;
+     //      if (this.nftValidatorService.isTransferFeeInvalid()) return false;
+     //      if (this.nftValidatorService.isNftMinterInvalid()) return false;
+     //      if (this.nftValidatorService.isNftOwnerInvalid()) return false;
+     //      if (this.nftValidatorService.isNftTokenIdInvalid()) return false;
+     //      if (this.nftValidatorService.hasInvalidNftSellExpiration()) return false;
+     //      if (this.nftValidatorService.checkForTransferFeeAndTransferFlag()) return false;
+     //      return true;
+     // });
 }

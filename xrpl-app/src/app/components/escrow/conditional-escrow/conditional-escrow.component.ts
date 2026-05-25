@@ -14,11 +14,12 @@ import { TransactionOptionsComponent } from '../../shared/transaction-options/tr
 import { EscrowsCancelComponent } from '../tab/escrows-cancel/escrows-cancel.component';
 import { EscrowsCreateComponent } from '../tab/escrows-create/escrows-create.component';
 import { EscrowsFinishComponent } from '../tab/escrows-finish/escrows-finish.component';
+import { ButtonTooltipComponent } from '../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-conditional-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
      templateUrl: './conditional-escrow.component.html',
      styleUrl: './conditional-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

@@ -31,19 +31,61 @@
                <app-transaction-options [showWhenTab]="['createTicket', 'deleteTicket']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
-               <div class="main-button-section">
-                    <!-- Primary Button -->
+<div class="main-button-section">
+     <app-button-tooltip [tooltipText]="getButtonTooltip()">
+
+          @if (tab === 'createTicket') {
+          <button
+               type="button"
+               class="btn-primary whitespace-nowrap"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ ticketsUtilService.createButtonLabel() }}
+          </button>
+          } @else if (tab === 'deleteTicket') {
+          <button
+               type="button"
+               class="btn-red whitespace-nowrap"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ ticketsUtilService.deleteButtonLabel() }}
+          </button>
+          }
+
+     </app-button-tooltip>
+
+     <!-- Clear Fields -->
+     <div class="right-buttons">
+          <button 
+               type="button" 
+               (click)="clearInputFields()" 
+               [disabled]="!isIdle() || !hasWallets()" 
+               class="btn-secondary whitespace-nowrap">
+               Clear Fields
+          </button>
+     </div>
+</div>
+
+               <!-- Action Buttons -->
+               <!-- <div class="main-button-section">
                     @if (tab === 'createTicket') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || !canCreateTicket()" class="btn-primary whitespace-nowrap">{{ ticketsUtilService.createButtonLabel() }}</button>
                     } @else if (tab === 'deleteTicket') {
                     <button type="button" (click)="performAction()" [disabled]="!isIdle() || !hasWallets() || xrplTxOptionsStore.walletTicketCount() <= 0" class="btn-red whitespace-nowrap">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                     }
 
-                    <!-- Secondary Button -->
                     <div class="right-buttons">
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>
-               </div>
+               </div> -->
 
                <!-- Execution Time -->
                <div class="execution-time">

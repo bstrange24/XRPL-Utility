@@ -13,11 +13,12 @@ import { TransactionPreviewComponent } from '../../shared/transaction-preview/tr
 import { EscrowsCreateComponent } from '../tab/escrows-create/escrows-create.component';
 import { EscrowsCancelComponent } from '../tab/escrows-cancel/escrows-cancel.component';
 import { EscrowsFinishComponent } from '../tab/escrows-finish/escrows-finish.component';
+import { ButtonTooltipComponent } from '../../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-time-based-escrow',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
+     imports: [CommonModule, FormsModule, ButtonTooltipComponent, LucideAngularModule, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, MatSlideToggleModule, TransactionOptionsComponent, EscrowsCreateComponent, EscrowsCancelComponent, EscrowsFinishComponent],
      templateUrl: './time-based-escrow.component.html',
      styleUrl: './time-based-escrow.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

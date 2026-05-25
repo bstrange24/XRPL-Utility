@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, Input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, Input, signal } from '@angular/core';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -44,6 +44,10 @@ export class EscrowsCancelComponent {
      public get activeTab() {
           return this.viewModel.activeTab();
      }
+
+     canCancelEscrow = computed(() => {
+  return !!this.escrowStoreService.escrowSequenceNumber();
+});
 
      // Uses allEscrowsRaw filtered to Sender === currentWallet (cancel = creator)
      public escrowItems() {

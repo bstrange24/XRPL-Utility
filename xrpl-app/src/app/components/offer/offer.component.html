@@ -26,7 +26,47 @@
                </div>
 
                <!-- Action Buttons -->
-               <div class="main-button-section mt-6">
+<div class="main-button-section mt-6">
+     <app-button-tooltip [tooltipText]="getButtonTooltip()">
+
+          <!-- Primary Action -->
+          <button
+               type="button"
+               [class]="offerUtilsService.actionButtonClass()"
+               [class.opacity-50]="!canPerformAction()"
+               [attr.aria-disabled]="!canPerformAction()"
+               [attr.tabindex]="!canPerformAction() ? 0 : null"
+               (click)="canPerformAction() ? performAction() : null"
+               [disabled]="false"
+          >
+               {{ offerUtilsService.actionButtonLabel() }}
+          </button>
+
+     </app-button-tooltip>
+
+     @if (tab === 'createOffer' || tab === 'getOrderBook') {
+     <button 
+          type="button" 
+          class="btn-primary whitespace-nowrap"
+          (click)="invertOrder()" 
+          [disabled]="!isIdle() || !hasWallets()">
+          Invert Order
+     </button>
+     }
+
+     <!-- Clear Fields -->
+     <div class="right-buttons">
+          <button 
+               type="button" 
+               (click)="clearInputFields()" 
+               [disabled]="!isIdle() || !hasWallets()" 
+               class="btn-secondary whitespace-nowrap">
+               Clear Fields
+          </button>
+     </div>
+</div>
+               <!-- Action Buttons -->
+               <!-- <div class="main-button-section mt-6">
                     <button type="button" [class]="offerUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ offerUtilsService.actionButtonLabel() }}</button>
 
                     @if (tab === 'createOffer' || tab === 'getOrderBook') {
@@ -34,7 +74,7 @@
                     }
 
                     <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
-               </div>
+               </div> -->
 
                <!-- Execution Time -->
                <div class="mt-3 text-sm text-gray-500">

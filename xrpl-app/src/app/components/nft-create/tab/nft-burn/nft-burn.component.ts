@@ -87,9 +87,10 @@ export class NftBurnComponent {
           this.nftCreateStoreService.setField('expiration', value);
      };
 
-     onNftSelected(item: SelectItem | null) {
-          this.nftCreateStoreService.setField('nftId', item?.id || '');
-     }
+     onNftSelected(item: SelectItem | null) {   // called from child components
+  const id = item?.id || '';
+  this.nftCreateStoreService.setField('nftId', id);
+}
 
      toggleNftHelper() {
           this.showNftHelper.update(v => !v);

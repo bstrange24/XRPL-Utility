@@ -11,9 +11,17 @@ export class NftCancelOfferService {
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
 
-     // Overall Form Validation
      canCancelOffer = computed(() => {
-          if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
-          return true;
-     });
+  const nftOfferId = this.nftCreateStoreService.nftOfferId()?.trim() ?? '';
+  if (!nftOfferId) return false;
+
+  if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
+  return true;
+});
+
+     // Overall Form Validation
+     // canCancelOffer = computed(() => {
+     //      if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
+     //      return true;
+     // });
 }

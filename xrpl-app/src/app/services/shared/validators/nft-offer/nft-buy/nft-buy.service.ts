@@ -11,10 +11,18 @@ export class NftBuyService {
      public readonly nftUtilService = inject(NftUtilService);
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
 
-     // Overall Form Validation
      canBuyOffer = computed(() => {
-          if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
-          if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
-          return true;
-     });
+  const nftOfferId = this.nftCreateStoreService.nftOfferId()?.trim() ?? '';
+  if (!nftOfferId) return false;
+
+  if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
+  if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
+  return true;
+});
+     // Overall Form Validation
+     // canBuyOffer = computed(() => {
+     //      if (this.nftOfferValidatorService.isNftOfferIndexInvalid()) return false;
+     //      if (this.nftOfferValidatorService.isNftTokenIdInvalid()) return false;
+     //      return true;
+     // });
 }

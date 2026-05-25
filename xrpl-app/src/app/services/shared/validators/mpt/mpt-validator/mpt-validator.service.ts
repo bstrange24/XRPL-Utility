@@ -1,4 +1,3 @@
-// mpt-validator.service.ts
 import { computed, inject, Injectable } from '@angular/core';
 import { MptStoreService } from '../../../../mpt/mpt-store/mpt-store.service';
 import { MptTransactionViewModelService } from '../../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
@@ -185,49 +184,93 @@ export class MptValidatorService {
           return this.viewModel.metadataByteLength() > 1024;
      });
 
+      canCreateMpt = computed(() => {
+    if (!this.isTokenCountValid()) return false;
+    if (this.isAssetScaleInvalid()) return false;
+    if (this.isTransferFeeInvalid()) return false;
+    if (this.isMetadataInvalid()) return false;
+    if (this.viewModel.metadataByteLength() > 1024) return false;
+
+    // Transfer Fee requires Can Transfer flag
+    const transferFee = this.mptStoreService.transferFee();
+    if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
+      return false;
+    }
+
+    return true;
+  });
+
      // Overall Form Validation
-     canCreateMpt = computed(() => {
-          if (!this.isTokenCountValid()) return false;
-          if (this.isAssetScaleInvalid()) return false;
-          if (this.isTransferFeeInvalid()) return false;
-          // if (this.isMetadataInvalid()) return false;
-          if (this.isMetadataSizeInvalid()) return false;
+     // canCreateMpt = computed(() => {
+     //      if (!this.isTokenCountValid()) return false;
+     //      if (this.isAssetScaleInvalid()) return false;
+     //      if (this.isTransferFeeInvalid()) return false;
+     //      // if (this.isMetadataInvalid()) return false;
+     //      if (this.isMetadataSizeInvalid()) return false;
 
-          // Additional check: Transfer fee requires Can Transfer flag
-          const transferFee = this.mptStoreService.transferFee();
-          if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
-               return false;
-          }
+     //      // Additional check: Transfer fee requires Can Transfer flag
+     //      const transferFee = this.mptStoreService.transferFee();
+     //      if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
+     //           return false;
+     //      }
 
-          return true;
-     });
+     //      return true;
+     // });
+
+     
+  getAllValidationErrors = computed(() => {
+    const errors: string[] = [];
+
+    const tokenErr = this.getTokenCountErrorMessage();
+    if (tokenErr) errors.push(tokenErr);
+
+    const assetErr = this.getAssetScaleErrorMessage();
+    if (assetErr) errors.push(assetErr);
+
+    const feeErr = this.getTransferFeeErrorMessage();
+    if (feeErr) errors.push(feeErr);
+
+    const metaErr = this.getMetadataErrorMessage();
+    if (metaErr) errors.push(`Metadata: ${metaErr}`);
+
+    if (this.viewModel.metadataByteLength() > 1024) {
+      errors.push(`Metadata exceeds 1024 byte limit (current: ${this.viewModel.metadataByteLength()} bytes)`);
+    }
+
+    const transferFee = this.mptStoreService.transferFee();
+    if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
+      errors.push('Transfer Fee requires "Can Transfer" flag to be enabled.');
+    }
+
+    return errors;
+  });
 
      // Get all validation error messages
-     getAllValidationErrors = computed(() => {
-          const errors: string[] = [];
+     // getAllValidationErrors = computed(() => {
+     //      const errors: string[] = [];
 
-          const tokenCountError = this.getTokenCountErrorMessage();
-          if (tokenCountError) errors.push(`${tokenCountError}`);
+     //      const tokenCountError = this.getTokenCountErrorMessage();
+     //      if (tokenCountError) errors.push(`${tokenCountError}`);
 
-          const assetScaleError = this.getAssetScaleErrorMessage();
-          if (assetScaleError) errors.push(`${assetScaleError}`);
+     //      const assetScaleError = this.getAssetScaleErrorMessage();
+     //      if (assetScaleError) errors.push(`${assetScaleError}`);
 
-          const transferFeeError = this.getTransferFeeErrorMessage();
-          if (transferFeeError) errors.push(`${transferFeeError}`);
+     //      const transferFeeError = this.getTransferFeeErrorMessage();
+     //      if (transferFeeError) errors.push(`${transferFeeError}`);
 
-          // const metadataError = this.getMetadataErrorMessage();
-          // if (metadataError) errors.push(`Metadata: ${metadataError}`);
+     //      // const metadataError = this.getMetadataErrorMessage();
+     //      // if (metadataError) errors.push(`Metadata: ${metadataError}`);
 
-          // if (this.isMetadataSizeInvalid()) {
-          //      errors.push(`Metadata exceeds 1024 byte limit (current: ${this.viewModel.metadataByteLength()} bytes)`);
-          // }
+     //      // if (this.isMetadataSizeInvalid()) {
+     //      //      errors.push(`Metadata exceeds 1024 byte limit (current: ${this.viewModel.metadataByteLength()} bytes)`);
+     //      // }
 
-          // Check transfer fee dependency
-          const transferFee = this.mptStoreService.transferFee();
-          if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
-               errors.push('Transfer Fee requires "Can Transfer" to be enabled in the flags section.');
-          }
+     //      // Check transfer fee dependency
+     //      const transferFee = this.mptStoreService.transferFee();
+     //      if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
+     //           errors.push('Transfer Fee requires "Can Transfer" to be enabled in the flags section.');
+     //      }
 
-          return errors;
-     });
+     //      return errors;
+     // });
 }

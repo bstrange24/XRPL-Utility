@@ -36,11 +36,12 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { TicketsSummaryComponent } from './ui-components/tickets-summary/tickets-summary.component';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { NgIcon } from '@ng-icons/core';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
 
 @Component({
      selector: 'app-tickets',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, NgIcon, OverlayModule, TransactionPreviewComponent, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TicketsCreateComponent, TicketsDeleteComponent],
      templateUrl: './tickets.component.html',
      styleUrl: './tickets.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,6 +87,25 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                this.setRightPanel();
           }
      });
+
+     public canPerformAction = computed(() => {
+  const idle = this.isIdle();
+  if (!idle || !this.hasWallets()) return false;
+
+  const tab = this.ticketsViewModelService.activeTab();
+
+  switch (tab) {
+    case 'createTicket':
+      return this.canCreateTicket();
+
+    case 'deleteTicket':
+      return this.xrplTxOptionsStore.walletTicketCount() > 0 &&
+             this.xrplTxOptionsStore.selectedTicketSequences().length > 0;
+
+    default:
+      return false;
+  }
+});
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
@@ -253,6 +273,29 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
                },
           });
      }
+
+     getButtonTooltip(): string {
+  if (!this.isIdle() || !this.hasWallets()) {
+    return 'Please wait or select a wallet';
+  }
+
+  const tab = this.ticketsViewModelService.activeTab();
+
+  if (!this.canPerformAction()) {
+    if (tab === 'createTicket') {
+      return 'Please enter a valid number of tickets (1-250)';
+    }
+    if (tab === 'deleteTicket') {
+      if (this.xrplTxOptionsStore.walletTicketCount() <= 0) {
+        return 'This wallet has no tickets to delete';
+      }
+      return 'Please select at least one ticket to delete';
+    }
+    return 'Cannot perform this action';
+  }
+
+  return '';
+}
 
      onCanCreateTicketChange(isValid: boolean) {
           this.canCreateTicket.set(isValid);
