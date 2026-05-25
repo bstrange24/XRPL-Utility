@@ -103,11 +103,6 @@ export class NftSellComponent {
           this.nftSelected.emit(item); // ← Forward to parent
      }
 
-     // onNftSelected(item: SelectItem | null) {
-     //      const id = item?.id || '';
-     //      this.nftCreateStoreService.setField('nftId', id);
-     // }
-
      // Clear methods
      clearNftId() {
           this.nftCreateStoreService.setField('nftId', '');

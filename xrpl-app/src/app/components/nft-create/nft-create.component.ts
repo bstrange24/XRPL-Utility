@@ -169,7 +169,6 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      onNftSelectedFromSummary(nft: any) {
           const id = nft?.NFTokenID || nft?.id;
           if (!id) {
-               console.warn('❌ No NFT ID found');
                return;
           }
 
@@ -343,7 +342,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
           }
 
           await this.handleTxResult(txResult, env.client, env.wallet, nftState.nftCreator, this.nftCreateStoreService.destination(), '', { includeNftObjects: true });
-          // this.nftUtilService.resetFlags();
+          this.nftUtilService.resetFlags();
           this.txUiService.resetCurrentStepToIdle();
      }
 

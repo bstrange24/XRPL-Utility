@@ -47,17 +47,6 @@
                          [isValid]="!!(nftOfferValidatorService.isNftOfferIndexValid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
                          [isInvalid]="!!(nftOfferValidatorService.isNftOfferIndexInvalid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
                     />
-                    <!-- <input
-                         type="text"
-                         [(ngModel)]="nftCreateStoreService.nftOfferId"
-                         (focus)="onOfferIndexFocus()"
-                         (blur)="onOfferIndexBlur()"
-                         placeholder="Enter 64-character hex NFT Offer Index"
-                         class="input-base-with-validation font-mono text-sm"
-                         app-focus-border
-                         [isValid]="!!(nftOfferValidatorService.isNftOfferIndexValid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
-                         [isInvalid]="!!(nftOfferValidatorService.isNftOfferIndexInvalid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
-                    /> -->
 
                     <!-- Clear Button -->
                     @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
