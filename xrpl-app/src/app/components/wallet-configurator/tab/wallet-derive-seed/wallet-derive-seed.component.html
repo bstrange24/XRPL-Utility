@@ -27,12 +27,12 @@
                <code class="block break-all font-mono text-sm text-gray-700">sEdTM1uX8pu2do5XvTnutH6HsouMaM2</code>
           </div>
 
-          <!-- Encryption Type -->
-          <div class="space-y-3">
+          <!-- Encryption Type Toggle -->
+          <div class="space-y-1">
                <label for="encryptionType" class="label-primary">Encryption Type</label>
 
                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <!-- ED25519 -->
+                    <!-- ED25519 Option -->
                     <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.ed25519_encryption_type()" [class.bg-green-50]="walletsStoreService.ed25519_encryption_type()" [class.border-gray-200]="!walletsStoreService.ed25519_encryption_type()" (click)="walletsUtilService.setEncryption('ed25519')">
                          <div class="summary-item-content">
                               <div class="mt-0.5 flex-shrink-0">
@@ -41,14 +41,14 @@
                                    </div>
                               </div>
 
-                              <div class="flex-1 text-left">
+                              <div class="flex-1">
                                    <div class="text-sm font-semibold text-gray-900">ED25519</div>
                                    <p class="mt-1 text-xs text-gray-500">Modern encryption, faster transactions</p>
                               </div>
                          </div>
                     </button>
 
-                    <!-- SECP256K1 -->
+                    <!-- SECP256K1 Option -->
                     <button type="button" class="cursor-pointer rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="walletsStoreService.secp256k1_encryption_type()" [class.bg-green-50]="walletsStoreService.secp256k1_encryption_type()" [class.border-gray-200]="!walletsStoreService.secp256k1_encryption_type()" (click)="walletsUtilService.setEncryption('secp256k1')">
                          <div class="summary-item-content">
                               <div class="mt-0.5 flex-shrink-0">
@@ -57,7 +57,7 @@
                                    </div>
                               </div>
 
-                              <div class="flex-1 text-left">
+                              <div class="flex-1">
                                    <div class="text-sm font-semibold text-gray-900">SECP256K1</div>
                                    <p class="mt-1 text-xs text-gray-500">Legacy encryption, widely compatible</p>
                               </div>
