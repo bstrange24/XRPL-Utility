@@ -32,8 +32,8 @@
                </div>
 
                @if (hasActiveFilters()) {
-               <button (click)="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                    <ng-icon name="heroXMark" size="16" />
+               <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
+                    <!-- <ng-icon name="heroXMark" size="16" /> -->
                     Clear All Filters
                </button>
                }
@@ -135,7 +135,7 @@
                </div>
                <p class="empty-state-title">No matching DEX offers found</p>
                <p class="empty-state-subtitle">Try adjusting your search or filters</p>
-               <!-- <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button> -->
+               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
           </div>
           }
      </div>

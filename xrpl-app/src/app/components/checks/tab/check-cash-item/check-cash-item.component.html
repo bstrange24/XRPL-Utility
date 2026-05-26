@@ -25,6 +25,10 @@
                     <span class="font-mono">{{ check.index.slice(0, 15) }}...{{ check.index.slice(-15) }}</span>
                </app-summary-key-value>
 
+               <app-summary-key-value label="Check Creator">
+                    <span class="font-mono">{{ check.sender }}</span>
+               </app-summary-key-value>
+
                @if (check.expiration) {
                <app-summary-key-value [label]="check.isExpired ? 'Expired' : 'Expires'">
                     <span class="font-mono" [class.text-red-600]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>

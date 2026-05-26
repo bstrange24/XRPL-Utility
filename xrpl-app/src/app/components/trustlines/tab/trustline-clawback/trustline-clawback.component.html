@@ -22,10 +22,6 @@
           </div>
           }
 
-          <!-- <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600">
-               <ng-icon name="heroQuestionMarkCircle" size="16" />
-          </button> -->
-
           <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" placeholder="Enter or select destination address" />
 
           <app-field-helper title="{{ activeTab === 'issueCurrency' ? 'Destination (Issue To)' : 'Token Holder' }}" [items]="clawbackDestinationHelperItems" [show]="showClawbackDestinationHelper" />

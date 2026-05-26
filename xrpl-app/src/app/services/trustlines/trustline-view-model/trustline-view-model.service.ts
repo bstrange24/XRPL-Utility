@@ -1,10 +1,11 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { TrustlineCurrencyService } from '../trustline-currency/trustline-currency.service';
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineActionTypes } from '../../../components/trustlines/constants/trustline.types';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
+import Decimal from 'decimal.js';
 
 @Injectable({
      providedIn: 'root',
@@ -18,15 +19,56 @@ export class TrustlineViewModelService {
      readonly activeTab = signal<TrustlineActionTypes>('setTrustline');
      readonly isBusy = computed(() => this.txUiService.currentStep() !== 'idle');
 
-     currencyItems = this.trustlineCurrencyService.currencyItems;
-     issuerItems = this.trustlineCurrencyService.issuerItems;
-     currencyBalanceField = this.currencyStoreService.balance();
+     constructor() {
+          effect(() => {
+               const selected = this.selectedIssuerItem();
+               console.log(`[ViewModel] selectedIssuerItem changed to:`, selected?.id?.slice(0, 8), selected?.display);
+          });
+     }
 
-     selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
-     selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
-     selectedIssuerItem = computed(() => this.issuerItems().find(i => i.id === this.currencyStoreService.issuer()) ?? null);
+     readonly currencyItems = this.trustlineCurrencyService.currencyItems;
+     readonly issuerItems = this.trustlineCurrencyService.issuerItems;
+     readonly currencyBalanceField = this.currencyStoreService.balance();
 
-     // ─── Memoized filter — only re-runs when IOUs, tab, issuer-role, or noRipple flag changes ───
+     readonly selectedCurrencyItem = computed(() => this.currencyItems().find(i => i.id === this.currencyStoreService.currency()) ?? null);
+     readonly selectedIssuerAddress = computed(() => this.currencyStoreService.issuer());
+     readonly selectedIssuerItem = computed(() => {
+          const issuerAddr = this.currencyStoreService.issuer();
+          if (!issuerAddr) return null;
+
+          const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+
+          console.log(`[VM selectedIssuerItem] issuer=${issuerAddr?.slice(0, 8)}... wallet=${currentWallet?.slice(0, 8)}...`);
+
+          // Self issuer case
+          if (currentWallet && issuerAddr === currentWallet) {
+               console.log(`[VM selectedIssuerItem] → RETURNING SELF ISSUER`);
+               return {
+                    id: issuerAddr,
+                    display: 'Self (Issuer)',
+                    secondary: issuerAddr.slice(0, 8) + '...' + issuerAddr.slice(-4),
+                    isSelf: true,
+                    isCurrentAccount: true,
+               } as any;
+          }
+
+          // Normal case
+          const found = this.issuerItems().find(i => i.id === issuerAddr);
+          return found ?? null;
+     });
+
+     // Improved self check (already good, but make sure it's used)
+     readonly isSelfTrustline = computed(() => {
+          const walletAddr = this.walletManager.getSelectedWallet()?.classicAddress?.toLowerCase();
+          const issuer = this.currencyStoreService.issuer()?.toLowerCase();
+          return !!(walletAddr && issuer && walletAddr === issuer);
+     });
+
+     // Make sure this also respects self
+     readonly isIssuerForSelected = computed(() => {
+          return this.isSelfTrustline(); // reuse the reliable one
+     });
+
      private readonly filteredTrustlines = computed(() => {
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
           if (allTrustlines.length === 0) return [];
@@ -49,15 +91,28 @@ export class TrustlineViewModelService {
           }
      });
 
-     readonly trustlinesToShow = computed(() =>
-          this.filteredTrustlines().map((tl: any) => ({
+     readonly doesTrustlineExist = computed(() => {
+          const currency = this.currencyStoreService.currency();
+          const issuer = this.currencyStoreService.issuer();
+          const existingIOUs = this.trustlineStoreService.existingIOUs();
+
+          if (!currency || !issuer) return false;
+
+          return existingIOUs.some((tl: any) => tl.currency === currency && tl.issuer === issuer);
+     });
+
+     readonly trustlinesToShow = computed(() => {
+          const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
+
+          // For summary, always show all trustlines with basic info
+          return allTrustlines.map((tl: any) => ({
                currency: tl.currency,
                issuer: tl.issuer,
                balance: tl.balance,
-               limit: tl.limit,
+               limit: new Decimal(tl.limit).toFixed(), //tl.limit,
                flags: tl.flags || [],
-          }))
-     );
+          }));
+     });
 
      private readonly removableTrustlines = computed(() => {
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
@@ -75,7 +130,6 @@ export class TrustlineViewModelService {
           const wallet = this.walletManager.getSelectedWallet();
           const tab = this.activeTab();
 
-          // ── Always return a loading skeleton so the summary renders at full height immediately ──
           if (!wallet?.address || this.trustlineStoreService.isLoading()) {
                return {
                     walletName: wallet?.name || wallet?.address?.slice(0, 10) + '...' || 'Loading...',
@@ -96,11 +150,17 @@ export class TrustlineViewModelService {
           const explorerBase = this.txUiService.explorerUrl();
           const address = wallet.address;
           const walletName = wallet.name || address.slice(0, 10) + '...';
-          const isIssuer = this.isIssuerForSelected();
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
-          const relevant = this.filteredTrustlines();
           const totalCount = allTrustlines.length;
-          const filteredCount = relevant.length;
+
+          // For summary, show ALL trustlines (not filtered)
+          const trustlinesToShow = allTrustlines.map((tl: any) => ({
+               currency: tl.currency,
+               issuer: tl.issuer,
+               balance: tl.balance,
+               limit: tl.limit,
+               flags: tl.flags || [],
+          }));
 
           let countText = '';
           let emptyMessage = '';
@@ -110,68 +170,19 @@ export class TrustlineViewModelService {
                case 'setTrustline':
                     countText = 'existing trustlines';
                     break;
+
                case 'removeTrustline':
-                    countText = 'removable trustlines';
-                    break;
                case 'issueCurrency':
-                    countText = isIssuer ? 'issuable currencies' : 'currencies you can send';
-                    if (allTrustlines.length === 0) {
-                         emptyMessage = ' No trustlines found for this wallet.';
-                         helpHint = isIssuer ? 'You must have trustlines before issuing tokens.' : ' You need a trustline and balance to send tokens.';
-                    } else if (filteredCount === 0) {
-                         emptyMessage = isIssuer ? ' You are not currently issuing any tokens.' : ' You do not hold any tokens to send.';
-                         helpHint = isIssuer ? 'Issue tokens to a destination to create supply.' : 'Receive tokens first or check another currency.';
-                    }
-                    break;
                case 'clawbackTokens':
-                    if (isIssuer) {
-                         countText = 'currencies you can clawback';
-                         if (allTrustlines.length === 0) {
-                              emptyMessage = ' No trustlines found for this wallet.';
-                              helpHint = 'You must issue tokens before they can be clawed back.';
-                         } else if (filteredCount === 0) {
-                              emptyMessage = ' No issued tokens available to claw back.';
-                              helpHint = 'Clawback applies only to tokens you have issued.';
-                         }
-                    } else {
-                         countText = 'clawback-eligible currencies';
-                         emptyMessage = ' Clawback is only available to the issuer of a currency.';
-                         helpHint = 'Switch to the issuing wallet to claw back tokens.';
-                    }
-                    break;
-               case 'addNewIssuers':
-                    countText = 'saved trustlines';
-                    break;
                default:
                     countText = 'trustlines';
+                    break;
           }
 
-          if (!emptyMessage) {
-               if (totalCount === 0) {
-                    emptyMessage = ' No trustlines found for this wallet.';
-                    helpHint = ' Start by adding or setting a trustline.';
-               } else if (filteredCount === 0) {
-                    switch (tab) {
-                         case 'removeTrustline':
-                              emptyMessage = ' has no trustlines are currently eligible for removal.';
-                              helpHint = '';
-                              break;
-                         case 'issueCurrency':
-                              emptyMessage = ' You are not an issuer of the selected currency/issuer pair.';
-                              helpHint = '';
-                              break;
-                         case 'clawbackTokens':
-                              emptyMessage = ' No clawback-enabled currencies found.';
-                              helpHint = '';
-                              break;
-                         case 'setTrustline':
-                              emptyMessage = ' No existing trustlines.';
-                              helpHint = ' You can create a new trustline below.';
-                              break;
-                         default:
-                              emptyMessage = ' No matching trustlines found.';
-                    }
-               }
+          // Common logic for empty state (outside the switch)
+          if (totalCount === 0) {
+               emptyMessage = ' No trustlines found for this wallet.';
+               helpHint = '';
           }
 
           const links = totalCount > 0 ? `<a href="${explorerBase}account/${address}/tokens" target="_blank" class="xrpl-win-link">View on explorer</a>` : '';
@@ -179,36 +190,16 @@ export class TrustlineViewModelService {
           return {
                walletName,
                activeTab: tab,
-               trustlineCount: filteredCount,
+               trustlineCount: totalCount,
                totalTrustlines: totalCount,
-               trustlinesToShow: relevant.map((tl: any) => ({
-                    currency: tl.currency,
-                    issuer: tl.issuer,
-                    balance: tl.balance,
-                    limit: tl.limit,
-                    flags: tl.flags || [],
-               })),
+               trustlinesToShow,
                links,
                countText,
                emptyMessage,
                helpHint,
-               isEmpty: filteredCount === 0,
+               isEmpty: totalCount === 0,
                isLoading: false,
           };
-     });
-
-     readonly isIssuerForSelected = computed(() => {
-          const walletAddr = this.walletManager.getSelectedWallet()?.address?.toLowerCase().trim();
-          if (!walletAddr) return false;
-
-          // Get the *currently active* issuer from the dropdown / service
-          // This ensures it's the one the user has selected right now
-          const activeIssuer = this.selectedIssuerItem()?.id?.toLowerCase().trim();
-
-          // Fallback: if no dropdown item selected yet, use the service's raw value
-          const fallbackIssuer = this.currencyStoreService.issuer()?.toLowerCase().trim();
-          const currentIssuer = activeIssuer || fallbackIssuer || '';
-          return walletAddr === currentIssuer;
      });
 
      readonly actionButtonLabel = computed(() => {
@@ -248,88 +239,77 @@ export class TrustlineViewModelService {
      });
 
      readonly displayedBalance = computed(() => {
-  const tab = this.activeTab();
-  const currency = this.currencyStoreService.currency();
-  const issuer = this.currencyStoreService.issuer();
-  const balance = this.currencyStoreService.balance();
-  const existingIOUs = this.trustlineStoreService.existingIOUs();
-  
-  // Enhanced logging
-  console.log(`[displayedBalance] START - Tab: ${tab}, Currency: ${currency}, Issuer: ${issuer}, StoreBalance: ${balance}, IOUs length: ${existingIOUs.length}`);
-  
-  const _forceRecompute = `${currency}|${issuer}|${balance}|${existingIOUs.length}`;
-
-  // Remove tab always shows the real per-trustline balance
-  if (tab === 'removeTrustline') {
-    const trustline = this.foundTrustline();
-    const result = trustline?.balance ?? '0';
-    console.log(`[displayedBalance] REMOVE tab - returning: ${result}`);
-    return result;
-  }
-
-  // Issuer case → use the total obligations from gateway_balances
-  if (this.isIssuerForSelected()) {
-    console.log(`[displayedBalance] ISSUER case - returning store balance: ${balance || '0'}`);
-    return balance || '0';
-  }
-
-  // Normal holder case → use the per-trustline balance from existingIOUs
-  const existing = this.foundTrustline();
-  const result = existing ? existing.balance : '0';
-  console.log(`[displayedBalance] HOLDER case - found trustline: ${!!existing}, balance: ${result}`);
-  return result;
-});
-
-     readonly displayedBalance23 = computed(() => {
           const tab = this.activeTab();
-          
-          // Add explicit dependencies on currency and issuer to trigger recomputation
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
           const balance = this.currencyStoreService.balance();
-          
-          // Force recomputation when these change
-          const _forceRecompute = `${currency}|${issuer}|${balance}`;
-          
-          console.log(`Recalculating balance for ${currency}/${issuer}: balance=${balance}`); // Debug
+          const existingIOUs = this.trustlineStoreService.existingIOUs();
+
+          // Enhanced logging
+          console.log(`[displayedBalance] START - Tab: ${tab}, Currency: ${currency}, Issuer: ${issuer}, StoreBalance: ${balance}, IOUs length: ${existingIOUs.length}`);
+
+          const _forceRecompute = `${currency}|${issuer}|${balance}|${existingIOUs.length}`;
 
           // Remove tab always shows the real per-trustline balance
           if (tab === 'removeTrustline') {
                const trustline = this.foundTrustline();
-               return trustline?.balance ?? '0';
+               const result = trustline?.balance ?? '0';
+               console.log(`[displayedBalance] REMOVE tab - returning: ${result}`);
+               return result;
           }
 
           // Issuer case → use the total obligations from gateway_balances
           if (this.isIssuerForSelected()) {
+               console.log(`[displayedBalance] ISSUER case - returning store balance: ${balance || '0'}`);
                return balance || '0';
           }
 
           // Normal holder case → use the per-trustline balance from existingIOUs
           const existing = this.foundTrustline();
-               return existing ? existing.balance : '0';
-          });
+          const result = existing ? existing.balance : '0';
+          console.log(`[displayedBalance] HOLDER case - found trustline: ${!!existing}, balance: ${result}`);
+          return result;
+     });
 
-          async forceRefreshBalance(): Promise<void> {
-               await this.trustlineCurrencyService.refreshCurrentBalance();
-               // Trigger recomputation
-               this.currencyStoreService.setField('balance', this.currencyStoreService.balance());
+     readonly canRemoveTrustline = computed(() => {
+          const currency = this.currencyStoreService.currency();
+          const issuer = this.currencyStoreService.issuer();
+          const existingIOUs = this.trustlineStoreService.existingIOUs();
+
+          console.log(`[canRemoveTrustline] Checking ${currency}/${issuer}`);
+
+          if (!currency || !issuer) {
+               return { canRemove: false, reasons: ['No currency or issuer selected'] };
           }
 
-          // readonly displayedBalance = computed(() => {
-          //      const tab = this.activeTab();
+          const trustline = existingIOUs.find((tl: any) => tl.currency === currency && tl.issuer === issuer);
 
-          //      // Remove tab always shows the real per-trustline balance
-          //      if (tab === 'removeTrustline') return this.foundTrustline()?.balance ?? '0';
+          if (!trustline) {
+               return { canRemove: false, reasons: ['No trustline exists for this currency/issuer pair'] };
+          }
 
-          //      // Issuer case → use the total obligations from gateway_balances
-          //      if (this.isIssuerForSelected()) return this.currencyStoreService.balance() || '0';
+          const balance = typeof trustline.balance === 'string' ? Number.parseFloat(trustline.balance) : Number(trustline.balance);
+          const limit = typeof trustline.limit === 'string' ? Number.parseFloat(trustline.limit) : Number(trustline.limit);
+          const reasons: string[] = [];
 
-          //      // Normal holder case → use the per-trustline balance from existingIOUs
-          //      const existing = this.foundTrustline();
-          //      return existing ? existing.balance : '0';
-          // });
+          console.log(`trustline.flags?: ${trustline.flags}`);
+          if (balance !== 0) reasons.push(`Balance is ${trustline.balance} (must be 0 to remove)`);
+          // if (limit !== 0) reasons.push(`Limit is ${trustline.limit} (must be 0 to remove)`);
+          if (trustline.flags?.includes('Freeze')) reasons.push(`Trustline is frozen`);
+          // if (trustline.flags?.includes('NoRipple')) reasons.push(`NoRipple flag must be cleared first`);
 
-     // Helper to find current selected trustline (null if none)
+          return {
+               canRemove: reasons.length === 0,
+               reasons,
+          };
+     });
+
+     async forceRefreshBalance(): Promise<void> {
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+          // Trigger recomputation
+          this.currencyStoreService.setField('balance', this.currencyStoreService.balance());
+     }
+
      private readonly foundTrustline = computed(() => {
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
@@ -338,8 +318,22 @@ export class TrustlineViewModelService {
           return this.trustlineStoreService.currentTrustline(currency, issuer);
      });
 
-     // Amount displayed/used in the form field
      readonly formAmount = computed(() => {
+          const tab = this.activeTab();
+          const existing = this.foundTrustline();
+
+          if (tab === 'removeTrustline') {
+               return existing?.limit ?? '0';
+          }
+
+          if (existing) {
+               return existing.limit;
+          }
+
+          return this.currencyStoreService.amount() ?? '';
+     });
+
+     readonly formAmount_234234 = computed(() => {
           const tab = this.activeTab();
 
           if (tab === 'issueCurrency' || tab === 'clawbackTokens') return '';
@@ -372,4 +366,10 @@ export class TrustlineViewModelService {
      readonly clawbackButtonLabel = this.buildTxLabel('Clawback Tokens');
      readonly addCurrencyIssuerButtonLabel = this.buildTxLabel('Add Currency/Issuer');
      readonly removeSelectedIssuerButtonLabel = this.buildTxLabel('Remove Selected Issuer');
+
+     readonly shouldShowAlreadyExistsWarning = computed(() => this.activeTab() === 'setTrustline' && this.trustlineStoreService.trustlineAlreadyExist() && !this.isSelfTrustline());
+
+     readonly shouldShowSelfWarning = computed(() => this.activeTab() === 'setTrustline' && this.isSelfTrustline());
+
+     readonly shouldShowExistsWarning = computed(() => this.activeTab() === 'setTrustline' && this.trustlineStoreService.trustlineAlreadyExist() && !this.isSelfTrustline());
 }

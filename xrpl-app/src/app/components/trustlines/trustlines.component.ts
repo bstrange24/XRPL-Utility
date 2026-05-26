@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, computed, effect, signal } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject, ChangeDetectionStrategy, computed, effect, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -47,7 +47,6 @@ import { RightPanelService } from '../../services/utils/right-panel/right-panel.
 import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { TrustlinesSummaryComponent } from './ui-components/trustline-summary/trustlines-summary.component';
 import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
-import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
      selector: 'app-trustlines',
@@ -57,7 +56,7 @@ import { ChangeDetectorRef } from '@angular/core';
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class TrustlinesComponent extends WalletDestinationBase implements OnInit {
+export class TrustlinesComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      private readonly currencyDebouncer = new Subject<any>();
      private readonly issuerDebouncer = new Subject<any>();
      public readonly connectionGuard = inject(ConnectionGuardService);
@@ -78,179 +77,350 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      readonly setFlags: Record<string, any> = SET_FLAGS;
      readonly clearFlags: Record<string, any> = CLEAR_FLAGS;
      private isSwitchingWallet = false;
+     activeTabForRequirements = computed(() => this.trustlineViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
+     private readonly currentWalletAddress = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
 
-          this.setupDebouncers();
+          effect(() => {
+               const ious = this.trustlineStoreService.existingIOUs();
+               console.log(`[Component] existingIOUs changed, count: ${ious.length}`);
+               if (ious.length > 0) {
+                    console.log(`[Component] First IOU:`, ious[0]);
+               }
+          });
      }
 
-     private async setupDebouncers() {
+     ngOnInit(): void {
+          this.applyTabFromQueryParam(this.route, TRUSTLINE_TAB, tab => this.setTab(tab));
+          this.trustlineCurrencyService.load();
+          this.trustlineCurrencyService.preferXrpAsDefault.set(false);
+          this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(false);
+          this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
+          this.transactionDropdownService.loadCustomDestinations();
+          this.setRightPanel();
+          this.setupDebouncers();
+
+          // DO NOT call setDefaultCurrencyAndIssuer here - let the wallet change effect handle it
+          // But only for non-issuer wallets
+          setTimeout(() => {
+               const wallet = this.currentWallet()?.classicAddress;
+               const existingIOUs = this.trustlineStoreService.existingIOUs();
+               const isIssuerWallet = existingIOUs.some((tl: any) => tl.issuer === wallet);
+
+               if (!isIssuerWallet) {
+                    this.setDefaultCurrencyAndIssuer();
+               }
+          }, 500);
+     }
+
+     private setupDebouncers() {
           this.currencyDebouncer.pipe(debounceTime(160), distinctUntilChanged()).subscribe(async item => {
                this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
                this.syncAfterSelection(false); // light sync
 
-                   await this.trustlineCurrencyService.refreshCurrentBalance();
+               await this.trustlineCurrencyService.refreshCurrentBalance();
           });
 
           this.issuerDebouncer.pipe(debounceTime(160), distinctUntilChanged()).subscribe(async item => {
                this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? '');
                this.syncAfterSelection(false);
-                   await this.trustlineCurrencyService.refreshCurrentBalance();
+               await this.trustlineCurrencyService.refreshCurrentBalance();
           });
      }
 
-     activeTabForRequirements = computed(() => this.trustlineViewModelService.activeTab());
-     readonly summaryExpanded = signal<boolean>(false);
-       private currentWalletAddress = signal<string>('');
+     private setDefaultCurrencyAndIssuer() {
+          const currentWallet = this.currentWallet()?.classicAddress;
+          const currentTab = this.trustlineViewModelService.activeTab();
+          const existingIOUs = this.trustlineStoreService.existingIOUs();
 
+          // CRITICAL: For Set tab, if this wallet has ANY trustlines where it's the issuer, skip entirely
+          // Because loadWalletDataPreservingSelection already handled it
+          const isIssuerWallet = existingIOUs.some((tl: any) => tl.issuer === currentWallet);
 
-     ngOnInit(): void {
-    this.applyTabFromQueryParam(this.route, TRUSTLINE_TAB, tab => this.setTab(tab));
-    this.trustlineCurrencyService.load();
-    this.trustlineCurrencyService.preferXrpAsDefault.set(false);
-    this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(false);
-    this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
-    this.transactionDropdownService.loadCustomDestinations();
-    this.setRightPanel();
-  }
+          if (currentTab === 'setTrustline' && isIssuerWallet) {
+               console.log(`[setDefaultCurrencyAndIssuer] SKIP - Wallet is an issuer on Set tab`);
+               return;
+          }
 
-  // Effect to watch for wallet changes
-  private readonly walletChangeEffect = effect(() => {
-  const wallet = this.currentWallet();
-  const newAddress = wallet?.classicAddress || wallet?.address || '';
-  const oldAddress = this.currentWalletAddress();
-  
-  console.log(`[walletChangeEffect] ===== WALLET CHANGE DETECTED =====`);
-  console.log(`[walletChangeEffect] Old: ${oldAddress?.slice(0,8)}..., New: ${newAddress?.slice(0,8)}...`);
-  
-  if (newAddress && newAddress !== oldAddress) {
-    console.log(`[walletChangeEffect] Processing wallet change...`);
-    this.currentWalletAddress.set(newAddress);
-    
-    console.log(`[walletChangeEffect] Clearing trustline data...`);
-    this.clearTrustlineData();
-    
-    console.log(`[walletChangeEffect] Loading new wallet data...`);
-    this.loadWalletDataPreservingSelection();
-  } else {
-    console.log(`[walletChangeEffect] No change or invalid address`);
-  }
-});
+          // Also skip if we already have a valid selection and this is not the initial load
+          const currentCurrency = this.currencyStoreService.currency();
+          const currentIssuer = this.currencyStoreService.issuer();
 
-    private clearTrustlineData() {
-  console.log(`[clearTrustlineData] START - Clearing data for wallet change`);
-  console.log(`[clearTrustlineData] Current balance before clear: ${this.currencyStoreService.balance()}`);
-  
-  this.trustlineStoreService.setField('existingIOUs', []);
-  this.trustlineStoreService.setField('trustlineAlreadyExist', false);
-  this.trustlineStoreService.setField('isLoaded', false);
-  this.trustlineStoreService.setField('isLoading', true);
-  this.currencyStoreService.setField('balance', '0');
-  
-  console.log(`[clearTrustlineData] Balance set to 0, isLoading set to true`);
-  this.cdr?.detectChanges();
-}
+          if (currentCurrency && currentIssuer && currentIssuer !== currentWallet) {
+               console.log(`[setDefaultCurrencyAndIssuer] SKIP - Valid selection already exists: ${currentCurrency}/${currentIssuer?.slice(0, 8)}...`);
+               return;
+          }
 
+          console.log(`[setDefaultCurrencyAndIssuer] Running auto-selection...`);
 
-private async loadWalletDataPreservingSelection() {
-  const wallet = this.currentWallet();
-  if (!wallet?.classicAddress) {
-    console.log(`[loadWalletDataPreservingSelection] No wallet address, returning`);
-    return;
-  }
-  
-  const currentCurrency = this.currencyStoreService.currency();
-  const currentIssuer = this.currencyStoreService.issuer();
-  
-  console.log(`[loadWalletDataPreservingSelection] ===== LOADING DATA =====`);
-  console.log(`[loadWalletDataPreservingSelection] Wallet: ${wallet.classicAddress.slice(0,8)}...`);
-  console.log(`[loadWalletDataPreservingSelection] Preserving selection: ${currentCurrency}/${currentIssuer?.slice(0,8)}...`);
-  
-  try {
-    console.log(`[loadWalletDataPreservingSelection] Fetching fresh environment...`);
-    const env = await this.txEnvironmentService.refreshEnvironment({
-      includeAccountInfo: true,
-      includeAccountObject: true,
-      includeTrustlines: true,
-      includeGatewayBalance: true,
-      forceRefresh: true,
-    });
-    console.log(`[loadWalletDataPreservingSelection] Environment fetched successfully`);
-    
-    console.log(`[loadWalletDataPreservingSelection] Getting existing IOUs...`);
-    const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(
-      env.accountObjects!, 
-      wallet.classicAddress
-    );
-    console.log(`[loadWalletDataPreservingSelection] Found ${existingIOUs.length} trustlines`);
-    
-    this.trustlineStoreService.setField('existingIOUs', existingIOUs);
-    
-    if (currentCurrency && currentIssuer) {
-      const selectionExists = existingIOUs.some(
-        (tl: any) => tl.currency === currentCurrency && tl.issuer === currentIssuer
-      );
-      console.log(`[loadWalletDataPreservingSelection] Selection exists: ${selectionExists}`);
-      
-      if (!selectionExists) {
-        console.log(`[loadWalletDataPreservingSelection] Selection doesn't exist, picking first available`);
-        this.selectFirstAvailableCurrency(existingIOUs);
-      } else {
-        console.log(`[loadWalletDataPreservingSelection] Keeping existing selection`);
-      }
-    } else {
-      console.log(`[loadWalletDataPreservingSelection] No selection, picking first available`);
-      this.selectFirstAvailableCurrency(existingIOUs);
-    }
-    
-    const trustLineExists = this.checkTrustlineExists(existingIOUs);
-    console.log(`[loadWalletDataPreservingSelection] Trustline exists: ${trustLineExists}`);
-    this.trustlineStoreService.setField('trustlineAlreadyExist', trustLineExists);
-    
-    console.log(`[loadWalletDataPreservingSelection] Refreshing balance from env...`);
-    await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
-    
-    this.trustlineStoreService.setField('isLoaded', true);
-    console.log(`[loadWalletDataPreservingSelection] ===== LOAD COMPLETE =====`);
-    
-  } catch (error) {
-    console.error('[loadWalletDataPreservingSelection] ERROR:', error);
-    this.toastService.error('Failed to load wallet data', AppConstants.TOAST.ERROR);
-  } finally {
-    this.trustlineStoreService.setField('isLoading', false);
-    console.log(`[loadWalletDataPreservingSelection] isLoading set to false`);
-  }
-}
+          // Wait for trustlines to load
+          setTimeout(() => {
+               const existingIOUsNow = this.trustlineStoreService.existingIOUs();
+               const currencies = this.trustlineCurrencyService.currencies();
 
+               if (existingIOUsNow.length > 0) {
+                    const nonSelfTrustline = existingIOUsNow.find((tl: any) => tl.issuer !== currentWallet);
+                    if (nonSelfTrustline) {
+                         console.log(`[setDefaultCurrencyAndIssuer] Selected non-self trustline: ${nonSelfTrustline.currency}/${nonSelfTrustline.issuer?.slice(0, 8)}...`);
+                         this.currencyStoreService.setCurrency(nonSelfTrustline.currency);
+                         this.currencyStoreService.setIssuer(nonSelfTrustline.issuer);
+                    } else if (existingIOUsNow.length > 0) {
+                         const first = existingIOUsNow[0];
+                         console.log(`[setDefaultCurrencyAndIssuer] Selected first trustline: ${first.currency}/${first.issuer?.slice(0, 8)}...`);
+                         this.currencyStoreService.setCurrency(first.currency);
+                         this.currencyStoreService.setIssuer(first.issuer);
+                    }
+               } else if (currencies.length > 0) {
+                    // Find a currency where this wallet is NOT the issuer
+                    for (const currency of currencies) {
+                         const issuers = this.trustlineCurrencyService.getIssuersForCurrency(currency);
+                         const nonSelfIssuer = issuers.find(issuer => issuer !== currentWallet);
+                         if (nonSelfIssuer) {
+                              console.log(`[setDefaultCurrencyAndIssuer] Selected currency: ${currency} with issuer: ${nonSelfIssuer?.slice(0, 8)}...`);
+                              this.currencyStoreService.setCurrency(currency);
+                              this.currencyStoreService.setIssuer(nonSelfIssuer);
+                              return;
+                         }
+                    }
 
+                    // Fallback to first available
+                    const firstCurrency = currencies[0];
+                    const issuers = this.trustlineCurrencyService.getIssuersForCurrency(firstCurrency);
+                    if (issuers.length > 0) {
+                         console.log(`[setDefaultCurrencyAndIssuer] Fallback to first currency: ${firstCurrency} with issuer: ${issuers[0]?.slice(0, 8)}...`);
+                         this.currencyStoreService.setCurrency(firstCurrency);
+                         this.currencyStoreService.setIssuer(issuers[0]);
+                    }
+               }
+          }, 100);
+     }
 
-  private selectFirstAvailableCurrency(existingIOUs: any[]) {
-    if (existingIOUs.length > 0) {
-      const first = existingIOUs[0];
-      this.currencyStoreService.setCurrency(first.currency);
-      this.currencyStoreService.setIssuer(first.issuer);
-    } else {
-      // No trustlines, try to select XRP or first available from dropdown
-      const currencies = this.trustlineCurrencyService.currencies();
-      if (currencies.length > 0) {
-        this.trustlineCurrencyService.selectCurrency(currencies[0]);
-      }
-    }
-  }
+     // Effect to watch for wallet changes
+     private readonly walletChangeEffect = effect(() => {
+          const wallet = this.currentWallet();
+          const newAddress = wallet?.classicAddress || wallet?.address || '';
+          const oldAddress = this.currentWalletAddress();
 
-  private checkTrustlineExists(existingIOUs: any[]): boolean {
-    const currency = this.currencyStoreService.currency();
-    const issuer = this.currencyStoreService.issuer();
-    
-    if (!currency || !issuer) return false;
-    
-    return existingIOUs.some(
-      (tl: any) => tl.currency === currency && tl.issuer === issuer
-    );
-  }
+          console.log(`[walletChangeEffect] ===== WALLET CHANGE DETECTED =====`);
+          console.log(`[walletChangeEffect] Old: ${oldAddress?.slice(0, 8)}..., New: ${newAddress?.slice(0, 8)}...`);
+
+          if (newAddress && newAddress !== oldAddress) {
+               console.log(`[walletChangeEffect] Processing wallet change...`);
+               this.currentWalletAddress.set(newAddress);
+
+               console.log(`[walletChangeEffect] Clearing trustline data...`);
+               this.clearTrustlineData();
+
+               console.log(`[walletChangeEffect] Loading new wallet data...`);
+               this.loadWalletDataPreservingSelection();
+          } else {
+               console.log(`[walletChangeEffect] No change or invalid address`);
+          }
+     });
+
+     private clearTrustlineData() {
+          console.log(`[clearTrustlineData] START - Clearing data for wallet change`);
+          console.log(`[clearTrustlineData] Current balance before clear: ${this.currencyStoreService.balance()}`);
+
+          this.trustlineStoreService.setField('existingIOUs', []);
+          this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+          this.trustlineStoreService.setField('isLoaded', false);
+          this.trustlineStoreService.setField('isLoading', true);
+          this.currencyStoreService.setField('balance', '0');
+
+          console.log(`[clearTrustlineData] Balance set to 0, isLoading set to true`);
+          this.cdr?.detectChanges();
+     }
+
+     private async loadWalletDataPreservingSelection() {
+          const wallet = this.currentWallet();
+          if (!wallet?.classicAddress) {
+               console.log(`[loadWalletDataPreservingSelection] No wallet address, returning`);
+               return;
+          }
+
+          const savedCurrency = this.currencyStoreService.currency();
+          const savedIssuer = this.currencyStoreService.issuer();
+          const currentTab = this.trustlineViewModelService.activeTab();
+
+          console.log(`[loadWalletDataPreservingSelection] ===== LOADING DATA =====`);
+          console.log(`[loadWalletDataPreservingSelection] Wallet: ${wallet.classicAddress.slice(0, 8)}...`);
+          console.log(`[loadWalletDataPreservingSelection] Current Tab: ${currentTab}`);
+          console.log(`[loadWalletDataPreservingSelection] Saved selection: ${savedCurrency}/${savedIssuer?.slice(0, 8)}...`);
+
+          try {
+               const env = await this.txEnvironmentService.refreshEnvironment({
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeTrustlines: true,
+                    includeGatewayBalance: true,
+                    forceRefresh: true,
+               });
+
+               const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(env.accountObjects!, wallet.classicAddress);
+               console.log(`[loadWalletDataPreservingSelection] Found ${existingIOUs.length} trustlines`);
+               this.trustlineStoreService.setField('existingIOUs', existingIOUs);
+
+               let selectionRestored = false;
+
+               // First, try to restore saved selection
+               if (savedCurrency && savedIssuer) {
+                    const selectionExists = existingIOUs.some((tl: any) => tl.currency === savedCurrency && tl.issuer === savedIssuer);
+                    if (selectionExists) {
+                         console.log(`[loadWalletDataPreservingSelection] ✓ Restoring saved selection: ${savedCurrency}/${savedIssuer?.slice(0, 8)}...`);
+                         this.currencyStoreService.setCurrency(savedCurrency);
+                         this.currencyStoreService.setIssuer(savedIssuer);
+                         selectionRestored = true;
+                    }
+               }
+
+               if (!selectionRestored) {
+                    // Check if this wallet is an issuer for any currency (has obligations in gateway_balances)
+                    const gatewayBalance = env.gatewayBalanceObject?.result;
+                    const isIssuerForCurrencies: string[] = [];
+
+                    if (gatewayBalance?.obligations) {
+                         // Get all currencies where this wallet has obligations (meaning it's an issuer)
+                         Object.keys(gatewayBalance.obligations).forEach(currency => {
+                              isIssuerForCurrencies.push(currency);
+                         });
+                         console.log(`[loadWalletDataPreservingSelection] This wallet is an issuer for currencies:`, isIssuerForCurrencies);
+                    }
+
+                    // For Set Trustline tab on an issuer wallet, we want to select self to show warning
+                    if (currentTab === 'setTrustline' && isIssuerForCurrencies.length > 0) {
+                         const currencyToSelect = isIssuerForCurrencies[0];
+                         const selfAddress = wallet.classicAddress;
+
+                         console.log(`[loadWalletDataPreservingSelection] ✓ Set Tab + Issuer Wallet - Selecting self issuer for ${currencyToSelect}`);
+
+                         this.currencyStoreService.setCurrency(currencyToSelect);
+
+                         // CRITICAL: Small async delay + force refresh
+                         setTimeout(() => {
+                              this.currencyStoreService.setIssuer(selfAddress);
+
+                              // Force Angular + signals to re-evaluate everything
+                              this.cdr.detectChanges();
+
+                              // Extra push to make issuerItems recompute
+                              this.trustlineCurrencyService.forceIssuerRefresh?.(); // we'll add this below
+                         }, 50);
+
+                         selectionRestored = true;
+                    }
+
+                    // If not restored, try to find a trustline where this wallet is NOT the issuer (holder)
+                    if (!selectionRestored) {
+                         const nonSelfTrustline = existingIOUs.find((tl: any) => tl.issuer !== wallet.classicAddress);
+                         if (nonSelfTrustline) {
+                              console.log(`[loadWalletDataPreservingSelection] ✓ Using non-self trustline: ${nonSelfTrustline.currency}/${nonSelfTrustline.issuer?.slice(0, 8)}...`);
+                              this.currencyStoreService.setCurrency(nonSelfTrustline.currency);
+                              this.currencyStoreService.setIssuer(nonSelfTrustline.issuer);
+                              selectionRestored = true;
+                         } else if (existingIOUs.length > 0) {
+                              const first = existingIOUs[0];
+                              console.log(`[loadWalletDataPreservingSelection] ✓ Using first trustline: ${first.currency}/${first.issuer?.slice(0, 8)}...`);
+                              this.currencyStoreService.setCurrency(first.currency);
+                              this.currencyStoreService.setIssuer(first.issuer);
+                              selectionRestored = true;
+                         }
+                    }
+
+                    // If no trustlines, try to find a good currency/issuer pair
+                    if (!selectionRestored) {
+                         console.log(`[loadWalletDataPreservingSelection] No trustlines, finding best currency/issuer pair`);
+                         const currenciesList = this.trustlineCurrencyService.currencies();
+
+                         // For Set tab on an issuer wallet (even if we couldn't detect from gateway_balances)
+                         // Check if this wallet is in the issuers list for any currency
+                         let foundSelfAsIssuer = false;
+
+                         for (const currency of currenciesList) {
+                              const issuers = this.trustlineCurrencyService.getIssuersForCurrency(currency);
+                              if (issuers.includes(wallet.classicAddress)) {
+                                   console.log(`[loadWalletDataPreservingSelection] ✓ Set Tab - Found ${currency} where this wallet is an issuer, selecting self to show warning`);
+                                   this.currencyStoreService.setCurrency(currency);
+                                   this.currencyStoreService.setIssuer(wallet.classicAddress);
+                                   this.debugSelection('After setIssuer');
+                                   selectionRestored = true;
+                                   foundSelfAsIssuer = true;
+                                   break;
+                              }
+                         }
+
+                         // If not restored and not a self-issuer, find a non-self issuer
+                         if (!selectionRestored) {
+                              for (const currency of currenciesList) {
+                                   const issuers = this.trustlineCurrencyService.getIssuersForCurrency(currency);
+                                   const nonSelfIssuer = issuers.find(issuer => issuer !== wallet.classicAddress);
+                                   if (nonSelfIssuer) {
+                                        console.log(`[loadWalletDataPreservingSelection] ✓ Using currency ${currency} with non-self issuer ${nonSelfIssuer?.slice(0, 8)}...`);
+                                        this.currencyStoreService.setCurrency(currency);
+                                        this.currencyStoreService.setIssuer(nonSelfIssuer);
+                                        selectionRestored = true;
+                                        break;
+                                   }
+                              }
+                         }
+
+                         // Ultimate fallback
+                         if (!selectionRestored && currenciesList.length > 0) {
+                              console.log(`[loadWalletDataPreservingSelection] ⚠ Ultimate fallback - selecting first currency`);
+                              this.trustlineCurrencyService.selectCurrency(currenciesList[0]);
+                         }
+                    }
+               }
+
+               const selectedCurrency = this.currencyStoreService.currency();
+               const selectedIssuer = this.currencyStoreService.issuer();
+
+               // Check if trustline exists (for holders) OR if this is a self-selection for issuer
+               let trustLineExists = false;
+
+               if (selectedIssuer === wallet.classicAddress) {
+                    // If selected issuer is self, this is for showing the warning, not an actual trustline
+                    trustLineExists = false;
+               } else {
+                    trustLineExists = existingIOUs.some((tl: any) => tl.currency === selectedCurrency && tl.issuer === selectedIssuer);
+               }
+
+               console.log(`[loadWalletDataPreservingSelection] Final selection: ${selectedCurrency}/${selectedIssuer?.slice(0, 8)}...`);
+               console.log(`[loadWalletDataPreservingSelection] Trustline exists: ${trustLineExists}`);
+               console.log(`[loadWalletDataPreservingSelection] Is Self: ${selectedIssuer === wallet.classicAddress}`);
+
+               this.trustlineStoreService.setField('trustlineAlreadyExist', trustLineExists);
+
+               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+
+               // Force flag + limit sync
+               await this.trustlineUtilService.onCurrencyIssuerChange();
+               this.cdr.detectChanges();
+
+               this.trustlineStoreService.setField('isLoaded', true);
+
+               if (!selectionRestored && !this.currencyStoreService.currency()) {
+                    this.setDefaultCurrencyAndIssuer();
+               }
+               console.log(`[loadWalletDataPreservingSelection] ===== LOAD COMPLETE =====`);
+          } catch (error) {
+               console.error('[loadWalletDataPreservingSelection] ERROR:', error);
+               this.toastService.error('Failed to load wallet data', AppConstants.TOAST.ERROR);
+          } finally {
+               this.trustlineStoreService.setField('isLoading', false);
+          }
+     }
+
+     private debugSelection(step: string) {
+          console.log(`[DEBUG ${step}] Currency: ${this.currencyStoreService.currency()}, Issuer: ${this.currencyStoreService.issuer()?.slice(0, 8)}...`);
+          console.log(`[DEBUG ${step}] SelectedCurrencyItem:`, this.trustlineViewModelService.selectedCurrencyItem());
+          console.log(`[DEBUG ${step}] SelectedIssuerItem:`, this.trustlineViewModelService.selectedIssuerItem());
+     }
 
      ngOnDestroy(): void {
           this.rightPanelService.clearPanel();
@@ -273,13 +443,16 @@ private async loadWalletDataPreservingSelection() {
 
           switch (tab) {
                case 'setTrustline':
-                    return !this.trustlineStoreService.trustlineAlreadyExist();
+                    // Can't set if trustline exists OR if trying to set trustline to self
+                    // return !this.trustlineStoreService.trustlineAlreadyExist() && !this.trustlineViewModelService.isSelfTrustline();
+                    return !this.trustlineViewModelService.shouldShowSelfWarning() && !this.trustlineViewModelService.shouldShowExistsWarning();
 
                case 'removeTrustline':
                     return this.trustlineStoreService.removeTrustlineAvailable();
+               // return true;
 
                case 'issueCurrency':
-                    return true; // let child component + connection guard handle it
+                    return true;
 
                case 'clawbackTokens':
                     return this.trustlineViewModelService.isIssuerForSelected();
@@ -295,68 +468,73 @@ private async loadWalletDataPreservingSelection() {
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
-    if (this.isSwitchingWallet) return;
-    this.isSwitchingWallet = true;
-    
-    console.log('Wallet changed, reloading...');
-    
-    // Save current currency/issuer before clearing
-    const savedCurrency = this.currencyStoreService.currency();
-    const savedIssuer = this.currencyStoreService.issuer();
-    
-    // COMPLETELY reset all state
-    this.trustlineStoreService.reset();
-    this.currencyStoreService.reset();
-    this.rightPanelService.resetFilters();
-    this.xrplTxOptionsStore.reset();
-    
-    // Force fresh load
-    this.isSummaryLoading.set(true);
-    
-    try {
-      // Load new wallet data
-      await this.getTrustlinesForAccount(true);
-      
-      // Restore the currency/issuer selection if they exist for this wallet
-      if (savedCurrency && savedIssuer) {
-        const existingIOUs = this.trustlineStoreService.existingIOUs();
-        const stillExists = existingIOUs.some(
-          (tl: any) => tl.currency === savedCurrency && tl.issuer === savedIssuer
-        );
-        
-        if (stillExists) {
-          this.currencyStoreService.setCurrency(savedCurrency);
-          this.currencyStoreService.setIssuer(savedIssuer);
-        } else if (existingIOUs.length > 0) {
-          // Pick the first available
-          this.currencyStoreService.setCurrency(existingIOUs[0].currency);
-          this.currencyStoreService.setIssuer(existingIOUs[0].issuer);
-        }
-      }
-      
-      // Force balance refresh
-      await this.trustlineCurrencyService.refreshCurrentBalance();
-      
-    } finally {
-      this.isSummaryLoading.set(false);
-      this.isSwitchingWallet = false;
-    }
-  }
+          if (this.isSwitchingWallet) return;
+          this.isSwitchingWallet = true;
+
+          console.log('Wallet changed, reloading...');
+
+          // Save current currency/issuer before clearing
+          const savedCurrency = this.currencyStoreService.currency();
+          const savedIssuer = this.currencyStoreService.issuer();
+
+          // COMPLETELY reset all state
+          this.trustlineStoreService.reset();
+          this.currencyStoreService.reset();
+          this.rightPanelService.resetFilters();
+          this.xrplTxOptionsStore.reset();
+
+          // Force fresh load
+          this.isSummaryLoading.set(true);
+
+          try {
+               // Load new wallet data
+               await this.getTrustlinesForAccount(true);
+
+               await this.trustlineUtilService.onCurrencyIssuerChange();
+
+               // Restore the currency/issuer selection if they exist for this wallet
+               if (savedCurrency && savedIssuer) {
+                    const existingIOUs = this.trustlineStoreService.existingIOUs();
+                    const stillExists = existingIOUs.some((tl: any) => tl.currency === savedCurrency && tl.issuer === savedIssuer);
+
+                    if (stillExists) {
+                         this.currencyStoreService.setCurrency(savedCurrency);
+                         this.currencyStoreService.setIssuer(savedIssuer);
+                    } else if (existingIOUs.length > 0) {
+                         // Pick the first available
+                         this.currencyStoreService.setCurrency(existingIOUs[0].currency);
+                         this.currencyStoreService.setIssuer(existingIOUs[0].issuer);
+                    }
+               }
+
+               // Force balance refresh
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+          } finally {
+               this.isSummaryLoading.set(false);
+               this.isSwitchingWallet = false;
+          }
+     }
 
      async onCurrencyChange(item: any) {
-          // Clear debouncer and handle immediately
+          const stack = new Error().stack;
+          console.log(`[onCurrencyChange] Called with:`, item);
+          console.log(`[onCurrencyChange] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyDebouncer.next(item);
-          await this.updateBalanceForCurrentPair();
-          // Force immediate sync for balance
-          await this.syncAfterSelection(true);
+          await new Promise(resolve => setTimeout(resolve, 50));
+          await this.trustlineUtilService.onCurrencyIssuerChange();
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+          this.cdr?.detectChanges();
      }
 
      async onIssuerChange(item: any) {
-          // Clear debouncer and handle immediately
+          const stack = new Error().stack;
+          console.log(`[onIssuerChange] Called with:`, item?.id?.slice(0, 8));
+          console.log(`[onIssuerChange] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.issuerDebouncer.next(item);
-          await this.updateBalanceForCurrentPair();
-          // Force immediate sync for balance
-          await this.syncAfterSelection(true);
+          await new Promise(resolve => setTimeout(resolve, 50));
+          await this.trustlineUtilService.onCurrencyIssuerChange();
+          await this.trustlineCurrencyService.refreshCurrentBalance();
+          this.cdr?.detectChanges();
      }
 
      async onCurrencySelected(item: SelectItem | null) {
@@ -413,7 +591,7 @@ private async loadWalletDataPreservingSelection() {
 
      async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
           this.isSummaryLoading.set(true);
-  
+
           await this.measure('getTrustlinesForAccount', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -426,40 +604,7 @@ private async loadWalletDataPreservingSelection() {
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
-                    
-                    if (!env) throw new Error('Unable to get environment.');
 
-                    this.refreshAccountObject(env);
-                    this.updateSharedObjectsStore(env);
-                    await this.trustlineUtilService.loadTrustlines(forceRefresh);
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-               } catch (error: any) {
-                    console.error('Failed to load trustlines:', error);
-                    this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
-               }
-          });
-     }
-
-     async getTrustlinesForAccount1(forceRefresh = false): Promise<void> {
-          const address = this.walletManager.selectedWallet()?.classicAddress ?? '';
-          this.isSummaryLoading.set(true);
-          if (!forceRefresh) this.tryPrePopulateFromCache(address);
-          await this.measure('getTrustlinesForAccount', true, async () => {
-               this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
-               this.xrplTxOptionsStore.reset();
-
-               // Keep existingIOUs intact for stale-while-revalidate; only reset loading/error state.
-               this.trustlineStoreService.setField('isLoading', true);
-               this.trustlineStoreService.setField('error', '');
-
-               if (!this.walletManagerService.ensureWalletSelected()) return;
-
-               try {
-                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.refreshAccountObject(env);
@@ -625,7 +770,6 @@ private async loadWalletDataPreservingSelection() {
           this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
      }
 
-     /** Stale-while-revalidate: populate existingIOUs from cached account objects instantly. */
      protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
           this.trustlineStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(accountObjects, address));
      }
@@ -644,22 +788,6 @@ private async loadWalletDataPreservingSelection() {
 
      async refreshBalance() {
           await this.trustlineViewModelService.forceRefreshBalance();
-     }
-
-     private async updateBalanceForCurrentPair() {
-          const currency = this.currencyStoreService.currency();
-          const issuer = this.currencyStoreService.issuer();
-          
-          if (!currency || !issuer) {
-               this.currencyStoreService.setField('balance', '0');
-               return;
-          }
-     
-          // Direct call to refresh balance
-          await this.trustlineCurrencyService.refreshCurrentBalance();
-          
-          // Or reload trustlines which will also update balance
-          await this.trustlineUtilService.loadTrustlines(false);
      }
 
      private setRightPanel(): void {
@@ -687,7 +815,19 @@ private async loadWalletDataPreservingSelection() {
                const tab = this.trustlineViewModelService.activeTab();
 
                if (tab === 'setTrustline') {
-                    return 'Trustline already exists for this pair';
+                    if (this.trustlineViewModelService.isSelfTrustline()) {
+                         return 'Cannot set trustline to yourself';
+                    }
+                    if (this.trustlineStoreService.trustlineAlreadyExist()) {
+                         return 'Trustline already exists for this pair';
+                    }
+                    if (this.trustlineViewModelService.shouldShowSelfWarning()) {
+                         return 'You cannot set a trustline to yourself. Please select a different issuer.';
+                    }
+                    if (this.trustlineViewModelService.shouldShowExistsWarning()) {
+                         return 'Trustline already exists for this currency/issuer pair.';
+                    }
+                    return 'Cannot set trustline';
                }
                if (tab === 'removeTrustline') {
                     return 'Cannot remove trustline (balance > 0 or other restrictions)';
@@ -716,16 +856,4 @@ private async loadWalletDataPreservingSelection() {
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
      }
-
-     debugState() {
-  console.log('=== DEBUG STATE ===');
-  console.log('Current wallet:', this.currentWallet()?.classicAddress?.slice(0,8));
-  console.log('Currency:', this.currencyStoreService.currency());
-  console.log('Issuer:', this.currencyStoreService.issuer()?.slice(0,8));
-  console.log('Balance in store:', this.currencyStoreService.balance());
-  console.log('Existing IOUs:', this.trustlineStoreService.existingIOUs().length);
-  console.log('IsLoading:', this.trustlineStoreService.isLoading());
-  console.log('IsLoaded:', this.trustlineStoreService.isLoaded());
-  console.log('Displayed balance:', this.trustlineViewModelService.displayedBalance());
-}
 }

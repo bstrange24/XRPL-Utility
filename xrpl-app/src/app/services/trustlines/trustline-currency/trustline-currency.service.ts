@@ -9,6 +9,7 @@ import { TrustlineFlagKey } from '../../../components/trustlines/constants/trust
 import { IssuerItem } from '../../../models/interface-items.model';
 import { CLEAR_FLAGS, SET_FLAGS, TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import Decimal from 'decimal.js';
 
 @Injectable({ providedIn: 'root' })
 export class TrustlineCurrencyService extends PerformanceBaseComponent {
@@ -26,17 +27,15 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      public readonly addMptInCurrencyDropdown = signal<boolean>(false);
      public readonly addXrpInCurrencyDropdown = signal<boolean>(false);
 
-     flags = signal<Record<TrustlineFlagKey, boolean>>({
-          tfSetfAuth: false,
-          tfSetNoRipple: false,
-          tfClearNoRipple: false,
-          tfSetFreeze: false,
-          tfClearFreeze: false,
-          tfSetDeepFreeze: false,
-          tfClearDeepFreeze: false,
-     });
-     totalFlagsValue = signal<number>(0);
-     totalFlagsHex = signal<string>('0x0');
+     public readonly trustlineFlags: Record<string, boolean> = { ...TRUSTLINE.FLAGS };
+     public readonly trustlineFlagList = TRUSTLINE.FLAG_LIST;
+     public readonly flagMap = TRUSTLINE.FLAG_MAP;
+     public readonly ledgerFlagMap = TRUSTLINE.LEDGER_FLAG_MAP;
+     public readonly setFlags = SET_FLAGS;
+     public readonly clearFlags = CLEAR_FLAGS;
+
+     // Force issuerItems to recompute (especially for self-issuer)
+     private readonly issuerRefreshTrigger = signal(0);
 
      private readonly flagValues = {
           tfSetfAuth: 0x00010000,
@@ -48,12 +47,17 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           tfClearDeepFreeze: 0x00800000,
      };
 
-     public readonly trustlineFlags: Record<string, boolean> = { ...TRUSTLINE.FLAGS };
-     public readonly trustlineFlagList = TRUSTLINE.FLAG_LIST;
-     public readonly flagMap = TRUSTLINE.FLAG_MAP;
-     public readonly ledgerFlagMap = TRUSTLINE.LEDGER_FLAG_MAP;
-     public readonly setFlags = SET_FLAGS;
-     public readonly clearFlags = CLEAR_FLAGS;
+     flags = signal<Record<TrustlineFlagKey, boolean>>({
+          tfSetfAuth: false,
+          tfSetNoRipple: false,
+          tfClearNoRipple: false,
+          tfSetFreeze: false,
+          tfClearFreeze: false,
+          tfSetDeepFreeze: false,
+          tfClearDeepFreeze: false,
+     });
+     totalFlagsValue = signal<number>(0);
+     totalFlagsHex = signal<string>('0x0');
 
      readonly currencies = computed(() => {
           const map = this.knownIssuers();
@@ -98,14 +102,32 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      });
 
      readonly issuerItems = computed(() => {
-          const active = this.currencyStore.issuer();
+          this.issuerRefreshTrigger(); // ← force recompute
 
-          return this.issuers().map(i => ({
+          const currency = this.currencyStore.currency();
+          const activeIssuer = this.currencyStore.issuer();
+          const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+
+          let items: any[] = this.issuers().map(i => ({
                id: i.address,
                display: i.name,
                secondary: i.address,
-               isCurrentAccount: i.address === active,
+               isCurrentAccount: i.address === activeIssuer,
           }));
+
+          if (currency && currentWallet && this.getIssuersForCurrency(currency).includes(currentWallet)) {
+               const alreadyExists = items.some(item => item.id === currentWallet);
+               if (!alreadyExists) {
+                    items.unshift({
+                         id: currentWallet,
+                         display: 'Self (Issuer)',
+                         secondary: currentWallet.slice(0, 8) + '...' + currentWallet.slice(-4),
+                         isCurrentAccount: true,
+                    });
+               }
+          }
+
+          return items;
      });
 
      selectedIssuerItem = computed(() => {
@@ -115,7 +137,10 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      });
 
      selectCurrency(item: any) {
-          const currency = item?.id ?? item; // ← fixed
+          const currency = item?.id ?? item;
+          const stack = new Error().stack;
+          console.log(`[TrustlineCurrencyService.selectCurrency] Called with: ${currency}`);
+          console.log(`[TrustlineCurrencyService.selectCurrency] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setCurrency(currency);
 
           const issuers = this.getIssuersForCurrency(currency);
@@ -128,7 +153,10 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      }
 
      selectIssuer(item: any) {
-          const value = item?.id ?? item; // ← fixed
+          const value = item?.id ?? item;
+          const stack = new Error().stack;
+          console.log(`[TrustlineCurrencyService.selectIssuer] Called with: ${value?.slice(0, 8)}...`);
+          console.log(`[TrustlineCurrencyService.selectIssuer] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setIssuer(value);
           this.refreshCurrentBalance().catch(console.error);
      }
@@ -242,53 +270,8 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           this.knownIssuers.set(normalized);
      }
 
-     // In trustline-currency.service.ts
-
-async refreshCurrentBalance(): Promise<void> {
-  await this.withPerf('updateBalanceForCurrentCombo', async () => {
-    const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
-    const currency = this.currencyStore.currency();
-    const issuer = this.currencyStore.issuer();
-
-    if (!walletAddress || !currency) {
-      this.currencyStore.setField('balance', '0');
-      return;
-    }
-
-    // Always fetch fresh - no cache
-    const env = await this.txEnvironmentService.refreshEnvironment({
-      includeAccountInfo: true,
-      includeGatewayBalance: true,
-      forceRefresh: true,
-    });
-
-    if (currency === 'XRP') {
-      try {
-        const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-        this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
-      } catch {
-        this.currencyStore.setField('balance', '0');
-      }
-      return;
-    }
-
-    if (!issuer) {
-      this.currencyStore.setField('balance', '0');
-      return;
-    }
-
-    try {
-      const balance = this.extractBalance(env.gatewayBalanceObject, walletAddress, currency, issuer);
-      this.currencyStore.setField('balance', balance);
-    } catch (err) {
-      console.warn('Failed to fetch token balance:', err);
-      this.currencyStore.setField('balance', '0');
-    }
-  });
-}
-
-     async refreshCurrentBalance12(): Promise<void> {
-          await this.withPerf('updateBalanceForCurrentCombo', async () => {
+     async refreshCurrentBalance(): Promise<void> {
+          await this.withPerf('refreshCurrentBalance', async () => {
                const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
                const currency = this.currencyStore.currency();
                const issuer = this.currencyStore.issuer();
@@ -298,19 +281,19 @@ async refreshCurrentBalance(): Promise<void> {
                     return;
                }
 
-               // Force fresh environment for balance to avoid stale data
-               const env = await this.txEnvironmentService.prepareTxEnvironment({
+               // Always fetch fresh - no cache
+               const env = await this.txEnvironmentService.refreshEnvironment({
                     includeAccountInfo: true,
                     includeGatewayBalance: true,
-                    forceRefresh: true, // Add this parameter to bypass cache
+                    forceRefresh: true,
                });
 
                if (currency === 'XRP') {
                     try {
-                    const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-                    this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
+                         const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
+                         this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
                     } catch {
-                    this.currencyStore.setField('balance', '0');
+                         this.currencyStore.setField('balance', '0');
                     }
                     return;
                }
@@ -331,78 +314,58 @@ async refreshCurrentBalance(): Promise<void> {
      }
 
      public async refreshCurrentBalanceFromEnv(env: PrepareTxEnvironmentResult): Promise<void> {
-  const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
-  const currency = this.currencyStore.currency();
-  const issuer = this.currencyStore.issuer();
-
-  console.log(`[refreshCurrentBalanceFromEnv] START - Wallet: ${walletAddress?.slice(0,8)}..., Currency: ${currency}, Issuer: ${issuer?.slice(0,8)}...`);
-
-  if (!walletAddress || !currency) {
-    console.log(`[refreshCurrentBalanceFromEnv] No wallet or currency, setting balance to 0`);
-    this.currencyStore.setField('balance', '0');
-    return;
-  }
-
-  if (currency === 'XRP') {
-    try {
-      const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-      const formatted = this.utilsService.formatTokenBalance(bal.toString(), 6);
-      console.log(`[refreshCurrentBalanceFromEnv] XRP balance: ${formatted}`);
-      this.currencyStore.setField('balance', formatted);
-    } catch {
-      console.log(`[refreshCurrentBalanceFromEnv] XRP error, setting to 0`);
-      this.currencyStore.setField('balance', '0');
-    }
-    return;
-  }
-
-  if (!issuer) {
-    console.log(`[refreshCurrentBalanceFromEnv] No issuer, setting balance to 0`);
-    this.currencyStore.setField('balance', '0');
-    return;
-  }
-
-  try {
-    const balance = this.extractBalance(env.gatewayBalanceObject, walletAddress, currency, issuer);
-    console.log(`[refreshCurrentBalanceFromEnv] Token balance extracted: ${balance}`);
-    this.currencyStore.setField('balance', balance);
-  } catch (err) {
-    console.warn('Failed to extract token balance from env:', err);
-    this.currencyStore.setField('balance', '0');
-  }
-}
-
-     /**
-      * Update the displayed balance using an already-fetched env object (avoids an extra network round-trip).
-      * Requires `env.accountInfo` (for XRP) or `env.gatewayBalanceObject` (for tokens) to be present.
-      */
-     public async refreshCurrentBalanceFromEnv23(env: PrepareTxEnvironmentResult): Promise<void> {
           const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
           const currency = this.currencyStore.currency();
           const issuer = this.currencyStore.issuer();
 
+          console.log(`[refreshCurrentBalanceFromEnv] START - Wallet: ${walletAddress?.slice(0, 8)}..., Currency: ${currency}, Issuer: ${issuer?.slice(0, 8)}...`);
+
           if (!walletAddress || !currency) {
+               console.log(`[refreshCurrentBalanceFromEnv] No wallet or currency, setting balance to 0`);
                this.currencyStore.setField('balance', '0');
                return;
           }
 
           if (currency === 'XRP') {
                try {
-                    const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-                    this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
+                    if (!env.accountInfo?.result?.account_data?.Balance) {
+                         console.warn('No account info available for XRP balance');
+                         this.currencyStore.setField('balance', '0');
+                         return;
+                    }
+                    const bal = Number(env.accountInfo.result.account_data.Balance) / 1_000_000;
+                    const formatted = this.utilsService.formatTokenBalance(bal.toString(), 6);
+                    console.log(`[refreshCurrentBalanceFromEnv] XRP balance: ${formatted}`);
+                    this.currencyStore.setField('balance', formatted);
                } catch {
+                    console.log(`[refreshCurrentBalanceFromEnv] XRP error, setting to 0`);
                     this.currencyStore.setField('balance', '0');
                }
                return;
           }
 
           if (!issuer) {
+               console.log(`[refreshCurrentBalanceFromEnv] No issuer, setting balance to 0`);
                this.currencyStore.setField('balance', '0');
                return;
           }
 
           try {
+               if (!env.gatewayBalanceObject) {
+                    console.warn('No gateway balance object available, fetching fresh');
+                    // Fetch fresh gateway balance
+                    const freshEnv = await this.txEnvironmentService.refreshEnvironment({
+                         includeGatewayBalance: true,
+                         forceRefresh: true,
+                    });
+                    const balance = this.extractBalance(freshEnv.gatewayBalanceObject, walletAddress, currency, issuer);
+                    console.log(`[refreshCurrentBalanceFromEnv] Token balance extracted (fresh): ${balance}`);
+                    this.currencyStore.setField('balance', balance);
+                    return;
+               }
+
                const balance = this.extractBalance(env.gatewayBalanceObject, walletAddress, currency, issuer);
+               console.log(`[refreshCurrentBalanceFromEnv] Token balance extracted: ${balance}`);
                this.currencyStore.setField('balance', balance);
           } catch (err) {
                console.warn('Failed to extract token balance from env:', err);
@@ -410,55 +373,17 @@ async refreshCurrentBalance(): Promise<void> {
           }
      }
 
-     private async updateBalanceForCurrentCombo(): Promise<void> {
-          await this.withPerf('updateBalanceForCurrentCombo', async () => {
-               console.log('updateBalanceForCurrentCombo ................................. updateBalanceForCurrentCombo');
-               const walletAddress = this.walletManager.getSelectedWallet()?.classicAddress;
-               const currency = this.currencyStore.currency();
-               const issuer = this.currencyStore.issuer();
-               const wallet = this.walletManager.getSelectedWallet()?.classicAddress;
-
-               if (!walletAddress || !currency) {
-                    this.currencyStore.setField('balance', '0');
-                    return;
-               }
-
-               const env = await this.txEnvironmentService.prepareTxEnvironment({
-                    includeAccountInfo: true,
-                    includeGatewayBalance: true,
-                    forceRefresh:true,
-               });
-
-               if (currency === 'XRP') {
-                    try {
-                         const bal = Number(env.accountInfo?.result.account_data.Balance ?? 0) / 1_000_000;
-                         this.currencyStore.setField('balance', this.utilsService.formatTokenBalance(bal.toString(), 6));
-                    } catch {
-                         this.currencyStore.setField('balance', '0');
-                    }
-                    return;
-               }
-
-               if (!issuer) {
-                    this.currencyStore.setField('balance', '0');
-                    return;
-               }
-
-               try {
-                    const balance = this.extractBalance(env.gatewayBalanceObject, wallet!, currency, issuer);
-                    this.currencyStore.setField('balance', balance);
-               } catch (err) {
-                    console.warn('Failed to fetch token balance:', err);
-                    this.currencyStore.setField('balance', '0');
-               }
-          });
-     }
-
      getTrustlineState(accountObjects: xrpl.AccountObjectsResponse, walletAddr: string, issuer: string, encodedCurrency: string): xrpl.LedgerEntry.RippleState | undefined {
           return accountObjects.result.account_objects.find((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encodedCurrency && ((obj.LowLimit?.issuer === walletAddr && obj.HighLimit?.issuer === issuer) || (obj.HighLimit?.issuer === walletAddr && obj.LowLimit?.issuer === issuer)));
      }
 
-     getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
+     getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse | undefined, classicAddress: string) {
+          // Add safety check
+          if (!accountObjects?.result?.account_objects) {
+               console.warn('getExistingIOUs: No account objects provided, returning empty array');
+               return [];
+          }
+
           const mapped = (accountObjects.result.account_objects ?? [])
                .filter((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState')
                .filter(obj => {
@@ -475,11 +400,11 @@ async refreshCurrentBalance(): Promise<void> {
                     const myLimitObj = isHighSide ? obj.HighLimit : obj.LowLimit;
                     const peerLimitObj = isHighSide ? obj.LowLimit : obj.HighLimit;
 
-                    const myLimitValue = myLimitObj.value;
+                    const myLimitValue = new Decimal(myLimitObj.value); //myLimitObj.value;
 
                     // The issuer is the one whose limit is typically non-zero while the holder's is set
                     // But more reliably: the issuer sees negative balance when tokens are issued
-                    const rawBalance = Number(obj.Balance.value ?? '0');
+                    const rawBalance = new Decimal(obj.Balance.value ?? '0').toFixed(); // Number(obj.Balance.value ?? '0');
 
                     // Balance is always expressed from the perspective of the LowLimit holder
                     // If we're the high side, we need to invert the sign
@@ -493,17 +418,16 @@ async refreshCurrentBalance(): Promise<void> {
                     if (ledgerFlags & 0x00010000) flags.push('Authorized'); // lsfLowAuth / lsfHighAuth simplified
                     if (ledgerFlags & 0x00020000) flags.push('NoRipple');
                     if (ledgerFlags & 0x00100000) flags.push('Freeze'); // lsfLowFreeze or lsfHighFreeze
-                    // add more if you use them: DeepFreeze 0x00400000 etc.
 
                     return {
                          currency,
-                         issuer: peerLimitObj.issuer, // the other party = issuer if we're holder
-                         balance: signedBalance.toString(), // now correctly signed from OUR perspective
+                         issuer: peerLimitObj.issuer,
+                         balance: signedBalance.toString(),
                          limit: myLimitValue,
                          flags,
-                         isIssuer: signedBalance < 0 && Number(myLimitValue) > 0, // strong indicator
-                         rawLedgerBalance: rawBalance, // for debugging
-                         isHighSide, // for debugging
+                         isIssuer: new Decimal(signedBalance).lt(0) && myLimitValue.gt(0),
+                         rawLedgerBalance: rawBalance,
+                         isHighSide,
                     };
                })
                .sort((a, b) => a.issuer.localeCompare(b.issuer));
@@ -551,20 +475,37 @@ async refreshCurrentBalance(): Promise<void> {
      }
 
      clearFlagsValue(activeTab: string) {
-          if (activeTab !== 'removeTrustline') {
-               this.flags.set({
-                    tfSetfAuth: false,
-                    tfSetNoRipple: false,
-                    tfClearNoRipple: false,
-                    tfSetFreeze: false,
-                    tfClearFreeze: false,
-                    tfSetDeepFreeze: false,
-                    tfClearDeepFreeze: false,
-               });
-               this.totalFlagsValue.set(0);
-               this.totalFlagsHex.set('0x0');
-          }
+          console.log(`[clearFlagsValue] Resetting all flags for tab: ${activeTab}`);
+
+          this.flags.set({
+               tfSetfAuth: false,
+               tfSetNoRipple: false,
+               tfClearNoRipple: false,
+               tfSetFreeze: false,
+               tfClearFreeze: false,
+               tfSetDeepFreeze: false,
+               tfClearDeepFreeze: false,
+          });
+
+          this.totalFlagsValue.set(0);
+          this.totalFlagsHex.set('0x0');
      }
+
+     // clearFlagsValue(activeTab: string) {
+     //      if (activeTab !== 'removeTrustline') {
+     //           this.flags.set({
+     //                tfSetfAuth: false,
+     //                tfSetNoRipple: false,
+     //                tfClearNoRipple: false,
+     //                tfSetFreeze: false,
+     //                tfClearFreeze: false,
+     //                tfSetDeepFreeze: false,
+     //                tfClearDeepFreeze: false,
+     //           });
+     //           this.totalFlagsValue.set(0);
+     //           this.totalFlagsHex.set('0x0');
+     //      }
+     // }
 
      setFlag(key: TrustlineFlagKey, value: boolean) {
           this.flags.update(f => {
@@ -572,5 +513,9 @@ async refreshCurrentBalance(): Promise<void> {
                return f;
           });
           this.updateFlagTotal();
+     }
+
+     forceIssuerRefresh() {
+          this.issuerRefreshTrigger.update(v => v + 1);
      }
 }

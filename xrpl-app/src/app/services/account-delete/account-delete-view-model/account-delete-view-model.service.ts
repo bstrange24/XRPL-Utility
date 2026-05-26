@@ -70,20 +70,36 @@ export class AccountDeleteViewModelService {
 
      readonly blockersList = computed<Blocker[]>(() => [...this.blockersFromObjects(), ...this.blockersFromAccountData(), ...this.ledgerWaitBlocker()]);
 
-     readonly balanceWarning = computed(() => {
+     readonly deleteInfo = computed(() => {
           const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
           const srv = this.deleteAccountStoreService.serverInfo()?.result?.info?.validated_ledger;
           if (!acc || !srv) return null;
 
-          const balanceXrp = Number(xrpl.dropsToXrp(String(acc.Balance)));
-          const reserveBase = Number(srv.reserve_base_xrp ?? 10);
-          const reserveInc = Number(srv.reserve_inc_xrp ?? 2);
+          const reserveBase = Number(srv.reserve_base_xrp ?? 10); // e.g. 1 or 10
+          const reserveInc = Number(srv.reserve_inc_xrp ?? 2); // usually 0.2
           const ownerCount = Number(acc.OwnerCount ?? 0);
-          const deleteFee = 2;
-          const reserveRequired = reserveBase + ownerCount * reserveInc;
 
-          if (balanceXrp < reserveRequired + deleteFee) {
-               return `Balance too low. Minimum ${(reserveRequired + deleteFee).toFixed(6)} XRP required.`;
+          const reserveRequired = reserveBase + ownerCount * reserveInc;
+          const deleteFee = reserveInc; // AccountDelete burns one owner reserve (~0.2 XRP)
+
+          return {
+               reserveBase,
+               reserveInc,
+               ownerCount,
+               reserveRequired,
+               deleteFee,
+               totalMinimumNeeded: reserveRequired + deleteFee,
+          };
+     });
+
+     readonly balanceWarning = computed(() => {
+          const info = this.deleteInfo();
+          if (!info) return null;
+
+          const balanceXrp = Number(xrpl.dropsToXrp(String(this.deleteAccountStoreService.accountInfo()?.result?.account_data?.Balance ?? 0)));
+
+          if (balanceXrp < info.totalMinimumNeeded) {
+               return `Balance too low. Minimum ${info.totalMinimumNeeded.toFixed(6)} XRP required.`;
           }
           return null;
      });
@@ -95,6 +111,7 @@ export class AccountDeleteViewModelService {
           canDelete: this.canDelete(),
           blockers: this.blockersList(),
           balanceWarning: this.balanceWarning(),
+          deleteInfo: this.deleteInfo(),
      }));
 
      readonly deleteBlockers = computed(() => this.blockersList());
@@ -103,7 +120,7 @@ export class AccountDeleteViewModelService {
           return computed(() => {
                const step = this.txUiService.currentStep();
                if (step === 'idle') return defaultText;
-               if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+               // if (step === 'waiting_validation') return 'Waiting for ledger validation...';
                return this.txUiService.stepMessage();
           });
      }

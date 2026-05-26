@@ -66,12 +66,8 @@
                </div>
 
                <div class="relative">
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" />
-                    <!-- @if (!isReadOnly && hasAmountValue()) {
-                    <button type="button" (click)="clearAmount()" class="absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear amount">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    } -->
+                    <!-- <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" /> -->
+                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amountValue()" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
                </div>
                @if (!isReadOnly && isAmountInvalid()) {
                <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
@@ -87,7 +83,7 @@
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected code and issuer combination. }</p>
+                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency issued by this account for the selected code/issuer combination. } @else { Total currency held by this account for the selected code/issuer combination. }</p>
                     <button type="button" (click)="toggleCurrencyBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
@@ -168,7 +164,9 @@
                </div>
 
                <div class="relative">
-                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" step="0.000001" max="10000000000000000" />
+                    <!-- <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" /> -->
+                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amountValue()" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
+
                     <!-- @if (!isReadOnly && hasAmountValue()) {
                     <button type="button" (click)="clearAmount()" class="absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear amount">
                          <lucide-icon name="x" size="16"></lucide-icon>
@@ -190,7 +188,7 @@
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency balance issued by this account for the selected currency code and issuer combination. } @else { Total currency balance held by this account for the selected code/issuer combination. }</p>
+                    <p class="text-secondary">@if (trustlineViewModelService.isIssuerForSelected()) { Total currency issued by this account for the selected code/issuer combination. } @else { Total currency held by this account for the selected code/issuer combination. }</p>
                     <button type="button" (click)="toggleCurrencyBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>

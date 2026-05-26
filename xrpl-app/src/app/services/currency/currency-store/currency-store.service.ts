@@ -2,38 +2,21 @@ import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 import { CurrencyState } from '../constants/currency.types';
 
 const initialState: CurrencyState = {
-  currencyCode: '',
-  currencyIssuer: '',
-  lastCurrency: '',
-  lastIssuer: '',
-  userAddedissuerFields: '',
-  newCurrency: '',
-  newIssuer: '',
-  issuerToRemove: '',
-  currency: '',  // Start empty, not XRP
-  issuer: '',    // Start empty
-  amount: 0,
-  balance: '0',  // Initialize with '0' not empty string
-  isIssuer: false,
-  destination: '',
+     currencyCode: '',
+     currencyIssuer: '',
+     lastCurrency: '',
+     lastIssuer: '',
+     userAddedissuerFields: '',
+     newCurrency: '',
+     newIssuer: '',
+     issuerToRemove: '',
+     currency: '', // Start empty, not XRP
+     issuer: '', // Start empty
+     amount: 0,
+     balance: '0', // Initialize with '0' not empty string
+     isIssuer: false,
+     destination: '',
 };
-
-// const initialState: CurrencyState = {
-//      currencyCode: 'XRP',
-//      currencyIssuer: '',
-//      lastCurrency: '',
-//      lastIssuer: '',
-//      userAddedissuerFields: '',
-//      newCurrency: '',
-//      newIssuer: '',
-//      issuerToRemove: '',
-//      currency: '',
-//      issuer: '',
-//      amount: 0,
-//      balance: '',
-//      isIssuer: false,
-//      destination: '',
-// };
 
 export const CurrencyStoreService = signalStore(
      { providedIn: 'root' },
@@ -43,7 +26,6 @@ export const CurrencyStoreService = signalStore(
      withMethods(store => ({
           setCurrency(item: any) {
                const value = item?.value ?? item;
-
                patchState(store, {
                     currency: value,
                     currencyCode: value,
@@ -52,7 +34,6 @@ export const CurrencyStoreService = signalStore(
 
           setIssuer(item: any) {
                const value = item?.value ?? item;
-
                patchState(store, {
                     issuer: value,
                     currencyIssuer: value,

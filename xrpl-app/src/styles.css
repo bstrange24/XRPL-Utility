@@ -166,12 +166,12 @@
 
      .empty-state-action {
           @apply mt-4 text-sm font-medium transition-colors;
-          color: #2563eb;
+          color: var(--icon-blue);
           /* blue-600 */
      }
 
      .empty-state-action:hover {
-          color: #1d4ed8;
+          @apply text-blue-700;
           /* blue-700 */
      }
 

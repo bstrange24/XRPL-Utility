@@ -20,8 +20,8 @@
                </div>
 
                @if (hasActiveFilters()) {
-               <button (click)="clearAllFilters()" class="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                    <ng-icon name="heroXMark" size="16" />
+               <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
+                    <!-- <ng-icon name="heroXMark" size="16" /> -->
                     Clear All
                </button>
                }
@@ -44,14 +44,22 @@
           </app-summary-item>
           } } @else if (searchQuery().length > 0) {
           <!-- No search results -->
-          <div class="flex-1 flex flex-col items-center justify-center py-16 text-center">
+          <div class="empty-state">
+               <div class="empty-state-icon">
+                    <ng-icon name="heroMagnifyingGlass" size="20" class="text-gray-400" />
+               </div>
+               <p class="empty-state-title">No matching tickets found</p>
+               <p class="empty-state-subtitle">Try adjusting your search, date range, or filters</p>
+               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+          </div>
+          <!-- <div class="flex-1 flex flex-col items-center justify-center py-16 text-center">
                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
                     <ng-icon name="heroMagnifyingGlass" size="32" class="text-gray-400" />
                </div>
                <p class="font-medium text-gray-600">No matching tickets</p>
                <p class="text-sm text-gray-500 mt-1">Nothing matches "<strong class="font-mono">{{ searchQuery() }}</strong>"</p>
                <button (click)="clearAllFilters()" class="mt-6 text-blue-600 hover:text-blue-700">Clear all filters</button>
-          </div>
+          </div> -->
           } @else if (totalTicketsCount() === 0) {
           <!-- No tickets at all -->
           <div class="flex-1 flex flex-col items-center justify-center py-16 text-center">

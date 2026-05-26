@@ -24,6 +24,10 @@
                     <span class="font-mono">{{ escrow.EscrowSequence }}</span>
                </app-summary-key-value>
 
+               <app-summary-key-value label="Escrow Owner">
+                    <span class="font-mono">{{ escrow.sender }}</span>
+               </app-summary-key-value>
+
                <app-summary-key-value label="{{ escrow.isExpired ? 'Finished at' : 'Finishes at or after' }}">
                     <span class="font-mono" [class.text-red-600]="escrow.isExpired">{{ escrow.finishAfter ? utilsService.convertXRPLTime(escrow.finishAfter) : 'N/A' }}</span>
                </app-summary-key-value>

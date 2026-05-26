@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, signal, computed, effect } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, inject, signal, computed, effect, SimpleChanges, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
@@ -10,16 +10,17 @@ import * as xrpl from 'xrpl';
 import { FocusBorderDirective } from '../../../services/shared/focus-border/focus-border.directive';
 import { UtilsService } from '../../../services/utils/util-service/utils.service';
 import { FieldHelperComponent } from '../field-helper/field-helper.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
      selector: 'app-currency-form-section',
      standalone: true,
-     imports: [CommonModule, LucideAngularModule, FocusBorderDirective, NgIcon, FieldHelperComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, FocusBorderDirective, NgIcon, FieldHelperComponent, SelectSearchDropdownComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CurrencyFormSectionComponent {
+export class CurrencyFormSectionComponent implements OnChanges {
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
      private readonly toastService = inject(ToastService);
      public readonly utilsService = inject(UtilsService);
@@ -56,16 +57,16 @@ export class CurrencyFormSectionComponent {
      public isCurrencyValid = signal(true);
      public isIssuerValid = signal(true);
      public isAmountTouched = signal(false);
-     private amountValue = signal<number>(0);
+     public amountValue = signal<number>(0);
 
      constructor() {
           // Initialize amount value
-          effect(() => {
-               const amt = typeof this.amount === 'number' ? this.amount : Number(this.amount);
-               if (!isNaN(amt)) {
-                    this.amountValue.set(amt);
-               }
-          });
+          // effect(() => {
+          //      const amt = typeof this.amount === 'number' ? this.amount : Number(this.amount);
+          //      if (!isNaN(amt)) {
+          //           this.amountValue.set(amt);
+          //      }
+          // });
 
           // Emit overall validation status
           effect(() => {
@@ -73,6 +74,16 @@ export class CurrencyFormSectionComponent {
                const errors = this.getValidationErrors();
                this.validationChange.emit({ isValid, errors });
           });
+     }
+
+     ngOnChanges(changes: SimpleChanges): void {
+          if (changes['amount']) {
+               const amt = typeof this.amount === 'number' ? this.amount : Number(this.amount);
+
+               if (!isNaN(amt)) {
+                    this.amountValue.set(amt);
+               }
+          }
      }
 
      get limitLabel(): string {
@@ -84,7 +95,7 @@ export class CurrencyFormSectionComponent {
           }
 
           if (tab === 'removeTrustline') {
-               return 'Current Limit';
+               return 'Current Trustline Limit';
           }
 
           return 'Token Amount';
@@ -165,10 +176,11 @@ export class CurrencyFormSectionComponent {
      // Amount Validation
      onAmountInput(event: Event) {
           const input = event.target as HTMLInputElement;
-          let value = input.value;
+          const value = input.value;
 
-          // Allow empty or decimal
+          // Allow temporary typing states
           if (value === '' || value === '.') {
+               this.amountValue.set(0);
                this.amountChange.emit(0);
                return;
           }
@@ -179,11 +191,32 @@ export class CurrencyFormSectionComponent {
                return;
           }
 
-          // Round to 6 decimal places
           const rounded = Math.round(numericValue * 1000000) / 1000000;
+
           this.amountValue.set(rounded);
           this.amountChange.emit(rounded);
      }
+     // onAmountInput(event: Event) {
+     //      const input = event.target as HTMLInputElement;
+     //      let value = input.value;
+
+     //      // Allow empty or decimal
+     //      if (value === '' || value === '.') {
+     //           this.amountChange.emit(0);
+     //           return;
+     //      }
+
+     //      const numericValue = Number(value);
+
+     //      if (!Number.isFinite(numericValue) || numericValue < 0) {
+     //           return;
+     //      }
+
+     //      // Round to 6 decimal places
+     //      const rounded = Math.round(numericValue * 1000000) / 1000000;
+     //      this.amountValue.set(rounded);
+     //      this.amountChange.emit(rounded);
+     // }
 
      onAmountBlur() {
           this.isAmountTouched.set(true);

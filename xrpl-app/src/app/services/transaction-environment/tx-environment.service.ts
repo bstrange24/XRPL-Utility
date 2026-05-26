@@ -87,36 +87,50 @@ export class TxEnvironmentService {
      private readonly CACHE_MS = 5000; // 5 seconds -- wide enough to cover sequential async ops on slow connections
 
      private currentEnv = signal<{ env: PrepareTxEnvironmentResult | null; walletAddress: string; timestamp: number }>({
-  env: null,
-  walletAddress: '',
-  timestamp: 0
-});
+          env: null,
+          walletAddress: '',
+          timestamp: 0,
+     });
 
-async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
-  const now = Date.now();
-  const selectedWallet = this.getSelectedWallet();
-  const currentWalletAddress = selectedWallet.classicAddress;
-  
-  const cached = this.currentEnv();
-  const isCacheValid = !force && 
-                       cached.env && 
-                       cached.walletAddress === currentWalletAddress && 
-                       now - cached.timestamp < this.CACHE_MS;
-  
-  if (isCacheValid) {
-    console.log(`Using cached environment for wallet ${currentWalletAddress.slice(0,8)}...`);
-    return cached.env!;
-  }
-  
-  console.log(`Fetching fresh environment for wallet ${currentWalletAddress.slice(0,8)}...`);
-  const env = await this.prepareTxEnvironment(options);
-  this.currentEnv.set({
-    env,
-    walletAddress: currentWalletAddress,
-    timestamp: now
-  });
-  return env;
-}
+     async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
+          const now = Date.now();
+          const selectedWallet = this.getSelectedWallet();
+          const currentWalletAddress = selectedWallet.classicAddress;
+
+          const cached = this.currentEnv();
+          const isCacheValid = !force && cached.env && cached.walletAddress === currentWalletAddress && now - cached.timestamp < this.CACHE_MS;
+
+          if (isCacheValid) {
+               console.log(`Using cached environment for wallet ${currentWalletAddress.slice(0, 8)}...`);
+               // Make sure cached env has accountObjects
+               if (!cached?.env?.accountObjects) {
+                    console.log('Cached env missing accountObjects, fetching fresh');
+                    return this.fetchFreshEnvironment(options, currentWalletAddress);
+               }
+               return cached.env;
+          }
+
+          return this.fetchFreshEnvironment(options, currentWalletAddress);
+     }
+
+     private async fetchFreshEnvironment(options: PrepareTxEnvironmentOptions, walletAddress: string): Promise<PrepareTxEnvironmentResult> {
+          console.log(`Fetching fresh environment for wallet ${walletAddress.slice(0, 8)}...`);
+
+          // Ensure accountObject is included if not specified
+          const fullOptions = {
+               ...options,
+               includeAccountObject: options.includeAccountObject ?? true,
+               includeAccountInfo: options.includeAccountInfo ?? true,
+          };
+
+          const env = await this.prepareTxEnvironment(fullOptions);
+          this.currentEnv.set({
+               env,
+               walletAddress,
+               timestamp: Date.now(),
+          });
+          return env;
+     }
 
      // async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
      //      // const now = Date.now();

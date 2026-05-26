@@ -62,7 +62,7 @@ export class EscrowUtilService {
      readonly generateConditionButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Generate Condition';
-          if (step === 'waiting_validation') return 'Waiting for ledger validation...';
+          // if (step === 'waiting_validation') return 'Waiting for ledger validation...';
           return this.txUiService.stepMessage();
      });
 

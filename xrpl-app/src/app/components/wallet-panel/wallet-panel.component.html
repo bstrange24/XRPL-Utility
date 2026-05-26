@@ -50,6 +50,19 @@
                <!-- Wallet List with Drag and Drop -->
                <div cdkDropList [cdkDropListData]="wallets" (cdkDropListDropped)="drop($event)" class="flex-1 p-2 space-y-3 scroll-container overflow-y-auto">
                     @if (hasWallets) { @for (wallet of wallets; track wallet.address; let i = $index) {
+                    <!-- <div
+                         cdkDrag
+                         [cdkDragData]="i"
+                         [cdkDragDisabled]="editingIndex(i)"
+                         cdkDragLockAxis="y"
+                         class="group relative rounded-xl border transition-all hover:shadow-card"
+                         [class.border-green-200]="!isDark()"
+                         [class.border-gray-700]="isDark()"
+                         [class.border-green-600]="selectedWalletIndex === i && !isDark()"
+                         [class.border-green-400]="selectedWalletIndex === i && isDark()"
+                         [class.bg-blue-50]="selectedWalletIndex === i && isWalletExpanded(i) && !isDark()"
+                         [class.bg-blue-900/30]="selectedWalletIndex === i && isWalletExpanded(i) && isDark()"
+                    > -->
                     <div
                          cdkDrag
                          [cdkDragData]="i"
@@ -140,7 +153,6 @@
                                                   <span class="hidden sm:inline">Select</span>
                                              </button>
                                              } @else {
-                                             <!-- Show "Selected" badge instead of button -->
                                              <!-- Show "Selected" badge instead of button -->
                                              <span class="active-badge flex items-center gap-1">
                                                   <lucide-icon name="check" size="12" />

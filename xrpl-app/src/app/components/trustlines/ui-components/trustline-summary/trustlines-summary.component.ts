@@ -12,6 +12,8 @@ import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shar
 import { FormsModule } from '@angular/forms';
 import { TrustlineActionTypes } from '../../constants/trustline.types';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
+import { TrustlineViewModelService } from '../../../../services/trustlines/trustline-view-model/trustline-view-model.service';
+import Decimal from 'decimal.js';
 
 export interface TrustlineItem {
      currency: string;
@@ -44,8 +46,7 @@ export class TrustlinesSummaryComponent {
      private readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);
-     
-
+     public readonly trustlineViewModelService = inject(TrustlineViewModelService);
      constructor() {
           // Auto-clear search when parent tells us to reset
           effect(() => {
@@ -61,6 +62,8 @@ export class TrustlinesSummaryComponent {
      explorerUrl = this.txUiService.explorerUrl;
      wallet = input<{ classicAddress?: string; address?: string } | null>();
      resetTrigger = input<number>(0);
+     selectedWalletAddress = input<string>('');
+     selectedIssuer = input<string>('');
 
      // Output
      toggleExpanded = output<void>();
@@ -90,7 +93,7 @@ export class TrustlinesSummaryComponent {
      trustlinesWithBalance = computed(() => {
           return this.sortedTrustlines().map(tl => ({
                ...tl,
-               balanceNum: parseFloat(tl.balance) || 0,
+               balanceNum: Number.parseFloat(tl.balance) || 0,
           }));
      });
 
@@ -102,20 +105,36 @@ export class TrustlinesSummaryComponent {
 
           // Text Search
           if (query) {
-               trustlines = trustlines.filter((tl: { currency: string; issuer: string; balance: string; limit: string }) => tl.currency.toLowerCase().includes(query) || tl.issuer.toLowerCase().includes(query) || tl.balance.toLowerCase().includes(query) || tl.limit.toLowerCase().includes(query));
+               trustlines = trustlines.filter((tl: any) => {
+                    const q = query; // already lowercased
+
+                    return (
+                         tl.currency?.toLowerCase().includes(q) ||
+                         tl.issuer?.toLowerCase().includes(q) ||
+                         tl.balance?.toLowerCase().includes(q) ||
+                         tl.limit?.toLowerCase().includes(q) ||
+                         // Handle flags as ARRAY (this was the main bug)
+                         tl.flags?.some((flag: string) => flag.toLowerCase().includes(q)) ||
+                         false
+                    );
+               });
           }
 
           // Quick Filters (by balance)
           if (quickFilter !== 'all') {
                trustlines = trustlines.filter((tl: { balance: string }) => {
-                    const balance = parseFloat(tl.balance);
+                    // const balance = Number.parseFloat(tl.balance);
+                    const balance = new Decimal(tl.balance || '0');
                     switch (quickFilter) {
                          case 'positive':
-                              return balance > 0;
+                              return balance.gt(0);
+
                          case 'negative':
-                              return balance < 0;
+                              return balance.lt(0);
+
                          case 'zero':
-                              return balance === 0;
+                              return balance.eq(0);
+
                          default:
                               return true;
                     }
@@ -131,37 +150,79 @@ export class TrustlinesSummaryComponent {
           const sortField = this.sortBy();
           const direction = this.sortDirection();
 
+          console.error(`items:  ${JSON.stringify(items)}`);
           return items.sort((a, b) => {
-               let valA: string | number = '';
-               let valB: string | number = '';
+               let valA: string | Decimal = '';
+               let valB: string | Decimal = '';
+               console.error(`Limit:  ${a.limit}`);
 
                switch (sortField) {
                     case 'currency':
                          valA = a.currency;
                          valB = b.currency;
                          break;
+
                     case 'issuer':
                          valA = a.issuer;
                          valB = b.issuer;
                          break;
+
                     case 'balance':
-                         valA = parseFloat(a.balance) || 0;
-                         valB = parseFloat(b.balance) || 0;
+                         valA = new Decimal(a.balance || '0');
+                         valB = new Decimal(b.balance || '0');
                          break;
+
                     case 'limit':
-                         valA = parseFloat(a.limit) || 0;
-                         valB = parseFloat(b.limit) || 0;
+                         valA = new Decimal(a.limit || '0');
+                         valB = new Decimal(b.limit || '0');
                          break;
                }
 
-               if (typeof valA === 'number' && typeof valB === 'number') {
-                    return direction === 'asc' ? valA - valB : valB - valA;
+               if (valA instanceof Decimal && valB instanceof Decimal) {
+                    return direction === 'asc' ? valA.comparedTo(valB) : valB.comparedTo(valA);
                }
 
                const cmp = String(valA).localeCompare(String(valB));
+
                return direction === 'asc' ? cmp : -cmp;
           });
      });
+     // sortedTrustlines = computed(() => {
+     //      let items = [...this.filteredTrustlines()];
+     //      const sortField = this.sortBy();
+     //      const direction = this.sortDirection();
+
+     //      return items.sort((a, b) => {
+     //           let valA: string | number = '';
+     //           let valB: string | number = '';
+
+     //           switch (sortField) {
+     //                case 'currency':
+     //                     valA = a.currency;
+     //                     valB = b.currency;
+     //                     break;
+     //                case 'issuer':
+     //                     valA = a.issuer;
+     //                     valB = b.issuer;
+     //                     break;
+     //                case 'balance':
+     //                     valA = Number.parseFloat(a.balance) || 0;
+     //                     valB = Number.parseFloat(b.balance) || 0;
+     //                     break;
+     //                case 'limit':
+     //                     valA = Number.parseFloat(a.limit) || 0;
+     //                     valB = Number.parseFloat(b.limit) || 0;
+     //                     break;
+     //           }
+
+     //           if (typeof valA === 'number' && typeof valB === 'number') {
+     //                return direction === 'asc' ? valA - valB : valB - valA;
+     //           }
+
+     //           const cmp = String(valA).localeCompare(String(valB));
+     //           return direction === 'asc' ? cmp : -cmp;
+     //      });
+     // });
 
      summaryText = computed(() => {
           const data = this.info();
@@ -208,6 +269,72 @@ export class TrustlinesSummaryComponent {
      hasActiveFilters = computed(() => this.searchQuery().length > 0 || this.activeQuickFilter() !== 'all');
      filteredCount = computed(() => this.sortedTrustlines().length);
      totalCount = computed(() => this.info()?.totalTrustlines ?? 0);
+
+     // Computed label for the address field
+     getAddressLabel = computed(() => {
+          const tab = this.tab();
+
+          switch (tab) {
+               case 'clawbackTokens':
+                    // For clawback, we want to show who holds the tokens (the destination/holder)
+                    return 'Token Holder';
+               case 'issueCurrency':
+                    if (this.trustlineViewModelService.isIssuerForSelected()) {
+                         // For issuing tokens, show the destination
+                         return 'Destination';
+                    } else {
+                         return 'Issuer';
+                    }
+
+               case 'removeTrustline':
+                    return 'Issuer';
+               case 'setTrustline':
+                    return 'Issuer';
+               default:
+                    return 'Issuer';
+          }
+     });
+
+     // Determine if the current trustline's issuer is the selected wallet (for clawback)
+     isCurrentWalletIssuer(trustlineIssuer: string): boolean {
+          const walletAddr = this.selectedWalletAddress()?.toLowerCase();
+          const issuer = trustlineIssuer?.toLowerCase();
+          const selectedIssuer = this.selectedIssuer()?.toLowerCase();
+
+          // For clawback tab, we want to show the holder, not the issuer
+          if (this.tab() === 'clawbackTokens') {
+               // If current wallet is the issuer, then the trustline.issuer is actually the holder?
+               // Actually in your trustline data, when you're the issuer, the trustline.issuer is the holder
+               return walletAddr === issuer;
+          }
+
+          return false;
+     }
+
+     // Get the display address based on context
+     getDisplayAddress(trustline: any): string {
+          const tab = this.tab();
+          const walletAddr = this.selectedWalletAddress()?.toLowerCase();
+          const trustlineIssuer = trustline.issuer?.toLowerCase();
+
+          switch (tab) {
+               case 'clawbackTokens':
+                    // If current wallet is the issuer, show the holder (trustline.issuer)
+                    if (walletAddr === this.selectedIssuer()?.toLowerCase()) {
+                         return trustline.issuer; // This is the token holder
+                    }
+                    // If current wallet is NOT the issuer, show the issuer
+                    return trustline.issuer;
+               case 'issueCurrency':
+                    // If current wallet is the issuer, we're issuing to a destination
+                    if (walletAddr === this.selectedIssuer()?.toLowerCase()) {
+                         return trustline.issuer; // The token holder
+                    }
+                    return trustline.issuer;
+               default:
+                    return trustline.issuer;
+          }
+     }
 
      onSearchChange(value: string) {
           this.searchQuery.set(value);
