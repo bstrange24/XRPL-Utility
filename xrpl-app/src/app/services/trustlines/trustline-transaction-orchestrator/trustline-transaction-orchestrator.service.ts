@@ -206,9 +206,9 @@ export class TrustlineTransactionOrchestratorService extends PerformanceBaseComp
                if (currency?.currency === 'XRP') {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, currency.amount.toString());
                } else {
-                    isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
+                    // isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
                }
-               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               // if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
 
                //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({

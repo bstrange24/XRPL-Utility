@@ -82,22 +82,54 @@ export class TxEnvironmentService {
      private readonly nftCreateStoreService = inject(CreateNftStoreService);
      private readonly ammUtilsService = inject(AmmUtilsService);
      private readonly DEFAULT_ENV_CONFIG = { includeAccountInfo: true, includeAccountObject: true } as const;
-     private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
+     // private readonly currentEnv = signal<PrepareTxEnvironmentResult | null>(null);
      private readonly lastRefreshTime = signal(0);
      private readonly CACHE_MS = 5000; // 5 seconds -- wide enough to cover sequential async ops on slow connections
 
-     async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
-          const now = Date.now();
+     private currentEnv = signal<{ env: PrepareTxEnvironmentResult | null; walletAddress: string; timestamp: number }>({
+  env: null,
+  walletAddress: '',
+  timestamp: 0
+});
 
-          if (!force && this.currentEnv() && now - this.lastRefreshTime() < this.CACHE_MS) {
-               return this.currentEnv()!;
-          }
+async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
+  const now = Date.now();
+  const selectedWallet = this.getSelectedWallet();
+  const currentWalletAddress = selectedWallet.classicAddress;
+  
+  const cached = this.currentEnv();
+  const isCacheValid = !force && 
+                       cached.env && 
+                       cached.walletAddress === currentWalletAddress && 
+                       now - cached.timestamp < this.CACHE_MS;
+  
+  if (isCacheValid) {
+    console.log(`Using cached environment for wallet ${currentWalletAddress.slice(0,8)}...`);
+    return cached.env!;
+  }
+  
+  console.log(`Fetching fresh environment for wallet ${currentWalletAddress.slice(0,8)}...`);
+  const env = await this.prepareTxEnvironment(options);
+  this.currentEnv.set({
+    env,
+    walletAddress: currentWalletAddress,
+    timestamp: now
+  });
+  return env;
+}
 
-          const env = await this.prepareTxEnvironment(options);
-          this.currentEnv.set(env);
-          this.lastRefreshTime.set(now);
-          return env;
-     }
+     // async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
+     //      // const now = Date.now();
+
+     //      // if (!force && this.currentEnv() && now - this.lastRefreshTime() < this.CACHE_MS) {
+     //      //      return this.currentEnv()!;
+     //      // }
+
+     //      const env = await this.prepareTxEnvironment(options);
+     //      this.currentEnv.set(env);
+     //      // this.lastRefreshTime.set(now);
+     //      return env;
+     // }
 
      async prepareTxEnvironmentWithWallet(selectedWallet: Wallet, options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           return this.buildEnvironment(selectedWallet, options);

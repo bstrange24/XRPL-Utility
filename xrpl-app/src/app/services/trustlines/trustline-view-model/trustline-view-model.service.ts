@@ -248,18 +248,86 @@ export class TrustlineViewModelService {
      });
 
      readonly displayedBalance = computed(() => {
+  const tab = this.activeTab();
+  const currency = this.currencyStoreService.currency();
+  const issuer = this.currencyStoreService.issuer();
+  const balance = this.currencyStoreService.balance();
+  const existingIOUs = this.trustlineStoreService.existingIOUs();
+  
+  // Enhanced logging
+  console.log(`[displayedBalance] START - Tab: ${tab}, Currency: ${currency}, Issuer: ${issuer}, StoreBalance: ${balance}, IOUs length: ${existingIOUs.length}`);
+  
+  const _forceRecompute = `${currency}|${issuer}|${balance}|${existingIOUs.length}`;
+
+  // Remove tab always shows the real per-trustline balance
+  if (tab === 'removeTrustline') {
+    const trustline = this.foundTrustline();
+    const result = trustline?.balance ?? '0';
+    console.log(`[displayedBalance] REMOVE tab - returning: ${result}`);
+    return result;
+  }
+
+  // Issuer case → use the total obligations from gateway_balances
+  if (this.isIssuerForSelected()) {
+    console.log(`[displayedBalance] ISSUER case - returning store balance: ${balance || '0'}`);
+    return balance || '0';
+  }
+
+  // Normal holder case → use the per-trustline balance from existingIOUs
+  const existing = this.foundTrustline();
+  const result = existing ? existing.balance : '0';
+  console.log(`[displayedBalance] HOLDER case - found trustline: ${!!existing}, balance: ${result}`);
+  return result;
+});
+
+     readonly displayedBalance23 = computed(() => {
           const tab = this.activeTab();
+          
+          // Add explicit dependencies on currency and issuer to trigger recomputation
+          const currency = this.currencyStoreService.currency();
+          const issuer = this.currencyStoreService.issuer();
+          const balance = this.currencyStoreService.balance();
+          
+          // Force recomputation when these change
+          const _forceRecompute = `${currency}|${issuer}|${balance}`;
+          
+          console.log(`Recalculating balance for ${currency}/${issuer}: balance=${balance}`); // Debug
 
           // Remove tab always shows the real per-trustline balance
-          if (tab === 'removeTrustline') return this.foundTrustline()?.balance ?? '0';
+          if (tab === 'removeTrustline') {
+               const trustline = this.foundTrustline();
+               return trustline?.balance ?? '0';
+          }
 
           // Issuer case → use the total obligations from gateway_balances
-          if (this.isIssuerForSelected()) return this.currencyStoreService.balance() || '0';
+          if (this.isIssuerForSelected()) {
+               return balance || '0';
+          }
 
           // Normal holder case → use the per-trustline balance from existingIOUs
           const existing = this.foundTrustline();
-          return existing ? existing.balance : '0';
-     });
+               return existing ? existing.balance : '0';
+          });
+
+          async forceRefreshBalance(): Promise<void> {
+               await this.trustlineCurrencyService.refreshCurrentBalance();
+               // Trigger recomputation
+               this.currencyStoreService.setField('balance', this.currencyStoreService.balance());
+          }
+
+          // readonly displayedBalance = computed(() => {
+          //      const tab = this.activeTab();
+
+          //      // Remove tab always shows the real per-trustline balance
+          //      if (tab === 'removeTrustline') return this.foundTrustline()?.balance ?? '0';
+
+          //      // Issuer case → use the total obligations from gateway_balances
+          //      if (this.isIssuerForSelected()) return this.currencyStoreService.balance() || '0';
+
+          //      // Normal holder case → use the per-trustline balance from existingIOUs
+          //      const existing = this.foundTrustline();
+          //      return existing ? existing.balance : '0';
+          // });
 
      // Helper to find current selected trustline (null if none)
      private readonly foundTrustline = computed(() => {

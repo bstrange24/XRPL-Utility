@@ -30,6 +30,325 @@ export class TrustlineUtilService {
      readonly activeTab = signal<TrustlineActionTypes>('setTrustline');
 
      async loadTrustlines(forceRefresh = false): Promise<void> {
+  const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+  if (!currentWallet) {
+    this.trustlineStoreService.setField('existingIOUs', []);
+    return;
+  }
+
+  console.log(`Loading trustlines for wallet: ${currentWallet.slice(0,8)}...`);
+  this.trustlineStoreService.setField('isLoading', true);
+
+  try {
+    // Simple fetch - no complex caching logic
+    const env = await this.txEnvironmentService.refreshEnvironment({
+      includeAccountInfo: true,
+      includeAccountObject: true,
+      includeTrustlines: true,
+      includeGatewayBalance: true,
+      forceRefresh: true,
+    });
+
+    // Update trustlines
+    const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(
+      env.accountObjects!, 
+      currentWallet
+    );
+    this.trustlineStoreService.setField('existingIOUs', existingIOUs);
+
+    // Check if current selection exists
+    const currentCurrency = this.currencyStoreService.currency();
+    const currentIssuer = this.currencyStoreService.issuer();
+    
+    if (currentCurrency && currentIssuer) {
+      const exists = existingIOUs.some(
+        (tl: any) => tl.currency === currentCurrency && tl.issuer === currentIssuer
+      );
+      this.trustlineStoreService.setField('trustlineAlreadyExist', exists);
+    } else {
+      this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+    }
+
+    // Update balance
+    await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+    
+  } catch (error) {
+    console.error('Failed to load trustlines:', error);
+    this.toastService.error('Failed to load trustlines', AppConstants.TOAST.ERROR);
+  } finally {
+    this.trustlineStoreService.setField('isLoading', false);
+  }
+}
+
+     async loadTrustlines23(forceRefresh = false): Promise<void> {
+   const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+  console.log(`[loadTrustlines] START - Wallet: ${currentWallet?.slice(0,8)}..., ForceRefresh: ${forceRefresh}`);
+  
+  if (!currentWallet) {
+    console.log(`[loadTrustlines] No wallet, clearing state`);
+    this.trustlineStoreService.setField('existingIOUs', []);
+    this.trustlineStoreService.setField('isLoading', false);
+    return;
+  }
+
+  this.trustlineStoreService.setField('isLoading', true);
+  
+  const savedCurrency = this.currencyStoreService.currency();
+  const savedIssuer = this.currencyStoreService.issuer();
+  console.log(`[loadTrustlines] Saved selection: ${savedCurrency}/${savedIssuer?.slice(0,8)}...`);
+
+  try {
+         console.log(`[loadTrustlines] Fetching fresh environment...`);
+
+    // Always fetch fresh - no cache
+    const env = await this.txEnvironmentService.refreshEnvironment({
+      includeAccountInfo: true,
+      includeAccountObject: true,
+      includeTrustlines: true,
+      includeGatewayBalance: true,
+      forceRefresh: true, // Always force refresh
+    });
+        console.log(`[loadTrustlines] Environment fetched`);
+
+
+    // Update trustlines
+    const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(
+      env.accountObjects!, 
+      currentWallet
+    );
+    console.log(`[loadTrustlines] Got ${existingIOUs.length} trustlines`);
+    this.trustlineStoreService.setField('existingIOUs', existingIOUs);
+
+    // Restore selection if it exists in the new data
+    if (savedCurrency && savedIssuer) {
+      const selectionExists = existingIOUs.some(
+        (tl: any) => tl.currency === savedCurrency && tl.issuer === savedIssuer
+      );
+            console.log(`[loadTrustlines] Selection exists in new wallet: ${selectionExists}`);
+
+
+      if (!selectionExists && existingIOUs.length > 0) {
+        console.log(`[loadTrustlines] Changing selection to first available: ${existingIOUs[0].currency}/${existingIOUs[0].issuer?.slice(0,8)}...`);
+        this.currencyStoreService.setCurrency(existingIOUs[0].currency);
+        this.currencyStoreService.setIssuer(existingIOUs[0].issuer);
+      }
+    }
+
+    const activeTab = this.activeTab();
+    const trustLineExists = this.checkForExistingTrustline(env);
+        console.log(`[loadTrustlines] Trustline exists: ${trustLineExists}, Active tab: ${activeTab}`);
+
+
+    if (trustLineExists) {
+      if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects!);
+      this.trustlineStoreService.setField('trustlineAlreadyExist', true);
+    } else {
+      if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
+      this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+    }
+
+    if (activeTab === 'removeTrustline') {
+      this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects!);
+    }
+
+    // Update balance from fresh environment
+    await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+     console.log(`[loadTrustlines] Balance refreshed from env`);
+
+    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+  } catch (error) {
+    console.error('Failed to load trustlines:', error);
+    this.toastService.error('Failed to load trustlines', AppConstants.TOAST.ERROR);
+  } finally {
+    this.trustlineStoreService.setField('isLoading', false);
+  }
+}
+
+     async loadTrustlines25(forceRefresh = false): Promise<void> {
+          const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+          if (!currentWallet) {
+               // ✅ Clear state if no wallet selected
+               this.trustlineStoreService.setField('existingIOUs', []);
+               this.trustlineStoreService.setField('isLoading', false);
+               return;
+          }
+
+          // ✅ Track current wallet to prevent stale updates
+          const requestWallet = currentWallet;
+          this.trustlineStoreService.setField('isLoading', true);
+
+          try {
+               let env: any;
+
+               if (forceRefresh) {
+                    env = await this.txEnvironmentService.refreshEnvironment({
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    includeTrustlines: true,
+                    includeGatewayBalance: true,
+                    forceRefresh: true,
+                    });
+               } else {
+                    env = await this.txEnvironmentService.getValidatedEnvironment(false);
+                    
+                    if (!env.gatewayBalanceObject) {
+                    env = await this.txEnvironmentService.refreshEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeTrustlines: true,
+                         includeGatewayBalance: true,
+                         forceRefresh: false,
+                    });
+                    }
+               }
+
+               // ✅ CRITICAL: Only update state if wallet hasn't changed during the request
+               const currentWalletAfterRequest = this.walletManager.getSelectedWallet()?.classicAddress;
+               if (currentWalletAfterRequest !== requestWallet) {
+                    console.log('Wallet changed during request, discarding results');
+                    return;
+               }
+
+               // Update trustlines
+               this.trustlineStoreService.setField('existingIOUs', 
+                    this.trustlineCurrencyService.getExistingIOUs(
+                    env.accountObjects, 
+                    currentWalletAfterRequest!
+                    )
+               );
+
+               const activeTab = this.activeTab();
+               const trustLineExists = this.checkForExistingTrustline(env);
+
+               if (trustLineExists) {
+                    if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects);
+                    this.trustlineStoreService.setField('trustlineAlreadyExist', true);
+               } else {
+                    if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
+                    this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+               }
+
+               if (activeTab === 'removeTrustline') {
+                    this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects);
+               }
+
+               // Update balance
+               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+
+               this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+          } catch (error) {
+               console.error('Failed to load trustlines:', error);
+               // ✅ Only show error if wallet hasn't changed
+               const currentWalletAfterError = this.walletManager.getSelectedWallet()?.classicAddress;
+               if (currentWalletAfterError === requestWallet) {
+                    this.toastService.error('Failed to load trustlines', AppConstants.TOAST.ERROR);
+               }
+          } finally {
+               // ✅ Only clear loading state if wallet hasn't changed
+               const finalWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+               if (finalWallet === requestWallet) {
+                    this.trustlineStoreService.setField('isLoading', false);
+               }
+          }
+     }
+
+     async loadTrustlines4(forceRefresh = false): Promise<void> {
+  const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
+  if (!currentWallet) return;
+
+  this.trustlineStoreService.setField('isLoading', true);
+
+  try {
+    // Always include gateway balance for proper balance display
+    let env: any;
+
+    if (forceRefresh) {
+      env = await this.txEnvironmentService.refreshEnvironment({
+        includeAccountInfo: true,
+        includeAccountObject: true,
+        includeTrustlines: true,
+        includeGatewayBalance: true,
+        forceRefresh: true,
+      });
+    } else {
+      env = await this.txEnvironmentService.getValidatedEnvironment(false);
+      
+      // If we don't have gateway balance, refresh to get it
+      if (!env.gatewayBalanceObject) {
+        env = await this.txEnvironmentService.refreshEnvironment({
+          includeAccountInfo: true,
+          includeAccountObject: true,
+          includeTrustlines: true,
+          includeGatewayBalance: true,
+          forceRefresh: false,
+        });
+      }
+    }
+
+    // Update trustlines
+    this.trustlineStoreService.setField('existingIOUs', 
+      this.trustlineCurrencyService.getExistingIOUs(
+        env.accountObjects, 
+        this.walletManager.getSelectedWallet()!.classicAddress
+      )
+    );
+
+    const activeTab = this.activeTab();
+    const trustLineExists = this.checkForExistingTrustline(env);
+
+    if (trustLineExists) {
+      if (activeTab === 'setTrustline') this.updateTrustLineFlagsInUI(env.accountObjects);
+      this.trustlineStoreService.setField('trustlineAlreadyExist', true);
+    } else {
+      if (activeTab === 'setTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
+      this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+    }
+
+    if (activeTab === 'removeTrustline') {
+      this.setRemoveFlagsBasedOnExistingTrustline(env.accountObjects);
+    }
+
+    // CRITICAL: Always refresh balance after loading trustlines
+    await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+
+    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+  } finally {
+    this.trustlineStoreService.setField('isLoading', false);
+  }
+     }
+
+     async onCurrencyIssuerChange(): Promise<void> {
+          const currency = this.currencyStoreService.currency();
+          const issuer = this.currencyStoreService.issuer();
+          
+          if (!currency || !issuer) {
+               this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+               this.currencyStoreService.setField('amount', 0);
+               this.currencyStoreService.setField('balance', '0');
+               return;
+          }
+
+          // Force refresh environment for the new pair
+          const env = await this.txEnvironmentService.refreshEnvironment({
+               includeAccountInfo: true,
+               includeAccountObject: true,
+               includeTrustlines: true,
+               includeGatewayBalance: true,
+               forceRefresh: true,
+          });
+
+          // Update trustline existence
+          this.checkForExistingTrustline(env);
+          
+          // Update balance immediately
+          await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
+          
+          // Force UI update by triggering signal updates
+          this.trustlineStoreService.setField('isLoaded', false);
+          this.trustlineStoreService.setField('isLoaded', true);
+     }
+
+     async loadTrustlines2(forceRefresh = false): Promise<void> {
           const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
           if (!currentWallet) return;
 
@@ -131,6 +450,39 @@ export class TrustlineUtilService {
      }
 
      checkForExistingTrustline(env: any): boolean {
+  const currency = this.currencyStoreService.currency();
+  const issuer = this.currencyStoreService.issuer();
+
+  if (!currency || !issuer) {
+    this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+    this.currencyStoreService.setField('amount', 0);
+    return false;
+  }
+
+  const trustLine = env.trustlines?.result.lines.find((line: any) => {
+    const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
+    return line.account === issuer && lineCurrency === this.utilsService.decodeIfNeeded(currency);
+  });
+
+  if (trustLine) {
+    this.trustlineStoreService.setField('trustlineAlreadyExist', true);
+
+    if (this.activeTab() === 'setTrustline') {
+      this.currencyStoreService.setField('amount', trustLine.limit);
+    } else if (this.activeTab() === 'removeTrustline') {
+      this.currencyStoreService.setField('amount', 0);
+    }
+    return true;
+  } else {
+    this.trustlineStoreService.setField('trustlineAlreadyExist', false);
+    if (this.activeTab() === 'setTrustline' || this.activeTab() === 'removeTrustline') {
+      this.currencyStoreService.setField('amount', 0);
+    }
+    return false;
+  }
+}
+
+     checkForExistingTrustline12(env: any): boolean {
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
 
@@ -155,6 +507,10 @@ export class TrustlineUtilService {
                     this.currencyStoreService.setField('amount', 0);
                }
 
+                // Update balance from the trustline data
+    const balance = trustLine.balance || '0';
+    this.currencyStoreService.setField('balance', balance);
+
                // Balance is handled via displayedBalance() computed signal
                return true;
           } else {
@@ -164,8 +520,7 @@ export class TrustlineUtilService {
                     this.currencyStoreService.setField('amount', 0);
                }
 
-               return false;
-          }
+  return !!trustLine;          }
      }
 
      updateTrustLineFlagsInUI(accountObjects: xrpl.AccountObjectsResponse) {

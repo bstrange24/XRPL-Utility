@@ -11,6 +11,7 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { FormsModule } from '@angular/forms';
 import { TrustlineActionTypes } from '../../constants/trustline.types';
+import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
 
 export interface TrustlineItem {
      currency: string;
@@ -42,6 +43,8 @@ type SortKey = 'currency' | 'issuer' | 'balance' | 'limit';
 export class TrustlinesSummaryComponent {
      private readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly trustlineStoreService = inject(TrustlineStoreService);
+     
 
      constructor() {
           // Auto-clear search when parent tells us to reset
