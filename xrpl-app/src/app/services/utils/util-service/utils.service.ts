@@ -978,7 +978,8 @@ export class UtilsService {
                // Issued currency
                const { currency, issuer, value } = amount;
                if (currency) {
-                    return `${value} ${this.decodeIfNeeded(currency)} (issuer: ${issuer})`;
+                    return `${value} ${this.decodeIfNeeded(currency)}`;
+                    //  return `${value} ${this.decodeIfNeeded(currency)} (issuer: ${issuer})`;
                } else {
                     return `${value} MPT ${amount.mpt_issuance_id}`;
                }
@@ -989,7 +990,8 @@ export class UtilsService {
                return `${splitAmount[0]} ${splitAmount[1]}`;
           } else if (amount.split(' ').length > 2) {
                const splitAmount = amount.split(' ');
-               return `${splitAmount[0]} ${splitAmount[1]} (issuer: ${splitAmount[4]})`;
+               // return `${splitAmount[0]} ${splitAmount[1]} (issuer: ${splitAmount[4]})`;
+               return `${splitAmount[0]} ${splitAmount[1]}`;
           }
 
           return `${amount} XRP`;

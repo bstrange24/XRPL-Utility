@@ -341,6 +341,7 @@ export class ChecksSummaryComponent {
                expiration: check.expiration,
                isExpired: check.isExpired,
                display: check.display,
+               issuer: check.issuer,
                secondary: check.secondary,
                id: check.id,
           };
@@ -357,6 +358,7 @@ export class ChecksSummaryComponent {
                expiration: check.expiration,
                isExpired: check.isExpired,
                display: check.display,
+               issuer: check.issuer,
                secondary: check.secondary,
                id: check.id,
           };
@@ -373,6 +375,7 @@ export class ChecksSummaryComponent {
                expiration: check.expiration,
                isExpired: check.isExpired,
                display: check.display,
+               issuer: check.issuer,
                secondary: check.secondary,
                id: check.id,
           };

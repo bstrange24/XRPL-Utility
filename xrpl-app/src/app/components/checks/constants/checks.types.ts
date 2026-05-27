@@ -25,6 +25,7 @@ export type CreateCheckItem = {
      id: string;
      index: string;
      amount: string;
+     issuer?: string | null;
      destination: string;
      destinationTag?: number;
      sendMax?: string;
@@ -41,6 +42,7 @@ export type CashCheckItem = {
      id: string;
      index: string;
      amount: string;
+     issuer?: string | null;
      sender: string;
      expiration?: number;
      isExpired: boolean;
@@ -55,6 +57,7 @@ export type CancelCheckItem = {
      id: string;
      index: string;
      amount: string;
+     issuer?: string | null;
      expiration?: number;
      isExpired: boolean;
      sendMax?: string;
@@ -77,6 +80,7 @@ export type AnyCheckDisplayItem = {
      id: string;
      sendMax?: string;
      destinationTag?: number;
+     issuer?: string | null;
      expiration?: number;
      // For create checks
      destination?: string;

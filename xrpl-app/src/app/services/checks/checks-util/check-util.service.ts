@@ -44,28 +44,45 @@ export class CheckUtilService extends PerformanceBaseComponent {
      getExistingChecks(checkObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const mapped = (checkObjects.result.account_objects ?? [])
                .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === classicAddress)
-               .map((obj: any) => {
+                .map((obj: any) => {
                     const sendMax = obj.SendMax;
+
                     let amount = '0';
-                    let currency = '';
+                    let currency = 'XRP';
+                    let issuer: string | null = null;
 
                     if (typeof sendMax === 'string') {
                          amount = String(xrpl.dropsToXrp(sendMax));
+                         currency = 'XRP';
                     } else if (sendMax?.value) {
                          amount = sendMax.value;
                          currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                         issuer = sendMax.issuer || null;
+                    }
+
+                    const expiration = obj.Expiration;
+
+                    let isExpired = false;
+
+                    if (expiration) {
+                         const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
+                         const nowUnix = Math.floor(Date.now() / 1000);
+                         isExpired = nowUnix > expirationUnix;
                     }
 
                     return {
                          id: obj.index,
                          index: obj.index,
                          amount: `${amount} ${currency}`,
+                         issuer: issuer,
+                         sender: obj.Account,
                          destination: obj.Destination,
                          sendMax,
                          expiration: obj.Expiration,
+                         isExpired,
                          destinationTag: obj.DestinationTag,
-                         sourceTag: obj.SourceTag,
                          invoiceId: obj.InvoiceID,
+                         sourceTag: obj.SourceTag,
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
@@ -78,15 +95,24 @@ export class CheckUtilService extends PerformanceBaseComponent {
                .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Destination === classicAddress)
                .map((obj: any) => {
                     const sendMax = obj.SendMax;
+
                     let amount = '0';
+                    let currency = 'XRP';
+                    let issuer: string | null = null;
+
                     if (typeof sendMax === 'string') {
                          amount = String(xrpl.dropsToXrp(sendMax));
+                         currency = 'XRP';
                     } else if (sendMax?.value) {
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+                         amount = sendMax.value;
+                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                         issuer = sendMax.issuer || null;
                     }
 
                     const expiration = obj.Expiration;
+
                     let isExpired = false;
+
                     if (expiration) {
                          const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
                          const nowUnix = Math.floor(Date.now() / 1000);
@@ -96,8 +122,10 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     return {
                          id: obj.index,
                          index: obj.index,
-                         amount,
+                         amount: `${amount} ${currency}`,
+                         issuer: issuer,
                          sender: obj.Account,
+                         destination: obj.Destination,
                          sendMax,
                          expiration: obj.Expiration,
                          isExpired,
@@ -105,6 +133,35 @@ export class CheckUtilService extends PerformanceBaseComponent {
                          invoiceId: obj.InvoiceID,
                     };
                })
+               // .map((obj: any) => {
+               // const sendMax = obj.SendMax;
+               //      let amount = '0';
+               //      if (typeof sendMax === 'string') {
+               //           amount = String(xrpl.dropsToXrp(sendMax));
+               //      } else if (sendMax?.value) {
+               //           amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+               //      }
+
+               //      const expiration = obj.Expiration;
+               //      let isExpired = false;
+               //      if (expiration) {
+               //           const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
+               //           const nowUnix = Math.floor(Date.now() / 1000);
+               //           isExpired = nowUnix > expirationUnix;
+               //      }
+
+               //      return {
+               //           id: obj.index,
+               //           index: obj.index,
+               //           amount,
+               //           sender: obj.Account,
+               //           sendMax,
+               //           expiration: obj.Expiration,
+               //           isExpired,
+               //           destinationTag: obj.DestinationTag,
+               //           invoiceId: obj.InvoiceID,
+               //      };
+               // })
                .sort((a, b) => a.sender.localeCompare(b.sender));
           this.logService.logObjects('cashableChecks', mapped);
           return mapped;
@@ -115,18 +172,24 @@ export class CheckUtilService extends PerformanceBaseComponent {
                .filter((obj: any) => obj.LedgerEntryType === 'Check' && obj.Account === sender)
                .map((obj: any) => {
                     const sendMax = obj.SendMax;
+
                     let amount = '0';
+                    let currency = 'XRP';
+                    let issuer: string | null = null;
 
                     if (typeof sendMax === 'string') {
-                         // XRP (drops)
                          amount = String(xrpl.dropsToXrp(sendMax));
+                         currency = 'XRP';
                     } else if (sendMax?.value) {
-                         // IOU
-                         amount = `${sendMax.value} ${this.utilsService.normalizeCurrencyCode(sendMax.currency)}`;
+                         amount = sendMax.value;
+                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
+                         issuer = sendMax.issuer || null;
                     }
 
                     const expiration = obj.Expiration;
+
                     let isExpired = false;
+
                     if (expiration) {
                          const expirationUnix = expiration + AppConstants.RIPPLE_EPOCH_START;
                          const nowUnix = Math.floor(Date.now() / 1000);
@@ -134,13 +197,17 @@ export class CheckUtilService extends PerformanceBaseComponent {
                     }
 
                     return {
-                         id: obj.index, // <-- CheckID
+                         id: obj.index,
                          index: obj.index,
-                         amount,
+                         amount: `${amount} ${currency}`,
+                         issuer: issuer,
+                         sender: obj.Account,
                          destination: obj.Destination,
                          sendMax,
                          expiration: obj.Expiration,
                          isExpired,
+                         destinationTag: obj.DestinationTag,
+                         invoiceId: obj.InvoiceID,
                     };
                })
                .sort((a, b) => a.destination.localeCompare(b.destination));
@@ -173,6 +240,35 @@ export class CheckUtilService extends PerformanceBaseComponent {
      }
 
      mapCheckItems(checks: Signal<any[]>, mode: Signal<'cashCheck' | 'cancelCheck' | 'createCheck'>, formatAmount: (amount: any) => string): Signal<SelectItem[]> {
+    return computed(() => {
+        const list = checks();
+        const currentMode = mode();
+
+        return list.map(check => {
+            const addr = currentMode === 'cashCheck' ? check.sender : check.destination;
+            const short = addr ? `${addr.slice(0, 8)}...${addr.slice(-6)}` : 'Unknown';
+            const amount = formatAmount(check.sendMax);
+
+            return {
+                id: check.id,
+                display: `${amount} ${currentMode === 'cashCheck' ? '←' : '→'} ${short}`,
+                secondary: check.id,
+                isCurrentAccount: false,
+                currency: check.sendMax?.currency || 'XRP',
+                
+                // ← ADD THESE
+                issuer: check.issuer || check.sendMax?.issuer || '',
+                sender: check.sender,
+                amount: amount,           // keep original amount string
+                expiration: check.expiration,
+                isExpired: check.isExpired,
+                sendMax: check.sendMax,
+            } as SelectItem;
+        });
+    });
+}
+
+     mapCheckItems123(checks: Signal<any[]>, mode: Signal<'cashCheck' | 'cancelCheck' | 'createCheck'>, formatAmount: (amount: any) => string): Signal<SelectItem[]> {
           return computed(() => {
                const list = checks();
                const currentMode = mode();
@@ -238,9 +334,16 @@ export class CheckUtilService extends PerformanceBaseComponent {
                const id = item?.id || '';
                this.checksStoreService.setField('checkIdField', id);
                if (item.amount.split(' ').length > 2) {
-                    this.checksStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
-                    this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(item?.amount?.split(' ')[1]) || '');
-                    this.currencyStoreService.setField('currencyIssuer', item.amount.split(' ')[3].replaceAll(')', '') || '');
+                    if (item.amount.split(' ').length > 2) {
+    // Clean parsing - ignore any old issuer-in-parentheses
+    const parts = item.amount.split(' ');
+    this.checksStoreService.setField('amount', parts[0] || '');
+    this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(parts[1]) || '');
+    this.currencyStoreService.setField('currencyIssuer', item?.issuer || '');
+}
+                    // this.checksStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
+                    // this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(item?.amount?.split(' ')[1]) || '');
+                    // this.currencyStoreService.setField('currencyIssuer', item.amount.split(' ')[3].replaceAll(')', '') || '');
                } else {
                     this.checksStoreService.setField('amount', item?.amount?.split(' ')[0] || '');
                }

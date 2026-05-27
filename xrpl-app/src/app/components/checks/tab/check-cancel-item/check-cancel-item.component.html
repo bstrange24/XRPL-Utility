@@ -28,6 +28,13 @@
                <app-summary-key-value label="Destination">
                     <span class="font-mono">{{ check.destination }}</span>
                </app-summary-key-value>
+
+               @if (check.issuer) {
+               <app-summary-key-value label="Issuer">
+                    <span class="font-mono">{{ check.issuer }}</span>
+               </app-summary-key-value>
+               }
+			   
                @if (check.destinationTag) {
                <app-summary-key-value label="Dest Tag">
                     <span class="font-mono">{{ check.destinationTag }}</span>

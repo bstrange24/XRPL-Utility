@@ -29,6 +29,12 @@
                     <span class="font-mono">{{ check.sender }}</span>
                </app-summary-key-value>
 
+               @if (check.issuer) {
+               <app-summary-key-value label="Issuer">
+                    <span class="font-mono">{{ check.issuer }}</span>
+               </app-summary-key-value>
+               }
+
                @if (check.expiration) {
                <app-summary-key-value [label]="check.isExpired ? 'Expired' : 'Expires'">
                     <span class="font-mono" [class.text-red-600]="check.isExpired"> {{ utilsService.convertXRPLTime(check.expiration) }} </span>

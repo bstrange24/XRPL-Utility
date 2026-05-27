@@ -58,6 +58,7 @@ export class ChecksTransactionViewModelService {
                     expiration: c.expiration,
                     invoiceId: c.invoiceId,
                     isExpired: this.checkUtilService.isCheckExpired(c.expiration),
+                    issuer: c.issuer,
                }));
           }
 
@@ -72,6 +73,7 @@ export class ChecksTransactionViewModelService {
                     sender: c.sender,
                     expiration: c.expiration,
                     isExpired: this.checkUtilService.isCheckExpired(c.expiration),
+                    issuer: c.issuer,
                }));
           }
 
@@ -84,6 +86,7 @@ export class ChecksTransactionViewModelService {
                     destination: c.destination,
                     expiration: c.expiration,
                     isExpired: this.checkUtilService.isCheckExpired(c.expiration),
+                    issuer: c.issuer,
                }));
           }
 

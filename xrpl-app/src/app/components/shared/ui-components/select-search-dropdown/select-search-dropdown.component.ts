@@ -12,6 +12,9 @@ export interface SelectItem {
      display: string;
      secondary?: string;
      isCurrentAccount?: boolean;
+     currency?: string;
+     sender?: string;
+     amount?: string;
      isCurrentCode?: boolean;
      isCurrentToken?: boolean;
      group?: string;
