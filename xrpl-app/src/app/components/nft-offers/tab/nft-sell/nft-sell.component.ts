@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,11 +25,12 @@ import { NftSellService } from '../../../../services/shared/validators/nft-offer
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { NftOfferValidatorService } from '../../../../services/shared/validators/nft-offer/nft-offer-validator/nft-offer-validator.service';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-sell',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
      templateUrl: './nft-sell.component.html',
      styleUrl: './nft-sell.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,31 +53,6 @@ export class NftSellComponent {
      public readonly nftSellService = inject(NftSellService);
      public readonly nftValidatorService = inject(NftValidatorService);
 
-     // Helper info items
-     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
-
-     // Outputs
-     canSellNftChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-
-     // UI State
-     showNftIdHelper = signal(false);
-     isNftIdFocused = signal(false);
-
-     nftSelected = output<any>();
-
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -84,6 +60,31 @@ export class NftSellComponent {
                this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
           });
      }
+
+     // Helper info items
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+
+     // Inputs
+     readonly destinationItems = input.required<SelectItem[]>();
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly destinationSearchQuery = input<string | null>(null);
+
+     // Outputs
+     readonly canSellNftChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+     readonly currencySelected = output<SelectItem | null>();
+     readonly issuerSelected = output<SelectItem | null>();
+
+     // UI State
+     showOfferIndexHelper = signal(false);
+     showNftIdHelper = signal(false);
+     isNftIdFocused = signal(false);
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;
@@ -111,6 +112,11 @@ export class NftSellComponent {
      // Helper toggles
      toggleNftIdHelper() {
           this.showNftIdHelper.set(!this.showNftIdHelper());
+     }
+
+     // Helper toggles
+     toggleOfferIndexHelper() {
+          this.showOfferIndexHelper.set(!this.showOfferIndexHelper());
      }
 
      // Focus handlers

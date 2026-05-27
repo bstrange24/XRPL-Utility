@@ -225,11 +225,21 @@
                     </div>
                     } } @else {
                     <!-- Empty State -->
-                    <div class="text-center mt-20" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()">
-                         <lucide-icon name="wallet" size="48" class="mx-auto mb-4" [class.text-gray-300]="!isDark()" [class.text-gray-600]="isDark()" />
-                         <p class="text-sm" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">No accounts yet</p>
-                         <p class="text-xs mt-1" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()">Click "Generate" above to create accounts</p>
+                    <div class="empty-state">
+                         <div class="empty-state-icon">
+                              <lucide-icon name="wallet" size="20" class="text-gray-400" />
+                         </div>
+                         <p class="empty-state-title">No accounts yet</p>
+                         <p class="empty-state-subtitle">Generate your first wallet to get started</p>
                     </div>
+
+                    <!-- <div class="flex flex-col items-center justify-center h-60 text-center">
+                         <div class="w-10 h-10 rounded-3xl bg-gray-100 flex items-center justify-center mb-6">
+                              <lucide-icon name="wallet" size="30" class="text-gray-400" />
+                         </div>
+                         <p class="text-xl font-medium text-gray-900">No accounts yet</p>
+                         <p class="text-gray-500 dark:text-gray-400 mt-2 max-w-xs">Generate your first wallet to get started</p>
+                    </div> -->
                     }
                </div>
           </div>

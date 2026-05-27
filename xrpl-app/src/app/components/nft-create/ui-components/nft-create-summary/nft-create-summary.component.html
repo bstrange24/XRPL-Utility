@@ -31,7 +31,7 @@
 
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
-                    <!-- <ng-icon name="heroXMark" size="16" /> -->
+                    <ng-icon name="heroXMark" size="16" />
                     Clear All Filters
                </button>
                }
@@ -69,16 +69,25 @@
                                              <span class="font-mono">{{ nft.id.slice(0, 15) }}...{{ nft.id.slice(-15) }}</span>
                                         </app-summary-key-value>
 
-                                        <app-summary-key-value label="Taxon">
-                                             <span class="font-mono">{{ nft.taxon }}</span>
-                                        </app-summary-key-value>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                                             <app-summary-key-value label="Taxon">
+                                                  <span class="font-mono">{{ nft.taxon }}</span>
+                                             </app-summary-key-value>
 
-                                        <app-summary-key-value label="Sequence">
-                                             <span class="font-mono">{{ nft.sequence }}</span>
-                                        </app-summary-key-value>
+                                             <app-summary-key-value label="Sequence">
+                                                  <span class="font-mono">{{ nft.sequence }}</span>
+                                             </app-summary-key-value>
+                                        </div>
 
                                         <app-summary-key-value label="URI">
-                                             <span class="font-mono break-all">{{ nft.uri || 'None' }}</span>
+                                             @if (nft.uri) {
+                                             <a [href]="nft.uri" target="_blank" rel="noopener noreferrer" class="font-mono text-blue-600 hover:text-blue-700 hover:underline break-all" title="{{ nft.uri }}">
+                                                  {{ truncateUri(nft.uri) }}
+                                                  <ng-icon name="heroArrowTopRightOnSquare" size="14" />
+                                             </a>
+                                             } @else {
+                                             <span class="font-mono text-gray-500">None</span>
+                                             }
                                         </app-summary-key-value>
 
                                         @if (nft.transferFee && nft.transferFee > 0) {
@@ -105,7 +114,10 @@
                </div>
                <p class="empty-state-title">No matching NFTs found</p>
                <p class="empty-state-subtitle">Try adjusting your search or filters</p>
-               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
           </div>
           }
      </div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -54,31 +54,6 @@ export class NftBuyOffersComponent {
      public readonly nftValidatorService = inject(NftValidatorService);
      public readonly nftBuyOfferService = inject(NftBuyOfferService);
 
-     // Helper info items
-     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
-
-     // Outputs
-     canBuyNftOfferChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-
-     // UI State
-     showNftIdHelper = signal(false);
-     isNftIdFocused = signal(false);
-
-     nftSelected = output<any>();
-
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -86,6 +61,36 @@ export class NftBuyOffersComponent {
                this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
           });
      }
+
+     // Helper info items
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+
+     // Inputs
+     readonly lastIntendedDestination = input<string>('');
+     readonly currentAddress = input<string>('');
+     readonly destinationItems = input.required<SelectItem[]>();
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly selectedDestinationAddr = input<string>();
+     readonly destinationSearchQuery = input<string | null>(null);
+
+     // Outputs
+     readonly canBuyNftOfferChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly searchQueryChange = output<string>();
+     readonly destinationChange = output<any>();
+     readonly selectedDestinationAddress = output<string>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+     readonly currencySelected = output<SelectItem | null>();
+     readonly issuerSelected = output<SelectItem | null>();
+
+     // UI State
+     showNftIdHelper = signal(false);
+     isNftIdFocused = signal(false);
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;

@@ -73,7 +73,6 @@ export const AppConstants = {
           INFO: 2000,
           WARN: 3000,
      },
-
      MPT_ID_EXAMPLES: ['0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF', '000000000000000000000000000000000000000000000000'],
      MPT_META_DATA_HELPER: [
           'Must be a valid JSON object',
@@ -86,11 +85,15 @@ export const AppConstants = {
      TRANSFER_FEE_HELPER_ITEMS: ['0 = 0% fee (no fee)', '500 = 0.5% fee', '5000 = 5% fee', '50000 = 50% fee (maximum)'],
      URI_HELPER_ITEMS: ['Must be a valid URI (usually starts with <code>https://</code>)', 'Will be automatically converted to hex by the client', 'Maximum 256 bytes after hex encoding', 'Common use: link to JSON metadata (IPFS, Arweave, HTTP, etc.)'],
      MINTER_HELPER_ITEMS: ['Optional field', 'If set, only this account can mint this NFT', 'Useful for royalty enforcement or delegated minting', 'Leave empty to allow anyone with minting rights'],
-     NFT_OWNER_HELPER_ITEMS: ['Optional field', 'If set, the current owner of the NFT must match this address to modify the NFT', 'Useful for ensuring only the owner can update metadata or burn the NFT', 'Leave empty to allow any holder to modify (if they have the rights based on flags)'],
      ASSET_SCALE_HELPER_ITEMS: ['Scale 0: 1 token (no decimals)', 'Scale 2: 0.01 token precision', 'Scale 6: 0.000001 token precision (XRP standard)', 'Scale 8: 0.00000001 token precision', 'Scale 15: Maximum precision (0.000000000000001)'],
+
+     NFT_OWNER_HELPER_ITEMS: ['Optional field', 'If set, the current owner of the NFT must match this address to modify the NFT', 'Useful for ensuring only the owner can update metadata or burn the NFT', 'Leave empty to allow any holder to modify (if they have the rights based on flags)'],
      TAXON_HELPER_ITEMS: ['A number chosen by the minter to group or categorize NFTs', 'Commonly used to identify collections or series', 'Value can be any integer from <strong>0</strong> to <strong>4,294,967,295</strong>', 'Most minters use small numbers like 0, 1, 10, 100, etc.', 'The combination of <strong>Issuer + Taxon</strong> helps wallets and marketplaces group NFTs'],
      NFT_ID_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)'],
      NFT_OFFER_INDEX_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)', 'The offer index is returned when you create an NFT offer'],
+     NFT_SELECT_HELPER_ITEMS: ['Select an NFT you currently own from the dropdown', 'You must own the NFT to create a Sell Offer or other actions', 'Search by NFT ID (hex) or by metadata URI', 'If no NFTs appear, make sure you are connected with the correct wallet'],
+     UPDATE_NFT_HELPER_ITEMS: ['Select an NFT you currently own that you want to update', 'Only NFTs you own with mutable metadata will be available', 'Search by NFT ID or URI', 'Updating metadata is only possible if the NFT was minted with mutable flags', 'This action will create an NFT metadata update transaction'],
+
      SUBJECT_HELPER_ITEMS: [`This is the holder's account that needs authorization`, 'Must be a valid XRPL address (starts with r...)', 'The issuer account (your current wallet) will grant or revoke authorization'],
      CREDENTIAL_TYPE_HELPER_ITEMS: [`This identifies the type/category of credential being authorized`, 'Must match the credential type defined by the issuer', 'Used to determine which credentials the holder can receive or use'],
      DESTINATION_HELPER_ITEMS: ['The unique address of the account receiving the token', 'Must be a valid XRPL address (starts with r...)', 'If sending to an exchange, make sure to include the correct destination tag if required by the exchange'],

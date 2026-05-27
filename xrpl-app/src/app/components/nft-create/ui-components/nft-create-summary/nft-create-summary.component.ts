@@ -27,6 +27,7 @@ const NFT_SUMMARY_CONFIG: SummaryTextConfig = {
 };
 
 type SortKey = 'id' | 'taxon' | 'sequence' | 'transferFee';
+type NftQuickFilterKey = 'all' | 'hasUri' | 'noUri' | 'hasTransferFee' | 'noTransferFee';
 
 @Component({
      selector: 'app-nft-create-summary',
@@ -51,18 +52,18 @@ export class NftCreateSummaryComponent {
      }
 
      // Inputs
-     infoPanelExpanded = input<boolean>();
-     info = input<string>();
-     tab = input<NftCreateActionTypes>();
-     resetTrigger = input<number>(0);
+     readonly infoPanelExpanded = input<boolean>();
+     readonly info = input<string>();
+     readonly tab = input<NftCreateActionTypes>();
+     readonly resetTrigger = input<number>(0);
 
      // Outputs
-     toggleInfoPanel = output<void>();
-     nftSelected = output<any>();
+     readonly toggleInfoPanel = output<void>();
+     readonly nftSelected = output<any>();
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'hasUri' | 'noUri' | 'hasTransferFee' | 'noTransferFee'>('all');
+     readonly activeQuickFilter = signal<NftQuickFilterKey>('all');
      readonly sortBy = signal<SortKey>('id');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -93,15 +94,6 @@ export class NftCreateSummaryComponent {
           };
           this.nftSelected.emit(item); // or emit normalizedNft if you prefer
      }
-
-     // selectNft(nft: any) {
-     //      const item: SelectItem = {
-     //           id: nft.NFTokenID,
-     //           display: nft.URI ? `NFT • ${nft.URI}` : 'NFT',
-     //           secondary: nft.NFTokenID.slice(0, 12) + '...' + nft.NFTokenID.slice(-10),
-     //      };
-     //      this.nftSelected.emit(item);
-     // }
 
      // Helper function to get transfer fee value for sorting
      private getTransferFeeValue(nft: any): number {
@@ -223,6 +215,10 @@ export class NftCreateSummaryComponent {
           if (query && this.filteredNfts().length === 0) {
                return 'Try a different search term';
           }
+
+          const activeTab = this.nftTransactionViewModelService.activeTab();
+          if ((activeTab === 'createNft' || activeTab === 'updateNFTMetadata' || activeTab === 'burnNft') && this.totalCount() === 0) return 'Use the Create tab to mint one.';
+
           return '';
      });
 
@@ -230,47 +226,44 @@ export class NftCreateSummaryComponent {
           if (!nft.transferFee) return false;
           if (nft.transferFee === 'None' || nft.transferFee === 'N/A') return false;
           const fee = Number(nft.transferFee);
-          return !isNaN(fee) && fee > 0;
+          return !Number.isNaN(fee) && fee > 0;
      }
 
      private hasNoTransferFee(nft: any): boolean {
           if (!nft.transferFee) return true;
           if (nft.transferFee === 'None' || nft.transferFee === 'N/A') return true;
           const fee = Number(nft.transferFee);
-          return isNaN(fee) || fee === 0;
+          return Number.isNaN(fee) || fee === 0;
      }
 
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;
 
-          let colorClass = '';
+          let baseClass = '';
 
           switch (filterKey) {
                case 'all':
-                    colorClass = 'btn-filter-blue';
+                    baseClass = 'btn-filter-blue';
                     break;
                case 'hasUri':
-                    colorClass = 'btn-filter-green';
+                    baseClass = 'btn-filter-green';
                     break;
                case 'noUri':
-                    colorClass = 'btn-filter-gray';
+                    baseClass = 'btn-filter-gray';
                     break;
                case 'hasTransferFee':
-                    colorClass = 'btn-filter-purple';
+                    baseClass = 'btn-filter-purple';
                     break;
                case 'noTransferFee':
-                    colorClass = 'btn-filter-amber';
+                    baseClass = 'btn-filter-amber';
                     break;
-               default:
-                    colorClass = 'btn-filter-blue';
           }
 
-          // Add active state
           if (isActive) {
-               return `${colorClass} btn-filter-active`;
+               return `${baseClass} ${baseClass}-active`; // ← Important: both classes
           }
 
-          return colorClass;
+          return baseClass;
      }
 
      onSearchChange(value: string) {
@@ -316,5 +309,14 @@ export class NftCreateSummaryComponent {
           if (currentTab !== 'createNft') {
                this.toggleInfoPanel.emit();
           }
+     }
+
+     truncateUri(uri: string, maxLength: number = 60): string {
+          if (!uri) return '';
+          if (uri.length <= maxLength) return uri;
+
+          const start = uri.slice(0, 25);
+          const end = uri.slice(-25);
+          return `${start}...${end}`;
      }
 }

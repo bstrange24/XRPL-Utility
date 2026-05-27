@@ -1,0 +1,15 @@
+@if (errors().length > 0) {
+<div class="alert-error mb-0">
+     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
+
+     <div class="alert-content">
+          <p class="helper-text-paragraph">{{ title() }}</p>
+
+          <ul class="alert-content-list">
+               @for (error of errors(); track error) {
+               <li class="text-sm">{{ error }}</li>
+               }
+          </ul>
+     </div>
+</div>
+}

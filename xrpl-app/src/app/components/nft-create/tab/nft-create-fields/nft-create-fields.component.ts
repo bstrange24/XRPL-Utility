@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
 import { NftTransactionOrchestrator } from '../../../../services/nft/nft-orchestrator/nft-orchestrator.service';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
@@ -27,11 +27,12 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
 import { AppConstants } from '../../../../core/app.constants';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-create-fields',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ToggleSliderComponent, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ToggleSliderComponent, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, ValidationErrorsComponent],
      templateUrl: './nft-create-fields.component.html',
      styleUrl: './nft-create-fields.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,28 +56,6 @@ export class NftCreateFieldsComponent {
      public readonly uriValidatorService = inject(UriValidatorService);
      public readonly nftValidatorService = inject(NftValidatorService);
 
-     // Preset values for quick selection
-     readonly assetScalePresets = AppConstants.ASSET_SCALE_PRESETS;
-     readonly taxonPresets = AppConstants.TAXON_PRESETS;
-     readonly transferFeePresets = AppConstants.TRANSFER_RATE_PRESETS;
-
-     // Helpler info
-     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
-     readonly uriHelperItems = AppConstants.URI_HELPER_ITEMS;
-     readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
-     readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
-     readonly destinationHelperItems = AppConstants.DESTINATION_HELPER_ITEMS;
-
-     readonly onlyXrpEnabled = computed(() => this.nftUtilService.nftFlags().onlyXrpNft ?? false);
-     readonly lastIntendedDestination = input<string>('');
-     readonly currentAddress = input<string>('');
-     readonly destinationItems = input.required<SelectItem[]>();
-     readonly selectedDestinationItem = input<SelectItem | null>(null);
-     readonly selectedDestinationAddr = input<string>();
-     readonly searchQueryChange = output<string>();
-     readonly destinationChange = output<any>();
-     readonly selectedDestinationAddress = output<string>();
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -94,9 +73,41 @@ export class NftCreateFieldsComponent {
           });
      }
 
+     readonly onlyXrpEnabled = computed(() => this.nftUtilService.nftFlags().onlyXrpNft ?? false);
+
+     // Preset values for quick selection
+     readonly assetScalePresets = AppConstants.ASSET_SCALE_PRESETS;
+     readonly taxonPresets = AppConstants.TAXON_PRESETS;
+     readonly transferFeePresets = AppConstants.TRANSFER_RATE_PRESETS;
+
+     // Helpler info
+     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
+     readonly uriHelperItems = AppConstants.URI_HELPER_ITEMS;
+     readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
+     readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
+     readonly destinationHelperItems = AppConstants.DESTINATION_HELPER_ITEMS;
+
+     // Inputs
+     readonly lastIntendedDestination = input<string>('');
+     readonly currentAddress = input<string>('');
+     readonly destinationItems = input.required<SelectItem[]>();
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly selectedDestinationAddr = input<string>();
+     readonly destinationSearchQuery = input<string | null>(null);
+
      // Outputs
-     canCreateNftChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
+     readonly canCreateNftChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly searchQueryChange = output<string>();
+     readonly destinationChange = output<any>();
+     readonly selectedDestinationAddress = output<string>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+     readonly currencySelected = output<SelectItem | null>();
+     readonly issuerSelected = output<SelectItem | null>();
 
      // Signals
      showUriHelper = signal(false);
@@ -105,16 +116,6 @@ export class NftCreateFieldsComponent {
      showTransferFeeHelper = signal(false);
      showDestinationHelper = signal(false);
      isDestinationValid = signal(false);
-
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
 
      private forceToXrp() {
           const current = this.currencyStoreService.currency();

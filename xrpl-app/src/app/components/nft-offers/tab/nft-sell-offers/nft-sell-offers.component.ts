@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CommonModule } from '@angular/common';
@@ -26,11 +26,12 @@ import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { NftSellOfferService } from '../../../../services/shared/validators/nft-offer/nft-sell-offer/nft-sell-offer.service';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-sell-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
      templateUrl: './nft-sell-offers.component.html',
      styleUrl: './nft-sell-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,27 +57,32 @@ export class NftSellOffersComponent {
 
      // Helper info items
      readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly selectNftHelperItems = AppConstants.NFT_SELECT_HELPER_ITEMS;
+
+     // Inputs
+     readonly destinationItems = input.required<SelectItem[]>();
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly destinationSearchQuery = input<string | null>(null);
 
      // Outputs
-     canSellNftOfferChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-     nftSelected = output<any>();
+     readonly canSellNftOfferChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly searchQueryChange = output<string>();
+     readonly destinationChange = output<any>();
+     readonly selectedDestinationAddress = output<string>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+     readonly currencySelected = output<SelectItem | null>();
+     readonly issuerSelected = output<SelectItem | null>();
 
      // UI State
      showNftIdHelper = signal(false);
      isNftIdFocused = signal(false);
-
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
+     showSelectNftHelper = signal(false);
 
      constructor() {
           // Emit validation status changes
@@ -112,6 +118,10 @@ export class NftSellOffersComponent {
      // Helper toggles
      toggleNftIdHelper() {
           this.showNftIdHelper.set(!this.showNftIdHelper());
+     }
+
+     toggleSelectNftHelper() {
+          this.showSelectNftHelper.update(v => !v);
      }
 
      // Focus handlers

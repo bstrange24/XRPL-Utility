@@ -56,17 +56,6 @@
                          [isInvalid]="!!(nftOfferValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
                     />
 
-                    <!-- Validation Icon -->
-                    <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && (nftOfferValidatorService.isNftTokenIdValid() || nftOfferValidatorService.isNftTokenIdInvalid())) {
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                         @if (nftOfferValidatorService.isNftTokenIdValid()) {
-                         <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                         } @else if (nftOfferValidatorService.isNftTokenIdInvalid()) {
-                         <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                         }
-                    </div>
-                    } -->
-
                     <!-- Clear Button -->
                     @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
                     <button type="button" (click)="clearNftId()" class="clearInputXmark right-8" aria-label="Clear NFT Token ID">
@@ -79,7 +68,7 @@
                <app-field-helper title="NFT Token ID Guidelines" [items]="nftIdHelperItems" [show]="showNftIdHelper" />
 
                <!-- Character Counter -->
-               <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
+               @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
                <div class="mt-1 text-xs flex justify-between items-center">
                     <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftId().length }} / 64</span>
                     @if (nftCreateStoreService.nftId().length === 64 && nftOfferValidatorService.isNftTokenIdValid()) {
@@ -94,19 +83,11 @@
                     </span>
                     }
                </div>
-               } -->
+               }
 
                <!-- Error Message -->
                @if (nftOfferValidatorService.getNftTokenIdErrorMessage()) {
                <p class="form-error mt-2">{{ nftOfferValidatorService.getNftTokenIdErrorMessage() }}</p>
-               }
-
-               <!-- Success Message -->
-               @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && nftOfferValidatorService.isNftTokenIdValid()) {
-               <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
-                    <ng-icon name="heroCheckCircle" size="12" />
-                    Valid NFT Token ID format
-               </p>
                }
           </div>
 

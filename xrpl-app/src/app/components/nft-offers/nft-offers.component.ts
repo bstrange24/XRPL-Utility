@@ -268,7 +268,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           const currentTab = this.nftOffersTransactionViewModelService.activeTab();
           const wallet = this.currentWallet();
 
-          if (!this.nftCreateStoreService.nftId()) {
+          if (currentTab !== 'cancelNftOffer' && !this.nftCreateStoreService.nftId()) {
                this.toastService.error('NFT Token ID can not be empty.', AppConstants.TOAST.ERROR);
                return;
           }

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -23,11 +23,12 @@ import { UriValidatorService } from '../../../../services/shared/validators/uri-
 import { NftCreateValidatorService } from '../../../../services/shared/validators/nft/nft-create-validator/nft-create-validator.service';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { NftModifyValidatorService } from '../../../../services/shared/validators/nft/nft-modify-validator/nft-modify-validator.service';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-modify',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent],
      templateUrl: './nft-modify.component.html',
      styleUrl: './nft-modify.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,24 +50,6 @@ export class NftModifyComponent {
      public readonly uriValidatorService = inject(UriValidatorService);
      public readonly nftModifyValidatorService = inject(NftModifyValidatorService);
 
-     // Helpler info
-     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
-     readonly uriHelperItems = AppConstants.URI_HELPER_ITEMS;
-     readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
-     readonly nftOwnerHelperItems = AppConstants.NFT_OWNER_HELPER_ITEMS;
-     readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
-     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
-
-     // Outputs
-     canModifyNftChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-     nftSelected = output<any>();
-
-     // Signals
-     showUriHelper = signal(false);
-     showNftOwnerHelper = signal(false);
-     showNftHelper = signal(false);
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -75,27 +58,35 @@ export class NftModifyComponent {
           });
      }
 
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
+     // Helpler info
+     readonly transferFeeHelperItems = AppConstants.TRANSFER_FEE_HELPER_ITEMS;
+     readonly uriHelperItems = AppConstants.URI_HELPER_ITEMS;
+     readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
+     readonly nftOwnerHelperItems = AppConstants.NFT_OWNER_HELPER_ITEMS;
+     readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly updateNftHelperItems = AppConstants.UPDATE_NFT_HELPER_ITEMS;
 
-     onFocus(event: FocusEvent): void {
-          const input = event.target as HTMLInputElement;
-          if (input.value) {
-               const num = Number.parseFloat(input.value);
-               if (!Number.isNaN(num)) input.value = num.toFixed(6);
-          }
-     }
+     // Inputs
+     readonly destinationItems = input<SelectItem[]>([]);
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly destinationSearchQuery = input<string | null>(null);
 
-     setNftExpirationDate = (value: string): void => {
-          this.nftCreateStoreService.setField('expiration', value);
-     };
+     // Outputs
+     readonly canModifyNftChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+
+     // Signals
+     showUriHelper = signal(false);
+     showNftOwnerHelper = signal(false);
+     showNftHelper = signal(false);
+     showUpdateNftHelper = signal(false);
 
      onNftSelected(item: SelectItem | null) {
           const id = item?.id || '';
@@ -112,11 +103,6 @@ export class NftModifyComponent {
 
           this.nftSelected.emit(item); // forward to parent if needed
      }
-
-     // onNftSelected(item: SelectItem | null) {
-     //      const id = item?.id || '';
-     //      this.nftCreateStoreService.setField('nftId', id);
-     // }
 
      // For NFT Burn
      selectedNftIsNotBurnable(): boolean {
@@ -142,5 +128,9 @@ export class NftModifyComponent {
 
      toggleNftHelper() {
           this.showNftHelper.update(v => !v);
+     }
+
+     toggleUpdateNftHelper() {
+          this.showUpdateNftHelper.update(v => !v);
      }
 }

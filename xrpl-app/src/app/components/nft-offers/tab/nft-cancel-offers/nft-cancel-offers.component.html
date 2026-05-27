@@ -13,9 +13,9 @@
 
                <div class="flex items-center gap-2">
                     <p class="text-secondary">Select an existing NFT offer to cancel.</p>
-                    <!-- <button type="button" (click)="toggleOfferIndexHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <button type="button" (click)="toggleOfferIndexHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
-                    </button> -->
+                    </button>
                </div>
 
                <div class="relative">
@@ -60,8 +60,8 @@
                <app-field-helper title="NFT Offer Index Guidelines" [items]="offerIndexHelperItems" [show]="showOfferIndexHelper" />
 
                <!-- Character Counter -->
-               <!-- @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
-               <div class="mt-1 text-xs flex justify-between items-center">
+               @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
+               <div class="mt-2 text-xs flex justify-between items-center">
                     <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftOfferId().length }} / 64</span>
                     @if (nftCreateStoreService.nftOfferId().length === 64 && nftOfferValidatorService.isNftOfferIndexValid()) {
                     <span class="text-green-600 flex items-center gap-1">
@@ -75,35 +75,15 @@
                     </span>
                     }
                </div>
-               } -->
+               }
 
                <!-- Error Message -->
                @if (nftOfferValidatorService.getNftOfferIndexErrorMessage()) {
                <p class="form-error mt-2">{{ nftOfferValidatorService.getNftOfferIndexErrorMessage() }}</p>
                }
-
-               <!-- Success Message -->
-               <!-- @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0 && nftOfferValidatorService.isNftOfferIndexValid()) {
-               <p class="text-xs text-green-600 mt-2 flex items-center gap-1">
-                    <ng-icon name="heroCheckCircle" size="12" />
-                    Valid NFT Offer Index format
-               </p>
-               } -->
           </div>
      </div>
 </div>
 
 <!-- Summary of validation errors -->
-@if (nftOfferValidatorService.getAllValidationErrors().length > 0) {
-<div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-     <div class="alert-content">
-          <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="alert-content-list">
-               @for (error of nftOfferValidatorService.getAllValidationErrors(); track $index) {
-               <li class="text-sm">{{ error }}</li>
-               }
-          </ul>
-     </div>
-</div>
-}
+<app-validation-errors [errors]="nftOfferValidatorService.getAllValidationErrors()" title="NFT validation issues:" />

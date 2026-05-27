@@ -34,6 +34,7 @@ const NFT_OFFERS_SUMMARY_CONFIG: SummaryTextConfig = {
 };
 
 type SortKey = 'amount' | 'counterparty' | 'offerId' | 'expiration';
+type NftQuickFilterKey = 'all' | 'expired' | 'active' | 'buy' | 'sell';
 
 @Component({
      selector: 'app-nft-offers-summary',
@@ -61,20 +62,20 @@ export class NftOffersSummaryComponent {
      }
 
      // Inputs
-     infoPanelExpanded = input<boolean>();
-     resetTrigger = input<number>(0);
+     readonly infoPanelExpanded = input<boolean>();
+     readonly resetTrigger = input<number>(0);
 
      // Outputs
-     toggleInfoPanel = output<void>();
-     nftSelected = output<any>();
-     info = input<string>();
-     tab = input<NftOfferActionTypes>();
+     readonly toggleInfoPanel = output<void>();
+     readonly nftSelected = output<any>();
+     readonly info = input<string>();
+     readonly tab = input<NftOfferActionTypes>();
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
      readonly expiresAfter = signal<string>('');
      readonly expiresBefore = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'expired' | 'active' | 'buy' | 'sell'>('all');
+     readonly activeQuickFilter = signal<NftQuickFilterKey>('all');
      readonly sortBy = signal<SortKey>('expiration');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -107,10 +108,10 @@ export class NftOffersSummaryComponent {
      private getAmountValue(offer: any): number {
           const amount = offer.amount;
           if (typeof amount === 'object' && amount !== null && amount.value) {
-               return parseFloat(amount.value) || 0;
+               return Number.parseFloat(amount.value) || 0;
           }
           if (typeof amount === 'string') {
-               return parseFloat(amount) || 0;
+               return Number.parseFloat(amount) || 0;
           }
           return 0;
      }
@@ -149,7 +150,7 @@ export class NftOffersSummaryComponent {
                offers = offers.filter(offer => {
                     if (!offer.expiration) return false;
                     const expirationDate = new Date(this.getExpirationTimestamp(offer.expiration));
-                    if (isNaN(expirationDate.getTime())) return false;
+                    if (Number.isNaN(expirationDate.getTime())) return false;
                     if (after && expirationDate < new Date(after)) return false;
                     if (before && expirationDate > new Date(before)) return false;
                     return true;
@@ -263,40 +264,44 @@ export class NftOffersSummaryComponent {
           if ((this.expiresAfter() || this.expiresBefore()) && this.filteredOffers().length === 0) {
                return 'Try adjusting the expiration date range';
           }
+
+          const activeTab = this.nftOffersTransactionViewModelService.activeTab();
+          if ((activeTab === 'sellNft' || activeTab === 'buyNft') && this.totalCount() === 0) return 'Use the current tab to generate one.';
+          if (activeTab === 'cancelNftOffer' && this.totalCount() === 0) return 'Use the Sell/Buy tab to generate one.';
+
           return '';
      });
 
      getQuickFilterClass(filterKey: string): string {
           const isActive = this.activeQuickFilter() === filterKey;
 
-          let colorClass = '';
+          let baseClass = '';
 
           switch (filterKey) {
                case 'all':
-                    colorClass = 'btn-filter-blue';
+                    baseClass = 'btn-filter-blue';
                     break;
                case 'active':
-                    colorClass = 'btn-filter-green';
+                    baseClass = 'btn-filter-green';
                     break;
                case 'expired':
-                    colorClass = 'btn-filter-red';
+                    baseClass = 'btn-filter-red';
                     break;
                case 'buy':
-                    colorClass = 'btn-filter-purple';
+                    baseClass = 'btn-filter-purple';
                     break;
                case 'sell':
-                    colorClass = 'btn-filter-amber';
+                    baseClass = 'btn-filter-amber';
                     break;
                default:
-                    colorClass = 'btn-filter-blue';
+                    baseClass = 'btn-filter-blue';
           }
 
-          // Add active state
           if (isActive) {
-               return `${colorClass} btn-filter-active`;
+               return `${baseClass} ${baseClass}-active`;
           }
 
-          return colorClass;
+          return baseClass;
      }
 
      onSearchChange(value: string) {

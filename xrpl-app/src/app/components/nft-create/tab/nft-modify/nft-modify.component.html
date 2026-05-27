@@ -14,11 +14,16 @@
 
                <div class="flex items-center gap-2">
                     <p class="text-secondary">Select an existing NFT to update its metadata.</p>
+                    <button type="button" (click)="toggleUpdateNftHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
                </div>
 
                <div class="relative">
                     <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
                </div>
+
+               <app-field-helper title="Select NFT to Update" [items]="updateNftHelperItems" [show]="showUpdateNftHelper" />
           </div>
 
           <!-- NFT Token ID -->
@@ -46,17 +51,6 @@
                          [isInvalid]="!!(nftValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
                     />
 
-                    <!-- Validation Icon -->
-                    <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0 && (nftValidatorService.isNftTokenIdValid() || nftValidatorService.isNftTokenIdInvalid())) {
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                         @if (nftValidatorService.isNftTokenIdValid()) {
-                         <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                         } @else if (nftValidatorService.isNftTokenIdInvalid()) {
-                         <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                         }
-                    </div>
-                    } -->
-
                     <!-- Clear Button -->
                     @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
                     <button type="button" (click)="nftValidatorService.clearField('nftId')" class="clearInputXmark right-8" aria-label="Clear NFT Token ID">
@@ -69,8 +63,8 @@
                <app-field-helper title="NFT ID Guidelines" [items]="nftIdHelperItems" [show]="showNftHelper" />
 
                <!-- Character Counter -->
-               <!-- @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
-               <div class="mt-1 text-xs flex justify-between items-center">
+               @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
+               <div class="mt-2 text-xs flex justify-between items-center">
                     <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftId().length }} / 64</span>
                     @if (nftCreateStoreService.nftId().length === 64 && nftValidatorService.isNftTokenIdValid()) {
                     <span class="text-green-600 flex items-center gap-1">
@@ -84,7 +78,7 @@
                     </span>
                     }
                </div>
-               } -->
+               }
 
                <!-- Error Message -->
                @if (nftValidatorService.getNftTokenIdErrorMessage()) {
@@ -190,16 +184,4 @@
 </div>
 
 <!-- Summary of validation errors -->
-@if (nftValidatorService.getAllValidationErrors().length > 0) {
-<div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-     <div class="alert-content">
-          <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="alert-content-list">
-               @for (error of nftValidatorService.getAllValidationErrors(); track $index) {
-               <li class="text-sm">{{ error }}</li>
-               }
-          </ul>
-     </div>
-</div>
-}
+<app-validation-errors [errors]="nftValidatorService.getAllValidationErrors()" title="NFT validation issues:" />

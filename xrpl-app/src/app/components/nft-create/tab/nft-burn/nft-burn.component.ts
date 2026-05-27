@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -22,11 +22,12 @@ import { AppConstants } from '../../../../core/app.constants';
 import { NftCreateValidatorService } from '../../../../services/shared/validators/nft/nft-create-validator/nft-create-validator.service';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { NftBurnValidatorService } from '../../../../services/shared/validators/nft/nft-burn-validator/nft-burn-validator.service';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-burn',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent],
      templateUrl: './nft-burn.component.html',
      styleUrl: './nft-burn.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,14 +48,6 @@ export class NftBurnComponent {
      public readonly nftValidatorService = inject(NftValidatorService);
      public readonly nftBurnValidatorService = inject(NftBurnValidatorService);
 
-     // Helpler info
-     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
-
-     // Outputs
-     canBurnNftChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-     nftSelected = output<any>();
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -63,30 +56,28 @@ export class NftBurnComponent {
           });
      }
 
+     // Helpler info
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly selectNftHelperItems = AppConstants.NFT_SELECT_HELPER_ITEMS;
+
+     // Inputs
+     readonly destinationItems = input<SelectItem[]>([]);
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly destinationSearchQuery = input<string | null>(null);
+
+     // Outputs
+     readonly canBurnNftChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+
      // Signals
+     showSelectNftHelper = signal(false);
      showNftHelper = signal(false);
-
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
-
-     onFocus(event: FocusEvent): void {
-          const input = event.target as HTMLInputElement;
-          if (input.value) {
-               const num = Number.parseFloat(input.value);
-               if (!Number.isNaN(num)) input.value = num.toFixed(6);
-          }
-     }
-
-     setNftExpirationDate = (value: string): void => {
-          this.nftCreateStoreService.setField('expiration', value);
-     };
 
      onNftSelected(item: SelectItem | null) {
           const id = item?.id || '';
@@ -94,16 +85,20 @@ export class NftBurnComponent {
           this.nftCreateStoreService.setField('nftId', id);
 
           if (id) {
-               this.nftUtilService.onNftSelectedInUi(item); // reuse the util
+               this.nftUtilService.onNftSelectedInUi(item);
           } else {
                this.nftCreateStoreService.setField('initialURI', '');
                this.nftCreateStoreService.setField('nftOwnerAddress', '');
           }
 
-          this.nftSelected.emit(item); // forward to parent if needed
+          this.nftSelected.emit(item);
      }
 
      toggleNftHelper() {
           this.showNftHelper.update(v => !v);
+     }
+
+     toggleSelectNftHelper() {
+          this.showSelectNftHelper.update(v => !v);
      }
 }

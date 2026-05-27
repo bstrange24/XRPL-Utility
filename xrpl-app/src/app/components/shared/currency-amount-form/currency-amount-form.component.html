@@ -15,7 +15,7 @@
           <app-select-search-dropdown [items]="currencyItems" [value]="selectedCurrencyItem" [showClearButton]="false" [showShortAddress]="false" (valueChange)="currencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" [disableCurrencySelection]="disableCurrencySelection"> </app-select-search-dropdown>
 
           @if (showXrpOnlyBadge) {
-          <div class="rounded-2xl bg-blue-100 px-3 py-2 text-xs text-blue-700">Only XRP Allowed when OnlyXRP flag is set</div>
+          <div class="rounded-2xl mt-3 bg-blue-100 px-3 py-2 text-xs text-blue-700">Only XRP Allowed when OnlyXRP flag is set</div>
           }
 
           <!-- Helper Text -->

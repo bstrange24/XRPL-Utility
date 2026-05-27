@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
@@ -20,11 +20,12 @@ import { NftCancelOfferService } from '../../../../services/shared/validators/nf
 import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-cancel-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon, FocusBorderDirective, FieldHelperComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
      templateUrl: './nft-cancel-offers.component.html',
      styleUrl: './nft-cancel-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,19 +44,6 @@ export class NftCancelOffersComponent {
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
      public readonly nftCancelService = inject(NftCancelOfferService);
 
-     // Helper info items
-     readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
-
-     // Outputs
-     canCancelNftOfferChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
-
-     // UI State
-     showOfferIndexHelper = signal(false);
-     isOfferIndexFocused = signal(false);
-
-     nftSelected = output<any>();
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -64,17 +52,31 @@ export class NftCancelOffersComponent {
           });
      }
 
-     // Destination dropdown – passed from parent (keeps logic in the main page)
-     @Input() destinationItems: SelectItem[] = [];
-     @Input() selectedDestinationItem: SelectItem | null = null;
-     @Input() destinationSearchQuery: string | null = null;
-     @Output() destinationChanged = new EventEmitter<SelectItem | null>();
-     @Output() currencySelected = new EventEmitter<SelectItem | null>();
-     @Output() issuerSelected = new EventEmitter<SelectItem | null>();
-     @Output() optionsToggled = new EventEmitter<boolean>();
-     @Output() expirationToggled = new EventEmitter<boolean>();
-     @Output() destinationSearchQueryChange = new EventEmitter<string>();
-     @Output() destinationValueChange = new EventEmitter<SelectItem | null>();
+     // Helper info items
+     readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
+
+     // Inputs
+     readonly destinationItems = input.required<SelectItem[]>();
+     readonly selectedDestinationItem = input<SelectItem | null>(null);
+     readonly destinationSearchQuery = input<string | null>(null);
+
+     // Outputs
+     readonly canCancelNftOfferChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
+     readonly nftSelected = output<any>();
+     readonly searchQueryChange = output<string>();
+     readonly destinationChange = output<any>();
+     readonly destinationChanged = output<SelectItem | null>();
+     readonly optionsToggled = output<boolean>();
+     readonly expirationToggled = output<boolean>();
+     readonly destinationSearchQueryChange = output<string>();
+     readonly destinationValueChange = output<SelectItem | null>();
+     readonly currencySelected = output<SelectItem | null>();
+     readonly issuerSelected = output<SelectItem | null>();
+
+     // UI State
+     showOfferIndexHelper = signal(false);
+     isOfferIndexFocused = signal(false);
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;

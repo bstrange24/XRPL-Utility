@@ -10,11 +10,12 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { NgIcon } from '@ng-icons/core';
 import { NftBuyService } from '../../../../services/shared/validators/nft-offer/nft-buy/nft-buy.service';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-nft-buy',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon, ValidationErrorsComponent],
      templateUrl: './nft-buy.component.html',
      styleUrl: './nft-buy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -25,10 +26,6 @@ export class NftBuyComponent {
      public readonly nftOfferValidatorService = inject(NftOfferValidatorService);
      public readonly nftBuyService = inject(NftBuyService);
 
-     // Helper info items
-     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
-     readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
-
      constructor() {
           // Emit validation status changes
           effect(() => {
@@ -37,9 +34,13 @@ export class NftBuyComponent {
           });
      }
 
+     // Helper info items
+     readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
+
      // Outputs
-     canBuyNftChange = output<boolean>();
-     validationErrorsChange = output<string[]>();
+     readonly canBuyNftChange = output<boolean>();
+     readonly validationErrorsChange = output<string[]>();
 
      // UI State
      showOfferIndexHelper = signal(false);

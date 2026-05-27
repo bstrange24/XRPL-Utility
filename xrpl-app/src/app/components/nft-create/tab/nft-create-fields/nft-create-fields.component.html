@@ -279,16 +279,4 @@
 </div>
 
 <!-- Summary of validation errors -->
-@if (nftValidatorService.getAllValidationErrors().length > 0) {
-<div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-     <div class="alert-content">
-          <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="alert-content-list">
-               @for (error of nftValidatorService.getAllValidationErrors(); track $index) {
-               <li class="text-sm">{{ error }}</li>
-               }
-          </ul>
-     </div>
-</div>
-}
+<app-validation-errors [errors]="nftValidatorService.getAllValidationErrors()" title="NFT validation issues:" />

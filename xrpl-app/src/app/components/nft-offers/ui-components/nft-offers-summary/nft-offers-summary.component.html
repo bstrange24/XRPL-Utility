@@ -39,7 +39,7 @@
 
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
-                    <!-- <ng-icon name="heroXMark" size="16" /> -->
+                    <ng-icon name="heroXMark" size="16" />
                     Clear All Filters
                </button>
                }
@@ -78,7 +78,7 @@
                                    <!-- Metadata -->
                                    <div class="mt-3 text-sm">
                                         <app-summary-key-value label="Offer ID">
-                                             <span class="font-mono">{{ offer.index }}</span>
+                                             <span class="font-mono">{{ offer.index.slice(0, 15) }}...{{ offer.index.slice(-15) }}</span>
                                         </app-summary-key-value>
 
                                         <app-summary-key-value label="NFT ID">
@@ -90,7 +90,7 @@
                                         </app-summary-key-value>
 
                                         @if (offer.expiration) {
-                                        <app-summary-key-value [label]="offer.isExpired ? 'Expired:' : 'Expires:'">
+                                        <app-summary-key-value [label]="offer.isExpired ? 'Expired' : 'Expires'">
                                              <span class="font-mono" [class.text-red-600]="offer.isExpired"> {{ formatXrplTimestamp(offer.expiration) }} </span>
                                         </app-summary-key-value>
                                         }
@@ -109,7 +109,10 @@
                </div>
                <p class="empty-state-title">No matching NFT offers found</p>
                <p class="empty-state-subtitle">Try adjusting your search, date range, or filters</p>
-               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
           </div>
           }
      </div>
