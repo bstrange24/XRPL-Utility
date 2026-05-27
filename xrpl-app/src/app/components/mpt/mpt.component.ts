@@ -183,7 +183,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           });
      });
 
-     onMptSelected(item: SelectItem | null) {
+     selectedMPT(item: SelectItem | null) {
           const id = item?.id || '';
           this.mptStoreService.setField('mptIssuanceId', id);
      }

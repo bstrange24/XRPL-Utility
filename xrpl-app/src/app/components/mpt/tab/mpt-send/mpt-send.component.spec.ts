@@ -109,9 +109,9 @@ describe('MptSendComponent', () => {
                expect(component.selectedDestinationAddress.emit).toHaveBeenCalledWith(address);
           });
 
-          it('should have onMptSelected output', () => {
-               expect(component.onMptSelected).toBeDefined();
-               expect(component.onMptSelected.emit).toBeDefined();
+          it('should have selectedMPT output', () => {
+               expect(component.selectedMPT).toBeDefined();
+               expect(component.selectedMPT.emit).toBeDefined();
           });
      });
 
@@ -159,21 +159,21 @@ describe('MptSendComponent', () => {
      });
 
      describe('onMptSelection', () => {
-          it('should emit onMptSelected with the item', () => {
-               spyOn(component.onMptSelected, 'emit');
+          it('should emit selectedMPT with the item', () => {
+               spyOn(component.selectedMPT, 'emit');
                const item = { id: 'mpt123', display: 'MPT 1' } as SelectItem;
 
                component.onMptSelection(item);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
           });
 
           it('should emit null when item is null', () => {
-               spyOn(component.onMptSelected, 'emit');
+               spyOn(component.selectedMPT, 'emit');
 
                component.onMptSelection(null);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(null);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(null);
           });
      });
 

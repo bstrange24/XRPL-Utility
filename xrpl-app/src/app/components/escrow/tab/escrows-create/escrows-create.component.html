@@ -137,7 +137,7 @@
                          </div>
 
                          <div class="relative">
-                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="onMptSelected($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="selectedMPT($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
                          </div>
                     </div>
                     <app-field-helper title="MPT" [items]="escrowMptHelperItems" [show]="showEscrowMptHelper" />

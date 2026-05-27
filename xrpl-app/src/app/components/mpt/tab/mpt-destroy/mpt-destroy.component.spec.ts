@@ -79,22 +79,22 @@ describe('MptDestroyComponent', () => {
      });
 
      describe('Output signals', () => {
-          it('should have onMptSelected output', () => {
-               expect(component.onMptSelected).toBeDefined();
-               expect(component.onMptSelected.emit).toBeDefined();
+          it('should have selectedMPT output', () => {
+               expect(component.selectedMPT).toBeDefined();
+               expect(component.selectedMPT.emit).toBeDefined();
           });
 
-          it('should emit onMptSelected when called', () => {
-               spyOn(component.onMptSelected, 'emit');
+          it('should emit selectedMPT when called', () => {
+               spyOn(component.selectedMPT, 'emit');
                const item = { id: 'mpt123', display: 'MPT 1' } as SelectItem;
-               component.onMptSelected.emit(item);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item);
+               component.selectedMPT.emit(item);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
           });
 
           it('should emit null when called with null', () => {
-               spyOn(component.onMptSelected, 'emit');
-               component.onMptSelected.emit(null);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(null);
+               spyOn(component.selectedMPT, 'emit');
+               component.selectedMPT.emit(null);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(null);
           });
      });
 
@@ -116,30 +116,30 @@ describe('MptDestroyComponent', () => {
      });
 
      describe('onMptSelection', () => {
-          it('should emit onMptSelected with the item', () => {
-               spyOn(component.onMptSelected, 'emit');
+          it('should emit selectedMPT with the item', () => {
+               spyOn(component.selectedMPT, 'emit');
                const item = { id: 'mpt123', display: 'MPT 1' } as SelectItem;
 
                component.onMptSelection(item);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
           });
 
           it('should emit null when item is null', () => {
-               spyOn(component.onMptSelected, 'emit');
+               spyOn(component.selectedMPT, 'emit');
 
                component.onMptSelection(null);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(null);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(null);
           });
 
           it('should handle item without id', () => {
-               spyOn(component.onMptSelected, 'emit');
+               spyOn(component.selectedMPT, 'emit');
                const item = { display: 'MPT' } as SelectItem;
 
                component.onMptSelection(item);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
           });
      });
 
@@ -190,7 +190,7 @@ describe('MptDestroyComponent', () => {
           });
 
           it('should handle rapid MPT selection changes', () => {
-               spyOn(component.onMptSelected, 'emit');
+               spyOn(component.selectedMPT, 'emit');
 
                const item1 = { id: 'mpt1', display: 'MPT 1' } as SelectItem;
                const item2 = { id: 'mpt2', display: 'MPT 2' } as SelectItem;
@@ -199,10 +199,10 @@ describe('MptDestroyComponent', () => {
                component.onMptSelection(item2);
                component.onMptSelection(null);
 
-               expect(component.onMptSelected.emit).toHaveBeenCalledTimes(3);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item1);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item2);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(null);
+               expect(component.selectedMPT.emit).toHaveBeenCalledTimes(3);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item1);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item2);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(null);
           });
 
           it('should handle viewModel returning empty mptItems', () => {

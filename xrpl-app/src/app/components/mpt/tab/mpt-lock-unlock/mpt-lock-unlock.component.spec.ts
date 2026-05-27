@@ -88,9 +88,9 @@ describe('MptLockUnlockComponent', () => {
                expect(component.selectedDestinationAddress.emit).toHaveBeenCalledWith(address);
           });
 
-          it('should have onMptSelected output', () => {
-               expect(component.onMptSelected).toBeDefined();
-               expect(component.onMptSelected.emit).toBeDefined();
+          it('should have selectedMPT output', () => {
+               expect(component.selectedMPT).toBeDefined();
+               expect(component.selectedMPT.emit).toBeDefined();
           });
      });
 

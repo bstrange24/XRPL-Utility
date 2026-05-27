@@ -37,7 +37,7 @@ export class MptDestroyComponent {
      readonly lastIntendedDestination = input<string>('');
      // Outputs to parent
      readonly selectedDestinationAddress = output<string>();
-     readonly onMptSelected = output<SelectItem | null>();
+     readonly selectedMPT = output<SelectItem | null>();
      readonly validationErrorsChange = output<string[]>();
      readonly confirmDestroy = output<void>();
      readonly clearFields = output<void>();
@@ -122,7 +122,7 @@ export class MptDestroyComponent {
                this.mptStoreService.setField('mptIssuanceId', '');
                return;
           }
-          this.onMptSelected.emit(item);
+          this.selectedMPT.emit(item);
      }
 
      onMptIssuanceIdBlur() {

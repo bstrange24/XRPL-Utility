@@ -345,16 +345,16 @@ describe('EscrowsCreateComponent', () => {
           });
      });
 
-     describe('onMptSelected', () => {
+     describe('selectedMPT', () => {
           it('should set mptIssuanceId when item is provided', () => {
                const item = { id: 'mpt123', display: 'MPT Token' };
-               component.onMptSelected(item);
+               component.selectedMPT(item);
 
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', 'mpt123');
           });
 
           it('should clear mptIssuanceId when item is null', () => {
-               component.onMptSelected(null);
+               component.selectedMPT(null);
 
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', '');
           });

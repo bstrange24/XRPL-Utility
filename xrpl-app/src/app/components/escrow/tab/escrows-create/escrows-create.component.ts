@@ -193,7 +193,7 @@ export class EscrowsCreateComponent {
           this.escrowStoreService.setField('destination', addr);
      }
 
-     public onMptSelected(item: any) {
+     public selectedMPT(item: any) {
           if (!item) {
                this.mptStoreService.setField('mptIssuanceId', '');
                return;

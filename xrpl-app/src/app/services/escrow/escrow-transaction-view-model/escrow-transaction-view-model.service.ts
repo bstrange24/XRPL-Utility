@@ -258,7 +258,7 @@ export class EscrowTransactionViewModelService {
 
      selectedMptItem = computed(() => this.mptUtilService.computeSelectedMptItem(this.mptItems(), this.mptStoreService.mptIssuanceId()));
 
-     onMptSelected(item: SelectItem | null) {
+     selectedMPT(item: SelectItem | null) {
           this.mptStoreService.setField('mptIssuanceId', item?.id || '');
      }
 

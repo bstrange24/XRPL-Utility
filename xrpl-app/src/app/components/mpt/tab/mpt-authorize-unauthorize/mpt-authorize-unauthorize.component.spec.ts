@@ -104,16 +104,16 @@ describe('MptAuthorizeUnauthorizeComponent', () => {
                expect(component.selectedDestinationAddress.emit).toHaveBeenCalledWith(address);
           });
 
-          it('should have onMptSelected output', () => {
-               expect(component.onMptSelected).toBeDefined();
-               expect(component.onMptSelected.emit).toBeDefined();
+          it('should have selectedMPT output', () => {
+               expect(component.selectedMPT).toBeDefined();
+               expect(component.selectedMPT.emit).toBeDefined();
           });
 
-          it('should emit onMptSelected when called', () => {
-               spyOn(component.onMptSelected, 'emit');
+          it('should emit selectedMPT when called', () => {
+               spyOn(component.selectedMPT, 'emit');
                const item = { id: 'mpt123', display: 'MPT 1' } as SelectItem;
-               component.onMptSelected.emit(item);
-               expect(component.onMptSelected.emit).toHaveBeenCalledWith(item);
+               component.selectedMPT.emit(item);
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
           });
      });
 

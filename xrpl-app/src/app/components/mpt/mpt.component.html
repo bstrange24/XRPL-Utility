@@ -70,7 +70,7 @@
                               (destinationChange)="handleDestinationChange($event)"
                               (searchQueryChange)="handleSearchQueryChange($event)"
                               (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
-                              (onMptSelected)="onMptSelected($event)"
+                              (selectedMPT)="selectedMPT($event)"
                          >
                          </app-mpt-send>
                          } @if (tab === 'clawbackMpt') {
@@ -85,7 +85,7 @@
                               (destinationChange)="handleDestinationChange($event)"
                               (searchQueryChange)="handleSearchQueryChange($event)"
                               (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
-                              (onMptSelected)="onMptSelected($event)"
+                              (selectedMPT)="selectedMPT($event)"
                          >
                          </app-mpt-clawback>
                          } @if (tab === 'destroyMpt') {
@@ -100,7 +100,7 @@
                               (searchQueryChange)="handleSearchQueryChange($event)"
                               (selectedDestinationAddress)="selectedDestinationAddress.set($event)"
                               [mptItems]="viewModel.mptItems()"
-                              (onMptSelected)="onMptSelected($event)"
+                              (selectedMPT)="selectedMPT($event)"
                          >
                          </app-mpt-destroy>
                          }

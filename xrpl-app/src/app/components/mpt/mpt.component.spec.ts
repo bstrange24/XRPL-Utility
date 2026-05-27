@@ -303,9 +303,9 @@ describe('MptComponent', () => {
           });
      });
 
-     describe('onMptSelected', () => {
+     describe('selectedMPT', () => {
           it('should update mptIssuanceId', () => {
-               component.onMptSelected({ id: '0000000000000001', display: 'Test MPT' } as any);
+               component.selectedMPT({ id: '0000000000000001', display: 'Test MPT' } as any);
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', '0000000000000001');
           });
      });

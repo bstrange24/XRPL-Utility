@@ -227,7 +227,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           (event.target as HTMLInputElement).select?.();
      }
 
-     public onMptSelected(item: any) {
+     public selectedMPT(item: any) {
           this.mptStoreService.setField('mptIssuanceId', item?.id || '');
      }
 

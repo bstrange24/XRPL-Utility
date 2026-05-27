@@ -38,7 +38,7 @@ export class MptAuthorizeUnauthorizeComponent {
 
      // Outputs to parent
      readonly selectedDestinationAddress = output<string>();
-     readonly onMptSelected = output<SelectItem | null>();
+     readonly selectedMPT = output<SelectItem | null>();
      readonly canAuthorizeChange = output<boolean>();
      readonly validationErrorsChange = output<string[]>();
 

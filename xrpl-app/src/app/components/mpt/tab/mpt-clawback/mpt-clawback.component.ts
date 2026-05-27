@@ -50,7 +50,7 @@ export class MptClawbackComponent {
 
      // Outputs to parent
      readonly selectedDestinationAddress = output<string>();
-     readonly onMptSelected = output<SelectItem | null>();
+     readonly selectedMPT = output<SelectItem | null>();
      readonly canSendMptChange = output<boolean>();
      readonly validationErrorsChange = output<string[]>();
 
@@ -154,7 +154,7 @@ export class MptClawbackComponent {
           }
 
           this.mptIssuanceId = item.id;
-          this.onMptSelected.emit(item);
+          this.selectedMPT.emit(item);
      }
 
      clearField(field: 'mptIssuanceId' | 'amount' | 'destination') {
