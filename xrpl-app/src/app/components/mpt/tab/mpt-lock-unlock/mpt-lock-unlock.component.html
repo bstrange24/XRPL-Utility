@@ -10,7 +10,7 @@
                <!-- Action Selection -->
                <div>
                     <div class="field-label">
-                         <label class="label-primary"> Action <span class="text-red-500">*</span> </label>
+                         <label for="action" class="label-primary"> Action <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -45,13 +45,18 @@
                               <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Lock</span>
                          </label>
                     </div>
+
+                    @if (mptAuthorizeValidator.getActionErrorMessage()) {
+                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getActionErrorMessage() }}</p>
+                    }
+
                     <app-field-helper title="Action" [items]="mptLockActionHelperItems" [show]="showMptLockActionHelper" />
                </div>
 
                <!-- MPT Issuer (Destination) -->
                <div>
                     <div class="field-label">
-                         <label class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
+                         <label for="mptIssuerHolder" class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -81,7 +86,7 @@
                <!-- MPT Issuance ID -->
                <div>
                     <div class="field-label">
-                         <label class="label-primary"> MPT Issuance ID <span class="text-red-500">*</span> </label>
+                         <label for="mptIssueID" class="label-primary"> MPT Issuance ID <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -107,16 +112,9 @@
                               [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
                          />
 
-                         @if (mptIssuanceId && mptIssuanceId.length > 0) {
-                         <button type="button" (click)="clearMptIssuanceId()" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId !== null && mptIssuanceId !== undefined" [isInvalid]="mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId !== null && mptIssuanceId !== undefined" [showClear]="!!mptIssuanceId" (clear)="clearMptIssuanceId()" />
                     </div>
-
-                    <!-- @if (mptAuthorizeValidator.getMptIssuanceIdErrorMessage()) {
-                    <p class="form-error mt-2">{{ mptAuthorizeValidator.getMptIssuanceIdErrorMessage() }}</p>
-                    } -->
 
                     <!-- MPT ID length indicator -->
                     @if (mptIssuanceId && mptIssuanceId.length > 0) {
@@ -129,17 +127,5 @@
      </div>
 
      <!-- Summary of validation errors -->
-     @if (mptAuthorizeValidator.getAllValidationErrors().length > 0) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of mptAuthorizeValidator.getAllValidationErrors(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
+     <app-validation-errors [errors]="mptAuthorizeValidator.getAllValidationErrors()" title="MPT lock/unlock validation issues:" />
 </div>

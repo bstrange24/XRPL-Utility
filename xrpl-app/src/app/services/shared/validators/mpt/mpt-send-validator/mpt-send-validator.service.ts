@@ -42,12 +42,11 @@ export class MptSendValidatorService {
           const issuanceId = this.mptStoreService.mptIssuanceId();
 
           if (!issuanceId || issuanceId.trim().length === 0) {
-               // return 'Please select an MPT to send.';
                return '';
           }
 
           if (!this.isMptSelectedValid()) {
-               return 'Selected MPT not found in your holdings. Please select a valid MPT from the dropdown.';
+               return 'Selected MPT not found in your holdings. Please select a valid MPT from the dropdown or enter a valid MPT Issuance ID.';
           }
 
           return '';
@@ -141,24 +140,25 @@ export class MptSendValidatorService {
      // Amount Validation
      isAmountValid = computed(() => {
           const amount = this.mptStoreService.amount();
+          // const tab = this.viewModel.activeTab();
 
           if (!amount || amount.trim().length === 0) {
-               return '';
+               return false;
           }
 
           const numAmount = Number(amount);
-          if (isNaN(numAmount) || numAmount <= 0) {
+
+          if (Number.isNaN(numAmount) || numAmount <= 0) {
                return false;
           }
 
-          // Check if amount doesn't exceed available balance
-          const availableBalance = this.getAvailableBalance();
-          if (numAmount > availableBalance) {
-               return false;
-          }
+          // const availableBalance = this.getAvailableBalance();
 
-          // Check if amount doesn't exceed max allowed (10 quadrillion)
-          if (numAmount > 10_000_000_000_000_000n) {
+          // if (tab === 'clawbackMpt' && numAmount > availableBalance) {
+          //      return false;
+          // }
+
+          if (numAmount > 10_000_000_000_000_000) {
                return false;
           }
 
@@ -169,7 +169,7 @@ export class MptSendValidatorService {
           const amount = this.mptStoreService.amount();
 
           if (!amount || amount.trim().length === 0) {
-               return '';
+               return false;
           }
 
           return !this.isAmountValid();
@@ -178,13 +178,14 @@ export class MptSendValidatorService {
      getAmountErrorMessage = computed(() => {
           const amount = this.mptStoreService.amount();
           const availableBalance = this.getAvailableBalance();
+          const tab = this.viewModel.activeTab();
 
           if (!amount || amount.trim().length === 0) {
                return '';
           }
 
           const numAmount = Number(amount);
-          if (isNaN(numAmount)) {
+          if (Number.isNaN(numAmount)) {
                return 'Amount must be a valid number.';
           }
 
@@ -192,9 +193,9 @@ export class MptSendValidatorService {
                return 'Amount must be greater than 0.';
           }
 
-          // if (numAmount > availableBalance) {
-          //      return `Amount exceeds available balance (${availableBalance} tokens).`;
-          // }
+          if (tab === 'clawbackMpt' && numAmount > availableBalance) {
+               return `Amount exceeds available balance (${availableBalance} tokens). Have any tokens been issues yet?`;
+          }
 
           if (numAmount > 10_000_000_000_000_000) {
                return 'Amount cannot exceed 10,000,000,000,000,000 tokens.';
@@ -239,7 +240,7 @@ export class MptSendValidatorService {
           if (!selectedMpt) return 0;
 
           // Extract amount from display string (e.g., "MPT • 1000 held" -> "1000")
-          const match = selectedMpt.display.match(/MPT • ([\d.]+)/);
+          const match = new RegExp(/MPT • ([\d.]+)/).exec(selectedMpt.display);
           return match ? Number(match[1]) : 0;
      }
 
@@ -254,7 +255,7 @@ export class MptSendValidatorService {
           if (!issuanceId) return false;
 
           // Implementation depends on your MPT data
-          return false;
+          return true;
      }
 
      // Overall Form Validation

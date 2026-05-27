@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, computed, signal, effect, input } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, ViewChild, computed, signal, effect, input, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -59,7 +59,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MptComponent extends WalletDestinationBase implements OnInit {
+export class MptComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      @ViewChild('jsonEditor') jsonEditor!: JsonEditorComponent;
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
@@ -187,11 +187,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           const id = item?.id || '';
           this.mptStoreService.setField('mptIssuanceId', id);
      }
-
-     // onMptSelected(item: SelectItem | null) {
-     //      if (!item) return;
-     //      this.mptStoreService.setField('mptIssuanceId', item?.id || '');
-     // }
 
      onMptSelectedFromSummary(mpt: any): void {
           if (!mpt) return;
@@ -356,7 +351,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                try {
                     switch (currentTab) {
                          case 'createMpt': {
-                              txType = 'createMpt' as MptTxType;
+                              txType = 'createMpt';
                               break;
                          }
 
@@ -364,7 +359,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                          case 'unauthorizeMpt': {
                               const action = this.mptStoreService.authAction();
                               if (action === 'authorize' || action === 'unauthorize') {
-                                   txType = `${action}Mpt` as MptTxType;
+                                   txType = `${action}Mpt`;
                               } else {
                                    throw new Error(`Invalid auth action: ${action}`);
                               }
@@ -375,7 +370,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                          case 'unlockMpt': {
                               const lockAction = this.mptStoreService.lockAction();
                               if (lockAction === 'lock' || lockAction === 'unlock') {
-                                   txType = `${lockAction}Mpt` as MptTxType;
+                                   txType = `${lockAction}Mpt`;
                               } else {
                                    throw new Error(`Invalid lock action: ${lockAction}`);
                               }
@@ -383,17 +378,17 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
                          }
 
                          case 'sendMpt': {
-                              txType = 'sendMpt' as MptTxType;
+                              txType = 'sendMpt';
                               break;
                          }
 
                          case 'clawbackMpt': {
-                              txType = 'clawbackMpt' as MptTxType;
+                              txType = 'clawbackMpt';
                               break;
                          }
 
                          case 'destroyMpt': {
-                              txType = 'destroyMpt' as MptTxType;
+                              txType = 'destroyMpt';
                               break;
                          }
 
@@ -458,18 +453,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit {
           this.destinationSearchQuery.set(query);
           this.mptStoreService.setField('destination', query); // important for typed input
      }
-
-     // handleDestinationChange(item: SelectItem | null) {
-     //      const addr = item?.id || '';
-     //      this.selectedDestinationAddress.set(addr);
-     //      this.mptStoreService.setField('destination', addr);
-     // }
-
-     // handleSearchQueryChange(query: string) {
-     //      this.destinationSearchQuery.set(query);
-     //      // Important: update store even for typed (potentially invalid) values
-     //      this.mptStoreService.setField('destination', query);
-     // }
 
      private async updateAuthorizedHolders(issuanceId: string, holderAddress: string, isAuthorizing: boolean): Promise<void> {
           const currentHolders = this.mptStoreService.getAuthorizedHolders(issuanceId);

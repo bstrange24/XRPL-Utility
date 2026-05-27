@@ -30,32 +30,19 @@
                          inputmode="decimal"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!(mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined)"
-                         [isInvalid]="(mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined)"
+                         [isValid]="mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined"
+                         [isInvalid]="mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined"
                          (keydown)="utilsService.preventNegative($event)"
                          (input)="amountValidatorService.onAmountInput($event,'mptCreate')"
                          (blur)="amountValidatorService.onAmountBlur($event,'mptCreate')"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event,'mptCreate')"
                          [ngModel]="tokenCount"
                          (ngModelChange)="tokenCount = $event"
                          placeholder="e.g. 10"
                     />
 
-                    <!-- @if (tokenCount !== null && tokenCount !== undefined && (mptValidator.isTokenCountValid() || mptValidator.isTokenCountInvalid())) {
-                    <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                         @if (mptValidator.isTokenCountValid()) {
-                         <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                         } @else if (mptValidator.isTokenCountInvalid()) {
-                         <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                         }
-                    </div>
-                    }  -->
-                    @if (tokenCount !== null && tokenCount !== undefined) {
-                    <button type="button" (click)="clearField('tokenCount')" class="clearInputXmark right-8" aria-label="Clear token count">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined" [isInvalid]="mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined" [showClear]="!!tokenCount" (clear)="clearField('tokenCount')" />
                </div>
 
                <app-field-helper title="Maximum Tokens (Supply Cap)" [items]="mptMaxTokenHelperItems" [show]="showMaxTokensHelper" />
@@ -63,11 +50,6 @@
                @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
                <p class="form-error mt-2">{{ mptValidator.getTokenCountErrorMessage() }}</p>
                }
-
-               <!-- Token count helper -->
-               <!-- @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountValid()) {
-               <p class="text-xs text-green-600 mt-1">✓ Supply cap of {{ tokenCount | number }} tokens will be created</p>
-               } -->
           </div>
 
           <!-- Asset Scale -->
@@ -94,11 +76,12 @@
                          inputmode="decimal"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!(mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined)"
-                         [isInvalid]="(mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined)"
+                         [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined"
+                         [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined"
                          (keydown)="utilsService.preventNegative($event)"
                          (input)="amountValidatorService.onAmountInput($event,'mptAssetScale')"
-                         (blur)="amountValidatorService.onAmountBlur($event,'mptAssetScale')"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mptAssetScale'); isFocusedAssetScale.set(false)"
+                         (focus)="isFocusedAssetScale.set(true)"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
                          (input)="amountValidatorService.onAmountInput($event,'mptAssetScale')"
                          [ngModel]="assetScale"
@@ -106,21 +89,8 @@
                          placeholder="e.g. 10"
                     />
 
-                    <!-- @if (assetScale !== null && assetScale !== undefined && (mptValidator.isAssetScaleValid() || mptValidator.isAssetScaleInvalid())) {
-                         <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                              @if (mptValidator.isAssetScaleValid()) {
-                              <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                              } @else if (mptValidator.isAssetScaleInvalid()) {
-                              <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                              }
-                         </div>
-                         }  -->
-
-                    @if (assetScale !== null && assetScale !== undefined) {
-                    <button type="button" (click)="clearField('assetScale')" class="clearInputXmark right-8" aria-label="Clear asset scale">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined" [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [showClear]="!!assetScale" (clear)="clearField('assetScale')" />
                </div>
 
                <app-field-helper title="Asset Scale Guidelines" [items]="assetScaleHelperItems" [show]="showAssetScaleHelper" />
@@ -154,11 +124,12 @@
                          inputmode="decimal"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!(mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined)"
-                         [isInvalid]="(mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined)"
+                         [isValid]="mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined"
+                         [isInvalid]="mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined"
                          (keydown)="utilsService.preventNegative($event)"
                          (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
-                         (blur)="amountValidatorService.onAmountBlur($event,'mptTransferFee')"
+                         (focus)="isFocused.set(true)"
+                         (blur)="amountValidatorService.onAmountBlur($event,'mptTransferFee'); isFocused.set(false)"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
                          (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
                          [ngModel]="transferFee"
@@ -166,21 +137,8 @@
                          placeholder="e.g. 10"
                     />
 
-                    <!-- @if (transferFee !== null && transferFee !== undefined && (mptValidator.isTransferFeeValid() || mptValidator.isTransferFeeInvalid())) {
-                         <div class="absolute right-2 top-1/2 -translate-y-1/2">
-                              @if (mptValidator.isTransferFeeValid()) {
-                              <ng-icon name="heroCheckCircle" size="16" class="text-green-500" />
-                              } @else if (mptValidator.isTransferFeeInvalid()) {
-                              <ng-icon name="heroXCircle" size="16" class="text-red-500" />
-                              }
-                         </div>
-                         }  -->
-
-                    @if (transferFee !== null && transferFee !== undefined) {
-                    <button type="button" (click)="clearField('transferFee')" class="clearInputXmark right-8" aria-label="Clear transfer fee">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined" [isInvalid]="mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined" [showClear]="!!transferFee" (clear)="clearField('transferFee')" />
                </div>
 
                <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
@@ -260,16 +218,4 @@
 </div>
 
 <!-- Summary of validation errors -->
-@if (mptValidator.getAllValidationErrors().length > 0) {
-<div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-     <div class="alert-content">
-          <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="alert-content-list">
-               @for (error of mptValidator.getAllValidationErrors(); track $index) {
-               <li class="text-sm">{{ error }}</li>
-               }
-          </ul>
-     </div>
-</div>
-}
+<app-validation-errors [errors]="mptValidator.getAllValidationErrors()" title="MPT create validation issues:" />

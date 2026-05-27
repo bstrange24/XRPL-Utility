@@ -1,4 +1,3 @@
-// mpt-summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { NgIcon } from '@ng-icons/core';
@@ -32,6 +31,7 @@ const MPT_SUMMARY_CONFIG: SummaryTextConfig = {
 };
 
 type SortKey = 'amount' | 'issuanceId' | 'ticker' | 'assetScale';
+type MptQuickFilterKey = 'all' | 'issued' | 'held' | 'locked';
 
 @Component({
      selector: 'app-summary',
@@ -56,20 +56,18 @@ export class MptSummaryComponent {
      }
 
      // Inputs
-     infoPanelExpanded = input<boolean>();
-     resetTrigger = input<number>(0);
-
-     info = input.required<string | null>();
-
-     tab = input<MptActionTypes>('createMpt');
+     readonly infoPanelExpanded = input<boolean>();
+     readonly resetTrigger = input<number>(0);
+     readonly info = input.required<string | null>();
+     readonly tab = input<MptActionTypes>('createMpt');
 
      // Outputs
-     toggleInfoPanel = output<void>();
-     mptSelected = output<any>();
+     readonly toggleInfoPanel = output<void>();
+     readonly mptSelected = output<any>();
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'issued' | 'held' | 'locked'>('all');
+     readonly activeQuickFilter = signal<MptQuickFilterKey>('all');
      readonly sortBy = signal<SortKey>('issuanceId');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -94,7 +92,7 @@ export class MptSummaryComponent {
      // Helper function to get amount value for sorting
      private getAmountValue(mpt: any): number {
           const amountStr = mpt.formattedAmount || mpt.maxAmount || '0';
-          return parseFloat(amountStr.split(' ')[0]) || 0;
+          return Number.parseFloat(amountStr.split(' ')[0]) || 0;
      }
 
      // Computed values
@@ -120,7 +118,7 @@ export class MptSummaryComponent {
                          case 'issued':
                               return !mpt.isHolder;
                          case 'held':
-                              return mpt.isHolder && parseFloat(mpt.formattedAmount || '0') > 0;
+                              return mpt.isHolder && Number.parseFloat(mpt.formattedAmount || '0') > 0;
                          case 'locked':
                               return mpt.flags?.includes('Locked') || false;
                          default:
@@ -155,8 +153,8 @@ export class MptSummaryComponent {
                          valB = b.ticker || '';
                          break;
                     case 'assetScale':
-                         valA = parseInt(a.assetScale, 10) || 0;
-                         valB = parseInt(b.assetScale, 10) || 0;
+                         valA = Number.parseInt(a.assetScale, 10) || 0;
+                         valB = Number.parseInt(b.assetScale, 10) || 0;
                          break;
                }
 

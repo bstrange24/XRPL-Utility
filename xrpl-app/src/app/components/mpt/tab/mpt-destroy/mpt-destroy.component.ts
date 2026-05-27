@@ -66,7 +66,6 @@ export class MptDestroyComponent {
      constructor() {
           // Emit validation status changes
           effect(() => {
-               // this.canAuthorizeChange.emit(this.mptAuthorizeValidator.canAuthorize());
                this.validationErrorsChange.emit(this.mptAuthorizeValidator.getAllValidationErrors());
           });
      }
@@ -79,6 +78,7 @@ export class MptDestroyComponent {
           const mpts = this.mptTransactionViewModelService?.infoData()?.mptsToShow || this.availableMpts();
           return mpts.find(m => m.mpt_issuance_id === issuanceId || m.id === issuanceId) || null;
      });
+
      destroyWarningMessage = computed(() => {
           return this.mptUtilService.getDestroyWarningMessage();
      });
@@ -119,7 +119,6 @@ export class MptDestroyComponent {
 
      onMptSelection(item: SelectItem | null) {
           if (!item?.id) {
-               // this.mptStoreService.setField('', '');
                this.mptStoreService.setField('mptIssuanceId', '');
                return;
           }

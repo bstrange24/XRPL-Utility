@@ -11,11 +11,13 @@ import { MptAuthorizeValidatorService } from '../../../../services/shared/valida
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-mpt-lock-unlock',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './mpt-lock-unlock.component.html',
      styleUrl: './mpt-lock-unlock.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

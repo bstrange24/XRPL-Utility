@@ -13,11 +13,9 @@
 
                <div class="flex items-center gap-2">
                     <p class="text-secondary">MPT this account holds that can be sent to another account.</p>
-                    <div class="flex gap-2">
-                         <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                              <ng-icon name="heroQuestionMarkCircle" size="14" />
-                         </button>
-                    </div>
+                    <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
                </div>
 
                <div class="relative">
@@ -66,32 +64,11 @@
                          [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
                     />
 
-                    @if (mptIssuanceId && mptIssuanceId.length > 0) {
-                    <button type="button" (click)="clearField('mptIssuanceId')" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId !== null && mptIssuanceId !== undefined" [isInvalid]="mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId !== null && mptIssuanceId !== undefined" [showClear]="!!mptIssuanceId" (clear)="clearField('mptIssuanceId')" />
                </div>
 
-               <!-- @if (showMptIssuanceHelper()) {
-               <div class="helper-text-main-div">
-                    <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
-                    <ul class="helper-text-ul">
-                         <li>• Exactly 48 characters in length</li>
-                         <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
-                         <li>• Example: <code class="text-xs bg-blue-100 px-1 rounded">{{ mptIdExamples[0] }}</code></li>
-                    </ul>
-                    <div class="flex gap-2 mt-2">
-                         @for (example of mptIdExamples; track example) {
-                         <button type="button" (click)="setExampleMptId(example)" class="text-xs bg-blue-100 px-2 py-1 rounded hover:bg-blue-200">Use Example {{ $index + 1 }}</button>
-                         }
-                    </div>
-               </div>
-               } -->
-
-               <!-- @if (mptSendValidator.getMptIssuanceIdErrorMessage()) {
-               <p class="form-error mt-2">{{ mptSendValidator.getMptIssuanceIdErrorMessage() }}</p>
-               }  -->
+               <!-- MPT ID length indicator -->
                @if (mptIssuanceId && mptIssuanceId.length > 0) {
                <div class="mt-1 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
                }
@@ -145,11 +122,6 @@
                <div>
                     <div class="field-label">
                          <label for="mptAmount" class="label-primary">MPT Amount <span class="text-red-500">*</span> </label>
-                         <!-- <div class="flex gap-2">
-                              @for (preset of amountPresets; track preset) {
-                              <button type="button" (click)="setPresetAmount(preset)" class="preset-amount-btn">{{ preset }}</button>
-                              }
-                         </div> -->
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -160,35 +132,37 @@
                     </div>
 
                     <div class="relative">
-                         <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!(mptSendValidator.isAmountValid() && amount && amount.length > 0)" [isInvalid]="!(mptSendValidator.isAmountInvalid() && amount && amount.length > 0)" (keydown)="utilsService.preventNegative($event)" [ngModel]="amount" (ngModelChange)="amount = $event" placeholder="e.g. 1000" />
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="mptSendValidator.isAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              [isInvalid]="mptSendValidator.isAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
+                              (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
+                              (blur)="amountValidatorService.onAmountBlur($event,'mptTransferFee'); isFocused.set(false)"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
+                              [ngModel]="amount"
+                              (ngModelChange)="amount = $event"
+                              placeholder="e.g. 10"
+                         />
 
-                         @if (amount && amount.length > 0) {
-                         <button type="button" (click)="clearField('amount')" class="clearInputXmark right-8" aria-label="Clear amount">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="mptSendValidator.isAmountValid() && !!amount && amount.length > 0" [isInvalid]="mptSendValidator.isAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="clearField('amount')" />
                     </div>
 
-                    <!-- @if (showAmountHelper()) {
-                    <div class="helper-text-main-div">
-                         <p class="helper-text-paragraph">Amount Information:</p>
-                         <ul class="space-y-1">
-                              <li>• Available balance: <strong>{{ getAvailableBalance() }}</strong> tokens</li>
-                              <li>• You cannot send more than your available balance</li>
-                              <li>• Amount will be sent with the token's asset scale precision</li>
-                         </ul>
-                    </div>
-                    }  -->
                     @if (mptSendValidator.getAmountErrorMessage()) {
                     <p class="form-error mt-2">{{ mptSendValidator.getAmountErrorMessage() }}</p>
                     }
 
-                    <app-field-helper title="MPT Amount" [items]="mptAmountHelperItems" [show]="showMptAmountHelper" />
-
                     <!-- Show formatted amount with asset scale -->
-                    <!-- @if (amount && mptSendValidator.isAmountValid() && mptIssuanceId) {
-                    <p class="text-xs text-green-600 mt-2">✓ Will send {{ formatAmountWithScale(amount) }} tokens ({{ amount }} base units)</p>
-                    } -->
+                    @if (amount && mptSendValidator.isAmountValid() && mptIssuanceId) {
+                    <p class="text-xs text-green-600 mt-2">Will send {{ formatAmountWithScale(amount) }} tokens ({{ amount }} base units)</p>
+                    }
+                    <app-field-helper title="MPT Amount" [items]="mptAmountHelperItems" [show]="showMptAmountHelper" />
                </div>
           </div>
 
@@ -205,16 +179,4 @@
 </div>
 
 <!-- Summary of validation errors -->
-@if (mptSendValidator.getAllValidationErrors().length > 0) {
-<div class="alert-error mb-0">
-     <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-     <div class="alert-content">
-          <p class="helper-text-paragraph">Please fix the following issues:</p>
-          <ul class="alert-content-list">
-               @for (error of mptSendValidator.getAllValidationErrors(); track $index) {
-               <li class="text-sm">{{ error }}</li>
-               }
-          </ul>
-     </div>
-</div>
-}
+<app-validation-errors [errors]="mptSendValidator.getAllValidationErrors()" title="MPT send token validation issues:" />

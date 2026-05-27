@@ -27,10 +27,10 @@ export class MptAuthorizeValidatorService {
      private readonly issuanceId = this.mptStoreService.mptIssuanceId;
 
      readonly fetchedMptDetails = signal<any>(null);
-     private mptCheckPending = signal(false);
+     private readonly mptCheckPending = signal(false);
      private lastCheckedId: string | null = null;
      private checkTimeout: any;
-     private destroyRef = inject(DestroyRef);
+     private readonly destroyRef = inject(DestroyRef);
 
      private mptDetailsState = signal<{
           loading: boolean;
@@ -148,11 +148,6 @@ export class MptAuthorizeValidatorService {
                     const exists = !!mptData;
 
                     this.mptExistsState.set({ loading: false, value: exists });
-                    // this.mptDetailsState.set({
-                    //      loading: false,
-                    //      value: mptData?.node || mptData, // Important: XRPL ledger_entry returns {node: {...}}
-                    //      issuer: (mptData?.node || mptData)?.Issuer || (mptData?.node || mptData)?.Account || null,
-                    // });
 
                     if (mptData && mptData.length > 0) {
                          console.log('Fetched MPT from XRPL:', mptData);

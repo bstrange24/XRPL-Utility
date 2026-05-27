@@ -1,0 +1,13 @@
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+     <!-- Clear Button -->
+     <button type="button" (click)="clear.emit()" class="text-gray-400 hover:text-gray-600 p-1 rounded-full transition-colors duration-200 hover:bg-gray-100" [class.opacity-0]="!showClear()" [class.opacity-100]="showClear()" [class.pointer-events-none]="!showClear()" aria-label="Clear field">
+          <lucide-icon name="x" size="18"></lucide-icon>
+     </button>
+
+     <!-- Validation Icon -->
+     @if (showValidation()) { @if (isValid()) {
+     <ng-icon name="heroCheckCircle" size="18" class="text-green-500" />
+     } @else if (isInvalid()) {
+     <ng-icon name="heroXCircle" size="18" class="text-red-500" />
+     } }
+</div>

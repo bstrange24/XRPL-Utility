@@ -11,11 +11,13 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-mpt-authorize-unauthorize',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './mpt-authorize-unauthorize.component.html',
      styleUrl: './mpt-authorize-unauthorize.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,11 +70,6 @@ export class MptAuthorizeUnauthorizeComponent {
           effect(() => {
                this.canAuthorizeChange.emit(this.mptAuthorizeValidator.canAuthorize());
                this.validationErrorsChange.emit(this.mptAuthorizeValidator.getAllValidationErrors());
-          });
-
-          effect(() => {
-               const mpt = this.selectedMpt();
-               const details = this.mptAuthorizeValidator.mptDetails();
           });
      }
 
@@ -189,15 +186,11 @@ export class MptAuthorizeUnauthorizeComponent {
           this.setMptIssuanceId(example);
      }
 
+     // Toggle Methods
      toggleMptHelper() {
           this.showMptHelper.set(!this.showMptHelper());
      }
 
-     // toggleDestinationHelper() {
-     //      this.showDestinationHelper.set(!this.showDestinationHelper());
-     // }
-
-     // Toggle Methods
      toggleActionHelper() {
           this.showMptActionHelper.set(!this.showMptActionHelper());
      }

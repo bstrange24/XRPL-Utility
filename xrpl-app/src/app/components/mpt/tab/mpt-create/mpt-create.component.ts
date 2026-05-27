@@ -13,11 +13,13 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-mpt-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, JsonEditorComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, JsonEditorComponent, NgIcon, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './mpt-create.component.html',
      styleUrl: './mpt-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +55,10 @@ export class MptCreateComponent {
      showTransferFeeHelper = signal(false);
      showMptMetadataHelper = signal(false);
      showMaxTokensHelper = signal(false);
+     isFocused = signal(false);
+     isFocusedTokenCount = signal(false);
+     isFocusedAssetScale = signal(false);
+     isFocusedTransferFee = signal(false);
 
      constructor() {
           // Emit validation status changes
@@ -66,6 +72,7 @@ export class MptCreateComponent {
      get assetScale() {
           return this.mptStoreService.assetScale();
      }
+
      set assetScale(value: number) {
           this.mptStoreService.setField('assetScale', value);
      }
@@ -89,6 +96,7 @@ export class MptCreateComponent {
      get metaData() {
           return this.mptStoreService.metaData();
      }
+
      set metaData(value: string) {
           this.mptStoreService.setField('metaData', value);
      }

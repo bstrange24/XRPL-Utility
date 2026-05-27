@@ -174,6 +174,12 @@ export const MptStoreService = signalStore(
                /** Reset MPT form fields */
                resetMptFields() {
                     patchState(store, {
+                         metadataError: '',
+                         isMptFlagModeEnabled: false,
+                         isAuthorized: false,
+                         isUnauthorized: false,
+                         holderAccount: '',
+                         isMptEnabled: false,
                          destination: '',
                          mptIdSearchQuery: '',
                          outstandingMpts: '',
@@ -181,6 +187,9 @@ export const MptStoreService = signalStore(
                          mptIssuanceId: '',
                          amount: '',
                          deliverMinAmount: '',
+                         tokenCount: null as any,
+                         assetScale: null as any,
+                         transferFee: null as any,
                          useDeliverMin: false,
                          isCheckOwner: false,
                          isCollapsed: false,

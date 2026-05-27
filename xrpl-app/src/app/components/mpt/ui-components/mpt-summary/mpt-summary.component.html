@@ -1,4 +1,3 @@
-<!-- mpt-summary.component.html -->
 @if (viewModel.infoData(); as info) {
 <app-summary-container [walletName]="info?.walletName || ''" [summaryText]="summaryText()" [itemCount]="totalCount()" [links]="info?.links || null" [buttonLabel]="'MPTs'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
      <div items-list class="flex flex-col h-full">
@@ -25,7 +24,6 @@
                     </button>
                     }
                </div>
-
                <!-- Sort Control & Clear Button -->
                <div class="options">
                     <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
@@ -33,7 +31,7 @@
 
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
-                    <!-- <ng-icon name="heroXMark" size="16" /> -->
+                    <ng-icon name="heroXMark" size="16" />
                     Clear All Filters
                </button>
                }
@@ -82,33 +80,38 @@
                                              <span class="font-mono">{{ mpt.mpt_issuance_id.slice(0, 15) }}...{{ mpt.mpt_issuance_id.slice(-15) }}</span>
                                         </app-summary-key-value>
 
-                                        @if (!mpt.isHolder) {
-                                        <app-summary-key-value label="Maximum Amount">
-                                             <span class="font-mono">{{ mpt.formattedMaxAmount }}</span>
-                                        </app-summary-key-value>
-                                        } @else {
-                                        <app-summary-key-value label="Total Amount">
-                                             <span class="font-mono">{{ mpt.formattedAmount || mpt.amount }}</span>
-                                        </app-summary-key-value>
-                                        } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
-                                        <app-summary-key-value label="Outstanding (Issued)">
-                                             <span class="font-mono">{{ mpt.formattedOutstanding }}</span>
-                                        </app-summary-key-value>
-                                        }
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                                             @if (!mpt.isHolder) {
+                                             <app-summary-key-value label="Maximum Amount">
+                                                  <span class="font-mono">{{ mpt.formattedMaxAmount }}</span>
+                                             </app-summary-key-value>
+                                             } @else {
+                                             <app-summary-key-value label="Total Amount">
+                                                  <span class="font-mono">{{ mpt.formattedAmount || mpt.amount }}</span>
+                                             </app-summary-key-value>
+                                             } @if (mpt.formattedOutstanding && mpt.formattedOutstanding !== '0') {
+                                             <app-summary-key-value label="Issued">
+                                                  <span class="font-mono">{{ mpt.formattedOutstanding }}</span>
+                                             </app-summary-key-value>
+                                             }
+                                        </div>
 
-                                        <app-summary-key-value label="Asset Scale">
-                                             <span class="font-mono">{{ mpt.assetScale === 'N/A' ? '0' : mpt.assetScale }}</span>
-                                        </app-summary-key-value>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                                             <app-summary-key-value label="Asset Scale">
+                                                  <span class="font-mono">{{ mpt.assetScale === 'N/A' ? '0' : mpt.assetScale }}</span>
+                                             </app-summary-key-value>
 
-                                        @if (mpt.ticker && mpt.ticker !== 'N/A') {
-                                        <app-summary-key-value label="Ticker">
-                                             <span class="font-mono">{{ mpt.ticker }}</span>
-                                        </app-summary-key-value>
-                                        } @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
-                                        <app-summary-key-value label="Transfer Fee">
-                                             <span class="font-mono">{{ mpt.transferFee / 1000 }}%</span>
-                                        </app-summary-key-value>
-                                        } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
+                                             @if (mpt.ticker && mpt.ticker !== 'N/A') {
+                                             <app-summary-key-value label="Ticker">
+                                                  <span class="font-mono">{{ mpt.ticker }}</span>
+                                             </app-summary-key-value>
+                                             } @if (mpt.transferFee && mpt.transferFee / 1000 !== 0) {
+                                             <app-summary-key-value label="Transfer Fee">
+                                                  <span class="font-mono">{{ mpt.transferFee / 1000 }}%</span>
+                                             </app-summary-key-value>
+                                             }
+                                        </div>
+                                        @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
                                         <app-summary-key-value label="Flags">
                                              <span class="font-mono">{{ mpt.flags }}</span>
                                         </app-summary-key-value>
@@ -128,7 +131,10 @@
                </div>
                <p class="empty-state-title">No matching MPTs found</p>
                <p class="empty-state-subtitle">Try adjusting your search or filters</p>
-               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
           </div>
           }
      </div>

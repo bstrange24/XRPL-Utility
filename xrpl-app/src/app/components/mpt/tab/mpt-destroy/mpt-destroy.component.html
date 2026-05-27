@@ -10,7 +10,7 @@
                <!-- Select MPT to Destroy -->
                <div>
                     <div class="field-label">
-                         <label class="label-primary">Select MPT to Destroy <span class="text-red-500">*</span> </label>
+                         <label for="selectMptToDestroy" class="label-primary">Select MPT to Destroy <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -44,23 +44,7 @@
 
           <div class="relative mt-2">
                <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" (blur)="onMptIssuanceIdBlur()" (focus)="onMptIssuanceIdFocus()" placeholder="Enter 48-character hex MPT Issuance ID" readonly class="input-disabled" app-focus-border [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)" [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)" />
-
-               <!-- @if (mptIssuanceId && mptIssuanceId.length > 0) {
-               <button type="button" (click)="clearMptIssuanceId()" class="clearInputXmark right-8" aria-label="Clear MPT Issuance ID">
-                    <lucide-icon name="x" size="16"></lucide-icon>
-               </button>
-               } -->
           </div>
-
-          <!-- @if (showMptHelper()) {
-          <div class="helper-text-main-div">
-               <p class="helper-text-paragraph">MPT Issuance ID Format:</p>
-               <ul class="helper-text-ul">
-                    <li>• Exactly 48 characters in length</li>
-                    <li>• Only hexadecimal characters (0-9, A-F, a-f)</li>
-               </ul>
-          </div>
-          } -->
 
           <!-- MPT ID length indicator -->
           @if (mptIssuanceId && mptIssuanceId.length > 0) {
@@ -72,25 +56,9 @@
      }
 </div>
 
-<!-- Outstanding MPT Warning -->
-@if (!mptUtilService.hasNoOutstandingMpts()) {
-<div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon"> </ng-icon>
-     <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
-</div>
-}
-
-<!-- Show warning for outstanding mpts -->
-@if(!mptUtilService.hasNoOutstandingMpts()) {
-<div class="alert-error">
-     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
-     <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
-</div>
-}
-
 <!-- Authorized Holder Warning -->
 @if (destroyWarningMessage()) {
-<div class="alert-warning">
+<div class="alert-warning bm-0">
      <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon"> </ng-icon>
 
      <div class="alert-content">
@@ -112,5 +80,13 @@
                </ul>
           </div>
      </div>
+</div>
+}
+
+<!-- Show error for outstanding mpts -->
+@if(!mptUtilService.hasNoOutstandingMpts()) {
+<div class="alert-error mb-0">
+     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
+     <div class="alert-content">Cannot destroy MPT with outstanding tokens. All tokens must be clawed back or destroyed first.</div>
 </div>
 }

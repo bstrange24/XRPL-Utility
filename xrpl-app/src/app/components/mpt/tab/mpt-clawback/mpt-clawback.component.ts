@@ -14,11 +14,13 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { MptAuthorizeValidatorService } from '../../../../services/shared/validators/mpt/mpt-authorize-validator/mpt-authorize-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-mpt-clawback',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, LucideAngularModule, NgIcon, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, LucideAngularModule, NgIcon, FocusBorderDirective, SelectSearchDropdownComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './mpt-clawback.component.html',
      styleUrl: './mpt-clawback.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +33,12 @@ export class MptClawbackComponent {
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly mptAuthorizeValidator = inject(MptAuthorizeValidatorService);
      public readonly utilsService = inject(UtilsService);
+
+     // Helper Items
+     readonly mptClawbackSelectHelperItems = AppConstants.MPT_CLAWBACK_SELECT_HELPER_ITEMS;
+     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_CLAWBACK_HELPER_ITEMS;
+     readonly mptHolderHelperItems = AppConstants.MPT_HOLDER_HELPER_ITEMS;
+     readonly mptClawbackAmountHelperItems = AppConstants.MPT_CLAWBACK_AMOUNT_HELPER_ITEMS;
 
      // Inputs from parent
      readonly destinationItems = input.required<SelectItem[]>();
@@ -53,12 +61,6 @@ export class MptClawbackComponent {
      readonly canSendXrpChange = output<boolean>();
      readonly destinationSearchQuery = input<string>();
 
-     // Helper Items
-     readonly mptClawbackSelectHelperItems = AppConstants.MPT_CLAWBACK_SELECT_HELPER_ITEMS;
-     readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_CLAWBACK_HELPER_ITEMS;
-     readonly mptHolderHelperItems = AppConstants.MPT_HOLDER_HELPER_ITEMS;
-     readonly mptClawbackAmountHelperItems = AppConstants.MPT_CLAWBACK_AMOUNT_HELPER_ITEMS;
-
      // UI Signals
      showMptClawbackSelectHelper = signal(false);
      showMptIssuanceIdHelper = signal(false);
@@ -66,6 +68,7 @@ export class MptClawbackComponent {
      showMptClawbackAmountHelper = signal(false);
      isMptIssuanceIdFocused = signal(false);
      isDestinationValid = signal(false);
+     isFocused = signal(false);
 
      // Preset amounts
      readonly amountPresets = [10, 100, 1000, 10000, 100000];
@@ -145,16 +148,12 @@ export class MptClawbackComponent {
 
      onMptSelection(item: SelectItem | null) {
           if (!item?.id) {
-               // this.mptStoreService.setField('', '');
                this.mptStoreService.setField('mptIssuanceId', '');
                this.mptStoreService.setField('amount', '');
                return;
           }
 
-          // if (item) {
           this.mptIssuanceId = item.id;
-          // }
-
           this.onMptSelected.emit(item);
      }
 
@@ -194,7 +193,7 @@ export class MptClawbackComponent {
           if (!selectedMpt) return '0';
 
           // Extract amount from display string (e.g., "MPT • 1000 held" -> "1000")
-          const match = selectedMpt.display.match(/MPT • ([\d.]+)/);
+          const match = new RegExp(/MPT • ([\d.]+)/).exec(selectedMpt.display);
           return match ? match[1] : '0';
      }
 
