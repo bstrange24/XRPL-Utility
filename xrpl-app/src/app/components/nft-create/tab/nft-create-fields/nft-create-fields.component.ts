@@ -28,11 +28,12 @@ import { AppConstants } from '../../../../core/app.constants';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-create-fields',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ToggleSliderComponent, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ToggleSliderComponent, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-create-fields.component.html',
      styleUrl: './nft-create-fields.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -116,6 +117,7 @@ export class NftCreateFieldsComponent {
      showTransferFeeHelper = signal(false);
      showDestinationHelper = signal(false);
      isDestinationValid = signal(false);
+     isFocused = signal(false);
 
      private forceToXrp() {
           const current = this.currencyStoreService.currency();

@@ -257,6 +257,8 @@ export class NftCreateSummaryComponent {
                case 'noTransferFee':
                     baseClass = 'btn-filter-amber';
                     break;
+               default:
+                    baseClass = 'btn-filter-blue';
           }
 
           if (isActive) {

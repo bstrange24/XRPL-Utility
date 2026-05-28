@@ -44,12 +44,12 @@
                     <!-- Icons Container -->
                     <app-input-icons [isValid]="mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined" [isInvalid]="mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined" [showClear]="!!tokenCount" (clear)="clearField('tokenCount')" />
                </div>
+               
+               @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
+                    <p class="form-error mt-2">{{ mptValidator.getTokenCountErrorMessage() }}</p>
+               }
 
                <app-field-helper title="Maximum Tokens (Supply Cap)" [items]="mptMaxTokenHelperItems" [show]="showMaxTokensHelper" />
-
-               @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
-               <p class="form-error mt-2">{{ mptValidator.getTokenCountErrorMessage() }}</p>
-               }
           </div>
 
           <!-- Asset Scale -->

@@ -42,11 +42,8 @@
                          placeholder="e.g. 10"
                     />
 
-                    @if (taxon !== null && taxon !== undefined) {
-                    <button type="button" (click)="nftValidatorService.clearField('taxon')" class="clearInputXmark right-8" aria-label="Clear taxon">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="nftValidatorService.isTaxonValid() && taxon !== null && taxon !== undefined" [isInvalid]="nftValidatorService.isTaxonInvalid() && taxon !== null && taxon !== undefined" [showClear]="!!taxon" (clear)="nftValidatorService.clearField('taxon')" />
                </div>
 
                @if (taxon !== null && taxon !== undefined && nftValidatorService.isTaxonInvalid()) {
@@ -80,23 +77,21 @@
                          inputmode="decimal"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!(nftValidatorService.isTransferFeeValid() && transferFee !== null && transferFee !== undefined)"
-                         [isInvalid]="(nftValidatorService.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined)"
+                         [isValid]="nftValidatorService.isTransferFeeValid() && transferFee !== null && transferFee !== undefined"
+                         [isInvalid]="nftValidatorService.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined"
                          (keydown)="utilsService.preventNegative($event)"
-                         (input)="amountValidatorService.onAmountInput($event,'nftTransferFee')"
-                         (blur)="amountValidatorService.onAmountBlur($event,'nftTransferFee')"
+                         (input)="amountValidatorService.onAmountInput($event,'transferFee')"
+                         (focus)="isFocused.set(true)"
+                         (blur)="amountValidatorService.onAmountBlur($event,'transferFee'); isFocused.set(false)"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                         (input)="amountValidatorService.onAmountInput($event,'nftTransferFee')"
+                         (input)="amountValidatorService.onAmountInput($event,'transferFee')"
                          [ngModel]="transferFee"
                          (ngModelChange)="transferFee = $event"
                          placeholder="e.g. 10"
                     />
 
-                    @if (transferFee !== null && transferFee !== undefined) {
-                    <button type="button" (click)="nftValidatorService.clearField('transferFee')" class="clearInputXmark right-8" aria-label="Clear transfer fee">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="nftValidatorService.isTransferFeeValid() && transferFee !== null && transferFee !== undefined" [isInvalid]="nftValidatorService.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined" [showClear]="!!transferFee" (clear)="nftValidatorService.clearField('transferFee')" />
                </div>
 
                <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
@@ -126,7 +121,7 @@
 
                <div class="relative">
                     <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isNFtCreateUriValid()" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri()" [value]="nftCreateStoreService.initialURI()" (input)="nftCreateStoreService.setField('initialURI',$event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
-
+               
                     @if (nftCreateStoreService.initialURI() && nftCreateStoreService.initialURI().trim().length > 0) {
                     <button type="button" (click)="nftCreateStoreService.setField('initialURI','')" class="clearInputXmark" aria-label="Clear URI">
                          <lucide-icon name="x" size="16"></lucide-icon>
