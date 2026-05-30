@@ -1,3 +1,4 @@
+@if (showLabel()) {
 <div class="connection-status-container">
      <div class="connection-indicator" [class.connected]="isConnected() && isLedgerReady()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [class.not-synced]="isLedgerNotSynced()" [class.syncing]="isLedgerSyncing()" [title]="statusMessage()">
           <div class="flex items-center justify-center gap-3 w-full">
@@ -15,3 +16,4 @@
      </div>
      }
 </div>
+}

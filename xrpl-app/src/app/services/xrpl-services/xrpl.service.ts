@@ -35,6 +35,16 @@ export class XrplService {
      readonly serverState$ = this.serverState.asReadonly();
      readonly ledgerSyncStatus$ = this.ledgerSyncStatus.asReadonly();
      readonly validatedLedgerIndex$ = this.validatedLedgerIndex.asReadonly();
+     private readonly baseFee = signal<number>(10);
+     private readonly closeTime = signal<number>(0);
+     private readonly lastLedgerTime = signal<Date | null>(null);
+     readonly baseFee$ = this.baseFee.asReadonly();
+     readonly closeTime$ = this.closeTime.asReadonly();
+     readonly lastLedgerTime$ = this.lastLedgerTime.asReadonly();
+     private readonly loadFactor = signal<number>(1);
+     private readonly feeMultiplier = signal<number>(1);
+     readonly loadFactor$ = this.loadFactor.asReadonly();
+     readonly feeMultiplier$ = this.feeMultiplier.asReadonly();
 
      // Computed values for UI
      readonly isConnected = computed(() => this.connectionStatus() === 'connected');
@@ -182,6 +192,7 @@ export class XrplService {
 
           // Initial check
           this.checkServerState(client);
+          this.startLedgerInfoMonitoring(client);
 
           // Check every 3 seconds
           this.syncCheckInterval = setInterval(() => {
@@ -195,6 +206,66 @@ export class XrplService {
                     }
                }
           }, 3000);
+     }
+
+     private startLedgerInfoMonitoring(client: xrpl.Client) {
+          // Initial fetch
+          this.updateLedgerInfo(client);
+
+          // Fetch every 5 seconds (or adjust based on your needs)
+          setInterval(() => {
+               const currentClient = this.client();
+               if (currentClient?.isConnected()) {
+                    this.updateLedgerInfo(currentClient);
+               }
+          }, 5000);
+     }
+
+     private async updateLedgerInfo(client: xrpl.Client) {
+          try {
+               // Get fee information
+               const feeResponse = await client.request({ command: 'fee' });
+               const fee = feeResponse.result.drops.open_ledger_fee;
+               const drops = feeResponse.result.drops;
+
+               this.baseFee.set(Number.parseInt(fee) || 10);
+
+               // Calculate load factor from fee data
+               const baseFee = Number.parseInt(drops.base_fee) || 10;
+               const openLedgerFee = Number.parseInt(drops.open_ledger_fee) || 10;
+               this.loadFactor.set(openLedgerFee / baseFee);
+
+               // Get fee multiplier from server info
+               const serverInfo = await client.request({ command: 'server_info' });
+               const info = serverInfo.result.info;
+               if (info.validated_ledger?.reserve_base_xrp) {
+                    // Calculate network load
+                    const load = info.load_factor || 1;
+                    this.feeMultiplier.set(load);
+               }
+
+               // Get validated ledger info
+               const ledgerResponse = await client.request({
+                    command: 'ledger',
+                    ledger_index: 'validated',
+               });
+
+               // The close_time is in XRPL epoch (seconds since 2000-01-01)
+               const closeTimeSec = ledgerResponse.result.ledger.close_time;
+
+               // console.log('Raw close_time from ledger:', closeTimeSec);
+               // console.log('Converted to readable:', new Date((closeTimeSec + 946684800) * 1000));
+
+               this.closeTime.set(closeTimeSec);
+
+               // Also update the ledger index if needed
+               const ledgerIndex = ledgerResponse.result.ledger.ledger_index;
+               if (ledgerIndex) {
+                    this.validatedLedgerIndex.set(ledgerIndex);
+               }
+          } catch (error) {
+               console.warn('Failed to update ledger info:', error);
+          }
      }
 
      private async checkServerState(client: xrpl.Client) {

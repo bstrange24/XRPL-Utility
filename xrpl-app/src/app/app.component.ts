@@ -20,11 +20,12 @@ import { CopyUtilService } from './services/utils/copy-util/copy-util.service';
 import { RightPanelService } from './services/utils/right-panel/right-panel.service';
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
+import { XrplStatusBarComponent } from './components/shared/xrpl-status-bar/xrpl-status-bar.component';
 
 @Component({
      selector: 'app-root',
      standalone: true,
-     imports: [RouterOutlet, CommonModule, WalletPanelComponent, NavbarComponent, NgIcon, LucideAngularModule],
+     imports: [RouterOutlet, CommonModule, WalletPanelComponent, NavbarComponent, NgIcon, LucideAngularModule, XrplStatusBarComponent],
      animations: [trigger('toastAnimation', [transition(':enter', [style({ opacity: 0, transform: 'translateY(100%)' }), animate('300ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))]), transition(':leave', [animate('200ms ease-in', style({ opacity: 0, transform: 'translateY(50%)' }))])])],
      templateUrl: './app.component.html',
      styleUrls: ['./app.component.css'],
@@ -91,31 +92,7 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
                          this.titleService.setTitle('XRPL App');
                     }
                });
-          // this.router.events
-          //      .pipe(
-          //           filter(event => event instanceof NavigationEnd),
-          //           map(() => this.activatedRoute),
-          //           map(route => {
-          //                while (route.firstChild) route = route.firstChild;
-          //                return route;
-          //           }),
-          //           mergeMap(route => route.data),
-          //           takeUntilDestroyed(this.destroyRef)
-          //      )
-          //      .subscribe(data => {
-          //           if (data['title']) {
-          //                this.titleService.setTitle(data['title']);
-          //           } else {
-          //                this.titleService.setTitle('XRPL App'); // fallback
-          //           }
-          //      });
      }
-
-     // isBalanceChangesPage(): boolean {
-     //      const url = this.router.url;
-     //      const isBalance = url === '/account-balance-changes' || url.startsWith('/account-balance-changes');
-     //      return isBalance;
-     // }
 
      isBalanceChangesPage(): boolean {
           const url = this.router.url;

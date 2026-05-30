@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 import { NavbarStore } from '../../../services/shared/navbar/navbar-store.service';
@@ -15,6 +15,9 @@ export class ConnectionStatusComponent {
      private readonly xrplService = inject(XrplService);
      private readonly connectionGuard = inject(ConnectionGuardService);
      public readonly store = inject(NavbarStore);
+
+     // New input to control label visibility
+     showLabel = input<boolean>(true);
 
      // Basic connection states
      isConnected = computed(() => this.xrplService.isConnected());
@@ -38,12 +41,14 @@ export class ConnectionStatusComponent {
 
                // For Mainnet, always show as connected once we have a ledger
                if (network === 'Mainnet' && ledgerIndex) {
-                    return `Connected (Ledger ${ledgerIndex}) ✓`;
+                    // return `Connected (Ledger ${ledgerIndex}) ✓`;
+                    return `Connected`;
                }
 
                switch (syncStatus) {
                     case 'synced':
-                         return ledgerIndex ? `Connected (Ledger ${ledgerIndex}) ✓` : 'Connected ✓';
+                         // return ledgerIndex ? `Connected (Ledger ${ledgerIndex}) ✓` : 'Connected ✓';
+                         return ledgerIndex ? `Connected` : 'Connected';
                     case 'syncing':
                          return 'Syncing...';
                     case 'not_synced':
