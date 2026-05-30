@@ -4,6 +4,12 @@ export interface IssuerItem {
 }
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+export type XrplServerState = 'disconnected' | 'connected' | 'syncing' | 'tracking' | 'full' | 'validating' | 'proposing';
+export type LedgerSyncStatus = 'not_synced' | 'syncing' | 'synced' | 'unknown';
+
+export function isServerReadyForTransactions(serverState: XrplServerState): boolean {
+     return serverState === 'full' || serverState === 'validating' || serverState === 'proposing';
+}
 
 export interface DidItem {
      index: string;

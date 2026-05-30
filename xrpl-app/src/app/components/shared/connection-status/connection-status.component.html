@@ -1,14 +1,14 @@
 <div class="connection-status-container">
-     <!-- Main connection indicator -->
-     <div class="connection-indicator" [class.connected]="isConnected()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [title]="statusMessage()">
+     <div class="connection-indicator" [class.connected]="isConnected() && isLedgerReady()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [class.not-synced]="isLedgerNotSynced()" [class.syncing]="isLedgerSyncing()" [title]="statusMessage()">
           <div class="flex items-center justify-center gap-3 w-full">
-               <span class="w-2 h-2 rounded-full animate-pulse" [style.backgroundColor]="'#10b981'" [style.boxShadow]="'0 0 0px 2px #10b98140'"> </span>
+               <span class="w-2 h-2 rounded-full animate-pulse" [style.backgroundColor]="isLedgerNotSynced() ? '#f59e0b' : (isLedgerSyncing() ? '#3b82f6' : (isLedgerReady() ? '#10b981' : '#6b7280'))" [style.boxShadow]="'0 0 0px 2px ' + (isLedgerNotSynced() ? '#f59e0b40' : (isLedgerSyncing() ? '#3b82f640' : (isLedgerReady() ? '#10b98140' : '#6b728040')))"> </span>
+
                <span class="text-xs text-gray-500 hidden sm:inline">Network Status:</span>
-               <span class="status-text"> {{ statusText() }} </span>
+
+               <span class="status-text" [class.text-yellow-500]="isLedgerNotSynced()" [class.text-blue-400]="isLedgerSyncing()"> {{ statusText() }} </span>
           </div>
      </div>
 
-     <!-- Pending operations indicator -->
      @if (hasPendingOperations()) {
      <div class="pending-operations" title="Processing transaction...">
           <div class="spinner"></div>

@@ -58,28 +58,28 @@
                                    inputmode="decimal"
                                    class="input-base-with-validation"
                                    app-focus-border
-                                   [isValid]="!amountValidatorService.isCheckAmountInvalid()"
-                                   [isInvalid]="amountValidatorService.isCheckAmountInvalid()"
+                                   [isValid]="amountValidatorService.isCheckAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   [isInvalid]="amountValidatorService.isCheckAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                                    (keydown)="utilsService.preventNegative($event)"
+                                   (focus)="isFocused.set(true)"
                                    (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                                   (blur)="amountValidatorService.onAmountBlur($event, 'checks')"
+                                   (blur)="amountValidatorService.onAmountBlur($event, 'checks'); isFocused.set(false)"
                                    (keypress)="amountValidatorService.onAmountKeyPress($event)"
                                    (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                                   [ngModel]="checksStoreService.amount()"
-                                   (ngModelChange)="checksStoreService.setField('amount', $event)"
+                                   [ngModel]="amount"
+                                   (ngModelChange)="amount = $event"
                                    placeholder="e.g. 10.5"
                               />
 
-                              @if (checksStoreService.amount() && checksStoreService.amount()!.trim().length > 0) {
-                              <button type="button" (click)="this.checksStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                                   <lucide-icon name="x" size="16"></lucide-icon>
-                              </button>
-                              }
+                              <!-- Icons Container -->
+                              <app-input-icons [isValid]="amountValidatorService.isCheckAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isCheckAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.checksStoreService.setField('amount', '')" />
                          </div>
 
-                         @if (amountValidatorService.isCheckAmountInvalid()) {
-                         <p class="form-error">Amount must be greater than 0</p>
+               			<!-- Error Message -->
+                         @if (checkValidatorService.getAmountErrorMessage()) {
+                         <p class="form-error mt-2">{{ checkValidatorService.getAmountErrorMessage() }}</p>
                          }
+
                          <app-field-helper title="Check Amount" [items]="checkAmountHelperItems" [show]="showCheckAmountHelper" />
                     </div>
                </div>
@@ -104,6 +104,7 @@
                     <div class="relative">
                          <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
                     </div>
+
                     <app-field-helper title="Issuer" [items]="checkIssuerHelperItems" [show]="showCheckIssuerHelper" />
                </div>
 
@@ -193,18 +194,7 @@
           <app-transaction-options-section [activeTab]="'createCheck'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
      </div>
      }
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Check cash validation issues:" />

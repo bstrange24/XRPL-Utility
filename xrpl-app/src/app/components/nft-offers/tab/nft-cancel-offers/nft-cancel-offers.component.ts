@@ -21,11 +21,12 @@ import { NgIcon } from '@ng-icons/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-cancel-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-cancel-offers.component.html',
      styleUrl: './nft-cancel-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +55,7 @@ export class NftCancelOffersComponent {
 
      // Helper info items
      readonly offerIndexHelperItems = AppConstants.NFT_OFFER_INDEX_HELPER_ITEMS;
+     readonly selectNftHelperItems = AppConstants.NFT_OFFER_SELECT_HELPER_ITEMS;
 
      // Inputs
      readonly destinationItems = input.required<SelectItem[]>();
@@ -75,6 +77,7 @@ export class NftCancelOffersComponent {
      readonly issuerSelected = output<SelectItem | null>();
 
      // UI State
+     showSelectNftHelper = signal(false);
      showOfferIndexHelper = signal(false);
      isOfferIndexFocused = signal(false);
 
@@ -84,6 +87,14 @@ export class NftCancelOffersComponent {
                const num = Number.parseFloat(input.value);
                if (!Number.isNaN(num)) input.value = num.toFixed(6);
           }
+     }
+
+     get nftOfferId() {
+          return this.nftCreateStoreService.nftOfferId();
+     }
+
+     set nftOfferId(value: string) {
+          this.nftCreateStoreService.setField('nftOfferId', value);
      }
 
      setNftExpirationDate = (value: string): void => {
@@ -124,5 +135,9 @@ export class NftCancelOffersComponent {
 
      onOfferIndexBlur() {
           this.isOfferIndexFocused.set(false);
+     }
+
+     toggleSelectNftHelper() {
+          this.showSelectNftHelper.update(v => !v);
      }
 }

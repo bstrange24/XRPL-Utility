@@ -186,6 +186,10 @@ export class NftCreateFieldsComponent {
           this.nftCreateStoreService.setField('taxon', count.toString());
      }
 
+     setPresetTransferFee(fee: number) {
+          this.nftCreateStoreService.setField('transferFee', fee);
+     }
+
      get taxon() {
           return this.nftCreateStoreService.taxon();
      }
@@ -194,8 +198,12 @@ export class NftCreateFieldsComponent {
           this.nftCreateStoreService.setField('taxon', value);
      }
 
-     setPresetTransferFee(fee: number) {
-          this.nftCreateStoreService.setField('transferFee', fee);
+     get uri() {
+          return this.nftCreateStoreService.initialURI();
+     }
+
+     set uri(value: string) {
+          this.nftCreateStoreService.setField('initialURI', value);
      }
 
      get transferFee() {

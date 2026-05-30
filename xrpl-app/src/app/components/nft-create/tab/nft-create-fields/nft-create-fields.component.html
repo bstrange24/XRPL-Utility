@@ -94,16 +94,21 @@
                     <app-input-icons [isValid]="nftValidatorService.isTransferFeeValid() && transferFee !== null && transferFee !== undefined" [isInvalid]="nftValidatorService.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined" [showClear]="!!transferFee" (clear)="nftValidatorService.clearField('transferFee')" />
                </div>
 
-               <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
-
                @if (transferFee !== null && transferFee !== undefined && nftValidatorService.isTransferFeeInvalid()) {
                <p class="form-error mt-2">{{ nftValidatorService.getTransferFeeErrorMessage() }}</p>
                } @if (transferFee && transferFee > 0 && !nftUtilService.nftFlags().transferableNft) {
                <p class="form-warning mt-2 flex items-center gap-1">
                     <ng-icon name="heroExclamationTriangle" size="14" />
-                    Transfer Fee requires "Can Transfer" to be enabled in the flags section.
+                    Transfer Fee requires "Transferable" to be enabled in the flags section.
+               </p>
+               } @else if (!transferFee && transferFee <= 0 && nftUtilService.nftFlags().transferableNft) {
+               <p class="form-warning mt-2 flex items-center gap-1">
+                    <ng-icon name="heroExclamationTriangle" size="14" />
+                    "Transferable" flag requires Transfer Fee to be valid.
                </p>
                }
+
+               <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
           </div>
 
           <!-- URI -->
@@ -120,17 +125,11 @@
                </div>
 
                <div class="relative">
-                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isNFtCreateUriValid()" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri()" [value]="nftCreateStoreService.initialURI()" (input)="nftCreateStoreService.setField('initialURI',$event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
-               
-                    @if (nftCreateStoreService.initialURI() && nftCreateStoreService.initialURI().trim().length > 0) {
-                    <button type="button" (click)="nftCreateStoreService.setField('initialURI','')" class="clearInputXmark" aria-label="Clear URI">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
-               </div>
+                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined" [value]="nftCreateStoreService.initialURI()" (input)="nftCreateStoreService.setField('initialURI',$event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
 
-               <!-- URI Helper -->
-               <app-field-helper title="URI Guidelines" [items]="uriHelperItems" [show]="showUriHelper" />
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined" [showClear]="!!uri" (clear)="nftCreateStoreService.setField('initialURI','')" />
+               </div>
 
                <!-- Show validation details when URI has content -->
                @if (nftCreateStoreService.initialURI() && nftCreateStoreService.initialURI().trim().length > 0) {
@@ -152,6 +151,9 @@
                     </div>
                </div>
                }
+
+               <!-- URI Helper -->
+               <app-field-helper title="URI Guidelines" [items]="uriHelperItems" [show]="showUriHelper" />
           </div>
 
           <!-- NFT Token Minter -->
@@ -168,21 +170,18 @@
                </div>
 
                <div class="relative">
-                    <input type="text" class="input-base-with-validation" app-focus-border [isValid]="nftValidatorService.isNftMinterValid()" [isInvalid]="nftValidatorService.isNftMinterInvalid()" [ngModel]="nftCreateStoreService.nfTokenMinterAddress()" (ngModelChange)="nftCreateStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
+                    <input type="text" class="input-base-with-validation" app-focus-border [isValid]="nftValidatorService.isNftMinterValid() && nftMinterAddress !== null && nftMinterAddress !== undefined" [isInvalid]="nftValidatorService.isNftMinterInvalid() && nftMinterAddress !== null && nftMinterAddress !== undefined" [ngModel]="nftCreateStoreService.nfTokenMinterAddress()" (ngModelChange)="nftCreateStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
 
-                    @if (nftCreateStoreService.nfTokenMinterAddress() !== null && nftCreateStoreService.nfTokenMinterAddress() !== undefined) {
-                    <button type="button" (click)="nftValidatorService.clearField('nfTokenMinterAddress')" class="clearInputXmark right-8" aria-label="Clear taxon">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="nftValidatorService.isNftMinterValid() && nftMinterAddress !== null && nftMinterAddress !== undefined" [isInvalid]="nftValidatorService.isNftMinterInvalid() && nftMinterAddress !== nftMinterAddress && uri !== undefined" [showClear]="!!nftMinterAddress" (clear)="nftCreateStoreService.setField('nfTokenMinterAddress','')" />
                </div>
-
-               <!-- Minter Helper -->
-               <app-field-helper title="Minter Address Examples" [items]="minterHelperItems" [show]="showMinterHelper" />
 
                @if (nftValidatorService.isNftMinterInvalid()) {
                <p class="form-error">Please enter a valid XRP address.</p>
                }
+
+               <!-- Minter Helper -->
+               <app-field-helper title="Minter Address Examples" [items]="minterHelperItems" [show]="showMinterHelper" />
           </div>
 
           <!-- Create Sell Offer on Mint Toggle -->
@@ -233,12 +232,10 @@
                               </button>
                          </div>
 
-                         <div>
+                         <div class="relative">
                               <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [showInlineErrorMessage]="false" [items]="destinationItems()" [value]="selectedDestinationItem()" (searchQueryChange)="searchQueryChange.emit($event)" (valueChange)="destinationChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address">
                               </app-select-search-dropdown>
                          </div>
-
-                         <app-field-helper title="Destination Address Examples" [items]="destinationHelperItems" [show]="showDestinationHelper" />
 
                          @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
                          <p class="same-addrress-as-selected-account">
@@ -248,6 +245,8 @@
                          } @if (nftValidatorService.getDestinationErrorMessage()) {
                          <p class="form-error mt-2">{{ nftValidatorService.getDestinationErrorMessage() }}</p>
                          }
+
+                         <app-field-helper title="Destination Address Examples" [items]="destinationHelperItems" [show]="showDestinationHelper" />
                     </div>
 
                     <!-- Expiration -->

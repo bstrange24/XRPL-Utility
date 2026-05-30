@@ -26,11 +26,12 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
 import { NftOfferValidatorService } from '../../../../services/shared/validators/nft-offer/nft-offer-validator/nft-offer-validator.service';
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-sell',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-sell.component.html',
      styleUrl: './nft-sell.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,6 +64,7 @@ export class NftSellComponent {
 
      // Helper info items
      readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
+     readonly selectNftHelperItems = AppConstants.NFT_SELECT_HELPER_ITEMS;
 
      // Inputs
      readonly destinationItems = input.required<SelectItem[]>();
@@ -85,6 +87,15 @@ export class NftSellComponent {
      showOfferIndexHelper = signal(false);
      showNftIdHelper = signal(false);
      isNftIdFocused = signal(false);
+     showSelectNftHelper = signal(false);
+
+     get nftId() {
+          return this.nftCreateStoreService.nftId();
+     }
+
+     set nftId(value: string) {
+          this.nftCreateStoreService.setField('nftId', value);
+     }
 
      onFocus(event: FocusEvent): void {
           const input = event.target as HTMLInputElement;
@@ -114,7 +125,6 @@ export class NftSellComponent {
           this.showNftIdHelper.set(!this.showNftIdHelper());
      }
 
-     // Helper toggles
      toggleOfferIndexHelper() {
           this.showOfferIndexHelper.set(!this.showOfferIndexHelper());
      }

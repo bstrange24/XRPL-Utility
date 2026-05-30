@@ -58,9 +58,10 @@
                                    inputmode="decimal"
                                    class="input-base-with-validation"
                                    app-focus-border
-                                   [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                                   [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                                   [isValid]="amountValidatorService.isEscrowAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                                    (keydown)="utilsService.preventNegative($event)"
+                                   (focus)="isFocused.set(true)"
                                    (input)="amountValidatorService.onAmountInput($event,'escrow')"
                                    (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
                                    (keypress)="amountValidatorService.onAmountKeyPress($event)"
@@ -70,16 +71,15 @@
                                    placeholder="e.g. 10.5"
                               />
 
-                              @if (escrowStoreService.amount() && escrowStoreService.amount()!.trim().length > 0) {
-                              <button type="button" (click)="this.escrowStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                                   <lucide-icon name="x" size="16"></lucide-icon>
-                              </button>
-                              }
+                              <!-- Icons Container -->
+                              <app-input-icons [isValid]="amountValidatorService.isEscrowAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.escrowStoreService.setField('amount', '')" />
                          </div>
 
-                         @if (amountValidatorService.isEscrowAmountInvalid()) {
-                         <p class="form-error">Amount must be greater than 0</p>
+                         <!-- Error Message -->
+                         @if (escrowValidatorService.getAmountErrorMessage()) {
+                         <p class="form-error mt-2">{{ escrowValidatorService.getAmountErrorMessage() }}</p>
                          }
+
                          <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
                     </div>
                </div>
@@ -245,7 +245,7 @@
           <div>
                <div class="mt-4">
                     <div class="field-label">
-                         <label for="escrowCondition" class="label-primary">Condition</label>
+                         <label for="escrowCondition" class="label-primary">Condition (Optional)</label>
                     </div>
 
                     <div class="flex items-center justify-between mb-1">
@@ -265,24 +265,20 @@
                     </div>
 
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidCondition() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
-
-                         @if (escrowValidatorService.hasInvalidCondition() || escrowStoreService.condition()) {
-                         <button type="button" (click)="this.escrowStoreService.setField('condition', '')" class="clearInputXmark" aria-label="Clear Condition Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <input type="text" class="input-base-with-validation pr-24 font-mono text-sm" app-focus-border [isValid]="!!escrowStoreService.condition() && !escrowValidatorService.hasInvalidCondition()" [isInvalid]="!!escrowStoreService.condition() && escrowValidatorService.hasInvalidCondition()" [ngModel]="escrowStoreService.condition()" (ngModelChange)="escrowStoreService.setField('condition', $event)" placeholder="Enter a valid PREIMAGE-SHA-256 crypto-condition (72+ hex chars)" />
+                         <app-input-icons [isValid]="!!escrowStoreService.condition() && !escrowValidatorService.hasInvalidCondition()" [isInvalid]="!!escrowStoreService.condition() && escrowValidatorService.hasInvalidCondition()" [showClear]="!!escrowStoreService.condition()" (clear)="escrowStoreService.setField('condition', '')" />
                     </div>
 
-                    @if (escrowValidatorService.hasInvalidCondition()) {
+                    @if (escrowStoreService.condition() && escrowValidatorService.hasInvalidCondition()) {
                     <p class="form-error">{{ escrowValidatorService.getConditionErrorMessage() }}</p>
                     }
+
                     <app-field-helper title="Condition" [items]="escrowConditionHelperItems" [show]="showEscrowConditionHelper" />
                </div>
 
                <div class="mt-4">
                     <div class="field-label">
-                         <label for="escrowFulfillment" class="label-primary">Fulfillment</label>
+                         <label for="escrowFulfillment" class="label-primary">Fulfillment (Optional for creation)</label>
                     </div>
 
                     <div class="flex items-center justify-between mb-1">
@@ -301,28 +297,17 @@
                          </button>
                     </div>
 
-                    <!-- <div class="flex items-center gap-2">
-                         <p class="text-secondary">PREIMAGE-SHA-256 crypto-condition fulfillment.</p>
-                         <button type="button" (click)="toggleFulfillmentHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                              <ng-icon name="heroQuestionMarkCircle" size="14" />
-                         </button>
-                    </div> -->
-
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" [class.border-red-500]="escrowValidatorService.hasInvalidFulfillment() || escrowValidatorService.hasInvalidConditionFulfillmentPair()" />
-
-                         @if (showClearFulfillmentButton() || escrowStoreService.fulfillment()) {
-                         <button type="button" (click)="escrowStoreService.setField('fulfillment', '')" class="clearInputXmark" aria-label="Clear Fulfillment Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <input type="text" class="input-base-with-validation pr-24 font-mono text-sm" app-focus-border [isValid]="!!escrowStoreService.fulfillment() && !escrowValidatorService.hasInvalidFulfillment()" [isInvalid]="!!escrowStoreService.fulfillment() && escrowValidatorService.hasInvalidFulfillment()" [ngModel]="escrowStoreService.fulfillment()" (ngModelChange)="escrowStoreService.setField('fulfillment', $event)" placeholder="Enter a valid PREIMAGE-SHA-256 fulfillment" />
+                         <app-input-icons [isValid]="!!escrowStoreService.fulfillment() && !escrowValidatorService.hasInvalidFulfillment()" [isInvalid]="!!escrowStoreService.fulfillment() && escrowValidatorService.hasInvalidFulfillment()" [showClear]="!!escrowStoreService.fulfillment()" (clear)="escrowStoreService.setField('fulfillment', '')" />
                     </div>
 
-                    @if (escrowValidatorService.hasInvalidFulfillment()) {
+                    @if (escrowStoreService.fulfillment() && escrowValidatorService.hasInvalidFulfillment()) {
                     <p class="form-error">{{ escrowValidatorService.getFulfillmentErrorMessage() }}</p>
-                    } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair() && !escrowValidatorService.hasInvalidCondition() && !escrowValidatorService.hasInvalidFulfillment()) {
+                    } @if (escrowValidatorService.hasInvalidConditionFulfillmentPair()) {
                     <p class="form-error">{{ escrowValidatorService.getConditionFulfillmentPairErrorMessage() }}</p>
                     }
+
                     <app-field-helper title="Fulfillment" [items]="escrowFulfillmentHelperItems" [show]="showEscrowFulfillmentHelper" />
                </div>
           </div>
@@ -365,21 +350,24 @@
                     >
                     </app-xrpl-expiration-input>
                </div>
+               @if (!isConditional && escrowValidatorService.hasMissingTimeBasedExpiration()) {
+               <div class="alert-warning mb-0">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
+                    <div class="alert-content">
+                         <div class="alert-content">{{ escrowValidatorService.getMissingTimeBasedErrorMessage() }}</div>
+                    </div>
+               </div>
+               } @else if (escrowValidatorService.hasMissingConditionalExpiration()) {
+               <div class="alert-warning mb-0">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
+                    <div class="alert-content">
+                         <div class="alert-content">{{ escrowValidatorService.getMissingConditionalExpirationErrorMessage() }}</div>
+                    </div>
+               </div>
+               }
           </div>
      </div>
-
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Escrow create validation issues:" />

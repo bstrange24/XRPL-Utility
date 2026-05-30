@@ -139,8 +139,8 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      selectCurrency(item: any) {
           const currency = item?.id ?? item;
           const stack = new Error().stack;
-          console.log(`[TrustlineCurrencyService.selectCurrency] Called with: ${currency}`);
-          console.log(`[TrustlineCurrencyService.selectCurrency] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
+          // console.warn(`[TrustlineCurrencyService.selectCurrency] Called with: ${currency}`);
+          // console.warn(`[TrustlineCurrencyService.selectCurrency] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setCurrency(currency);
 
           const issuers = this.getIssuersForCurrency(currency);
@@ -155,8 +155,8 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      selectIssuer(item: any) {
           const value = item?.id ?? item;
           const stack = new Error().stack;
-          console.log(`[TrustlineCurrencyService.selectIssuer] Called with: ${value?.slice(0, 8)}...`);
-          console.log(`[TrustlineCurrencyService.selectIssuer] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
+          // console.warn(`[TrustlineCurrencyService.selectIssuer] Called with: ${value?.slice(0, 8)}...`);
+          // console.warn(`[TrustlineCurrencyService.selectIssuer] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setIssuer(value);
           this.refreshCurrentBalance().catch(console.error);
      }

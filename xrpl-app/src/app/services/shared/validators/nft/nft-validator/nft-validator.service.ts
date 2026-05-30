@@ -42,7 +42,6 @@ export class NftValidatorService {
 
      getTaxonErrorMessage = computed(() => {
           const count = this.nftCreateStoreService.taxon();
-          // if (count === null || count === undefined) return 'Maximum Tokens is required.';
           if (count === null || count === undefined) return '';
 
           const num = Number(count);
@@ -89,6 +88,8 @@ export class NftValidatorService {
 
      isNftMinterInvalid = computed(() => {
           const address = this.nftCreateStoreService.nfTokenMinterAddress();
+          // Empty = neutral
+          if (!address) return false;
           return !!address && !xrpl.isValidAddress(address);
      });
 
@@ -228,12 +229,10 @@ export class NftValidatorService {
 
      checkForTransferFeeAndTransferFlag = computed(() => {
           const transferFee = this.nftCreateStoreService.transferFee();
-          if (transferFee && transferFee > 0 && !this.nftUtilService.nftFlags().transferableNft) {
-               return true;
-          } else if (!transferFee && transferFee <= 0 && this.nftUtilService.nftFlags().transferableNft) {
-               return true;
-          }
-          return false;
+          const hasTransferFee = transferFee && transferFee > 0;
+          const isTransferable = this.nftUtilService.nftFlags().transferableNft;
+
+          return hasTransferFee !== isTransferable;
      });
 
      isNftSellExpirationValid = computed(() => {

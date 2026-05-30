@@ -811,6 +811,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                return 'Connection not ready. Please wait.';
           }
 
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
           if (!this.canPerformAction()) {
                const tab = this.trustlineViewModelService.activeTab();
 

@@ -4,6 +4,7 @@ import { ExpirationValidatorService } from '../expiration-validator/expiration-v
 import { MptStoreService } from '../../../mpt/mpt-store/mpt-store.service';
 import { CurrencyStoreService } from '../../../currency/currency-store/currency-store.service';
 import { RealTimeExpirationService } from '../../real-time-date-expiration-check/real-time-expiration.service';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -32,28 +33,14 @@ export class EscrowValidatorService {
           return this.realTimeService.isEscrowFinishAfterExpired();
      });
 
-     getCancelAfterErrorMessage = computed(() => {
-          if (!this.hasInvalidEscrowCancelAfterExpiration()) return '';
-          const expiration = this.escrowStoreService.escrowCancelAfterExpirationDate();
-          if (!expiration) return '';
-
-          const timeRemaining = this.realTimeService.escrowCancelAfterTimeRemaining();
-          if (timeRemaining === 'Expired') {
-               return `Cancel after time has expired (${new Date(expiration).toLocaleString()}). Please select a future date/time.`;
-          }
-          return `Cancel after time is invalid. ${timeRemaining}`;
-     });
-
      getFinishAfterErrorMessage = computed(() => {
           if (!this.hasInvalidEscrowFinishAfterExpiration()) return '';
-          const expiration = this.escrowStoreService.escrowFinishAfterExpirationDate();
-          if (!expiration) return '';
+          return 'Finish After must be a future date/time.';
+     });
 
-          const timeRemaining = this.realTimeService.escrowFinishAfterTimeRemaining();
-          if (timeRemaining === 'Expired') {
-               return `Finish after time has expired (${new Date(expiration).toLocaleString()}). Please select a future date/time.`;
-          }
-          return `Finish after time is invalid. ${timeRemaining}`;
+     getCancelAfterErrorMessage = computed(() => {
+          if (!this.hasInvalidEscrowCancelAfterExpiration()) return '';
+          return 'Cancel After must be a future date/time.';
      });
 
      getTimeRemainingForFinishAfter = computed(() => {
@@ -112,6 +99,31 @@ export class EscrowValidatorService {
           const condition = this.escrowStoreService.condition();
           const fulfillment = this.escrowStoreService.fulfillment();
 
+          // If both are empty, it's valid (creating an escrow with just CancelAfter)
+          if ((!condition || condition.trim().length === 0) && (!fulfillment || fulfillment.trim().length === 0)) {
+               return false;
+          }
+
+          // If condition is provided, it's valid even without fulfillment (for creation)
+          // Fulfillment is only needed when finishing the escrow
+          if (condition && condition.trim().length > 0 && (!fulfillment || fulfillment.trim().length === 0)) {
+               return false; // Valid for creation
+          }
+
+          // If fulfillment is provided without condition, that's invalid
+          if ((!condition || condition.trim().length === 0) && fulfillment && fulfillment.trim().length > 0) {
+               return true;
+          }
+
+          // If both are provided, they should form a valid pair (but we can't validate the cryptographic pairing here)
+          // The XRPL will validate the pair when finishing the escrow
+          return false;
+     });
+
+     hasInvalidConditionFulfillmentPair345345345 = computed(() => {
+          const condition = this.escrowStoreService.condition();
+          const fulfillment = this.escrowStoreService.fulfillment();
+
           // If both are empty, it's valid (not using conditional escrow)
           if ((!condition || condition.trim().length === 0) && (!fulfillment || fulfillment.trim().length === 0)) {
                return false;
@@ -125,10 +137,71 @@ export class EscrowValidatorService {
           return false;
      });
 
+     hasMissingFinishAfter = computed(() => this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && !this.escrowStoreService.escrowFinishAfterExpirationDate()?.trim());
+
+     hasMissingCancelAfter = computed(() => this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && !this.escrowStoreService.escrowCancelAfterExpirationDate()?.trim());
+
+     hasMissingTimeBasedExpiration = computed(() => {
+          const isConditional = this.escrowStoreService.isConditional?.();
+          const enableFinish = this.escrowStoreService.enableEscrowFinishAfterExpirationDate();
+          const enableCancel = this.escrowStoreService.enableEscrowCancelAfterExpirationDate();
+
+          console.log('[Validator] hasMissingTimeBasedExpiration:', {
+               isConditional,
+               enableFinish,
+               enableCancel,
+               result: !enableFinish && !enableCancel,
+               timestamp: new Date().toISOString(),
+          });
+
+          if (isConditional ?? false) return false;
+          return !enableFinish && !enableCancel;
+     });
+
+     getMissingTimeBasedErrorMessage = computed(() => (this.hasMissingTimeBasedExpiration() ? 'Time-based escrow requires at least Finish After or Cancel After to be enabled.' : ''));
+     getMissingConditionErrorMessage = computed(() => (this.hasMissingTimeBasedExpiration() ? 'Conditional escrow requires Cancel After to be enabled and a date set.' : ''));
+
+     getMissingExpirationValueErrorMessage = computed(() => {
+          if (this.hasMissingFinishAfter()) {
+               return 'Finish After is enabled but no date is set.';
+          }
+          if (this.hasMissingCancelAfter()) {
+               return 'Cancel After is enabled but no date is set.';
+          }
+          return '';
+     });
+
+     hasMissingConditionalExpiration = computed(() => {
+          const isConditional = this.escrowStoreService.isConditional?.() ?? false;
+          if (!isConditional) return false;
+
+          // Conditional escrows MUST have CancelAfter
+          const enableCancel = this.escrowStoreService.enableEscrowCancelAfterExpirationDate();
+          const cancelDate = this.escrowStoreService.escrowCancelAfterExpirationDate();
+
+          return !enableCancel || !cancelDate?.trim();
+     });
+
+     getMissingConditionalExpirationErrorMessage = computed(() => {
+          if (!this.hasMissingConditionalExpiration()) return '';
+          return 'Conditional escrow requires a Cancel After expiration date.';
+     });
+
      getConditionFulfillmentPairErrorMessage = computed(() => {
           if (!this.hasInvalidConditionFulfillmentPair()) return '';
-          const hasCondition = this.escrowStoreService.condition() && this.escrowStoreService.condition()!.trim().length > 0;
-          const hasFulfillment = this.escrowStoreService.fulfillment() && this.escrowStoreService.fulfillment()!.trim().length > 0;
+          const hasCondition = this.escrowStoreService.condition() && this.escrowStoreService.condition().trim().length > 0;
+          const hasFulfillment = this.escrowStoreService.fulfillment() && this.escrowStoreService.fulfillment().trim().length > 0;
+
+          if (!hasCondition && hasFulfillment) {
+               return 'Fulfillment requires a condition to be set.';
+          }
+          return 'Invalid condition and fulfillment combination.';
+     });
+
+     getConditionFulfillmentPairErrorMessage34534534 = computed(() => {
+          if (!this.hasInvalidConditionFulfillmentPair()) return '';
+          const hasCondition = this.escrowStoreService.condition() && this.escrowStoreService.condition().trim().length > 0;
+          const hasFulfillment = this.escrowStoreService.fulfillment() && this.escrowStoreService.fulfillment().trim().length > 0;
 
           if (hasCondition && !hasFulfillment) {
                return 'Fulfillment is required when condition is provided.';
@@ -137,5 +210,49 @@ export class EscrowValidatorService {
                return 'Condition is required when fulfillment is provided.';
           }
           return '';
+     });
+
+     // Amount Error (only shows when user typed something)
+     getAmountErrorMessage = computed(() => {
+          const amount = this.escrowStoreService.amount()?.trim() ?? '';
+
+          if (amount === '') return '';
+
+          const num = Number.parseFloat(amount);
+          if (num <= 0) {
+               return 'Amount must be greater than 0.';
+          }
+          if (num > AppConstants.MAX_TOKEN_COUNT) {
+               return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000.';
+          }
+
+          return '';
+     });
+
+     // Single source of truth for all validation errors
+     getAllValidationErrors = computed(() => {
+          const errors: string[] = [];
+
+          const amountErr = this.getAmountErrorMessage();
+          if (amountErr) errors.push(amountErr);
+
+          if (this.hasInvalidCondition()) {
+               errors.push(this.getConditionErrorMessage());
+          }
+          if (this.hasInvalidFulfillment()) {
+               errors.push(this.getFulfillmentErrorMessage());
+          }
+          if (this.hasInvalidConditionFulfillmentPair()) {
+               errors.push(this.getConditionFulfillmentPairErrorMessage());
+          }
+
+          if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && this.hasInvalidEscrowFinishAfterExpiration()) {
+               errors.push(this.getFinishAfterErrorMessage());
+          }
+          if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.hasInvalidEscrowCancelAfterExpiration()) {
+               errors.push(this.getCancelAfterErrorMessage());
+          }
+
+          return errors;
      });
 }

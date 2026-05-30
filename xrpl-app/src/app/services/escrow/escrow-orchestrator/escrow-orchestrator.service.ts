@@ -8,19 +8,16 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { ToastService } from '../../utils/toast/toast.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { EscrowUtilService } from '../escrow-util/escrow-util.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
 import { AppConstants } from '../../../core/app.constants';
-import { ESCROW_TX_TYPES, ESCROW_VALIDATION_RULES, EscrowTxType } from '../../../components/escrow/constants/time-escrow.constants';
+import { EscrowTxType } from '../../../components/escrow/constants/time-escrow.constants';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { EscrowConfig } from '../../../components/escrow/constants/time-escrow.types';
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { EscrowTransactionBuilderService } from '../escrow-transaction-builder/escrow-transaction-builder.service';
 
 type EscrowTxMeta = {
-     validationRule: string;
-     buildValidationInputs: (args: { orchestrator: EscrowOrchestratorService; wallet: Wallet; env: any; escrow: any; account: any; currency: any; txOptions: any }) => any;
      buildTx: (args: { orchestrator: EscrowOrchestratorService; env: any; wallet: any; escrow: any; currency: any; trustline: any }) => xrpl.Transaction;
      simulationToastMessage: (args: { orchestrator: EscrowOrchestratorService; escrow: any; currency: any }) => string;
      successMessage: (args: { orchestrator: EscrowOrchestratorService; escrow: any; currency: any }) => string;
@@ -28,30 +25,6 @@ type EscrowTxMeta = {
 
 const ESCROW_META: Record<EscrowTxType, EscrowTxMeta> = {
      createEscrow: {
-          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.CREATE],
-          buildValidationInputs: ({ wallet, env, escrow, currency, account, txOptions, orchestrator }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               createEscrow: {
-                    amount: escrow.amount,
-                    destination: escrow.destination,
-                    finishAfter: escrow.escrowFinishAfterExpirationDate ? orchestrator.utilsService.toRippleTime(escrow.escrowFinishAfterExpirationDate) : '',
-                    cancelAfter: escrow.escrowCancelAfterExpirationDate ? orchestrator.utilsService.toRippleTime(escrow.escrowCancelAfterExpirationDate) : '',
-                    issuer: currency.issuer,
-                    currencyValue: currency.currencyValue,
-                    condition: escrow.condition,
-               },
-          }),
           buildTx: ({ orchestrator, env, wallet, escrow, currency }) => orchestrator.escrowTransactionBuilderService.buildCreateEscrowTx(env.wallet || wallet, env, escrow, currency),
           simulationToastMessage: ({ orchestrator, escrow, currency }) => `Simulated Sending Escrow of ${escrow.amount} ${orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP'}`,
           successMessage: ({ orchestrator, escrow, currency }) => {
@@ -64,26 +37,6 @@ const ESCROW_META: Record<EscrowTxType, EscrowTxMeta> = {
      },
 
      finishEscrow: {
-          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.FINISH],
-          buildValidationInputs: ({ wallet, env, escrow, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    fee: env.fee,
-                    currentLedger: env.currentLedger,
-               },
-               regularKey: {
-                    isRegularKey: escrow.isRegularKeyAddress,
-                    address: escrow.regularKeyAddress,
-                    seed: escrow.regularKeySeed,
-               },
-               finishEscrow: {
-                    escrowOwner: escrow.escrowOwnerField,
-                    escrowSequenceNumber: escrow.escrowSequenceNumber,
-                    condition: escrow.condition,
-                    fulfillment: escrow.fulfillment,
-               },
-          }),
           buildTx: ({ orchestrator, env, wallet, escrow, currency }) => orchestrator.escrowTransactionBuilderService.buildFinishEscrowTx(env.wallet || wallet, env, escrow),
           simulationToastMessage: ({ orchestrator, escrow, currency }) => `Simulated Finishing Escrow of ${escrow.amount} ${orchestrator.utilsService.encodeIfNeeded(currency.currencyCode) || 'XRP'}`,
           successMessage: ({ orchestrator, escrow, currency }) => {
@@ -93,25 +46,6 @@ const ESCROW_META: Record<EscrowTxType, EscrowTxMeta> = {
      },
 
      cancelEscrow: {
-          validationRule: ESCROW_VALIDATION_RULES[ESCROW_TX_TYPES.CANCEL],
-          buildValidationInputs: ({ wallet, env, escrow, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               cancelEscrow: {
-                    escrowSequenceNumber: escrow.escrowSequenceNumber,
-               },
-          }),
           buildTx: ({ orchestrator, env, wallet, escrow }) => orchestrator.escrowTransactionBuilderService.buildCancelEscrowTx(env.wallet, env, escrow),
           simulationToastMessage: () => `Simulated Cancelling Escrow`,
           successMessage: () => `Successfully Cancelled Escrow`,
@@ -160,14 +94,8 @@ export class EscrowOrchestratorService extends PerformanceBaseComponent {
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Validation
-               const meta = ESCROW_META[type];
-
-               const validationInputs = meta.buildValidationInputs({ orchestrator: this, wallet, env, escrow, account, currency, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
-
                // Build transaction
+               const meta = ESCROW_META[type];
                const tx = meta.buildTx({ orchestrator: this, env, wallet, escrow, currency, trustline });
 
                // Optional fields

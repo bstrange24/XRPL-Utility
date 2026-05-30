@@ -8,6 +8,7 @@ import { ConnectionGuardService } from '../../connection-guard/connection-guard.
 import { PaymentChannelStoreService } from '../../../payment-channel/payment-channel-store/payment-channel-store.service';
 import { EscrowStoreService } from '../../../escrow/escrow-store/escrow-store.service';
 import { ChecksStoreService } from '../../../checks/checks-store/checks-store.service';
+import { AppConstants } from '../../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -28,6 +29,10 @@ export class AmountValidatorService {
           const amount = this.accountConfiguratorStoreService.amount();
 
           if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          if (Number.parseFloat(amount) > AppConstants.MAX_TOKEN_COUNT) {
                return false;
           }
 
@@ -68,6 +73,18 @@ export class AmountValidatorService {
           return !Number.isFinite(numAmount) || numAmount <= 0;
      });
 
+     isTicketCreateAmountValid = computed(() => {
+          const amount = this.xrplTxOptionsStore.ticketCountField();
+
+          if (amount === null || amount === undefined || amount === '') {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          // Must be a finite number AND between 1 and 250 inclusive
+          return Number.isFinite(numAmount) && numAmount >= 1 && numAmount <= 250;
+     });
+
      isTicketCreateAmountInvalid = computed(() => {
           const amount = this.xrplTxOptionsStore.ticketCountField();
 
@@ -76,18 +93,55 @@ export class AmountValidatorService {
           }
 
           const numAmount = Number(amount);
-          return !Number.isFinite(numAmount) || numAmount <= 0 || numAmount > 250;
+          // Invalid if: not a finite number OR less than 1 OR greater than 250
+          return !Number.isFinite(numAmount) || numAmount < 1 || numAmount > 250;
+     });
+
+     isCheckAmountValid = computed(() => {
+          const amount = this.checksStoreService.amount();
+          const totalCheckAmount = this.checksStoreService.totalCheckAmount();
+
+          if (!amount || amount.trim().length === 0) {
+               return false;
+          }
+
+          const numAmount = Number(amount);
+          if (Number.isNaN(numAmount) || numAmount <= 0) {
+               return false;
+          }
+
+          const numTotalCheckAmount = Number(totalCheckAmount);
+          if (Number.isNaN(numAmount) || numAmount > numTotalCheckAmount) {
+               return false;
+          }
+
+          // Must be finite AND greater than 0 AND less than max
+          return Number.isFinite(numAmount) && numAmount > 0 && numAmount < AppConstants.MAX_TOKEN_COUNT;
      });
 
      isCheckAmountInvalid = computed(() => {
           const amount = this.checksStoreService.amount();
 
+          // Empty or null amounts ARE invalid
           if (amount === null || amount === undefined || amount === '') {
-               return false;
+               return true; // Changed from false to true
           }
 
           const numAmount = Number(amount);
-          return !Number.isFinite(numAmount) || numAmount <= 0;
+
+          return !Number.isFinite(numAmount) || numAmount <= 0 || numAmount > AppConstants.MAX_TOKEN_COUNT;
+     });
+
+     isCheckCashAmountInvalid = computed(() => {
+          const amount = this.checksStoreService.amount();
+          const totalCheckAmount = this.checksStoreService.totalCheckAmount();
+
+          const numTotalCheckAmount = Number(totalCheckAmount);
+          const numAmount = Number(amount);
+          if (Number.isNaN(numAmount) || numAmount > numTotalCheckAmount) {
+               return true;
+          }
+          return false;
      });
 
      isEscrowAmountValid = computed(() => {
@@ -116,8 +170,6 @@ export class AmountValidatorService {
           const key = event.key;
           const input = event.target as HTMLInputElement;
           const currentValue = input.value;
-          const selectionStart = input.selectionStart || 0;
-          const selectionEnd = input.selectionEnd || 0;
 
           // Allow: backspace, delete, tab, escape, enter
           if (key === 'Backspace' || key === 'Delete' || key === 'Tab' || key === 'Escape' || key === 'Enter') {
@@ -197,17 +249,17 @@ export class AmountValidatorService {
           // Convert to number for validation
           let numericValue: number | null = null;
           if (value && value !== '.') {
-               numericValue = parseFloat(value);
-               if (isNaN(numericValue)) {
+               numericValue = Number.parseFloat(value);
+               if (Number.isNaN(numericValue)) {
                     numericValue = null;
                }
           }
 
           // Update the store with the value
           // For empty or invalid values, pass empty string or null
-          if (!value || value === '.' || (numericValue !== null && isNaN(numericValue))) {
+          if (!value || value === '.' || (numericValue !== null && Number.isNaN(numericValue))) {
                this.utilsService.updateAmount('', type);
-          } else if (numericValue !== null && !isNaN(numericValue)) {
+          } else if (numericValue !== null && !Number.isNaN(numericValue)) {
                // For valid numbers, update with the numeric value
                // But keep the string representation for display
                this.utilsService.updateAmount(numericValue.toString(), type);
@@ -221,15 +273,15 @@ export class AmountValidatorService {
           const input = event.target as HTMLInputElement;
           let value = input.value;
 
-          if (value && value !== '.' && !isNaN(parseFloat(value))) {
-               const num = parseFloat(value);
+          if (value && value !== '.' && !Number.isNaN(Number.parseFloat(value))) {
+               const num = Number.parseFloat(value);
                // Format with up to 6 decimal places, removing trailing zeros
                const formatted = num.toFixed(6).replace(/\.?0+$/, '');
                if (formatted !== value) {
                     input.value = formatted;
                     this.utilsService.updateAmount(formatted, type);
                }
-          } else if (value === '.' || (value && isNaN(parseFloat(value)))) {
+          } else if (value === '.' || (value && Number.isNaN(Number.parseFloat(value)))) {
                // Clear invalid input
                input.value = '';
                this.utilsService.updateAmount('', '');

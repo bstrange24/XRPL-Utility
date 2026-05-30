@@ -3,6 +3,7 @@ import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 export interface CheckState {
      checkIdField: string;
      destination: string;
+     totalCheckAmount: string;
      amount: string;
      checkCreator: string;
      checkIdSearchQuery: string;
@@ -26,6 +27,7 @@ const initialState: CheckState = {
      checkIdField: '',
      destination: '',
      amount: '',
+     totalCheckAmount: '',
      checkCreator: '',
      checkIdSearchQuery: '',
      outstandingChecks: '',
@@ -33,7 +35,7 @@ const initialState: CheckState = {
      checkExpirationDate: '',
      enableExpirationDate: false,
      outstandingChecksCollapsed: false,
-     deliverMinAmount: '',
+     deliverMinAmount: null as unknown as string,
      useDeliverMin: false,
      isCheckOwner: false,
      isCollapsed: false,
@@ -86,6 +88,7 @@ export const ChecksStoreService = signalStore(
                     checkIdField: '',
                     mptIssuanceIdField: '',
                     amount: '',
+                    totalCheckAmount: '',
                });
           },
 
@@ -100,7 +103,8 @@ export const ChecksStoreService = signalStore(
                     outstandingChecks: '',
                     mptIssuanceIdField: '',
                     amount: '',
-                    deliverMinAmount: '',
+                    totalCheckAmount: '',
+                    deliverMinAmount: null as unknown as string,
                     useDeliverMin: false,
                     isCheckOwner: false,
                     isCollapsed: false,

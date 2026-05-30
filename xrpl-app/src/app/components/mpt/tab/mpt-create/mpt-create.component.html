@@ -6,8 +6,8 @@
                MPT Details
           </h4>
 
+          <!-- Maximum Tokens -->
           <div>
-               <!-- Maximum Tokens -->
                <div class="field-label">
                     <label for="mptMaxTokens" class="label-primary">Maximum Tokens <span class="text-red-500">*</span> </label>
                     <div class="flex gap-2">
@@ -44,9 +44,9 @@
                     <!-- Icons Container -->
                     <app-input-icons [isValid]="mptValidator.isTokenCountValid() && tokenCount !== null && tokenCount !== undefined" [isInvalid]="mptValidator.isTokenCountInvalid() && tokenCount !== null && tokenCount !== undefined" [showClear]="!!tokenCount" (clear)="clearField('tokenCount')" />
                </div>
-               
+
                @if (tokenCount !== null && tokenCount !== undefined && mptValidator.isTokenCountInvalid()) {
-                    <p class="form-error mt-2">{{ mptValidator.getTokenCountErrorMessage() }}</p>
+               <p class="form-error mt-2">{{ mptValidator.getTokenCountErrorMessage() }}</p>
                }
 
                <app-field-helper title="Maximum Tokens (Supply Cap)" [items]="mptMaxTokenHelperItems" [show]="showMaxTokensHelper" />
@@ -93,11 +93,11 @@
                     <app-input-icons [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined" [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [showClear]="!!assetScale" (clear)="clearField('assetScale')" />
                </div>
 
-               <app-field-helper title="Asset Scale Guidelines" [items]="assetScaleHelperItems" [show]="showAssetScaleHelper" />
-
                @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
                <p class="form-error mt-2">{{ mptValidator.getAssetScaleErrorMessage() }}</p>
                }
+
+               <app-field-helper title="Asset Scale Guidelines" [items]="assetScaleHelperItems" [show]="showAssetScaleHelper" />
           </div>
 
           <!-- Transfer Fee -->
@@ -141,16 +141,21 @@
                     <app-input-icons [isValid]="mptValidator.isTransferFeeValid() && transferFee !== null && transferFee !== undefined" [isInvalid]="mptValidator.isTransferFeeInvalid() && transferFee !== null && transferFee !== undefined" [showClear]="!!transferFee" (clear)="clearField('transferFee')" />
                </div>
 
-               <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
-
                @if (transferFee !== null && transferFee !== undefined && mptValidator.isTransferFeeInvalid()) {
                <p class="form-error mt-2">{{ mptValidator.getTransferFeeErrorMessage() }}</p>
                } @if (transferFee && transferFee > 0 && !mptUtil.flags().canTransfer) {
                <p class="form-warning mt-2 flex items-center gap-1">
                     <ng-icon name="heroExclamationTriangle" size="14" />
-                    Transfer Fee requires "Can Transfer" to be enabled in the flags section.
+                    Transfer Fee requires "MPTCanTransfer" flag to be enabled in the flags section.
+               </p>
+               } @else if (!transferFee && transferFee <= 0 && mptUtil.flags().canTransfer) {
+               <p class="form-warning mt-2 flex items-center gap-1">
+                    <ng-icon name="heroExclamationTriangle" size="14" />
+                    "MPTCanTransfer" flag requires Transfer Fee to be valid.
                </p>
                }
+
+               <app-field-helper title="Transfer Fee Guidelines" [items]="transferFeeHelperItems" [show]="showTransferFeeHelper" />
           </div>
 
           <!-- Token Metadata -->

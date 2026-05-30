@@ -184,15 +184,6 @@ export class UtilsService {
                     this.xrplTxOptionsStore.setField('ticketCountField', rounded.toString());
                }
           }
-
-          // Round to 6 decimal places (XRP precision)
-          // const rounded = Number(num.toFixed(6));
-          // this.accountConfiguratorStoreService.setField('amount', rounded.toString());
-
-          // this.paymentChannelStoreService.setField('amount', rounded.toString());
-          // this.checksStoreService.setField('amount', rounded.toString());
-          // this.escrowStoreService.setField('amount', rounded.toString());
-          // this.nftCreateStoreService.setField('amount', rounded.toString());
      }
 
      updateTransferFee(value: string | number) {

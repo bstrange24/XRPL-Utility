@@ -83,14 +83,14 @@
           <app-select-search-dropdown [items]="issuerItems" [value]="selectedIssuerItem" (valueChange)="issuerSelected.emit($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
      </div>
 
-     <!-- Helper Text -->
-     <app-field-helper title="Issuer Guidelines" [items]="issuerHelperItems" [show]="showIssuerHelper" />
-
      <div>
           <label for="currencyBalabce" class="label-primary">Currency Balance</label>
           <p class="text-secondary">Total currency balance held by this account.</p>
           <input type="text" readonly class="input-disabled" [value]="balance" />
      </div>
+
+     <!-- Helper Text -->
+     <app-field-helper title="Issuer Guidelines" [items]="issuerHelperItems" [show]="showIssuerHelper" />
      }
 
      <!-- Custom Amount (when showAmount = true) -->

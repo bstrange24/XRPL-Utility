@@ -233,6 +233,14 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      }
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
           const tab = this.didViewModelService.activeTab();
 
           if (!this.canPerformAction()) {

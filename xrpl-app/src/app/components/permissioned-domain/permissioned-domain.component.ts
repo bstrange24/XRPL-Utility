@@ -330,6 +330,10 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
                return 'Connection not ready. Please wait.';
           }
 
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
           if (!this.canPerformAction()) {
                const tab = this.permissionedDomainViewModelService.activeTab();
                if (tab === 'setPermissionedDomain') {

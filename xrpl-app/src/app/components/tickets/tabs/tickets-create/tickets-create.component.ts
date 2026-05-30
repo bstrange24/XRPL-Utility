@@ -8,11 +8,13 @@ import { UtilsService } from '../../../../services/utils/util-service/utils.serv
 import { LucideAngularModule } from 'lucide-angular';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-tickets-create',
      standalone: true,
-     imports: [FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, FocusBorderDirective],
+     imports: [FormsModule, FieldHelperComponent, NgIcon, LucideAngularModule, FocusBorderDirective, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './tickets-create.component.html',
      styleUrl: './tickets-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,

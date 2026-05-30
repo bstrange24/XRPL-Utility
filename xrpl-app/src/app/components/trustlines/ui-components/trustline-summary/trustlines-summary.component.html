@@ -37,7 +37,7 @@
 
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
-                    <!-- <ng-icon name="heroXMark" size="16" /> -->
+                    <ng-icon name="heroXMark" size="16" />
                     Clear All Filters
                </button>
                }
@@ -116,7 +116,10 @@
                </div>
                <p class="empty-state-title">No matching trustlines</p>
                <p class="empty-state-subtitle">Try adjusting your search or filters</p>
-               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
           </div>
           }
      </div>

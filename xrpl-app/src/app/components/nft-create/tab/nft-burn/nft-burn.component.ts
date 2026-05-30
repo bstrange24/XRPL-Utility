@@ -23,11 +23,12 @@ import { NftCreateValidatorService } from '../../../../services/shared/validator
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { NftBurnValidatorService } from '../../../../services/shared/validators/nft/nft-burn-validator/nft-burn-validator.service';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-burn',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-burn.component.html',
      styleUrl: './nft-burn.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -78,6 +79,14 @@ export class NftBurnComponent {
      // Signals
      showSelectNftHelper = signal(false);
      showNftHelper = signal(false);
+
+     get nftId() {
+          return this.nftCreateStoreService.nftId();
+     }
+
+     set nftId(value: string) {
+          this.nftCreateStoreService.setField('nftId', value);
+     }
 
      onNftSelected(item: SelectItem | null) {
           const id = item?.id || '';

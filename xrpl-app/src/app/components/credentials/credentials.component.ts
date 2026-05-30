@@ -430,7 +430,16 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
      }
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
+          if (!this.isIdle() || !this.hasWallets()) {
+               return 'Please wait or select a wallet';
+          }
+
           const tab = this.credentialViewModelService.activeTab();
+
           if (!this.canPerformAction()) {
                if (tab === 'createCredential') {
                     return 'Subject and Credential Type are required';

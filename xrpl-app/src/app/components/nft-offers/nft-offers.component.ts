@@ -514,6 +514,10 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      });
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
           if (!this.isIdle() || !this.hasWallets()) {
                return 'Please wait or select a wallet';
           }

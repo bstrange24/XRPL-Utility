@@ -241,9 +241,8 @@ export class PaymentChannelSummaryComponent {
                     colorClass = 'btn-filter-blue';
           }
 
-          // Add active state
           if (isActive) {
-               return `${colorClass} btn-filter-active`;
+               return `${colorClass} ${colorClass}-active`;
           }
 
           return colorClass;

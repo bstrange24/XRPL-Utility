@@ -3,7 +3,7 @@ import { Client, GatewayBalancesResponse } from 'xrpl';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../core/app.constants';
 import { StorageService } from '../shared/local-storage/storage.service';
-import { ConnectionStatus, MptInfoResponse, Token } from '../../models/interface-items.model';
+import { ConnectionStatus, isServerReadyForTransactions, LedgerSyncStatus, MptInfoResponse, Token, XrplServerState } from '../../models/interface-items.model';
 import { ToastService } from '../utils/toast/toast.service';
 
 @Injectable({
@@ -22,31 +22,51 @@ export class XrplService {
      private reconnectAttempts = 0;
      private reconnectTimeout: any = null;
 
-     // Public readonly signals (exposed to components)
+     // Server state monitoring
+     private readonly serverState = signal<XrplServerState>('disconnected');
+     private readonly ledgerSyncStatus = signal<LedgerSyncStatus>('unknown');
+     private readonly validatedLedgerIndex = signal<number | null>(null);
+     private syncCheckInterval: any = null;
+
+     // Public readonly signals
      readonly connectionStatus$ = this.connectionStatus.asReadonly();
      readonly connectionMessage$ = this.connectionMessage.asReadonly();
      readonly tokens$ = this.tokens.asReadonly();
+     readonly serverState$ = this.serverState.asReadonly();
+     readonly ledgerSyncStatus$ = this.ledgerSyncStatus.asReadonly();
+     readonly validatedLedgerIndex$ = this.validatedLedgerIndex.asReadonly();
 
-     // Computed values
+     // Computed values for UI
      readonly isConnected = computed(() => this.connectionStatus() === 'connected');
      readonly isConnecting = computed(() => this.connectionStatus() === 'connecting');
      readonly isDisconnected = computed(() => this.connectionStatus() === 'disconnected');
+
+     // Ledger state computed values
+     readonly isLedgerReady = computed(() => {
+          return this.isConnected() && isServerReadyForTransactions(this.serverState());
+     });
+
+     readonly isLedgerSyncing = computed(() => {
+          return this.isConnected() && (this.serverState() === 'syncing' || this.serverState() === 'tracking');
+     });
+
+     readonly isLedgerNotSynced = computed(() => {
+          return this.isConnected() && this.serverState() === 'connected';
+     });
+
      readonly tokenCount = computed(() => this.tokens().length);
      readonly latestTokens = computed(() => this.tokens().slice(0, 10));
 
      async getClient(): Promise<xrpl.Client> {
-          // CASE 1: Already connected → return immediately
           const currentClient = this.client();
           if (currentClient?.isConnected()) {
                return currentClient;
           }
 
-          // CASE 2: Already trying to connect → return the existing promise
           if (this.connectingPromise) {
                return this.connectingPromise;
           }
 
-          // CASE 3: Need to (re)connect
           this.connectingPromise = this.connectWithRetry();
 
           try {
@@ -86,7 +106,6 @@ export class XrplService {
                try {
                     console.log(`Connection attempt ${attempt}/${maxRetries} to ${net}`);
 
-                    // Update status with retry count
                     if (attempt > 1) {
                          this.setStatus('connecting', `Connection attempt ${attempt}/${maxRetries} to ${this.getNetworkName()}...`);
                     }
@@ -103,12 +122,18 @@ export class XrplService {
                     });
 
                     this.client.set(client);
+
+                    // Start monitoring server state
+                    this.startServerStateMonitoring(client);
+
                     this.setStatus('connected', `Connected to ${this.getNetworkName()}`);
 
                     client.on('disconnected', code => {
                          console.warn('XRPL client disconnected:', code);
                          this.setStatus('disconnected', 'Connection lost');
                          this.client.set(null);
+                         this.serverState.set('disconnected');
+                         this.ledgerSyncStatus.set('unknown');
                          this.scheduleReconnect();
                     });
 
@@ -120,7 +145,6 @@ export class XrplService {
                          attempt: attempt,
                     });
 
-                    // Show retry warning toast
                     if (attempt < maxRetries) {
                          this.toastService.warn(`Connection attempt ${attempt}/${maxRetries} failed. Retrying...`, AppConstants.TOAST.WARN);
                     }
@@ -147,6 +171,161 @@ export class XrplService {
           }
 
           throw new Error('Unexpected connection failure');
+     }
+
+     private startServerStateMonitoring(client: xrpl.Client) {
+          console.log('Starting server state monitoring...');
+
+          if (this.syncCheckInterval) {
+               clearInterval(this.syncCheckInterval);
+          }
+
+          // Initial check
+          this.checkServerState(client);
+
+          // Check every 3 seconds
+          this.syncCheckInterval = setInterval(() => {
+               const currentClient = this.client();
+               if (currentClient?.isConnected()) {
+                    this.checkServerState(currentClient);
+               } else {
+                    if (this.syncCheckInterval) {
+                         clearInterval(this.syncCheckInterval);
+                         this.syncCheckInterval = null;
+                    }
+               }
+          }, 3000);
+     }
+
+     private async checkServerState(client: xrpl.Client) {
+          try {
+               const response = await client.request({ command: 'server_info' });
+               const info = response.result.info;
+
+               // Get reported state - it might be missing on some nodes
+               const reportedState = (info.server_state as XrplServerState) || 'full';
+
+               // TEST if we can actually query the ledger
+               let canQueryLedger = false;
+               let actualLedgerIndex: number | null = null;
+
+               try {
+                    const ledgerTest = await client.request({
+                         command: 'ledger',
+                         ledger_index: 'validated',
+                         transactions: false,
+                         accounts: false,
+                    });
+
+                    // Check different response structures
+                    if (ledgerTest.result.ledger?.ledger_index) {
+                         actualLedgerIndex = ledgerTest.result.ledger.ledger_index;
+                    } else if (ledgerTest.result.ledger_index) {
+                         actualLedgerIndex = ledgerTest.result.ledger_index;
+                    }
+
+                    if (actualLedgerIndex) {
+                         canQueryLedger = true;
+                         this.validatedLedgerIndex.set(actualLedgerIndex);
+                    }
+               } catch (ledgerError: any) {
+                    const errorMsg = ledgerError.message || '';
+                    const errorData = ledgerError.data?.error || '';
+
+                    if (errorMsg.includes('notSynced') || errorData === 'notSynced') {
+                         canQueryLedger = false;
+                         console.warn(`Ledger query failed with notSynced on ${this.getNetworkName()}`);
+                    } else {
+                         // For Mainnet, other errors might be temporary, assume we can query
+                         console.warn(`Ledger query warning: ${errorMsg}`);
+                         canQueryLedger = this.getNetworkName() === 'Mainnet';
+                    }
+               }
+
+               // For Mainnet, also check if we can get account info as a fallback test
+               if (!canQueryLedger && this.getNetworkName() === 'Mainnet') {
+                    try {
+                         // Try a simple account_info request for a known account
+                         const accountTest = await client.request({
+                              command: 'account_info',
+                              account: 'rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh', // Genesis account
+                              ledger_index: 'validated',
+                         });
+                         if (accountTest.result.account_data) {
+                              canQueryLedger = true;
+                              console.log('Mainnet fallback test passed - node is responsive');
+                         }
+                    } catch (accountError: any) {
+                         console.warn('Mainnet fallback test failed:', accountError.message);
+                    }
+               }
+
+               // Determine the REAL state
+               let newState: XrplServerState;
+               let newSyncStatus: LedgerSyncStatus;
+
+               if (!canQueryLedger) {
+                    // Cannot query ledger = not synced
+                    newState = 'connected';
+                    newSyncStatus = 'not_synced';
+               } else if (actualLedgerIndex) {
+                    // Successfully got ledger = fully synced
+                    newState = 'full';
+                    newSyncStatus = 'synced';
+               } else {
+                    // Can query but no ledger index - check reported state
+                    if (reportedState === 'syncing' || reportedState === 'tracking') {
+                         newState = reportedState;
+                         newSyncStatus = 'syncing';
+                    } else {
+                         newState = 'full';
+                         newSyncStatus = 'synced';
+                    }
+               }
+
+               const oldState = this.serverState();
+               const oldSyncStatus = this.ledgerSyncStatus();
+
+               // Only update if something changed
+               if (oldState !== newState || oldSyncStatus !== newSyncStatus) {
+                    console.log(`Server state: ${oldState} -> ${newState} (reported: ${reportedState}, canQueryLedger: ${canQueryLedger}, ledger: ${actualLedgerIndex})`);
+
+                    this.serverState.set(newState);
+                    this.ledgerSyncStatus.set(newSyncStatus);
+
+                    // Update connection message based on newSyncStatus
+                    if (newSyncStatus === 'synced') {
+                         const message = actualLedgerIndex ? `Connected to ${this.getNetworkName()} (Ledger ${actualLedgerIndex})` : `Connected to ${this.getNetworkName()}`;
+                         this.setStatus('connected', message);
+
+                         // Only show success toast once when truly synced
+                         if (oldSyncStatus !== 'synced') {
+                              this.toastService.success(message, AppConstants.TOAST.CONNECTION, false);
+                         }
+                    } else if (newSyncStatus === 'syncing') {
+                         const message = `Syncing... (${this.getNetworkName()})`;
+                         this.setStatus('connected', message);
+                    } else {
+                         const message = `Connected but not synced (${this.getNetworkName()})`;
+                         this.setStatus('connected', message);
+                         if (oldSyncStatus !== 'not_synced') {
+                              this.toastService.warn(`Waiting for ${this.getNetworkName()} to sync...`, AppConstants.TOAST.WARN);
+                         }
+                    }
+               } else if (actualLedgerIndex && actualLedgerIndex !== this.validatedLedgerIndex()) {
+                    // Just update the ledger index
+                    this.validatedLedgerIndex.set(actualLedgerIndex);
+                    if (newSyncStatus === 'synced') {
+                         this.setStatus('connected', `Connected to ${this.getNetworkName()} (Ledger ${actualLedgerIndex})`);
+                    }
+               }
+          } catch (error: any) {
+               console.error('Failed to check server state:', error);
+               // Don't change state on error for Mainnet - it might be a temporary issue
+               if (this.getNetworkName() !== 'Mainnet') {
+                    this.ledgerSyncStatus.set('unknown');
+               }
+          }
      }
 
      private scheduleReconnect() {
@@ -176,16 +355,13 @@ export class XrplService {
           this.connectionStatus.set(status);
           this.connectionMessage.set(message);
 
-          // Show toast for connection status changes
-          if (status === 'connected') {
-               this.toastService.success(`${message}`, AppConstants.TOAST.CONNECTION, false);
-               console.warn('XRPL connection status:', message);
-          } else if (status === 'disconnected') {
-               console.warn('XRPL connection status:', message);
-          } else if (status === 'connecting') {
-               this.toastService.info(`${message}`, AppConstants.TOAST.INFO);
-               console.warn('XRPL connection status:', message);
+          // Only show toasts for important changes
+          if (status === 'disconnected') {
+               this.toastService.error(message, AppConstants.TOAST.ERROR, false);
+          } else if (status === 'connecting' && !this.connectionMessage().includes('attempt')) {
+               this.toastService.info(message, AppConstants.TOAST.INFO);
           }
+          // Don't show success toasts for every status update
      }
 
      async ensureConnection(): Promise<Client> {
@@ -203,28 +379,77 @@ export class XrplService {
           return client?.isConnected() === true;
      }
 
-     getConnectionStatus(): { isConnected: boolean; status: ConnectionStatus; message: string } {
+     isLedgerReadyForTransactions(): boolean {
+          const client = this.client();
+          if (!client?.isConnected()) return false;
+
+          // For Mainnet, we can be more trusting
+          if (this.getNetworkName() === 'Mainnet') {
+               // If we have a validated ledger index, we're ready
+               if (this.validatedLedgerIndex()) {
+                    return true;
+               }
+               // Otherwise, check if client is connected
+               return client.isConnected();
+          }
+
+          // For Devnet/Testnet, require synced status
+          return this.ledgerSyncStatus() === 'synced';
+     }
+
+     getConnectionStatus(): {
+          isConnected: boolean;
+          status: ConnectionStatus;
+          message: string;
+          serverState: XrplServerState;
+          ledgerSyncStatus: LedgerSyncStatus;
+          isLedgerReady: boolean;
+     } {
           return {
                isConnected: this.isConnectionReady(),
                status: this.connectionStatus(),
                message: this.connectionMessage(),
+               serverState: this.serverState(),
+               ledgerSyncStatus: this.ledgerSyncStatus(),
+               isLedgerReady: this.isLedgerReadyForTransactions(),
           };
      }
 
      async disconnect() {
+          if (this.syncCheckInterval) {
+               clearInterval(this.syncCheckInterval);
+               this.syncCheckInterval = null;
+          }
+
           const currentClient = this.client();
           if (currentClient) {
                await currentClient.disconnect();
                this.client.set(null);
           }
           this.setStatus('disconnected', 'Disconnected');
+          this.serverState.set('disconnected');
+          this.ledgerSyncStatus.set('unknown');
+          this.validatedLedgerIndex.set(null);
           if (this.reconnectTimeout) {
                clearTimeout(this.reconnectTimeout);
                this.reconnectTimeout = null;
           }
      }
 
-     private getNetworkName(): string {
+     // async disconnect() {
+     //      const currentClient = this.client();
+     //      if (currentClient) {
+     //           await currentClient.disconnect();
+     //           this.client.set(null);
+     //      }
+     //      this.setStatus('disconnected', 'Disconnected');
+     //      if (this.reconnectTimeout) {
+     //           clearTimeout(this.reconnectTimeout);
+     //           this.reconnectTimeout = null;
+     //      }
+     // }
+
+     public getNetworkName(): string {
           const net = this.storageService.getNet().environment;
           return net.charAt(0).toUpperCase() + net.slice(1);
      }
@@ -717,7 +942,7 @@ export class XrplService {
 
                return response;
           } catch (error: any) {
-               console.warn('Error fetching gateway_balances:', error);
+               console.debug('Error fetching gateway_balances:', error);
                // Still return a valid empty GatewayBalancesResponse
                return {
                     id: 0,

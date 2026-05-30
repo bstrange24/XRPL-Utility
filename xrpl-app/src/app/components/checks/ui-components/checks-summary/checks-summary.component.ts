@@ -7,7 +7,7 @@ import { ChecksTransactionViewModelService } from '../../../../services/checks/c
 import { CheckCreateItemComponent } from '../../tab/check-create-item/check-create-item.component';
 import { CheckCashItemComponent } from '../../tab/check-cash-item/check-cash-item.component';
 import { CheckCancelItemComponent } from '../../tab/check-cancel-item/check-cancel-item.component';
-import { CheckActionTypes, CreateCheckItem, CashCheckItem, CancelCheckItem, CheckListItem } from '../../constants/checks.types';
+import { CheckActionTypes, CheckListItem } from '../../constants/checks.types';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
@@ -28,6 +28,7 @@ const CHECKS_SUMMARY_CONFIG: SummaryTextConfig = {
 };
 
 type SortKey = 'amount' | 'party' | 'index' | 'expiration';
+type CheckQuickFilterKey = 'all' | 'expired' | 'active' | 'cashable';
 
 @Component({
      selector: 'app-checks-summary',
@@ -68,7 +69,7 @@ export class ChecksSummaryComponent {
      readonly searchQuery = signal<string>('');
      readonly expiresAfter = signal<string>('');
      readonly expiresBefore = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'expired' | 'active' | 'cashable'>('all');
+     readonly activeQuickFilter = signal<CheckQuickFilterKey>('all');
      readonly sortBy = signal<SortKey>('expiration');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -101,9 +102,9 @@ export class ChecksSummaryComponent {
      // Helper function to get party (sender or destination) from check
      private getParty(check: CheckListItem): string {
           if (check.tab === 'cashCheck') {
-               return (check as CashCheckItem).sender || '';
+               return check.sender || '';
           }
-          return (check as CreateCheckItem | CancelCheckItem).destination || '';
+          return check.destination || '';
      }
 
      // Helper function to get expiration timestamp
@@ -111,13 +112,13 @@ export class ChecksSummaryComponent {
           if (!check.expiration) return 0;
           // Check expiration is in seconds since epoch
           const timestamp = check.expiration * 1000;
-          return isNaN(timestamp) ? 0 : timestamp;
+          return Number.isNaN(timestamp) ? 0 : timestamp;
      }
 
      // Helper function to get amount value
      private getAmountValue(check: CheckListItem): number {
           const amountStr = check.amount || (check as any).sendMax || '0';
-          return parseFloat(amountStr.split(' ')[0]) || 0;
+          return Number.parseFloat(amountStr.split(' ')[0]) || 0;
      }
 
      // Computed values
@@ -149,7 +150,7 @@ export class ChecksSummaryComponent {
                checks = checks.filter(check => {
                     if (!check.expiration) return false;
                     const expirationDate = new Date(this.getExpirationTimestamp(check));
-                    if (isNaN(expirationDate.getTime())) return false;
+                    if (Number.isNaN(expirationDate.getTime())) return false;
                     if (after && expirationDate < new Date(after)) return false;
                     if (before && expirationDate > new Date(before)) return false;
                     return true;
@@ -283,9 +284,8 @@ export class ChecksSummaryComponent {
                     colorClass = 'btn-filter-blue';
           }
 
-          // Add active state
           if (isActive) {
-               return `${colorClass} btn-filter-active`;
+               return `${colorClass} ${colorClass}-active`;
           }
 
           return colorClass;

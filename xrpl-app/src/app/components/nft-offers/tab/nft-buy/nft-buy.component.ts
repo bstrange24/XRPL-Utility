@@ -11,11 +11,12 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { NgIcon } from '@ng-icons/core';
 import { NftBuyService } from '../../../../services/shared/validators/nft-offer/nft-buy/nft-buy.service';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-buy',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-buy.component.html',
      styleUrl: './nft-buy.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -48,11 +49,28 @@ export class NftBuyComponent {
      isOfferIndexFocused = signal(false);
      isNftIdFocused = signal(false);
 
+     get nftId() {
+          return this.nftCreateStoreService.nftId();
+     }
+
+     set nftId(value: string) {
+          this.nftCreateStoreService.setField('nftId', value);
+     }
+
+     get nftOfferId() {
+          return this.nftCreateStoreService.nftOfferId();
+     }
+
+     set nftOfferId(value: string) {
+          this.nftCreateStoreService.setField('nftOfferId', value);
+     }
+
      // Clear methods
      clearOfferIndex() {
           this.nftCreateStoreService.setField('nftOfferId', '');
      }
 
+     // Clear methods
      clearNftId() {
           this.nftCreateStoreService.setField('nftId', '');
      }

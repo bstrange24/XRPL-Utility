@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -27,16 +27,18 @@ import { CredentialValidatorService } from '../../../../services/shared/validato
 import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-checks-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent, LucideAngularModule, TransactionOptionsSectionComponent, MatSlideToggleModule, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './checks-create.component.html',
      styleUrl: './checks-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChecksCreateComponent {
+export class ChecksCreateComponent implements OnDestroy {
      public readonly txUiService = inject(TransactionUiService);
      public readonly checksStoreService = inject(ChecksStoreService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
@@ -54,6 +56,21 @@ export class ChecksCreateComponent {
      public readonly domainIdValidatorService = inject(DomainIdValidatorService);
      public readonly credentialValidatorService = inject(CredentialValidatorService);
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
+
+     constructor() {
+          // Emit overall validation status whenever relevant signals change
+          effect(() => {
+               this.canCreateCheckChange.emit(this.canCreateCheck());
+          });
+
+          effect(() => {
+               const wantsOptions = this.txUiService.wantsOptions();
+               if (!wantsOptions) {
+                    this.checksStoreService.setCheckExpirationDate('');
+                    this.xrplTxOptionsStore.setIsExpirationEnabled(false);
+               }
+          });
+     }
 
      readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
      readonly checkCurrencyCodeHelperItems = AppConstants.CHECK_CURRENCY_CODE_HELPER_ITEMS;
@@ -98,21 +115,7 @@ export class ChecksCreateComponent {
      showCheckDestinationHelper = signal(false);
      showOptionalFieldsHelper = signal(false);
      showCheckCurrencyBalanceHelper = signal(false);
-
-     constructor() {
-          // Emit overall validation status whenever relevant signals change
-          effect(() => {
-               this.canCreateCheckChange.emit(this.canCreateCheck());
-          });
-
-          effect(() => {
-               const wantsOptions = this.txUiService.wantsOptions();
-               if (!wantsOptions) {
-                    this.checksStoreService.setCheckExpirationDate('');
-                    this.xrplTxOptionsStore.setIsExpirationEnabled(false);
-               }
-          });
-     }
+     isFocused = signal(false);
 
      ngOnDestroy(): void {
           this.checksStoreService.setCheckExpirationDate('');
@@ -167,25 +170,36 @@ export class ChecksCreateComponent {
           }
      }
 
+     getCheckAmountErrorMessage = computed(() => {
+          const amount = this.checksStoreService.amount();
+
+          if (!amount || amount.trim().length === 0) return '';
+
+          const num = Number.parseFloat(amount);
+          if (num > AppConstants.MAX_TOKEN_COUNT) return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000.';
+          if (num < 0) return 'Amount must be greater than 0';
+
+          return '';
+     });
+
+     get amount() {
+          return this.checksStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.checksStoreService.setField('amount', value);
+     }
+
      canCreateCheck = computed(() => {
           const destAddr = this.selectedDestinationAddress?.() ?? '';
-
-          // 1. Destination must be filled AND valid
-          if (!destAddr || !this.isDestinationValid()) return false;
-
-          // 2. Amount must be filled AND > 0
           const amountStr = this.checksStoreService.amount()?.trim() ?? '';
-          if (!amountStr || this.amountValidatorService.isCheckAmountInvalid()) return false;
 
-          // 3. Expiration (if enabled)
-          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.checksStoreService.checkExpirationDate()) {
-               if (this.checkValidatorService.hasInvalidCheckExpiration()) {
-                    return false;
-               }
-          }
+          if (!destAddr || !this.isDestinationValid()) return false;
+          if (!amountStr) return false;
+          if (this.amountValidatorService.isCheckAmountInvalid()) return false;
 
-          // 4. Options validation
           if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
+          if (this.checkValidatorService.hasInvalidCheckExpiration()) return false;
 
           return true;
      });
@@ -195,15 +209,18 @@ export class ChecksCreateComponent {
           const destAddr = this.selectedDestinationAddress?.() ?? '';
           const amountStr = this.checksStoreService.amount()?.trim() ?? '';
 
-          // Only show error if user has entered something
+          // Destination
           if (destAddr && !this.isDestinationValid()) {
                errors.push('Destination address is invalid.');
           }
 
-          if (amountStr && this.amountValidatorService.isCheckAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
+          // Amount (only if user entered value)
+          if (amountStr) {
+               const amountErr = this.checkValidatorService.getAmountErrorMessage();
+               if (amountErr) errors.push(amountErr);
           }
 
+          // Options
           if (this.txUiService.wantsOptions() && this.optionsHasError()) {
                errors.push(...this.optionsErrors());
           }

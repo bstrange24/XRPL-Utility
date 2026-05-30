@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, signal, input, output } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, signal, input, output, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -53,7 +53,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
      styleUrl: './nft-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateNftComponent extends WalletDestinationBase implements OnInit {
+export class CreateNftComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -445,6 +445,10 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
      });
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+          
           if (!this.isIdle() || !this.hasWallets()) {
                return 'Please wait or select a wallet';
           }
@@ -474,6 +478,7 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit 
 
      clearFields() {
           this.nftCreateStoreService.resetNftFields();
+          this.nftUtilService.resetFlags();
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
      }

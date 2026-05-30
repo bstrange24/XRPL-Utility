@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
@@ -17,11 +17,14 @@ import { AmountValidatorService } from '../../../../services/shared/validators/a
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { CheckValidatorService } from '../../../../services/shared/validators/check-validator/check-validator.service';
 
 @Component({
      selector: 'app-checks-cash',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, NgIcon, LucideAngularModule, ToggleSliderComponent, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, NgIcon, LucideAngularModule, ToggleSliderComponent, SelectSearchDropdownComponent, MatSlideToggleModule, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './checks-cash.component.html',
      styleUrl: './checks-cash.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,6 +39,14 @@ export class ChecksCashComponent {
      public readonly checksStoreService = inject(ChecksStoreService);
      private readonly currencyStoreService = inject(CurrencyStoreService);
      private readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly checkValidatorService = inject(CheckValidatorService);
+
+     constructor() {
+          // Emit overall validation status whenever relevant signals change
+          effect(() => {
+               this.canCashCheckChange.emit(this.canCashCheck());
+          });
+     }
 
      // Input
      showEnableTrustline = input<boolean>(false);
@@ -44,6 +55,7 @@ export class ChecksCashComponent {
      checkItems = output<SelectItem | null>();
      checkSelected = output<SelectItem | null>();
      selectedCheckItem = output<SelectItem | null>();
+     canCashCheckChange = output<boolean>();
 
      // Helper Items
      readonly checkCashSelectorHelperItems = AppConstants.CHECK_CASH_SELECTOR_HELPER_ITEMS;
@@ -62,6 +74,7 @@ export class ChecksCashComponent {
      showCheckIndexHelper = signal(false);
      showCashAmountHelper = signal(false);
      showDeliverMinHelper = signal(false);
+     isFocused = signal(false);
 
      // Add this method to the ChecksCashComponent class
      onCheckSelected(item: SelectItem | null) {
@@ -92,6 +105,59 @@ export class ChecksCashComponent {
           } else {
                this.xrplTxOptionsStore?.setField('showEnableTrustline', true);
           }
+
+          this.checksStoreService.setField('amount', parts[0]);
+          this.checksStoreService.setField('totalCheckAmount', parts[0]);
+     }
+
+     canCashCheck = computed(() => {
+          const selectedCheckId = this.checksStoreService.checkIdField?.() ?? '';
+          const isExpired = this.checksTransactionViewModelService.selectedCheckIsExpired?.() ?? false;
+          const amountStr = this.checksStoreService.amount()?.trim() ?? '';
+
+          if (!selectedCheckId || isExpired) return false;
+          if (!amountStr) return false;
+
+          // Block on any error
+          return this.checkValidatorService.getAmountErrorMessage() === '' && !this.amountValidatorService.isCheckCashAmountInvalid();
+     });
+
+     validationErrorMessagesForCash = computed(() => {
+          const errors: string[] = [];
+          const amountStr = this.checksStoreService.amount()?.trim() ?? '';
+          const totalCheck = Number(this.checksStoreService.totalCheckAmount() || 0);
+
+          if (amountStr) {
+               const amountErr = this.checkValidatorService.getAmountErrorMessage();
+               if (amountErr) errors.push(amountErr);
+
+               const num = Number.parseFloat(amountStr);
+               if (num > totalCheck) {
+                    errors.push(`Amount cannot exceed the check value (${totalCheck}).`);
+               }
+          }
+
+          return errors;
+     });
+
+     getCheckAmountErrorMessage = computed(() => {
+          const amount = this.checksStoreService.amount();
+
+          if (!amount || amount.trim().length === 0) return '';
+
+          const num = Number.parseFloat(amount);
+          if (num > AppConstants.MAX_TOKEN_COUNT) return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000.';
+          if (num < 0) return 'Amount must be greater than 0';
+
+          return '';
+     });
+
+     get amount() {
+          return this.checksStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.checksStoreService.setField('amount', value);
      }
 
      onFocus(event: FocusEvent): void {

@@ -62,52 +62,24 @@
                </div>
 
                <div class="relative">
-                    <input
-                         type="text"
-                         [ngModel]="nftCreateStoreService.nftId()"
-                         (ngModelChange)="nftCreateStoreService.setField('nftId', $event)"
-                         (focus)="onNftIdFocus()"
-                         (blur)="onNftIdBlur()"
-                         placeholder="Enter 64-character hex NFT Token ID"
-                         class="input-base-with-validation font-mono text-sm"
-                         app-focus-border
-                         [isValid]="!!(nftOfferValidatorService.isNftTokenIdValid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
-                         [isInvalid]="!!(nftOfferValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
-                    />
+                    <input type="text" class="input-base-with-validation font-mono text-sm" app-focus-border [isValid]="!!(nftValidatorService.isNftTokenIdValid() && nftId !== null && nftId !== undefined)" [isInvalid]="!!(nftValidatorService.isNftTokenIdInvalid() && nftId !== null && nftId !== undefined)" [ngModel]="nftCreateStoreService.nftId()" (ngModelChange)="nftCreateStoreService.setField('nftId', $event)" placeholder="Enter 64-character hex NFT Token ID" />
 
-                    <!-- Clear Button -->
-                    @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
-                    <button type="button" (click)="clearNftId()" class="clearInputXmark right-8" aria-label="Clear NFT Token ID">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="nftValidatorService.isNftTokenIdValid() && nftId !== null && nftId !== undefined" [isInvalid]="nftValidatorService.isNftTokenIdInvalid() && nftId !== nftId && nftId !== undefined" [showClear]="!!nftId" (clear)="clearNftId()" />
                </div>
-
-               <!-- Helper Text -->
-               <app-field-helper title="NFT Token ID Guidelines" [items]="nftIdHelperItems" [show]="showNftIdHelper" />
 
                <!-- Character Counter -->
                @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
-               <div class="mt-2 text-xs flex justify-between items-center">
-                    <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftId().length }} / 64</span>
-                    @if (nftCreateStoreService.nftId().length === 64 && nftOfferValidatorService.isNftTokenIdValid()) {
-                    <span class="text-green-600 flex items-center gap-1">
-                         <ng-icon name="heroCheckCircle" size="12" />
-                         Valid format
-                    </span>
-                    } @else if (nftCreateStoreService.nftId().length === 64 && nftOfferValidatorService.isNftTokenIdInvalid()) {
-                    <span class="text-red-600 flex items-center gap-1">
-                         <ng-icon name="heroXCircle" size="12" />
-                         Invalid hex characters
-                    </span>
-                    }
-               </div>
+               <div class="mt-2 text-xs" [class.text-green-600]="nftCreateStoreService.nftId().length === 64" [class.text-red-600]="nftCreateStoreService.nftId().length !== 64 && nftCreateStoreService.nftId().length> 0">Character count: {{ nftCreateStoreService.nftId().length }} / 64</div>
                }
 
                <!-- Error Message -->
                @if (nftOfferValidatorService.getNftTokenIdErrorMessage()) {
                <p class="form-error mt-2">{{ nftOfferValidatorService.getNftTokenIdErrorMessage() }}</p>
                }
+
+               <!-- Helper Text -->
+               <app-field-helper title="NFT Token ID Guidelines" [items]="nftIdHelperItems" [show]="showNftIdHelper" />
           </div>
 
           <!-- Expiration -->

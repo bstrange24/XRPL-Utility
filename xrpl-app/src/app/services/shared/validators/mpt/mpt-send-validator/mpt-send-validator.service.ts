@@ -4,6 +4,7 @@ import { MptTransactionViewModelService } from '../../../../mpt/mpt-transaction-
 import { MptUtilService } from '../../../../mpt/mpt-util/mpt-util.service';
 import { XrplTransactionService } from '../../../../xrpl-transactions/xrpl-transaction.service';
 import * as xrpl from 'xrpl';
+import { AppConstants } from '../../../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -158,7 +159,7 @@ export class MptSendValidatorService {
           //      return false;
           // }
 
-          if (numAmount > 10_000_000_000_000_000) {
+          if (numAmount > AppConstants.MAX_TOKEN_COUNT) {
                return false;
           }
 
@@ -197,7 +198,7 @@ export class MptSendValidatorService {
                return `Amount exceeds available balance (${availableBalance} tokens). Have any tokens been issues yet?`;
           }
 
-          if (numAmount > 10_000_000_000_000_000) {
+          if (numAmount > AppConstants.MAX_TOKEN_COUNT) {
                return 'Amount cannot exceed 10,000,000,000,000,000 tokens.';
           }
 

@@ -21,7 +21,7 @@
 
                @if (hasActiveFilters()) {
                <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
-                    <!-- <ng-icon name="heroXMark" size="16" /> -->
+                    <ng-icon name="heroXMark" size="16" />
                     Clear All
                </button>
                }
@@ -50,7 +50,10 @@
                </div>
                <p class="empty-state-title">No matching tickets found</p>
                <p class="empty-state-subtitle">Try adjusting your search, date range, or filters</p>
-               <button (click)="clearAllFilters()" class="empty-state-action">Clear all filters</button>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
           </div>
           <!-- <div class="flex-1 flex flex-col items-center justify-center py-16 text-center">
                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">

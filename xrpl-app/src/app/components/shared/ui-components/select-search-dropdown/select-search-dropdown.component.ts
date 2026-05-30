@@ -275,7 +275,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           const q = this.searchQuery().toLowerCase().trim();
           if (!q) return this.items();
 
-          return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q));
+          return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q) || (item.id ?? '').toLowerCase().includes(q) || (item.amount ?? '').toLowerCase().includes(q));
      });
 
      // Lifecycle

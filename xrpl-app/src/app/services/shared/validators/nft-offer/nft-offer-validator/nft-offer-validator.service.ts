@@ -23,7 +23,6 @@ export class NftOfferValidatorService {
                return false;
           }
 
-          // NFT Offer Index is typically a 64-character hex string
           const hexRegex = /^[0-9A-Fa-f]{64}$/;
           return hexRegex.test(offerId.trim());
      });
@@ -105,7 +104,7 @@ export class NftOfferValidatorService {
           }
 
           const numAmount = Number(amount);
-          if (isNaN(numAmount) || numAmount <= 0) {
+          if (Number.isNaN(numAmount) || numAmount <= 0) {
                return false;
           }
 
@@ -144,7 +143,7 @@ export class NftOfferValidatorService {
           }
 
           const numAmount = Number(amount);
-          if (isNaN(numAmount)) {
+          if (Number.isNaN(numAmount)) {
                return 'Amount must be a valid number.';
           }
 
@@ -168,7 +167,6 @@ export class NftOfferValidatorService {
      });
 
      hasInvalidNftSellExpiration = computed(() => {
-          // const sellEnabled = this.nftCreateStoreService.enableSellOnNftCreation();
           const sellEnabled = true;
           const expEnabled = this.nftCreateStoreService.enableExpirationDate();
           const expiration = this.nftCreateStoreService.expiration();

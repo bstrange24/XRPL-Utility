@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { Wallet, WalletManagerService } from '../../../services/wallets/manager/wallet-manager.service';
 import { WalletDestinationBase } from '../../../services/wallets/walletDestinationBase';
 import { DownloadUtilService } from '../../../services/utils/download-util/download-util.service';
@@ -42,7 +42,7 @@ import { EscrowSummaryComponent } from '../ui-components/escrow-summary/escrow-s
      template: '',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export abstract class EscrowBaseComponent extends WalletDestinationBase implements OnInit {
+export abstract class EscrowBaseComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -104,7 +104,17 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                this.resetTrigger(); // track changes
                // this.clearSearch();
           });
+
+          effect(() => {
+               this.escrowStoreService.setField('isConditional', this.isConditional);
+               console.log('[Parent] Set isConditional in store:', this.isConditional);
+          });
      }
+
+     private setConditionalFlagEffect = effect(() => {
+          // Set the isConditional flag in the store whenever it changes
+          this.escrowStoreService.setField('isConditional', this.isConditional);
+     });
 
      activeTabForRequirements = computed(() => this.escrowTransactionViewModelService.activeTab());
      readonly summaryExpanded = signal<boolean>(false);
@@ -506,6 +516,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      handleCanCreateEscrowChange(canCreate: boolean) {
+          console.log('[Parent] handleCanCreateEscrowChange received:', canCreate);
           this.canCreateEscrowForm.set(canCreate);
      }
 
@@ -525,32 +536,42 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.escrowStoreService.setField('escrowFinishAfterExpirationDate', '');
      }
 
+     // In EscrowBaseComponent
      public canPerformAction = computed(() => {
           const idle = this.isIdle();
-          if (!idle || !this.hasWallets()) return false;
-
+          const hasWallets = this.hasWallets();
           const tab = this.escrowTransactionViewModelService.activeTab();
-
-          // Force reading the key signals so they trigger reactivity
           const selectedSequence = this.escrowStoreService.escrowSequenceNumber();
           const isExpired = this.escrowTransactionViewModelService.selectedEscrowIsExpired?.() ?? false;
+
+          console.log('[Parent] canPerformAction:', {
+               tab,
+               idle,
+               hasWallets,
+               canCreateEscrowForm: this.canCreateEscrowForm(),
+               selectedSequence,
+               isExpired,
+          });
+
+          if (!idle || !hasWallets) return false;
 
           switch (tab) {
                case 'createEscrow':
                     return this.canCreateEscrowForm();
-
                case 'finishEscrow':
                     return !!selectedSequence && !isExpired;
-
                case 'cancelEscrow':
-                    return !!selectedSequence; // Must have a selected escrow
-
+                    return !!selectedSequence;
                default:
                     return false;
           }
      });
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
           if (!this.isIdle() || !this.hasWallets()) {
                return 'Please wait or select a wallet';
           }

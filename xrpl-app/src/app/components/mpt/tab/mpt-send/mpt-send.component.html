@@ -53,15 +53,15 @@
                <div class="relative">
                     <input
                          type="text"
+                         class="input-base-with-validation pr-24 font-mono text-sm"
+                         app-focus-border
+                         [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)"
+                         [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
                          [ngModel]="mptIssuanceId"
                          (ngModelChange)="setMptIssuanceId($event)"
                          (blur)="onMptIssuanceIdBlur()"
                          (focus)="onMptIssuanceIdFocus()"
                          placeholder="Enter 48-character hex MPT Issuance ID"
-                         class="input-base-with-validation pr-24 font-mono text-sm"
-                         app-focus-border
-                         [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)"
-                         [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)"
                     />
 
                     <!-- Icons Container -->
@@ -144,7 +144,6 @@
                               (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
                               (blur)="amountValidatorService.onAmountBlur($event,'mptTransferFee'); isFocused.set(false)"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              (input)="amountValidatorService.onAmountInput($event,'mptTransferFee')"
                               [ngModel]="amount"
                               (ngModelChange)="amount = $event"
                               placeholder="e.g. 10"

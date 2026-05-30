@@ -1,5 +1,6 @@
-<div class="card-base">
-     <div class="space-y-6">
+<div class="space-y-6">
+     <!-- NFT Offer Details -->
+     <div class="card-base">
           <h4 class="section-heading">
                <lucide-icon name="handshake" class="section-heading-icon-green"></lucide-icon>
                NFT Offer Details
@@ -13,7 +14,7 @@
 
                <div class="flex items-center gap-2">
                     <p class="text-secondary">Select an existing NFT offer to cancel.</p>
-                    <button type="button" (click)="toggleOfferIndexHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <button type="button" (click)="toggleSelectNftHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
                </div>
@@ -21,68 +22,56 @@
                <div class="relative">
                     <app-select-search-dropdown [items]="nftOffersTransactionViewModelService.offerItems()" [value]="selectedOfferItem()" (valueChange)="onOfferSelected($event)" placeholder="Search by amount, NFT ID, or offer ID..." emptyMessage="No cancellable offers" />
                </div>
-          </div>
 
-          <!-- NFT Offer ID -->
-          <div>
-               <div class="field-label">
-                    <label for="nftOfferID" class="label-primary"> NFT Offer ID <span class="text-red-500">*</span> </label>
-               </div>
-
-               <div class="flex items-center gap-2">
-                    <p class="text-secondary">NFT Offer ID generated when the offer was created.</p>
-                    <button type="button" (click)="toggleOfferIndexHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                         <ng-icon name="heroQuestionMarkCircle" size="14" />
-                    </button>
-               </div>
-
-               <div class="relative">
-                    <input
-                         type="text"
-                         [ngModel]="nftCreateStoreService.nftOfferId()"
-                         (ngModelChange)="nftCreateStoreService.setField('nftOfferId', $event)"
-                         placeholder="Enter 64-character hex NFT Offer Index"
-                         class="input-base-with-validation font-mono text-sm"
-                         app-focus-border
-                         [isValid]="!!(nftOfferValidatorService.isNftOfferIndexValid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
-                         [isInvalid]="!!(nftOfferValidatorService.isNftOfferIndexInvalid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
-                    />
-
-                    <!-- Clear Button -->
-                    @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
-                    <button type="button" (click)="clearOfferIndex()" class="clearInputXmark right-8" aria-label="Clear NFT Offer Index">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
-               </div>
-
-               <!-- Helper Text -->
-               <app-field-helper title="NFT Offer Index Guidelines" [items]="offerIndexHelperItems" [show]="showOfferIndexHelper" />
-
-               <!-- Character Counter -->
-               @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
-               <div class="mt-2 text-xs flex justify-between items-center">
-                    <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftOfferId().length }} / 64</span>
-                    @if (nftCreateStoreService.nftOfferId().length === 64 && nftOfferValidatorService.isNftOfferIndexValid()) {
-                    <span class="text-green-600 flex items-center gap-1">
-                         <ng-icon name="heroCheckCircle" size="12" />
-                         Valid format
-                    </span>
-                    } @else if (nftCreateStoreService.nftOfferId().length === 64 && nftOfferValidatorService.isNftOfferIndexInvalid()) {
-                    <span class="text-red-600 flex items-center gap-1">
-                         <ng-icon name="heroXCircle" size="12" />
-                         Invalid hex characters
-                    </span>
-                    }
-               </div>
-               }
-
-               <!-- Error Message -->
-               @if (nftOfferValidatorService.getNftOfferIndexErrorMessage()) {
-               <p class="form-error mt-2">{{ nftOfferValidatorService.getNftOfferIndexErrorMessage() }}</p>
-               }
+               <app-field-helper title="Selecting an NFT" [items]="selectNftHelperItems" [show]="showSelectNftHelper" />
           </div>
      </div>
+
+     <!-- NFT Offer ID -->
+     @if (selectedOfferItem()) {
+     <div class="card-base">
+          <div class="field-label">
+               <label for="nftOfferID" class="label-primary"> NFT Offer ID <span class="text-red-500">*</span> </label>
+          </div>
+
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">NFT Offer ID generated when the offer was created.</p>
+               <button type="button" (click)="toggleOfferIndexHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                    <ng-icon name="heroQuestionMarkCircle" size="14" />
+               </button>
+          </div>
+
+          <div class="relative">
+               <input
+                    type="text"
+                    class="input-disabled"
+                    readonly
+                    app-focus-border
+                    [isValid]="!!(nftOfferValidatorService.isNftOfferIndexValid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
+                    [isInvalid]="!!(nftOfferValidatorService.isNftOfferIndexInvalid() && nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0)"
+                    [ngModel]="nftCreateStoreService.nftOfferId()"
+                    (ngModelChange)="nftCreateStoreService.setField('nftOfferId', $event)"
+                    placeholder="Enter 64-character hex NFT Offer Index"
+               />
+
+               <!-- Icons Container -->
+               <app-input-icons [isValid]="nftOfferValidatorService.isNftOfferIndexValid() && nftOfferId !== null && nftOfferId !== undefined" [isInvalid]="nftOfferValidatorService.isNftOfferIndexInvalid() && nftOfferId !== nftOfferId && nftOfferId !== undefined" [showClear]="false" (clear)="clearOfferIndex()" />
+          </div>
+
+          <!-- Character Counter -->
+          @if (nftCreateStoreService.nftOfferId() && nftCreateStoreService.nftOfferId().length > 0) {
+          <div class="mt-2 text-xs" [class.text-green-600]="nftCreateStoreService.nftOfferId().length === 64" [class.text-red-600]="nftCreateStoreService.nftOfferId().length !== 64 && nftCreateStoreService.nftOfferId().length> 0">Character count: {{ nftCreateStoreService.nftOfferId().length }} / 64</div>
+          }
+
+          <!-- Error Message -->
+          @if (nftOfferValidatorService.getNftOfferIndexErrorMessage()) {
+          <p class="form-error mt-2">{{ nftOfferValidatorService.getNftOfferIndexErrorMessage() }}</p>
+          }
+
+          <!-- Helper Text -->
+          <app-field-helper title="NFT Offer Index Guidelines" [items]="offerIndexHelperItems" [show]="showOfferIndexHelper" />
+     </div>
+     }
 </div>
 
 <!-- Summary of validation errors -->

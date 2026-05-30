@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, effect, computed, signal, input } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, effect, computed, signal, input, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -57,7 +57,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
      styleUrl: './checks.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SendChecksComponent extends WalletDestinationBase implements OnInit {
+export class SendChecksComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -78,6 +78,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      public readonly tabs = CHECK_TABS;
      public readonly tabMeta = CHECK_TAB_META;
      public canCreateCheck = signal(false);
+     public canCashCheck = signal(false);
      public resetTrigger = input<number>(0);
      public activeTabForRequirements = computed(() => this.checksTransactionViewModelService.activeTab());
      public lastIntendedDestination = signal<string>('');
@@ -151,7 +152,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.rightPanelService.resetFilters();
-          this.clearInputFields;
+          this.clearInputFields();
           await this.getChecks(false);
      }
 
@@ -192,9 +193,9 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           }
      }
 
-     onCheckSelectedInUi(item: any | null) {
+     onCheckSelectedInUi(item: SelectItem | null) {
           if (item) {
-               this.checksStoreService.setField('amount', item.amount);
+               this.checksStoreService.setField('amount', item.amount!);
                this.checkUtilService.onCheckSelectedInUi(item);
           }
      }
@@ -439,6 +440,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.canCreateCheck.set(isValid);
      }
 
+     onCanCashCheckChange(isValid: boolean) {
+          this.canCashCheck.set(isValid);
+     }
+
      handleSearchQueryChange(query: string) {
           this.destinationSearchQuery.set(query);
           this.checksStoreService.setField('checkIdSearchQuery', query);
@@ -455,21 +460,21 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      }
 
      public canPerformAction = computed(() => {
-          const idle = this.isIdle();
-          if (!idle || !this.hasWallets()) return false;
+          if (!this.connectionGuard.isConnectionReady()) return false;
+
+          if (!this.isIdle() || !this.hasWallets()) return false;
 
           const tab = this.checksTransactionViewModelService.activeTab();
 
           // Force reactivity by reading key signals
           const selectedCheckId = this.checksStoreService.checkIdField?.() ?? '';
-          const isExpired = this.checksTransactionViewModelService.selectedCheckIsExpired?.() ?? false;
 
           switch (tab) {
                case 'createCheck':
                     return this.canCreateCheck();
 
                case 'cashCheck':
-                    return !!selectedCheckId && !isExpired;
+                    return this.canCashCheck();
 
                case 'cancelCheck':
                     return !!selectedCheckId; // Must have a selected check
@@ -480,6 +485,10 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
      });
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
           if (!this.isIdle() || !this.hasWallets()) {
                return 'Please wait or select a wallet';
           }
@@ -495,8 +504,26 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                     if (!hasSelection) {
                          return 'Please select a check from the dropdown';
                     }
-                    if (tab === 'cashCheck' && this.checksTransactionViewModelService.selectedCheckIsExpired?.()) {
-                         return 'This check has expired';
+                    if (tab === 'cashCheck') {
+                         if (this.checksTransactionViewModelService.selectedCheckIsExpired?.()) {
+                              return 'This check has expired';
+                         }
+                         if (this.checksStoreService.amount() === '') {
+                              return 'Amount to cash cannot be empty';
+                         }
+
+                         if (this.checksStoreService.amount()) {
+                              const num = Number.parseFloat(this.checksStoreService.amount());
+                              if (num > AppConstants.MAX_TOKEN_COUNT) {
+                                   return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000.';
+                              }
+                              if (num < 0) {
+                                   return 'Amount must be greater than 0';
+                              }
+                              if (num > Number.parseFloat(this.checksStoreService.totalCheckAmount())) {
+                                   return `Amount exceeds total check value.`;
+                              }
+                         }
                     }
                }
                return 'Cannot perform this action';

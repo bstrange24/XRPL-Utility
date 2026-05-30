@@ -24,11 +24,12 @@ import { NftCreateValidatorService } from '../../../../services/shared/validator
 import { NftValidatorService } from '../../../../services/shared/validators/nft/nft-validator/nft-validator.service';
 import { NftModifyValidatorService } from '../../../../services/shared/validators/nft/nft-modify-validator/nft-modify-validator.service';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-modify',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, SelectSearchDropdownComponent, LucideAngularModule, MatSlideToggleModule, NgIcon, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-modify.component.html',
      styleUrl: './nft-modify.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +103,30 @@ export class NftModifyComponent {
           }
 
           this.nftSelected.emit(item); // forward to parent if needed
+     }
+
+     get uri() {
+          return this.nftCreateStoreService.initialURI();
+     }
+
+     set uri(value: string) {
+          this.nftCreateStoreService.setField('initialURI', value);
+     }
+
+     get nftOwnerAddress() {
+          return this.nftCreateStoreService.nftOwnerAddress();
+     }
+
+     set nftOwnerAddress(value: string) {
+          this.nftCreateStoreService.setField('nftOwnerAddress', value);
+     }
+
+     get nftId() {
+          return this.nftCreateStoreService.nftId();
+     }
+
+     set nftId(value: string) {
+          this.nftCreateStoreService.setField('nftId', value);
      }
 
      // For NFT Burn

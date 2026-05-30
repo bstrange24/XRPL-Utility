@@ -2,6 +2,7 @@ import { computed, inject, Injectable } from '@angular/core';
 import { MptStoreService } from '../../../../mpt/mpt-store/mpt-store.service';
 import { MptTransactionViewModelService } from '../../../../mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { MptUtilService } from '../../../../mpt/mpt-util/mpt-util.service';
+import { AppConstants } from '../../../../../core/app.constants';
 
 @Injectable({
      providedIn: 'root',
@@ -20,7 +21,7 @@ export class MptValidatorService {
           }
 
           const num = Number(count);
-          return Number.isInteger(num) && num >= 1 && num <= 10_000_000_000_000_000; // 10 quadrillion
+          return Number.isInteger(num) && num >= 1 && num <= AppConstants.MAX_TOKEN_COUNT;
      });
 
      isTokenCountInvalid = computed(() => {
@@ -31,7 +32,7 @@ export class MptValidatorService {
           }
 
           const num = Number(count);
-          return !Number.isInteger(num) || num < 1 || num > 10_000_000_000_000_000;
+          return !Number.isInteger(num) || num < 1 || num > AppConstants.MAX_TOKEN_COUNT;
      });
 
      getTokenCountErrorMessage = computed(() => {
@@ -41,7 +42,7 @@ export class MptValidatorService {
           const num = Number(count);
           if (!Number.isInteger(num)) return 'Maximum Tokens must be a whole number.';
           if (num < 1) return 'Maximum Tokens must be at least 1.';
-          if (num > 10_000_000_000_000_000) return 'Maximum Tokens cannot exceed 10,000,000,000,000,000.';
+          if (num > AppConstants.MAX_TOKEN_COUNT) return 'Maximum Tokens cannot exceed 10,000,000,000,000,000.';
           return '';
      });
 
@@ -223,7 +224,9 @@ export class MptValidatorService {
 
           const transferFee = this.mptStoreService.transferFee();
           if (transferFee && transferFee > 0 && !this.mptUtil.flags().canTransfer) {
-               errors.push('Transfer Fee requires "Can Transfer" flag to be enabled.');
+               errors.push('Transfer Fee requires "MPTCanTransfer" flag to be enabled.');
+          } else if (!transferFee && transferFee <= 0 && this.mptUtil.flags().canTransfer) {
+               errors.push('"MPTCanTransfer" flag requires Transfer Fee to be valid.');
           }
 
           return errors;

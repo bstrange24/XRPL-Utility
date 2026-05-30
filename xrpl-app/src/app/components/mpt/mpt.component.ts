@@ -534,6 +534,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      });
 
      getButtonTooltip(): string {
+          if (!this.connectionGuard.isConnectionReady()) {
+               return 'Connection not ready. Please wait.';
+          }
+
           if (!this.isIdle() || !this.hasWallets()) {
                return 'Please wait or select a wallet';
           }

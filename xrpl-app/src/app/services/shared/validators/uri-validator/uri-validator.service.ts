@@ -39,29 +39,29 @@ export class UriValidatorService {
 
      isNFtCreateUriValid = computed(() => {
           const uri = this.nftCreateStoreService.initialURI()?.trim() ?? '';
-          if (!uri) return true; // Optional field
 
-          // Check length
+          // Empty = neutral
+          if (!uri) return false;
+
           if (uri.length > 256) return false;
 
-          // Basic URL validation (if it looks like a URL)
-          // This is optional - URIs can be other formats too
           try {
-               // If it starts with http:// or https://, validate as URL
                if (uri.startsWith('http://') || uri.startsWith('https://')) {
-                    new URL(uri); // This will throw if invalid
+                    new URL(uri);
                }
+
                return true;
           } catch {
-               // If it's not a URL format, still allow if it's a valid format
-               // (could be a URN, custom scheme, etc.)
                return /^[a-zA-Z][a-zA-Z0-9+\-.]+:/.test(uri) || /^[a-zA-Z0-9\-_]+$/.test(uri);
           }
      });
 
      hasNftCreateInvalidUri = computed(() => {
           const uri = this.nftCreateStoreService.initialURI()?.trim() ?? '';
+
+          // Empty = neutral
           if (!uri) return false;
+
           return !this.isNFtCreateUriValid();
      });
 }

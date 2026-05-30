@@ -1,27 +1,22 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { AppConstants } from '../../../core/app.constants';
 import { MptUtilService } from '../mpt-util/mpt-util.service';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
-import { MPT_TX_TYPES, MPT_VALIDATION_RULES } from '../../../components/mpt/constants/mpt.constants';
 import { MptTransactionBuilderService } from '../mpt-transaction-builder/mpt-transaction-builder.service';
 import { MptTxConfig, MptTxType } from '../../../components/mpt/constants/mpt.types';
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 
 type MptMeta = {
-     validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; mpt: any; account: any; txOptions: any }) => any;
      buildTx: (args: { orchestrator: MptOrchestratorServiceService; env: any; wallet: any; mpt: any; account: any; txOptions: any; type: MptTxType }) => xrpl.Transaction;
      simulationToastMessage: (args: { orchestrator: MptOrchestratorServiceService; mpt: any }) => string;
      successMessage: (args: { orchestrator: MptOrchestratorServiceService; mpt: any }) => string;
@@ -29,23 +24,6 @@ type MptMeta = {
 
 const MPT_META: Record<MptTxType, MptMeta> = {
      createMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.CREATE],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               createMpt: { amount: mpt.tokenCount, assetScaleField: mpt.assetScale, transferFeeField: mpt.transferFee, metaData: mpt.metaData },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildCreateMptTx(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Creating MPT of ${mpt.tokenCount} `,
           successMessage: ({ orchestrator, mpt }) => {
@@ -53,23 +31,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      unauthorizeMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.UNAUTHORIZE],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               unauthorizeMpt: { mptIssuanceId: mpt.mptIssuanceId },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptAuthorizeTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Unauthorizing MPT of ${mpt.mptIssuanceId}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -77,23 +38,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      authorizeMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.AUTHORIZE],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               authorizeMpt: { mptIssuanceId: mpt.mptIssuanceId },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptAuthorizeTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Authorizing MPT of ${mpt.mptIssuanceId}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -101,23 +45,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      sendMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.SEND],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               sendMpt: { amount: mpt.amount, destination: mpt.destination, mptIssuanceId: mpt.mptIssuanceId },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptSendTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Sending MPT of ${mpt.amount}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -125,23 +52,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      lockMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.LOCK],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               lockMpt: { mptIssuanceId: mpt.mptIssuanceId, destination: mpt.destination },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptLockTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Locking MPT of ${mpt.mptIssuanceId}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -149,23 +59,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      unlockMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.UNLOCK],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               unlockMpt: { mptIssuanceId: mpt.mptIssuanceId, destination: mpt.destination },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptLockTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Unlocking MPT of ${mpt.mptIssuanceId} `,
           successMessage: ({ orchestrator, mpt }) => {
@@ -173,23 +66,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      clawbackMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.CLAWBACK],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               clawbackMpt: { amount: mpt.amount, mptIssuanceId: mpt.mptIssuanceId, destination: mpt.destination },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptClawbackTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Clawback MPT of ${mpt.amount}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -197,23 +73,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
           },
      },
      destroyMpt: {
-          validationRule: MPT_VALIDATION_RULES[MPT_TX_TYPES.DESTROY],
-          buildValidationInputs: ({ wallet, env, mpt, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               destroyMpt: { amount: mpt.amount, mptIssuanceId: mpt.mptIssuanceId, destination: mpt.destination },
-          }),
           buildTx: ({ orchestrator, env, wallet, mpt, txOptions }) => orchestrator.mptTransactionBuilderService.buildMptDestroyTransaction(env.wallet || wallet, env, mpt, txOptions),
           simulationToastMessage: ({ orchestrator, mpt }) => `Simulated Destroy MPT of ${mpt.amount}`,
           successMessage: ({ orchestrator, mpt }) => {
@@ -227,7 +86,6 @@ const MPT_META: Record<MptTxType, MptMeta> = {
 })
 export class MptOrchestratorServiceService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
-     private readonly validator = inject(ValidationService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
      private readonly toastService = inject(ToastService);
      public readonly utilsService = inject(UtilsService);
@@ -264,13 +122,8 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Validation
-               const meta = MPT_META[type];
-               const validationInputs = meta.buildValidationInputs({ wallet, env, mpt, account, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
-
                // Build transaction
+               const meta = MPT_META[type];
                const tx = meta.buildTx({ orchestrator: this, env, wallet, mpt, account, txOptions, type });
 
                // Optional fields

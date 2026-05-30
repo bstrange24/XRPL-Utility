@@ -27,11 +27,12 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { NftSellOfferService } from '../../../../services/shared/validators/nft-offer/nft-sell-offer/nft-sell-offer.service';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-nft-sell-offers',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, SelectSearchDropdownComponent, XrplExpirationInputComponent, MatSlideToggleModule, CurrencyAmountFormComponent, NgIcon, FocusBorderDirective, FieldHelperComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './nft-sell-offers.component.html',
      styleUrl: './nft-sell-offers.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,6 +55,14 @@ export class NftSellOffersComponent {
      public readonly nftSellService = inject(NftSellService);
      public readonly nftValidatorService = inject(NftValidatorService);
      public readonly nftSellOfferService = inject(NftSellOfferService);
+
+     constructor() {
+          // Emit validation status changes
+          effect(() => {
+               this.canSellNftOfferChange.emit(this.nftSellOfferService.canSellNftOffer());
+               this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
+          });
+     }
 
      // Helper info items
      readonly nftIdHelperItems = AppConstants.NFT_ID_HELPER_ITEMS;
@@ -84,12 +93,12 @@ export class NftSellOffersComponent {
      isNftIdFocused = signal(false);
      showSelectNftHelper = signal(false);
 
-     constructor() {
-          // Emit validation status changes
-          effect(() => {
-               this.canSellNftOfferChange.emit(this.nftSellOfferService.canSellNftOffer());
-               this.validationErrorsChange.emit(this.nftOfferValidatorService.getAllValidationErrors());
-          });
+     get nftId() {
+          return this.nftCreateStoreService.nftId();
+     }
+
+     set nftId(value: string) {
+          this.nftCreateStoreService.setField('nftId', value);
      }
 
      onFocus(event: FocusEvent): void {

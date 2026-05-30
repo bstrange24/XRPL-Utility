@@ -2371,31 +2371,31 @@ export class ValidationService {
                     //      return null;
                     // },
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+                    // ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    this.positiveAmount('createEscrow'),
+                    // this.positiveAmount('createEscrow'),
 
-                    ctx => {
-                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
-                              this.validateDate('createEscrow', 'finishAfter');
-                         }
+                    // ctx => {
+                    //      if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
+                    //           this.validateDate('createEscrow', 'finishAfter');
+                    //      }
 
-                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
-                              this.validateDate('createEscrow', 'cancelAfter');
-                         }
-                         return null;
-                    },
+                    //      if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate()) {
+                    //           this.validateDate('createEscrow', 'cancelAfter');
+                    //      }
+                    //      return null;
+                    // },
 
-                    ctx => {
-                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
-                              const finishAfter = new Date(ctx.inputs['createEscrow'].finishAfter).getTime();
-                              const cancelAfter = new Date(ctx.inputs['createEscrow'].cancelAfter).getTime();
-                              if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
-                                   return 'Finish After must be before Cancel After';
-                              }
-                         }
-                         return null;
-                    },
+                    // ctx => {
+                    //      if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
+                    //           const finishAfter = new Date(ctx.inputs['createEscrow'].finishAfter).getTime();
+                    //           const cancelAfter = new Date(ctx.inputs['createEscrow'].cancelAfter).getTime();
+                    //           if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                    //                return 'Finish After must be before Cancel After';
+                    //           }
+                    //      }
+                    //      return null;
+                    // },
                     this.isValidAddress('createEscrow.destination'),
                     this.requireDestinationTagIfNeeded('createEscrow'),
 
@@ -2471,7 +2471,7 @@ export class ValidationService {
           // CreateTimeBasedEscrow
           this.registerRule({
                transactionType: 'CreateTimeBasedEscrow',
-               requiredFields: ['createTimeBasedEscrow.amount', 'createTimeBasedEscrow.destination', 'createTimeBasedEscrow.finishAfter', 'createTimeBasedEscrow.cancelAfter'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
                     // ctx => {
@@ -2487,24 +2487,24 @@ export class ValidationService {
 
                     this.positiveAmount('createTimeBasedEscrow'),
 
-                    // if (this.txUiService.enableEscrowFinishAfterExpirationDate() {
-                    this.validateDate('createTimeBasedEscrow', 'finishAfter'),
+                    // // if (this.txUiService.enableEscrowFinishAfterExpirationDate() {
+                    // this.validateDate('createTimeBasedEscrow', 'finishAfter'),
+                    // // },
+                    // // if (this.txUiService.enableEscrowCancelAfterExpirationDate() ) {
+                    // // this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
+                    // // },
+                    // ctx => {
+                    //      if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
+                    //           const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
+                    //           const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
+                    //           if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
+                    //                return 'Finish After must be before Cancel After';
+                    //           }
+                    //      }
+                    //      return null;
                     // },
-                    // if (this.txUiService.enableEscrowCancelAfterExpirationDate() ) {
-                    // this.validateDate('createTimeBasedEscrow', 'cancelAfter'),
-                    // },
-                    ctx => {
-                         if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowStoreService.enableEscrowFinishAfterExpirationDate()) {
-                              const finishAfter = new Date(ctx.inputs['createTimeBasedEscrow'].finishAfter).getTime();
-                              const cancelAfter = new Date(ctx.inputs['createTimeBasedEscrow'].cancelAfter).getTime();
-                              if (finishAfter && cancelAfter && finishAfter >= cancelAfter) {
-                                   return 'Finish After must be before Cancel After';
-                              }
-                         }
-                         return null;
-                    },
-                    this.isValidAddress('createTimeBasedEscrow.destination'),
-                    this.requireDestinationTagIfNeeded('createTimeBasedEscrow'),
+                    // this.isValidAddress('createTimeBasedEscrow.destination'),
+                    // this.requireDestinationTagIfNeeded('createTimeBasedEscrow'),
 
                     this.validDestinationTag('createTimeBasedEscrow'),
                     this.optionalNumeric('destinationTag', 0),
@@ -2672,207 +2672,207 @@ export class ValidationService {
                ],
           });
 
-          // CreateMpt
-          this.registerRule({
-               transactionType: 'CreateMpt',
-               requiredFields: ['createMpt.amount'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // CreateMpt
+          // this.registerRule({
+          //      transactionType: 'CreateMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           // this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           // ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    this.optionalNumeric('amount', 0),
+          //           // this.optionalNumeric('amount', 0),
 
-                    ctx => {
-                         if (ctx.inputs['createMpt']?.assetScaleField) {
-                              this.isValidNumber('assetScaleField', 'Asset scale', 0, 15);
-                         }
-                         return null;
-                    },
+          //           // ctx => {
+          //           //      if (ctx.inputs['createMpt']?.assetScaleField) {
+          //           //           this.isValidNumber('assetScaleField', 'Asset scale', 0, 15);
+          //           //      }
+          //           //      return null;
+          //           // },
 
-                    ctx => {
-                         if (ctx.inputs['createMpt']?.transferFeeField) {
-                              this.isValidNumber('transferFeeField', 'Transfer fee', 0, 50000);
-                         }
-                         return null;
-                    },
+          //           // ctx => {
+          //           //      if (ctx.inputs['createMpt']?.transferFeeField) {
+          //           //           this.isValidNumber('transferFeeField', 'Transfer fee', 0, 50000);
+          //           //      }
+          //           //      return null;
+          //           // },
 
-                    this.positiveAmount('createMpt'),
+          //           this.positiveAmount('createMpt'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // AuthorizeMpt
-          this.registerRule({
-               transactionType: 'AuthorizeMpt',
-               requiredFields: ['authorizeMpt.mptIssuanceId'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // AuthorizeMpt
+          // this.registerRule({
+          //      transactionType: 'AuthorizeMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // UnauthorizeMpt
-          this.registerRule({
-               transactionType: 'UnauthorizeMpt',
-               requiredFields: ['unauthorizeMpt.mptIssuanceId'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // UnauthorizeMpt
+          // this.registerRule({
+          //      transactionType: 'UnauthorizeMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // SendMpt
-          this.registerRule({
-               transactionType: 'SendMpt',
-               requiredFields: ['sendMpt.mptIssuanceId', 'sendMpt.destination', 'sendMpt.amount'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // SendMpt
+          // this.registerRule({
+          //      transactionType: 'SendMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // LockMpt
-          this.registerRule({
-               transactionType: 'LockMpt',
-               requiredFields: ['lockMpt.mptIssuanceId'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // LockMpt
+          // this.registerRule({
+          //      transactionType: 'LockMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // UnlockMpt
-          this.registerRule({
-               transactionType: 'UnlockMpt',
-               requiredFields: ['unlockMpt.mptIssuanceId'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // UnlockMpt
+          // this.registerRule({
+          //      transactionType: 'UnlockMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // ClawbackMpt
-          this.registerRule({
-               transactionType: 'ClawbackMpt',
-               requiredFields: ['clawbackMpt.mptIssuanceId', 'clawbackMpt.destination', 'clawbackMpt.amount'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // ClawbackMpt
+          // this.registerRule({
+          //      transactionType: 'ClawbackMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
-          // DestroyMpt
-          this.registerRule({
-               transactionType: 'DestroyMpt',
-               requiredFields: ['destroyMpt.mptIssuanceId'],
-               validators: [
-                    this.walletCredentialRequired(),
+          // // DestroyMpt
+          // this.registerRule({
+          //      transactionType: 'DestroyMpt',
+          //      requiredFields: [],
+          //      validators: [
+          //           this.walletCredentialRequired(),
 
-                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+          //           ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
 
-                    // Master key disabled → must use Regular Key or Multi-Sign
-                    this.masterKeyDisabledRequiresAltSigning(),
+          //           // Master key disabled → must use Regular Key or Multi-Sign
+          //           this.masterKeyDisabledRequiresAltSigning(),
 
-                    // Ticket validation
-                    this.ticketValidation(),
+          //           // Ticket validation
+          //           this.ticketValidation(),
 
-                    // Regular Key signing requirements (only if selected and not multi-signing)
-                    ...this.regularKeySigningValidation(),
+          //           // Regular Key signing requirements (only if selected and not multi-signing)
+          //           ...this.regularKeySigningValidation(),
 
-                    // Multi-Sign validation (addresses + seeds match, valid, etc.)
-                    this.multiSign(),
-               ],
-          });
+          //           // Multi-Sign validation (addresses + seeds match, valid, etc.)
+          //           this.multiSign(),
+          //      ],
+          // });
 
           // OfferCreate
           this.registerRule({

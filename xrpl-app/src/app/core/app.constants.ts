@@ -64,6 +64,7 @@ export const AppConstants = {
      XRP_CURRENCY: 'XRP',
      LAST_LEDGER_ADD_TIME: 20,
      SIGN_TX_LAST_LEDGER_ADD_TIME: 1000,
+     MAX_TOKEN_COUNT: 10_000_000_000_000_000n, // An arbitray large number - 10 quadrillion
      MAX_FEE: '12',
      MIN_FEE: '10',
      TOAST: {
@@ -92,6 +93,7 @@ export const AppConstants = {
      NFT_ID_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)'],
      NFT_OFFER_INDEX_HELPER_ITEMS: ['Exactly 64 characters in length', 'Only hexadecimal characters (0-9, A-F, a-f)', 'The offer index is returned when you create an NFT offer'],
      NFT_SELECT_HELPER_ITEMS: ['Select an NFT you currently own from the dropdown', 'You must own the NFT to create a Sell Offer or other actions', 'Search by NFT ID (hex) or by metadata URI', 'If no NFTs appear, make sure you are connected with the correct wallet'],
+     NFT_OFFER_SELECT_HELPER_ITEMS: ['Select an NFT you currently own from the dropdown', 'You must own the NFT to create a Sell Offer or other actions', 'Search by NFT ID (hex) or by Offer ID', 'If no NFTs appear, make sure you are connected with the correct wallet'],
      UPDATE_NFT_HELPER_ITEMS: ['Select an NFT you currently own that you want to update', 'Only NFTs you own with mutable metadata will be available', 'Search by NFT ID or URI', 'Updating metadata is only possible if the NFT was minted with mutable flags', 'This action will create an NFT metadata update transaction'],
 
      SUBJECT_HELPER_ITEMS: [`This is the holder's account that needs authorization`, 'Must be a valid XRPL address (starts with r...)', 'The issuer account (your current wallet) will grant or revoke authorization'],
@@ -219,8 +221,8 @@ export const AppConstants = {
      ESCROW_MPT_HELPER_ITEMS: ['Multi-Purpose Token (MPT) you want to escrow', 'Select from the tokens currently held by your account', 'The MPT Issuance ID will be automatically filled'],
      ESCROW_DESTINATION_HELPER_ITEMS: ['The account that will eventually receive the escrowed funds', 'You cannot escrow to your own currently active wallet', 'The destination must be a valid activated XRPL account'],
      ESCROW_DEST_TAG_HELPER_ITEMS: ['Destination Tag helps identify the recipient on shared or exchange addresses', 'Commonly required when sending to centralized exchanges or custodians', 'Optional for most direct wallet-to-wallet transfers'],
-     ESCROW_CONDITION_HELPER_ITEMS: ['A crypto-condition (PREIMAGE-SHA-256) that must be fulfilled to release the escrow', 'Used for conditional/secret-based escrows', 'Must be paired with a valid Fulfillment'],
-     ESCROW_FULFILLMENT_HELPER_ITEMS: ['The secret/preimage that fulfills the Condition', 'Must match the Condition exactly', 'Keep this secret until you want the escrow to be released'],
+     ESCROW_CONDITION_HELPER_ITEMS: ['Optional: A PREIMAGE-SHA-256 crypto-condition that locks the escrow', 'If provided, the escrow can only be finished by providing the matching fulfillment', 'The condition must be a valid hex string (64-128 characters)', 'Fulfillment is NOT required when creating the escrow'],
+     ESCROW_FULFILLMENT_HELPER_ITEMS: ['The secret/preimage that fulfills the Condition', 'This is not needed for creating the escrow. It is needed when finishing the escrow.', 'Must be a valid hex string that matches the Condition'],
      ESCROW_SELECTOR_HELPER_ITEMS: ['Select an existing escrow that you created or have permission to finish/cancel', 'You can search by amount, destination address, or sequence number', 'Only active escrows can be finished or cancelled'],
      ESCROW_SEQUENCE_HELPER_ITEMS: ['The sequence number of the original EscrowCreate transaction', 'This uniquely identifies the escrow on the XRPL ledger', 'Required when submitting Finish or Cancel transactions'],
      ESCROW_AMOUNT_FINISH_HELPER_ITEMS: ['The amount of XRP or token currently held in this escrow', 'This amount will be released to the destination (if finishing) or returned to the creator (if cancelling)'],

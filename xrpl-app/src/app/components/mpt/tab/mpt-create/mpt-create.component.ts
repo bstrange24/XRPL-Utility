@@ -142,9 +142,4 @@ export class MptCreateComponent {
      toggleMaxTokensHelper() {
           this.showMaxTokensHelper.update(v => !v);
      }
-
-     formatSecondsToHuman(seconds: string): string {
-          // Not needed for MPT, but kept for consistency
-          return '';
-     }
 }

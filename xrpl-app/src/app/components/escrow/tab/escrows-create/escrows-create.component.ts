@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, Input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, Input, OnDestroy, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
@@ -25,16 +25,18 @@ import { MptValidatorService } from '../../../../services/shared/validators/mpt/
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-escrows-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, LucideAngularModule, NgIcon, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, LucideAngularModule, NgIcon, MatSlideToggleModule, XrplExpirationInputComponent, SelectSearchDropdownComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './escrows-create.component.html',
      styleUrl: './escrows-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EscrowsCreateComponent {
+export class EscrowsCreateComponent implements OnDestroy {
      public readonly escrowStoreService = inject(EscrowStoreService);
      public readonly currencyStoreService = inject(CurrencyStoreService);
      public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
@@ -52,6 +54,22 @@ export class EscrowsCreateComponent {
      public readonly mptValidatorService = inject(MptValidatorService);
      public readonly copyUtilService = inject(CopyUtilService);
 
+     constructor() {
+          // Emit overall validation status whenever relevant signals change
+          effect(() => {
+               this.canCreateEscrowChange.emit(this.canCreateEscrow());
+          });
+
+          effect(() => {
+               const wantsOptions = this.txUiService.wantsOptions();
+               if (!wantsOptions) {
+                    this.escrowStoreService.setEscrowCancelAfterExpirationDate('');
+                    this.escrowStoreService.setEscrowFinishAfterExpirationDate('');
+                    this.xrplTxOptionsStore.setIsExpirationEnabled(false);
+               }
+          });
+     }
+
      // Helper Items
      readonly escrowCurrencyCodeHelperItems = AppConstants.ESCROW_CURRENCY_CODE_HELPER_ITEMS;
      readonly escrowAmountHelperItems = AppConstants.ESCROW_AMOUNT_HELPER_ITEMS;
@@ -67,18 +85,6 @@ export class EscrowsCreateComponent {
      private readonly optionsErrors = signal<string[]>([]);
 
      @Input() isConditional = false;
-
-     // Signals
-     // Track destination validation status from dropdown
-     isDestinationValid = signal(false);
-     showEscrowCurrencyCodeHelper = signal(false);
-     showEscrowAmountHelper = signal(false);
-     showEscrowIssuerHelper = signal(false);
-     showEscrowMptHelper = signal(false);
-     showEscrowDestinationHelper = signal(false);
-     showEscrowDestTagHelper = signal(false);
-     showEscrowConditionHelper = signal(false);
-     showEscrowFulfillmentHelper = signal(false);
 
      // Inputs from parent
      wantsOptions = input<boolean>(true);
@@ -99,21 +105,17 @@ export class EscrowsCreateComponent {
      canFinishEscrowChange = output<boolean>();
      canCancelEscrowChange = output<boolean>();
 
-     constructor() {
-          // Emit overall validation status whenever relevant signals change
-          effect(() => {
-               this.canCreateEscrowChange.emit(this.canCreateEscrow());
-          });
-
-          effect(() => {
-               const wantsOptions = this.txUiService.wantsOptions();
-               if (!wantsOptions) {
-                    this.escrowStoreService.setEscrowCancelAfterExpirationDate('');
-                    this.escrowStoreService.setEscrowFinishAfterExpirationDate('');
-                    this.xrplTxOptionsStore.setIsExpirationEnabled(false);
-               }
-          });
-     }
+     // Signals
+     isDestinationValid = signal(false);
+     showEscrowCurrencyCodeHelper = signal(false);
+     showEscrowAmountHelper = signal(false);
+     showEscrowIssuerHelper = signal(false);
+     showEscrowMptHelper = signal(false);
+     showEscrowDestinationHelper = signal(false);
+     showEscrowDestTagHelper = signal(false);
+     showEscrowConditionHelper = signal(false);
+     showEscrowFulfillmentHelper = signal(false);
+     isFocused = signal(false);
 
      ngOnDestroy(): void {
           this.escrowStoreService.setEscrowCancelAfterExpirationDate('');
@@ -200,9 +202,14 @@ export class EscrowsCreateComponent {
           }
 
           this.mptStoreService.setField('mptIssuanceId', item.id || '');
+     }
 
-          // Optional: nice feedback
-          console.log('MPT Selected:', item.id);
+     get amount() {
+          return this.escrowStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.escrowStoreService.setField('amount', value);
      }
 
      public onFocus(event: Event) {
@@ -233,144 +240,134 @@ export class EscrowsCreateComponent {
      }
 
      canCreateEscrow = computed(() => {
-          // 1. Destination must be selected AND valid
           const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
-          if (!destAddr || !this.isDestinationValid()) return false;
+          const amountStr = this.escrowStoreService.amount()?.trim() ?? '';
+          const isDestinationValid = this.isDestinationValid();
+          const amountValid = !this.amountValidatorService.isEscrowAmountInvalid();
 
-          // 2. Amount must be > 0
-          if (this.amountValidatorService.isEscrowAmountInvalid()) return false;
+          if (!destAddr || !isDestinationValid) {
+               return false;
+          }
+          if (!amountStr || !amountValid) {
+               return false;
+          }
 
-          // 3. Conditional escrow checks
           if (this.isConditional) {
-               if (this.escrowValidatorService.hasInvalidCondition()) return false;
-               if (this.escrowValidatorService.hasInvalidFulfillment()) return false;
-               if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) return false;
+               // Condition validation - only check format if condition is provided
+               const condition = this.escrowStoreService.condition();
+               if (condition && condition.trim().length > 0) {
+                    if (this.escrowValidatorService.hasInvalidCondition()) {
+                         return false;
+                    }
+               }
+
+               // Fulfillment validation - only check format if fulfillment is provided
+               const fulfillment = this.escrowStoreService.fulfillment();
+               if (fulfillment && fulfillment.trim().length > 0) {
+                    if (this.escrowValidatorService.hasInvalidFulfillment()) {
+                         return false;
+                    }
+               }
+
+               // Check for invalid pair (fulfillment without condition)
+               if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) {
+                    return false;
+               }
+
+               // Conditional escrows MUST have CancelAfter enabled AND a date set
+               const enableCancel = this.escrowStoreService.enableEscrowCancelAfterExpirationDate();
+               const cancelDate = this.escrowStoreService.escrowCancelAfterExpirationDate();
+
+               if (!enableCancel || !cancelDate?.trim()) {
+                    return false;
+               }
+
+               // Validate CancelAfter date is in the future
+               if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
+                    return false;
+               }
+          } else {
+               // Read all relevant signals
+               const enableFinish = this.escrowStoreService.enableEscrowFinishAfterExpirationDate();
+               const enableCancel = this.escrowStoreService.enableEscrowCancelAfterExpirationDate();
+               const hasMissingTimeBased = this.escrowValidatorService.hasMissingTimeBasedExpiration();
+               const hasMissingFinish = this.escrowValidatorService.hasMissingFinishAfter();
+               const hasMissingCancel = this.escrowValidatorService.hasMissingCancelAfter();
+
+               if (hasMissingTimeBased) {
+                    return false;
+               }
+               if (hasMissingFinish) {
+                    return false;
+               }
+               if (hasMissingCancel) {
+                    return false;
+               }
+
+               // Check date validity if enabled
+               if (enableFinish) {
+                    const invalidFinish = this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration();
+                    if (invalidFinish) return false;
+               }
+
+               if (enableCancel) {
+                    const invalidCancel = this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration();
+                    if (invalidCancel) return false;
+               }
           }
 
-          // 4. Expiration validation (if enabled)
-          if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
+          const wantsOptions = this.txUiService.wantsOptions();
+          const optionsError = this.optionsHasError();
+
+          if (wantsOptions && optionsError) {
                return false;
           }
-
-          if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-               return false;
-          }
-
-          // 5. Options validation
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
 
           return true;
      });
 
-     // canCreateEscrow = computed(() => {
-     //      // Must have valid subject (XRP address)
-     //      if (!this.isDestinationValid()) return false;
-
-     //      // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowCancelAfterExpirationDate()) {
-     //      if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-     //           return false;
-     //      }
-     //      // }
-
-     //      // if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.escrowStoreService.escrowFinishAfterExpirationDate()) {
-     //      if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-     //           return false;
-     //      }
-
-     //      if (this.amountValidatorService.isEscrowAmountInvalid()) {
-     //           return false;
-     //      }
-     //      // }
-
-     //      // Check options validation if enabled
-     //      if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
-
-     //      return true;
-     // });
-
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
           const destAddr = this.viewModel.selectedDestinationAddress?.() ?? '';
+          const amountStr = this.escrowStoreService.amount()?.trim() ?? '';
 
-          // Only show error if user has typed something but it's invalid
-          if (destAddr && !this.isDestinationValid()) {
-               errors.push('Destination address is invalid. Please enter a valid XRP address.');
-          }
+          if (destAddr && !this.isDestinationValid()) errors.push('Destination address is invalid.');
 
-          // Amount error only if something was entered
-          if (this.escrowStoreService.amount() && this.escrowStoreService.amount()!.trim() !== '' && this.amountValidatorService.isEscrowAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
+          if (amountStr) {
+               const err = this.escrowValidatorService.getAmountErrorMessage();
+               if (err) errors.push(err);
           }
 
           if (this.isConditional) {
-               if (this.escrowValidatorService.hasInvalidCondition()) {
-                    errors.push(this.escrowValidatorService.getConditionErrorMessage());
-               }
-               if (this.escrowValidatorService.hasInvalidFulfillment()) {
-                    errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
-               }
+               if (this.escrowValidatorService.hasInvalidCondition()) errors.push(this.escrowValidatorService.getConditionErrorMessage());
+               if (this.escrowValidatorService.hasInvalidFulfillment()) errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
+               if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) errors.push(this.escrowValidatorService.getConditionFulfillmentPairErrorMessage());
           }
 
-          // Finish After (only if enabled)
+          // if (!this.isConditional && this.escrowValidatorService.hasMissingTimeBasedExpiration()) {
+          //      errors.push(this.escrowValidatorService.getMissingTimeBasedErrorMessage());
+          // }
+          // if (this.isConditional && this.escrowValidatorService.hasMissingConditionalExpiration()) {
+          //      errors.push(this.escrowValidatorService.getMissingConditionalExpirationErrorMessage());
+          // }
+
+          if (this.escrowValidatorService.hasMissingFinishAfter()) {
+               errors.push('Finish After is enabled but no date is set.');
+          }
+
+          if (this.escrowValidatorService.hasMissingCancelAfter()) {
+               errors.push('Cancel After is enabled but no date is set.');
+          }
+
           if (this.escrowStoreService.enableEscrowFinishAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
                errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
           }
-
-          // Cancel After (only if enabled)
           if (this.escrowStoreService.enableEscrowCancelAfterExpirationDate() && this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
                errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
           }
 
           if (this.txUiService.wantsOptions() && this.optionsHasError()) {
                errors.push(...this.optionsErrors());
-          }
-
-          return errors;
-     });
-
-     // validationErrorMessages = computed(() => {
-     //      const errors: string[] = [];
-
-     //      if (!this.isDestinationValid()) {
-     //           errors.push('Destination address is invalid. Please enter a valid XRP address.');
-     //      }
-
-     //      if (this.amountValidatorService.isEscrowAmountInvalid()) {
-     //           errors.push('Amount must be greater than 0.');
-     //      }
-
-     //      // Conditional escrow validations
-     //      if (this.isConditional) {
-     //           if (this.escrowValidatorService.hasInvalidCondition()) {
-     //                errors.push(this.escrowValidatorService.getConditionErrorMessage());
-     //           }
-     //           if (this.escrowValidatorService.hasInvalidFulfillment()) {
-     //                errors.push(this.escrowValidatorService.getFulfillmentErrorMessage());
-     //           }
-     //           if (this.escrowValidatorService.hasInvalidConditionFulfillmentPair()) {
-     //                errors.push(this.escrowValidatorService.getConditionFulfillmentPairErrorMessage());
-     //           }
-     //      }
-
-     //      if (this.escrowValidatorService.hasInvalidEscrowFinishAfterExpiration()) {
-     //           errors.push(this.escrowValidatorService.getFinishAfterErrorMessage());
-     //      }
-     //      if (this.escrowValidatorService.hasInvalidEscrowCancelAfterExpiration()) {
-     //           errors.push(this.escrowValidatorService.getCancelAfterErrorMessage());
-     //      }
-
-     //      return errors;
-     // });
-
-     validationErrorMessages1 = computed(() => {
-          const errors: string[] = [];
-
-          if (!this.isDestinationValid()) {
-               errors.push('Destination address is invalid. Please enter a valid XRP address.');
-          }
-
-          if (this.amountValidatorService.isEscrowAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
           }
 
           return errors;

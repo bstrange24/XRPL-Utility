@@ -1600,3 +1600,22 @@ pre code[class*="language-"] {
 .copy-flash {
      animation: copyFlash 0.5s ease-out;
 }
+
+/* Connection status */
+.connection-indicator.out-of-sync {
+     background-color: rgba(245, 158, 11, 0.1);
+     border-color: #f59e0b;
+}
+
+.connection-indicator.syncing {
+     background-color: rgba(59, 130, 246, 0.1);
+     border-color: #3b82f6;
+}
+
+.status-text.text-yellow-500 {
+     color: #f59e0b;
+}
+
+.status-text.text-blue-400 {
+     color: #60a5fa;
+}

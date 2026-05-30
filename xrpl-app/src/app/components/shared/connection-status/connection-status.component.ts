@@ -16,16 +16,57 @@ export class ConnectionStatusComponent {
      private readonly connectionGuard = inject(ConnectionGuardService);
      public readonly store = inject(NavbarStore);
 
-     // Computed status values
-     isConnected = computed(() => this.xrplService.connectionStatus$() === 'connected');
-     isConnecting = computed(() => this.xrplService.connectionStatus$() === 'connecting');
-     isDisconnected = computed(() => this.xrplService.connectionStatus$() === 'disconnected');
-     statusMessage = computed(() => this.xrplService.connectionMessage$());
+     // Basic connection states
+     isConnected = computed(() => this.xrplService.isConnected());
+     isConnecting = computed(() => this.xrplService.isConnecting());
+     isDisconnected = computed(() => this.xrplService.isDisconnected());
+
+     // Ledger states (using the computed properties from XrplService)
+     isLedgerReady = computed(() => this.xrplService.isLedgerReady());
+     isLedgerSyncing = computed(() => this.xrplService.isLedgerSyncing());
+     isLedgerNotSynced = computed(() => this.xrplService.isLedgerNotSynced());
+
+     // Get the actual server state for display
+     serverState = computed(() => this.xrplService.serverState$());
      hasPendingOperations = computed(() => this.connectionGuard.hasPendingOperations());
 
      statusText = computed(() => {
-          if (this.isConnected()) return 'Connected';
+          if (this.isConnected()) {
+               const syncStatus = this.xrplService.ledgerSyncStatus$();
+               const ledgerIndex = this.xrplService.validatedLedgerIndex$();
+               const network = this.xrplService.getNetworkName();
+
+               // For Mainnet, always show as connected once we have a ledger
+               if (network === 'Mainnet' && ledgerIndex) {
+                    return `Connected (Ledger ${ledgerIndex}) ✓`;
+               }
+
+               switch (syncStatus) {
+                    case 'synced':
+                         return ledgerIndex ? `Connected (Ledger ${ledgerIndex}) ✓` : 'Connected ✓';
+                    case 'syncing':
+                         return 'Syncing...';
+                    case 'not_synced':
+                         return 'Waiting for sync...';
+                    default:
+                         return 'Connected';
+               }
+          }
           if (this.isConnecting()) return 'Connecting...';
           return 'Disconnected';
+     });
+
+     statusMessage = computed(() => {
+          const syncStatus = this.xrplService.ledgerSyncStatus$();
+          if (syncStatus === 'not_synced') {
+               return 'Node is connected but not fully synced. Please wait for ledger access.';
+          }
+          if (syncStatus === 'syncing') {
+               return 'Node is catching up with the ledger. Please wait.';
+          }
+          if (syncStatus === 'synced') {
+               return 'Node is fully synchronized and ready for transactions.';
+          }
+          return this.xrplService.connectionMessage$();
      });
 }

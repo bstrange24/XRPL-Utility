@@ -18,12 +18,15 @@
                     </button>
                </div>
 
-               <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               <div class="relative">
+                    <app-select-search-dropdown [items]="checksTransactionViewModelService.checkItems()" [value]="checksTransactionViewModelService.selectedCheckItem()" (valueChange)="onCheckSelected($event)" placeholder="Search by amount, address, or Check ID..." emptyMessage="No checks available" />
+               </div>
+
                <app-field-helper title="Select Check to Cash" [items]="checkCashSelectorHelperItems" [show]="showCheckCashSelectorHelper" />
           </div>
      </div>
 
-     <!-- Check Details Card (New - consistent with Cancel page) -->
+     <!-- Check Details Card -->
      @if (checksTransactionViewModelService.selectedFullCheckForCash()) {
      <div class="card-base">
           <div class="space-y-6">
@@ -127,34 +130,33 @@
                </div>
 
                <div class="relative">
-                    <!-- <input type="number" class="input-base" placeholder="e.g. 10.5" step="0.000001" min="0" max="10000000000000000" [ngModel]="checkStoreService.amount()" (ngModelChange)="utilsService.updateAmount($event, 'checksCash')" (focus)="onFocus($event)" /> -->
                     <input
                          type="text"
                          inputmode="decimal"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!amountValidatorService.isCheckAmountInvalid()"
-                         [isInvalid]="amountValidatorService.isCheckAmountInvalid()"
+                         [isValid]="amountValidatorService.isCheckAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                         [isInvalid]="amountValidatorService.isCheckAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                          (keydown)="utilsService.preventNegative($event)"
+                         (focus)="isFocused.set(true)"
                          (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                         (blur)="amountValidatorService.onAmountBlur($event, 'checks')"
+                         (blur)="amountValidatorService.onAmountBlur($event, 'checks'); isFocused.set(false)"
                          (keypress)="amountValidatorService.onAmountKeyPress($event)"
                          (input)="amountValidatorService.onAmountInput($event, 'checks')"
-                         [ngModel]="checksStoreService.amount()"
-                         (ngModelChange)="checksStoreService.setField('amount', $event)"
+                         [ngModel]="amount"
+                         (ngModelChange)="amount = $event"
                          placeholder="e.g. 10.5"
                     />
 
-                    @if (checksStoreService.amount() && checksStoreService.amount()!.trim().length > 0) {
-                    <button type="button" (click)="this.checksStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="amountValidatorService.isCheckAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isCheckAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.checksStoreService.setField('amount', '')" />
                </div>
 
-               @if (amountValidatorService.isCheckAmountInvalid()) {
-               <p class="form-error">Amount must be greater than 0</p>
+               <!-- Error Message -->
+               @if (checkValidatorService.getAmountErrorMessage()) {
+               <p class="form-error mt-2">{{ checkValidatorService.getAmountErrorMessage() }}</p>
                }
+
                <app-field-helper title="DeliverMin" [items]="deliverMinHelperItems" [show]="showDeliverMinHelper" />
           </div>
      </div>
@@ -171,36 +173,5 @@
      }
 </div>
 
-<!-- Trustline Section -->
-<!-- @if (showEnableTrustline) {
-<div class="card-base">
-     <div class="space-y-6">
-          <div class="flex items-center gap-2">
-               <ng-icon name="heroExclamationTriangle" size="18" class="flex-shrink-0 text-amber-600" />
-               <h4 class="text-sm font-semibold text-amber-800">Missing Trustline Detected</h4>
-          </div>
-
-          <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="checkCurrencyCode" class="label-primary">Currency Code</label>
-                    <p class="text-xs text-amber-700">Issued asset combined with the issuer to uniquely define a token.</p>
-                    <input type="text" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.currencyCode" class="w-full cursor-not-allowed rounded-2xl border border-amber-200 bg-amber-100/50 px-4 py-3 text-sm text-amber-900" />
-               </div>
-
-               <div class="space-y-2">
-                    <label for="checkCurrencyIssuer" class="label-primary">Issuer</label>
-                    <p class="text-xs text-amber-700">The XRPL account that issues and controls this currency.</p>
-                    <input type="text" readonly [ngModel]="trustlineStoreService.missingTrustlineInfo.issuer" class="w-full cursor-not-allowed rounded-2xl border border-amber-200 bg-amber-100/50 px-4 py-3 font-mono text-sm text-amber-900" />
-               </div>
-          </div>
-
-          <div class="space-y-2">
-               <label for="checkTrustLimit" class="label-primary">Trust Limit</label>
-               <p class="text-xs text-amber-700">Max amount you're willing to hold (set reasonably high)</p>
-               <input type="number" min="0" placeholder="e.g. 1000000" [ngModel]="trustlineStoreService.trustlineLimitField()" (ngModelChange)="utilsService.updateTrustlineLimitAmount($event)" (focus)="onFocus($event)" class="w-full rounded-2xl border border-amber-300 bg-white px-4 py-3 text-sm focus:border-amber-500 focus:outline-none" />
-          </div>
-
-          <p class="text-xs text-amber-700">Enabling this trustline will add a <strong class="font-semibold">TrustSet</strong> transaction before cashing the check.</p>
-     </div>
-</div>
-} -->
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessagesForCash()" title="Check cash validation issues:" />

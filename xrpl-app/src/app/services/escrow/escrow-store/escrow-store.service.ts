@@ -1,5 +1,4 @@
-import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
-import { computed } from '@angular/core';
+import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
 
 export interface EscrowState {
      isConditional?: boolean;

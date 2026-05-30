@@ -20,7 +20,10 @@
                          </button>
                     </div>
 
-                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                    </div>
+
                     <app-field-helper title="Select MPT" [items]="mptDestroySelectHelperItems" [show]="showMptDestroySelectHelper" />
                </div>
           </div>
@@ -46,7 +49,7 @@
                <input type="text" [ngModel]="mptIssuanceId" (ngModelChange)="setMptIssuanceId($event)" (blur)="onMptIssuanceIdBlur()" (focus)="onMptIssuanceIdFocus()" placeholder="Enter 48-character hex MPT Issuance ID" readonly class="input-disabled" app-focus-border [isValid]="!!(mptAuthorizeValidator.isMptIssuanceIdValid() && mptIssuanceId && mptIssuanceId.length > 0)" [isInvalid]="!!(mptAuthorizeValidator.isMptIssuanceIdInvalid() && mptIssuanceId && mptIssuanceId.length > 0)" />
           </div>
 
-          <!-- MPT ID length indicator -->
+          <!-- Character Counter -->
           @if (mptIssuanceId && mptIssuanceId.length > 0) {
           <div class="mt-2 text-xs" [class.text-green-600]="mptIssuanceId.length === 48" [class.text-red-600]="mptIssuanceId.length !== 48 && mptIssuanceId.length > 0">Character count: {{ mptIssuanceId.length }} / 48</div>
           }

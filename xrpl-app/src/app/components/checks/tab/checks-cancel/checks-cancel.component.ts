@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, inject, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
 import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -7,7 +7,6 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
-import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
@@ -72,38 +71,6 @@ export class ChecksCancelComponent {
                this.xrplTxOptionsStore.setField('showEnableTrustline', true);
           }
      }
-
-     // // Uses allEscrowsRaw filtered to Sender === currentWallet (cancel = creator)
-     // public escrowItems() {
-     //      const address = this.walletManager.getSelectedWallet()?.address || '';
-     //      return this.escrowUtilService.escrowItems(
-     //           this.escrowStoreService.allEscrowsRaw(),
-     //           address,
-     //           true // true = cancelEscrow (filter by Sender)
-     //      );
-     // }
-
-     // public selectedEscrowItem() {
-     //      return this.escrowUtilService.selectedEscrowItem(this.escrowItems(), this.escrowStoreService.escrowSequenceNumber());
-     // }
-
-     // public selectedEscrowIsExpired(): boolean {
-     //      return this.viewModel.selectedEscrowIsExpired();
-     // }
-
-     // public onEscrowSelected(item: SelectItem | null) {
-     //      if (!item?.id) {
-     //           this.escrowStoreService.setField('escrowSequenceNumber', '');
-     //           this.escrowStoreService.setField('escrowOwner', '');
-     //           return;
-     //      }
-     //      this.escrowStoreService.setField('escrowSequenceNumber', item.id);
-     //      // Look up the Sender from allEscrowsRaw so escrowOwner is always correct
-     //      const escrow = this.escrowStoreService.allEscrowsRaw().find((e: any) => e.EscrowSequence?.toString() === item.id);
-     //      if (escrow) {
-     //           this.escrowStoreService.setField('escrowOwner', escrow.Sender);
-     //      }
-     // }
 
      // Toggle Methods
      toggleCheckSelectorHelper() {

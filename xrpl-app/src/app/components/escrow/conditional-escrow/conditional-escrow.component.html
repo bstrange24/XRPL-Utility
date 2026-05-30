@@ -13,18 +13,18 @@
           <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
           }
 
-          <!-- Form -->
+          <!-- Main Form Area -->
           <form #theForm="ngForm">
                <!-- Dynamic Form Content -->
                @if (tab === 'createEscrow') {
                <app-escrows-create
-                    [isConditional]="true"
                     [currentAddress]="currentAddress()"
                     [lastIntendedDestination]="lastIntendedDestination()"
                     [selectedDestinationAddress]="selectedDestinationAddress()"
                     [wantsOptions]="txUiService.wantsOptions()"
                     [canSubmit]="canSubmit()"
                     [tab]="tab"
+                    [isConditional]="isConditional"
                     (clearFields)="clearInputFields()"
                     (searchQueryChange)="handleSearchQueryChange($event)"
                     (destinationChange)="handleDestinationChange($event)"
@@ -49,8 +49,6 @@
                               <button
                                    type="button"
                                    class="btn-blue whitespace-nowrap"
-                                   [class.opacity-50]="!canPerformAction()"
-                                   [attr.aria-disabled]="!canPerformAction()"
                                    [attr.tabindex]="!canPerformAction() ? 0 : null"
                                    (click)="getCondition(); 
                               $event.preventDefault()"
@@ -66,6 +64,7 @@
                          }
                     </app-button-tooltip>
 
+                    <!-- Clear Fields -->
                     <div class="right-buttons">
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
                     </div>

@@ -53,10 +53,10 @@
                     <app-field-helper title="Action" [items]="mptLockActionHelperItems" [show]="showMptLockActionHelper" />
                </div>
 
-               <!-- MPT Issuer (Destination) -->
+               <!-- MPT Issuer -->
                <div>
                     <div class="field-label">
-                         <label for="mptIssuerHolder" class="label-primary"> MPT Issuer (Destination) <span class="text-red-500">*</span> </label>
+                         <label for="mptIssuerHolder" class="label-primary"> MPT Issuer <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -80,7 +80,7 @@
                     <p class="form-error mt-2">{{ mptAuthorizeValidator.getDestinationErrorMessage() }}</p>
                     }
 
-                    <app-field-helper title="MPT Issuer (Destination)" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
+                    <app-field-helper title="MPT Issuer" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
                </div>
 
                <!-- MPT Issuance ID -->

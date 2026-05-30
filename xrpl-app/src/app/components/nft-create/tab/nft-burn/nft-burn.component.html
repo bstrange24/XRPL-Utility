@@ -1,90 +1,71 @@
-<div class="card-base">
-     <div class="space-y-6">
-          <h4 class="section-heading">
-               <lucide-icon name="lucideBadgeInfo" class="section-heading-icon-green"></lucide-icon>
-               NFT Details
-          </h4>
+<div class="space-y-6">
+     <!-- NFT Details -->
+     <div class="card-base">
+          <div class="space-y-6">
+               <h4 class="section-heading">
+                    <lucide-icon name="lucideBadgeInfo" class="section-heading-icon-green"></lucide-icon>
+                    NFT Details
+               </h4>
 
-          <!-- Select NFT -->
-          <div>
-               <div class="field-label">
-                    <label for="selectNft" class="label-primary">Select NFT to Burn <span class="text-red-500">*</span></label>
+               <!-- Select NFT -->
+               <div>
+                    <div class="field-label">
+                         <label for="selectNft" class="label-primary">Select NFT to Burn <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select an existing NFT to burn.</p>
+                         <button type="button" (click)="toggleSelectNftHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
+                    </div>
+
+                    <app-field-helper title="Selecting an NFT" [items]="selectNftHelperItems" [show]="showSelectNftHelper" />
                </div>
+          </div>
+     </div>
 
-               <div class="flex items-center gap-2">
-                    <p class="text-secondary">Select an existing NFT to burn.</p>
-                    <button type="button" (click)="toggleSelectNftHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                         <ng-icon name="heroQuestionMarkCircle" size="14" />
-                    </button>
-               </div>
-
-               <div class="relative">
-                    <app-select-search-dropdown [items]="nftUtilService.nftItems()" [value]="nftUtilService.selectedNftItem()" (valueChange)="onNftSelected($event)" placeholder="Search by ID or URI..." emptyMessage="No NFTs found" />
-               </div>
-
-               <app-field-helper title="Selecting an NFT" [items]="selectNftHelperItems" [show]="showSelectNftHelper" />
+     <!-- NFT Token ID -->
+     @if (nftUtilService.selectedNftItem()) {
+     <div class="card-base">
+          <div class="field-label">
+               <label for="nftTokenID" class="label-primary">NFT Token ID <span class="text-red-500">*</span></label>
           </div>
 
-          <!-- NFT Token ID -->
-          <div>
-               <div class="field-label">
-                    <label for="nftTokenID" class="label-primary">NFT Token ID <span class="text-red-500">*</span></label>
-               </div>
-
-               <div class="flex items-center gap-2">
-                    <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
+          <div class="flex items-center gap-2">
+               <p class="text-secondary">NFT Token ID generated when the NFT was created.</p>
+               <div class="flex gap-2">
                     <button type="button" (click)="toggleNftHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
                </div>
-
-               <div class="relative">
-                    <input
-                         type="text"
-                         [ngModel]="nftCreateStoreService.nftId()"
-                         (ngModelChange)="nftCreateStoreService.setField('nftId', $event)"
-                         placeholder="Enter 64-character hex NFT Token ID"
-                         class="input-base-with-validation font-mono text-sm"
-                         app-focus-border
-                         [isValid]="!!(nftValidatorService.isNftTokenIdValid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
-                         [isInvalid]="!!(nftValidatorService.isNftTokenIdInvalid() && nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0)"
-                    />
-
-                    <!-- Clear Button -->
-                    @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
-                    <button type="button" (click)="nftValidatorService.clearField('nftId')" class="clearInputXmark right-8" aria-label="Clear NFT Token ID">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
-               </div>
-
-               <!-- Helper Text -->
-               <app-field-helper title="NFT ID Guidelines" [items]="nftIdHelperItems" [show]="showNftHelper" />
-
-               <!-- Character Counter -->
-               @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
-               <div class="mt-2 text-xs flex justify-between items-center">
-                    <span class="text-gray-500">Character count: {{ nftCreateStoreService.nftId().length }} / 64</span>
-                    @if (nftCreateStoreService.nftId().length === 64 && nftValidatorService.isNftTokenIdValid()) {
-                    <span class="text-green-600 flex items-center gap-1">
-                         <ng-icon name="heroCheckCircle" size="12" />
-                         Valid format
-                    </span>
-                    } @else if (nftCreateStoreService.nftId().length === 64 && nftValidatorService.isNftTokenIdInvalid()) {
-                    <span class="text-red-600 flex items-center gap-1">
-                         <ng-icon name="heroXCircle" size="12" />
-                         Invalid hex characters
-                    </span>
-                    }
-               </div>
-               }
-
-               <!-- Error Message -->
-               @if (nftValidatorService.getNftTokenIdErrorMessage()) {
-               <p class="form-error mt-2">{{ nftValidatorService.getNftTokenIdErrorMessage() }}</p>
-               }
           </div>
+
+          <div class="relative">
+               <input type="text" class="input-disabled" readonly app-focus-border [isValid]="!!(nftValidatorService.isNftTokenIdValid() && nftId !== null && nftId !== undefined)" [isInvalid]="!!(nftValidatorService.isNftTokenIdInvalid() && nftId !== null && nftId !== undefined)" [ngModel]="nftCreateStoreService.nftId()" (ngModelChange)="nftCreateStoreService.setField('nftId', $event)" placeholder="Enter 64-character hex NFT Token ID" />
+
+               <!-- Icons Container -->
+               <app-input-icons [isValid]="nftValidatorService.isNftTokenIdValid() && nftId !== null && nftId !== undefined" [isInvalid]="nftValidatorService.isNftTokenIdInvalid() && nftId !== nftId && nftId !== undefined" [showClear]="false" (clear)="nftCreateStoreService.setField('nftId','')" />
+          </div>
+
+          <!-- Character Counter -->
+          @if (nftCreateStoreService.nftId() && nftCreateStoreService.nftId().length > 0) {
+          <div class="mt-2 text-xs" [class.text-green-600]="nftCreateStoreService.nftId().length === 64" [class.text-red-600]="nftCreateStoreService.nftId().length !== 64 && nftCreateStoreService.nftId().length> 0">Character count: {{ nftCreateStoreService.nftId().length }} / 64</div>
+          }
+
+          <!-- Error Message -->
+          @if (nftValidatorService.getNftTokenIdErrorMessage()) {
+          <p class="form-error mt-2">{{ nftValidatorService.getNftTokenIdErrorMessage() }}</p>
+          }
+
+          <!-- Helper Text -->
+          <app-field-helper title="NFT ID Guidelines" [items]="nftIdHelperItems" [show]="showNftHelper" />
      </div>
+     }
 </div>
 
 <!-- Summary of validation errors -->
