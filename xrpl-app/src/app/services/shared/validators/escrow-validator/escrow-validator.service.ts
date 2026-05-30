@@ -220,10 +220,10 @@ export class EscrowValidatorService {
 
           const num = Number.parseFloat(amount);
           if (num <= 0) {
-               return 'Amount must be greater than 0.';
+               return 'Amount must be greater than 0';
           }
           if (num > AppConstants.MAX_TOKEN_COUNT) {
-               return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000.';
+               return 'Maximum XRP/Tokens cannot exceed 10,000,000,000,000,000';
           }
 
           return '';

@@ -91,9 +91,10 @@
                               inputmode="decimal"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isValid]="amountValidatorService.isPaymentChannelAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                               (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
                               (input)="amountValidatorService.onAmountInput($event,'paymentChannel')"
                               (blur)="amountValidatorService.onAmountBlur($event,'paymentChannel')"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
@@ -103,16 +104,10 @@
                               placeholder="e.g. 10.5"
                          />
 
-                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="amountValidatorService.isPaymentChannelAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.paymentChannelStoreService.setField('amount', '')" />
                     </div>
 
-                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
                     <app-field-helper title="XRP Amount to Authorize" [items]="fundPaymentChannelAmountHelperItems" [show]="showFundPaymentChannelAmountHelper" />
                </div>
 
@@ -120,9 +115,9 @@
                @if (paymentChannelStoreService.channelClaimSignatureField()) {
                <div class="space-y-2">
                     <label for="generateSign" class="label-primary"> Generated Signature </label>
-                    <div class="flex flex-col gap-3 sm:flex-row">
-                         <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly class="flex-1 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
-                         <button type="button" class="btn-primary whitespace-nowrap" (click)="copyUtilService.copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                         <input type="text" [value]="paymentChannelStoreService.channelClaimSignatureField()" readonly class="w-full flex-1 rounded-2xl border border-gray-100 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                         <button type="button" class="btn-green whitespace-nowrap" (click)="copyUtilService.copyAndToast(paymentChannelStoreService.channelClaimSignatureField(), 'Signature')">Copy Signature</button>
                     </div>
                </div>
                }
@@ -197,9 +192,10 @@
                               inputmode="decimal"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isValid]="amountValidatorService.isPaymentChannelAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                               (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
                               (input)="amountValidatorService.onAmountInput($event,'paymentChannel')"
                               (blur)="amountValidatorService.onAmountBlur($event,'paymentChannel')"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
@@ -209,16 +205,10 @@
                               placeholder="e.g. 10.5"
                          />
 
-                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="amountValidatorService.isPaymentChannelAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.paymentChannelStoreService.setField('amount', '')" />
                     </div>
 
-                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
                     <app-field-helper title="XRP Amount to Claim" [items]="fundPaymentChannelAmountHelperItems" [show]="showFundPaymentChannelAmountHelper" />
                </div>
 
@@ -226,7 +216,24 @@
                <div class="space-y-2">
                     <label for="claimSign" class="label-primary">Claim Signature <span class="text-red-500">*</span></label>
                     <p class="text-secondary">The signed message from the channel creator.</p>
-                    <input type="text" [(ngModel)]="paymentChannelStoreService.channelClaimSignatureField" name="channelClaimSignatureField" class="input-base" />
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              class="input-base-with-validation pr-10 font-mono"
+                              app-focus-border
+                              [isValid]="paymentChannelValidatorService.isValidClaimSignature() && paymentChannelValidatorService.hasClaimSignature()"
+                              [isInvalid]="paymentChannelValidatorService.hasClaimSignature() && !paymentChannelValidatorService.isValidClaimSignature()"
+                              [value]="paymentChannelStoreService.channelClaimSignatureField() || ''"
+                              (input)="onClaimSignatureInput($event)"
+                              placeholder="Enter the hexadecimal signature from the creator..."
+                              spellcheck="false"
+                              autocomplete="off"
+                         />
+
+                         <!-- Optional: Clear button -->
+                         <app-input-icons [isValid]="paymentChannelValidatorService.isValidClaimSignature() && paymentChannelValidatorService.hasClaimSignature()" [isInvalid]="paymentChannelValidatorService.hasClaimSignature() && !paymentChannelValidatorService.isValidClaimSignature()" [showClear]="!!paymentChannelStoreService.channelClaimSignatureField()" (clear)="paymentChannelStoreService.setField('channelClaimSignatureField', '')" />
+                    </div>
                </div>
           </div>
      </div>
@@ -236,19 +243,7 @@
           <div class="alert-content">This selected payment channel has expired.</div>
      </div>
      }
-
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Payment channel claim validation issues:" />

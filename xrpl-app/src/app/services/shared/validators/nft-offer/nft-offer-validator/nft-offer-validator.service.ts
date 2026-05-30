@@ -148,7 +148,7 @@ export class NftOfferValidatorService {
           }
 
           if (numAmount <= 0) {
-               return 'Amount must be greater than 0.';
+               return 'Amount must be greater than 0';
           }
 
           if (currency === 'XRP') {

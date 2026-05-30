@@ -14,7 +14,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel (precision up to 0.000001).</p>
+                         <p class="text-secondary">Amount of XRP to deduct from the sender's balance and set aside in this channel.</p>
                          <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -26,9 +26,10 @@
                               inputmode="decimal"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!amountValidatorService.isPaymentChannelAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid()"
+                              [isValid]="amountValidatorService.isPaymentChannelAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                               (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
                               (input)="amountValidatorService.onAmountInput($event,'paymentChannel')"
                               (blur)="amountValidatorService.onAmountBlur($event,'paymentChannel')"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
@@ -38,16 +39,9 @@
                               placeholder="e.g. 10.5"
                          />
 
-                         @if (paymentChannelStoreService.amount() && paymentChannelStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.paymentChannelStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="amountValidatorService.isPaymentChannelAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isPaymentChannelAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.paymentChannelStoreService.setField('amount', '')" />
                     </div>
-
-                    @if (amountValidatorService.isPaymentChannelAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
 
                     <app-field-helper title="XRP Amount" [items]="paymentChannelAmountHelperItems" [show]="showPaymentChannelAmountHelper" />
                </div>
@@ -55,11 +49,11 @@
                <!-- Settle Delay -->
                <div>
                     <div class="field-label">
-                         <label class="label-primary">Settle Delay <span class="text-red-500">*</span></label>
+                         <label for="settleDelay" class="label-primary">Settle Delay <span class="text-red-500">*</span></label>
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Seconds the source must wait before closing the channel with unclaimed XRP. Unclaimed XRP will be returned to the source.</p>
+                         <p class="text-secondary">Seconds the source must wait before closing the channel with unclaimed XRP.</p>
                          <button type="button" (click)="toggleSettleDelayHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -69,7 +63,12 @@
                     <div class="flex gap-2 items-end">
                          <!-- Number Input -->
                          <div class="flex-1">
-                              <input type="number" class="input-base-with-validation" app-focus-border [isValid]="paymentChannelValidatorService.isSettleDelayValid()" [isInvalid]="paymentChannelValidatorService.isSettleDelayInvalid()" [(ngModel)]="paymentChannelStoreService.settleDelay" min="0" max="4294967295" step="1" placeholder="e.g. 86400" />
+                              <div class="relative">
+                                   <input type="text" inputmode="numeric" class="input-base-with-validation" app-focus-border [isValid]="paymentChannelValidatorService.isSettleDelayValid()" [isInvalid]="paymentChannelValidatorService.isSettleDelayInvalid()" [(ngModel)]="paymentChannelStoreService.settleDelay" min="0" max="4294967295" step="1" placeholder="e.g. 86400" />
+
+                                   <!-- Icons Container -->
+                                   <app-input-icons [isValid]="paymentChannelValidatorService.isSettleDelayValid()" [isInvalid]="paymentChannelValidatorService.isSettleDelayInvalid()" [showClear]="!!this.paymentChannelStoreService.settleDelay()" (clear)="this.paymentChannelStoreService.setField('settleDelay', '')" />
+                              </div>
                          </div>
 
                          <!-- Preset Buttons -->
@@ -130,17 +129,6 @@
 
           <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
      </div>
-     <!-- <div class="card-base">
-          <div class="options">
-               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
-
-               <div class="flex items-center gap-2">
-                    <button type="button" class="btn-optional-fields" title="Destination Tag and Expiration Date are optional XRPL transaction fields">
-                         <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
-                    </button>
-               </div>
-          </div>
-     </div> -->
 
      <!-- Optional Fields Section -->
      @if (txUiService.wantsOptions()) {
@@ -148,19 +136,7 @@
           <app-transaction-options-section [activeTab]="'createPaymentChannel'" (optionsValidationChange)="onOptionsValidationChange($event)"> </app-transaction-options-section>
      </div>
      }
-
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Payment channel create validation issues:" />

@@ -39,7 +39,6 @@
 
                <div class="relative">
                     <input type="text" name="channelIDField" readonly class="input-disabled" [ngModel]="paymentChannelStoreService.channelIDField()" (ngModelChange)="paymentChannelStoreService.setField('channelIDField', $event)" name="channelIDField" />
-                    <!-- <input type="text" readonly class="input-disabled" [(ngModel)]="paymentChannelStoreService.channelIDField" name="channelIDField" /> -->
                </div>
 
                <app-field-helper title="Channel ID" [items]="channelIdHelperItems" [show]="showChannelIdHelper" />

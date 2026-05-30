@@ -27,17 +27,10 @@ export class PaymentChannelValidatorService {
           const isEnabled = this.xrplTxOptionsStore.isExpirationEnabled();
 
           if (!isEnabled || !expiration) return false;
-          // if (!expiration) return false;
 
           // Use real-time expired check
           return this.realTimeService.isPaymentChannelExpired();
      });
-
-     // hasInvalidPaymentChannelExpiration = computed(() => {
-     //      const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
-     //      if (!expiration) return false;
-     //      return !this.isPaymentChannelExpirationValid();
-     // });
 
      hasInvalidPaymentChannelExpirationWhenEnabled = computed(() => {
           if (!this.txUiService.wantsOptions()) return false; // Main toggle off → no error
@@ -47,11 +40,6 @@ export class PaymentChannelValidatorService {
 
           return !this.expirationValidator.isValid(expiration);
      });
-
-     // getPaymentChannelExpirationErrorMessage = computed(() => {
-     //      const expiration = this.paymentChannelStoreService.paymentChannelCancelAfterTimeField();
-     //      return this.expirationValidator.getErrorMessage(expiration);
-     // });
 
      getPaymentChannelExpirationErrorMessage = computed(() => {
           if (!this.hasInvalidPaymentChannelExpiration()) return '';
@@ -65,11 +53,67 @@ export class PaymentChannelValidatorService {
           return `Payment channel expiration is invalid. ${timeRemaining}`;
      });
 
-     isValidClaimSignature = computed(() => {
-          const signature = this.paymentChannelStoreService.channelClaimSignatureField();
-          if (signature === null || signature === '' || signature === undefined) return false;
-          return true;
+     claimSignatureError = computed(() => {
+          const signature = this.paymentChannelStoreService.channelClaimSignatureField()?.trim();
+
+          // Empty field = no error yet
+          if (!signature) {
+               return null;
+          }
+
+          if (!/^[A-F0-9]+$/i.test(signature)) {
+               return 'Claim Signature must contain only hexadecimal characters';
+          }
+
+          if (signature.length % 2 !== 0) {
+               return 'Claim Signature must contain an even number of characters';
+          }
+
+          if (signature.length < 140 || signature.length > 144) {
+               return 'Claim Signature must be between 140 and 144 characters';
+          }
+
+          if (!signature.startsWith('30')) {
+               return 'Claim Signature must be a valid DER-encoded signature';
+          }
+
+          return null;
      });
+
+     isValidClaimSignature = computed(() => {
+          return this.claimSignatureError() === null;
+     });
+
+     hasClaimSignature = computed(() => {
+          const signature = this.paymentChannelStoreService.channelClaimSignatureField();
+          return !!signature?.trim();
+     });
+
+     // isValidClaimSignature = computed(() => {
+     //      const signature = this.paymentChannelStoreService.channelClaimSignatureField()?.trim();
+
+     //      // Empty field = no validation error yet
+     //      if (!signature) {
+     //           return true;
+     //      }
+
+     //      // Must be hex
+     //      if (!/^[A-F0-9]+$/i.test(signature)) {
+     //           return false;
+     //      }
+
+     //      // Must have an even number of hex characters
+     //      if (signature.length % 2 !== 0) {
+     //           return false;
+     //      }
+
+     //      // Typical DER-encoded XRPL signature length
+     //      if (signature.length < 140 || signature.length > 144) {
+     //           return false;
+     //      }
+
+     //      return true;
+     // });
 
      isSettleDelayValid = computed(() => {
           const delay = this.paymentChannelStoreService.settleDelay();

@@ -20,11 +20,13 @@ import { PaymentChannelValidatorService } from '../../../../services/shared/vali
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-payment-channel-claim',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, MatSlideToggleModule, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './payment-channel-claim.component.html',
      styleUrl: './payment-channel-claim.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,14 +45,18 @@ export class PaymentChannelClaimComponent {
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
 
-     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
-
      // === Helper Items ===
      readonly fundPaymentChannelSelectionHelperItems = AppConstants.CHANNEL_SELECTOR_HELPER_ITEMS;
      readonly fundPaymentChannelDetailsHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_DETAILS_HELPER_ITEMS;
      readonly paymentChannelIdHelperItems = AppConstants.PAYMENT_CHANNEL_ID_HELPER_ITEMS;
      readonly fundPaymentChannelAmountHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_AMOUNT_HELPER_ITEMS;
      readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
+
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
+     readonly isIdle = computed(() => this.txUiService.currentStep() === 'idle');
 
      // Inputs from parent
      wantsOptions = input.required<boolean>();
@@ -64,16 +70,13 @@ export class PaymentChannelClaimComponent {
      toggleOptions = output<boolean>();
      canClaimPaymentChannelChange = output<boolean>();
 
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
-
      // UI State
      showFundPaymentSelectionDetailsHelper = signal(false);
      showFundPaymentChannelDetailsHelper = signal(false);
      showPaymentChannelIdHelper = signal(false);
      showFundPaymentChannelAmountHelper = signal(false);
      showOptionalFieldsHelper = signal(false);
+     isFocused = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -83,12 +86,29 @@ export class PaymentChannelClaimComponent {
      }
      toggleCreatorMode(isChecked: boolean): void {
           this.paymentChannelStoreService.setField('isCreatorMode', isChecked);
+          this.paymentChannelStoreService.setField('channelIDField', '');
+          this.paymentChannelStoreService.setField('amount', '');
+     }
+
+     onClaimSignatureInput(event: Event): void {
+          const value = (event.target as HTMLInputElement).value.trim().toUpperCase();
+
+          // Update store immediately (for UI binding)
+          this.paymentChannelStoreService.setField('channelClaimSignatureField', value);
      }
 
      async generateCreatorClaimSignature(): Promise<void> {
           const wallet = this.walletManagerService.getSelectedWallet();
           if (!wallet) return;
           await this.paymentChannelUtilService.generateCreatorClaimSignature(wallet);
+     }
+
+     get amount() {
+          return this.paymentChannelStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.paymentChannelStoreService.setField('amount', value);
      }
 
      canClaimPaymentChannel = computed(() => {
@@ -103,11 +123,16 @@ export class PaymentChannelClaimComponent {
           const errors: string[] = [];
 
           if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
+               errors.push('Amount must be greater than 0');
           }
 
-          // if (!this.paymentChannelStoreService.isCreatorMode() && !this.paymentChannelValidatorService.isValidClaimSignature()) {
-          //      errors.push('Signature required.');
+          const claimSignatureError = this.paymentChannelValidatorService.claimSignatureError();
+          if (claimSignatureError) {
+               errors.push(claimSignatureError);
+          }
+
+          // if (this.paymentChannelValidatorService.hasClaimSignature() && !this.paymentChannelValidatorService.isValidClaimSignature()) {
+          //      errors.push('Claim Signature is invalid');
           // }
 
           if (this.txUiService.wantsOptions() && this.optionsHasError()) {

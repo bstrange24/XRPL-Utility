@@ -1,4 +1,4 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { SelectItem } from '../../../components/shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import * as xrpl from 'xrpl';
@@ -25,6 +25,7 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      selectedPaymentChannelId = computed(() => this.paymentChannelStoreService.channelIDField());
+     private readonly lastHydratedSignature = signal<string | null>(null);
 
      readonly createChannelButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
@@ -92,6 +93,17 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
           const next = item?.id ?? '';
           if (this.paymentChannelStoreService.channelIDField() !== next) {
                this.paymentChannelStoreService.setField('channelIDField', next);
+
+               if (this.paymentChannelStoreService.channelIDField() === '') {
+                    this.paymentChannelStoreService.setField('amount', '');
+               } else {
+                    const channel = this.paymentChannelStoreService.existingPaymentChannels().find(e => e.id?.toString() === next);
+                    if (channel) {
+                         this.paymentChannelStoreService.setField('channelIDField', channel.id);
+                         // Optional: pre-fill amount with full remaining if desired
+                         this.paymentChannelStoreService.setField('amount', channel.totalAmount.split(' ')[0] || '0');
+                    }
+               }
           }
      }
 
@@ -130,39 +142,59 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
      }
 
      loadFlagsFromSignature(signature: string) {
+          if (!signature || signature.length < 140) return;
+
+          if (this.lastHydratedSignature() === signature) return;
+          this.lastHydratedSignature.set(signature);
+
           const context = this.paymentChannelSignatureContextService.getSignatureContext(signature);
+          if (!context?.flags) return;
 
-          if (context?.flags) {
-               // Update the store with the flags from the signature context
-               this.paymentChannelStoreService.updateField('flags', () => ({
-                    renew: context.flags.renew ?? false,
-                    close: context.flags.close ?? true,
-                    claimAndClose: context.flags.claimAndClose ?? false,
-               }));
+          this.paymentChannelStoreService.updateField('flags', () => ({
+               renew: context.flags.renew ?? false,
+               close: context.flags.close ?? true,
+               claimAndClose: context.flags.claimAndClose ?? false,
+          }));
 
-               // Update the total flags value
-               this.updateFlagTotal();
+          this.updateFlagTotal();
 
-               // Also update other fields if needed
-               if (context.channelId && !this.paymentChannelStoreService.channelIDField()) {
-                    this.paymentChannelStoreService.setField('channelIDField', context.channelId);
-               }
-
-               if (context.amount && !this.paymentChannelStoreService.amount()) {
-                    this.paymentChannelStoreService.setField('amount', context.amount);
-               }
-
-               console.log('Loaded flags from signature context:', context.flags);
-          }
+          console.log('Loaded flags from signature context:', context.flags);
      }
+
+     // loadFlagsFromSignature(signature: string) {
+     //      const context = this.paymentChannelSignatureContextService.getSignatureContext(signature);
+     //      if (!signature || signature.length < 140) return;
+
+     //      if (context?.flags) {
+     //           // Update the store with the flags from the signature context
+     //           this.paymentChannelStoreService.updateField('flags', () => ({
+     //                renew: context.flags.renew ?? false,
+     //                close: context.flags.close ?? true,
+     //                claimAndClose: context.flags.claimAndClose ?? false,
+     //           }));
+
+     //           // Update the total flags value
+     //           this.updateFlagTotal();
+
+     //           // Also update other fields if needed
+     //           if (context.channelId && !this.paymentChannelStoreService.channelIDField()) {
+     //                this.paymentChannelStoreService.setField('channelIDField', context.channelId);
+     //           }
+
+     //           if (context.amount && !this.paymentChannelStoreService.amount()) {
+     //                this.paymentChannelStoreService.setField('amount', context.amount);
+     //           }
+
+     //           console.log('Loaded flags from signature context:', context.flags);
+     //      }
+     // }
 
      onSignatureInput(signature: string) {
           this.paymentChannelStoreService.setField('channelClaimSignatureField', signature);
-          // The subscription will automatically load the flags
      }
 
      onChannelSelected(channel: any) {
-          // If channel has flags, you might also want to load them
+          // If channel has flags then load them
           if (channel?.Flags) {
                const hasCloseFlag = (channel.Flags & 0x00020000) !== 0;
                this.paymentChannelStoreService.updateField('flags', () => ({

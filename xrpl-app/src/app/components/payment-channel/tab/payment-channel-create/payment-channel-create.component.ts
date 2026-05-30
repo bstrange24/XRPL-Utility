@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, EventEmitter, inject, input, Input, output, Output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { SelectSearchDropdownComponent, SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TransactionOptionsSectionComponent } from '../../../shared/transaction-options-section/transaction-options-section.component';
@@ -18,16 +18,18 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { PaymentChannelValidatorService } from '../../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 
 @Component({
      selector: 'app-payment-channel-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './payment-channel-create.component.html',
      styleUrl: './payment-channel-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaymentChannelCreateComponent {
+export class PaymentChannelCreateComponent implements OnDestroy {
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
@@ -43,6 +45,10 @@ export class PaymentChannelCreateComponent {
      readonly settleDelayHelperItems = AppConstants.SETTLE_DELAY_HELPER_ITEMS;
      readonly paymentChannelDestinationHelperItems = AppConstants.PAYMENT_CHANNEL_DESTINATION_HELPER_ITEMS;
 
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
      // Inputs from parent
      destinationItems = input.required<any[]>();
      selectedDestinationItem = input.required<any>();
@@ -54,16 +60,6 @@ export class PaymentChannelCreateComponent {
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
 
-     // Track destination validation status from dropdown
-     isDestinationValid = signal(false);
-
-     // UI State
-     showPaymentChannelDetailsHelper = signal(false);
-     showPaymentChannelAmountHelper = signal(false);
-     showSettleDelayHelper = signal(false);
-     showPaymentChannelDestinationHelper = signal(false);
-     showOptionalFieldsHelper = signal(false);
-
      // Outputs to parent
      performAction = output<void>();
      clearFields = output<void>();
@@ -74,9 +70,14 @@ export class PaymentChannelCreateComponent {
      canCreateCredentialChange = output<boolean>();
      canCreatePaymentChannelChange = output<boolean>();
 
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
+     // UI State
+     isDestinationValid = signal(false);
+     showPaymentChannelDetailsHelper = signal(false);
+     showPaymentChannelAmountHelper = signal(false);
+     showSettleDelayHelper = signal(false);
+     showPaymentChannelDestinationHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
+     isFocused = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -100,6 +101,14 @@ export class PaymentChannelCreateComponent {
 
      setSettleDelay(seconds: number) {
           this.paymentChannelStoreService.setField('settleDelay', seconds.toString());
+     }
+
+     get amount() {
+          return this.paymentChannelStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.paymentChannelStoreService.setField('amount', value);
      }
 
      // Forward events to parent
@@ -139,22 +148,6 @@ export class PaymentChannelCreateComponent {
           return true;
      });
 
-     canCreatePaymentChannel1 = computed(() => {
-          if (!this.isDestinationValid()) return false;
-          if (!this.amountValidatorService.isPaymentChannelAmountValid()) return false;
-          if (!this.paymentChannelValidatorService.isSettleDelayValid()) return false;
-
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
-
-          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.paymentChannelStoreService.paymentChannelCancelAfterTimeField()) {
-               if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
-                    return false;
-               }
-          }
-
-          return true;
-     });
-
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
@@ -163,41 +156,7 @@ export class PaymentChannelCreateComponent {
           }
 
           if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
-          }
-
-          if (this.paymentChannelValidatorService.isSettleDelayInvalid()) {
-               const delay = Number(this.paymentChannelStoreService.settleDelay());
-               if (delay > 4294967295) {
-                    errors.push('Settle Delay cannot exceed 4,294,967,295 seconds');
-               } else {
-                    errors.push('Settle Delay must be a valid whole number between 0 and 4,294,967,295');
-               }
-          }
-
-          // Only show expiration error if wantsOptions is enabled AND expiration is enabled AND expiration has a value
-          if (this.txUiService.wantsOptions() && this.xrplTxOptionsStore.isExpirationEnabled() && this.paymentChannelStoreService.paymentChannelCancelAfterTimeField()) {
-               if (this.paymentChannelValidatorService.hasInvalidPaymentChannelExpiration()) {
-                    errors.push(this.paymentChannelValidatorService.getPaymentChannelExpirationErrorMessage());
-               }
-          }
-
-          if (this.txUiService.wantsOptions() && this.optionsHasError()) {
-               errors.push(...this.optionsErrors());
-          }
-
-          return errors;
-     });
-
-     validationErrorMessages1 = computed(() => {
-          const errors: string[] = [];
-
-          if (!this.isDestinationValid()) {
-               errors.push('Destination address is invalid. Please enter a valid XRP address.');
-          }
-
-          if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
+               errors.push('Amount must be greater than 0');
           }
 
           if (this.paymentChannelValidatorService.isSettleDelayInvalid()) {

@@ -191,7 +191,7 @@ export class MptSendValidatorService {
           }
 
           if (numAmount <= 0) {
-               return 'Amount must be greater than 0.';
+               return 'Amount must be greater than 0';
           }
 
           if (tab === 'clawbackMpt' && numAmount > availableBalance) {
@@ -199,7 +199,7 @@ export class MptSendValidatorService {
           }
 
           if (numAmount > AppConstants.MAX_TOKEN_COUNT) {
-               return 'Amount cannot exceed 10,000,000,000,000,000 tokens.';
+               return 'Amount cannot exceed 10,000,000,000,000,000 tokens';
           }
 
           return '';

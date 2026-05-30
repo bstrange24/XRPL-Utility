@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { PaymentChannelStoreService } from '../../../../services/payment-channel/payment-channel-store/payment-channel-store.service';
@@ -19,16 +19,18 @@ import { AccountConfiguratorUtilService } from '../../../../services/account-con
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-payment-channel-fund',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, SelectSearchDropdownComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './payment-channel-fund.component.html',
      styleUrl: './payment-channel-fund.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaymentChannelFundComponent {
+export class PaymentChannelFundComponent implements OnDestroy {
      public readonly paymentChannelStoreService = inject(PaymentChannelStoreService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
@@ -46,6 +48,10 @@ export class PaymentChannelFundComponent {
      readonly fundPaymentChannelAmountHelperItems = AppConstants.FUND_PAYMENT_CHANNEL_AMOUNT_HELPER_ITEMS;
      readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
 
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+
      // Inputs from parent
      wantsOptions = input.required<boolean>();
      canSubmit = input<boolean>(false);
@@ -58,16 +64,13 @@ export class PaymentChannelFundComponent {
      toggleOptions = output<boolean>();
      canFundPaymentChannelChange = output<boolean>();
 
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
-
      // UI State
      showFundPaymentSelectionDetailsHelper = signal(false);
      showFundPaymentChannelDetailsHelper = signal(false);
      showPaymentChannelIdHelper = signal(false);
      showFundPaymentChannelAmountHelper = signal(false);
      showOptionalFieldsHelper = signal(false);
+     isFocused = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -100,6 +103,14 @@ export class PaymentChannelFundComponent {
           this.optionsErrors.set(validation.errors || []);
      }
 
+     get amount() {
+          return this.paymentChannelStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.paymentChannelStoreService.setField('amount', value);
+     }
+
      canFundPaymentChannel = computed(() => {
           if (!this.amountValidatorService.isPaymentChannelAmountValid()) return false;
           if (this.wantsOptions() && this.optionsHasError()) return false;
@@ -117,7 +128,7 @@ export class PaymentChannelFundComponent {
           const errors: string[] = [];
 
           if (this.amountValidatorService.isPaymentChannelAmountInvalid()) {
-               errors.push('Amount must be greater than 0.');
+               errors.push('Amount must be greater than 0');
           }
 
           // Only show expiration error if wantsOptions is enabled AND expiration is enabled AND expiration has a value
