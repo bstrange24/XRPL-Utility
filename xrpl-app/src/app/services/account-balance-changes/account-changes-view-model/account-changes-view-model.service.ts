@@ -7,9 +7,11 @@ import { AccountChangesStoreService } from '../account-changes-store/account-cha
      providedIn: 'root',
 })
 export class AccountChangesViewModelService {
+     private readonly walletManager = inject(WalletManagerService);
      private readonly store = inject(AccountChangesStoreService);
      private readonly walletManagerService = inject(WalletManagerService);
      public readonly txUiService = inject(TransactionUiService);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      activeTab = signal<any>('accountBalance');
 
      readonly filteredBalanceChanges = computed(() => {

@@ -7,6 +7,7 @@ import { SummaryItemComponent } from '../../../shared/ui-components/summary/summ
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 
 export interface ConfigItem {
      id: string;
@@ -31,9 +32,11 @@ export interface AccountConfiguratorInfo {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountConfiguratorSummaryComponent {
+     private readonly walletManager = inject(WalletManagerService);
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly copyUtilService = inject(CopyUtilService);
      readonly searchQuery = signal<string>('');
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
 
      constructor() {
           // Auto-clear search when parent tells us to reset

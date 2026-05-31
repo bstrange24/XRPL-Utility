@@ -59,10 +59,12 @@
                </div>
                } @else {
                <!-- Empty State Card -->
-               <div class="flex-1 flex flex-col items-center justify-center text-center py-20 bg-white border border-gray-200 rounded-2xl mt-4 transition-shadow hover:shadow-card">
-                    <lucide-icon name="wallet" size="72" class="text-gray-300 mb-6" />
-                    <h3 class="text-2xl font-medium text-gray-900">No Account Selected</h3>
-                    <p class="text-gray-500 mt-3 max-w-md">Select an account from the wallet panel on the left to view its balance change history.</p>
+               <div class="empty-state">
+                    <div class="empty-state-icon">
+                         <lucide-icon name="wallet" size="20" class="text-gray-400" />
+                    </div>
+                    <p class="empty-state-title">No accounts yet</p>
+                    <p class="empty-state-subtitle">Generate your first wallet to get started</p>
                </div>
                }
           </div>

@@ -1,4 +1,4 @@
-@if (infoData(); as info) {
+@if (hasWallets()) { @if (infoData(); as info) {
 <app-summary-container [walletName]="(infoData().walletName) || 'Wallet'" [summaryText]="(infoData().summaryMessage)" [itemCount]="infoData().totalItems" [buttonLabel]="'configuration items'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
      <div items-list class="space-y-3">
           <!-- Search INSIDE the items-list - Same as credential page -->
@@ -60,4 +60,4 @@
           }
      </div>
 </app-summary-container>
-}
+} }

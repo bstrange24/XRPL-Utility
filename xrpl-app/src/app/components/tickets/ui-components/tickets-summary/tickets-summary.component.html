@@ -1,3 +1,4 @@
+@if (hasWallets()) {
 <app-summary-container [walletName]="walletName()" [summaryText]="summaryText()" [itemCount]="totalTicketsCount()" [links]="null" [buttonLabel]="'Tickets'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
      <div items-list class="flex flex-col h-full">
           <!-- Filters Section -->
@@ -74,3 +75,4 @@
           }
      </div>
 </app-summary-container>
+}

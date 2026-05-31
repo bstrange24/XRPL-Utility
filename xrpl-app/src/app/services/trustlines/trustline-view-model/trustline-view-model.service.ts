@@ -18,6 +18,7 @@ export class TrustlineViewModelService {
      public readonly txUiService = inject(TransactionUiService);
      readonly activeTab = signal<TrustlineActionTypes>('setTrustline');
      readonly isBusy = computed(() => this.txUiService.currentStep() !== 'idle');
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
 
      constructor() {
           effect(() => {

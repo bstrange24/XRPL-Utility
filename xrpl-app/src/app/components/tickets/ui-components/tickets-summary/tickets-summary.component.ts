@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 
 const TICKETS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'ticket',
@@ -26,9 +27,11 @@ const TICKETS_SUMMARY_CONFIG: SummaryTextConfig = {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TicketsSummaryComponent {
+     private readonly walletManager = inject(WalletManagerService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
      public readonly summaryTextConfigService = inject(SummaryTextConfigService);
      public readonly copyUtilService = inject(CopyUtilService);
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
 
      constructor() {
           // Auto-clear search when parent tells us to reset

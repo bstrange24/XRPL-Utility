@@ -4,7 +4,7 @@
           <button (click)="isWalletPanelExpanded.set(!isWalletPanelExpanded())" class="w-full rounded-2xl px-5 py-4 hover:bg-gray-50 active:bg-gray-100 transition-all text-left shadow-sm hover:shadow-card" [class.bg-white]="!isDark()" [class.bg-gray-800]="isDark()" [class.border]="true" [class.border-gray-200]="!isDark()" [class.border-gray-700]="isDark()" [class.hover:bg-gray-50]="!isDark()" [class.hover:bg-gray-700]="isDark()">
                <div class="options">
                     <div class="flex items-center gap-3">
-                         <ng-icon name="heroWallet" size="22" [class.text-green-600]="!isDark()" [class.text-green-400]="isDark()" />
+                         <lucide-icon name="wallet" size="20" [class.text-green-600]="!isDark()" [class.text-green-400]="isDark()" />
                          <span class="font-semibold" [class.text-gray-900]="!isDark()" [class.text-gray-100]="isDark()">Accounts</span>
                     </div>
 
@@ -232,14 +232,6 @@
                          <p class="empty-state-title">No accounts yet</p>
                          <p class="empty-state-subtitle">Generate your first wallet to get started</p>
                     </div>
-
-                    <!-- <div class="flex flex-col items-center justify-center h-60 text-center">
-                         <div class="w-10 h-10 rounded-3xl bg-gray-100 flex items-center justify-center mb-6">
-                              <lucide-icon name="wallet" size="30" class="text-gray-400" />
-                         </div>
-                         <p class="text-xl font-medium text-gray-900">No accounts yet</p>
-                         <p class="text-gray-500 dark:text-gray-400 mt-2 max-w-xs">Generate your first wallet to get started</p>
-                    </div> -->
                     }
                </div>
           </div>

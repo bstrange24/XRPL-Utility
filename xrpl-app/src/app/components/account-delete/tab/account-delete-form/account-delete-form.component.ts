@@ -16,6 +16,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-tooltip.component';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 
 @Component({
      selector: 'app-account-delete-form',
@@ -26,11 +27,13 @@ import { ButtonTooltipComponent } from '../../../shared/button-tooltip/button-to
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteFormComponent {
+     private readonly walletManager = inject(WalletManagerService);
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      private readonly optionsHasError = signal(false);
      private readonly optionsErrorMsg = signal('');
      private readonly optionsErrors = signal<string[]>([]);

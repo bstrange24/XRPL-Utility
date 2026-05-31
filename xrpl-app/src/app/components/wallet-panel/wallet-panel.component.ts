@@ -15,7 +15,6 @@ import { WalletsStoreService } from '../../services/wallets/wallets-store/wallet
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { NgIcon } from '@ng-icons/core';
 import { ThemeService } from '../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { DialogService } from '../../services/shared/dialog/dialog.service';
@@ -23,7 +22,7 @@ import { DialogService } from '../../services/shared/dialog/dialog.service';
 @Component({
      selector: 'app-wallet-panel',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule, NgIcon],
+     imports: [CommonModule, FormsModule, LucideAngularModule, DragDropModule],
      templateUrl: './wallet-panel.component.html',
      styleUrl: './wallet-panel.component.css',
      animations: [trigger('expandCollapse', [transition(':enter', [style({ height: 0, opacity: 0, overflow: 'hidden' }), animate('200ms ease-out', style({ height: '*', opacity: 1 }))]), transition(':leave', [animate('200ms ease-in', style({ height: 0, opacity: 0, overflow: 'hidden' }))])])],

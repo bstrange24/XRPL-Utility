@@ -4,6 +4,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { RouterModule } from '@angular/router';
 import { AccountDeleteViewModelService } from '../../../../services/account-delete/account-delete-view-model/account-delete-view-model.service';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
+import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 
 export interface BlockerItem {
      label: string;
@@ -27,6 +28,9 @@ export interface DeleteAccountInfo {
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountDeleteSummaryComponent {
+     private readonly walletManager = inject(WalletManagerService);
+
+     readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
      info = input.required<{ walletName: string; canDelete: boolean; blockers: BlockerItem[]; balanceWarning: string | null } | null | undefined>();
      infoPanelExpanded = input<boolean>();
      tab = input<string>('delete');

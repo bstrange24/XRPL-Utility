@@ -62,6 +62,7 @@
      }
 
      <!-- Destructive Action Warning (IMPORTANT for Delete Account) -->
+     @if (hasWallets()) {
      <div class="alert-error">
           <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
           <div class="alert-content">
@@ -69,6 +70,7 @@
                <strong>{{ view().deleteInfo()?.deleteFee ?? '~0.2' }} XRP</strong>). The account can later be re-created by sending at least the base reserve (<strong>{{ view().deleteInfo()?.reserveBase ?? '~1' }} XRP</strong>), but it will be treated as a brand-new account.
           </div>
      </div>
+     }
 
      <!-- Action Buttons -->
      <div class="main-button-section">

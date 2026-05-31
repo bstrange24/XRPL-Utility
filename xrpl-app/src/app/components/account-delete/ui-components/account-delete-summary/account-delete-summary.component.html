@@ -1,4 +1,4 @@
-@if (info(); as infoData) {
+@if (hasWallets()) { @if (info(); as infoData) {
 <app-summary-container [walletName]="infoData.walletName" [summaryText]="summaryMessage()" [itemCount]="infoData.blockers.length" [links]="null" [buttonLabel]="'blocking objects'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
      <!-- Custom Content for Delete Account -->
      <div items-list>
@@ -60,4 +60,4 @@
           }
      </div>
 </app-summary-container>
-}
+} }

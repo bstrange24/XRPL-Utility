@@ -1,4 +1,4 @@
-@if (info(); as trustlineInfo) { @if (trustlineStoreService.isLoading()) {
+@if (trustlineViewModelService.hasWallets()) { @if (info(); as trustlineInfo) { @if (trustlineStoreService.isLoading()) {
 <div class="flex justify-center items-center p-6 bg-white rounded-2xl">
      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
      <span class="ml-3 text-gray-600">Loading trustline data...</span>
@@ -124,4 +124,4 @@
           }
      </div>
 </app-summary-container>
-} }
+} } }
