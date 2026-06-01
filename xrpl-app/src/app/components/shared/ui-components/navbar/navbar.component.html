@@ -3,7 +3,7 @@
           <div class="flex items-center justify-between gap-4">
                <!-- Logo -->
                <div class="flex items-center gap-3 flex-shrink-0">
-                    <div class="w-9 h-9 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-sm">X</div>
+                    <div class="w-7 h-7 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-sm">X</div>
                     <span class="font-semibold text-xl tracking-tight">XRPL Utility</span>
                </div>
 
@@ -111,32 +111,47 @@
 
                <!-- RIGHT SIDE -->
                <div class="flex items-center gap-3 flex-shrink-0">
-                    <!-- Network Selector -->
-                    <span class="text-sm text-gray-500 hidden sm:inline" [class.text-gray-400]="isDark()">XRPL Network:</span>
-                    <div class="relative">
-                         <button (click)="store.toggleDropdown('network')" [class.btn-network-devnet]="store.selectedNetwork() === 'Devnet'" [class.btn-network-testnet]="store.selectedNetwork() === 'Testnet'" [class.btn-network-mainnet]="store.selectedNetwork() === 'Mainnet'" class="flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all">
-                              <span>{{ store.selectedNetwork() }}</span>
-                              <span [class.rotate-180]="store.dropdowns().network" class="transition-transform">▾</span>
-                         </button>
-
-                         @if (store.dropdowns().network) {
-                         <div class="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50">
-                              <a (click)="store.selectNetwork('Devnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-white-700 hover:bg-gray-50 transition-colors cursor-pointer">Devnet</a>
-                              <a (click)="store.selectNetwork('Testnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-white-700 hover:bg-gray-50 transition-colors cursor-pointer">Testnet</a>
-                              <a (click)="store.selectNetwork('Mainnet'); store.closeAllDropdowns()" class="block px-4 py-2 text-white-700 hover:bg-gray-50 transition-colors cursor-pointer">Mainnet</a>
-                         </div>
+                    <!-- Network Selector Button - Opens Modal -->
+                    <button
+                         (click)="openNetworkModal()"
+                         class="flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium text-sm transition-all group"
+                         [class.bg-red-50]="selectedNetwork() === 'Mainnet' && !isDark()"
+                         [class.bg-amber-50]="selectedNetwork() === 'Testnet' && !isDark()"
+                         [class.bg-emerald-50]="selectedNetwork() === 'Devnet' && !isDark()"
+                         [class.bg-red-900/20]="selectedNetwork() === 'Mainnet' && isDark()"
+                         [class.bg-amber-900/20]="selectedNetwork() === 'Testnet' && isDark()"
+                         [class.bg-emerald-900/20]="selectedNetwork() === 'Devnet' && isDark()"
+                         [class.text-red-700]="selectedNetwork() === 'Mainnet' && !isDark()"
+                         [class.text-amber-700]="selectedNetwork() === 'Testnet' && !isDark()"
+                         [class.text-emerald-700]="selectedNetwork() === 'Devnet' && !isDark()"
+                         [class.text-red-400]="selectedNetwork() === 'Mainnet' && isDark()"
+                         [class.text-amber-400]="selectedNetwork() === 'Testnet' && isDark()"
+                         [class.text-emerald-400]="selectedNetwork() === 'Devnet' && isDark()"
+                    >
+                         <!-- Network icon based on type -->
+                         @if (selectedNetwork() === 'Mainnet') {
+                         <lucide-icon name="lucideNetwork" size="16" class="text-red-600 dark:text-red-400"></lucide-icon>
+                         } @if (selectedNetwork() === 'Testnet') {
+                         <lucide-icon name="shieldCheck" size="16" class="text-amber-600 dark:text-amber-400"></lucide-icon>
+                         } @if (selectedNetwork() === 'Devnet') {
+                         <lucide-icon name="lucideZap" size="16" class="text-emerald-600 dark:text-emerald-400"></lucide-icon>
                          }
-                    </div>
 
-                    <!-- Connection Status - now with showLabel false to hide "Network Status:" text -->
+                         <span>{{ selectedNetwork() }}</span>
+
+                         <!-- Chevron down icon to indicate clickable -->
+                         <ng-icon name="heroChevronDown" size="12" class="opacity-60 group-hover:opacity-100 transition-opacity"></ng-icon>
+                    </button>
+
+                    <!-- Connection Status -->
                     <app-connection-status [showLabel]="false"></app-connection-status>
 
                     <!-- Theme Toggle -->
-                    <button (click)="themeService.toggle()" class="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-gray-100 transition-colors" [class.hover:bg-gray-700]="isDark()">
+                    <button (click)="themeService.toggle()" class="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors" [class.hover:bg-gray-700]="isDark()">
                          @if (!isDark()) {
-                         <ng-icon name="heroMoon" size="20" class="text-gray-600" />
+                         <ng-icon name="heroMoon" size="18" class="text-gray-600" />
                          } @else {
-                         <ng-icon name="heroSun" size="20" class="text-gray-400" />
+                         <ng-icon name="heroSun" size="18" class="text-gray-400" />
                          }
                     </button>
                </div>

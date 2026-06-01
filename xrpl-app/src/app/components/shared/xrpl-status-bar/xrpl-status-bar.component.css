@@ -1,0 +1,42 @@
+button {
+     cursor: pointer;
+     user-select: none;
+}
+
+/* Smooth transitions */
+.status-bar-interactive {
+     transition: all 0.2s ease;
+}
+
+/* Modal backdrop blur */
+.modal-backdrop {
+     backdrop-filter: blur(4px);
+}
+
+/* Network indicator hover effect */
+.network-indicator:hover {
+     background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* xrpl-status-bar.component.css */
+.status-bar {
+     position: sticky;
+     top: 0;
+     z-index: 40;
+}
+
+/* On scroll, shrink slightly */
+.status-bar.scrolled {
+     padding-top: 0.25rem;
+     padding-bottom: 0.25rem;
+     font-size: 0.7rem;
+}
+
+/* On mobile, make more compact */
+@media (max-width: 768px) {
+     .status-bar {
+          position: static;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+     }
+}

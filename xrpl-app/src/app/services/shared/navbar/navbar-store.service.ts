@@ -9,8 +9,12 @@ export class NavbarStore {
      private readonly xrplService = inject(XrplService);
      private readonly networkService = inject(NetworkService);
 
+     constructor() {}
+
      selectedNetwork = signal('Devnet');
      networkColor = signal('#10b981');
+     transactionInput = signal('');
+     loading = signal(false);
 
      dropdowns = signal({
           network: false,
@@ -20,13 +24,8 @@ export class NavbarStore {
           mpt: false,
      });
 
-     transactionInput = signal('');
-     loading = signal(false);
-
      connectionStatus = computed(() => this.xrplService.connectionStatus$());
      connectionMessage = computed(() => this.xrplService.connectionMessage$());
-
-     constructor() {}
 
      toggleDropdown(name: keyof ReturnType<typeof this.dropdowns>) {
           this.dropdowns.update(d => ({

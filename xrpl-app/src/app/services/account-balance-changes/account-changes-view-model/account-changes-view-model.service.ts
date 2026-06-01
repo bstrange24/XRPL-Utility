@@ -65,6 +65,7 @@ export class AccountChangesViewModelService {
                case 'NFTokenBurn':
                case 'PaymentChannelClaim':
                case 'PaymentChannelCreate':
+               case 'PaymentChannelFund':
                case 'AMMDelete':
                case 'CredentialDelete':
                     return '#f0874bff';

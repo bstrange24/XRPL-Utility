@@ -2,8 +2,7 @@ import { NgIconsModule } from '@ng-icons/core';
 import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
 import { RealTimeExpirationService } from './app/services/shared/real-time-date-expiration-check/real-time-expiration.service';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { BrowserAnimationsModule, provideAnimations } from '@angular/platform-browser/animations';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { AppComponent } from './app/app.component';
 import { provideRouter } from '@angular/router';
@@ -78,6 +77,13 @@ import {
      LucideTag,
      LucidePlus,
      LucideRefreshCcw,
+     LucideNetwork,
+     LucideCpu,
+     LucideZap,
+     LucideSparkle,
+     LucideFlaskConical,
+     LucideFlaskRound,
+     LucideActivity,
 } from 'lucide-angular';
 import { provideIcons } from '@ng-icons/core';
 import {
@@ -214,6 +220,13 @@ bootstrapApplication(AppComponent, {
                     LucideShuffle,
                     LucideTag,
                     LucidePackage,
+                    LucideNetwork,
+                    LucideCpu,
+                    LucideZap,
+                    LucideSparkle,
+                    LucideActivity,
+                    LucideFlaskConical,
+                    LucideFlaskRound,
                     LucideRefreshCcw,
                     LucidePlus,
                     Handshake,

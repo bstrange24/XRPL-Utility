@@ -1101,9 +1101,9 @@ label:hover .toggle-label {
      @apply bg-white rounded-2xl shadow p-4;
 }
 
-.navbar-container {
+/* .navbar-container {
      width: 100%;
-}
+} */
 
 .transaction-options {
      @apply space-y-8;
@@ -1618,4 +1618,151 @@ pre code[class*="language-"] {
 
 .status-text.text-blue-400 {
      color: #60a5fa;
+}
+
+/* Modal animations */
+@keyframes modalSlideIn {
+     from {
+          opacity: 0;
+          transform: scale(0.95) translateY(-10px);
+     }
+
+     to {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+     }
+}
+
+.modal-content {
+     animation: modalSlideIn 0.2s ease-out;
+}
+
+/* Backdrop blur */
+.backdrop-blur-sm {
+     backdrop-filter: blur(8px);
+}
+
+/* Network option hover effects */
+.network-option {
+     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.network-option:hover {
+     transform: translateX(4px);
+}
+
+/* Sync indicator animations */
+@keyframes pulse-yellow {
+
+     0%,
+     100% {
+          opacity: 1;
+     }
+
+     50% {
+          opacity: 0.5;
+     }
+}
+
+.syncing-text {
+     animation: pulse-yellow 1.5s ease-in-out infinite;
+}
+
+/* Warning banner */
+.sync-warning {
+     animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+     from {
+          opacity: 0;
+          transform: translateY(-100%);
+     }
+
+     to {
+          opacity: 1;
+          transform: translateY(0);
+     }
+}
+
+/* ============================================
+   NAVBAR STYLES - COMPACT & TIGHT
+   ============================================ */
+@layer components {
+
+     .navbar {
+          @apply h-11 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-slate-700;
+          font-size: 0.95rem;
+     }
+
+     .navbar-container>div {
+          /* targets your mx-auto px-6 py-4 */
+          @apply px-6 py-2.5;
+          /* reduced padding */
+     }
+
+     /* Logo area */
+     .navbar-logo {
+          @apply text-lg font-semibold;
+     }
+
+     /* Make nav links tighter */
+     nav a,
+     nav button {
+          @apply py-1.5 px-3 text-sm;
+          /* tighter vertical padding */
+     }
+}
+
+/* ============================================
+   STATUS BAR - ZERO LAYOUT SHIFT + TIGHT SPACING
+   ============================================ */
+@layer components {
+
+     .status-bar {
+          @apply flex items-center h-full px-3 overflow-x-auto;
+
+          display: grid;
+          grid-auto-flow: column;
+          grid-auto-columns: max-content;
+          align-items: center;
+          column-gap: 0.75rem;
+     }
+
+     .status-item {
+          @apply flex items-center gap-1 whitespace-nowrap;
+     }
+
+     .status-label {
+          @apply text-slate-400;
+     }
+
+     .status-value {
+          @apply font-medium tabular-nums leading-none;
+     }
+
+     .status-separator {
+          @apply w-px h-4 bg-slate-700;
+     }
+
+     /* Reserve width ONLY for changing values */
+     .ledger-value {
+          @apply inline-block;
+          min-width: 1rem;
+     }
+
+     .close-value {
+          @apply inline-block;
+          min-width: 3rem;
+     }
+
+     .peer-value {
+          @apply inline-block;
+          min-width: 1rem;
+     }
+
+     .load-value {
+          @apply inline-block;
+          min-width: 1rem;
+     }
 }

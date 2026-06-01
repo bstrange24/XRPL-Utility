@@ -1,12 +1,17 @@
 @if (showLabel()) {
 <div class="connection-status-container">
-     <div class="connection-indicator" [class.connected]="isConnected() && isLedgerReady()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [class.not-synced]="isLedgerNotSynced()" [class.syncing]="isLedgerSyncing()" [title]="statusMessage()">
+     <div class="connection-indicator" [class.connected]="isConnected() && isLedgerReady()" [class.connecting]="isConnecting()" [class.disconnected]="isDisconnected()" [class.syncing]="isConnected() && !isLedgerReady()" [class.not-synced]="isLedgerNotSynced()" [class.syncing]="isLedgerSyncing()" [title]="statusMessage()">
           <div class="flex items-center justify-center gap-3 w-full">
-               <span class="w-2 h-2 rounded-full animate-pulse" [style.backgroundColor]="isLedgerNotSynced() ? '#f59e0b' : (isLedgerSyncing() ? '#3b82f6' : (isLedgerReady() ? '#10b981' : '#6b7280'))" [style.boxShadow]="'0 0 0px 2px ' + (isLedgerNotSynced() ? '#f59e0b40' : (isLedgerSyncing() ? '#3b82f640' : (isLedgerReady() ? '#10b98140' : '#6b728040')))"> </span>
+               <span class="w-2 h-2 rounded-full animate-pulse" [style.backgroundColor]="!isConnected() ? '#6b7280' : (!isLedgerReady() ? '#f59e0b' : '#10b981')" [style.boxShadow]="'0 0 0px 2px ' + (!isConnected() ? '#6b728040' : (!isLedgerReady() ? '#f59e0b40' : '#10b98140'))"> </span>
 
                <span class="text-xs text-gray-500 hidden sm:inline">Network Status:</span>
 
-               <span class="status-text" [class.text-yellow-500]="isLedgerNotSynced()" [class.text-blue-400]="isLedgerSyncing()"> {{ statusText() }} </span>
+               <span class="status-text" [class.text-yellow-500]="isConnected() && !isLedgerReady()" [class.text-blue-400]="isLedgerSyncing()" [class.text-green-500]="isConnected() && isLedgerReady()"> {{ statusText() }} </span>
+
+               <!-- Show spinner when connected but not ready -->
+               @if (isConnected() && !isLedgerReady()) {
+               <lucide-icon name="lucideRefreshCcw" size="12" class="animate-spin"></lucide-icon>
+               }
           </div>
      </div>
 

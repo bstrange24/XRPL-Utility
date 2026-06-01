@@ -21,6 +21,7 @@ import { RightPanelService } from './services/utils/right-panel/right-panel.serv
 import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
 import { XrplStatusBarComponent } from './components/shared/xrpl-status-bar/xrpl-status-bar.component';
+import { NetworkModalService } from './services/utils/network-modal/network-modal.service';
 
 @Component({
      selector: 'app-root',
@@ -38,6 +39,7 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
      private readonly activatedRoute = inject(ActivatedRoute);
      private readonly titleService = inject(Title);
      public readonly rightPanelService = inject(RightPanelService);
+     public readonly networkModalService = inject(NetworkModalService);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -85,13 +87,17 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
                     takeUntilDestroyed(this.destroyRef)
                )
                .subscribe(data => {
-                    if (data && data['title']) {
+                    if (data?.['title']) {
                          // Add check for data being truthy
                          this.titleService.setTitle(data['title']);
                     } else {
                          this.titleService.setTitle('XRPL App');
                     }
                });
+     }
+
+     openNetworkModal() {
+          this.networkModalService.openModal();
      }
 
      isBalanceChangesPage(): boolean {

@@ -2,126 +2,301 @@
      <div class="h-full w-full mx-auto px-6 flex items-center justify-center gap-4 overflow-x-auto whitespace-nowrap text-xs text-slate-200">
           <!-- Network Status -->
           <div class="flex items-center gap-2 h-full" [title]="statusTooltip()">
-               <div class="w-2 h-2 rounded-full animate-pulse flex-shrink-0" [class.bg-red-500]="!isConnected()" [class.bg-yellow-500]="isConnected() && serverState() === 'connected'" [class.bg-blue-500]="isConnected() && (serverState() === 'tracking' || serverState() === 'syncing')" [class.bg-green-500]="isConnected() && serverState() === 'full'"></div>
-
-               <!-- <span class="text-slate-400">Network:</span> -->
-               <!-- <span class="font-medium text-white leading-none"> {{ getNetworkName() }} </span> -->
-               <!-- <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" [class.bg-red-400]="getNetworkName() === 'Mainnet'" [class.bg-orange-400]="getNetworkName() === 'Testnet'" [class.bg-green-400]="getNetworkName() === 'Devnet'"></div> -->
-               <span class="text-slate-400"> XRPL {{ getNetworkName() }} </span>
-
                @if (serverState() === 'syncing') {
-               <svg class="w-3 h-3 animate-spin text-blue-400" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-               </svg>
+               <lucide-icon name="lucideRefreshCcw" size="12" class="animate-spin"></lucide-icon>
                }
           </div>
+
+          <!-- Opens network selector modal -->
+          <button (click)="openNetworkSelector()" class="flex items-center gap-2 h-full px-2 rounded hover:bg-slate-800 transition-colors group" [title]="'Current: ' + getNetworkName() + ' network. Click to change'">
+               <div class="w-2 h-2 rounded-full animate-pulse flex-shrink-0" [class.bg-red-500]="!isConnected()" [class.bg-yellow-500]="isConnected() && serverState() === 'connected'" [class.bg-blue-500]="isConnected() && (serverState() === 'tracking' || serverState() === 'syncing')" [class.bg-green-500]="isConnected() && serverState() === 'full'"></div>
+
+               <span class="text-slate-400 group-hover:text-slate-300 transition-colors">XRPL</span>
+
+               <span class="font-medium text-white leading-none group-hover:text-emerald-400 transition-colors"> {{ getNetworkName() }} </span>
+
+               <!-- Small edit icon to indicate clickability -->
+               <lucide-icon name="edit-2" size="12" class="text-slate-500 group-hover:text-slate-400 transition-colors"></lucide-icon>
+          </button>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Ledger -->
-          <div class="flex items-center gap-1 h-full">
-               <span class="text-slate-400">Ledger:</span>
-               <span class="font-medium text-white leading-none"> {{ ledgerIndex() | number }} </span>
+          <div class="flex items-center gap-1 h-full" [title]="'Validated ledger #' + (ledgerIndex() | number) + (ledgerLag() > 1 ? ' - Node is ' + ledgerLag() + ' ledgers behind the network' : ' - Fully synced')">
+               <span class="status-label">Ledger: </span>
+               <span class="status-value inline-block"> {{ ledgerIndex() | number }} </span>
+
                @if (ledgerLag() > 1) {
-               <span class="text-yellow-400 leading-none"> (+{{ ledgerLag() }}) </span>
+               <span class="inline-block text-yellow-400"> (+{{ ledgerLag() }}) </span>
                }
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Fee -->
-          <div class="flex items-center gap-1 h-full" title="Current transaction fee">
-               <span class="text-slate-400">Fee:</span>
-               <span class="font-medium text-emerald-400 leading-none"> {{ formattedFee() }} </span>
-               <span class="leading-none" [class]="loadIndicator().class"> ({{ loadIndicator().text }}) </span>
+          <div class="status-item" title="Current transaction fee">
+               <span class="status-label">Fee:</span>
+
+               <span class="status-value text-emerald-400"> {{ formattedFee() }} </span>
+
+               <span [class]="loadIndicator().class"> ({{ loadIndicator().text }}) </span>
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
-          <!-- Close Time -->
+          <!-- Close -->
           <div class="flex items-center gap-1 h-full" title="Time since last ledger close">
-               <span class="text-slate-400">Close:</span>
-               <span class="font-medium text-blue-400 leading-none"> {{ formattedCloseTime() }} </span>
+               <span class="status-label">Close:</span>
+
+               <span class="status-value close-value"> {{ formattedCloseTime() }} </span>
           </div>
+
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Server -->
-          <div class="flex items-center gap-1 h-full">
-               <span class="text-slate-400">Server:</span>
+          <div class="status-item" title="Server state">
+               <span class="status-label">Server:</span>
 
-               <span class="font-medium text-white leading-none"> {{ getFormattedServerState() }} </span>
+               <span class="status-value text-white"> {{ getFormattedServerState() }} </span>
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Reserve -->
-          <div class="flex items-center gap-1 h-full" title="Minimum XRP required for account creation and per object">
-               <span class="text-slate-400">Reserve:</span>
-               <span class="font-medium text-slate-300 leading-none"> {{ reserveBase() }} + {{ reserveIncrement() }} XRP/obj </span>
+          <div class="status-item" title="Minimum XRP required">
+               <span class="status-label">Reserve:</span>
+
+               <span class="status-value text-slate-300"> {{ reserveBase() }} + {{ reserveIncrement() }} XRP/obj </span>
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
-          <!-- Node Version -->
-          <div class="flex items-center gap-1 h-full" title="Connected node version">
-               <span class="text-slate-400">Node:</span>
+          <!-- Node -->
+          <div class="status-item" title="Connected node version">
+               <span class="status-label">Node:</span>
 
                @if (nodeVersion()) {
-               <span class="font-medium text-cyan-400 leading-none"> {{ nodeVersion() }} </span>
+               <span class="status-value text-cyan-400"> {{ nodeVersion() }} </span>
                } @else {
-               <span class="font-medium text-yellow-500 animate-pulse leading-none"> loading... </span>
+               <span class="status-value text-yellow-500 animate-pulse"> loading... </span>
                }
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Peers -->
-          <div class="flex items-center gap-1 h-full" title="Connected peers">
-               <span class="text-slate-400">Peers:</span>
+          <div class="status-item" title="Connected peers">
+               <span class="status-label">Peers:</span>
 
                @if (peerCount() > 0) {
-               <span class="font-medium text-emerald-400 leading-none"> {{ peerCount() }} </span>
+               <span class="status-value text-emerald-400 peer-value"> {{ peerCount() }} </span>
                } @else if (peerCount() === 0 && isConnected()) {
-               <span class="font-medium text-yellow-500 leading-none"> connecting... </span>
+               <span class="status-value text-yellow-500 peer-value"> connecting... </span>
                } @else {
-               <span class="font-medium text-slate-500 leading-none"> — </span>
+               <span class="status-value text-slate-500 peer-value"> — </span>
                }
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
           <!-- Load -->
-          <div class="flex items-center gap-1 h-full" title="Network congestion level">
-               <span class="text-slate-400">Load:</span>
-               <span class="font-medium leading-none" [class.text-emerald-400]="loadFactor() <= 1" [class.text-yellow-400]="loadFactor() > 1 && loadFactor() <= 2" [class.text-orange-400]="loadFactor() > 2 && loadFactor() <= 5" [class.text-red-400]="loadFactor() > 5"> {{ loadFactor().toFixed(1) }}x </span>
+          <div class="status-item" title="Network congestion level">
+               <span class="status-label">Load:</span>
+
+               <span class="status-value load-value" [class.text-emerald-400]="loadFactor() <= 1" [class.text-yellow-400]="loadFactor() > 1 && loadFactor() <= 2" [class.text-orange-400]="loadFactor() > 2 && loadFactor() <= 5" [class.text-red-400]="loadFactor() > 5"> {{ loadFactor().toFixed(1) }}x </span>
           </div>
 
           <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div>
 
-          <!-- Health -->
-          <!-- <div class="flex items-center gap-1 h-full">
-               <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" [class.bg-red-400]="getNetworkName() === 'Mainnet'" [class.bg-orange-400]="getNetworkName() === 'Testnet'" [class.bg-green-400]="getNetworkName() === 'Devnet'"></div>
-               <span class="text-slate-400"> XRPL {{ getNetworkName() }} </span> -->
-
-          <!-- @if (ledgerLag() === 0 && loadFactor() <= 1) {
-               <span class="text-emerald-400 text-xs"> ● Optimal </span>
-               } @else if (ledgerLag() > 5 || loadFactor() > 2) {
-               <span class="text-yellow-400 text-xs"> ● Degraded </span>
-               } -->
-          <!-- </div> -->
-
-          <!-- <div class="w-px h-4 bg-slate-700 flex-shrink-0"></div> -->
-
-          <div class="flex items-center gap-1 h-full">
-               <!-- <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" [class.bg-red-400]="getNetworkName() === 'Mainnet'" [class.bg-orange-400]="getNetworkName() === 'Testnet'" [class.bg-green-400]="getNetworkName() === 'Devnet'"></div>
-               <span class="text-slate-400"> XRPL {{ getNetworkName() }} </span> -->
-
+          <!-- Final message -->
+          <div class="flex items-center gap-1 h-full min-w-[135px] flex-shrink-0">
                @if (ledgerLag() === 0 && loadFactor() <= 1) {
-               <span class="text-emerald-400 text-xs"> Optimal Network</span>
+               <span class="text-emerald-400 text-xs">Network Optimal</span>
                } @else if (ledgerLag() > 5 || loadFactor() > 2) {
-               <span class="text-yellow-400 text-xs"> Network Degraded </span>
+               <span class="text-yellow-400 text-xs">Network Degraded</span>
                }
           </div>
      </div>
 </div>
+
+@if (showSyncBanner()) {
+<div class="bg-slate-800/80 border-b text-xs py-2 px-4 text-center sticky top-0 z-30 backdrop-blur-sm" [class]="bannerColors.borderClass" style="margin-top: -1px">
+     <div class="flex items-center justify-center gap-4">
+          <div class="flex items-center gap-2">
+               <div class="relative">
+                    <div class="w-2 h-2 rounded-full" [class]="bannerColors.dotClass"></div>
+                    <div class="absolute inset-0 w-2 h-2 rounded-full animate-ping opacity-75" [class]="bannerColors.dotClass"></div>
+               </div>
+               <span class="font-mono text-[11px] font-semibold tracking-wider" [class]="bannerColors.textClass"> {{ getNetworkName().toUpperCase() }} </span>
+          </div>
+
+          <div class="w-px h-3 bg-slate-700"></div>
+
+          <div class="flex items-center gap-2">
+               <lucide-icon name="lucideRefreshCcw" size="12" class="animate-spin"></lucide-icon>
+               <span class="text-slate-300 text-[11px]">Synchronizing with {{ getNetworkName() }}...</span>
+          </div>
+
+          <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full" [class]="bannerColors.badgeClass">
+               <span class="text-[10px] font-medium" [class]="bannerColors.textClass">●</span>
+               <span class="text-slate-300 text-[10px]">Ledger unavailable</span>
+          </div>
+     </div>
+</div>
+}
+
+<!-- Network Selection Modal -->
+@if (showNetworkModal()) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="closeNetworkModal()" (keydown)="onModalKeyDown($event)">
+     <!-- Backdrop with blur -->
+     <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-all duration-200"></div>
+
+     <!-- Modal Panel -->
+     <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 transform transition-all duration-200 scale-100 opacity-100 overflow-hidden" (click)="$event.stopPropagation()" (keydown)="onModalKeyDown($event)">
+          <!-- Header -->
+          <div class="flex items-center justify-between p-6 border-b border-gray-200">
+               <div>
+                    <h3 class="text-xl font-semibold text-gray-900">Select Network</h3>
+                    <p class="text-sm text-gray-500 mt-1">Choose which XRPL network to connect to</p>
+               </div>
+               <button (click)="closeNetworkModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-xl">
+                    <lucide-icon name="X" size="20"></lucide-icon>
+               </button>
+          </div>
+
+          <!-- Network Options -->
+          <div class="p-6 space-y-3">
+               <!-- Mainnet Option -->
+               <button (click)="selectNetwork('Mainnet')" class="w-full group">
+                    <div class="relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4" [class.border-red-500]="getNetworkName() === 'Mainnet'" [class.border-gray-200]="getNetworkName() !== 'Mainnet'" [class.bg-red-50]="getNetworkName() === 'Mainnet'" [class.dark:bg-red-900/10]="getNetworkName() === 'Mainnet'" [class.hover:border-red-300]="getNetworkName() !== 'Mainnet'" [class.dark:hover:border-red-700]="getNetworkName() !== 'Mainnet'">
+                         <!-- Checkmark on the LEFT - for active network -->
+                         @if (getNetworkName() === 'Mainnet') {
+                         <div class="flex-shrink-0 w-6">
+                              <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
+                                   <ng-icon name="heroCheck" size="16" class="text-white"></ng-icon>
+                              </div>
+                         </div>
+                         } @else {
+                         <!-- Empty spacer for alignment -->
+                         <div class="flex-shrink-0 w-6"></div>
+                         }
+
+                         <!-- Network icon -->
+                         <div class="flex-shrink-0">
+                              <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                                   <lucide-icon name="lucideNetwork" size="24" class="text-red-600 dark:text-red-400"></lucide-icon>
+                              </div>
+                         </div>
+
+                         <!-- Network info -->
+                         <div class="flex-1 text-left">
+                              <div class="flex items-center gap-2 mb-1">
+                                   <span class="font-semibold text-gray-900 text-lg">Mainnet</span>
+                                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Production</span>
+                              </div>
+                              <div class="text-sm text-gray-500">Main XRPL network with real XRP value</div>
+                              <div class="flex items-center gap-3 mt-2 text-xs">
+                                   <span class="flex items-center gap-1 text-red-600">
+                                        <lucide-icon name="dollarSign" size="12"></lucide-icon>
+                                        Real XRP
+                                   </span>
+                                   <span class="text-gray-300">•</span>
+                                   <lucide-icon name="lucideActivity" size="12"></lucide-icon>
+                                   <span>Live transactions</span>
+                              </div>
+                         </div>
+                    </div>
+               </button>
+
+               <!-- Testnet Option -->
+               <button (click)="selectNetwork('Testnet')" class="w-full group">
+                    <div class="relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4" [class.border-amber-500]="getNetworkName() === 'Testnet'" [class.border-gray-200]="getNetworkName() !== 'Testnet'" [class.bg-amber-50]="getNetworkName() === 'Testnet'" [class.dark:bg-amber-900/10]="getNetworkName() === 'Testnet'" [class.hover:border-amber-300]="getNetworkName() !== 'Testnet'" [class.dark:hover:border-amber-700]="getNetworkName() !== 'Testnet'">
+                         @if (getNetworkName() === 'Testnet') {
+                         <div class="flex-shrink-0 w-6">
+                              <div class="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center shadow-lg">
+                                   <ng-icon name="heroCheck" size="16" class="text-white"></ng-icon>
+                              </div>
+                         </div>
+                         } @else {
+                         <div class="flex-shrink-0 w-6"></div>
+                         }
+
+                         <div class="flex-shrink-0">
+                              <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                                   <lucide-icon name="shieldCheck" size="24" class="text-amber-600 dark:text-amber-400"></lucide-icon>
+                              </div>
+                         </div>
+
+                         <div class="flex-1 text-left">
+                              <div class="flex items-center gap-2 mb-1">
+                                   <span class="font-semibold text-gray-900 text-lg">Testnet</span>
+                                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Testing</span>
+                              </div>
+                              <div class="text-sm text-gray-500">Stable testing environment, mimics Mainnet</div>
+                              <div class="flex items-center gap-3 mt-2 text-xs">
+                                   <span class="flex items-center gap-1 text-amber-600">
+                                        <lucide-icon name="eye" size="12" class="text-amber-600 dark:text-amber-400"></lucide-icon>
+                                        Free XRP
+                                   </span>
+                                   <span class="text-gray-300">•</span>
+                                   <lucide-icon name="lucideFlaskConical" size="12"></lucide-icon>
+                                   <span>Test transactions</span>
+                              </div>
+                         </div>
+                    </div>
+               </button>
+
+               <!-- Devnet Option -->
+               <button (click)="selectNetwork('Devnet')" class="w-full group">
+                    <div class="relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4" [class.border-emerald-500]="getNetworkName() === 'Devnet'" [class.border-gray-200]="getNetworkName() !== 'Devnet'" [class.bg-emerald-50]="getNetworkName() === 'Devnet'" [class.dark:bg-emerald-900/10]="getNetworkName() === 'Devnet'" [class.hover:border-emerald-300]="getNetworkName() !== 'Devnet'" [class.dark:hover:border-emerald-700]="getNetworkName() !== 'Devnet'">
+                         @if (getNetworkName() === 'Devnet') {
+                         <div class="flex-shrink-0 w-6">
+                              <div class="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                                   <ng-icon name="heroCheck" size="16" class="text-white"></ng-icon>
+                              </div>
+                         </div>
+                         } @else {
+                         <div class="flex-shrink-0 w-6"></div>
+                         }
+
+                         <div class="flex-shrink-0">
+                              <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
+                                   <lucide-icon name="lucideZap" size="24" class="text-emerald-600 dark:text-emerald-400"></lucide-icon>
+                              </div>
+                         </div>
+
+                         <div class="flex-1 text-left">
+                              <div class="flex items-center gap-2 mb-1">
+                                   <span class="font-semibold text-gray-900 text-lg">Devnet</span>
+                                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Development</span>
+                              </div>
+                              <div class="text-sm text-gray-500">Fast development network with free XRP</div>
+                              <div class="flex items-center gap-3 mt-2 text-xs">
+                                   <span class="flex items-center gap-1 text-emerald-600">
+                                        <lucide-icon name="lucideZap" size="10" class="text-emerald-600 dark:text-emerald-400"></lucide-icon>
+                                        Fast sync
+                                   </span>
+                                   <span class="text-gray-300">•</span>
+                                   <lucide-icon name="lucideSparkle" size="12"></lucide-icon>
+                                   <span>Latest features</span>
+                              </div>
+                         </div>
+                    </div>
+               </button>
+          </div>
+
+          <!-- Footer with network stats -->
+          <div class="p-6 border-t border-gray-200 bg-gray-50">
+               <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                         <div class="w-2 h-2 rounded-full" [class.bg-red-500]="getNetworkName() === 'Mainnet'" [class.bg-amber-500]="getNetworkName() === 'Testnet'" [class.bg-emerald-500]="getNetworkName() === 'Devnet'"></div>
+                         <span class="text-gray-600">Currently connected to</span>
+                         <span class="font-semibold text-gray-900">{{ getNetworkName() }}</span>
+                    </div>
+
+                    <button (click)="closeNetworkModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors">Close</button>
+               </div>
+          </div>
+     </div>
+</div>
+}

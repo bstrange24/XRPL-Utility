@@ -18,6 +18,11 @@ export class XrplService {
      private readonly connectionStatus = signal<ConnectionStatus>('disconnected');
      private readonly connectionMessage = signal<string>('Disconnected');
      private readonly tokens = signal<Token[]>([]);
+     private readonly baseFee = signal<number>(10);
+     private readonly closeTime = signal<number>(0);
+     private readonly lastLedgerTime = signal<Date | null>(null);
+     private readonly loadFactor = signal<number>(1);
+     private readonly feeMultiplier = signal<number>(1);
      private connectingPromise: Promise<xrpl.Client> | null = null;
      private reconnectAttempts = 0;
      private reconnectTimeout: any = null;
@@ -35,14 +40,9 @@ export class XrplService {
      readonly serverState$ = this.serverState.asReadonly();
      readonly ledgerSyncStatus$ = this.ledgerSyncStatus.asReadonly();
      readonly validatedLedgerIndex$ = this.validatedLedgerIndex.asReadonly();
-     private readonly baseFee = signal<number>(10);
-     private readonly closeTime = signal<number>(0);
-     private readonly lastLedgerTime = signal<Date | null>(null);
      readonly baseFee$ = this.baseFee.asReadonly();
      readonly closeTime$ = this.closeTime.asReadonly();
      readonly lastLedgerTime$ = this.lastLedgerTime.asReadonly();
-     private readonly loadFactor = signal<number>(1);
-     private readonly feeMultiplier = signal<number>(1);
      readonly loadFactor$ = this.loadFactor.asReadonly();
      readonly feeMultiplier$ = this.feeMultiplier.asReadonly();
 
@@ -94,7 +94,7 @@ export class XrplService {
           const baseDelay = 1000;
 
           console.log(`Attempting to connect to: ${net}`);
-          this.setStatus('connecting', `Connecting to ${this.getNetworkName()}...`);
+          // this.setStatus('connecting', `Connecting to ${this.getNetworkName()}...`);
 
           for (let attempt = 1; attempt <= maxRetries; attempt++) {
                const client = new xrpl.Client(net, {
@@ -140,7 +140,7 @@ export class XrplService {
 
                     client.on('disconnected', code => {
                          console.warn('XRPL client disconnected:', code);
-                         this.setStatus('disconnected', 'Connection lost');
+                         // this.setStatus('disconnected', 'Connection lost');
                          this.client.set(null);
                          this.serverState.set('disconnected');
                          this.ledgerSyncStatus.set('unknown');
@@ -497,7 +497,7 @@ export class XrplService {
                await currentClient.disconnect();
                this.client.set(null);
           }
-          this.setStatus('disconnected', 'Disconnected');
+          // this.setStatus('disconnected', 'Disconnected');
           this.serverState.set('disconnected');
           this.ledgerSyncStatus.set('unknown');
           this.validatedLedgerIndex.set(null);
@@ -506,19 +506,6 @@ export class XrplService {
                this.reconnectTimeout = null;
           }
      }
-
-     // async disconnect() {
-     //      const currentClient = this.client();
-     //      if (currentClient) {
-     //           await currentClient.disconnect();
-     //           this.client.set(null);
-     //      }
-     //      this.setStatus('disconnected', 'Disconnected');
-     //      if (this.reconnectTimeout) {
-     //           clearTimeout(this.reconnectTimeout);
-     //           this.reconnectTimeout = null;
-     //      }
-     // }
 
      public getNetworkName(): string {
           const net = this.storageService.getNet().environment;

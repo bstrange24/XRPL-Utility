@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { XrplService } from '../../../services/xrpl-services/xrpl.service';
 import { ConnectionGuardService } from '../../../services/shared/connection-guard/connection-guard.service';
 import { NavbarStore } from '../../../services/shared/navbar/navbar-store.service';
+import { CommonModule } from '@angular/common';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-connection-status',
      standalone: true,
-     imports: [],
+     imports: [LucideAngularModule, CommonModule],
      templateUrl: './connection-status.component.html',
      styleUrl: './connection-status.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,21 +35,22 @@ export class ConnectionStatusComponent {
      serverState = computed(() => this.xrplService.serverState$());
      hasPendingOperations = computed(() => this.connectionGuard.hasPendingOperations());
 
+     // In connection-status.component.ts
      statusText = computed(() => {
           if (this.isConnected()) {
+               if (!this.isLedgerReady()) {
+                    return 'Syncing...';
+               }
                const syncStatus = this.xrplService.ledgerSyncStatus$();
                const ledgerIndex = this.xrplService.validatedLedgerIndex$();
                const network = this.xrplService.getNetworkName();
 
-               // For Mainnet, always show as connected once we have a ledger
                if (network === 'Mainnet' && ledgerIndex) {
-                    // return `Connected (Ledger ${ledgerIndex}) ✓`;
                     return `Connected`;
                }
 
                switch (syncStatus) {
                     case 'synced':
-                         // return ledgerIndex ? `Connected (Ledger ${ledgerIndex}) ✓` : 'Connected ✓';
                          return ledgerIndex ? `Connected` : 'Connected';
                     case 'syncing':
                          return 'Syncing...';
@@ -62,6 +65,13 @@ export class ConnectionStatusComponent {
      });
 
      statusMessage = computed(() => {
+          if (!this.isConnected()) {
+               return 'Not connected to XRPL network';
+          }
+          if (!this.isLedgerReady()) {
+               const network = this.xrplService.getNetworkName();
+               return `${network} is syncing. Transactions will be available once sync is complete.`;
+          }
           const syncStatus = this.xrplService.ledgerSyncStatus$();
           if (syncStatus === 'not_synced') {
                return 'Node is connected but not fully synced. Please wait for ledger access.';
