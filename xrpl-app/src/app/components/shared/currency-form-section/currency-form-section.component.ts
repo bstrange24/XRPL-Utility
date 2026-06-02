@@ -6,16 +6,18 @@ import { LucideAngularModule } from 'lucide-angular';
 import { NgIcon } from '@ng-icons/core';
 import { ToastService } from '../../../services/utils/toast/toast.service';
 import { AppConstants } from '../../../core/app.constants';
-import * as xrpl from 'xrpl';
 import { FocusBorderDirective } from '../../../services/shared/focus-border/focus-border.directive';
 import { UtilsService } from '../../../services/utils/util-service/utils.service';
 import { FieldHelperComponent } from '../field-helper/field-helper.component';
 import { FormsModule } from '@angular/forms';
+import { AmountValidatorService } from '../../../services/shared/validators/amount-validator/amount-validator.service';
+import { InputIconsComponent } from '../input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-currency-form-section',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, FocusBorderDirective, NgIcon, FieldHelperComponent, SelectSearchDropdownComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, FocusBorderDirective, NgIcon, FieldHelperComponent, SelectSearchDropdownComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './currency-form-section.component.html',
      styleUrl: './currency-form-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,13 +26,14 @@ export class CurrencyFormSectionComponent implements OnChanges {
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
      private readonly toastService = inject(ToastService);
      public readonly utilsService = inject(UtilsService);
+     public readonly amountValidatorService = inject(AmountValidatorService);
 
      @Input() layout: 'split' | 'paired' = 'paired';
      @Input() currencyItems: any[] = [];
      @Input() issuerItems: any[] = [];
      @Input() selectedCurrency: any;
      @Input() selectedIssuer: any;
-     @Input() amount!: number | string;
+     @Input() amount!: number | string | null;
      @Input() currencyBalance!: string;
      @Input() activeTab: 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers' | 'create' | 'cash' | 'cancel' = 'setTrustline';
      @Input() trustlineAlreadyExist: boolean = false;
@@ -38,7 +41,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
 
      @Output() currencyChange = new EventEmitter<any>();
      @Output() issuerChange = new EventEmitter<any>();
-     @Output() amountChange = new EventEmitter<number>();
+     @Output() amountChange = new EventEmitter<number | null>();
      @Output() validationChange = new EventEmitter<{ isValid: boolean; errors: string[] }>();
 
      // Helper Items
@@ -57,17 +60,10 @@ export class CurrencyFormSectionComponent implements OnChanges {
      public isCurrencyValid = signal(true);
      public isIssuerValid = signal(true);
      public isAmountTouched = signal(false);
-     public amountValue = signal<number>(0);
+     public amountValue = signal<number | null>(null);
+     isFocused = signal(false);
 
      constructor() {
-          // Initialize amount value
-          // effect(() => {
-          //      const amt = typeof this.amount === 'number' ? this.amount : Number(this.amount);
-          //      if (!isNaN(amt)) {
-          //           this.amountValue.set(amt);
-          //      }
-          // });
-
           // Emit overall validation status
           effect(() => {
                const isValid = this.isCurrencyValid() && this.isIssuerValid() && !this.isAmountInvalid();
@@ -77,11 +73,24 @@ export class CurrencyFormSectionComponent implements OnChanges {
      }
 
      ngOnChanges(changes: SimpleChanges): void {
-          if (changes['amount']) {
-               const amt = typeof this.amount === 'number' ? this.amount : Number(this.amount);
+          if (changes['activeTab']) {
+               // Reset touched state when tab changes
+               this.isAmountTouched.set(false);
+          }
 
-               if (!isNaN(amt)) {
-                    this.amountValue.set(amt);
+          if (changes['amount']) {
+               const incoming = this.amount;
+               if (incoming === 0 && this.activeTab === 'removeTrustline') {
+                    this.amountValue.set(0);
+               } else if (typeof incoming === 'number' && !Number.isNaN(incoming)) {
+                    this.amountValue.set(incoming);
+               } else {
+                    this.amountValue.set(null); // empty on load for setTrustline / issue / clawback
+               }
+
+               // If external code cleared the amount, reset touched state
+               if (incoming === null) {
+                    this.isAmountTouched.set(false);
                }
           }
      }
@@ -104,12 +113,12 @@ export class CurrencyFormSectionComponent implements OnChanges {
      // Helper method to check if amount has value (for template)
      public hasAmountValue(): boolean {
           const amt = this.amountValue();
-          return amt > 0;
+          return amt !== null && amt > 0;
      }
 
      // Helper method to get numeric amount for template
      public getNumericAmount(): number {
-          return this.amountValue();
+          return this.amountValue()!;
      }
 
      // Currency Code Validation
@@ -173,76 +182,53 @@ export class CurrencyFormSectionComponent implements OnChanges {
           return !this.isIssuerValid();
      });
 
-     // Amount Validation
      onAmountInput(event: Event) {
           const input = event.target as HTMLInputElement;
-          const value = input.value;
+          const value = input.value.trim();
 
-          // Allow temporary typing states
+          // Mark as touched on first user input so validation runs as they type
+          if (!this.isAmountTouched()) {
+               this.isAmountTouched.set(true);
+          }
+
           if (value === '' || value === '.') {
-               this.amountValue.set(0);
-               this.amountChange.emit(0);
+               this.amountValue.set(null);
+               this.amountChange.emit(null);
                return;
           }
 
-          const numericValue = Number(value);
+          const numeric = Number(value);
+          if (!Number.isFinite(numeric) || numeric < 0) return;
 
-          if (!Number.isFinite(numericValue) || numericValue < 0) {
-               return;
-          }
-
-          const rounded = Math.round(numericValue * 1000000) / 1000000;
-
+          const rounded = Math.round(numeric * 1_000_000) / 1_000_000;
           this.amountValue.set(rounded);
           this.amountChange.emit(rounded);
      }
-     // onAmountInput(event: Event) {
-     //      const input = event.target as HTMLInputElement;
-     //      let value = input.value;
-
-     //      // Allow empty or decimal
-     //      if (value === '' || value === '.') {
-     //           this.amountChange.emit(0);
-     //           return;
-     //      }
-
-     //      const numericValue = Number(value);
-
-     //      if (!Number.isFinite(numericValue) || numericValue < 0) {
-     //           return;
-     //      }
-
-     //      // Round to 6 decimal places
-     //      const rounded = Math.round(numericValue * 1000000) / 1000000;
-     //      this.amountValue.set(rounded);
-     //      this.amountChange.emit(rounded);
-     // }
 
      onAmountBlur() {
           this.isAmountTouched.set(true);
 
-          // Format the amount to 6 decimal places if valid
-          if (this.isAmountValid() && this.amountValue() > 0) {
-               const formatted = this.amountValue().toFixed(6);
-               this.amountChange.emit(Number(formatted));
+          // Optional: format to 6 decimals on blur
+          const amt = this.amountValue();
+          if (amt !== null && this.isAmountValid()) {
+               this.amountChange.emit(Number(amt.toFixed(6)));
           }
      }
 
      clearAmount() {
-          this.amountValue.set(0);
-          this.amountChange.emit(0);
-          this.isAmountTouched.set(true);
+          this.amountValue.set(null);
+          this.amountChange.emit(null);
+          this.isAmountTouched.set(false);
      }
 
      public isAmountValid = computed(() => {
           const amt = this.amountValue();
+          if (amt === null) return false; // empty = invalid until touched
 
           if (this.activeTab === 'removeTrustline') {
-               // For remove trustline, amount must be exactly 0
                return amt === 0;
           }
 
-          // For other tabs, amount must be > 0
           return amt > 0 && Number.isFinite(amt);
      });
 
@@ -257,22 +243,29 @@ export class CurrencyFormSectionComponent implements OnChanges {
           const amt = this.amountValue();
 
           if (this.activeTab === 'removeTrustline') {
-               if (amt !== 0) {
-                    return 'Balance must be 0 to remove trustline';
-               }
-               return '';
+               return amt === 0 ? '' : 'Balance must be 0 to remove trustline';
           }
 
-          if (amt <= 0) {
+          if (amt === null || amt <= 0) {
                return 'Amount must be greater than 0';
           }
-
           if (!Number.isFinite(amt)) {
                return 'Please enter a valid number';
           }
-
           return '';
      });
+
+     get getAmount(): number | null {
+          return this.amountValue();
+     }
+
+     set setAmount(value: number | null | string) {
+          if (value === '' || value === null) {
+               this.amountValue.set(null);
+          } else {
+               this.amountValue.set(Number(value));
+          }
+     }
 
      public getAmountInputClasses(): string {
           const baseClasses = 'w-full rounded-2xl border px-4 py-3 text-sm focus:outline-none focus:border-green-500';
@@ -285,7 +278,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
                return `${baseClasses} border-red-500 bg-red-50`;
           }
 
-          if (this.isAmountValid() && this.isAmountTouched() && this.amountValue() > 0) {
+          if (this.isAmountValid() && this.isAmountTouched() && this.amountValue() !== null) {
                return `${baseClasses} border-green-500`;
           }
 
@@ -304,25 +297,23 @@ export class CurrencyFormSectionComponent implements OnChanges {
                });
      }
 
-     private getValidationErrors(): string[] {
+     public getValidationErrors = computed(() => {
           const errors: string[] = [];
 
           if (!this.isCurrencyValid() && this.selectedCurrency?.display) {
                errors.push(`Invalid currency code: ${this.currencyErrorMessage()}`);
           }
-
           if (!this.isIssuerValid() && this.selectedIssuer?.id) {
                errors.push('Invalid issuer address');
           }
-
-          if (this.isAmountInvalid() && this.isAmountTouched()) {
-               errors.push(this.amountErrorMessage());
+          if (this.isAmountInvalid()) {
+               const msg = this.amountErrorMessage();
+               if (msg) errors.push(msg);
           }
 
           return errors;
-     }
+     });
 
-     // Public method to trigger validation from parent
      public validate(): boolean {
           this.isAmountTouched.set(true);
           return this.isCurrencyValid() && this.isIssuerValid() && this.isAmountValid();

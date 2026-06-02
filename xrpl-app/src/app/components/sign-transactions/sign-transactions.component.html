@@ -129,51 +129,51 @@
                                    <div class="flex flex-col gap-3 sm:flex-row">
                                         <!-- Get JSON -->
                                         <app-button-tooltip [tooltipText]="getJsonTooltip()">
-                                             <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canGetJson()" [attr.aria-disabled]="!canGetJson()" [attr.tabindex]="!canGetJson() ? 0 : null" (click)="canGetJson() ? getTransactionJSON() : null" [disabled]="false">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
+                                             <button type="button" class="btn-primary" [class.opacity-50]="!canGetJson()" [attr.aria-disabled]="!canGetJson()" [attr.tabindex]="!canGetJson() ? 0 : null" (click)="canGetJson() ? getTransactionJSON() : null" [disabled]="false">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
                                         </app-button-tooltip>
 
                                         <!-- Signing Button -->
                                         @if (xrplTxOptionsStore.useMultiSign()) {
                                         <app-button-tooltip [tooltipText]="signMultiSignTooltip()">
-                                             <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signForMultiSign() : null" [disabled]="false">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                             <button type="button" class="btn-primary" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signForMultiSign() : null" [disabled]="false">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
                                         </app-button-tooltip>
                                         } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
                                         <app-button-tooltip [tooltipText]="signRegularKeyTooltip()">
-                                             <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signWithRegularKey() : null" [disabled]="false">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                             <button type="button" class="btn-primary" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signWithRegularKey() : null" [disabled]="false">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
                                         </app-button-tooltip>
                                         } @else {
                                         <app-button-tooltip [tooltipText]="signTooltip()">
-                                             <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signedTransaction() : null" [disabled]="false">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+                                             <button type="button" class="btn-primary" [class.opacity-50]="!canSign()" [attr.aria-disabled]="!canSign()" [attr.tabindex]="!canSign() ? 0 : null" (click)="canSign() ? signedTransaction() : null" [disabled]="false">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                         </app-button-tooltip>
                                         }
 
                                         <!-- Submit -->
                                         <app-button-tooltip [tooltipText]="submitTooltip()">
-                                             <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canSubmitTx()" [attr.aria-disabled]="!canSubmitTx()" [attr.tabindex]="!canSubmitTx() ? 0 : null" (click)="canSubmitTx() ? submitTransaction() : null" [disabled]="false">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
+                                             <button type="button" class="btn-primary" [class.opacity-50]="!canSubmitTx()" [attr.aria-disabled]="!canSubmitTx()" [attr.tabindex]="!canSubmitTx() ? 0 : null" (click)="canSubmitTx() ? submitTransaction() : null" [disabled]="false">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
                                         </app-button-tooltip>
                                    </div>
 
                                    <!-- Clear Fields -->
                                    <div class="flex items-center justify-end">
-                                        <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                                        <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                                    </div>
                               </div>
                               <!-- <div class="main-button-section">
                                    <div class="flex flex-col gap-3 sm:flex-row">
-                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
+                                        <button type="button" class="btn-primary" (click)="getTransactionJSON()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().getJson || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.getTransactionJsonButtonLabel() }}</button>
 
                                         @if (xrplTxOptionsStore.useMultiSign()) {
-                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
+                                        <button type="button" class="btn-primary" (click)="signForMultiSign()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().multiSign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signMultiSignButtonLabel() }}</button>
                                         } @else if (xrplTxOptionsStore.isRegularKeyAddress()) {
-                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
+                                        <button type="button" class="btn-primary" (click)="signWithRegularKey()" [disabled]="!isIdle() || !hasWallets() || signTransationStoreService.buttonLoading().regularKeySign || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signWithRegularKeyButtonLabel() }}</button>
                                         } @else {
-                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
+                                        <button type="button" class="btn-primary" (click)="signedTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().signed || signTransactionUtilService.isAnyButtonLoading || isExternallySignedTx()">{{ signTransactionUtilService.signTransactionButtonLabel() }}</button>
                                         }
 
-                                        <button type="button" class="btn-primary whitespace-nowrap" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
+                                        <button type="button" class="btn-primary" (click)="submitTransaction()" [disabled]="!isIdle() || !hasWallets() || !signTransactionValidatorService.jsonIsValid() || signTransationStoreService.buttonLoading().submit || signTransactionUtilService.isAnyButtonLoading">{{ signTransactionUtilService.submitTransactionButtonLabel() }}</button>
                                    </div>
                                    <div class="flex items-center justify-end">
-                                        <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                                        <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">Clear Fields</button>
                                    </div>
                               </div> -->
 

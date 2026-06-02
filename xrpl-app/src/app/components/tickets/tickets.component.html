@@ -36,15 +36,15 @@
                <div class="main-button-section">
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
                          @if (tab === 'createTicket') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ ticketsUtilService.createButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ ticketsUtilService.createButtonLabel() }}</button>
                          } @else if (tab === 'deleteTicket') {
-                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ ticketsUtilService.deleteButtonLabel() }}</button>
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ ticketsUtilService.deleteButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
                </div>
 

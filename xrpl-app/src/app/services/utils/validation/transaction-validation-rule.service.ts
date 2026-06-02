@@ -1015,7 +1015,7 @@ export class ValidationService {
           // PermissionedDomainDelete Actions
           this.registerRule({
                transactionType: 'PermissionedDomainDelete',
-               requiredFields: ['permissonedDomainDelete.domainId'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
 
@@ -1038,7 +1038,7 @@ export class ValidationService {
           // DIDSet Actions
           this.registerRule({
                transactionType: 'DIDSet',
-               requiredFields: ['did.didDocument', 'did.didUri', 'did.didData'],
+               requiredFields: [],
                validators: [
                     this.walletCredentialRequired(),
 

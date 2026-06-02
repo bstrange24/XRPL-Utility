@@ -44,7 +44,7 @@
                <div class="main-button-section">
                     <button type="button" [class]="ammUtilsService.actionButtonClass()" (click)="performAction()" [disabled]="!isIdle() || !hasWallets()">{{ ammUtilsService.actionButtonLabel() }}</button>
 
-                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                    <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
                </div>
 
                <!-- Execution Time -->

@@ -27,6 +27,7 @@ const CREDENTIALS_SUMMARY_CONFIG: SummaryTextConfig = {
 };
 
 type SortKey = 'expiration' | 'index' | 'type';
+type CredentialQuickFilterKey = 'all' | 'accepted' | 'expired' | 'issued' | 'received';
 
 @Component({
      selector: 'app-credentials-summary',
@@ -45,7 +46,7 @@ export class CredentialsSummaryComponent {
      readonly searchQuery = signal<string>('');
      readonly expiresAfter = signal<string>('');
      readonly expiresBefore = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'accepted' | 'expired' | 'issued' | 'received'>('all');
+     readonly activeQuickFilter = signal<CredentialQuickFilterKey>('all');
      readonly sortBy = signal<SortKey>('expiration');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -74,7 +75,7 @@ export class CredentialsSummaryComponent {
      ];
 
      // Quick Filter Options
-     quickFilters: { key: 'all' | 'accepted' | 'expired' | 'issued' | 'received'; label: string; icon: string; color: string }[] = [
+     quickFilters: { key: CredentialQuickFilterKey; label: string; icon: string; color: string }[] = [
           { key: 'all', label: 'All', icon: 'heroSquares2x2', color: 'blue' },
           { key: 'accepted', label: 'Accepted', icon: 'heroCheckBadge', color: 'purple' },
           { key: 'expired', label: 'Expired', icon: 'heroExclamationCircle', color: 'red' },
@@ -108,7 +109,7 @@ export class CredentialsSummaryComponent {
                list = list.filter(cred => {
                     if (!cred.Expiration || cred.Expiration === 'N/A') return false;
                     const exp = new Date(cred.Expiration);
-                    if (isNaN(exp.getTime())) return false;
+                    if (Number.isNaN(exp.getTime())) return false;
                     if (after && exp < new Date(after)) return false;
                     if (before && exp > new Date(before)) return false;
                     return true;
@@ -225,7 +226,7 @@ export class CredentialsSummaryComponent {
                return Number.MAX_SAFE_INTEGER;
           }
           const timestamp = Date.parse(expiration);
-          return isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+          return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
      }
 
      getQuickFilterClass(filterKey: string): string {

@@ -89,21 +89,21 @@
                <div class="main-button-section mt-6">
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
                          @if (tab === 'buyNft') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyButtonLabel() }}</button>
                          } @else if (tab === 'sellNft') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellButtonLabel() }}</button>
                          } @else if (tab === 'buyNftOffer') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftBuyOfferButtonLabel() }}</button>
                          } @else if (tab === 'sellNftOffer') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftSellOfferButtonLabel() }}</button>
                          } @else if (tab === 'cancelNftOffer') {
-                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftCancelOfferButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
                </div>
 

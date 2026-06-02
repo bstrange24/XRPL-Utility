@@ -66,17 +66,17 @@
                <div class="main-button-section mt-6">
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
                          @if (tab === 'createNft') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.createNftButtonLabel() }}</button>
                          } @else if (tab === 'updateNFTMetadata') {
                          <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.updateNftMetadataButtonLabel() }}</button>
                          } @else if (tab === 'burnNft') {
-                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.burnNftButtonLabel() }}</button>
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ nftUtilService.burnNftButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
                </div>
 

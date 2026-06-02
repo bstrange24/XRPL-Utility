@@ -21,22 +21,21 @@
                          } @case ('deleteDid') {
                          <app-did-delete [view]="didViewModelService" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" />
                          } }
-
-                         <!-- Transaction Options (conditional) -->
-                         @if ((tab === 'setDid' && didStoreService.existingDid().length <= 0) || tab === 'deleteDid') {
-                         <app-transaction-options [showWhenTab]="['setDid','deleteDid']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
-                         }
                     </div>
                </div>
+               <!-- Transaction Options (conditional) -->
+               @if ((tab === 'setDid' && didStoreService.existingDid().length <= 0) || tab === 'deleteDid') {
+               <app-transaction-options [showWhenTab]="['setDid','deleteDid']" [activeTab]="didViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+               }
 
                <!-- Action Buttons -->
                <div class="main-button-section">
                     <div class="flex flex-col gap-3 sm:flex-row">
                          <app-button-tooltip [tooltipText]="getButtonTooltip()">
                               @if (tab === 'setDid' && hasNoExistingDid()) {
-                              <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Set DID</button>
-                              } @else if (tab === 'deleteDid') {
-                              <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Delete DID</button>
+                              <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction() || !canSubmit()" [attr.aria-disabled]="!canPerformAction() || !canSubmit()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Set DID</button>
+                              } @else if (tab === 'deleteDid' && !hasNoExistingDid()) {
+                              <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Delete DID</button>
                               }
                          </app-button-tooltip>
                     </div>
@@ -44,7 +43,7 @@
                     <!-- Secondary Button -->
                     <div class="right-buttons">
                          @if (tab === 'setDid' && hasNoExistingDid()) {
-                         <button type="button" class="btn-secondary whitespace-nowrap" (click)="clearInputFields()" [disabled]="!canSubmit()">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!canSubmit()">Clear Fields</button>
                          }
                     </div>
                </div>

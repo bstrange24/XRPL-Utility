@@ -12,7 +12,7 @@ const initialState: CurrencyState = {
      issuerToRemove: '',
      currency: '', // Start empty, not XRP
      issuer: '', // Start empty
-     amount: 0,
+     amount: null,
      balance: '0', // Initialize with '0' not empty string
      isIssuer: false,
      destination: '',
@@ -40,7 +40,7 @@ export const CurrencyStoreService = signalStore(
                });
           },
 
-          setAmount(amount: number) {
+          setAmount(amount: number | null) {
                patchState(store, { amount });
           },
 

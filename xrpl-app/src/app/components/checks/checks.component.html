@@ -47,19 +47,17 @@
                <div class="main-button-section">
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
                          @if (tab === 'createCheck') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="(canPerformAction() && connectionGuard.isConnectionReady() ) ? performAction() : null" [disabled]="false">
-                              {{ viewModel.createCheckButtonLabel() }}
-                         </button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="(canPerformAction() && connectionGuard.isConnectionReady() ) ? performAction() : null" [disabled]="false">{{ viewModel.createCheckButtonLabel() }}</button>
                          } @else if (tab === 'cashCheck') {
                          <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="(canPerformAction() && connectionGuard.isConnectionReady() ) ? performAction() : null" [disabled]="false">{{ viewModel.cashCheckButtonLabel() }}</button>
                          } @else if (tab === 'cancelCheck') {
-                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="(canPerformAction() && connectionGuard.isConnectionReady() ) ? performAction() : null" [disabled]="false">{{ viewModel.cancelCheckButtonLabel() }}</button>
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="(canPerformAction() && connectionGuard.isConnectionReady() ) ? performAction() : null" [disabled]="false">{{ viewModel.cancelCheckButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-primary">Clear Fields</button>
                     </div>
                </div>
 

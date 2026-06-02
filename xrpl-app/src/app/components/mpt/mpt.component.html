@@ -114,23 +114,23 @@
                <div class="main-button-section">
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
                          @if (tab === 'createMpt') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.createMptButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.createMptButtonLabel() }}</button>
                          } @else if (tab === 'authorizeMpt' || tab === 'unauthorizeMpt') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [ngClass]="{'btn-amber': mptStoreService.authAction() === 'authorize', 'btn-red': mptStoreService.authAction() === 'unauthorize'}" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.authorizeButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [ngClass]="{'btn-amber': mptStoreService.authAction() === 'authorize', 'btn-red': mptStoreService.authAction() === 'unauthorize'}" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.authorizeButtonLabel() }}</button>
                          } @else if (tab === 'sendMpt') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.sendMptButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.sendMptButtonLabel() }}</button>
                          } @else if (tab === 'lockMpt' || tab === 'unlockMpt') {
-                         <button type="button" class="btn-primary whitespace-nowrap" [ngClass]="{'btn-red': mptStoreService.lockAction() === 'lock', 'btn-purple': mptStoreService.lockAction() === 'unlock'}" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.lockMptButtonLabel() }}</button>
+                         <button type="button" class="btn-primary" [ngClass]="{'btn-red': mptStoreService.lockAction() === 'lock', 'btn-purple': mptStoreService.lockAction() === 'unlock'}" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.lockMptButtonLabel() }}</button>
                          } @else if (tab === 'clawbackMpt') {
                          <button type="button" class="btn-blue whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.clawbackMptButtonLabel() }}</button>
                          } @else if (tab === 'destroyMpt') {
-                         <button type="button" class="btn-red whitespace-nowrap" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.destroyMptButtonLabel() }}</button>
+                         <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ mptUtilService.destroyMptButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearFields(true)" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearFields(true)" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
                </div>
 

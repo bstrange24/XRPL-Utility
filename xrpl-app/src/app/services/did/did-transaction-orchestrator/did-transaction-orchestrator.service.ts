@@ -3,23 +3,18 @@ import * as xrpl from 'xrpl';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { ToastService } from '../../utils/toast/toast.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { DidTransactionBuilderService } from '../did-transaction-builder/did-transaction-builder.service';
 import { DidUtilService } from '../did-util/did-util.service';
 import { DidStoreService } from '../did-store/did-store.service';
-import { DID_TX_TYPES, DID_VALIDATION_RULES } from '../../../components/did/constants/did.constants';
 import { DidTxConfig, DidTxType } from '../../../components/did/constants/did.types';
 import { AppConstants } from '../../../core/app.constants';
 
 type DidTxMeta = {
-     validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; did: any; account: any; txOptions: any }) => any;
      buildTx: (args: { orchestrator: DidTransactionOrchestratorService; env: any; wallet: any; did: any }) => xrpl.Transaction;
      simulationToastMessage: (args: { orchestrator: DidTransactionOrchestratorService; did: any }) => string;
      successMessage: (args: { orchestrator: DidTransactionOrchestratorService; did: any }) => string;
@@ -27,49 +22,12 @@ type DidTxMeta = {
 
 const DID_META: Record<DidTxType, DidTxMeta> = {
      setDid: {
-          validationRule: DID_VALIDATION_RULES[DID_TX_TYPES.SET],
-          buildValidationInputs: ({ wallet, env, did, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-               did: {
-                    didDocument: did.didDocumentData,
-                    didUri: did.uriData,
-                    didData: did.didData,
-               },
-          }),
           buildTx: ({ orchestrator, env, wallet, did }) => orchestrator.didTransactionBuilderService.buildDidSetTransaction(env.wallet || wallet, env, did),
           simulationToastMessage: () => `Simulated Setting DID`,
           successMessage: () => `Successfully Set DID`,
      },
 
      deleteDid: {
-          validationRule: DID_VALIDATION_RULES[DID_TX_TYPES.DELETE],
-          buildValidationInputs: ({ wallet, env, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions.isRegularKeyAddress,
-                    address: account.regularKeyAddress,
-                    seed: account.regularKeySeed,
-               },
-               env,
-          }),
           buildTx: ({ orchestrator, env, wallet }) => orchestrator.didTransactionBuilderService.buildDidDeleteTransaction(env.wallet || wallet, env),
           simulationToastMessage: () => `Simulated Deleting DID`,
           successMessage: () => `Successfully Deleted DID`,
@@ -79,7 +37,6 @@ const DID_META: Record<DidTxType, DidTxMeta> = {
 @Injectable({ providedIn: 'root' })
 export class DidTransactionOrchestratorService extends PerformanceBaseComponent {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
-     private readonly validator = inject(ValidationService);
      private readonly txUiService = inject(TransactionUiService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
@@ -114,14 +71,8 @@ export class DidTransactionOrchestratorService extends PerformanceBaseComponent 
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Validation
-               const meta = DID_META[type];
-
-               const validationInputs = meta.buildValidationInputs({ wallet, env, did, account, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
-
                // Build transaction
+               const meta = DID_META[type];
                const tx = meta.buildTx({ orchestrator: this, env, wallet, did });
 
                // Optional fields

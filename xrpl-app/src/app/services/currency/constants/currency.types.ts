@@ -9,7 +9,7 @@ export interface CurrencyState {
      issuerToRemove: string;
      currency: string;
      issuer: string;
-     amount: number;
+     amount: number | null;
      balance: string;
      isIssuer: boolean;
      destination: string;

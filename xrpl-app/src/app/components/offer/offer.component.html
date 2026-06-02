@@ -31,12 +31,12 @@
                     </app-button-tooltip>
 
                     @if (tab === 'createOffer' || tab === 'getOrderBook') {
-                    <button type="button" class="btn-primary whitespace-nowrap" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">Invert Order</button>
+                    <button type="button" class="btn-primary" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">Invert Order</button>
                     }
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
                     </div>
                </div>
 

@@ -1,4 +1,4 @@
-import { Component, input, output, inject, ChangeDetectionStrategy, computed } from '@angular/core';
+import { Component, input, output, inject, ChangeDetectionStrategy, computed, effect } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
@@ -23,6 +23,13 @@ export class DidSummaryComponent {
      private readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
 
+     constructor() {
+          // Auto-clear search when parent tells us to reset
+          effect(() => {
+               this.resetTrigger(); // track changes
+          });
+     }
+
      info = input.required<
           | {
                  walletName: string;
@@ -35,8 +42,8 @@ export class DidSummaryComponent {
      >();
 
      infoPanelExpanded = input.required<boolean>();
-
      toggleInfoPanel = output<void>();
+     resetTrigger = input<number>(0);
 
      explorerUrl = this.txUiService.explorerUrl;
 

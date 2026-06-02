@@ -30,37 +30,16 @@
                <div class="main-button-section">
                     <!-- Primary Action -->
                     <app-button-tooltip [tooltipText]="getButtonTooltip()">
-                         <button
-                              type="button"
-                              [class]="view.infoData()?.actionButtonClass || 'btn-primary'"
-                              class="whitespace-nowrap"
-                              [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()"
-                              [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()"
-                              [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null"
-                              (click)="canPerformAction() && connectionGuard.isConnectionReady() ? performAction() : null"
-                              [disabled]="false"
-                         >
-                              {{ view.infoData()?.actionButtonLabel }}
+                         <button type="button" class="btn-green" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" [class.opacity-50]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canPerformAction() || !connectionGuard.isConnectionReady()" [attr.tabindex]="(!canPerformAction() || !connectionGuard.isConnectionReady()) ? 0 : null" (click)="canPerformAction() && connectionGuard.isConnectionReady() ? performAction() : null" [disabled]="false">
+                              {{ view.setPermissionedDomainButtonLabel() }}
                          </button>
                     </app-button-tooltip>
 
                     <!-- Secondary Button -->
                     <div class="right-buttons">
-                         <button type="button" (click)="clearInputFields()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary whitespace-nowrap">Clear Fields</button>
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()">Clear Fields</button>
                     </div>
                </div>
-
-               <!-- Action Buttons -->
-
-               <!-- <div class="main-button-section"> -->
-               <!-- Primary Action -->
-               <!-- <button type="button" [class]="view.infoData()?.actionButtonClass || 'btn-primary'" (click)="performAction()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady() || !canSetPermissionDomainForm()" class="whitespace-nowrap">{{ view.infoData()?.actionButtonLabel }}</button> -->
-
-               <!-- Secondary Actions -->
-               <!-- <div class="right-buttons"> -->
-               <!-- <button type="button" (click)="clearInputFields()" [disabled]="!canSubmit() || !connectionGuard.isConnectionReady()" class="btn-secondary whitespace-nowrap">Clear Fields</button> -->
-               <!-- </div> -->
-               <!-- </div> -->
 
                <!-- Execution Time -->
                <div class="execution-time">

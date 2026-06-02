@@ -13,7 +13,7 @@
                <!-- DID Index -->
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary flex items-center mb-0">DID Index</label>
+                         <label for="didIndex" class="label-primary flex items-center mb-0">DID Index</label>
                          <button (click)="copyField('index')" class="btn-ghost-small flex items-center">Copy Index</button>
                     </div>
                     <app-tooltip-link [href]="explorerUrl() + 'entry/' + d.index" tooltipText="View on XRPL Explorer">
@@ -25,7 +25,7 @@
                @if (d.URI && d.URI !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary flex items-center mb-0">DID URI</label>
+                         <label for="didUri" class="label-primary flex items-center mb-0">DID URI</label>
                          <button (click)="copyField('URI')" class="btn-ghost-small flex items-center">Copy URI</button>
                     </div>
 
@@ -37,7 +37,7 @@
                @if (d.Data && d.Data !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary flex items-center mb-0">DID Data</label>
+                         <label for="didData" class="label-primary flex items-center mb-0">DID Data</label>
                          <button (click)="copyField('Data')" class="btn-ghost-small">Copy Data</button>
                     </div>
                     <pre class="input-mono p-4 text-xs overflow-auto bg-gray-100 rounded-2xl border border-gray-100">{{ prettyJson(d.Data) }}</pre>
@@ -48,7 +48,7 @@
                @if (d.DIDDocument && d.DIDDocument !== 'N/A') {
                <div class="space-y-2">
                     <div class="flex items-center justify-between">
-                         <label class="label-primary flex items-center mb-0">DID Document</label>
+                         <label for="didDocument" class="label-primary flex items-center mb-0">DID Document</label>
                          <button (click)="copyField('DIDDocument')" class="btn-ghost-small">Copy Document</button>
                     </div>
                     <pre class="input-mono p-4 text-xs overflow-auto bg-gray-100 rounded-2xl border border-gray-100">{{ prettyJson(d.DIDDocument) }}</pre>

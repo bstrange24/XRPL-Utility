@@ -170,10 +170,6 @@ export class DidViewModelService {
           return !this.hasJsonSyntaxError() && this.didDocumentDataByteLength() <= 256 && this.uriDataByteLength() <= 256 && this.didDataByteLength() <= 256;
      });
 
-     // allFieldsValid = computed(() => {
-     //      return this.isDidDataValid() && this.isDidDocumentValid() && this.isUriDataValid();
-     // });
-
      setDidDataEditor(editor: JsonEditorComponent) {
           this.didDataEditor.set(editor);
      }
@@ -197,27 +193,9 @@ export class DidViewModelService {
                }
 
                return ''; // valid
-          } catch (e) {
+          } catch (error: any) {
+               console.error(`JSON syntax error in ${fieldName}:`, error);
                return `Invalid JSON format in ${fieldName}. Please check your syntax.`;
           }
      };
-
-     // getMetadataErrorMessage = computed(() => {
-     //      const metadata = this.didStoreService.didDocumentData();
-     //      if (!metadata || metadata.trim() === '') return '';
-
-     //      try {
-     //           JSON.parse(metadata);
-
-     //           // Check if it's an object
-     //           const parsed = JSON.parse(metadata);
-     //           if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-     //                return 'Metadata must be a valid JSON object (not an array or primitive value).';
-     //           }
-
-     //           return '';
-     //      } catch (e) {
-     //           return 'Invalid JSON format. Please check your syntax.';
-     //      }
-     // });
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
@@ -151,32 +151,7 @@ export class TransactionOptionsComponent {
                // Add one empty memo by default when toggling on
                this.addMemo();
           }
-
-          // if (!enabled) {
-          //      this.xrplTxOptionsStore.addMemo('');
-          // } else {
-          //      this.xrplTxOptionsStore.setField('memos', []);
-          // }
      }
-
-     // onMemoInput(value: string) {
-     //      // This can be deprecated but kept for backward compatibility
-     //      const cleaned = value
-     //           .split(',')
-     //           .map(v => v.trim())
-     //           .filter(Boolean)
-     //           .map(text => ({
-     //                Memo: {
-     //                     MemoData: text,
-     //                     MemoType: '',
-     //                     MemoFormat: '',
-     //                },
-     //           }));
-
-     //      if (cleaned.length > 0) {
-     //           this.xrplTxOptionsStore.updateMemos(cleaned);
-     //      }
-     // }
 
      onMemoInput(value: string) {
           const cleaned = value

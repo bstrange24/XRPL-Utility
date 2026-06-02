@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../trustline-currency/trustline-currency.service';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
@@ -126,7 +126,7 @@ export class TrustlineUtilService {
           this.trustlineStoreService.setField('removeTrustlineMessage', []);
 
           if (!currency || !issuer) {
-               this.currencyStoreService.setField('amount', 0);
+               this.currencyStoreService.setField('amount', tab === 'removeTrustline' ? 0 : null);
                return;
           }
 
@@ -174,7 +174,7 @@ export class TrustlineUtilService {
           this.trustlineStoreService.setField('removeTrustlineMessage', []);
 
           if (!currency || !issuer) {
-               this.currencyStoreService.setField('amount', 0);
+               this.currencyStoreService.setField('amount', this.activeTab() === 'removeTrustline' ? 0 : null);
                this.currencyStoreService.setField('balance', '0');
                console.log(`[onCurrencyIssuerChange] No currency or issuer, reset and returning`);
                return;
@@ -239,32 +239,44 @@ export class TrustlineUtilService {
                this.trustlineStoreService.setField('trustlineAlreadyExist', false);
                this.trustlineStoreService.setField('removeTrustlineAvailable', true);
                this.trustlineStoreService.setField('removeTrustlineMessage', []);
-               this.currencyStoreService.setField('amount', 0);
+               this.currencyStoreService.setField('amount', this.activeTab() === 'removeTrustline' ? 0 : null);
                return false;
           }
 
-          // Make sure trustlines exist
-          if (!env.trustlines?.result?.lines) {
-               console.info('[checkForExistingTrustline] No trustlines in environment');
-               this.trustlineStoreService.setField('trustlineAlreadyExist', false);
-               return false;
+          let trustLine: any = null;
+
+          // First, try to find trustline in the environment
+          if (env.trustlines?.result?.lines) {
+               trustLine = env.trustlines.result.lines.find((line: any) => {
+                    const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
+                    const matches = line.account === issuer && lineCurrency === this.utilsService.decodeIfNeeded(currency);
+                    if (matches) {
+                         console.log(`[checkForExistingTrustline] Found trustline in environment:`, line);
+                    }
+                    return matches;
+               });
+          } else {
+               console.info('[checkForExistingTrustline] No trustlines in environment, checking stored IOUs');
           }
 
-          const trustLine = env.trustlines.result.lines.find((line: any) => {
-               const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
-               const matches = line.account === issuer && lineCurrency === this.utilsService.decodeIfNeeded(currency);
-               if (matches) {
-                    console.log(`[checkForExistingTrustline] Found trustline:`, line);
+          // If not found in environment, check the stored IOUs (they were loaded earlier)
+          if (!trustLine) {
+               const existingIOUs = this.trustlineStoreService.existingIOUs();
+               const storedTrustline = existingIOUs.find((tl: any) => tl.currency === currency && tl.issuer === issuer);
+               if (storedTrustline) {
+                    console.log(`[checkForExistingTrustline] Found trustline in stored IOUs:`, storedTrustline);
+                    trustLine = storedTrustline;
                }
-               return matches;
-          });
+          }
 
           if (trustLine) {
                console.log(`[checkForExistingTrustline] Trustline EXISTS for ${currency}/${issuer}`);
                this.trustlineStoreService.setField('trustlineAlreadyExist', true);
 
                if (this.activeTab() === 'setTrustline') {
-                    this.currencyStoreService.setField('amount', trustLine.limit);
+                    // Convert limit to number in case it comes back as a string from API
+                    const limitValue = typeof trustLine.limit === 'string' ? Number(trustLine.limit) : trustLine.limit;
+                    this.currencyStoreService.setField('amount', limitValue);
                } else if (this.activeTab() === 'removeTrustline') {
                     this.currencyStoreService.setField('amount', 0);
                }
@@ -273,7 +285,7 @@ export class TrustlineUtilService {
                console.log(`[checkForExistingTrustline] Trustline DOES NOT EXIST for ${currency}/${issuer}`);
                this.trustlineStoreService.setField('trustlineAlreadyExist', false);
                if (this.activeTab() === 'setTrustline' || this.activeTab() === 'removeTrustline') {
-                    this.currencyStoreService.setField('amount', 0);
+                    this.currencyStoreService.setField('amount', this.activeTab() === 'removeTrustline' ? 0 : null);
                }
                return false;
           }

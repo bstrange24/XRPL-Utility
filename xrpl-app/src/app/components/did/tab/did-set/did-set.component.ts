@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, computed, inject, input, output, signal, ViewChild } from '@angular/core';
 import { JsonEditorComponent } from '../../../shared/json-editor/json-editor.component';
 import { CommonModule } from '@angular/common';
 import { DidStoreService } from '../../../../services/did/did-store/did-store.service';
@@ -17,7 +17,7 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
      styleUrl: './did-set.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DidSetComponent {
+export class DidSetComponent implements AfterViewInit {
      @ViewChild('didDataEditor') didDataEditor!: JsonEditorComponent;
      @ViewChild('didDocumentEditor') didDocumentEditor!: JsonEditorComponent;
      @ViewChild('uriEditor') uriEditor!: JsonEditorComponent;

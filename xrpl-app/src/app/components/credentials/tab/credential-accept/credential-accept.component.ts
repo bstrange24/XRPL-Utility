@@ -23,8 +23,8 @@ export class CredentialAcceptComponent {
      public readonly credentialStore = inject(CredentialStore);
      public readonly credentialViewModel = inject(CredentialViewModelService);
 
-     view = input.required<any>(); // contains selectedCredentialItem, etc.
-     creds = input.required<any>(); // ← added: creds.dropdown
+     view = input.required<any>();
+     creds = input.required<any>();
      canSubmit = input<boolean>(false);
 
      // Helper Items
@@ -42,7 +42,7 @@ export class CredentialAcceptComponent {
      clearFields = output<void>();
      searchQueryChange = output<string>();
      destinationChange = output<any>();
-     selectCredential = output<{ item: any; source: 'dropdown' | 'list' }>(); // ← we'll emit this
+     selectCredential = output<{ item: any; source: 'dropdown' | 'list' }>();
 
      // Forward events to parent if needed
      handleSearchQueryChange(query: string) {

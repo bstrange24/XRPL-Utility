@@ -22,7 +22,7 @@ describe('CurrencyStoreService (signalStore)', () => {
 
           expect(state.currencyCode).toBe('XRP');
           expect(state.currencyIssuer).toBe('');
-          expect(state.amount).toBe(0);
+          expect(state.amount).toBeNull();
           expect(state.balance).toBe('');
           expect(state.isIssuer).toBeFalse();
      });
@@ -98,7 +98,10 @@ describe('CurrencyStoreService (signalStore)', () => {
      it('should update field using updater function', () => {
           store.setField('amount', 10);
 
-          store.updateField('amount', current => current + 5);
+          store.updateField('amount', (current: number | null) => {
+               const value = current ?? 0;
+               return value + 5;
+          });
 
           expect(store.getAll().amount).toBe(15);
      });
@@ -106,7 +109,7 @@ describe('CurrencyStoreService (signalStore)', () => {
      it('should update string field correctly', () => {
           store.setField('currency', 'USD');
 
-          store.updateField('currency', current => current + '-X');
+          store.updateField('currency', (current: string) => current + '-X');
 
           expect(store.getAll().currency).toBe('USD-X');
      });
@@ -126,9 +129,8 @@ describe('CurrencyStoreService (signalStore)', () => {
           const state = store.getAll();
 
           expect(state.currencyCode).toBe('XRP');
-          // expect(state.currency).toBe('XRP');
           expect(state.currencyIssuer).toBe('');
-          expect(state.amount).toBe(0);
+          expect(state.amount).toBeNull();
           expect(state.destination).toBe('');
      });
 
@@ -183,7 +185,7 @@ describe('CurrencyStoreService (signalStore)', () => {
      it('should not break when updater returns same value', () => {
           store.setField('amount', 10);
 
-          store.updateField('amount', current => current);
+          store.updateField('amount', (current: number | null) => current);
 
           expect(store.getAll().amount).toBe(10);
      });

@@ -66,12 +66,11 @@
                </div>
 
                <div class="relative">
-                    <!-- <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" /> -->
-                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amountValue()" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
+                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" (focus)="isFocused.set(true)" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [ngModel]="getAmount ?? ''" (ngModelChange)="setAmount = $event" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
+
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="getAmount !== null" (clear)="clearAmount()" />
                </div>
-               @if (!isReadOnly && isAmountInvalid()) {
-               <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
-               }
 
                <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />
           </div>
@@ -91,11 +90,6 @@
 
                <div class="relative">
                     <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
-                    <!-- @if (currencyBalance && currencyBalance !== '0') {
-                    <button type="button" (click)="copyToClipboard(currencyBalance)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Copy balance">
-                         <lucide-icon name="copy" size="14"></lucide-icon>
-                    </button>
-                    } -->
                </div>
 
                <app-field-helper title="Currency Balance" [items]="currencyBalanceHelperItems" [show]="showCurrencyBalanceHelper" />
@@ -164,19 +158,11 @@
                </div>
 
                <div class="relative">
-                    <!-- <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amount" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" min="1" max="10000000000000000" /> -->
-                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid()" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" [value]="amountValue()" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
+                    <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" (focus)="isFocused.set(true)" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [ngModel]="getAmount ?? ''" (ngModelChange)="setAmount = $event" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
 
-                    <!-- @if (!isReadOnly && hasAmountValue()) {
-                    <button type="button" (click)="clearAmount()" class="absolute right-10 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Clear amount">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    } -->
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="getAmount !== null" (clear)="clearAmount()" />
                </div>
-
-               @if (!isReadOnly && isAmountInvalid()) {
-               <p class="form-error mt-2">{{ amountErrorMessage() }}</p>
-               }
 
                <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />
           </div>
@@ -196,11 +182,6 @@
 
                <div class="relative">
                     <input type="text" readonly class="input-disabled pr-10" [value]="currencyBalance" />
-                    <!-- @if (currencyBalance && currencyBalance !== '0') {
-                    <button type="button" (click)="copyToClipboard(currencyBalance)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700" aria-label="Copy balance">
-                         <lucide-icon name="copy" size="14"></lucide-icon>
-                    </button>
-                    } -->
                </div>
 
                <app-field-helper title="Currency Balance" [items]="currencyBalanceHelperItems" [show]="showCurrencyBalanceHelper" />
@@ -208,3 +189,6 @@
      </div>
      }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="getValidationErrors()" title="Trustline validation issues:" />

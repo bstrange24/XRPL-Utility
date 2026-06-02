@@ -388,7 +388,7 @@
                          }
                     </div>
 
-                    <button type="button" (click)="addCredentialId()" class="btn-primary whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-50" [disabled]="!canAddCredentialId()">Add</button>
+                    <button type="button" class="btn-primary disabled:cursor-not-allowed disabled:opacity-50" (click)="addCredentialId()" [disabled]="!canAddCredentialId()">Add</button>
                </div>
 
                <div class="text-xs text-gray-500">{{ credentialStore.credentialIDs().length }} credential ID(s) added</div>

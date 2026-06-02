@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef, OnInit, inject, ChangeDetectionStrategy, computed, effect, signal, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, inject, ChangeDetectionStrategy, computed, effect, signal, OnDestroy, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -337,10 +337,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                          console.log(`[loadWalletDataPreservingSelection] No trustlines, finding best currency/issuer pair`);
                          const currenciesList = this.trustlineCurrencyService.currencies();
 
-                         // For Set tab on an issuer wallet (even if we couldn't detect from gateway_balances)
-                         // Check if this wallet is in the issuers list for any currency
-                         let foundSelfAsIssuer = false;
-
                          for (const currency of currenciesList) {
                               const issuers = this.trustlineCurrencyService.getIssuersForCurrency(currency);
                               if (issuers.includes(wallet.classicAddress)) {
@@ -349,7 +345,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                                    this.currencyStoreService.setIssuer(wallet.classicAddress);
                                    this.debugSelection('After setIssuer');
                                    selectionRestored = true;
-                                   foundSelfAsIssuer = true;
                                    break;
                               }
                          }
@@ -467,6 +462,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           return ['setTrustline', 'removeTrustline', 'issueCurrency', 'clawbackTokens'].includes(tab);
      });
 
+     @ViewChild('currencyFormRef') currencyForm?: CurrencyFormSectionComponent;
+
      protected async onSelectedWalletIndexChange(): Promise<void> {
           if (this.isSwitchingWallet) return;
           this.isSwitchingWallet = true;
@@ -519,6 +516,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           const stack = new Error().stack;
           console.log(`[onCurrencyChange] Called with:`, item);
           console.log(`[onCurrencyChange] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
+
+          // Update currency store immediately
+          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
+
           this.currencyDebouncer.next(item);
           await new Promise(resolve => setTimeout(resolve, 50));
           await this.trustlineUtilService.onCurrencyIssuerChange();
@@ -530,6 +531,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           const stack = new Error().stack;
           console.log(`[onIssuerChange] Called with:`, item?.id?.slice(0, 8));
           console.log(`[onIssuerChange] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
+
+          // Update issuer store immediately
+          this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? '');
+
           this.issuerDebouncer.next(item);
           await new Promise(resolve => setTimeout(resolve, 50));
           await this.trustlineUtilService.onCurrencyIssuerChange();
@@ -586,6 +591,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.clearInputFields();
           if (this.hasWallets() && this.trustlineStoreService.isLoaded()) {
                await this.getTrustlinesForAccount(true);
+               // Re-check trustline for the new tab to populate amount correctly
+               await this.trustlineUtilService.onCurrencyIssuerChange();
           }
      }
 
@@ -650,6 +657,15 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                });
 
                this.trustlineStoreService.setField('trustlineFlags', flags);
+          }
+
+          // Validate currency form if present (prevents submitting invalid amounts)
+          if (this.currencyForm) {
+               const valid = this.currencyForm.validate();
+               if (!valid) {
+                    this.toastService.error('Please fix validation errors before submitting.', AppConstants.TOAST.ERROR);
+                    return;
+               }
           }
 
           if (currentTab === 'issueCurrency' || currentTab === 'clawbackTokens') {
@@ -762,6 +778,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
 
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress);
+
+          // Reload trustlines to get updated data (newly created trustlines, updated limits, etc.)
+          await this.getTrustlinesForAccount(true);
+
           await this.trustlineCurrencyService.refreshCurrentBalance();
           this.txUiService.resetCurrentStepToIdle();
      }
@@ -857,6 +877,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      protected clearInputFields(): void {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.trustlineCurrencyService.clearFlagsValue(this.trustlineViewModelService.activeTab());
+          this.currencyStoreService.setField('amount', null);
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
      }

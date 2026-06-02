@@ -134,9 +134,8 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
      public canPerformAction = computed(() => {
           const tab = this.credentialViewModelService.activeTab();
-          const idle = this.isIdle(); // from WalletDestinationBase
-
-          if (!idle) return false;
+          const idle = this.isIdle();
+          if (!idle || !this.hasWallets()) return false;
 
           switch (tab) {
                case 'createCredential':
