@@ -33,6 +33,8 @@ export interface TrustlineInfo {
 }
 
 type SortKey = 'currency' | 'issuer' | 'balance' | 'limit';
+type QuickFilter = 'all' | 'positive' | 'negative' | 'zero';
+type SortDirection = 'asc' | 'desc';
 
 @Component({
      selector: 'app-trustlines-summary',
@@ -70,9 +72,9 @@ export class TrustlinesSummaryComponent {
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'positive' | 'negative' | 'zero'>('all');
+     readonly activeQuickFilter = signal<QuickFilter>('all');
      readonly sortBy = signal<SortKey>('currency');
-     readonly sortDirection = signal<'asc' | 'desc'>('asc');
+     readonly sortDirection = signal<SortDirection>('asc');
 
      // Sort Options
      sortOptions: SortOption[] = [
@@ -123,7 +125,6 @@ export class TrustlinesSummaryComponent {
           // Quick Filters (by balance)
           if (quickFilter !== 'all') {
                trustlines = trustlines.filter((tl: { balance: string }) => {
-                    // const balance = Number.parseFloat(tl.balance);
                     const balance = new Decimal(tl.balance || '0');
                     switch (quickFilter) {
                          case 'positive':
@@ -150,11 +151,9 @@ export class TrustlinesSummaryComponent {
           const sortField = this.sortBy();
           const direction = this.sortDirection();
 
-          console.error(`items:  ${JSON.stringify(items)}`);
           return items.sort((a, b) => {
                let valA: string | Decimal = '';
                let valB: string | Decimal = '';
-               console.error(`Limit:  ${a.limit}`);
 
                switch (sortField) {
                     case 'currency':
@@ -187,42 +186,6 @@ export class TrustlinesSummaryComponent {
                return direction === 'asc' ? cmp : -cmp;
           });
      });
-     // sortedTrustlines = computed(() => {
-     //      let items = [...this.filteredTrustlines()];
-     //      const sortField = this.sortBy();
-     //      const direction = this.sortDirection();
-
-     //      return items.sort((a, b) => {
-     //           let valA: string | number = '';
-     //           let valB: string | number = '';
-
-     //           switch (sortField) {
-     //                case 'currency':
-     //                     valA = a.currency;
-     //                     valB = b.currency;
-     //                     break;
-     //                case 'issuer':
-     //                     valA = a.issuer;
-     //                     valB = b.issuer;
-     //                     break;
-     //                case 'balance':
-     //                     valA = Number.parseFloat(a.balance) || 0;
-     //                     valB = Number.parseFloat(b.balance) || 0;
-     //                     break;
-     //                case 'limit':
-     //                     valA = Number.parseFloat(a.limit) || 0;
-     //                     valB = Number.parseFloat(b.limit) || 0;
-     //                     break;
-     //           }
-
-     //           if (typeof valA === 'number' && typeof valB === 'number') {
-     //                return direction === 'asc' ? valA - valB : valB - valA;
-     //           }
-
-     //           const cmp = String(valA).localeCompare(String(valB));
-     //           return direction === 'asc' ? cmp : -cmp;
-     //      });
-     // });
 
      summaryText = computed(() => {
           const data = this.info();
@@ -299,12 +262,9 @@ export class TrustlinesSummaryComponent {
      isCurrentWalletIssuer(trustlineIssuer: string): boolean {
           const walletAddr = this.selectedWalletAddress()?.toLowerCase();
           const issuer = trustlineIssuer?.toLowerCase();
-          const selectedIssuer = this.selectedIssuer()?.toLowerCase();
 
           // For clawback tab, we want to show the holder, not the issuer
           if (this.tab() === 'clawbackTokens') {
-               // If current wallet is the issuer, then the trustline.issuer is actually the holder?
-               // Actually in your trustline data, when you're the issuer, the trustline.issuer is the holder
                return walletAddr === issuer;
           }
 
@@ -313,27 +273,7 @@ export class TrustlinesSummaryComponent {
 
      // Get the display address based on context
      getDisplayAddress(trustline: any): string {
-          const tab = this.tab();
-          const walletAddr = this.selectedWalletAddress()?.toLowerCase();
-          const trustlineIssuer = trustline.issuer?.toLowerCase();
-
-          switch (tab) {
-               case 'clawbackTokens':
-                    // If current wallet is the issuer, show the holder (trustline.issuer)
-                    if (walletAddr === this.selectedIssuer()?.toLowerCase()) {
-                         return trustline.issuer; // This is the token holder
-                    }
-                    // If current wallet is NOT the issuer, show the issuer
-                    return trustline.issuer;
-               case 'issueCurrency':
-                    // If current wallet is the issuer, we're issuing to a destination
-                    if (walletAddr === this.selectedIssuer()?.toLowerCase()) {
-                         return trustline.issuer; // The token holder
-                    }
-                    return trustline.issuer;
-               default:
-                    return trustline.issuer;
-          }
+          return trustline.issuer;
      }
 
      onSearchChange(value: string) {

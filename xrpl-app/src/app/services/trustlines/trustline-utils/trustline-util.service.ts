@@ -4,12 +4,11 @@ import { TrustlineCurrencyService } from '../trustline-currency/trustline-curren
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import * as xrpl from 'xrpl';
-import { TrustlineActionTypes, TrustlineFlagKey } from '../../../components/trustlines/constants/trustline.types';
+import { TrustlineActionTypes } from '../../../components/trustlines/constants/trustline.types';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
-import { TRUSTLINE } from '../../../components/trustlines/constants/trustline.constants';
 import { AcccountDataService } from '../../account-data/acccount-data.service';
 import { AppConstants } from '../../../core/app.constants';
 
@@ -36,17 +35,16 @@ export class TrustlineUtilService {
                return;
           }
 
-          console.log(`Loading trustlines for wallet: ${currentWallet.slice(0, 8)}...`);
           this.trustlineStoreService.setField('isLoading', true);
 
           try {
                // Always force refresh to ensure we have accountObjects
                const env = await this.txEnvironmentService.refreshEnvironment({
                     includeAccountInfo: true,
-                    includeAccountObject: true, // Make sure this is true
+                    includeAccountObject: true,
                     includeTrustlines: true,
                     includeGatewayBalance: true,
-                    forceRefresh: forceRefresh || true, // Force refresh to avoid missing data
+                    forceRefresh: forceRefresh,
                });
 
                // Safety check - if accountObjects is missing, refresh again
@@ -116,9 +114,6 @@ export class TrustlineUtilService {
           const issuer = this.currencyStoreService.issuer();
           const tab = this.activeTab();
 
-          console.log(`[onCurrencyIssuerChange] ${tab} - ${currency}/${issuer}`);
-
-          // FORCE FULL RESET EVERY TIME
           this.trustlineCurrencyService.clearFlagsValue(tab as any);
 
           this.trustlineStoreService.setField('trustlineAlreadyExist', false);
@@ -149,8 +144,6 @@ export class TrustlineUtilService {
                }
 
                await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
-
-               console.log('[onCurrencyIssuerChange] FINAL flags:', JSON.stringify(this.trustlineCurrencyService.flags()));
           } catch (error) {
                console.error('[onCurrencyIssuerChange] Error:', error);
           }
@@ -160,63 +153,6 @@ export class TrustlineUtilService {
           const wallet = this.walletManager.getSelectedWallet()?.classicAddress;
           const issuer = this.currencyStoreService.issuer();
           return !!(wallet && issuer && wallet === issuer);
-     }
-
-     async onCurrencyIssuerChange_234234234234234(): Promise<void> {
-          const currency = this.currencyStoreService.currency();
-          const issuer = this.currencyStoreService.issuer();
-
-          console.log(`[onCurrencyIssuerChange] Checking for ${currency}/${issuer}`);
-
-          // ALWAYS reset both flags first
-          this.trustlineStoreService.setField('trustlineAlreadyExist', false);
-          this.trustlineStoreService.setField('removeTrustlineAvailable', true);
-          this.trustlineStoreService.setField('removeTrustlineMessage', []);
-
-          if (!currency || !issuer) {
-               this.currencyStoreService.setField('amount', this.activeTab() === 'removeTrustline' ? 0 : null);
-               this.currencyStoreService.setField('balance', '0');
-               console.log(`[onCurrencyIssuerChange] No currency or issuer, reset and returning`);
-               return;
-          }
-
-          try {
-               // Force refresh environment for the new pair
-               const env = await this.txEnvironmentService.refreshEnvironment({
-                    includeAccountInfo: true,
-                    includeAccountObject: true,
-                    includeTrustlines: true,
-                    includeGatewayBalance: true,
-                    forceRefresh: true,
-               });
-
-               // Check and update trustline existence
-               const exists = this.checkForExistingTrustline(env);
-               console.log(`[onCurrencyIssuerChange] Trustline exists: ${exists}`);
-
-               // IMPORTANT: Also update removal availability for the Remove tab
-               if (this.activeTab() === 'removeTrustline') {
-                    const existingIOUs = this.trustlineStoreService.existingIOUs();
-                    const trustline = existingIOUs.find((tl: any) => tl.currency === currency && tl.issuer === issuer);
-
-                    if (trustline) {
-                         const canRemove = this.canRemoveTrustline(trustline);
-                         console.log(`[onCurrencyIssuerChange] Can remove: ${canRemove.canRemove}, Reasons: ${canRemove.reasons}`);
-                         this.trustlineStoreService.setField('removeTrustlineAvailable', canRemove.canRemove);
-                         this.trustlineStoreService.setField('removeTrustlineMessage', canRemove.reasons);
-                    } else {
-                         // No trustline exists for this pair
-                         console.log(`[onCurrencyIssuerChange] No trustline found for removal`);
-                         this.trustlineStoreService.setField('removeTrustlineAvailable', false);
-                         this.trustlineStoreService.setField('removeTrustlineMessage', ['No trustline exists for this currency/issuer pair']);
-                    }
-               }
-
-               // Update balance immediately
-               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
-          } catch (error) {
-               console.error('[onCurrencyIssuerChange] Error:', error);
-          }
      }
 
      async onCurrencyChange(currency: string) {
@@ -233,8 +169,6 @@ export class TrustlineUtilService {
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
 
-          console.log(`[checkForExistingTrustline] Checking for ${currency}/${issuer}`);
-
           if (!currency || !issuer) {
                this.trustlineStoreService.setField('trustlineAlreadyExist', false);
                this.trustlineStoreService.setField('removeTrustlineAvailable', true);
@@ -249,14 +183,10 @@ export class TrustlineUtilService {
           if (env.trustlines?.result?.lines) {
                trustLine = env.trustlines.result.lines.find((line: any) => {
                     const lineCurrency = this.utilsService.decodeIfNeeded(line.currency);
-                    const matches = line.account === issuer && lineCurrency === this.utilsService.decodeIfNeeded(currency);
-                    if (matches) {
-                         console.log(`[checkForExistingTrustline] Found trustline in environment:`, line);
-                    }
-                    return matches;
+                    return line.account === issuer && lineCurrency === this.utilsService.decodeIfNeeded(currency);
                });
           } else {
-               console.info('[checkForExistingTrustline] No trustlines in environment, checking stored IOUs');
+               // No trustlines returned in the environment; fall back to previously cached trustlines.
           }
 
           // If not found in environment, check the stored IOUs (they were loaded earlier)
@@ -264,13 +194,11 @@ export class TrustlineUtilService {
                const existingIOUs = this.trustlineStoreService.existingIOUs();
                const storedTrustline = existingIOUs.find((tl: any) => tl.currency === currency && tl.issuer === issuer);
                if (storedTrustline) {
-                    console.log(`[checkForExistingTrustline] Found trustline in stored IOUs:`, storedTrustline);
                     trustLine = storedTrustline;
                }
           }
 
           if (trustLine) {
-               console.log(`[checkForExistingTrustline] Trustline EXISTS for ${currency}/${issuer}`);
                this.trustlineStoreService.setField('trustlineAlreadyExist', true);
 
                if (this.activeTab() === 'setTrustline') {
@@ -282,7 +210,6 @@ export class TrustlineUtilService {
                }
                return true;
           } else {
-               console.log(`[checkForExistingTrustline] Trustline DOES NOT EXIST for ${currency}/${issuer}`);
                this.trustlineStoreService.setField('trustlineAlreadyExist', false);
                if (this.activeTab() === 'setTrustline' || this.activeTab() === 'removeTrustline') {
                     this.currencyStoreService.setField('amount', this.activeTab() === 'removeTrustline' ? 0 : null);
@@ -292,8 +219,6 @@ export class TrustlineUtilService {
      }
 
      setRemoveFlagsBasedOnExistingTrustline(accountObjects: xrpl.AccountObjectsResponse) {
-          console.log('=== setRemoveFlagsBasedOnExistingTrustline ===');
-
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
           if (!currency || !issuer) return;
@@ -303,12 +228,10 @@ export class TrustlineUtilService {
 
           const state = this.trustlineCurrencyService.getTrustlineState(accountObjects, walletAddr!, issuer, encoded);
           if (!state) {
-               console.log('[setRemoveFlags] No RippleState found');
                return;
           }
 
           const flags = state.Flags ?? 0;
-          console.log(`[setRemoveFlags] Raw Flags: ${flags} (0b${flags.toString(2)})`);
 
           // Check BOTH sides
           const hasNoRipple = (flags & 0x00020000) !== 0 || (flags & 0x00040000) !== 0;
@@ -323,13 +246,9 @@ export class TrustlineUtilService {
           }));
 
           this.trustlineCurrencyService.updateFlagTotal();
-
-          console.log(`[setRemoveFlags] FINAL -> NoRipple:${hasNoRipple}, Freeze:${hasFreeze}, DeepFreeze:${hasDeepFreeze}`);
      }
 
      updateTrustLineFlagsInUI(accountObjects: xrpl.AccountObjectsResponse) {
-          console.log('=== updateTrustLineFlagsInUI (Set tab) ===');
-
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
           if (!currency || !issuer) return;
@@ -340,7 +259,6 @@ export class TrustlineUtilService {
           const state = this.trustlineCurrencyService.getTrustlineState(accountObjects, walletAddr!, issuer, encoded);
           if (!state) {
                this.trustlineCurrencyService.clearFlagsValue(this.activeTab());
-               console.log('[updateTrustLineFlagsInUI] No state found - flags cleared');
                return;
           }
 
@@ -359,147 +277,6 @@ export class TrustlineUtilService {
                tfSetDeepFreeze: hasDeepFreeze,
                tfClearDeepFreeze: false,
           }));
-
-          this.trustlineCurrencyService.updateFlagTotal();
-
-          console.log(`[updateTrustLineFlagsInUI] Applied -> NoRipple:${hasNoRipple}, Freeze:${hasFreeze}, DeepFreeze:${hasDeepFreeze}`);
-     }
-
-     updateTrustLineFlagsInUI_5465456465454(accountObjects: xrpl.AccountObjectsResponse) {
-          console.log('updateTrustLineFlagsInUI.........................');
-          const currency = this.currencyStoreService.currency();
-          const issuer = this.currencyStoreService.issuer();
-          const activeTab = this.activeTab();
-
-          // Reset all UI flags first
-          this.trustlineCurrencyService.flags.update(currentFlags => {
-               const reset: Record<TrustlineFlagKey, boolean> = {
-                    tfSetfAuth: false,
-                    tfSetNoRipple: false,
-                    tfClearNoRipple: false,
-                    tfSetFreeze: false,
-                    tfClearFreeze: false,
-                    tfSetDeepFreeze: false,
-                    tfClearDeepFreeze: false,
-               };
-               return reset;
-          });
-
-          if (!currency || !issuer) return;
-
-          const encoded = this.utilsService.encodeIfNeeded(currency);
-          const walletAddr = this.walletManager.getSelectedWallet()?.classicAddress || this.walletManager.getSelectedWallet()?.address;
-
-          const state = this.trustlineCurrencyService.getTrustlineState(accountObjects, walletAddr!, issuer, encoded);
-
-          if (!state) {
-               if (activeTab !== 'removeTrustline') this.trustlineCurrencyService.clearFlagsValue(activeTab);
-               return;
-          }
-
-          const flags = state.Flags ?? 0;
-          const isLowSide = state.LowLimit?.issuer === walletAddr;
-          const map = TRUSTLINE.LEDGER_FLAG_MAP;
-
-          // Side-specific evaluations
-          const authSet = isLowSide ? flags & map.lsfLowAuth : flags & map.lsfHighAuth;
-          const noRippleSet = isLowSide ? (flags & map.lsfLowNoRipple) !== 0 : (flags & map.lsfHighNoRipple) !== 0;
-          const freezeSet = isLowSide ? flags & map.lsfLowFreeze : flags & map.lsfHighFreeze;
-          const deepFreezeSet = isLowSide ? flags & map.lsfLowDeepFreeze : flags & map.lsfHighDeepFreeze;
-
-          if (activeTab === 'removeTrustline') {
-               if (noRippleSet) {
-                    this.trustlineCurrencyService.flags.update(f => {
-                         f.tfClearNoRipple = true;
-                         return f;
-                    });
-               }
-
-               if (freezeSet) {
-                    this.trustlineCurrencyService.flags.update(f => {
-                         f.tfClearFreeze = true;
-                         return f;
-                    });
-               }
-
-               if (deepFreezeSet) {
-                    this.trustlineCurrencyService.flags.update(f => {
-                         f.tfClearDeepFreeze = true;
-                         return f;
-                    });
-               }
-          } else {
-               this.trustlineCurrencyService.flags.update(f => {
-                    f.tfSetfAuth = !!authSet;
-
-                    f.tfSetNoRipple = !!noRippleSet;
-                    f.tfSetFreeze = !!freezeSet;
-                    f.tfSetDeepFreeze = !!deepFreezeSet;
-                    return f;
-               });
-          }
-
-          this.trustlineCurrencyService.updateFlagTotal();
-     }
-
-     setRemoveFlagsBasedOnExistingTrustline_546456465456654(accountObjects: xrpl.AccountObjectsResponse) {
-          console.log('setRemoveFlagsBasedOnExistingTrustline************************');
-          const currency = this.currencyStoreService.currency();
-          const issuer = this.currencyStoreService.issuer();
-
-          // Force reset ALL flags first, then only enable the required clears
-          this.trustlineCurrencyService.flags.update(f => ({
-               tfSetfAuth: false,
-               tfSetNoRipple: false,
-               tfClearNoRipple: false,
-               tfSetFreeze: false,
-               tfClearFreeze: false,
-               tfSetDeepFreeze: false,
-               tfClearDeepFreeze: false,
-          }));
-
-          if (!currency || !issuer || !this.walletManager.getSelectedWallet()?.address) {
-               this.trustlineCurrencyService.updateFlagTotal();
-               return;
-          }
-
-          const encoded = this.utilsService.encodeIfNeeded(currency);
-          const walletAddr = this.walletManager.getSelectedWallet()?.classicAddress || this.walletManager.getSelectedWallet()?.address;
-          const state = this.trustlineCurrencyService.getTrustlineState(accountObjects, walletAddr!, issuer, encoded);
-
-          if (!state) {
-               this.trustlineCurrencyService.updateFlagTotal();
-               return;
-          }
-
-          const flags = state.Flags ?? 0;
-          const isLowSide = state.LowLimit?.issuer === walletAddr;
-          const map = TRUSTLINE.LEDGER_FLAG_MAP;
-
-          const noRippleSet = isLowSide ? (flags & map.lsfLowNoRipple) !== 0 : (flags & map.lsfHighNoRipple) !== 0;
-          const freezeSet = isLowSide ? flags & map.lsfLowFreeze : flags & map.lsfHighFreeze;
-          const deepFreezeSet = isLowSide ? flags & map.lsfLowDeepFreeze : flags & map.lsfHighDeepFreeze;
-
-          // Removal requires clearing these if present
-          if (noRippleSet) {
-               this.trustlineCurrencyService.flags.update(f => {
-                    f.tfClearNoRipple = true;
-                    return f;
-               });
-          }
-          if (freezeSet) {
-               this.trustlineCurrencyService.flags.update(f => {
-                    f.tfClearFreeze = true;
-                    return f;
-               });
-          }
-
-          if (deepFreezeSet) {
-               this.trustlineCurrencyService.flags.update(f => {
-                    f.tfClearDeepFreeze = true;
-                    return f;
-               });
-          }
 
           this.trustlineCurrencyService.updateFlagTotal();
      }
@@ -568,15 +345,8 @@ export class TrustlineUtilService {
 
           // Parse balance and limit as numbers
           const balance = typeof trustline.balance === 'string' ? Number.parseFloat(trustline.balance) : Number(trustline.balance);
-          const limit = typeof trustline.limit === 'string' ? Number.parseFloat(trustline.limit) : Number(trustline.limit);
 
-          console.log(`[canRemoveTrustline] Checking trustline:`, {
-               currency: trustline.currency,
-               issuer: trustline.issuer,
-               balance: balance,
-               limit: limit,
-               flags: trustline.flags,
-          });
+          // Keep the removal criteria simple and stable
 
           // Check balance (must be 0)
           if (balance !== 0) {
@@ -607,7 +377,6 @@ export class TrustlineUtilService {
           }
 
           const canRemove = reasons.length === 0;
-          console.log(`[canRemoveTrustline] Can remove: ${canRemove}, Reasons: ${reasons}`);
 
           return {
                canRemove,

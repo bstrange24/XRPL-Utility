@@ -138,9 +138,6 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
 
      selectCurrency(item: any) {
           const currency = item?.id ?? item;
-          const stack = new Error().stack;
-          // console.warn(`[TrustlineCurrencyService.selectCurrency] Called with: ${currency}`);
-          // console.warn(`[TrustlineCurrencyService.selectCurrency] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setCurrency(currency);
 
           const issuers = this.getIssuersForCurrency(currency);
@@ -154,9 +151,6 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
 
      selectIssuer(item: any) {
           const value = item?.id ?? item;
-          const stack = new Error().stack;
-          // console.warn(`[TrustlineCurrencyService.selectIssuer] Called with: ${value?.slice(0, 8)}...`);
-          // console.warn(`[TrustlineCurrencyService.selectIssuer] Stack:`, stack?.split('\n').slice(1, 4).join('\n'));
           this.currencyStore.setIssuer(value);
           this.refreshCurrentBalance().catch(console.error);
      }
@@ -318,10 +312,7 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           const currency = this.currencyStore.currency();
           const issuer = this.currencyStore.issuer();
 
-          console.log(`[refreshCurrentBalanceFromEnv] START - Wallet: ${walletAddress?.slice(0, 8)}..., Currency: ${currency}, Issuer: ${issuer?.slice(0, 8)}...`);
-
           if (!walletAddress || !currency) {
-               console.log(`[refreshCurrentBalanceFromEnv] No wallet or currency, setting balance to 0`);
                this.currencyStore.setField('balance', '0');
                return;
           }
@@ -335,17 +326,14 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
                     }
                     const bal = Number(env.accountInfo.result.account_data.Balance) / 1_000_000;
                     const formatted = this.utilsService.formatTokenBalance(bal.toString(), 6);
-                    console.log(`[refreshCurrentBalanceFromEnv] XRP balance: ${formatted}`);
                     this.currencyStore.setField('balance', formatted);
                } catch {
-                    console.log(`[refreshCurrentBalanceFromEnv] XRP error, setting to 0`);
                     this.currencyStore.setField('balance', '0');
                }
                return;
           }
 
           if (!issuer) {
-               console.log(`[refreshCurrentBalanceFromEnv] No issuer, setting balance to 0`);
                this.currencyStore.setField('balance', '0');
                return;
           }
@@ -359,13 +347,11 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
                          forceRefresh: true,
                     });
                     const balance = this.extractBalance(freshEnv.gatewayBalanceObject, walletAddress, currency, issuer);
-                    console.log(`[refreshCurrentBalanceFromEnv] Token balance extracted (fresh): ${balance}`);
                     this.currencyStore.setField('balance', balance);
                     return;
                }
 
                const balance = this.extractBalance(env.gatewayBalanceObject, walletAddress, currency, issuer);
-               console.log(`[refreshCurrentBalanceFromEnv] Token balance extracted: ${balance}`);
                this.currencyStore.setField('balance', balance);
           } catch (err) {
                console.warn('Failed to extract token balance from env:', err);
@@ -400,11 +386,11 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
                     const myLimitObj = isHighSide ? obj.HighLimit : obj.LowLimit;
                     const peerLimitObj = isHighSide ? obj.LowLimit : obj.HighLimit;
 
-                    const myLimitValue = new Decimal(myLimitObj.value); //myLimitObj.value;
+                    const myLimitValue = new Decimal(myLimitObj.value);
 
                     // The issuer is the one whose limit is typically non-zero while the holder's is set
                     // But more reliably: the issuer sees negative balance when tokens are issued
-                    const rawBalance = new Decimal(obj.Balance.value ?? '0').toFixed(); // Number(obj.Balance.value ?? '0');
+                    const rawBalance = new Decimal(obj.Balance.value ?? '0').toFixed();
 
                     // Balance is always expressed from the perspective of the LowLimit holder
                     // If we're the high side, we need to invert the sign
@@ -475,8 +461,6 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      }
 
      clearFlagsValue(activeTab: string) {
-          console.log(`[clearFlagsValue] Resetting all flags for tab: ${activeTab}`);
-
           this.flags.set({
                tfSetfAuth: false,
                tfSetNoRipple: false,

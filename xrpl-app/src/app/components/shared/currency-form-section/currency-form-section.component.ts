@@ -223,7 +223,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
 
      public isAmountValid = computed(() => {
           const amt = this.amountValue();
-          if (amt === null) return false; // empty = invalid until touched
+          if (amt === null || amt === undefined) return false; // empty = invalid until touched
 
           if (this.activeTab === 'removeTrustline') {
                return amt === 0;
@@ -246,12 +246,14 @@ export class CurrencyFormSectionComponent implements OnChanges {
                return amt === 0 ? '' : 'Balance must be 0 to remove trustline';
           }
 
-          if (amt === null || amt <= 0) {
+          if (amt === null || amt === undefined || amt <= 0) {
                return 'Amount must be greater than 0';
           }
+
           if (!Number.isFinite(amt)) {
                return 'Please enter a valid number';
           }
+
           return '';
      });
 
@@ -260,7 +262,7 @@ export class CurrencyFormSectionComponent implements OnChanges {
      }
 
      set setAmount(value: number | null | string) {
-          if (value === '' || value === null) {
+          if (value === '' || value === null || value === undefined) {
                this.amountValue.set(null);
           } else {
                this.amountValue.set(Number(value));

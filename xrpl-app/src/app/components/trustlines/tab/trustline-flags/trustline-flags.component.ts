@@ -19,12 +19,7 @@ export class TrustlineFlagsComponent {
 
      constructor() {
           effect(() => {
-               console.log('[Flags] Current flags:', this.trustlineCurrencyService.flags());
-          });
-
-          effect(() => {
-               const current = this.trustlineCurrencyService.flags(); // or however you read it
-               console.log('[Flags] Current flags updated to:', current);
+               this.trustlineCurrencyService.flags();
                this.cdr.detectChanges();
           });
      }

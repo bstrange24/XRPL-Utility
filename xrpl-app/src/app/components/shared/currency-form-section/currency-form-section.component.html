@@ -69,7 +69,7 @@
                     <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" (focus)="isFocused.set(true)" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [ngModel]="getAmount ?? ''" (ngModelChange)="setAmount = $event" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
 
                     <!-- Icons Container -->
-                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="getAmount !== null" (clear)="clearAmount()" />
+                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="!isReadOnly && getAmount !== null" (clear)="clearAmount()" />
                </div>
 
                <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />
@@ -161,7 +161,7 @@
                     <input type="text" inputmode="decimal" class="input-base-with-validation" app-focus-border [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid()" (keydown)="utilsService.preventNegative($event)" (focus)="isFocused.set(true)" (input)="onAmountInput($event)" (blur)="onAmountBlur()" [ngModel]="getAmount ?? ''" (ngModelChange)="setAmount = $event" [readonly]="isReadOnly" [disabled]="isReadOnly" placeholder="e.g. 10.5" />
 
                     <!-- Icons Container -->
-                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="getAmount !== null" (clear)="clearAmount()" />
+                    <app-input-icons [isValid]="!isReadOnly && !isAmountInvalid() && getAmount !== null" [isInvalid]="!isReadOnly && isAmountInvalid() && getAmount !== null" [showClear]="!isReadOnly && getAmount !== null" (clear)="clearAmount()" />
                </div>
 
                <app-field-helper title="{{ limitLabel }}" [items]="amountHelperItems" [show]="showAmountHelper" />

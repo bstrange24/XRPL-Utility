@@ -20,12 +20,7 @@ export class TrustlineViewModelService {
      readonly isBusy = computed(() => this.txUiService.currentStep() !== 'idle');
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
 
-     constructor() {
-          effect(() => {
-               const selected = this.selectedIssuerItem();
-               console.log(`[ViewModel] selectedIssuerItem changed to:`, selected?.id?.slice(0, 8), selected?.display);
-          });
-     }
+     constructor() {}
 
      readonly currencyItems = this.trustlineCurrencyService.currencyItems;
      readonly issuerItems = this.trustlineCurrencyService.issuerItems;
@@ -39,11 +34,8 @@ export class TrustlineViewModelService {
 
           const currentWallet = this.walletManager.getSelectedWallet()?.classicAddress;
 
-          console.log(`[VM selectedIssuerItem] issuer=${issuerAddr?.slice(0, 8)}... wallet=${currentWallet?.slice(0, 8)}...`);
-
           // Self issuer case
           if (currentWallet && issuerAddr === currentWallet) {
-               console.log(`[VM selectedIssuerItem] → RETURNING SELF ISSUER`);
                return {
                     id: issuerAddr,
                     display: 'Self (Issuer)',
@@ -246,38 +238,28 @@ export class TrustlineViewModelService {
           const balance = this.currencyStoreService.balance();
           const existingIOUs = this.trustlineStoreService.existingIOUs();
 
-          // Enhanced logging
-          console.log(`[displayedBalance] START - Tab: ${tab}, Currency: ${currency}, Issuer: ${issuer}, StoreBalance: ${balance}, IOUs length: ${existingIOUs.length}`);
-
           const _forceRecompute = `${currency}|${issuer}|${balance}|${existingIOUs.length}`;
 
           // Remove tab always shows the real per-trustline balance
           if (tab === 'removeTrustline') {
                const trustline = this.foundTrustline();
-               const result = trustline?.balance ?? '0';
-               console.log(`[displayedBalance] REMOVE tab - returning: ${result}`);
-               return result;
+               return trustline?.balance ?? '0';
           }
 
           // Issuer case → use the total obligations from gateway_balances
           if (this.isIssuerForSelected()) {
-               console.log(`[displayedBalance] ISSUER case - returning store balance: ${balance || '0'}`);
                return balance || '0';
           }
 
           // Normal holder case → use the per-trustline balance from existingIOUs
           const existing = this.foundTrustline();
-          const result = existing ? existing.balance : '0';
-          console.log(`[displayedBalance] HOLDER case - found trustline: ${!!existing}, balance: ${result}`);
-          return result;
+          return existing ? existing.balance : '0';
      });
 
      readonly canRemoveTrustline = computed(() => {
           const currency = this.currencyStoreService.currency();
           const issuer = this.currencyStoreService.issuer();
           const existingIOUs = this.trustlineStoreService.existingIOUs();
-
-          console.log(`[canRemoveTrustline] Checking ${currency}/${issuer}`);
 
           if (!currency || !issuer) {
                return { canRemove: false, reasons: ['No currency or issuer selected'] };
@@ -293,7 +275,6 @@ export class TrustlineViewModelService {
           const limit = typeof trustline.limit === 'string' ? Number.parseFloat(trustline.limit) : Number(trustline.limit);
           const reasons: string[] = [];
 
-          console.log(`trustline.flags?: ${trustline.flags}`);
           if (balance !== 0) reasons.push(`Balance is ${trustline.balance} (must be 0 to remove)`);
           // if (limit !== 0) reasons.push(`Limit is ${trustline.limit} (must be 0 to remove)`);
           if (trustline.flags?.includes('Freeze')) reasons.push(`Trustline is frozen`);
@@ -332,19 +313,6 @@ export class TrustlineViewModelService {
           }
 
           return this.currencyStoreService.amount() ?? '';
-     });
-
-     readonly formAmount_234234 = computed(() => {
-          const tab = this.activeTab();
-
-          if (tab === 'issueCurrency' || tab === 'clawbackTokens') return '';
-
-          if (tab === 'removeTrustline') return this.foundTrustline()?.limit ?? '0';
-
-          const existing = this.foundTrustline();
-          if (existing) return existing.limit;
-
-          return '';
      });
 
      readonly isAmountReadOnly = computed(() => {
