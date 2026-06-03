@@ -242,7 +242,7 @@ describe('PermissionedDomainUtilService', () => {
 
                service.clearInputFields();
 
-               expect(mockTxUiService.clearAllFields).toHaveBeenCalled();
+               expect(mockTxUiService.disableAdditionalFields).toHaveBeenCalled();
                expect(mockPermissionedDomainStoreService.resetDomainFields).toHaveBeenCalled();
           });
 
@@ -251,7 +251,7 @@ describe('PermissionedDomainUtilService', () => {
 
                service.clearInputFields();
 
-               expect(mockTxUiService.clearAllFields).not.toHaveBeenCalled();
+               expect(mockTxUiService.disableAdditionalFields).not.toHaveBeenCalled();
                expect(mockPermissionedDomainStoreService.resetDomainFields).not.toHaveBeenCalled();
           });
      });

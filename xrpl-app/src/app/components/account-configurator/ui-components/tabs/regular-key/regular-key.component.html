@@ -16,33 +16,27 @@
           <div class="grid grid-cols-1 gap-6 mt-5 md:grid-cols-2">
                <!-- Regular Key Address -->
                <div>
-                    <label for="regularKeyAddress" class="label-primary">Regular Key Address <span class="text-red-500">*</span></label>
+                    <div class="field-label">
+                         <label for="regularKeyAddress" class="label-primary">Regular Key Address <span class="text-red-500">*</span></label>
+                    </div>
+
                     <p class="text-secondary">The account address to use as your regular key</p>
                     <div class="relative">
                          <input
                               type="text"
                               class="input-base-with-validation"
-                              [class.border-gray-200]="!regularKeyAddressInvalid() && !isRegularKeyAddressFocused()"
-                              [class.border-green-500]="isRegularKeyAddressFocused() && !regularKeyAddressInvalid()"
-                              [class.border-red-500]="regularKeyAddressInvalid()"
+                              app-focus-border
+                              [isValid]="!regularKeyAddressInvalid() && regularKeyAddress !== null && regularKeyAddress !== undefined && regularKeyAddress.trim().length > 0"
+                              [isInvalid]="regularKeyAddressInvalid() && regularKeyAddress !== null && regularKeyAddress !== undefined && regularKeyAddress.trim().length > 0"
                               (focus)="isRegularKeyAddressFocused.set(true); isRegularKeyAddressFocused()"
                               (blur)="isRegularKeyAddressFocused.set(false)"
-                              [ngModel]="accountConfiguratorStoreService.regularKeyAddress()"
-                              (ngModelChange)="accountConfiguratorStoreService.setField('regularKeyAddress', $event)"
+                              [ngModel]="regularKeyAddress"
+                              (ngModelChange)="regularKeyAddress = $event"
                               placeholder="r..."
                          />
 
-                         @if (accountConfiguratorStoreService.regularKeyAddress()) {
-                         <button type="button" (click)="accountConfiguratorStoreService.setField('regularKeyAddress','')" class="clearInputXmark" aria-label="Clear Regular Key address">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="!regularKeyAddressInvalid() && regularKeyAddress !== null && regularKeyAddress !== undefined && regularKeyAddress.trim().length > 0" [isInvalid]="regularKeyAddressInvalid() && regularKeyAddress !== null && regularKeyAddress !== undefined && regularKeyAddress.trim().length > 0" [showClear]="!!accountConfiguratorStoreService.regularKeyAddress()" (clear)="accountConfiguratorStoreService.setField('regularKeyAddress','')" />
                     </div>
-
-                    <!-- Helper text for invalid address -->
-                    @if (regularKeyAddressInvalid()) {
-                    <p class="form-error">Please enter a valid XRP address</p>
-                    }
                </div>
 
                <!-- Regular Key Seed -->
@@ -53,28 +47,22 @@
                          <input
                               type="text"
                               class="input-base-with-validation"
-                              [class.border-gray-200]="!regularKeySeedInvalid() && !isRegularKeySeedFocused()"
-                              [class.border-green-500]="isRegularKeySeedFocused() && !regularKeySeedInvalid()"
-                              [class.border-red-500]="regularKeySeedInvalid()"
+                              app-focus-border
+                              [isValid]="!regularKeySeedInvalid() && regularKeySeed !== null && regularKeySeed !== undefined && regularKeySeed.trim().length > 0"
+                              [isInvalid]="regularKeySeedInvalid() && regularKeySeed !== null && regularKeySeed !== undefined && regularKeySeed.trim().length > 0"
                               (focus)="isRegularKeySeedFocused.set(true); isRegularKeySeedFocused()"
                               (blur)="isRegularKeySeedFocused.set(false)"
-                              [ngModel]="accountConfiguratorStoreService.regularKeySeed()"
-                              (ngModelChange)="accountConfiguratorStoreService.setField('regularKeySeed', $event)"
-                              placeholder="s... or 123456 234567..."
+                              [ngModel]="regularKeySeed"
+                              (ngModelChange)="regularKeySeed = $event"
+                              placeholder="r..."
                          />
 
-                         @if (accountConfiguratorStoreService.regularKeySeed()) {
-                         <button type="button" (click)="accountConfiguratorStoreService.setField('regularKeySeed','')" class="clearInputXmark" aria-label="Clear Regular Key seed">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="!regularKeySeedInvalid() && regularKeySeed !== null && regularKeySeed !== undefined && regularKeySeed.trim().length > 0" [isInvalid]="regularKeySeedInvalid() && regularKeySeed !== null && regularKeySeed !== undefined && regularKeySeed.trim().length > 0" [showClear]="!!accountConfiguratorStoreService.regularKeySeed()" (clear)="accountConfiguratorStoreService.setField('regularKeySeed','')" />
                     </div>
 
                     <!-- Helper text for invalid seed -->
                     @if (regularKeySeedInvalid()) { @if (isMnemonic(accountConfiguratorStoreService.regularKeySeed())) {
                     <p class="form-error">Mnemonics are not supported for regular keys. Please use a family seed (s...) or secret numbers.</p>
-                    } @else {
-                    <p class="form-error">Please enter a valid XRP seed (family seed or secret numbers)</p>
                     } }
                </div>
           </div>
@@ -94,12 +82,7 @@
      <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
      <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">Please fix validation errors above before proceeding.</div>
-     </div>
-     }
+     <app-validation-errors [errors]="validationErrorMessages()" title="Regular key validation issues:" />
 
      <div class="main-button-section">
           <!-- Primary Actions -->

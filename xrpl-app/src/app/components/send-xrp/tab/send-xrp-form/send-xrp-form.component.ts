@@ -17,11 +17,13 @@ import { LucideAngularModule } from 'lucide-angular';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-send-xrp-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, FieldHelperComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon, LucideAngularModule],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, SelectSearchDropdownComponent, FieldHelperComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, ToggleSliderComponent, NgIcon, LucideAngularModule, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './send-xrp-form.component.html',
      styleUrl: './send-xrp-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,14 +64,6 @@ export class SendXrpFormComponent {
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
 
-     // UI State
-     showSendXrpDestinationHelper = signal(false);
-     showSendXrpAmountHelper = signal(false);
-     showOptionalFieldsHelper = signal(false);
-
-     // Track destination validation status from dropdown
-     isDestinationValid = signal(false);
-
      // Outputs to parent
      performAction = output<void>();
      clearFields = output<void>();
@@ -77,6 +71,21 @@ export class SendXrpFormComponent {
      destinationChange = output<any>();
      toggleOptions = output<boolean>();
      canSendXrpChange = output<boolean>();
+
+     // UI State
+     isDestinationValid = signal(false);
+     showSendXrpDestinationHelper = signal(false);
+     showSendXrpAmountHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
+     isFocused = signal(false);
+
+     get amount() {
+          return this.accountConfiguratorStoreService.amount();
+     }
+
+     set amount(value: string) {
+          this.accountConfiguratorStoreService.setField('amount', value);
+     }
 
      canSendXrp = computed(() => {
           // Must have valid destination (from dropdown validation)

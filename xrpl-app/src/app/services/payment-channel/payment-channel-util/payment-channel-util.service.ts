@@ -462,6 +462,6 @@ export class PaymentChannelUtilService extends PerformanceBaseComponent {
 
      clearInputFields(): void {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
      }
 }

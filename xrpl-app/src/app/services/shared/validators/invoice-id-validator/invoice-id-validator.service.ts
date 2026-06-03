@@ -8,26 +8,27 @@ import { XrplTxOptionsStore } from '../../../../components/shared/stores/xrpl-tx
 export class InvoiceIdValidatorService {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
+     INVOICE_ID_REGEX = /^[0-9A-F]{64}$/i;
+
      // Computed signal: the final hex that will be sent
      readonly invoiceIdHex = computed(() => {
           const input = this.xrplTxOptionsStore.invoiceId()?.trim() ?? '';
+
           if (!input) return '';
-          if (/^[0-9A-Fa-f]{64}$/i.test(input)) {
-               return input.toUpperCase();
-          }
-          return input;
+
+          return this.INVOICE_ID_REGEX.test(input) ? input.toUpperCase() : input;
      });
 
      isValidInvoiceId = computed(() => {
           const id = this.xrplTxOptionsStore.invoiceId()?.trim();
-          if (!id) return true;
-          return /^[0-9A-Fa-f]{64}$/i.test(id);
+
+          return !id || this.INVOICE_ID_REGEX.test(id);
      });
 
      hasInvalidInvoiceId = computed(() => {
           const id = this.xrplTxOptionsStore.invoiceId()?.trim();
-          if (!id) return false;
-          return !/^[0-9A-Fa-f]{64}$/i.test(id);
+
+          return !!id && !this.INVOICE_ID_REGEX.test(id);
      });
 
      invoiceIdHexLength = computed(() => {

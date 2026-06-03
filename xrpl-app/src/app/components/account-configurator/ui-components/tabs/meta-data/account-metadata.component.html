@@ -14,16 +14,27 @@
           </div>
 
           <div class="relative">
-               <input type="text" class="input-base-with-validation" app-focus-border [isValid]="isNftMinterValid()" [isInvalid]="isNftMinterInvalid()" [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)" placeholder="r..." />
-               @if (accountConfiguratorStoreService.nfTokenMinterAddress()) {
-               <button type="button" (click)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', '')" class="clearInputXmark" aria-label="Clear NFT Minter Address">
-                    <lucide-icon name="x" size="16"></lucide-icon>
-               </button>
-               }
+               <input
+                    type="text"
+                    class="input-base-with-validation"
+                    app-focus-border
+                    [isValid]="isNftMinterValid() && accountConfiguratorStoreService.nfTokenMinterAddress() !== null && accountConfiguratorStoreService.nfTokenMinterAddress() !== undefined && accountConfiguratorStoreService.nfTokenMinterAddress().trim().length > 0"
+                    [isInvalid]="isNftMinterInvalid() && accountConfiguratorStoreService.nfTokenMinterAddress() !== null && accountConfiguratorStoreService.nfTokenMinterAddress() !== undefined && accountConfiguratorStoreService.nfTokenMinterAddress().trim().length > 0"
+                    [ngModel]="accountConfiguratorStoreService.nfTokenMinterAddress()"
+                    (ngModelChange)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', $event)"
+                    placeholder="r..."
+               />
+
+               <app-input-icons
+                    [isValid]="isNftMinterValid() && accountConfiguratorStoreService.nfTokenMinterAddress() !== null && accountConfiguratorStoreService.nfTokenMinterAddress() !== undefined && accountConfiguratorStoreService.nfTokenMinterAddress().trim().length > 0"
+                    [isInvalid]="isNftMinterInvalid() && accountConfiguratorStoreService.nfTokenMinterAddress() !== null && accountConfiguratorStoreService.nfTokenMinterAddress() !== undefined && accountConfiguratorStoreService.nfTokenMinterAddress().trim().length > 0"
+                    [showClear]="!!accountConfiguratorStoreService.nfTokenMinterAddress()"
+                    (clear)="accountConfiguratorStoreService.setField('nfTokenMinterAddress', '')"
+               />
           </div>
 
           @if (isNftMinterInvalid()) {
-          <p class="form-error">Please enter a valid XRP address</p>
+          <p class="form-error">Please enter a valid XRP address.</p>
           }
 
           <app-field-helper title="NFT Minter Address" [items]="nftMinterHelperItems" [show]="showNftMinterHelper" />
@@ -55,6 +66,7 @@
           </h4>
 
           <div class="side-by-side-fields">
+               <!-- Transfer Rate -->
                <div>
                     <div class="field-label">
                          <label for="credentialSubject" class="label-primary">Transfer Rate</label>
@@ -68,7 +80,23 @@
                     </div>
 
                     <div class="relative">
-                         <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTransferRateValid()" [isInvalid]="isTransferRateInvalid()" [ngModel]="accountConfiguratorStoreService.transferRate()" (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 1.5" step="0.001" min="0" max="100" />
+                         <input
+                              type="text"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isTransferRateValid() && accountConfiguratorStoreService.transferRate() !== null && accountConfiguratorStoreService.transferRate() !== undefined && accountConfiguratorStoreService.transferRate().trim().length > 0"
+                              [isInvalid]="isTransferRateInvalid() && accountConfiguratorStoreService.transferRate() !== null && accountConfiguratorStoreService.transferRate() !== undefined && accountConfiguratorStoreService.transferRate().trim().length > 0"
+                              [ngModel]="accountConfiguratorStoreService.transferRate()"
+                              (ngModelChange)="accountConfiguratorStoreService.setField('transferRate', $event)"
+                              placeholder="r..."
+                         />
+
+                         <app-input-icons
+                              [isValid]="isTransferRateValid() && accountConfiguratorStoreService.transferRate() !== null && accountConfiguratorStoreService.transferRate() !== undefined && accountConfiguratorStoreService.transferRate().trim().length > 0"
+                              [isInvalid]="isTransferRateInvalid() && accountConfiguratorStoreService.transferRate() !== null && accountConfiguratorStoreService.transferRate() !== undefined && accountConfiguratorStoreService.transferRate().trim().length > 0"
+                              [showClear]="!!accountConfiguratorStoreService.transferRate()"
+                              (clear)="accountConfiguratorStoreService.setField('transferRate', '')"
+                         />
                     </div>
 
                     @if (isTransferRateInvalid()) {
@@ -76,6 +104,7 @@
                     }
                </div>
 
+               <!-- Tick Size -->
                <div>
                     <div class="field-label">
                          <label for="credentialSubject" class="label-primary">Tick Size</label>
@@ -89,7 +118,23 @@
                     </div>
 
                     <div class="relative">
-                         <input type="number" class="input-base-with-validation" app-focus-border [isValid]="isTickSizeValid()" [isInvalid]="isTickSizeInvalid()" [ngModel]="accountConfiguratorStoreService.tickSize()" (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)" (keydown)="utilsService.preventNegative($event)" placeholder="e.g. 6" min="3" max="15" />
+                         <input
+                              type="text"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [ngModel]="accountConfiguratorStoreService.tickSize()"
+                              (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)"
+                              placeholder="r..."
+                         />
+
+                         <app-input-icons
+                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [showClear]="!!accountConfiguratorStoreService.tickSize()"
+                              (clear)="accountConfiguratorStoreService.setField('tickSize', '')"
+                         />
                     </div>
 
                     @if (isTickSizeInvalid()) {
@@ -115,13 +160,23 @@
           </div>
 
           <div class="relative">
-               <input type="text" class="input-base-with-validation" placeholder="e.g. example.com" app-focus-border [isValid]="!isDomainTooLong()" [isInvalid]="isDomainTooLong()" [ngModel]="accountConfiguratorStoreService.domain()" (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)" />
+               <input
+                    type="text"
+                    class="input-base-with-validation pr-20"
+                    placeholder="e.g. example.com"
+                    app-focus-border
+                    [isValid]="!isDomainTooLong() && accountConfiguratorStoreService.domain() !== null && accountConfiguratorStoreService.domain() !== undefined && accountConfiguratorStoreService.domain().trim().length > 0"
+                    [isInvalid]="isDomainTooLong()&& accountConfiguratorStoreService.domain() !== null && accountConfiguratorStoreService.domain() !== undefined && accountConfiguratorStoreService.domain().trim().length > 0"
+                    [ngModel]="accountConfiguratorStoreService.domain()"
+                    (ngModelChange)="accountConfiguratorStoreService.setField('domain', $event)"
+               />
 
-               @if (accountConfiguratorStoreService.domain()) {
-               <button type="button" (click)="accountConfiguratorStoreService.setField('domain', '')" class="clearInputXmark" aria-label="Clear Credential Type">
-                    <lucide-icon name="x" size="16"></lucide-icon>
-               </button>
-               }
+               <app-input-icons
+                    [isValid]="!isDomainTooLong() && accountConfiguratorStoreService.domain() !== null && accountConfiguratorStoreService.domain() !== undefined && accountConfiguratorStoreService.domain().trim().length > 0"
+                    [isInvalid]="isDomainTooLong()&& accountConfiguratorStoreService.domain() !== null && accountConfiguratorStoreService.domain() !== undefined && accountConfiguratorStoreService.domain().trim().length > 0"
+                    [showClear]="!!accountConfiguratorStoreService.domain()"
+                    (clear)="accountConfiguratorStoreService.setField('domain', '')"
+               />
           </div>
 
           <app-field-helper title="Domain" [items]="domainHelperItems" [show]="showDomainHelper" />
@@ -184,24 +239,11 @@
      <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
      <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessage(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
+     <app-validation-errors [errors]="validationErrorMessage()" title="Meta data validation issues:" />
 
      <!-- Main Action Button -->
      <div class="main-button-section">
           <!-- LEFT: primary action -->
-          <!-- <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="performAction.emit('')" [disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button> -->
           <app-button-tooltip [tooltipText]="!canModifyMetadata() ? 'Cannot modify metadata at this time. Check for missing or invalid fields.' : ''">
                <button type="button" class="btn-primary px-10 py-3 text-base font-semibold" (click)="canModifyMetadata() ? performAction.emit('') : null" [disabled]="false" [class.opacity-50]="!canModifyMetadata()" [attr.aria-disabled]="!canModifyMetadata()">{{ accountConfiguratorUtilService.modifyAccountMetaDataButtonLabel() }}</button>
           </app-button-tooltip>

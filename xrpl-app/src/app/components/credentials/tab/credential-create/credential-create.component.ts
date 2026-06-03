@@ -16,11 +16,13 @@ import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store
 import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-credential-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon, ToggleSliderComponent, LucideAngularModule, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, FieldHelperComponent, TransactionOptionsSectionComponent, MatSlideToggleModule, NgIcon, ToggleSliderComponent, LucideAngularModule, FocusBorderDirective, InputIconsComponent, ValidationErrorsComponent],
      templateUrl: './credential-create.component.html',
      styleUrl: './credential-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -62,13 +64,13 @@ export class CredentialCreateComponent {
      canCreateCredentialChange = output<boolean>();
 
      // UI State
-     private isSubjectValid = signal(false);
-     private optionsHasError = signal(false);
-     private optionsErrorMsg = signal('');
-     private optionsErrors = signal<string[]>([]);
-     showSubjectHelper = signal(false);
-     showCredentialTypeHelper = signal(false);
-     showOptionalFieldsHelper = signal(false);
+     private readonly isSubjectValid = signal(false);
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrorMsg = signal('');
+     private readonly optionsErrors = signal<string[]>([]);
+     readonly showSubjectHelper = signal(false);
+     readonly showCredentialTypeHelper = signal(false);
+     readonly showOptionalFieldsHelper = signal(false);
 
      constructor() {
           // Emit overall validation status whenever relevant signals change
@@ -107,6 +109,10 @@ export class CredentialCreateComponent {
           this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
      }
 
+     isCredentialTypeLengthValid() {
+          return this.credentialValidatorService.isCredentialTypeLengthValid();
+     }
+
      onOptionsValidationChange(validation: { hasError: boolean; message: string; errors: string[] }) {
           this.optionsHasError.set(validation.hasError);
           this.optionsErrorMsg.set(validation.message || '');
@@ -129,20 +135,6 @@ export class CredentialCreateComponent {
           return true;
      });
 
-     // canCreateCredential = computed(() => {
-     //      // Must have valid subject (XRP address)
-     //      if (!this.isSubjectValid()) return false;
-
-     //      // Credential type is optional but if provided must be valid
-     //      const type = this.credentialStore.credentialType()?.trim() ?? '';
-     //      if (type && !this.credentialValidatorService.isCredentialTypeValid()) return false;
-
-     //      // Check options validation if enabled
-     //      if (this.txUiService.wantsOptions() && this.optionsHasError()) return false;
-
-     //      return true;
-     // });
-
      shouldShowCredentialTypeError = computed(() => {
           const type = this.credentialStore.credentialType()?.trim() ?? '';
           return type.length > 0 && this.credentialValidatorService.isCredentialTypeInvalid();
@@ -161,17 +153,8 @@ export class CredentialCreateComponent {
                errors.push('Subject address is invalid.');
           }
 
-          // Subject validation error
-          // if (!this.isSubjectValid()) {
-          //      errors.push('Subject address is invalid. Please enter a valid XRP address.');
-          // }
-
-          if (this.shouldShowCredentialTypeError()) {
-               errors.push(this.credentialValidatorService.credentialTypeErrorMessage());
-          }
-
           // Credential type validation error
-          if (this.credentialValidatorService.isCredentialTypeInvalid()) {
+          if (this.credentialValidatorService.isCredentialTypeInvalid() || this.shouldShowCredentialTypeError()) {
                errors.push(this.credentialValidatorService.credentialTypeErrorMessage());
           }
 

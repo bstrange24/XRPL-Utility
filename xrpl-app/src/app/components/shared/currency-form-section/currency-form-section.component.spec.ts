@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
 import { CurrencyFormSectionComponent } from './currency-form-section.component';
 import { TrustlineViewModelService } from '../../../services/trustlines/trustline-view-model/trustline-view-model.service';
-import { SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
 import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 
 describe('CurrencyFormSectionComponent', () => {

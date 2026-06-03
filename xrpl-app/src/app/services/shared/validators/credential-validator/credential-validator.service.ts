@@ -29,12 +29,6 @@ export class CredentialValidatorService {
           return this.realTimeService.isCredentialExpired();
      });
 
-     // hasInvalidCredentialExpiration = computed(() => {
-     //      const expiration = this.credentialStore.credentialSubjectExpirationDate();
-     //      if (!expiration) return false;
-     //      return !this.isCredentialExpirationValid();
-     // });
-
      getCredentialExpirationErrorMessage = computed(() => {
           if (!this.hasInvalidCredentialExpiration()) return '';
 
@@ -48,11 +42,6 @@ export class CredentialValidatorService {
 
           return `Credential expiration is invalid. ${timeRemaining}`;
      });
-
-     // getCredentialExpirationErrorMessage = computed(() => {
-     //      const expiration = this.credentialStore.credentialSubjectExpirationDate();
-     //      return this.expirationValidator.getErrorMessage(expiration);
-     // });
 
      isCredentialIDsValid = computed(() => {
           const ids = this.credentialStore.credentialIDs();
@@ -149,12 +138,14 @@ export class CredentialValidatorService {
           return validPattern.test(trimmed);
      });
 
-     // isCredentialTypeValid = computed(() => {
-     //      const type = this.credentialStore.credentialType()?.trim() ?? '';
-     //      if (!type) return true;
-     //      if (type.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) return false;
-     //      return CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_PATTERN.test(type);
-     // });
+     isCredentialTypeLengthValid = computed(() => {
+          const credentialType = this.credentialStore.credentialType();
+          const trimmed = credentialType.trim();
+          if (trimmed.length >= 64) {
+               return `Credential type exceeds 64 character limit (currently ${trimmed.length} characters)`;
+          }
+          return '';
+     });
 
      isCredentialTypeInvalid = computed(() => {
           const type = this.credentialStore.credentialType()?.trim() ?? '';
@@ -177,16 +168,4 @@ export class CredentialValidatorService {
 
           return 'Credential type can only contain letters, numbers, hyphens, underscores, and dots';
      });
-
-     // credentialTypeErrorMessage1 = computed(() => {
-     //      const type = this.credentialStore.credentialType()?.trim() ?? '';
-     //      if (!type) return '';
-     //      if (type.length > CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH) {
-     //           return `Credential type must be ${CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_MAX_LENGTH} characters or less (currently ${type.length})`;
-     //      }
-     //      if (!CREDENTIAL_TYPE_VALADATION.CREDENTIAL_TYPE_PATTERN.test(type)) {
-     //           return 'Credential type can only contain letters, numbers, hyphens, and underscores';
-     //      }
-     //      return '';
-     // });
 }

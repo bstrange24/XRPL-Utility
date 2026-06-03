@@ -65,7 +65,7 @@ export class PermissionedDomainUtilService extends PerformanceBaseComponent {
 
      clearInputFields() {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
           this.permissionedDomainStoreService.resetDomainFields();
      }
 }

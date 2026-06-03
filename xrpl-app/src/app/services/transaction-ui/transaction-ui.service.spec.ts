@@ -196,7 +196,7 @@ describe('TransactionUiService', () => {
 
      it('should clear all fields', () => {
           service.wantsOptions.set(true);
-          service.clearAllFields();
+          service.disableAdditionalFields();
 
           expect(service.wantsOptions()).toBeFalse();
      });

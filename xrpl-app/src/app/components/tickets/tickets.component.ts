@@ -307,7 +307,7 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      protected clearInputFields(): void {
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
           this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           this.xrplTxOptionsStore.setField('ticketCountField', '');
      }

@@ -8,25 +8,18 @@ export class DomainIdValidatorService {
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
      isDomainIdValid = computed(() => {
-          const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
+          const domainId = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
 
-          // Optional field
-          if (!domain) return true;
-
-          // Valid hex string (XRPL hex encoded domain)
-          if (/^[0-9A-Fa-f]+$/.test(domain)) {
-               return domain.length <= 512;
+          if (!domainId) {
+               return true; // optional field
           }
 
-          // Valid domain name
-          const domainRegex = /^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))+$/;
-
-          return domainRegex.test(domain);
+          return /^[0-9A-F]+$/i.test(domainId) && domainId.length % 2 === 0;
      });
 
      hasInvalidDomainId = computed(() => {
           const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
-          if (!domain) return false;
-          return !this.isDomainIdValid();
+
+          return !!domain && !this.isDomainIdValid();
      });
 }

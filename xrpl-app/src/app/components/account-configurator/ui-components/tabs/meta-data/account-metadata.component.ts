@@ -15,11 +15,13 @@ import { FocusBorderDirective } from '../../../../../services/shared/focus-borde
 import { AppConstants } from '../../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
+import { InputIconsComponent } from '../../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../../shared/validation-errors/validation-errors.component';
 
 @Component({
      selector: 'app-account-metadata',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent, InputIconsComponent, ValidationErrorsComponent],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -91,14 +93,14 @@ export class AccountMetadataComponent {
           const rate = this.accountConfiguratorStoreService.transferRate();
           if (!rate) return true; // Empty is valid (0% fee)
           const numRate = Number.parseFloat(rate);
-          return !isNaN(numRate) && numRate >= 0 && numRate <= 100;
+          return !Number.isNaN(numRate) && numRate >= 0 && numRate <= 100;
      });
 
      isTransferRateInvalid = computed(() => {
           const rate = this.accountConfiguratorStoreService.transferRate();
           if (!rate) return false;
           const numRate = Number.parseFloat(rate);
-          return isNaN(numRate) || numRate < 0 || numRate > 100;
+          return Number.isNaN(numRate) || numRate < 0 || numRate > 100;
      });
 
      // Check if Tick Size is valid
@@ -187,12 +189,10 @@ export class AccountMetadataComponent {
           this.accountConfiguratorStoreService.setField('tickSize', '');
           this.accountConfiguratorStoreService.setField('domain', '');
           this.accountConfiguratorStoreService.setField('isMessageKey', false);
-          return;
      }
 
      clearMinterAddresField() {
           this.accountConfiguratorStoreService.setField('nfTokenMinterAddress', '');
-          return;
      }
 
      // Toggle Methods

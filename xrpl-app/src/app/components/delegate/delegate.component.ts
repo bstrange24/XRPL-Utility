@@ -392,7 +392,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      protected clearInputFields(): void {
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
           this.xrplTxOptionsStore.setField('selectedTicketSequences', []);
           this.xrplTxOptionsStore.setField('ticketCountField', '');
      }

@@ -125,10 +125,20 @@
                </div>
 
                <div class="relative">
-                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined" [value]="nftCreateStoreService.initialURI()" (input)="nftCreateStoreService.setField('initialURI',$event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
+                    <input
+                         type="url"
+                         class="input-base-with-validation pr-24"
+                         app-focus-border
+                         [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined && uri.length > 0"
+                         [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined && uri.length > 0"
+                         [value]="nftCreateStoreService.initialURI()"
+                         (input)="nftCreateStoreService.setField('initialURI',$event.target.value)"
+                         name="uri"
+                         placeholder="Enter a URI (e.g., https://example.com/credential)"
+                    />
 
                     <!-- Icons Container -->
-                    <app-input-icons [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined" [showClear]="!!uri" (clear)="nftCreateStoreService.setField('initialURI','')" />
+                    <app-input-icons [isValid]="uriValidatorService.isNFtCreateUriValid() && uri !== null && uri !== undefined && uri.length > 0" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && uri !== null && uri !== undefined && uri.length > 0" [showClear]="!!uri" (clear)="nftCreateStoreService.setField('initialURI','')" />
                </div>
 
                <!-- Show validation details when URI has content -->

@@ -24,11 +24,12 @@ import { CredentialValidatorService } from '../../../services/shared/validators/
 import { PaymentChannelValidatorService } from '../../../services/shared/validators/payment-channel-validator/payment-channel-validator.service';
 import { CheckValidatorService } from '../../../services/shared/validators/check-validator/check-validator.service';
 import { FieldHelperComponent } from '../field-helper/field-helper.component';
+import { InputIconsComponent } from '../input-icons/input-icons.component';
 
 @Component({
      selector: 'app-transaction-options-section',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent, FieldHelperComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent, FieldHelperComponent, InputIconsComponent],
      templateUrl: './transaction-options-section.component.html',
      styleUrl: './transaction-options-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -204,10 +205,10 @@ export class TransactionOptionsSectionComponent {
                }
 
                // Domain ID validation (if applicable for checks)
-               if (this.permissionedDomainStoreService.domainId() && this.permissionedDomainStoreService.domainId()!.trim().length > 0) {
+               if (this.permissionedDomainStoreService.domainId() && this.permissionedDomainStoreService.domainId().trim().length > 0) {
                     if (this.domainIdValidatorService.hasInvalidDomainId()) {
                          const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
-                         if (/^[0-9A-Fa-f]+$/i.test(domain)) {
+                         if (/^[A-F0-9]+$/i.test(domain)) {
                               errors.push(`Domain ID hex exceeds 512 character limit (256 bytes). Got ${domain.length} chars`);
                          } else {
                               errors.push('Domain ID must be a valid domain name (example.com) or hex string (max 512 chars)');
@@ -220,7 +221,7 @@ export class TransactionOptionsSectionComponent {
           if (currentTab === 'sendXrp') {
                if (this.domainIdValidatorService.hasInvalidDomainId()) {
                     const domain = this.permissionedDomainStoreService.domainId()?.trim() ?? '';
-                    if (/^[0-9A-Fa-f]+$/i.test(domain)) {
+                    if (/^[A-F0-9]+$/i.test(domain)) {
                          errors.push(`Domain ID hex exceeds 512 character limit (256 bytes). Got ${domain.length} chars`);
                     } else {
                          errors.push('Domain ID must be a valid domain name (example.com) or hex string (max 512 chars)');
@@ -252,7 +253,7 @@ export class TransactionOptionsSectionComponent {
           }
 
           // Invoice ID (Multiple tabs)
-          if ((currentTab === 'sendXrp' || currentTab === 'createCheck' || currentTab === 'createPaymentChannel') && this.xrplTxOptionsStore.invoiceId() && this.xrplTxOptionsStore.invoiceId()!.trim().length > 0) {
+          if ((currentTab === 'sendXrp' || currentTab === 'createCheck' || currentTab === 'createPaymentChannel') && this.xrplTxOptionsStore.invoiceId() && this.xrplTxOptionsStore.invoiceId().trim().length > 0) {
                if (this.invoiceIdValidatorService.hasInvalidInvoiceId()) {
                     errors.push(`Invoice ID must be exactly 64 hex characters (32 bytes). Got ${this.invoiceIdValidatorService.invoiceIdHexLength()} characters.`);
                }
@@ -268,6 +269,46 @@ export class TransactionOptionsSectionComponent {
      hasOptionsValidationError = computed(() => {
           return this.optionsErrorMessages().length > 0;
      });
+
+     get sourceTag() {
+          return this.xrplTxOptionsStore.sourceTag()!;
+     }
+
+     set sourceTag(value: string) {
+          this.xrplTxOptionsStore.setField('sourceTag', value);
+     }
+
+     get destinationTag() {
+          return this.xrplTxOptionsStore.destinationTag()!;
+     }
+
+     set destinationTag(value: string) {
+          this.xrplTxOptionsStore.setField('destinationTag', value);
+     }
+
+     get uri() {
+          return this.credentialStore.uri();
+     }
+
+     set uri(value: string) {
+          this.credentialStore.setField('uri', value);
+     }
+
+     get invoiceId() {
+          return this.xrplTxOptionsStore.invoiceId();
+     }
+
+     set invoiceId(value: string) {
+          this.xrplTxOptionsStore.setField('invoiceId', value);
+     }
+
+     get domainid() {
+          return this.permissionedDomainStoreService.domainId();
+     }
+
+     set domainid(value: string) {
+          this.permissionedDomainStoreService.setField('domainId', value);
+     }
 
      // Toggle Methods
      toggleOptionalFieldsHelper() {

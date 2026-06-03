@@ -13,11 +13,14 @@ import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
+import { InputIconsComponent } from '../../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../../shared/validation-errors/validation-errors.component';
+import { FocusBorderDirective } from '../../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-deposit-auth',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent, InputIconsComponent, ValidationErrorsComponent],
      templateUrl: './deposit-auth.component.html',
      styleUrl: './deposit-auth.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,12 +37,16 @@ export class DepositAuthComponent {
 
      readonly performAction = output<'Y' | 'N' | ''>();
      canSubmit = input<boolean>();
-     focusedAddressIndex = signal<number | null>(null);
 
      // UI State
      showDepositAuthHelper = signal(false);
+     focusedAddressIndex = signal<number | null>(null);
 
-     // Simple validation methods - same as regular key page
+     // Track user interaction
+     hasUserInteracted = signal(false);
+     touchedFields = signal<Set<number>>(new Set());
+
+     // Simple validation methods
      isAddressValid(address: string): boolean {
           if (!address) return false;
           return xrpl.isValidAddress(address);
@@ -49,18 +56,71 @@ export class DepositAuthComponent {
           return !!address && !xrpl.isValidAddress(address);
      }
 
-     // Check if any address has a value but is invalid
+     // Track focus and blur
+     trackAddressFocus(index: number) {
+          this.focusedAddressIndex.set(index);
+          this.hasUserInteracted.set(true);
+     }
+
+     handleAddressBlur(index: number) {
+          this.focusedAddressIndex.set(null);
+          this.touchedFields.update(set => {
+               const newSet = new Set(set);
+               newSet.add(index);
+               return newSet;
+          });
+     }
+
+     // Update address
+     updateAddress(index: number, value: string) {
+          this.accountConfiguratorStoreService.updateDepositAuthAddress(index, 'account', value);
+          this.hasUserInteracted.set(true);
+     }
+
+     // Clear address
+     clearAddress(index: number) {
+          this.accountConfiguratorStoreService.updateDepositAuthAddress(index, 'account', '');
+          return '';
+     }
+
+     // Remove address
+     removeAddress(index: number) {
+          this.accountConfiguratorUtilService.removeDepositAuthAddresses(index);
+          this.hasUserInteracted.set(true);
+     }
+
+     // Add address
+     addAddress() {
+          this.accountConfiguratorUtilService.addDepositAuthAddresses();
+          this.hasUserInteracted.set(true);
+     }
+
+     // Check if any address has a value
+     hasAnyAddressInput = computed(() => {
+          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
+          return addresses.some((addr: { account: string }) => {
+               return addr.account && addr.account.trim().length > 0;
+          });
+     });
+
+     // Check if validation should show
+     shouldShowValidation = computed(() => {
+          return this.hasAnyAddressInput() || this.hasUserInteracted() || this.touchedFields().size > 0;
+     });
+
+     // Check if there are any empty addresses (only show if touched or has input)
+     hasEmptyAddresses = computed(() => {
+          if (!this.shouldShowValidation()) return false;
+          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
+          return addresses.some((addr: { account: string }) => !addr.account || addr.account.trim() === '');
+     });
+
+     // Check if there are invalid addresses
      hasInvalidAddresses = computed(() => {
           const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
           return addresses.some((addr: { account: string }) => {
                return addr.account && !xrpl.isValidAddress(addr.account);
           });
-     });
-
-     // Check if there are any empty addresses
-     hasEmptyAddresses = computed(() => {
-          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
-          return addresses.some((addr: { account: string }) => !addr.account || addr.account.trim() === '');
      });
 
      // Check if there are duplicate addresses
@@ -71,7 +131,7 @@ export class DepositAuthComponent {
           return new Set(validAddresses).size !== validAddresses.length;
      });
 
-     // Check if there are any valid addresses
+     // Check if there are at least one valid address
      hasAtLeastOneValidAddress = computed(() => {
           const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
           return addresses.some((addr: { account: string }) => {
@@ -81,10 +141,8 @@ export class DepositAuthComponent {
 
      // Combined validation for Set Deposit Auth button
      canSetDepositAuth = computed(() => {
-          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
-
-          // Must have no empty addresses
-          if (this.hasEmptyAddresses()) return false;
+          // Must have no empty addresses if user has interacted
+          if (this.shouldShowValidation() && this.hasEmptyAddresses()) return false;
 
           // Must have no invalid addresses
           if (this.hasInvalidAddresses()) return false;
@@ -98,63 +156,40 @@ export class DepositAuthComponent {
           return this.canSubmit() && this.connectionGuard.isConnectionReady();
      });
 
-     // Remove button
+     // Remove button validation
      canRemoveDepositAuth = computed(() => {
-          // Must have no empty addresses
-          if (this.hasEmptyAddresses()) return false;
-
-          // Must have no invalid addresses
+          // For removal, we just need at least one valid address and no invalid ones
           if (this.hasInvalidAddresses()) return false;
-
-          // Must have at least one valid address
           if (!this.hasAtLeastOneValidAddress()) return false;
-
-          // Must have no duplicates
           if (this.hasDuplicateAddresses()) return false;
 
           return this.canSubmit() && this.connectionGuard.isConnectionReady();
      });
 
-     hasUserInput = computed(() => {
-          const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
-
-          return addresses.some((addr: { account: string }) => {
-               return !!addr.account?.trim();
-          });
-     });
-
-     // Check if there are any validation errors
-     hasValidationErrors = computed(() => {
-          // Don't show validation on initial empty state
-          if (!this.hasUserInput()) return false;
-          if (this.hasEmptyAddresses()) return true;
-          if (this.hasInvalidAddresses()) return true;
-          if (this.hasDuplicateAddresses()) return true;
-          return false;
-     });
-
-     // Get validation error message
-     // Alternative: Show all validation errors
+     // Validation error messages for summary
      validationErrorMessages = computed(() => {
-          if (!this.hasUserInput()) return [];
-          const messages: string[] = [];
+          const errors: string[] = [];
+
+          if (!this.shouldShowValidation()) {
+               return errors;
+          }
+
           const addresses = this.accountConfiguratorStoreService.depositAuthAddresses();
+          const touched = this.touchedFields();
 
-          // Check for empty addresses
-          if (this.hasEmptyAddresses()) {
-               const emptyIndices = addresses.map((addr: { account: string }, idx: number) => (!addr.account ? idx + 1 : null)).filter((idx: null) => idx !== null);
+          // Check for empty addresses (only if touched or has input)
+          addresses.forEach((addr: { account: string }, index: number) => {
+               const isTouched = touched.has(index);
+               const hasInput = addr.account && addr.account.trim().length > 0;
 
-               messages.push(`Address${emptyIndices.length > 1 ? 'es' : ''} ${emptyIndices.join(', ')} ${emptyIndices.length > 1 ? 'are' : 'is'} empty.`);
-          }
+               if ((isTouched || hasInput || this.hasAnyAddressInput()) && (!addr.account || addr.account.trim() === '')) {
+                    errors.push(`Address ${index + 1}: Account address is required.`);
+               } else if (addr.account && !xrpl.isValidAddress(addr.account)) {
+                    errors.push(`Address ${index + 1}: "${addr.account}" is not a valid XRP address.`);
+               }
+          });
 
-          // Check for invalid addresses
-          if (this.hasInvalidAddresses()) {
-               const invalidIndices = addresses.map((addr: { account: string }, idx: number) => (addr.account && !xrpl.isValidAddress(addr.account) ? idx + 1 : null)).filter((idx: null) => idx !== null);
-
-               messages.push(`Address${invalidIndices.length > 1 ? 'es' : ''} ${invalidIndices.join(', ')} ${invalidIndices.length > 1 ? 'have' : 'has'} invalid XRP addresses.`);
-          }
-
-          // Check for duplicate addresses
+          // Check for duplicates (show only once if there are duplicates)
           if (this.hasDuplicateAddresses()) {
                const duplicateMap = new Map<string, number[]>();
                addresses.forEach((addr: { account: string }, idx: number) => {
@@ -168,12 +203,14 @@ export class DepositAuthComponent {
 
                const duplicates = Array.from(duplicateMap.entries())
                     .filter(([_, indices]) => indices.length > 1)
-                    .map(([address, indices]) => `"${address}" (Addresses ${indices.join(', ')})`);
+                    .map(([address, indices]) => `"${address}" (addresses ${indices.join(', ')})`);
 
-               messages.push(`Duplicate ${duplicates.length === 1 ? 'address' : 'addresses'} detected: ${duplicates.join(', ')}.`);
+               if (duplicates.length > 0) {
+                    errors.push(`Duplicate ${duplicates.length === 1 ? 'address' : 'addresses'} detected: ${duplicates.join(', ')}. Each address can only be added once.`);
+               }
           }
 
-          return messages;
+          return errors;
      });
 
      // Track by index for better performance
@@ -186,7 +223,9 @@ export class DepositAuthComponent {
      }
 
      clearFields() {
-          this.accountConfiguratorStoreService.setField('depositAuthAddresses', [{ Account: '', seed: '', SignerWeight: 1 }]);
-          return;
+          this.accountConfiguratorStoreService.setField('depositAuthAddresses', [{ account: '' }]);
+          this.hasUserInteracted.set(false);
+          this.touchedFields.set(new Set());
+          this.focusedAddressIndex.set(null);
      }
 }

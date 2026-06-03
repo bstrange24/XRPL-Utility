@@ -17,40 +17,38 @@
           <div class="space-y-4">
                @for (depositAuthAddress of accountConfiguratorStoreService.depositAuthAddresses(); track trackByIndex($index, depositAuthAddress); let i = $index) {
                <div class="card-base">
-                    <div class="options mb-4">
-                         <label for="depAuthAddress" class="text-sm font-medium text-gray-800">Address {{ i + 1 }} <span class="text-red-500">*</span></label>
+                    <div class="mb-4 flex items-center justify-between">
+                         <span class="text-sm font-medium text-gray-800">Address {{ i + 1 }}</span>
                          @if (accountConfiguratorStoreService.depositAuthAddresses().length > 1) {
-                         <button type="button" (click)="accountConfiguratorUtilService.removeDepositAuthAddresses(i)" class="text-red-400 transition-colors hover:text-red-600">
+                         <button type="button" (click)="removeAddress(i)" class="text-red-400 transition-colors hover:text-red-600">
                               <lucide-icon name="trash-2" size="16" />
                          </button>
                          }
                     </div>
 
+                    <div class="field-label">
+                         <label for="depAuthAddress" class="label-primary">Account Address <span class="text-red-500">*</span></label>
+                    </div>
                     <p class="text-secondary">The account address to pre-authorize</p>
+
                     <div class="relative">
                          <input
                               type="text"
                               class="input-base-with-validation"
-                              [class.border-gray-200]="!isAddressInvalid(depositAuthAddress.account) && focusedAddressIndex() !== i"
-                              [class.border-green-500]="focusedAddressIndex() === i && !isAddressInvalid(depositAuthAddress.account)"
-                              [class.border-red-500]="isAddressInvalid(depositAuthAddress.account)"
-                              (focus)="focusedAddressIndex.set(i)"
-                              (blur)="focusedAddressIndex.set(null)"
+                              app-focus-border
+                              [isValid]="isAddressValid(depositAuthAddress.account) && depositAuthAddress.account !== null && depositAuthAddress.account !== undefined && depositAuthAddress.account.trim().length > 0"
+                              [isInvalid]="isAddressInvalid(depositAuthAddress.account) && depositAuthAddress.account !== null && depositAuthAddress.account !== undefined && depositAuthAddress.account.trim().length > 0"
                               [ngModel]="depositAuthAddress.account"
-                              (ngModelChange)="accountConfiguratorStoreService.updateDepositAuthAddress(i, 'account', $event)"
+                              (ngModelChange)="updateAddress(i, $event)"
                               placeholder="r..."
                          />
 
-                         @if (depositAuthAddress.account && depositAuthAddress.account.length > 0) {
-                         <button type="button" (click)="accountConfiguratorStoreService.clearDepositAuthAddress(i)" class="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-700 focus:outline-none" aria-label="Clear Address">
-                              <ng-icon name="heroXMark" size="12"></ng-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="isAddressValid(depositAuthAddress.account) && depositAuthAddress.account !== null && depositAuthAddress.account !== undefined && depositAuthAddress.account.trim().length > 0" [isInvalid]="isAddressInvalid(depositAuthAddress.account) && depositAuthAddress.account !== null && depositAuthAddress.account !== undefined && depositAuthAddress.account.trim().length > 0" [showClear]="!!depositAuthAddress.account" (clear)="clearAddress(i)" />
                     </div>
 
                     <!-- Helper text for invalid address -->
-                    @if (isAddressInvalid(depositAuthAddress.account)) {
-                    <p class="form-error">Please enter a valid XRP address</p>
+                    @if (depositAuthAddress.account && isAddressInvalid(depositAuthAddress.account)) {
+                    <p class="form-error">Please enter a valid XRP address.</p>
                     }
                </div>
                }
@@ -59,7 +57,7 @@
           <!-- Add Button -->
           <div class="main-button-section">
                <div class="flex flex-col gap-3 sm:flex-row">
-                    <button type="button" class="btn-blue" (click)="accountConfiguratorUtilService.addDepositAuthAddresses()">+ Add Another Authorized Address</button>
+                    <button type="button" class="btn-blue" (click)="addAddress()">+ Add Another Authorized Address</button>
                </div>
           </div>
 
@@ -70,35 +68,23 @@
      <app-transaction-options [showWhenTab]="['modifyMultiSigners','modifyRegularKey','modifyMetaData','modifyDepositAuth','modifyAccountFlags']" [activeTab]="accountConfiguratorViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
      <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
+     <app-validation-errors [errors]="validationErrorMessages()" title="Deposit authorization validation issues:" />
 
      <!-- Action Buttons -->
      <div class="main-button-section">
           <!-- Primary Actions -->
           <div class="flex flex-col gap-3 sm:flex-row">
-               <app-button-tooltip [tooltipText]="!canSetDepositAuth() ? 'Cannot set deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
-                    <button type="button" class="btn-green" (click)="(canSetDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('Y') : null" [class.opacity-50]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()" [disabled]="false">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
+               <app-button-tooltip [tooltipText]="(!canSetDepositAuth() || !connectionGuard.isConnectionReady()) ? 'Cannot set deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-green" (click)="(canSetDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('Y') : null" [class.opacity-50]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canSetDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.setDepositAuthButtonLabel() }}</button>
                </app-button-tooltip>
 
-               <app-button-tooltip [tooltipText]="!canRemoveDepositAuth() ? 'Cannot remove deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
-                    <button type="button" class="btn-red" (click)="(canRemoveDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('N') : null" [disabled]="false" [class.opacity-50]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
+               <app-button-tooltip [tooltipText]="(!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()) ? 'Cannot remove deposit auth at this time. Check for missing or invalid fields.' : !connectionGuard.isConnectionReady() ? 'Connection not ready. Please wait.' : ''">
+                    <button type="button" class="btn-red" (click)="(canRemoveDepositAuth() && connectionGuard.isConnectionReady()) ? performAction.emit('N') : null" [class.opacity-50]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()" [attr.aria-disabled]="!canRemoveDepositAuth() || !connectionGuard.isConnectionReady()">{{ accountConfiguratorUtilService.removeDepositAuthButtonLabel() }}</button>
                </app-button-tooltip>
           </div>
 
           <!-- Secondary Actions -->
-          <div class="right-buttons">
+          <div class="flex items-center justify-end">
                <button type="button" class="btn-secondary" (click)="clearFields()">Clear Fields</button>
           </div>
      </div>

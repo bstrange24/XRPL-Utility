@@ -10,15 +10,17 @@ import { ConnectionGuardService } from '../../../../../services/shared/connectio
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import * as xrpl from 'xrpl';
-import * as bip39 from 'bip39';
 import { AppConstants } from '../../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
+import { InputIconsComponent } from '../../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../../shared/validation-errors/validation-errors.component';
+import { FocusBorderDirective } from '../../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-regular-key',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent, ValidationErrorsComponent, InputIconsComponent],
      templateUrl: './regular-key.component.html',
      styleUrl: './regular-key.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -50,6 +52,22 @@ export class RegularKeyComponent {
           const address = this.accountConfiguratorStoreService.regularKeyAddress();
           return !!address && !this.regularKeyAddressValid();
      });
+
+     get regularKeyAddress() {
+          return this.accountConfiguratorStoreService.regularKeyAddress();
+     }
+
+     set regularKeyAddress(value: string) {
+          this.accountConfiguratorStoreService.setField('regularKeyAddress', value);
+     }
+
+     get regularKeySeed() {
+          return this.accountConfiguratorStoreService.regularKeySeed();
+     }
+
+     set regularKeySeed(value: string) {
+          this.accountConfiguratorStoreService.setField('regularKeySeed', value);
+     }
 
      isMnemonic(secret: string): boolean {
           if (!secret) return false;
@@ -113,24 +131,26 @@ export class RegularKeyComponent {
           return this.canSubmit() && this.connectionGuard.isConnectionReady() && hasValidAddress;
      });
 
-     // Add computed property for validation state
+     // Check if there are any validation errors
      hasValidationErrors = computed(() => {
+          return this.validationErrorMessages().length > 0;
+     });
+
+     // Validation error messages for summary
+     validationErrorMessages = computed(() => {
+          const errors: string[] = [];
           const address = this.accountConfiguratorStoreService.regularKeyAddress();
           const seed = this.accountConfiguratorStoreService.regularKeySeed();
 
-          // If both are empty, no validation errors (user hasn't started)
-          if (!address && !seed) return false;
-
           // Check for invalid address (if address is provided and invalid)
-          if (address && !xrpl.isValidAddress(address)) return true;
+          if (address && !xrpl.isValidAddress(address)) errors.push('Regular key address is invalid. Please enter a valid XRP address.');
 
           // Check for invalid seed (if seed is provided and invalid)
-          if (seed && !xrpl.isValidSecret(seed)) return true;
+          if (seed && !xrpl.isValidSecret(seed)) errors.push('Regular key seed is invalid. Please enter a valid XRP seed (family seed or secret numbers).');
 
-          // Check warning condition: seed valid but address missing
-          if (seed && xrpl.isValidSecret(seed) && !address) return true;
+          if (seed && xrpl.isValidSecret(seed) && !address) errors.push('Regular key address is required when a valid seed is provided.');
 
-          return false;
+          return errors;
      });
 
      // Toggle Method
@@ -141,6 +161,5 @@ export class RegularKeyComponent {
      clearFields() {
           this.accountConfiguratorStoreService.setField('regularKeyAddress', '');
           this.accountConfiguratorStoreService.setField('regularKeySeed', '');
-          return;
      }
 }

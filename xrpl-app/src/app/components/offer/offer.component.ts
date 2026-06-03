@@ -387,6 +387,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerUtilsService.clearInputFields();
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
      }
 }

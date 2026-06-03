@@ -26,17 +26,14 @@
      <div class="side-by-side-fields">
           <!-- URI Section - Update to show validation properly -->
           <div class="space-y-2">
-               <label class="label-primary">URI</label>
+               <label for="uri" class="label-primary">URI</label>
                <p class="text-secondary">Additional data about the credential (i.e. a link to the VC document).</p>
 
                <div class="relative">
-                    <input type="url" class="input-base-with-validation pr-10" app-focus-border [isValid]="uriValidatorService.isUriValid()" [isInvalid]="uriValidatorService.hasInvalidUri()" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
+                    <input type="url" class="input-base-with-validation pr-24" app-focus-border [isValid]="uriValidatorService.hasInvalidUri() && uri !== null && uri !== undefined && uri.length > 0" [isInvalid]="uriValidatorService.hasInvalidUri() && uri !== null && uri !== undefined && uri.length > 0" [value]="credentialStore.uri()" (input)="credentialUtilService.setCredentialUri($event.target.value)" name="uri" placeholder="Enter a URI (e.g., https://example.com/credential)" />
 
-                    @if (credentialStore.uri() && credentialStore.uri().trim().length > 0) {
-                    <button type="button" (click)="credentialUtilService.setCredentialUri('')" class="clearInputXmark" aria-label="Clear URI">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <!-- Icons Container -->
+                    <app-input-icons [isValid]="uriValidatorService.hasInvalidUri() && uri !== null && uri !== undefined && uri.length > 0" [isInvalid]="uriValidatorService.hasInvalidUri() && uri !== null && uri !== undefined && uri.length > 0" [showClear]="!!uri" (clear)="credentialUtilService.setCredentialUri('')" />
                </div>
 
                <!-- Show validation details when URI has content -->
@@ -101,7 +98,7 @@
      <div class="side-by-side-fields">
           <!-- Destination Tag -->
           <div class="space-y-2">
-               <label class="label-primary">Destination Tag</label>
+               <label for="destTag" class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
                <div class="relative">
                     <input
@@ -109,8 +106,8 @@
                          inputmode="numeric"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!tagValidatorService.isDestinationTagInvalid()"
-                         [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                         [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
+                         [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
                          (keydown)="utilsService.preventNegative($event)"
                          (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
                          (input)="tagValidatorService.onDestinationTagInput($event)"
@@ -120,11 +117,7 @@
                          placeholder="e.g. 1123456"
                     />
 
-                    @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
-                    <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <app-input-icons [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [showClear]="!!xrplTxOptionsStore.destinationTag()" (clear)="xrplTxOptionsStore.setField('destinationTag', '')" />
                </div>
 
                @if (tagValidatorService.isDestinationTagInvalid()) {
@@ -195,8 +188,9 @@
      <div class="space-y-6">
           <!-- Tags Row -->
           <div class="side-by-side-fields">
+               <!-- Destination Tag -->
                <div class="space-y-2">
-                    <label class="label-primary">Destination Tag</label>
+                    <label for="destinTag" class="label-primary">Destination Tag</label>
                     <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
                     <div class="relative">
                          <input
@@ -204,8 +198,8 @@
                               inputmode="numeric"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!tagValidatorService.isDestinationTagInvalid()"
-                              [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                              [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
+                              [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
                               (keydown)="utilsService.preventNegative($event)"
                               (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
                               (input)="tagValidatorService.onDestinationTagInput($event)"
@@ -215,11 +209,7 @@
                               placeholder="e.g. 1123456"
                          />
 
-                         @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
-                         <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [showClear]="!!xrplTxOptionsStore.destinationTag()" (clear)="xrplTxOptionsStore.setField('destinationTag', '')" />
                     </div>
 
                     @if (tagValidatorService.isDestinationTagInvalid()) {
@@ -227,8 +217,9 @@
                     }
                </div>
 
+               <!-- Source Tag -->
                <div class="space-y-2">
-                    <label class="label-primary">Source Tag</label>
+                    <label for="sourceTag" class="label-primary">Source Tag</label>
                     <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
                     <div class="relative">
                          <input
@@ -236,8 +227,8 @@
                               inputmode="numeric"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!tagValidatorService.isSourceTagInvalid()"
-                              [isInvalid]="tagValidatorService.isSourceTagInvalid()"
+                              [isValid]="!tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0"
+                              [isInvalid]="tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0"
                               (keydown)="utilsService.preventNegative($event)"
                               (keypress)="tagValidatorService.onSourceTagKeyPress($event)"
                               (input)="tagValidatorService.onSourceTagInput($event)"
@@ -247,11 +238,7 @@
                               placeholder="e.g. 1123456"
                          />
 
-                         @if (xrplTxOptionsStore.sourceTag() && xrplTxOptionsStore.sourceTag()!.trim().length > 0) {
-                         <button type="button" (click)="this.xrplTxOptionsStore.setField('sourceTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="!tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0" [isInvalid]="tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0" [showClear]="!!xrplTxOptionsStore.sourceTag()" (clear)="xrplTxOptionsStore.setField('sourceTag', '')" />
                     </div>
 
                     @if (tagValidatorService.isSourceTagInvalid()) {
@@ -263,17 +250,24 @@
           <div class="side-by-side-fields">
                <!-- Invoice ID -->
                <div class="space-y-2">
-                    <label class="label-primary">Invoice ID</label>
+                    <label for="invId" class="label-primary">Invoice ID</label>
                     <p class="text-secondary">Arbitrary 256-bit hash representing a specific reason or a specific identifier for this payment.</p>
 
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!invoiceIdValidatorService.hasInvalidInvoiceId()" [isInvalid]="invoiceIdValidatorService.hasInvalidInvoiceId()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.invoiceId()" (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)" placeholder="e.g. 1123456" />
+                         <input
+                              type="text"
+                              inputmode="numeric"
+                              class="input-base-with-validation pr-24"
+                              app-focus-border
+                              [isValid]="!invoiceIdValidatorService.hasInvalidInvoiceId() && invoiceId !== null && invoiceId !== undefined && invoiceId.length > 0"
+                              [isInvalid]="invoiceIdValidatorService.hasInvalidInvoiceId() && invoiceId !== null && invoiceId !== undefined && invoiceId.length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              [ngModel]="xrplTxOptionsStore.invoiceId()"
+                              (ngModelChange)="xrplTxOptionsStore.setField('invoiceId', $event)"
+                              placeholder="e.g. 1123456"
+                         />
 
-                         @if (xrplTxOptionsStore.invoiceId() && xrplTxOptionsStore.invoiceId()!.trim().length > 0) {
-                         <button type="button" (click)="xrplTxOptionsStore.setField('invoiceId', '')" class="clearInputXmark" aria-label="Clear invoice ID">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <app-input-icons [isValid]="!invoiceIdValidatorService.hasInvalidInvoiceId() && invoiceId !== null && invoiceId !== undefined && invoiceId.length > 0" [isInvalid]="invoiceIdValidatorService.hasInvalidInvoiceId() && invoiceId !== null && invoiceId !== undefined && invoiceId.length > 0" [showClear]="!!xrplTxOptionsStore.invoiceId()" (clear)="xrplTxOptionsStore.setField('invoiceId', '')" />
                     </div>
 
                     @if (xrplTxOptionsStore.invoiceId()) {
@@ -298,17 +292,24 @@
 
                <!-- Domain ID -->
                <div class="space-y-2">
-                    <label class="label-primary">Domain ID</label>
-                    <p class="text-secondary">The domain the sender intends to use. Both the sender and destination must be part of this domain.</p>
+                    <label for="domId" class="label-primary">Domain ID</label>
+                    <p class="text-secondary">Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier.</p>
 
                     <div class="relative">
-                         <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="!domainIdValidatorService.hasInvalidDomainId()" [isInvalid]="domainIdValidatorService.hasInvalidDomainId()" [ngModel]="permissionedDomainStoreService.domainId()" (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)" placeholder="example.com or hex value" />
+                         <input
+                              type="text"
+                              class="input-base-with-validation pr-20"
+                              app-focus-border
+                              [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0"
+                              [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0"
+                              [ngModel]="permissionedDomainStoreService.domainId()"
+                              (ngModelChange)="permissionedDomainStoreService.setField('domainId', $event)"
+                              name="domainId"
+                              placeholder="Permissioned Domain ID (hex)"
+                         />
 
-                         @if (permissionedDomainStoreService.domainId()) {
-                         <button type="button" (click)="permissionedDomainStoreService.setField('domainId', '')" class="clearInputXmark" aria-label="Clear domain ID">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [showClear]="!!domainid" (clear)="permissionedDomainStoreService.setField('domainId', '')" />
                     </div>
 
                     @if (permissionedDomainStoreService.domainId()) {
@@ -320,14 +321,14 @@
                                    <code class="block break-all font-mono text-sm text-gray-700"> {{ permissionedDomainStoreService.domainId() }} </code>
 
                                    @if (domainIdValidatorService.hasInvalidDomainId()) {
-                                   <p class="form-error">Must be a valid domain name (max 253 chars) or hex string (max 512 chars)</p>
+                                   <p class="form-error">Must be a valid Permissioned Domain ID (hex string)</p>
                                    }
                               </div>
 
                               <div class="text-right">
                                    <p class="text-secondary">Length</p>
 
-                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="domainIdValidatorService.hasInvalidDomainId()" [class.text-green-600]="!domainIdValidatorService.hasInvalidDomainId()">{{ permissionedDomainStoreService.domainId().length || 0 }} / 512 chars</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="domainIdValidatorService.hasInvalidDomainId()" [class.text-green-600]="!domainIdValidatorService.hasInvalidDomainId()">{{ permissionedDomainStoreService.domainId().length || 0 }} / 64 chars</p>
                               </div>
                          </div>
                     </div>
@@ -338,7 +339,6 @@
           <!-- Check Expiration (for createCheck only) -->
           @if (tab === 'createCheck') {
           <div class="expiration-field">
-               <!-- <app-xrpl-expiration-input [expirationSignal]="checksStoreService.checkExpirationDate" [setExpiration]="setCheckExpirationDate" label="Check Expiration Date" hint="Check expiration when the check will expire. Leave default/empty for no expiration (check never expires automatically)."> </app-xrpl-expiration-input> -->
                <app-xrpl-expiration-input
                     [expirationSignal]="checksStoreService.checkExpirationDate"
                     [setExpiration]="checksStoreService.setCheckExpirationDate.bind(checksStoreService)"
@@ -359,7 +359,7 @@
           <!-- Domain + Credential (for sendXrp only) -->
           @if (tab === 'sendXrp') {
           <div class="space-y-2">
-               <label class="label-primary">Credential IDs</label>
+               <label for="credIds" class="label-primary">Credential IDs</label>
                <p class="text-secondary">Credentials associated with the sender of this transaction. The credentials included must not be expired.</p>
 
                <div class="space-y-2">
@@ -412,8 +412,9 @@
           </button>
      </div>
      <div class="side-by-side-fields">
+          <!-- Destination Tag -->
           <div class="space-y-2">
-               <label class="label-primary">Destination Tag</label>
+               <label for="desTag" class="label-primary">Destination Tag</label>
                <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
                <div class="relative">
                     <input
@@ -421,8 +422,8 @@
                          inputmode="numeric"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!tagValidatorService.isDestinationTagInvalid()"
-                         [isInvalid]="tagValidatorService.isDestinationTagInvalid()"
+                         [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
+                         [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0"
                          (keydown)="utilsService.preventNegative($event)"
                          (keypress)="tagValidatorService.onDestinationTagKeyPress($event)"
                          (input)="tagValidatorService.onDestinationTagInput($event)"
@@ -432,11 +433,7 @@
                          placeholder="e.g. 1123456"
                     />
 
-                    @if (xrplTxOptionsStore.destinationTag() && xrplTxOptionsStore.destinationTag()!.trim().length > 0) {
-                    <button type="button" (click)="this.xrplTxOptionsStore.setField('destinationTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <app-input-icons [isValid]="!tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [isInvalid]="tagValidatorService.isDestinationTagInvalid() && destinationTag !== null && destinationTag !== undefined && destinationTag.length > 0" [showClear]="!!xrplTxOptionsStore.destinationTag()" (clear)="xrplTxOptionsStore.setField('destinationTag', '')" />
                </div>
 
                @if (tagValidatorService.isDestinationTagInvalid()) {
@@ -444,8 +441,9 @@
                }
           </div>
 
+          <!-- Source Tag -->
           <div class="space-y-2">
-               <label class="label-primary">Source Tag</label>
+               <label for="sourTag" class="label-primary">Source Tag</label>
                <p class="text-secondary">Arbitrary integer used to identify the reason for this payment, or a sender on whose behalf this transaction is made.</p>
                <div class="relative">
                     <input
@@ -453,8 +451,8 @@
                          inputmode="numeric"
                          class="input-base-with-validation"
                          app-focus-border
-                         [isValid]="!tagValidatorService.isSourceTagInvalid()"
-                         [isInvalid]="tagValidatorService.isSourceTagInvalid()"
+                         [isValid]="!tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0"
+                         [isInvalid]="tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0"
                          (keydown)="utilsService.preventNegative($event)"
                          (keypress)="tagValidatorService.onSourceTagKeyPress($event)"
                          (input)="tagValidatorService.onSourceTagInput($event)"
@@ -464,11 +462,7 @@
                          placeholder="e.g. 1123456"
                     />
 
-                    @if (xrplTxOptionsStore.sourceTag() && xrplTxOptionsStore.sourceTag()!.trim().length > 0) {
-                    <button type="button" (click)="this.xrplTxOptionsStore.setField('sourceTag', '')" class="clearInputXmark" aria-label="Clear Source Tag Field">
-                         <lucide-icon name="x" size="16"></lucide-icon>
-                    </button>
-                    }
+                    <app-input-icons [isValid]="!tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0" [isInvalid]="tagValidatorService.isSourceTagInvalid() && sourceTag !== null && sourceTag !== undefined && sourceTag.length > 0" [showClear]="!!xrplTxOptionsStore.sourceTag()" (clear)="xrplTxOptionsStore.setField('sourceTag', '')" />
                </div>
 
                @if (tagValidatorService.isSourceTagInvalid()) {

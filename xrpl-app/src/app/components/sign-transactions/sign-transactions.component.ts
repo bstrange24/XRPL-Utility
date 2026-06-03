@@ -580,7 +580,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      private clearFields() {
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
           this.cdr.markForCheck();
      }
 

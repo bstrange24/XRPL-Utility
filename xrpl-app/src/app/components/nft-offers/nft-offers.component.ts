@@ -553,6 +553,6 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
           this.nftCreateStoreService.resetNftFields();
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
      }
 }

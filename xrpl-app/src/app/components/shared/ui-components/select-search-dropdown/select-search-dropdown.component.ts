@@ -1,11 +1,10 @@
-import { Component, ElementRef, ViewChild, TemplateRef, ViewContainerRef, inject, input, output, signal, computed, ChangeDetectionStrategy, AfterViewInit, HostListener, OnDestroy, effect } from '@angular/core';
+import { Component, ElementRef, ViewChild, TemplateRef, ViewContainerRef, inject, input, output, signal, computed, ChangeDetectionStrategy, AfterViewInit, OnDestroy, effect } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
 import * as xrpl from 'xrpl';
 import { dropDownAnimation } from '../../../../services/utils/animations/animations.service';
-import { NgIcon } from '@ng-icons/core';
 
 export interface SelectItem {
      id: string;
@@ -42,18 +41,14 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      private portal!: TemplatePortal<any>;
      private isDropdownOpening = false;
 
-     // Inputs / Outputs
+     // Inputs
      items = input.required<SelectItem[]>();
      showClearButton = input<boolean>(true);
      clearOnEscape = input<boolean>(true);
      closeWhenInvalid = input<boolean>(false);
      showInlineErrorMessage = input<boolean>(true);
      searchQueryInput = input<string>('');
-     searchQueryChange = output<string>();
      value = input<SelectItem | null>(null);
-     valueChange = output<SelectItem | null>();
-     selected = output<SelectItem>();
-     isValid = output<boolean>();
      validateXrpAddress = input<boolean>(false);
      customValidation = input<(value: string) => boolean>(() => true);
      customValidationMessage = input<string>('Invalid value');
@@ -65,12 +60,19 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      showShortAddress = input<boolean>(true);
      disabled = input<boolean>(false);
      disableCurrencySelection = input<boolean>(false);
-     isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
+     disableCurrentAccount = input<boolean>(true);
+
+     // Outputs
+     valueChange = output<SelectItem | null>();
+     selected = output<SelectItem>();
+     isValid = output<boolean>();
+     searchQueryChange = output<string>();
+
+     // UI Signals
      searchQuery = signal<string>('');
      highlightedIndex = signal(-1);
      isTouched = signal(false);
      wasSubmitted = signal(false);
-     disableCurrentAccount = input<boolean>(true);
 
      constructor() {
           // Sync parent's [searchQueryInput] → internal writable searchQuery
@@ -104,6 +106,19 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           });
      }
 
+     ngAfterViewInit() {
+          this.portal = new TemplatePortal(this.dropdownTpl, this.vcr);
+     }
+
+     ngOnDestroy() {
+          if (SelectSearchDropdownComponent.openInstance === this) {
+               SelectSearchDropdownComponent.openInstance = null;
+          }
+          this.close();
+     }
+
+     isDisabled = computed(() => this.disabled() || this.disableCurrencySelection());
+
      // Computed: Get the current value (selected item or manual entry)
      getCurrentValue = computed(() => {
           const selected = this.value();
@@ -130,24 +145,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           return xrpl.isValidAddress(value);
      });
-
-     // Computed: Overall validation status (combines XRP validation and custom validation)
-     // isValidValue = computed(() => {
-     //      const value = this.getCurrentValue();
-     //      if (!value) return true; // Empty is considered valid
-
-     //      // Check XRP validation if enabled
-     //      if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
-     //           return false;
-     //      }
-
-     //      // Check custom validation
-     //      if (!this.customValidation()(value)) {
-     //           return false;
-     //      }
-
-     //      return true;
-     // });
 
      // Update isValidValue to include currency validation
      isValidValue = computed(() => {
@@ -204,7 +201,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           // Check XRP validation first
           if (this.validateXrpAddress() && !this.isXrpAddressValid()) {
-               return 'Please enter a valid XRP address';
+               return 'Please enter a valid XRP address.';
           }
 
           // Check custom validation
@@ -236,20 +233,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           return `${base} border-gray-200 ${focusBorder}`;
      });
 
-     // inputClasses = computed(() => {
-     //      const baseClasses = 'w-full bg-white border rounded-2xl px-3.5 py-3.5 text-sm focus:outline-none focus:ring-0 focus:shadow-none transition-colors';
-
-     //      if (this.showError()) {
-     //           return `${baseClasses} border-red-500 focus:border-red-500 bg-red-50`;
-     //      }
-
-     //      if (this.isValidValue() && this.getCurrentValue() && this.isTouched()) {
-     //           return `${baseClasses} border-green-500 focus:border-green-500`;
-     //      }
-
-     //      return `${baseClasses} border-gray-100 focus:border-green-500`;
-     // });
-
      // Computed
      displayValue = computed(() => {
           const q = this.searchQuery();
@@ -278,18 +261,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
           return this.items().filter(item => item.display.toLowerCase().includes(q) || (item.secondary ?? '').toLowerCase().includes(q) || (item.id ?? '').toLowerCase().includes(q) || (item.amount ?? '').toLowerCase().includes(q));
      });
 
-     // Lifecycle
-     ngAfterViewInit() {
-          this.portal = new TemplatePortal(this.dropdownTpl, this.vcr);
-     }
-
-     ngOnDestroy() {
-          if (SelectSearchDropdownComponent.openInstance === this) {
-               SelectSearchDropdownComponent.openInstance = null;
-          }
-          this.close();
-     }
-
      isInvalidAndShouldClose = computed(() => {
           const value = this.getCurrentValue();
           if (!value) return false; // Don't close on empty
@@ -302,16 +273,6 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           return isInvalid && shouldShowError;
      });
-
-     onItemMouseDown(event: MouseEvent, item: SelectItem) {
-          event.preventDefault();
-
-          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) {
-               return;
-          }
-
-          this.onSelect(item);
-     }
 
      validateCurrencyCode = input<boolean>(false);
 
@@ -340,6 +301,16 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
           return false;
      });
+
+     onItemMouseDown(event: MouseEvent, item: SelectItem) {
+          event.preventDefault();
+
+          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) {
+               return;
+          }
+
+          this.onSelect(item);
+     }
 
      // Dropdown control
      open() {

@@ -32,14 +32,14 @@ export class SendXrpUtilService extends PerformanceBaseComponent {
 
      sendButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
-          if (step === 'idle') return 'Send XRP';
-          if (step === 'waiting_validation') return 'Send XRP';
+          if (step === 'idle' || step === 'waiting_validation') return 'Send XRP';
           return this.txUiService.stepMessage();
      });
 
      clearInputFields(): void {
-          if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
-          this.txUiService.clearAllFields();
+          // if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
+          this.xrplTxOptionsStore.setField('isSimulateEnabled', false);
+          this.txUiService.disableAdditionalFields();
           this.xrplTxOptionsStore.setField('destinationTag', '');
           this.xrplTxOptionsStore.setField('sourceTag', '');
           this.xrplTxOptionsStore.setField('invoiceId', '');

@@ -228,7 +228,7 @@ export class TransactionUiService {
           this.isSuccess.set(event.isSuccess);
      }
 
-     clearAllFields() {
+     disableAdditionalFields() {
           this.wantsOptions.set(false);
      }
 

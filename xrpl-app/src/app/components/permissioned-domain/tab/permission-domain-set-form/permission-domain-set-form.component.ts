@@ -17,11 +17,14 @@ import { FocusBorderDirective } from '../../../../services/shared/focus-border/f
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { CREDENTIAL_TYPE_VALADATION } from '../../../credentials/constants/credential.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
+import { CredentialValidatorService } from '../../../../services/shared/validators/credential-validator/credential-validator.service';
 
 @Component({
      selector: 'app-permission-domain-set-form',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, ReactiveFormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, ReactiveFormsModule, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, FocusBorderDirective, InputIconsComponent, ValidationErrorsComponent],
      templateUrl: './permission-domain-set-form.component.html',
      styleUrl: './permission-domain-set-form.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +34,7 @@ export class PermissionDomainSetFormComponent {
      public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      public readonly permissionedDomainUtilService = inject(PermissionedDomainUtilService);
      public readonly permissionedDomainViewModelService = inject(PermissionedDomainViewModelService);
+     public readonly credentialValidatorService = inject(CredentialValidatorService);
      public readonly toastService = inject(ToastService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
@@ -66,8 +70,8 @@ export class PermissionDomainSetFormComponent {
      showIssuerHelper = signal(false);
      showCredentialTypeHelper = signal(false);
 
-     private optionsHasError = signal(false);
-     private optionsErrors = signal<string[]>([]);
+     private readonly optionsHasError = signal(false);
+     private readonly optionsErrors = signal<string[]>([]);
 
      warningMessage = 'Updating will completely replace the existing AcceptedCredentials list for this domain.';
      readonly safeWarningMessage = computed(() => this.warningMessage?.replaceAll('<', '&lt;').replaceAll('>', '&gt;'));
@@ -195,18 +199,6 @@ export class PermissionDomainSetFormComponent {
           return errors.length > 0;
      });
 
-     // canSetDomain = computed(() => {
-     //      if (this.hasValidationErrors()) {
-     //           return false;
-     //      }
-
-     //      if (this.wantsOptions() && this.optionsHasError()) {
-     //           return false;
-     //      }
-
-     //      return true;
-     // });
-
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
 
@@ -223,13 +215,6 @@ export class PermissionDomainSetFormComponent {
                const msg = this.credentialTypeErrorMessage();
                if (msg) errors.push(msg);
           }
-
-          // === UPDATE MODE DOMAIN CHECK ===
-          // if (this.permissionedDomainStoreService.domainMode() === 'update') {
-          //      if (!this.permissionedDomainStoreService.domainId()) {
-          //           errors.push('Please select a domain to update');
-          //      }
-          // }
 
           // Max credentials
           if (this.credentialsArray.length > CREDENTIAL_TYPE_VALADATION.MAX_CREDENTIALS) {
@@ -261,65 +246,17 @@ export class PermissionDomainSetFormComponent {
           return errors;
      });
 
-     // validationErrorMessages = computed(() => {
-     //      const errors: string[] = [];
-
-     //      const issuerRaw = this.issuerInput().trim();
-
-     //      if (issuerRaw && !xrpl.isValidAddress(issuerRaw)) {
-     //           errors.push('Issuer address is not a valid XRP address');
-     //      }
-
-     //      if (this.credentialsArray.length > CREDENTIAL_TYPE_VALADATION.MAX_CREDENTIALS) {
-     //           errors.push(`Maximum of ${CREDENTIAL_TYPE_VALADATION.MAX_CREDENTIALS} credentials allowed per domain`);
-     //      }
-
-     //      if (this.permissionedDomainStoreService.domainMode() === 'update') {
-     //           if (!this.permissionedDomainStoreService.domainId()) {
-     //                errors.push('Please select a domain to update');
-     //           }
-     //      }
-
-     //      const issuer = this.issuerAddress();
-     //      if (issuer && !this.isIssuerValid()) {
-     //           errors.push('Issuer address is not a valid XRP address');
-     //      }
-
-     //      if (this.credentialType().trim() && this.isCredentialTypeInvalid()) {
-     //           const msg = this.credentialTypeErrorMessage();
-
-     //           if (msg) {
-     //                errors.push(msg);
-     //           }
-     //      }
-
-     //      const pending = this.pendingCredential();
-     //      if (pending && this.isPendingCredentialDuplicate()) {
-     //           errors.push(`Credential "${pending.credentialType}" already exists for issuer ${pending.issuer.substring(0, 10)}...`);
-     //      }
-
-     //      const seen = new Set<string>();
-     //      for (const cred of this.credentialsArray.value) {
-     //           const key = `${cred.issuer}|${cred.credentialType}`;
-
-     //           if (seen.has(key)) {
-     //                errors.push(`Duplicate credential "${cred.credentialType}" detected`);
-     //                break;
-     //           }
-
-     //           seen.add(key);
-     //      }
-
-     //      if (this.wantsOptions() && this.optionsHasError()) {
-     //           errors.push(...this.optionsErrors());
-     //      }
-
-     //      return errors;
-     // });
-
      hasValidationErrors = computed(() => {
           return this.validationErrorMessages().length > 0;
      });
+
+     isCredentialTypeLengthValid() {
+          const trimmed = this.credentialType().trim();
+          if (trimmed.length >= 64) {
+               return `Credential type exceeds 64 character limit (currently ${trimmed.length} characters)`;
+          }
+          return '';
+     }
 
      onIssuerValidationChange(isValid: boolean) {
           this.isIssuerValid.set(isValid);

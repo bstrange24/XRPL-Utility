@@ -46,7 +46,7 @@
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
 
                @if (isIssuerInvalid()) {
-               <p class="form-error mt-2">Please enter a valid XRP address</p>
+               <p class="form-error mt-2">Please enter a valid XRP address.</p>
                }
 
                <app-field-helper title="Issuer" [items]="issuerHelperItems" [show]="showIssuerHelper" />
@@ -136,7 +136,7 @@
                <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [disableCurrentAccount]="false" [closeWhenInvalid]="true" [items]="issuerItems" [value]="selectedIssuer" [showShortAddress]="true" (valueChange)="onIssuerChange($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
 
                @if (isIssuerInvalid()) {
-               <p class="form-error mt-2">Please enter a valid XRP address</p>
+               <p class="form-error mt-2">Please enter a valid XRP address.</p>
                }
 
                <app-field-helper title="Issuer" [items]="issuerHelperItems" [show]="showIssuerHelper" />

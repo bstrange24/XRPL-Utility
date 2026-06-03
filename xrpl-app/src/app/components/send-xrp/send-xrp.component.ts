@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, ViewChild, output, signal, input } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -31,7 +31,7 @@ import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution
 import { SendXrpViewModelService } from '../../services/send-xrp/send-xrp-view-model/send-xrp-view-model.service';
 import { SendXrpUtilService } from '../../services/send-xrp/send-xrp-util/send-xrp-util.service';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
-import { SendXrpActionTypes, XrpPaymentConfig } from './constants/send-xrp.types';
+import { XrpPaymentConfig } from './constants/send-xrp.types';
 import { SEND_XRP_TAB_META, SEND_XRP_TABS } from './constants/send-xrp.ui';
 import { SEND_XRP_TAB } from './constants/send-xrp.constants';
 import { SendXrpSummaryComponent } from './ui-components/send-xrp-summary/send-xrp-summary.component';
@@ -112,7 +112,7 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
 
      async setTab(tab: string): Promise<void> {
           if (!SEND_XRP_TABS.includes(tab as any)) return;
-          this.sendXrpViewModelService.activeTab.set(tab as SendXrpActionTypes);
+          this.sendXrpViewModelService.activeTab.set(tab);
           this.clearInputFields();
           if (this.hasWallets()) await this.onAccountChange(true);
      }

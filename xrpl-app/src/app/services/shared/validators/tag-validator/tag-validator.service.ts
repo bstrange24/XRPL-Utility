@@ -20,8 +20,8 @@ export class TagValidatorService {
           let value = this.sanitizeTagInput(input.value);
 
           // Validate against max value
-          if (value && !isNaN(parseInt(value, 10))) {
-               const numValue = parseInt(value, 10);
+          if (value && !Number.isNaN(Number.parseInt(value, 10))) {
+               const numValue = Number.parseInt(value, 10);
                if (numValue > this.MAX_TAG_VALUE) {
                     value = this.MAX_TAG_VALUE.toString();
                }
@@ -41,8 +41,8 @@ export class TagValidatorService {
           }
 
           // Parse and validate on blur
-          const numValue = parseInt(value, 10);
-          if (isNaN(numValue) || numValue <= 0) {
+          const numValue = Number.parseInt(value, 10);
+          if (Number.isNaN(numValue) || numValue <= 0) {
                input.value = '';
                this.xrplTxOptionsStore.setField('destinationTag', null);
           } else if (numValue > this.MAX_TAG_VALUE) {
@@ -65,8 +65,8 @@ export class TagValidatorService {
           let value = this.sanitizeTagInput(input.value);
 
           // Validate against max value
-          if (value && !isNaN(parseInt(value, 10))) {
-               const numValue = parseInt(value, 10);
+          if (value && !Number.isNaN(Number.parseInt(value, 10))) {
+               const numValue = Number.parseInt(value, 10);
                if (numValue > this.MAX_TAG_VALUE) {
                     value = this.MAX_TAG_VALUE.toString();
                }
@@ -86,8 +86,8 @@ export class TagValidatorService {
           }
 
           // Parse and validate on blur
-          const numValue = parseInt(value, 10);
-          if (isNaN(numValue) || numValue <= 0) {
+          const numValue = Number.parseInt(value, 10);
+          if (Number.isNaN(numValue) || numValue <= 0) {
                input.value = '';
                this.xrplTxOptionsStore.setField('sourceTag', null);
           } else if (numValue > this.MAX_TAG_VALUE) {
@@ -137,8 +137,8 @@ export class TagValidatorService {
           }
 
           // If value would exceed max, prevent it
-          if (newValue && !isNaN(parseInt(newValue, 10))) {
-               const numValue = parseInt(newValue, 10);
+          if (newValue && !Number.isNaN(Number.parseInt(newValue, 10))) {
+               const numValue = Number.parseInt(newValue, 10);
                if (numValue > this.MAX_TAG_VALUE) {
                     event.preventDefault();
                     return;
@@ -183,28 +183,28 @@ export class TagValidatorService {
      isDestinationTagValid = computed(() => {
           const tag = this.xrplTxOptionsStore.destinationTag();
           if (tag === null || tag === '' || tag === undefined) return true;
-          const numTag = typeof tag === 'string' ? parseInt(tag, 10) : Number(tag);
+          const numTag = typeof tag === 'string' ? Number.parseInt(tag, 10) : Number(tag);
           return Number.isFinite(numTag) && numTag > 0 && numTag <= this.MAX_TAG_VALUE;
      });
 
      isDestinationTagInvalid = computed(() => {
           const tag = this.xrplTxOptionsStore.destinationTag();
           if (tag === null || tag === '' || tag === undefined) return false;
-          const numTag = typeof tag === 'string' ? parseInt(tag, 10) : Number(tag);
-          return isNaN(numTag) || numTag <= 0 || numTag > this.MAX_TAG_VALUE;
+          const numTag = typeof tag === 'string' ? Number.parseInt(tag, 10) : Number(tag);
+          return Number.isNaN(numTag) || numTag <= 0 || numTag > this.MAX_TAG_VALUE;
      });
 
      isSourceTagValid = computed(() => {
           const tag = this.xrplTxOptionsStore.sourceTag();
           if (tag === null || tag === '' || tag === undefined) return true;
-          const numTag = typeof tag === 'string' ? parseInt(tag, 10) : Number(tag);
+          const numTag = typeof tag === 'string' ? Number.parseInt(tag, 10) : Number(tag);
           return Number.isFinite(numTag) && numTag > 0 && numTag <= this.MAX_TAG_VALUE;
      });
 
      isSourceTagInvalid = computed(() => {
           const tag = this.xrplTxOptionsStore.sourceTag();
           if (tag === null || tag === '' || tag === undefined) return false;
-          const numTag = typeof tag === 'string' ? parseInt(tag, 10) : Number(tag);
-          return isNaN(numTag) || numTag <= 0 || numTag > this.MAX_TAG_VALUE;
+          const numTag = typeof tag === 'string' ? Number.parseInt(tag, 10) : Number(tag);
+          return Number.isNaN(numTag) || numTag <= 0 || numTag > this.MAX_TAG_VALUE;
      });
 }

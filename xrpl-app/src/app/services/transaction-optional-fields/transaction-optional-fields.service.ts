@@ -71,20 +71,6 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
           if (txType === 'sendXrp') {
                const invoiceIdInput = this.xrplTxOptionsStore.invoiceId();
                if (invoiceIdInput && invoiceIdInput !== '') {
-                    let invoiceIdHex: string;
-
-                    // // Validate it's already valid hex
-                    // if (/^[0-9A-Fa-f]+$/.test(invoiceIdInput)) {
-                    //      if (invoiceIdInput.length !== 64) {
-                    //           throw new Error('InvoiceID must be exactly 64 hex characters (32 bytes)');
-                    //      }
-                    //      invoiceIdHex = invoiceIdInput.toUpperCase();
-                    // } else {
-                    //      // For InvoiceID, you typically DON'T convert strings to hex
-                    //      // Instead, you'd hash the string or generate a proper ID
-                    //      throw new Error('InvoiceID must be a valid 64-character hex string');
-                    // }
-
                     tx.InvoiceID = invoiceIdInput;
                }
 
@@ -115,20 +101,11 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                     // Check if it's the new format (objects with Memo property)
                     if (memos.length > 0 && typeof memos[0] === 'object' && memos[0].Memo && memos[0].Memo.MemoData !== '') {
                          this.utilsService.setEnhancedMemoField(tx, memos);
-                    } else {
-                         if (memos.length > 0 && memos[0].Memo && memos[0].Memo.MemoData !== '') {
-                              // Legacy format (array of strings)
-                              this.utilsService.setMemoField1(tx, memos);
-                         }
+                    } else if (memos.length > 0 && memos[0].Memo && memos[0].Memo.MemoData !== '') {
+                         // Legacy format (array of strings)
+                         this.utilsService.setMemoField1(tx, memos);
                     }
                }
           }
-
-          // if (this.xrplTxOptionsStore.isMemoEnabled()) {
-          //      const memoField = this.xrplTxOptionsStore.memos();
-          //      if (memoField && memoField.length > 0) {
-          //           this.utilsService.setMemoField1(tx, memoField);
-          //      }
-          // }
      }
 }

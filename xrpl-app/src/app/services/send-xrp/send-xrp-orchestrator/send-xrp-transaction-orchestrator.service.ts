@@ -68,10 +68,8 @@ export class SendXrpTransactionOrchestratorService extends PerformanceBaseCompon
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Meta
-               const meta = SEND_XRP_META[type];
-
                // Build transaction
+               const meta = SEND_XRP_META[type];
                const tx = meta.buildTx({ orchestrator: this, env, wallet, account });
 
                // Optional fields

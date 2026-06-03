@@ -107,7 +107,6 @@ export class ChecksCreateComponent implements OnDestroy {
      canCreateCredentialChange = output<boolean>();
 
      // UI Signals
-     // Track destination validation status from dropdown
      isDestinationValid = signal(false);
      showCheckCurrencyCodeHelper = signal(false);
      showCheckAmountHelper = signal(false);

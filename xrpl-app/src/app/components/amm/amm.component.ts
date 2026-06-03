@@ -316,6 +316,6 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           this.ammUtilsService.clearInputFields();
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
      }
 }

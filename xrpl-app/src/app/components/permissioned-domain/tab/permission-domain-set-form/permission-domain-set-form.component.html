@@ -125,20 +125,24 @@
                          </div>
 
                          <div class="relative">
-                              <input type="text" class="input-base-with-validation pr-10" app-focus-border [isValid]="isCredentialTypeValid()" [isInvalid]="isCredentialTypeInvalid()" [value]="credentialType()" (input)="onCredentialTypeInput($event)" placeholder="Enter a credential type (e.g. KYC-Level2)" />
+                              <input
+                                   type="text"
+                                   class="input-base-with-validation pr-24"
+                                   app-focus-border
+                                   [isValid]="isCredentialTypeValid() && credentialType() !== null && credentialType() !== undefined && credentialType().trim().length > 0"
+                                   [isInvalid]="isCredentialTypeInvalid() && credentialType() !== null && credentialType() !== undefined && credentialType().trim().length > 0"
+                                   [value]="credentialType()"
+                                   (input)="onCredentialTypeInput($event)"
+                                   placeholder="Enter a credential type (e.g. KYC-Level2)"
+                              />
 
-                              @if (credentialType() && credentialType().trim().length > 0) {
-                              <button type="button" (click)="clearCredentialType()" class="clearInputXmark" aria-label="Clear credential type">
-                                   <lucide-icon name="x" size="16"></lucide-icon>
-                              </button>
-                              }
+                              <app-input-icons [isValid]="isCredentialTypeValid() && credentialType() !== null && credentialType() !== undefined && credentialType().trim().length > 0" [isInvalid]="isCredentialTypeInvalid() && credentialType() !== null && credentialType() !== undefined && credentialType().trim().length > 0" [showClear]="!!credentialType()" (clear)="clearCredentialType()" />
                          </div>
 
                          <app-field-helper title="Credential Type" [items]="credentialTypeHelperItems" [show]="showCredentialTypeHelper" />
                     </div>
 
                     <div class="md:col-span-2 flex items-start pt-[58px]">
-                         <!-- <div class="md:col-span-2"> -->
                          <button type="button" class="btn-blue" [disabled]="!canAddCredential()" (click)="addCredential()">+ Add Credential</button>
                     </div>
                </div>
@@ -169,7 +173,7 @@
 
                          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                               <div>
-                                   <label class="label-primary">Issuer</label>
+                                   <label for="credIssuer" class="label-primary">Issuer</label>
                                    <div class="relative">
                                         <input type="text" readonly class="input-disabled pr-10" formControlName="issuer" />
                                         <button type="button" (click)="copyUtilService.copyAddress(control.get('issuer')?.value)" class="clearInputXmark" aria-label="Copy issuer address">
@@ -178,7 +182,7 @@
                                    </div>
                               </div>
                               <div>
-                                   <label class="label-primary">Credential Type</label>
+                                   <label for="credType" class="label-primary">Credential Type</label>
                                    <input type="text" readonly class="input-disabled" formControlName="credentialType" />
                               </div>
                          </div>
@@ -187,19 +191,16 @@
                </div>
           </form>
      </div>
-
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+@if (isCredentialTypeLengthValid()) {
+<div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3">
+     <div class="flex items-center gap-2">
+          <ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600" />
+          <p class="text-sm text-amber-800">Max limit of a credential type is 64 characters.</p>
+     </div>
+</div>
+}
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Permissioned domain create validation issues:" />

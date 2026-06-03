@@ -541,6 +541,6 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
           this.currencyStoreService.resetOptions();
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.selectIssuer('XRP');
-          this.txUiService.clearAllFields();
+          this.txUiService.disableAdditionalFields();
      }
 }

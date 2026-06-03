@@ -14,11 +14,14 @@ import { UtilsService } from '../../../../../services/utils/util-service/utils.s
 import { AppConstants } from '../../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
+import { InputIconsComponent } from '../../../../shared/input-icons/input-icons.component';
+import { ValidationErrorsComponent } from '../../../../shared/validation-errors/validation-errors.component';
+import { FocusBorderDirective } from '../../../../../services/shared/focus-border/focus-border.directive';
 
 @Component({
      selector: 'app-multi-sign',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, ButtonTooltipComponent, FieldHelperComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, NgIcon, TransactionOptionsComponent, ButtonTooltipComponent, FieldHelperComponent, FocusBorderDirective, InputIconsComponent, ValidationErrorsComponent],
      templateUrl: './multi-sign.component.html',
      styleUrl: './multi-sign.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,30 +76,19 @@ export class MultiSignComponent {
           }, 0);
      }
 
-     // Optional: Add keyboard support (Escape key to clear)
-     //   onKeydown(event: KeyboardEvent, field: 'account' | 'seed', index: number) {
-     //     if (event.key === 'Escape') {
-     //       event.preventDefault();
-     //       if (field === 'account') {
-     //         this.clearAccount(index, event);
-     //       } else {
-     //         this.clearSeed(index, event);
-     //       }
-     //     }
-     //   }
-
      isAddressValid(address: string): boolean {
-          if (!address) return false;
+          if (!address?.trim()) return false;
+
           return xrpl.isValidAddress(address);
      }
 
      isAddressInvalid(address: string): boolean {
-          return !!address && !xrpl.isValidAddress(address);
+          if (!address?.trim()) return false;
+
+          return !xrpl.isValidAddress(address);
      }
 
      isSeedValid(secret: string): boolean {
-          // if (!seed) return false;
-          // return xrpl.isValidSecret(seed);
           if (!secret || secret.trim().length === 0) {
                return false;
           }
@@ -123,7 +115,9 @@ export class MultiSignComponent {
      }
 
      isSeedInvalid(seed: string): boolean {
-          return !!seed && !this.isSeedValid(seed);
+          if (!seed?.trim()) return false;
+
+          return !this.isSeedValid(seed);
      }
 
      isMnemonic(secret: string): boolean {
@@ -131,6 +125,16 @@ export class MultiSignComponent {
           const trimmed = secret.trim();
           return trimmed.includes(' ') && /^[a-z\s]+$/i.test(trimmed);
      }
+
+     isWeightValid(weight: number): boolean {
+          return Number(weight) > 0;
+     }
+
+     isWeightInvalid(weight: number): boolean {
+          return Number(weight) <= 0;
+     }
+
+     isQuorumInvalid = computed(() => !this.isQuorumValid());
 
      // Computed total signer weight
      totalSignerWeight = computed(() => {
@@ -225,24 +229,28 @@ export class MultiSignComponent {
 
      // Get validation error message
      validationErrorMessage = computed(() => {
-          if (!this.hasUserInput()) return [];
+          const errors: string[] = [];
+
+          if (!this.hasUserInput()) return errors; // No errors if user hasn't entered anything yet
+
           if (!this.hasSigners()) {
-               return 'Please add at least one signer.';
+               errors.push('Please add at least one signer.');
           }
           if (this.hasInvalidSigners()) {
-               return 'Please fix invalid signer entries (valid account, positive weight, and valid seed required).';
+               errors.push('Please fix invalid signer entries (valid account, positive weight, and valid seed required).');
           }
           if (!this.isQuorumValid()) {
                const quorum = this.accountConfiguratorStoreService.signerQuorum();
                const totalWeight = this.totalSignerWeight();
                if (quorum < 1) {
-                    return 'Quorum must be at least 1.';
+                    errors.push('Quorum must be at least 1.');
                }
                if (quorum > totalWeight) {
-                    return `Quorum (${quorum}) exceeds total signer weight (${totalWeight}). Transactions cannot be authorized.`;
+                    errors.push(`Quorum (${quorum}) exceeds total signer weight (${totalWeight}).`);
                }
           }
-          return '';
+
+          return errors;
      });
 
      // Toggle Method

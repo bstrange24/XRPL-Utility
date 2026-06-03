@@ -52,27 +52,21 @@
                               inputmode="decimal"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="!amountValidatorService.isAmountInvalid()"
-                              [isInvalid]="amountValidatorService.isAmountInvalid()"
+                              [isValid]="amountValidatorService.isAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                              [isInvalid]="amountValidatorService.isAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                               (keydown)="utilsService.preventNegative($event)"
-                              (input)="amountValidatorService.onAmountInput($event,'accountConfig')"
-                              (blur)="amountValidatorService.onAmountBlur($event,'accountConfig')"
+                              (focus)="isFocused.set(true)"
+                              (input)="amountValidatorService.onAmountInput($event, 'accountConfig')"
+                              (blur)="amountValidatorService.onAmountBlur($event, 'accountConfig'); isFocused.set(false)"
                               (keypress)="amountValidatorService.onAmountKeyPress($event)"
-                              [ngModel]="accountConfiguratorStoreService.amount()"
-                              (ngModelChange)="utilsService.updateAmount($event, 'accountConfig')"
+                              [ngModel]="amount"
+                              (ngModelChange)="amount = $event"
                               placeholder="e.g. 10.5"
                          />
 
-                         @if (accountConfiguratorStoreService.amount() && accountConfiguratorStoreService.amount()!.trim().length > 0) {
-                         <button type="button" (click)="this.accountConfiguratorStoreService.setField('amount', '')" class="clearInputXmark" aria-label="Clear Amount Field">
-                              <lucide-icon name="x" size="16"></lucide-icon>
-                         </button>
-                         }
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="amountValidatorService.isAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.accountConfiguratorStoreService.setField('amount', '')" />
                     </div>
-
-                    @if (amountValidatorService.isAmountInvalid()) {
-                    <p class="form-error">Amount must be greater than 0</p>
-                    }
 
                     <app-field-helper title="XRP Amount" [items]="sendXrpAmountHelperItems" [show]="showSendXrpAmountHelper" />
                </div>
@@ -91,17 +85,6 @@
 
           <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
      </div>
-     <!-- <div class="card-base">
-          <div class="options">
-               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
-
-               <div class="flex items-center gap-2">
-                    <button type="button" class="btn-optional-fields" title="Destination Tag, Source Tag, Invoice ID, Domain ID and Credential IDs are optional XRPL transaction fields">
-                         <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
-                    </button>
-               </div>
-          </div>
-     </div> -->
 
      <!-- Optional Fields Section -->
      @if (wantsOptions()) {
@@ -109,19 +92,7 @@
           <app-transaction-options-section [activeTab]="'sendXrp'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
      </div>
      }
-
-     <!-- Summary of validation errors -->
-     @if (hasValidationErrors()) {
-     <div class="alert-error">
-          <ng-icon name="heroXCircle" size="18" class="alert-icon" />
-          <div class="alert-content">
-               <p class="helper-text-paragraph">Please fix the following issues:</p>
-               <ul class="alert-content-list">
-                    @for (error of validationErrorMessages(); track $index) {
-                    <li class="text-sm">{{ error }}</li>
-                    }
-               </ul>
-          </div>
-     </div>
-     }
 </div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Check cash validation issues:" />
