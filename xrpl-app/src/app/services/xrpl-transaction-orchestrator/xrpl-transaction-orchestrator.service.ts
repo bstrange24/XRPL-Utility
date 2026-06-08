@@ -84,6 +84,7 @@ export class XrplTransactionOrchestratorService {
           try {
                if (mode === 'simulate') {
                     response = await this.xrplTransactions.simulateTransaction(client, tx);
+                    if (response?.result) this.txUiService.addTxResultSignal(response.result);
                } else {
                     const fee = params.env?.fee;
                     if (!fee) throw new Error('Missing fee in env');
@@ -103,10 +104,10 @@ export class XrplTransactionOrchestratorService {
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
-               if (response?.result) this.txUiService.addTxResultSignal(response.result);
+               // if (response?.result) this.txUiService.addTxResultSignal(response.result);
 
                const isSuccess = this.utilsService.isTxSuccessful(response);
-               if (!isSuccess) {
+               if (!isSuccess && mode !== 'simulate') {
                     const resultMsg = this.utilsService.getTransactionResultMessage(response);
                     const userMessage = 'Transaction failed.\n' + this.utilsService.processErrorMessageFromLedger(resultMsg);
 

@@ -1130,7 +1130,7 @@ label:hover .toggle-label {
 }
 
 .execution-time {
-     @apply text-sm text-gray-500 mt-3;
+     @apply text-sm mt-3;
 }
 
 /* ============================================

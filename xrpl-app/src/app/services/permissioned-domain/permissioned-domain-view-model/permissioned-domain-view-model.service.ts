@@ -21,13 +21,21 @@ export class PermissionedDomainViewModelService {
 
           const tab = this.activeTab();
           const domains = this.permissionedDomainStoreService.createdPermissionedDomains() ?? [];
+          const mode = this.permissionedDomainStoreService.domainMode();
+
+          let actionButtonLabel: string;
+          if (tab === 'setPermissionedDomain') {
+               actionButtonLabel = mode === 'update' ? this.updatePermissionedDomainButtonLabel() : this.setPermissionedDomainButtonLabel();
+          } else {
+               actionButtonLabel = this.deletePermissionedDomainButtonLabel();
+          }
 
           return {
                walletName: wallet.name || 'Selected wallet',
                mode: tab,
                permissionedDomainCount: domains.length,
                permissionedDomainsToShow: domains,
-               actionButtonLabel: this.actionButtonLabel(tab),
+               actionButtonLabel: actionButtonLabel,
                actionButtonClass: this.actionButtonClass(tab),
           };
      });
@@ -85,6 +93,17 @@ export class PermissionedDomainViewModelService {
      actionButtonLabel(tab: 'setPermissionedDomain' | 'deletePermissionedDomain') {
           switch (tab) {
                case 'setPermissionedDomain':
+                    // This is the key change
+                    return this.permissionedDomainStoreService.domainMode() === 'update' ? this.updatePermissionedDomainButtonLabel() : this.setPermissionedDomainButtonLabel();
+
+               case 'deletePermissionedDomain':
+                    return this.deletePermissionedDomainButtonLabel();
+          }
+     }
+
+     actionButtonLabel234234(tab: 'setPermissionedDomain' | 'deletePermissionedDomain') {
+          switch (tab) {
+               case 'setPermissionedDomain':
                     return this.setPermissionedDomainButtonLabel();
                case 'deletePermissionedDomain':
                     return this.deletePermissionedDomainButtonLabel();
@@ -111,4 +130,5 @@ export class PermissionedDomainViewModelService {
 
      readonly setPermissionedDomainButtonLabel = this.buildTxLabel('Set Permissioned Domain');
      readonly deletePermissionedDomainButtonLabel = this.buildTxLabel('Delete Permissioned Domain');
+     private readonly updatePermissionedDomainButtonLabel = this.buildTxLabel('Update Permissioned Domain');
 }

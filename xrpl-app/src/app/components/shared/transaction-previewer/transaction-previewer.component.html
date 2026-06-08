@@ -1,0 +1,142 @@
+@if (parsedPreview) {
+<div class="space-y-4">
+     <!-- Transaction Type Header -->
+     <div class="rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+          <div class="flex items-start gap-3">
+               <div class="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                    <span class="text-2xl">{{ getIconForType(parsedPreview.transactionType) }}</span>
+               </div>
+               <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">{{ parsedPreview.summary.title }}</h3>
+                    <p class="text-sm text-gray-600 mt-1">{{ parsedPreview.summary.description }}</p>
+               </div>
+          </div>
+     </div>
+
+     <!-- Key Details Cards -->
+     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          @for (detail of parsedPreview.keyDetails; track $index) {
+          <div class="bg-white rounded-2xl border border-gray-200 p-4 hover:shadow-md transition-shadow">
+               <div class="flex items-start gap-3">
+                    <div class="text-2xl">{{ detail.icon || '📄' }}</div>
+                    <div class="flex-1 min-w-0">
+                         <p class="text-xs text-gray-500 uppercase tracking-wide">{{ detail.label }}</p>
+                         @if (detail.type === 'credential-list') {
+                         <ul class="mt-1 space-y-1">
+                              @for (cred of detail.credentials; track $index) {
+                              <li class="text-sm text-gray-900">
+                                   {{ cred.type }}
+                                   <span class="text-gray-500"> ({{ cred.issuer }}) </span>
+                              </li>
+                              }
+                         </ul>
+                         }@if (detail.type === 'memo-list') {
+                         <div class="mt-2 space-y-2">
+                              @for (memo of detail.memos; track $index) {
+                              <div class="rounded-lg bg-gray-50 p-2 text-sm">
+                                   <div class="font-medium text-gray-900">{{ memo.data || '[Empty Memo]' }}</div>
+
+                                   @if (memo.type) {
+                                   <div class="text-xs text-gray-500">Type: {{ memo.type }}</div>
+                                   } @if (memo.format) {
+                                   <div class="text-xs text-gray-500">Format: {{ memo.format }}</div>
+                                   }
+                              </div>
+                              }
+                         </div>
+                         } @else {
+                         <p class="text-sm font-medium text-gray-900 break-all mt-1">{{ detail.value }}</p>
+                         }
+                    </div>
+               </div>
+          </div>
+          }
+     </div>
+
+     <!-- Warnings -->
+     @if (parsedPreview.warnings && parsedPreview.warnings.length > 0) {
+     <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4">
+          <div class="flex gap-3">
+               <svg class="w-5 h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+               </svg>
+               <div class="flex-1">
+                    <p class="text-sm font-medium text-yellow-800">Before You Proceed</p>
+                    <ul class="mt-1 text-sm text-yellow-700 list-disc list-inside">
+                         @for (warning of parsedPreview.warnings; track $index) {
+                         <li>{{ warning }}</li>
+                         }
+                    </ul>
+               </div>
+          </div>
+     </div>
+     }
+
+     <!-- Estimated Impact Summary -->
+     @if (parsedPreview.estimatedImpact) {
+     <div class="bg-gray-50 rounded-2xl p-4">
+          <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Estimated Impact</p>
+          <div class="grid grid-cols-2 gap-4">
+               <div>
+                    <p class="text-xs text-gray-500">XRP to be used</p>
+                    <p class="text-base font-semibold text-gray-900">{{ parsedPreview.estimatedImpact.xrpUsed }}</p>
+               </div>
+               @if (parsedPreview.estimatedImpact.sequence) {
+               <div>
+                    <p class="text-xs text-gray-500">Transaction Sequence</p>
+                    <p class="text-base font-mono text-gray-900">{{ parsedPreview.estimatedImpact.sequence }}</p>
+               </div>
+               } @if (parsedPreview.estimatedImpact.ticketSequence) {
+               <div>
+                    <p class="text-xs text-gray-500">Ticket Sequence</p>
+                    <p class="text-base font-mono text-gray-900">{{ parsedPreview.estimatedImpact.ticketSequence }}</p>
+               </div>
+               } @if (parsedPreview.estimatedImpact.lastLedger) {
+               <div class="col-span-2">
+                    <p class="text-xs text-gray-500">Valid Until Ledger</p>
+                    <p class="text-sm font-mono text-gray-700">{{ parsedPreview.estimatedImpact.lastLedger }}</p>
+                    <p class="text-xs text-gray-400 mt-1">Transaction expires after this ledger</p>
+               </div>
+               }
+          </div>
+     </div>
+     }
+
+     <!-- Raw Data Toggle (for power users) -->
+     <div class="flex justify-end">
+          <button (click)="showRawData = !showRawData" class="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 mr-4">
+               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+               </svg>
+               {{ showRawData ? 'Hide' : 'Show' }} Raw Transaction Request
+          </button>
+     </div>
+
+     @if (showRawData) {
+     <div class="border border-gray-200 rounded-2xl overflow-hidden bg-white">
+          <!-- Header -->
+          <div class="flex items-center justify-between px-4 py-3 bg-gray-100 border-b border-gray-200">
+               <div class="flex items-center gap-3">
+                    <ng-icon name="heroCodeBracket" size="16" class="text-gray-500"> </ng-icon>
+                    <span class="text-sm font-medium text-gray-700"> Raw Transaction Request </span>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <button type="button" (click)="copyRawData()" class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors">
+                         <ng-icon name="heroClipboardDocumentList" size="14"> </ng-icon>
+                         Copy JSON
+                    </button>
+
+                    <button type="button" (click)="downloadRawData()" class="inline-flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded transition-colors">
+                         <ng-icon name="heroArrowDownOnSquareStack" size="14"> </ng-icon>
+                         Download JSON
+                    </button>
+               </div>
+          </div>
+
+          <!-- JSON -->
+          <pre class="max-h-[500px] overflow-auto bg-white-900 p-4"><code class="text-xs font-mono text-gray-800 whitespace-pre">{{ parsedPreview.rawData | json }}</code></pre>
+     </div>
+     }
+</div>
+}

@@ -1,6 +1,6 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, OnInit, signal, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants } from '../../core/app.constants';
@@ -49,7 +49,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
      styleUrl: './permissioned-domain.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PermissionedDomainComponent extends WalletDestinationBase implements OnInit {
+export class PermissionedDomainComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      @ViewChild('setForm') setFormComponent!: PermissionDomainSetFormComponent;
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
