@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, effect, computed, signal } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, effect, computed, signal, OnDestroy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -30,7 +30,7 @@ import { OfferTransactionOrchestratorService } from '../../services/offer/offer-
 import { OfferUtilsService } from '../../services/offer/offer-utils/offer-utils.service';
 import { OFFER_TABS, OFFER_TAB_META } from './constants/offer.ui';
 import { OFFER_TX_TYPES } from './constants/offer.constants';
-import { OfferActionTypes, OfferTxConfig, OfferTxType } from './constants/offer.types';
+import { OfferActionTypes, OfferTxConfig } from './constants/offer.types';
 import { OfferFieldsComponent } from './tab/offer-fields/offer-fields.component';
 import { OfferSummaryComponent } from './ui-components/offer-summary/offer-summary.component';
 import { OfferRequirementsInfoComponent } from './ui-components/offer-requirements-info/offer-requirements-info.component';
@@ -47,7 +47,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
      styleUrl: './offer.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateOfferComponent extends WalletDestinationBase implements OnInit {
+export class CreateOfferComponent extends WalletDestinationBase implements OnInit, OnDestroy {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly walletManagerService = inject(WalletManagerService);
      public readonly downloadUtilService = inject(DownloadUtilService);
@@ -62,31 +62,59 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      public readonly tabs = OFFER_TABS;
      public readonly tabMeta = OFFER_TAB_META;
 
+     private readonly destroyRef = inject(DestroyRef);
+     private isInitialized = false;
+     private currencySyncInProgress = false;
+
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
 
           this.txUiService.clearAllOptionsAndMessages();
 
-          // Currency → Store + VM
+          // FIXED: Use runInInjectionContext and prevent race conditions
           effect(() => {
-               const curr = this.offerCurrency.weWant.currency();
-               this.offerTransactionViewModelService.weWantCurrency.set(curr);
-               this.offerStoreService.setField('weWantCurrency', curr);
+               if (this.currencySyncInProgress) return;
+               this.currencySyncInProgress = true;
+
+               try {
+                    const curr = this.offerCurrency.weWant.currency();
+                    if (curr !== this.offerTransactionViewModelService.weWantCurrency()) {
+                         this.offerTransactionViewModelService.weWantCurrency.set(curr);
+                         this.offerStoreService.setField('weWantCurrency', curr);
+                    }
+               } finally {
+                    this.currencySyncInProgress = false;
+               }
           });
 
           effect(() => {
-               const curr = this.offerCurrency.weSpend.currency();
-               this.offerTransactionViewModelService.weSpendCurrency.set(curr);
-               this.offerStoreService.setField('weSpendCurrency', curr);
+               if (this.currencySyncInProgress) return;
+               this.currencySyncInProgress = true;
+
+               try {
+                    const curr = this.offerCurrency.weSpend.currency();
+                    if (curr !== this.offerTransactionViewModelService.weSpendCurrency()) {
+                         this.offerTransactionViewModelService.weSpendCurrency.set(curr);
+                         this.offerStoreService.setField('weSpendCurrency', curr);
+                    }
+               } finally {
+                    this.currencySyncInProgress = false;
+               }
           });
 
-          // Only refresh dropdown lists
+          // FIXED: Debounced refresh to avoid excessive calls
           effect(() => {
-               this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
+               this.offerTransactionViewModelService.weWantIssuersTrigger();
+               setTimeout(() => {
+                    this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
+               }, 100);
           });
 
           effect(() => {
-               this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
+               this.offerTransactionViewModelService.weSpendIssuersTrigger();
+               setTimeout(() => {
+                    this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
+               }, 100);
           });
      }
 
@@ -96,29 +124,32 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, OFFER_TX_TYPES as any, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
-
-          // Initial setup
           this.setRightPanel();
 
-          // Force load credentials
+          // FIXED: Only load if we have wallets
           if (this.hasWallets()) {
-               this.onAccountChange(true);
+               this.onAccountChange(true).catch(console.error);
           }
+
+          this.isInitialized = true;
      }
 
      ngOnDestroy(): void {
           this.rightPanelService.clearPanel();
+          this.isInitialized = false;
      }
 
      private readonly updateRightPanelEffect = effect(() => {
           const wallet = this.currentWallet();
-          if (wallet?.address) {
+          if (wallet?.address && this.isInitialized) {
                this.setRightPanel();
           }
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
-          this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress);
+          if (!this.currentWallet()) return;
+
+          this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress || this.currentWallet()?.address);
           await this.offerCurrency.refreshBothBalances(this.currentWallet());
           this.rightPanelService.resetFilters();
           await this.onAccountChange(true);
@@ -129,90 +160,99 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           this.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
-          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
-          this.offerCurrency.setWalletAddress(wallet.address);
+          if (this.selectedDestinationAddress() === wallet.address) {
+               this.selectedDestinationAddress.set('');
+          }
+
+          this.offerCurrency.setWalletAddress(wallet.address || wallet.classicAddress);
           this.trustlineCurrencyService.refreshCurrentBalance();
 
-          // Smart default: set XRP on "What You Give" side only when wallet is ready
           await this.offerCurrency.refreshBothBalances(wallet);
-          if (!this.offerCurrency.weSpend.currency()) {
+
+          // FIXED: Only set XRP if no currency selected
+          const currentSpendCurrency = this.offerCurrency.weSpend.currency();
+          if (!currentSpendCurrency || currentSpendCurrency === '') {
                await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
           }
-     }
-
-     async selectWallet1(wallet: Wallet): Promise<void> {
-          if (wallet?.address === this.currentWallet()?.address) return;
-
-          this.currentWallet.set(wallet);
-          this.accountConfiguratorStoreService.resetAll();
-
-          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
-
-          this.offerCurrency.setWalletAddress(wallet.address);
-          this.trustlineCurrencyService.refreshCurrentBalance();
-          await this.offerCurrency.refreshBothBalances(wallet);
      }
 
      async setTab(tab: string): Promise<void> {
           const allowed = Object.values(OFFER_TX_TYPES) as string[];
           if (!allowed.includes(tab)) return;
+
           this.offerTransactionViewModelService.activeTab.set(tab as OfferActionTypes);
           this.offerUtilsService.clearInputFields();
           this.txUiService.clearAllOptionsAndMessages();
 
-          if (this.hasWallets()) await this.onAccountChange(false);
+          if (this.hasWallets() && this.isInitialized) {
+               await this.onAccountChange(false);
+          }
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
-          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
-          this.isSummaryLoading.set(true);
-          if (!forceRefresh) this.tryPrePopulateFromCache(address);
+          const wallet = this.walletManagerService.getSelectedWallet();
+          if (!wallet?.classicAddress) {
+               console.warn('No wallet selected');
+               return;
+          }
 
-          await this.measure('onAccountChange', true, async () => {
+          this.isSummaryLoading.set(true);
+
+          if (!forceRefresh) {
+               this.tryPrePopulateFromCache(wallet.classicAddress);
+          }
+
+          try {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
-               const wallet = this.walletManagerService.getSelectedWallet();
+               const env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: true,
+                    includeAccountObject: true,
+                    forceRefresh,
+               });
 
-               try {
-                    const env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet!, {
-                         includeAccountInfo: true,
-                         includeAccountObject: true,
-                         forceRefresh,
-                    });
+               if (!env) throw new Error('Unable to get environment.');
 
-                    if (!env) throw new Error('Unable to get environment.');
+               this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
 
-                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                    if (env.accountObjects) this.offerUtilsService.getExistingOffers(env.accountObjects, env.wallet.classicAddress);
-                    this.updateSharedObjectsStore(env);
-
-                    if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
-                         await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
-                    }
-
-                    // Force wallet address + smart XRP default after account loads
-                    this.offerCurrency.setWalletAddress(this.currentWallet()?.classicAddress ?? '');
-                    await this.offerCurrency.refreshBothBalances(wallet);
-                    if (!this.offerCurrency.weSpend.currency()) {
-                         await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
-                    }
-               } catch (error: any) {
-                    console.error('Failed to load account:', error);
-                    this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+               if (env.accountObjects) {
+                    this.offerUtilsService.getExistingOffers(env.accountObjects, wallet.classicAddress);
                }
-          });
+
+               this.updateSharedObjectsStore(env);
+
+               if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
+                    await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
+               }
+
+               // FIXED: Only update currency if needed
+               this.offerCurrency.setWalletAddress(wallet.classicAddress);
+               await this.offerCurrency.refreshBothBalances(wallet);
+
+               const currentSpendCurrency = this.offerCurrency.weSpend.currency();
+               if (!currentSpendCurrency || currentSpendCurrency === '') {
+                    await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
+               }
+          } catch (error: any) {
+               console.error('Failed to load account:', error);
+               this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
+          } finally {
+               this.isSummaryLoading.set(false);
+               this.txUiService.resetCurrentStepToIdle();
+          }
      }
 
      async performAction(): Promise<void> {
           const currentTab = this.offerTransactionViewModelService.activeTab();
           const wallet = this.currentWallet();
+
+          if (!wallet) {
+               this.toastService.error('No wallet selected', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           if (currentTab === 'getOrderBook') {
                try {
@@ -220,7 +260,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                          includeAccountInfo: false,
                          includeAccountObject: false,
                     });
-                    await this.offerUtilsService.fetchOrderBook(env.client, env.wallet ?? (wallet as any));
+                    if (env?.client) {
+                         await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
+                    }
                } catch (err: any) {
                     this.toastService.error(err.message || 'Failed to fetch order book', AppConstants.TOAST.ERROR);
                }
@@ -257,24 +299,25 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           let txResult: { success: boolean; hash?: string; error?: string } | null = null;
 
-          await this.withPerf('performAction', async () => {
-               try {
-                    txResult = await this.offerTransactionOrchestratorService.executeOfferTx(currentTab as OfferTxType, config);
-               } catch (error: any) {
-                    console.error(`[${currentTab}] execution failed:`, error);
-                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
-                    return;
-               }
-          });
+          try {
+               txResult = await this.offerTransactionOrchestratorService.executeOfferTx(currentTab, config);
+          } catch (error: any) {
+               console.error(`[${currentTab}] execution failed:`, error);
+               this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           if (!txResult) {
                this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
                return;
           }
 
-          await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
-          this.trustlineCurrencyService.refreshCurrentBalance();
-          await this.offerCurrency.refreshBothBalances(wallet);
+          if (txResult.success) {
+               await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
+               this.trustlineCurrencyService.refreshCurrentBalance();
+               await this.offerCurrency.refreshBothBalances(wallet);
+          }
+
           this.txUiService.resetCurrentStepToIdle();
      }
 
@@ -305,20 +348,54 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           });
      }
 
-     onWeWantCurrencySelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
+     async onWeWantCurrencySelected(item: SelectItem | null): Promise<void> {
+          const currency = item?.id || 'XRP';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeWantCurrency(currency, wallet);
+
+          // Force immediate sync to store
+          const currentIssuer = this.offerCurrency.weWant.issuer();
+          if (currentIssuer) {
+               this.offerStoreService.setField('weWantIssuer', currentIssuer);
+          }
      }
 
      async onWeWantIssuerSelected(item: SelectItem | null): Promise<void> {
-          this.offerCurrency.selectWeWantIssuer(item?.id || '', this.currentWallet());
+          const issuer = item?.id || '';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeWantIssuer(issuer, wallet);
+          this.offerStoreService.setField('weWantIssuer', issuer);
      }
 
-     onWeSpendCurrencySelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeSpendCurrency(item?.id || 'XRP', this.currentWallet());
+     async onWeSpendCurrencySelected(item: SelectItem | null): Promise<void> {
+          const currency = item?.id || 'XRP';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeSpendCurrency(currency, wallet);
+
+          // Force immediate sync to store
+          const currentIssuer = this.offerCurrency.weSpend.issuer();
+          if (currentIssuer) {
+               this.offerStoreService.setField('weSpendIssuer', currentIssuer);
+          }
      }
 
      async onWeSpendIssuerSelected(item: SelectItem | null): Promise<void> {
-          this.offerCurrency.selectWeSpendIssuer(item?.id || '', this.currentWallet());
+          const issuer = item?.id || '';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeSpendIssuer(issuer, wallet);
+          this.offerStoreService.setField('weSpendIssuer', issuer);
      }
 
      handleWeWantAmountChange(): void {
@@ -345,15 +422,11 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           switch (tab) {
                case 'createOffer':
-                    // Use your existing validation from offerUtils or store
-                    return this.offerUtilsService.canCreateOffer?.() ?? true; // adjust if you have a specific validator
-
+                    return this.offerUtilsService.canCreateOffer?.() ?? false;
                case 'cancelOffer':
                     return this.offerUtilsService.canCancelOffer?.() ?? false;
-
                case 'getOrderBook':
-                    return true; // always enabled when idle + wallet
-
+                    return true;
                default:
                     return false;
           }

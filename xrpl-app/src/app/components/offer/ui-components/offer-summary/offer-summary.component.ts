@@ -15,6 +15,7 @@ import { SummaryKeyValueComponent } from '../../../shared/ui-components/summary/
 import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shared/sort-control/sort-control.component';
 
 type SortKey = 'gets' | 'pays' | 'rate' | 'index';
+type QuickFilter = 'all' | 'buy' | 'sell';
 
 @Component({
      selector: 'app-offer-summary',
@@ -46,7 +47,7 @@ export class OfferSummaryComponent {
 
      // Search and Filter State
      readonly searchQuery = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'buy' | 'sell'>('all');
+     readonly activeQuickFilter = signal<QuickFilter>('all');
      readonly sortBy = signal<SortKey>('rate');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 
@@ -69,15 +70,15 @@ export class OfferSummaryComponent {
 
      // Helper function to calculate rate from takerGets/takerPays
      private calculateRate(offer: any): number {
-          const gets = parseFloat(offer.takerGets?.split(' ')[0] || '0');
-          const pays = parseFloat(offer.takerPays?.split(' ')[0] || '0');
+          const gets = Number.parseFloat(offer.takerGets?.split(' ')[0] || '0');
+          const pays = Number.parseFloat(offer.takerPays?.split(' ')[0] || '0');
           if (gets === 0) return 0;
           return pays / gets;
      }
 
      // Helper function to get amount value for sorting
      private getAmountValue(amount: string): number {
-          return parseFloat(amount?.split(' ')[0] || '0');
+          return Number.parseFloat(amount?.split(' ')[0] || '0');
      }
 
      // Helper function to determine if offer is buy or sell

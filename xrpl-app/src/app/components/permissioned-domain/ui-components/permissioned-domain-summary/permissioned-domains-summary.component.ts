@@ -28,6 +28,7 @@ export interface CredentialGroup {
 }
 
 type SortKey = 'index' | 'credentialCount';
+type QuickFilter = 'all' | 'hasCredentials' | 'noCredentials';
 
 @Component({
      selector: 'app-permissioned-domains-summary',
@@ -73,7 +74,7 @@ export class PermissionedDomainsSummaryComponent {
 
      // Filters
      readonly searchQuery = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'hasCredentials' | 'noCredentials'>('all');
+     readonly activeQuickFilter = signal<QuickFilter>('all');
      readonly sortBy = signal<SortKey>('index');
      readonly sortDirection = signal<'asc' | 'desc'>('asc');
 

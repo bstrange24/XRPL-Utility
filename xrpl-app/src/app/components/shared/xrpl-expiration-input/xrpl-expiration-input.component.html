@@ -1,7 +1,7 @@
 <div class="space-y-4">
      <!-- Header -->
      <div>
-          <label class="label-primary"> {{ label }} </label>
+          <label for="labelName" class="label-primary"> {{ label }} </label>
           @if (hint) {
           <p class="mb-2 text-sm text-gray-600">{{ hint }}</p>
           }
@@ -11,8 +11,8 @@
      <label class="flex items-center gap-3 cursor-pointer group">
           <div class="relative inline-flex items-center">
                <input type="checkbox" class="peer sr-only" [checked]="enabled()" (change)="toggle($event)" />
-               <div class="h-6 w-11 rounded-full transition-all duration-300" [class.bg-gray-200]="!enabled()" [class.bg-gradient-to-r]="enabled()" [class.from-green-500]="enabled()" [class.to-green-600]="enabled()"></div>
-               <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300" [class.translate-x-5]="enabled()" [class.translate-x-0]="!enabled()"></div>
+               <div class="h-5 w-10 rounded-full transition-all duration-300" [class.bg-gray-200]="!enabled()" [class.bg-gradient-to-r]="enabled()" [class.from-green-500]="enabled()" [class.to-green-600]="enabled()"></div>
+               <div class="absolute left-0.5 h-4 w-4 transform rounded-full bg-white shadow-md transition-all duration-300" [class.translate-x-5]="enabled()" [class.translate-x-0]="!enabled()"></div>
           </div>
           <span class="text-sm text-gray-700 select-none transition-colors"> Enable expiration </span>
      </label>
@@ -89,16 +89,6 @@
           @if (!expirationSignal()) {
           <p class="text-xs text-gray-400 italic">No expiration set</p>
           }
-
-          <!-- Error Message -->
-          <!-- @if (showError && errorMessage) {
-          <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded-xl">
-               <p class="text-sm text-red-600 flex items-center gap-2">
-                    <ng-icon name="heroExclamationCircle" size="16" />
-                    {{ errorMessage }}
-               </p>
-          </div>
-          } -->
      </div>
      }
 </div>

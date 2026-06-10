@@ -29,6 +29,8 @@ export class CancelOfferTabComponent {
 
      private offerOverlayRef: OverlayRef | null = null;
 
+     private selectionChangeSubscription: any;
+
      @ViewChild('offerDropdownInput', { read: ElementRef, static: false })
      offerDropdownInput!: ElementRef<HTMLInputElement>;
 
@@ -63,8 +65,21 @@ export class CancelOfferTabComponent {
      constructor() {
           effect(() => {
                const sequences = this.selectedOfferSequences();
-               this.offerStoreService.setField('offerSequenceField', sequences.join(','));
+               if (sequences.length > 0) {
+                    this.offerStoreService.setField('offerSequenceField', sequences.join(','));
+                    this.offerStoreService.setField('selectedOffersToCancel', this.selectedOffers());
+               } else {
+                    this.offerStoreService.setField('offerSequenceField', '');
+                    this.offerStoreService.setField('selectedOffersToCancel', []);
+               }
           });
+     }
+
+     ngOnDestroy(): void {
+          this.closeOfferDropdown();
+          if (this.selectionChangeSubscription) {
+               this.selectionChangeSubscription.unsubscribe();
+          }
      }
 
      formatOfferDisplay(offer: any): string {
@@ -91,6 +106,7 @@ export class CancelOfferTabComponent {
                this.selectedOfferSequences.set([]);
           } else {
                this.selectedOfferSequences.set(this.offerStoreService.existingOffers().map((o: any) => o.Sequence));
+               this.offerStoreService.setField('selectedOffersToCancel', this.selectedOfferSequences());
           }
      }
 

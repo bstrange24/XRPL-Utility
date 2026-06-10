@@ -26,11 +26,38 @@ export class OfferTransactionViewModelService {
      readonly weSpendUserBalance = computed(() => this.offerCurrency.weSpend.balance());
 
      constructor() {
+          // Sync weWant issuer changes to store
           effect(() => {
-               const issuer = this.weWantIssuer();
-               if (issuer) {
-                    const wallet = this.walletManagerService.getSelectedWallet();
-                    if (wallet) this.offerCurrency.selectWeWantIssuer(issuer, wallet); // will refresh balance
+               const issuer = this.offerCurrency.weWant.issuer();
+               if (issuer !== undefined) {
+                    this.offerStoreService.setField('weWantIssuer', issuer);
+                    this.weWantIssuer.set(issuer);
+               }
+          });
+
+          // Sync weSpend issuer changes to store
+          effect(() => {
+               const issuer = this.offerCurrency.weSpend.issuer();
+               if (issuer !== undefined) {
+                    this.offerStoreService.setField('weSpendIssuer', issuer);
+                    this.weSpendIssuer.set(issuer);
+               }
+          });
+
+          // Sync currency changes to store
+          effect(() => {
+               const currency = this.offerCurrency.weWant.currency();
+               if (currency !== undefined) {
+                    this.offerStoreService.setField('weWantCurrency', currency);
+                    this.weWantCurrency.set(currency);
+               }
+          });
+
+          effect(() => {
+               const currency = this.offerCurrency.weSpend.currency();
+               if (currency !== undefined) {
+                    this.offerStoreService.setField('weSpendCurrency', currency);
+                    this.weSpendCurrency.set(currency);
                }
           });
      }
@@ -88,7 +115,6 @@ export class OfferTransactionViewModelService {
           const items = this.weWantIssuerItems();
           const item = items.find(i => i.id === addr);
 
-          console.log(`selectedWeWantIssuerItem for ${this.weWantCurrency()}:`, addr, item ? '✅ FOUND' : '❌ NOT FOUND');
           return item ?? null;
      });
 
@@ -109,7 +135,6 @@ export class OfferTransactionViewModelService {
           const items = this.weSpendIssuerItems();
           const item = items.find(i => i.id === addr);
 
-          console.log(`selectedWeSpendIssuerItem for ${this.weSpendCurrency()}:`, addr, item ? '✅ FOUND' : '❌ NOT FOUND');
           return item ?? null;
      });
 

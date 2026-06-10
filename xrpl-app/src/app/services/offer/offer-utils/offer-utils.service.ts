@@ -7,6 +7,7 @@ import * as xrpl from 'xrpl';
 import BigNumber from 'bignumber.js';
 import { AppConstants } from '../../../core/app.constants';
 import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({
      providedIn: 'root',
@@ -18,6 +19,7 @@ export class OfferUtilsService {
      public readonly offerCurrency = inject(OfferCurrencyService);
      public readonly offerTransactionViewModelService = inject(OfferTransactionViewModelService);
      private amountTimeout: ReturnType<typeof setTimeout> | null = null;
+     private isUpdatingExchange = false;
 
      readonly actionButtonLabel = computed(() => {
           const tab = this.offerTransactionViewModelService.activeTab();
@@ -49,6 +51,10 @@ export class OfferUtilsService {
 
      clearInputFields(): void {
           this.offerStoreService.resetOfferFields();
+          if (this.amountTimeout) {
+               clearTimeout(this.amountTimeout);
+               this.amountTimeout = null;
+          }
      }
 
      invertOrder(): void {
@@ -60,6 +66,7 @@ export class OfferUtilsService {
           this.offerStoreService.setField('weSpendCurrency', tempCurr);
           this.offerStoreService.setField('weWantIssuer', this.offerStoreService.weSpendIssuer());
           this.offerStoreService.setField('weSpendIssuer', tempIss);
+          this.offerStoreService.setField('weWantAmount', this.offerStoreService.weSpendAmount());
           this.offerStoreService.setField('weSpendAmount', tempAmt || '');
 
           const newWeWant = this.offerStoreService.weWantCurrency();
@@ -67,16 +74,15 @@ export class OfferUtilsService {
           const currentWallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
 
           if (currentWallet) {
-               this.offerCurrency.selectWeWantCurrency(newWeWant, currentWallet as any);
-               this.offerCurrency.selectWeSpendCurrency(newWeSpend, currentWallet as any);
+               // FIXED: Async handling without Promise chain issues
+               this.offerCurrency.selectWeWantCurrency(newWeWant, currentWallet).catch(console.error);
+               this.offerCurrency.selectWeSpendCurrency(newWeSpend, currentWallet).catch(console.error);
           }
      }
 
      getExistingOffers(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string): any[] {
-          const offers = (accountObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Offer' && obj.Account === classicAddress);
-
-          const sequences = offers.map((obj: any) => obj.Sequence);
-          this.offerStoreService.setField('offersArray', sequences);
+          const objects = accountObjects.result?.account_objects ?? accountObjects.result.account_objects ?? [];
+          const offers = objects.filter((obj: any) => obj.LedgerEntryType === 'Offer' && obj.Account === classicAddress);
 
           const mapped = offers.map((obj: any): any => {
                let takerGetsUI: string = '';
@@ -89,14 +95,14 @@ export class OfferUtilsService {
                     takerGetsUI = String(xrpl.dropsToXrp(tg));
                } else if (tg?.value) {
                     const currency = this.utilsService.normalizeCurrencyCode(tg.currency);
-                    takerGetsUI = `${tg.value} ${currency} ${tg.issuer}`;
+                    takerGetsUI = `${tg.value} ${currency} ${tg.issuer || ''}`;
                }
 
                if (typeof tp === 'string') {
                     takerPaysUI = String(xrpl.dropsToXrp(tp));
                } else if (tp?.value) {
                     const currency = this.utilsService.normalizeCurrencyCode(tp.currency);
-                    takerPaysUI = `${tp.value} ${currency} ${tp.issuer}`;
+                    takerPaysUI = `${tp.value} ${currency} ${tp.issuer || ''}`;
                }
 
                return {
@@ -116,97 +122,142 @@ export class OfferUtilsService {
      }
 
      async fetchOrderBook(client: xrpl.Client, wallet: xrpl.Wallet): Promise<void> {
+          if (!client || !wallet) {
+               console.warn('Cannot fetch order book: missing client or wallet');
+               return;
+          }
+
           this.txUiService.clearAllOptionsAndMessages();
+
           try {
                const weWantCurr = this.offerStoreService.weWantCurrency();
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
-               type CurrencyAmount = { currency: string; value: string; issuer?: string };
-               const we_want: CurrencyAmount = weWantCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weWantAmount() } : { currency: this.utilsService.encodeIfNeeded(weWantCurr), issuer: 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm', value: this.offerStoreService.weWantAmount() }; //issuer: this.offerStoreService.weWantIssuer(), value: this.offerStoreService.weWantAmount() };
-               const we_spend: CurrencyAmount = weSpendCurr === AppConstants.XRP_CURRENCY ? { currency: 'XRP', value: this.offerStoreService.weSpendAmount() } : { currency: this.utilsService.encodeIfNeeded(weSpendCurr), issuer: this.offerStoreService.weSpendIssuer(), value: this.offerStoreService.weSpendAmount() };
+               if (!weWantCurr || !weSpendCurr) {
+                    this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+                    return;
+               }
+
+               // FIXED: Proper issuer handling
+               const we_want: any =
+                    weWantCurr === AppConstants.XRP_CURRENCY
+                         ? { currency: 'XRP' }
+                         : {
+                                currency: this.utilsService.encodeIfNeeded(weWantCurr),
+                                issuer: this.offerStoreService.weWantIssuer() || 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm',
+                           };
+
+               const we_spend: any =
+                    weSpendCurr === AppConstants.XRP_CURRENCY
+                         ? { currency: 'XRP' }
+                         : {
+                                currency: this.utilsService.encodeIfNeeded(weSpendCurr),
+                                issuer: this.offerStoreService.weSpendIssuer(),
+                           };
+
+               // Add value only if provided
+               if (this.offerStoreService.weWantAmount()) {
+                    we_want.value = this.offerStoreService.weWantAmount();
+               }
+               if (this.offerStoreService.weSpendAmount()) {
+                    we_spend.value = this.offerStoreService.weSpendAmount();
+               }
 
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);
                const displayWeSpend = this.utilsService.decodeIfNeeded(we_spend.currency);
-               const offerType = we_spend.currency === AppConstants.XRP_CURRENCY ? 'buy' : 'sell';
 
-               if (weWantCurr && weSpendCurr) {
-                    const [orderBook, counterOrderBook, ammData] = await Promise.all([
-                         client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_want, taker_pays: we_spend }),
-                         client.request({ command: 'book_offers', taker: wallet.classicAddress, ledger_index: 'current', taker_gets: we_spend, taker_pays: we_want }),
-                         client.request({ command: 'amm_info', asset: we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer } : { currency: 'XRP' }, asset2: we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer } : { currency: 'XRP' } } as any).catch(() => null) as any,
-                    ]);
+               const [orderBook, counterOrderBook] = await Promise.all([
+                    client.request({
+                         command: 'book_offers',
+                         taker: wallet.classicAddress,
+                         ledger_index: 'current',
+                         taker_gets: we_want,
+                         taker_pays: we_spend,
+                         limit: 200,
+                    }),
+                    client.request({
+                         command: 'book_offers',
+                         taker: wallet.classicAddress,
+                         ledger_index: 'current',
+                         taker_gets: we_spend,
+                         taker_pays: we_want,
+                         limit: 200,
+                    }),
+               ]);
 
-                    const combinedOffers: any[] = [...orderBook.result.offers];
+               const combinedOffers = [...(orderBook.result.offers || [])];
+               const pair = `${displayWeWant}/${displayWeSpend}`;
 
-                    if (ammData?.result?.amm) {
-                         const amm = ammData.result.amm;
-                         const takerGets = we_want.currency !== 'XRP' ? { currency: we_want.currency, issuer: we_want.issuer!, value: typeof amm.amount2 === 'string' ? String(xrpl.dropsToXrp(amm.amount2)) : amm.amount2.value } : typeof amm.amount2 === 'string' ? amm.amount2 : amm.amount2.value;
-                         const takerPays = we_spend.currency !== 'XRP' ? { currency: we_spend.currency, issuer: we_spend.issuer!, value: typeof amm.amount === 'string' ? String(xrpl.dropsToXrp(amm.amount)) : amm.amount.value } : typeof amm.amount === 'string' ? amm.amount : amm.amount.value;
-                         combinedOffers.unshift({ Account: amm.account || 'AMM_POOL', Flags: 0, LedgerEntryType: 'Offer', Sequence: 0, TakerGets: takerGets, TakerPays: takerPays, isAMM: true });
+               this.offerStoreService.setField('orderBookPair', pair);
+               this.offerStoreService.setField('orderBookStats', {
+                    vwap: '0',
+                    simpleAvg: '0',
+                    bestRate: '0',
+                    spread: '0',
+                    spreadPercent: '0',
+                    liquidityRatio: '0',
+                    depth: 'N/A',
+                    execution: 'N/A',
+                    volatility: 'N/A',
+               });
+
+               if (combinedOffers.length > 0) {
+                    const stats = this.computeAverageExchangeRateBothWays(combinedOffers, 15);
+                    if (stats) {
+                         this.offerStoreService.setField('orderBookStats', {
+                              vwap: stats.forward?.vwap?.toFixed(8) || '0',
+                              simpleAvg: stats.forward?.simpleAvg?.toFixed(8) || '0',
+                              bestRate: stats.forward?.bestRate?.toFixed(8) || '0',
+                              spread: '0',
+                              spreadPercent: '0',
+                              liquidityRatio: '0',
+                              depth: `${stats.forward?.depthDOG?.toFixed(2) || '0'} ${displayWeWant} for ${stats.forward?.depthXRP?.toFixed(2) || '0'} ${displayWeSpend}`,
+                              execution: stats.forward?.insufficientLiquidity ? `Insufficient liquidity` : `Receive ${stats.forward?.executionDOG?.toFixed(2) || '0'} ${displayWeWant} for 15 ${displayWeSpend}`,
+                              volatility: `${stats.forward?.volatility?.toFixed(8) || '0'} (${stats.forward?.volatilityPercent?.toFixed(2) || '0'}%)`,
+                         });
                     }
-
-                    const spread = this.computeBidAskSpread(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers);
-                    const liquidity = this.computeLiquidityRatio(offerType === 'sell' ? counterOrderBook.result.offers : combinedOffers, offerType === 'sell' ? combinedOffers : counterOrderBook.result.offers, offerType === 'sell');
-                    const stats = this.computeAverageExchangeRateBothWays(combinedOffers, 5);
-
-                    const pair = `${displayWeWant}/${displayWeSpend}`;
-                    this.offerStoreService.setField('orderBookPair', pair);
-                    this.offerStoreService.setField('orderBookStats', {
-                         // vwap: stats.forward.vwap.toFixed(8) ? stats.forward.vwap.toFixed(8) : 0,
-                         // simpleAvg: stats.forward.simpleAvg.toFixed(8) ? stats.forward.simpleAvg.toFixed(8) : 0,
-                         // bestRate: stats.forward.bestRate.toFixed(8) ? stats.forward.bestRate.toFixed(8) : 0,
-                         // spread: spread.spread.toFixed(8) ? spread.spread.toFixed(8) : 0,
-                         // spreadPercent: spread.spreadPercent.toFixed(2) ? spread.spreadPercent.toFixed(2) : 0,
-                         // liquidityRatio: liquidity.ratio.toFixed(2) ? liquidity.ratio.toFixed(2) : 0,
-                         // depth: `${stats.forward.depthDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.depthXRP.toFixed(2)} ${displayWeSpend}`,
-                         // execution: stats.forward.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
-                         // volatility: `${stats.forward.volatility.toFixed(8)} (${stats.forward.volatilityPercent.toFixed(2)}%)`,
-
-                         vwap: stats?.forward?.vwap == null ? '0' : stats.forward.vwap.toFixed(8),
-                         simpleAvg: stats?.forward?.simpleAvg == null ? '0' : stats.forward.simpleAvg.toFixed(8),
-                         bestRate: stats?.forward?.bestRate == null ? '0' : stats.forward.bestRate.toFixed(8),
-                         spread: spread?.spread == null ? '0' : spread.spread.toFixed(8),
-                         spreadPercent: spread?.spreadPercent == null ? '0' : spread.spreadPercent.toFixed(2),
-                         liquidityRatio: liquidity?.ratio == null ? '0' : liquidity.ratio.toFixed(2),
-                         depth: `${stats?.forward?.depthDOG == null ? '0' : stats.forward.depthDOG.toFixed(2)} ${displayWeWant} for ${stats?.forward?.depthXRP == null ? '0' : stats.forward.depthXRP.toFixed(2)} ${displayWeSpend}`,
-                         execution: stats?.forward?.insufficientLiquidity ? `Insufficient liquidity: ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for ${stats.forward.executionXRP.toFixed(2)} ${displayWeSpend}` : `Receive ${stats.forward.executionDOG.toFixed(2)} ${displayWeWant} for 15 ${displayWeSpend}`,
-                         volatility: `${stats?.forward?.volatility == null ? '0' : stats.forward.volatility.toFixed(8)} (${stats?.forward?.volatilityPercent == null ? '0' : stats.forward.volatilityPercent.toFixed(2)}%)`,
-                    });
-               } else {
-                    this.offerStoreService.setField('orderBookStats', {
-                         vwap: 0,
-                         simpleAvg: 0,
-                         bestRate: 0,
-                         spread: 0,
-                         spreadPercent: 0,
-                         liquidityRatio: 0,
-                         depth: `N/A`,
-                         execution: `N/A`,
-                         volatility: `N/A`,
-                    });
                }
           } catch (error: any) {
                console.error('Error in fetchOrderBook:', error);
-               this.txUiService.setError(`${error.message || 'Transaction failed'}`);
+               this.txUiService.setError(error.message || 'Failed to fetch order book');
+               this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
           }
+     }
+
+     private getEmptyStats() {
+          return {
+               vwap: '0',
+               simpleAvg: '0',
+               bestRate: '0',
+               spread: '0',
+               spreadPercent: '0',
+               liquidityRatio: '0',
+               depth: 'N/A',
+               execution: 'N/A',
+               volatility: 'N/A',
+          };
      }
 
      onWeSpendAmountChange(): void {
           if (this.amountTimeout) clearTimeout(this.amountTimeout);
-          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchange(), 400);
+          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchange(), 500);
      }
 
      onWeWantAmountChange(): void {
           if (this.amountTimeout) clearTimeout(this.amountTimeout);
-          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchangeReverse(), 400);
+          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchangeReverse(), 500);
      }
 
      async updateTokenBalanceAndExchange(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
           const weSpendAmt = this.offerStoreService.weSpendAmount();
           if (!weSpendAmt || Number.parseFloat(weSpendAmt) <= 0) {
                this.offerStoreService.setField('weWantAmount', '0');
                return;
           }
+
+          this.isUpdatingExchange = true;
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -215,17 +266,45 @@ export class OfferUtilsService {
                const weWantCurr = this.offerStoreService.weWantCurrency();
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
-               type CA = { currency: string; value: string; issuer?: string };
+               if (!weWantCurr || !weSpendCurr) return;
 
-               const weWant: CA = weWantCurr === 'XRP' ? { currency: 'XRP', value: '0' } : { currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr, issuer: this.offerStoreService.weWantIssuer(), value: '0' };
-               const weSpend: CA = weSpendCurr === 'XRP' ? { currency: 'XRP', value: weSpendAmt } : { currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr, issuer: this.offerStoreService.weSpendIssuer(), value: weSpendAmt };
+               const weWant: any =
+                    weWantCurr === 'XRP'
+                         ? { currency: 'XRP', value: '0' }
+                         : {
+                                currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr,
+                                issuer: this.offerStoreService.weWantIssuer(),
+                                value: '0',
+                           };
 
-               const client = (await (this.offerCurrency as any).getClient?.()) ?? null;
+               const weSpend: any =
+                    weSpendCurr === 'XRP'
+                         ? { currency: 'XRP', value: weSpendAmt }
+                         : {
+                                currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr,
+                                issuer: this.offerStoreService.weSpendIssuer(),
+                                value: weSpendAmt,
+                           };
+
+               const client = await this.getClient();
                if (!client) return;
 
-               const [orderBook] = await Promise.all([client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress })]);
+               const orderBook = await client.request({
+                    command: 'book_offers',
+                    taker_gets: weWant,
+                    taker_pays: weSpend,
+                    limit: 400,
+                    ledger_index: 'current',
+                    taker: wallet.classicAddress,
+               });
 
-               const allOffers = [...orderBook.result.offers];
+               const allOffers = orderBook.result.offers || [];
+
+               if (allOffers.length === 0) {
+                    this.offerStoreService.setField('weWantAmount', '0');
+                    return;
+               }
+
                allOffers.sort((a: any, b: any) => {
                     const rateA = new BigNumber(this.normalizeAmount(a.TakerGets)).dividedBy(this.normalizeAmount(a.TakerPays));
                     const rateB = new BigNumber(this.normalizeAmount(b.TakerGets)).dividedBy(this.normalizeAmount(b.TakerPays));
@@ -237,9 +316,12 @@ export class OfferUtilsService {
 
                for (const offer of allOffers) {
                     if (remaining.lte(0)) break;
+
                     const pays = new BigNumber(this.normalizeAmount(offer.TakerPays));
                     const gets = new BigNumber(this.normalizeAmount(offer.TakerGets));
+
                     if (pays.isZero()) continue;
+
                     const use = BigNumber.min(remaining, pays);
                     const received = use.multipliedBy(gets).dividedBy(pays);
                     totalReceived = totalReceived.plus(received);
@@ -250,17 +332,22 @@ export class OfferUtilsService {
                this.offerStoreService.setField('insufficientLiquidityWarning', remaining.gt(0));
           } catch (error: any) {
                console.error('Error in updateTokenBalanceAndExchange:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weWantAmount', '0');
+          } finally {
+               this.isUpdatingExchange = false;
           }
      }
 
      async updateTokenBalanceAndExchangeReverse(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
           const weWantAmt = this.offerStoreService.weWantAmount();
           if (!weWantAmt || Number.parseFloat(weWantAmt) <= 0) {
                this.offerStoreService.setField('weSpendAmount', '0');
                return;
           }
+
+          this.isUpdatingExchange = true;
 
           try {
                const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
@@ -269,17 +356,45 @@ export class OfferUtilsService {
                const weWantCurr = this.offerStoreService.weWantCurrency();
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
-               type CA = { currency: string; value: string; issuer?: string };
+               if (!weWantCurr || !weSpendCurr) return;
 
-               const weWant: CA = weWantCurr === 'XRP' ? { currency: 'XRP', value: weWantAmt } : { currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr, issuer: this.offerStoreService.weWantIssuer(), value: weWantAmt };
-               const weSpend: CA = weSpendCurr === 'XRP' ? { currency: 'XRP', value: '0' } : { currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr, issuer: this.offerStoreService.weSpendIssuer(), value: '0' };
+               const weWant: any =
+                    weWantCurr === 'XRP'
+                         ? { currency: 'XRP', value: weWantAmt }
+                         : {
+                                currency: weWantCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weWantCurr) : weWantCurr,
+                                issuer: this.offerStoreService.weWantIssuer(),
+                                value: weWantAmt,
+                           };
 
-               const client = (await (this.offerCurrency as any).getClient?.()) ?? null;
+               const weSpend: any =
+                    weSpendCurr === 'XRP'
+                         ? { currency: 'XRP', value: '0' }
+                         : {
+                                currency: weSpendCurr.length > 3 ? this.utilsService.encodeCurrencyCode(weSpendCurr) : weSpendCurr,
+                                issuer: this.offerStoreService.weSpendIssuer(),
+                                value: '0',
+                           };
+
+               const client = await this.getClient();
                if (!client) return;
 
-               const [orderBook] = await Promise.all([client.request({ command: 'book_offers', taker_gets: weWant, taker_pays: weSpend, limit: 400, ledger_index: 'current', taker: (wallet as any).classicAddress })]);
+               const orderBook = await client.request({
+                    command: 'book_offers',
+                    taker_gets: weWant,
+                    taker_pays: weSpend,
+                    limit: 400,
+                    ledger_index: 'current',
+                    taker: wallet.classicAddress,
+               });
 
-               const allOffers = [...orderBook.result.offers];
+               const allOffers = orderBook.result.offers || [];
+
+               if (allOffers.length === 0) {
+                    this.offerStoreService.setField('weSpendAmount', '0');
+                    return;
+               }
+
                allOffers.sort((a: any, b: any) => {
                     const rateA = new BigNumber(this.normalizeAmount(a.TakerPays)).dividedBy(this.normalizeAmount(a.TakerGets));
                     const rateB = new BigNumber(this.normalizeAmount(b.TakerPays)).dividedBy(this.normalizeAmount(b.TakerGets));
@@ -291,9 +406,12 @@ export class OfferUtilsService {
 
                for (const offer of allOffers) {
                     if (remainingReceive.lte(0)) break;
+
                     const availableReceive = new BigNumber(this.normalizeAmount(offer.TakerGets));
                     const payForThis = new BigNumber(this.normalizeAmount(offer.TakerPays));
+
                     if (availableReceive.isZero()) continue;
+
                     const rate = payForThis.dividedBy(availableReceive);
                     const useReceive = BigNumber.min(remainingReceive, availableReceive);
                     const requiredPay = useReceive.multipliedBy(rate);
@@ -305,12 +423,23 @@ export class OfferUtilsService {
                this.offerStoreService.setField('insufficientLiquidityWarning', remainingReceive.gt(0));
           } catch (error: any) {
                console.error('Error in updateTokenBalanceAndExchangeReverse:', error);
-               this.txUiService.setError(`${error.message || 'Unknown error'}`);
                this.offerStoreService.setField('weSpendAmount', '0');
+          } finally {
+               this.isUpdatingExchange = false;
+          }
+     }
+
+     private async getClient(): Promise<xrpl.Client | null> {
+          try {
+               const xrplService = inject(XrplService);
+               return await xrplService.getClient();
+          } catch {
+               return null;
           }
      }
 
      private normalizeAmount(val: any): string {
+          if (!val) return '0';
           if (typeof val === 'string') {
                return /^\d+$/.test(val) ? String(xrpl.dropsToXrp(val)) : val;
           }
@@ -426,11 +555,11 @@ export class OfferUtilsService {
      canCreateOffer = computed(() => {
           const weWantAmount = this.offerStoreService.weWantAmount() ?? '';
           const weSpendAmount = this.offerStoreService.weSpendAmount() ?? '';
-          return !!weWantAmount.trim() && !!weSpendAmount.trim();
+          return weWantAmount.trim().length > 0 && weSpendAmount.trim().length > 0 && parseFloat(weWantAmount) > 0 && parseFloat(weSpendAmount) > 0;
      });
 
      canCancelOffer = computed(() => {
-          //   return this.offerStoreService.selectedOfferSequences?.().length > 0;
-          return;
+          const selected = this.offerStoreService.selectedOffersToCancel?.();
+          return selected && selected.length > 0;
      });
 }

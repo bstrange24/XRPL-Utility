@@ -1,4 +1,3 @@
-// payment-channel-summary.component.ts
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
@@ -16,6 +15,7 @@ import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shar
 import { ExpirationFilterInputComponent } from '../../../shared/expiration-filter-input/expiration-filter-input.component';
 
 type SortKey = 'amount' | 'remaining' | 'expiration' | 'id';
+type QuickFilter = 'all' | 'expired' | 'active' | 'claimable';
 
 @Component({
      selector: 'app-payment-channel-summary',
@@ -52,7 +52,7 @@ export class PaymentChannelSummaryComponent {
      readonly searchQuery = signal<string>('');
      readonly expiresAfter = signal<string>('');
      readonly expiresBefore = signal<string>('');
-     readonly activeQuickFilter = signal<'all' | 'expired' | 'active' | 'claimable'>('all');
+     readonly activeQuickFilter = signal<QuickFilter>('all');
      readonly sortBy = signal<SortKey>('remaining');
      readonly sortDirection = signal<'asc' | 'desc'>('desc');
 
@@ -78,7 +78,7 @@ export class PaymentChannelSummaryComponent {
      private getExpirationTimestamp(channel: UnifiedPaymentChannel): number {
           if (!channel.expiration) return 0;
           const date = new Date(channel.expiration);
-          return isNaN(date.getTime()) ? 0 : date.getTime();
+          return Number.isNaN(date.getTime()) ? 0 : date.getTime();
      }
 
      // Computed values
@@ -105,7 +105,7 @@ export class PaymentChannelSummaryComponent {
                channels = channels.filter(ch => {
                     if (!ch.expiration) return false;
                     const expirationDate = new Date(ch.expiration);
-                    if (isNaN(expirationDate.getTime())) return false;
+                    if (Number.isNaN(expirationDate.getTime())) return false;
                     if (after && expirationDate < new Date(after)) return false;
                     if (before && expirationDate > new Date(before)) return false;
                     return true;
@@ -121,7 +121,7 @@ export class PaymentChannelSummaryComponent {
                          case 'active':
                               return !ch.isExpired;
                          case 'claimable':
-                              return !ch.isExpired && !ch.isOwner && parseFloat(ch.remaining?.split(' ')[0] || '0') > 0;
+                              return !ch.isExpired && !ch.isOwner && Number.parseFloat(ch.remaining?.split(' ')[0] || '0') > 0;
                          default:
                               return true;
                     }
@@ -142,12 +142,12 @@ export class PaymentChannelSummaryComponent {
 
                switch (sortField) {
                     case 'amount':
-                         valA = parseFloat(a.totalAmount?.split(' ')[0] || '0');
-                         valB = parseFloat(b.totalAmount?.split(' ')[0] || '0');
+                         valA = Number.parseFloat(a.totalAmount?.split(' ')[0] || '0');
+                         valB = Number.parseFloat(b.totalAmount?.split(' ')[0] || '0');
                          break;
                     case 'remaining':
-                         valA = parseFloat(a.remaining?.split(' ')[0] || '0');
-                         valB = parseFloat(b.remaining?.split(' ')[0] || '0');
+                         valA = Number.parseFloat(a.remaining?.split(' ')[0] || '0');
+                         valB = Number.parseFloat(b.remaining?.split(' ')[0] || '0');
                          break;
                     case 'expiration':
                          valA = this.getExpirationTimestamp(a);

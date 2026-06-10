@@ -12,6 +12,7 @@ export interface OfferState {
      isPassive: boolean;
      isFillOrKill: boolean;
      existingOffers: any[];
+     selectedOffersToCancel: any[];
      offersArray: any[];
      insufficientLiquidityWarning: boolean;
      orderBookPair: string;
@@ -20,16 +21,17 @@ export interface OfferState {
 
 const initialState: OfferState = {
      weWantCurrency: '',
-     weWantIssuer: '',
+     weWantIssuer: '', // Will be set when currency is selected
      weWantAmount: '',
      weSpendCurrency: 'XRP',
-     weSpendIssuer: '',
+     weSpendIssuer: '', // XRP has no issuer
      weSpendAmount: '',
      offerSequenceField: '',
      isMarketOrder: false,
      isPassive: true,
      isFillOrKill: false,
      existingOffers: [],
+     selectedOffersToCancel: [],
      offersArray: [],
      insufficientLiquidityWarning: false,
      orderBookPair: '',
@@ -38,22 +40,17 @@ const initialState: OfferState = {
 
 export const OfferStoreService = signalStore(
      { providedIn: 'root' },
-
      withState(initialState),
-
      withComputed(() => ({})),
-
      withMethods(store => ({
           setField<K extends keyof OfferState>(field: K, value: OfferState[K]) {
                patchState(store, { [field]: value });
           },
-
           updateField<K extends keyof OfferState>(field: K, updater: (current: OfferState[K]) => OfferState[K]) {
                patchState(store, state => ({
                     [field]: updater(state[field]),
                }));
           },
-
           resetOfferFields() {
                patchState(store, {
                     weWantAmount: '',
@@ -65,23 +62,29 @@ export const OfferStoreService = signalStore(
                     insufficientLiquidityWarning: false,
                });
           },
-
           resetAll() {
                patchState(store, structuredClone(initialState));
           },
-
           getAll(): OfferState {
-               const snapshot: any = {};
-               for (const [key, value] of Object.entries(store)) {
-                    if (typeof value === 'function') {
-                         try {
-                              snapshot[key] = value();
-                         } catch {
-                              // ignore non-signal methods
-                         }
-                    }
-               }
-               return snapshot as OfferState;
+               // FIXED: Properly get all state values
+               return {
+                    weWantCurrency: store.weWantCurrency(),
+                    weWantIssuer: store.weWantIssuer(),
+                    weWantAmount: store.weWantAmount(),
+                    weSpendCurrency: store.weSpendCurrency(),
+                    weSpendIssuer: store.weSpendIssuer(),
+                    weSpendAmount: store.weSpendAmount(),
+                    offerSequenceField: store.offerSequenceField(),
+                    isMarketOrder: store.isMarketOrder(),
+                    isPassive: store.isPassive(),
+                    isFillOrKill: store.isFillOrKill(),
+                    existingOffers: store.existingOffers(),
+                    selectedOffersToCancel: store.selectedOffersToCancel(),
+                    offersArray: store.offersArray(),
+                    insufficientLiquidityWarning: store.insufficientLiquidityWarning(),
+                    orderBookPair: store.orderBookPair(),
+                    orderBookStats: store.orderBookStats(),
+               };
           },
      }))
 );

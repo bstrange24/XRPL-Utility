@@ -1,8 +1,8 @@
 <label class="flex cursor-pointer items-center gap-3">
      <div class="relative inline-flex items-center">
           <input type="checkbox" class="peer sr-only" [checked]="checked" (change)="onChange($event)" />
-          <div class="h-6 w-11 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
-          <div class="absolute left-0.5 h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
+          <div class="h-5 w-10 rounded-full bg-gray-200 shadow-inner transition-all duration-300 peer-checked:bg-gradient-to-r peer-checked:from-green-500 peer-checked:to-green-600"></div>
+          <div class="absolute left-0.5 h-4 w-4 transform rounded-full bg-white shadow-md transition-all duration-300 peer-checked:translate-x-5"></div>
      </div>
      <span class="select-none text-sm font-medium text-gray-900">
           <ng-content></ng-content>
