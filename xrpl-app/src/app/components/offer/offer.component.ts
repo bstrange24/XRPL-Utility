@@ -406,8 +406,26 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerUtilsService.onWeSpendAmountChange();
      }
 
-     invertOrder(): void {
+     async invertOrder(): Promise<void> {
           this.offerUtilsService.invertOrder();
+          const wallet = this.currentWallet();
+
+          if (!wallet) {
+               this.toastService.error('No wallet selected', AppConstants.TOAST.ERROR);
+               return;
+          }
+          if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
+               let env: any = null;
+               try {
+                    env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {});
+                    if (!env) throw new Error('Unable to get environment.');
+               } catch (err: any) {
+                    console.error('prepareTxEnvironment failed:', err);
+                    this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+                    return;
+               }
+               await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
+          }
      }
 
      override toggleInfoPanel(): void {

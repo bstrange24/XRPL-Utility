@@ -99,11 +99,11 @@ export class OfferCurrencyService {
 
           this.weWant.currency.set(currency);
 
-          if (currency !== 'XRP') {
-               await this.loadIssuersForSide(currency, this.weWant);
-          } else {
+          if (currency === 'XRP') {
                this.weWant.issuers.set([]);
                this.weWant.issuer.set(''); // XRP has no issuer
+          } else {
+               await this.loadIssuersForSide(currency, this.weWant);
           }
 
           await new Promise(resolve => setTimeout(resolve, 50));
@@ -122,11 +122,11 @@ export class OfferCurrencyService {
 
           this.weSpend.currency.set(currency);
 
-          if (currency !== 'XRP') {
-               await this.loadIssuersForSide(currency, this.weSpend);
-          } else {
+          if (currency === 'XRP') {
                this.weSpend.issuers.set([]);
                this.weSpend.issuer.set(''); // XRP has no issuer
+          } else {
+               await this.loadIssuersForSide(currency, this.weSpend);
           }
 
           await new Promise(resolve => setTimeout(resolve, 50));

@@ -1,4 +1,3 @@
-// offer-summary.component.ts
 import { Component, inject, input, output, signal, computed, ChangeDetectionStrategy, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';

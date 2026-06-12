@@ -16,11 +16,6 @@ export class OfferTransactionBuilderService {
           return { currency, issuer };
      }
 
-     private toCurrencyAmount(currency: string, issuer: string, amount: string): string | xrpl.IssuedCurrencyAmount {
-          if (currency === 'XRP') return xrpl.xrpToDrops(amount);
-          return { currency: this.utilsService.encodeIfNeeded(currency), issuer, value: amount };
-     }
-
      buildOfferCreateTx(wallet: xrpl.Wallet, offer: OfferState, env: any): xrpl.OfferCreate {
           let takerGets: string | xrpl.IssuedCurrencyAmount;
           let takerPays: string | xrpl.IssuedCurrencyAmount;
@@ -60,51 +55,6 @@ export class OfferTransactionBuilderService {
                takerPays = {
                     currency: this.utilsService.encodeIfNeeded(offer.weWantCurrency),
                     issuer: offer.weWantIssuer,
-                    value: offer.weWantAmount,
-               };
-          }
-
-          let flags = 0;
-          if (offer.isMarketOrder) {
-               flags |= OfferCreateFlags.tfImmediateOrCancel;
-          } else if (offer.isFillOrKill) {
-               flags |= OfferCreateFlags.tfFillOrKill;
-          } else if (offer.isPassive) {
-               flags |= OfferCreateFlags.tfPassive;
-          }
-
-          return {
-               TransactionType: 'OfferCreate',
-               Account: wallet.classicAddress,
-               TakerGets: takerGets,
-               TakerPays: takerPays,
-               Flags: flags,
-               LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-     }
-
-     buildOfferCreateTx23(wallet: xrpl.Wallet, offer: OfferState, env: any): xrpl.OfferCreate {
-          let takerGets: string | xrpl.IssuedCurrencyAmount;
-          let takerPays: string | xrpl.IssuedCurrencyAmount;
-
-          if (offer.weSpendCurrency === AppConstants.XRP_CURRENCY) {
-               takerGets = xrpl.xrpToDrops(offer.weSpendAmount);
-          } else {
-               takerGets = {
-                    currency: this.utilsService.encodeIfNeeded(offer.weSpendCurrency),
-                    issuer: 'rhZmA5XVLvB2dRG3wadNgxHUc9JhfBpwUM', // offer.weSpendIssuer,
-                    // issuer: offer.weSpendIssuer,
-                    value: offer.weSpendAmount,
-               };
-          }
-
-          if (offer.weWantCurrency === AppConstants.XRP_CURRENCY) {
-               takerPays = xrpl.xrpToDrops(offer.weWantAmount);
-          } else {
-               takerPays = {
-                    currency: this.utilsService.encodeIfNeeded(offer.weWantCurrency),
-                    issuer: 'rhZmA5XVLvB2dRG3wadNgxHUc9JhfBpwUM', //offer.weWantIssuer,
-                    // issuer: offer.weWantIssuer,
                     value: offer.weWantAmount,
                };
           }

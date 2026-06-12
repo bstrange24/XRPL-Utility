@@ -1,4 +1,4 @@
-import { Component, inject, effect, signal, computed, ViewContainerRef, ChangeDetectionStrategy, ChangeDetectorRef, TemplateRef, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, effect, signal, computed, ViewContainerRef, ChangeDetectionStrategy, ChangeDetectorRef, TemplateRef, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -19,7 +19,7 @@ import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.
      templateUrl: './cancel-offer.component.html',
      styleUrl: './cancel-offer.component.css',
 })
-export class CancelOfferTabComponent {
+export class CancelOfferTabComponent implements OnDestroy {
      public readonly offerStoreService = inject(OfferStoreService);
      public readonly view = inject(OfferTransactionViewModelService);
      public readonly txUiService = inject(TransactionUiService);
@@ -29,7 +29,7 @@ export class CancelOfferTabComponent {
 
      private offerOverlayRef: OverlayRef | null = null;
 
-     private selectionChangeSubscription: any;
+     private readonly selectionChangeSubscription: any;
 
      @ViewChild('offerDropdownInput', { read: ElementRef, static: false })
      offerDropdownInput!: ElementRef<HTMLInputElement>;

@@ -45,46 +45,6 @@
           </div>
           }
 
-          <!-- Order Book Stats (only for order book tab) -->
-          @if (info.isOrderBookTab && info.stats) {
-          <div class="rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all mb-2">
-               <div class="flex flex-wrap gap-2">
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">VWAP:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.vwap }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Simple Avg:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.simpleAvg }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Best Rate:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.bestRate }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Spread:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.spread }} ({{ info.stats.spreadPercent }}%)</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Depth (30% slippage):</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.depth }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Execution (15 input):</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.execution }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Volatility:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.volatility }} {{ info.pair }}</span>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg px-3 py-1.5">
-                         <span class="text-xs text-gray-500">Liquidity Ratio:</span>
-                         <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.liquidityRatio }} {{ info.pair }}</span>
-                    </div>
-               </div>
-          </div>
-          }
-
           <!-- Offers List -->
           @if (sortedOffers().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
@@ -143,4 +103,44 @@
           }
      </div>
 </app-summary-container>
-}
+
+<!-- Order Book Stats (only for order book tab) -->
+@if (info.isOrderBookTab && info.stats) {
+<div class="rounded-xl border border-gray-100 hover:border-gray-200 p-4 transition-all mb-2">
+     <h4>Order Book Data</h4>
+     <div class="flex flex-wrap gap-2">
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">VWAP:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.vwap }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Simple Avg:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.simpleAvg }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Best Rate:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.bestRate }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Spread:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.spread }} ({{ info.stats.spreadPercent }}%)</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Depth (30% slippage):</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.depth }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Execution (15 input):</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.execution }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Volatility:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.volatility }} {{ info.pair }}</span>
+          </div>
+          <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+               <span class="text-xs text-gray-500">Liquidity Ratio:</span>
+               <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ info.stats.liquidityRatio }} {{ info.pair }}</span>
+          </div>
+     </div>
+</div>
+} }

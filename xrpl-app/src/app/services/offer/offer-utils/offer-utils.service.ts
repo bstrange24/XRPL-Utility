@@ -135,6 +135,7 @@ export class OfferUtilsService {
 
                if (!weWantCurr || !weSpendCurr) {
                     this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+                    this.offerStoreService.setField('orderBookPair', '');
                     return;
                }
 
@@ -166,7 +167,7 @@ export class OfferUtilsService {
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);
                const displayWeSpend = this.utilsService.decodeIfNeeded(we_spend.currency);
 
-               const [orderBook, counterOrderBook] = await Promise.all([
+               const [orderBook] = await Promise.all([
                     client.request({
                          command: 'book_offers',
                          taker: wallet.classicAddress,
@@ -555,7 +556,7 @@ export class OfferUtilsService {
      canCreateOffer = computed(() => {
           const weWantAmount = this.offerStoreService.weWantAmount() ?? '';
           const weSpendAmount = this.offerStoreService.weSpendAmount() ?? '';
-          return weWantAmount.trim().length > 0 && weSpendAmount.trim().length > 0 && parseFloat(weWantAmount) > 0 && parseFloat(weSpendAmount) > 0;
+          return weWantAmount.trim().length > 0 && weSpendAmount.trim().length > 0 && Number.parseFloat(weWantAmount) > 0 && Number.parseFloat(weSpendAmount) > 0;
      });
 
      canCancelOffer = computed(() => {

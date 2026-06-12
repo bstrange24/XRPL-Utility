@@ -25,7 +25,7 @@ import { AMM_TX_TYPES } from './constants/amm.constants';
 import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
 import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { AmmActionTypes, AmmTxConfig, AmmTxType } from './constants/amm.types';
+import { AmmActionTypes, AmmTxConfig } from './constants/amm.types';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -150,13 +150,24 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
 
      async selectWallet(wallet: Wallet): Promise<void> {
           if (wallet?.address === this.currentWallet()?.address) return;
+
           this.currentWallet.set(wallet);
           this.accountConfiguratorStoreService.resetAll();
-          if (this.selectedDestinationAddress() === wallet.address) this.selectedDestinationAddress.set('');
 
-          this.offerCurrency.setWalletAddress(wallet.address);
+          if (this.selectedDestinationAddress() === wallet.address) {
+               this.selectedDestinationAddress.set('');
+          }
+
+          this.offerCurrency.setWalletAddress(wallet.address || wallet.classicAddress);
           this.trustlineCurrencyService.refreshCurrentBalance();
+
           await this.offerCurrency.refreshBothBalances(wallet);
+
+          // FIXED: Only set XRP if no currency selected
+          const currentSpendCurrency = this.offerCurrency.weSpend.currency();
+          if (!currentSpendCurrency || currentSpendCurrency === '') {
+               await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
+          }
      }
 
      async setTab(tab: string): Promise<void> {
@@ -169,8 +180,19 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
      }
 
      async onAccountChange(forceRefresh = false): Promise<void> {
+          const wallet = this.walletManagerService.getSelectedWallet();
+          if (!wallet?.classicAddress) {
+               console.warn('No wallet selected');
+               return;
+          }
+
           this.isSummaryLoading.set(true);
-          await this.measure('onAccountChange', true, async () => {
+
+          if (!forceRefresh) {
+               this.tryPrePopulateFromCache(wallet.classicAddress);
+          }
+
+          try {
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
@@ -178,41 +200,33 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
                if (!this.walletManagerService.ensureWalletSelected()) return;
                const wallet = this.walletManagerService.getSelectedWallet();
 
-               try {
-                    let env: any = null;
-                    if (this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
-                         const asset = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weWantCurrency()), this.ammStoreService.weWantIssuer());
-                         const asset2 = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weSpendCurrency()), this.ammStoreService.weSpendIssuer());
+               let env: any = null;
+               if (this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
+                    const asset = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weWantCurrency()), this.ammStoreService.weWantIssuer());
+                    const asset2 = this.ammTransactionBuilderService.toXRPLCurrency(this.utilsService.encodeIfNeeded(this.ammStoreService.weSpendCurrency()), this.ammStoreService.weSpendIssuer());
 
-                         try {
-                              env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet!, {
-                                   includeAccountInfo: true,
-                                   includeAccountObject: true,
-                                   includeAmmResponse: true,
-                                   includeParticipation: true,
-                                   forceRefresh: forceRefresh,
-                                   asset,
-                                   asset2,
-                              });
-                              if (!env) throw new Error('Unable to get environment.');
-                         } catch (err: any) {
-                              console.error('prepareTxEnvironment failed:', err);
-                              this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
-                              return;
-                         }
+                    env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet!, {
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeAmmResponse: true,
+                         includeParticipation: true,
+                         forceRefresh: forceRefresh,
+                         asset,
+                         asset2,
+                    });
+                    if (!env) throw new Error('Unable to get environment.');
 
-                         this.updateSharedObjectsStore(env);
-                         this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-                         this.ammUtilsService.clearInputFields();
-                    }
-               } catch (error: any) {
-                    console.error('Failed to load account:', error);
-                    this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
-               } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+                    this.updateSharedObjectsStore(env);
+                    this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    this.ammUtilsService.clearInputFields();
                }
-          });
+          } catch (error: any) {
+               console.error('Failed to load account:', error);
+               this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
+          } finally {
+               this.isSummaryLoading.set(false);
+               this.txUiService.resetCurrentStepToIdle();
+          }
      }
 
      async performAction(): Promise<void> {
@@ -260,15 +274,13 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
 
           let txResult: { success: boolean; hash?: string; error?: string } | null = null;
 
-          await this.withPerf('performAction', async () => {
-               try {
-                    txResult = await this.ammTransactionOrchestratorService.executeAmmTx(currentTab as AmmTxType, config);
-               } catch (error: any) {
-                    console.error(`[${currentTab}] execution failed:`, error);
-                    this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
-                    return;
-               }
-          });
+          try {
+               txResult = await this.ammTransactionOrchestratorService.executeAmmTx(currentTab, config);
+          } catch (error: any) {
+               console.error(`[${currentTab}] execution failed:`, error);
+               this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           if (!txResult) {
                this.toastService.error('Unexpected error when submitting transaction.', AppConstants.TOAST.ERROR);
@@ -285,20 +297,40 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit 
           return;
      }
 
-     onPool1CurrencySelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeWantCurrency(item?.id || 'XRP', this.currentWallet());
+     async onPool1CurrencySelected(item: SelectItem | null): Promise<void> {
+          const currency = item?.id || 'XRP';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeWantCurrency(currency, wallet);
      }
 
-     onPool1IssuerSelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeWantIssuer(item?.id || '', this.currentWallet());
+     async onPool1IssuerSelected(item: SelectItem | null): Promise<void> {
+          const issuer = item?.id || '';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeWantIssuer(issuer, wallet);
      }
 
-     onPool2CurrencySelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeSpendCurrency(item?.id || 'XRP', this.currentWallet());
+     async onPool2CurrencySelected(item: SelectItem | null): Promise<void> {
+          const currency = item?.id || 'XRP';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeSpendCurrency(currency, wallet);
      }
 
-     onPool2IssuerSelected(item: SelectItem | null): void {
-          this.offerCurrency.selectWeSpendIssuer(item?.id || '', this.currentWallet());
+     async onPool2IssuerSelected(item: SelectItem | null): Promise<void> {
+          const issuer = item?.id || '';
+          const wallet = this.currentWallet();
+
+          if (!wallet) return;
+
+          await this.offerCurrency.selectWeSpendIssuer(issuer, wallet);
      }
 
      handleSearchQueryChange(query: string): void {

@@ -1,8 +1,8 @@
 <!-- Get view model and store for easier template access -->
 @let view = ammTransactionViewModelService; @let store = ammStoreService; @let opts = ammUtilsService;
 
-<div class="card-base">
-     <div class="space-y-6">
+<div class="space-y-6">
+     <div class="card-base">
           <!-- ── Pool Assets Section ── -->
           @if (tab() === 'createAMM' || tab() === 'depositToAMM' || tab() === 'withdrawalFromAMM' || tab() === 'clawbackFromAMM' || tab() === 'swapViaAMM' || tab() === 'deleteAMM') {
           <div>
