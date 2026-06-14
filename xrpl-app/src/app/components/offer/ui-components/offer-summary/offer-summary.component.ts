@@ -82,10 +82,7 @@ export class OfferSummaryComponent {
 
      // Helper function to determine if offer is buy or sell
      public getOfferType(offer: any): 'buy' | 'sell' {
-          // This depends on your data structure - adjust as needed
-          // Typically, if the offer is selling XRP for another currency
           const getsCurrency = offer.takerGets?.split(' ')[1] || '';
-          const paysCurrency = offer.takerPays?.split(' ')[1] || '';
 
           // If takerGets is XRP, it's a sell offer (selling XRP)
           if (getsCurrency === 'XRP') return 'sell';
@@ -104,17 +101,17 @@ export class OfferSummaryComponent {
           const query = this.searchQuery().trim().toLowerCase();
           const quickFilter = this.activeQuickFilter();
 
-          // For order book tab, don't apply filters (show all)
-          if (this.isOrderBookTab()) {
-               return offers;
-          }
+          // Remove this condition:
+          // if (this.isOrderBookTab()) {
+          //   return offers;
+          // }
 
-          // Text Search
+          // Text Search - apply to all tabs
           if (query) {
                offers = offers.filter(offer => offer.index?.toLowerCase().includes(query) || offer.takerGets?.toLowerCase().includes(query) || offer.takerPays?.toLowerCase().includes(query) || offer.issuer?.toLowerCase().includes(query));
           }
 
-          // Quick Filters
+          // Quick Filters - apply to all tabs
           if (quickFilter !== 'all') {
                offers = offers.filter(offer => {
                     const type = this.getOfferType(offer);
@@ -176,10 +173,6 @@ export class OfferSummaryComponent {
           if (info?.isOrderBookTab) {
                return ` viewing order book for <strong>${info.pair}</strong>`;
           }
-
-          // if (this.filteredCount() === 0 && this.hasActiveFilters()) {
-          //      return ` has no offers matching your filters.`;
-          // }
 
           if (info?.offerCount === 0) {
                return ` has no outstanding offers.`;

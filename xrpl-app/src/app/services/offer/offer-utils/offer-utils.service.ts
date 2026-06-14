@@ -8,6 +8,7 @@ import BigNumber from 'bignumber.js';
 import { AppConstants } from '../../../core/app.constants';
 import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
+import { ToastService } from '../../utils/toast/toast.service';
 
 @Injectable({
      providedIn: 'root',
@@ -18,65 +19,74 @@ export class OfferUtilsService {
      public readonly utilsService = inject(UtilsService);
      public readonly offerCurrency = inject(OfferCurrencyService);
      public readonly offerTransactionViewModelService = inject(OfferTransactionViewModelService);
+     public readonly xrplService = inject(XrplService);
+     public readonly toastService = inject(ToastService);
      private amountTimeout: ReturnType<typeof setTimeout> | null = null;
      private isUpdatingExchange = false;
+     private isInternalUpdate = false;
 
-     readonly actionButtonLabel = computed(() => {
-          const tab = this.offerTransactionViewModelService.activeTab();
-          switch (tab) {
-               case 'createOffer':
-                    return 'Create Offer';
-               case 'getOrderBook':
-                    return 'Get Order Book';
-               case 'cancelOffer':
-                    return 'Cancel Offer';
-               default:
-                    return 'Submit';
-          }
-     });
-
-     readonly actionButtonClass = computed(() => {
-          const tab = this.offerTransactionViewModelService.activeTab();
-          switch (tab) {
-               case 'createOffer':
-                    return 'btn-primary';
-               case 'getOrderBook':
-                    return 'btn-blue';
-               case 'cancelOffer':
-                    return 'btn-red';
-               default:
-                    return 'btn-blue';
-          }
-     });
-
-     clearInputFields(): void {
-          this.offerStoreService.resetOfferFields();
+     invertOrder(): void {
+          // Prevent any recalculation during invert
           if (this.amountTimeout) {
                clearTimeout(this.amountTimeout);
                this.amountTimeout = null;
           }
-     }
 
-     invertOrder(): void {
+          // Store current values
           const tempCurr = this.offerStoreService.weWantCurrency();
           const tempIss = this.offerStoreService.weWantIssuer();
           const tempAmt = this.offerStoreService.weWantAmount();
 
-          this.offerStoreService.setField('weWantCurrency', this.offerStoreService.weSpendCurrency());
+          const spendCurr = this.offerStoreService.weSpendCurrency();
+          const spendIss = this.offerStoreService.weSpendIssuer();
+          const spendAmt = this.offerStoreService.weSpendAmount();
+
+          console.log('Invert - Before swap:', {
+               weWant: { curr: tempCurr, iss: tempIss, amt: tempAmt },
+               weSpend: { curr: spendCurr, iss: spendIss, amt: spendAmt },
+          });
+
+          // Swap values in store - do this synchronously
+          this.offerStoreService.setField('weWantCurrency', spendCurr);
           this.offerStoreService.setField('weSpendCurrency', tempCurr);
-          this.offerStoreService.setField('weWantIssuer', this.offerStoreService.weSpendIssuer());
+          this.offerStoreService.setField('weWantIssuer', spendIss);
           this.offerStoreService.setField('weSpendIssuer', tempIss);
-          this.offerStoreService.setField('weWantAmount', this.offerStoreService.weSpendAmount());
+          this.offerStoreService.setField('weWantAmount', spendAmt);
           this.offerStoreService.setField('weSpendAmount', tempAmt || '');
 
-          const newWeWant = this.offerStoreService.weWantCurrency();
-          const newWeSpend = this.offerStoreService.weSpendCurrency();
+          console.log('Invert - After swap:', {
+               weWant: { curr: this.offerStoreService.weWantCurrency(), iss: this.offerStoreService.weWantIssuer(), amt: this.offerStoreService.weWantAmount() },
+               weSpend: { curr: this.offerStoreService.weSpendCurrency(), iss: this.offerStoreService.weSpendIssuer(), amt: this.offerStoreService.weSpendAmount() },
+          });
+
           const currentWallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
 
           if (currentWallet) {
-               // FIXED: Async handling without Promise chain issues
-               this.offerCurrency.selectWeWantCurrency(newWeWant, currentWallet).catch(console.error);
-               this.offerCurrency.selectWeSpendCurrency(newWeSpend, currentWallet).catch(console.error);
+               // Update the OfferCurrency service without triggering additional refreshes
+               // Use setTimeout to avoid blocking
+               setTimeout(async () => {
+                    try {
+                         // Reset both sides first
+                         await this.offerCurrency.selectWeWantCurrency('', currentWallet);
+                         await this.offerCurrency.selectWeSpendCurrency('', currentWallet);
+
+                         // Set new currencies
+                         await this.offerCurrency.selectWeWantCurrency(spendCurr, currentWallet);
+                         await this.offerCurrency.selectWeSpendCurrency(tempCurr, currentWallet);
+
+                         // Handle issuers - only set if currency is not XRP
+                         if (spendCurr !== 'XRP' && spendIss) {
+                              await this.offerCurrency.selectWeWantIssuer(spendIss, currentWallet);
+                         }
+                         if (tempCurr !== 'XRP' && tempIss) {
+                              await this.offerCurrency.selectWeSpendIssuer(tempIss, currentWallet);
+                         }
+
+                         console.log('Invert completed successfully');
+                    } catch (error) {
+                         console.error('Error during invert currency update:', error);
+                    }
+               }, 0);
           }
      }
 
@@ -133,6 +143,16 @@ export class OfferUtilsService {
                const weWantCurr = this.offerStoreService.weWantCurrency();
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
 
+               console.log(`fetchOrderBook - weWantCurr: ${weWantCurr}, weSpendCurr: ${weSpendCurr}`);
+
+               // Don't fetch if both currencies are the same (invalid market)
+               if (weWantCurr === weSpendCurr) {
+                    console.warn('Cannot fetch order book for same currency pair');
+                    this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+                    this.offerStoreService.setField('orderBookPair', '');
+                    return;
+               }
+
                if (!weWantCurr || !weSpendCurr) {
                     this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
                     this.offerStoreService.setField('orderBookPair', '');
@@ -155,6 +175,8 @@ export class OfferUtilsService {
                                 currency: this.utilsService.encodeIfNeeded(weSpendCurr),
                                 issuer: this.offerStoreService.weSpendIssuer(),
                            };
+
+               console.log(`we_want: ${JSON.stringify(we_want)}, we_spend: ${JSON.stringify(we_spend)}`);
 
                // Add value only if provided
                if (this.offerStoreService.weWantAmount()) {
@@ -212,15 +234,18 @@ export class OfferUtilsService {
                               spread: '0',
                               spreadPercent: '0',
                               liquidityRatio: '0',
-                              depth: `${stats.forward?.depthDOG?.toFixed(2) || '0'} ${displayWeWant} for ${stats.forward?.depthXRP?.toFixed(2) || '0'} ${displayWeSpend}`,
-                              execution: stats.forward?.insufficientLiquidity ? `Insufficient liquidity` : `Receive ${stats.forward?.executionDOG?.toFixed(2) || '0'} ${displayWeWant} for 15 ${displayWeSpend}`,
+                              depth: `${stats.forward?.depthToken?.toFixed(2) || '0'} ${displayWeWant} for ${stats.forward?.depthXRP?.toFixed(2) || '0'} ${displayWeSpend}`,
+                              execution: stats.forward?.insufficientLiquidity ? `Insufficient liquidity` : `Receive ${stats.forward?.executionPriceToken?.toFixed(2) || '0'} ${displayWeWant} for 15 ${displayWeSpend}`,
                               volatility: `${stats.forward?.volatility?.toFixed(8) || '0'} (${stats.forward?.volatilityPercent?.toFixed(2) || '0'}%)`,
                          });
                     }
                }
           } catch (error: any) {
                console.error('Error in fetchOrderBook:', error);
-               this.txUiService.setError(error.message || 'Failed to fetch order book');
+               // Don't show error toast for "No such market" - it's expected for some pairs
+               if (!error.message?.includes('No such market')) {
+                    this.toastService.error(error.message || 'Failed to fetch order book', AppConstants.TOAST.ERROR);
+               }
                this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
           }
      }
@@ -240,13 +265,264 @@ export class OfferUtilsService {
      }
 
      onWeSpendAmountChange(): void {
+          if (this.isInternalUpdate) return;
           if (this.amountTimeout) clearTimeout(this.amountTimeout);
-          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchange(), 500);
+          this.amountTimeout = setTimeout(() => this.calculateFromSpend(), 500);
      }
 
      onWeWantAmountChange(): void {
+          if (this.isInternalUpdate) return;
           if (this.amountTimeout) clearTimeout(this.amountTimeout);
-          this.amountTimeout = setTimeout(() => this.updateTokenBalanceAndExchangeReverse(), 500);
+          this.amountTimeout = setTimeout(() => this.calculateFromWant(), 500);
+     }
+
+     private async calculateFromSpend(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
+          const weSpendAmt = this.offerStoreService.weSpendAmount();
+          if (!weSpendAmt || Number.parseFloat(weSpendAmt) <= 0) {
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weWantAmount', '0');
+               this.isInternalUpdate = false;
+               return;
+          }
+
+          const weSpendCurr = this.offerStoreService.weSpendCurrency();
+          const weWantCurr = this.offerStoreService.weWantCurrency();
+
+          if (weSpendCurr === 'XRP' && weWantCurr !== 'XRP') {
+               await this.updateTokenBalanceAndExchange(); // spend XRP → want token
+          } else if (weSpendCurr !== 'XRP' && weWantCurr === 'XRP') {
+               await this.calculateSpendTokenForXRP(); // spend token → want XRP
+          } else {
+               await this.updateTokenBalanceAndExchange(); // both non‑XRP or both XRP (invalid pair)
+          }
+     }
+
+     private async calculateFromWant(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
+          const weWantAmt = this.offerStoreService.weWantAmount();
+          if (!weWantAmt || Number.parseFloat(weWantAmt) <= 0) {
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
+               return;
+          }
+
+          const weSpendCurr = this.offerStoreService.weSpendCurrency();
+          const weWantCurr = this.offerStoreService.weWantCurrency();
+
+          if (weWantCurr === 'XRP' && weSpendCurr !== 'XRP') {
+               await this.updateTokenBalanceAndExchangeReverse(); // want XRP → spend token
+          } else if (weWantCurr !== 'XRP' && weSpendCurr === 'XRP') {
+               await this.calculateWantTokenForXRP(); // want token → spend XRP
+          } else {
+               await this.updateTokenBalanceAndExchangeReverse(); // both non‑XRP or both XRP
+          }
+     }
+
+     private async calculateSpendTokenForXRP(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
+          const spendAmount = this.offerStoreService.weSpendAmount();
+          if (!spendAmount || Number.parseFloat(spendAmount) <= 0) {
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weWantAmount', '0');
+               this.isInternalUpdate = false;
+               return;
+          }
+
+          this.isUpdatingExchange = true;
+
+          try {
+               const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
+               if (!wallet) return;
+
+               const weWantCurr = this.offerStoreService.weWantCurrency();
+               const weSpendCurr = this.offerStoreService.weSpendCurrency();
+               const weSpendIssuer = this.offerStoreService.weSpendIssuer();
+
+               const takerGets =
+                    weWantCurr === 'XRP'
+                         ? { currency: 'XRP', value: '0' }
+                         : {
+                                currency: weWantCurr,
+                                issuer: this.offerStoreService.weWantIssuer(),
+                                value: '0',
+                           };
+
+               const takerPays =
+                    weSpendCurr === 'XRP'
+                         ? { currency: 'XRP', value: spendAmount }
+                         : {
+                                currency: weSpendCurr,
+                                issuer: weSpendIssuer,
+                                value: spendAmount,
+                           };
+
+               const client = await this.getClient();
+               if (!client) return;
+
+               const orderBook = await client.request({
+                    command: 'book_offers',
+                    taker_gets: takerGets,
+                    taker_pays: takerPays,
+                    limit: 400,
+                    ledger_index: 'current',
+                    taker: wallet.classicAddress,
+               });
+
+               const allOffers = orderBook.result.offers || [];
+
+               if (allOffers.length === 0) {
+                    this.isInternalUpdate = true;
+                    this.offerStoreService.setField('weWantAmount', '0');
+                    this.isInternalUpdate = false;
+                    return;
+               }
+
+               allOffers.sort((a: any, b: any) => {
+                    const rateA = new BigNumber(this.utilsService.normalizeAmount(a.TakerGets)).dividedBy(this.utilsService.normalizeAmount(a.TakerPays));
+                    const rateB = new BigNumber(this.utilsService.normalizeAmount(b.TakerGets)).dividedBy(this.utilsService.normalizeAmount(b.TakerPays));
+                    return rateA.minus(rateB).toNumber();
+               });
+
+               let remainingSpend = new BigNumber(spendAmount);
+               let totalReceived = new BigNumber(0);
+
+               for (const offer of allOffers) {
+                    if (remainingSpend.lte(0)) break;
+
+                    const pays = new BigNumber(this.utilsService.normalizeAmount(offer.TakerPays));
+                    const gets = new BigNumber(this.utilsService.normalizeAmount(offer.TakerGets));
+
+                    if (pays.isZero()) continue;
+
+                    const useSpend = BigNumber.min(remainingSpend, pays);
+                    const received = useSpend.multipliedBy(gets).dividedBy(pays);
+                    totalReceived = totalReceived.plus(received);
+                    remainingSpend = remainingSpend.minus(useSpend);
+               }
+
+               const roundedAmount = this.utilsService.roundAmount(totalReceived.toNumber(), weWantCurr, 6);
+
+               // Use internal update flag to prevent circular calculation
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weWantAmount', roundedAmount);
+               this.isInternalUpdate = false;
+
+               this.offerStoreService.setField('insufficientLiquidityWarning', remainingSpend.gt(0));
+          } catch (error) {
+               console.error('Error in calculateSpendTokenForXRP:', error);
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weWantAmount', '0');
+               this.isInternalUpdate = false;
+          } finally {
+               this.isUpdatingExchange = false;
+          }
+     }
+
+     private async calculateWantTokenForXRP(): Promise<void> {
+          if (this.isUpdatingExchange) return;
+
+          const wantAmount = this.offerStoreService.weWantAmount();
+          if (!wantAmount || Number.parseFloat(wantAmount) <= 0) {
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
+               return;
+          }
+
+          this.isUpdatingExchange = true;
+
+          try {
+               const wallet = this.offerTransactionViewModelService.walletManagerService.getSelectedWallet();
+               if (!wallet) return;
+
+               const weWantCurr = this.offerStoreService.weWantCurrency();
+               const weSpendCurr = this.offerStoreService.weSpendCurrency();
+               const weWantIssuer = this.offerStoreService.weWantIssuer();
+
+               const takerGets =
+                    weWantCurr === 'XRP'
+                         ? { currency: 'XRP', value: wantAmount }
+                         : {
+                                currency: weWantCurr,
+                                issuer: weWantIssuer,
+                                value: wantAmount,
+                           };
+
+               const takerPays =
+                    weSpendCurr === 'XRP'
+                         ? { currency: 'XRP', value: '0' }
+                         : {
+                                currency: weSpendCurr,
+                                issuer: this.offerStoreService.weSpendIssuer(),
+                                value: '0',
+                           };
+
+               const client = await this.getClient();
+               if (!client) return;
+
+               const orderBook = await client.request({
+                    command: 'book_offers',
+                    taker_gets: takerGets,
+                    taker_pays: takerPays,
+                    limit: 400,
+                    ledger_index: 'current',
+                    taker: wallet.classicAddress,
+               });
+
+               const allOffers = orderBook.result.offers || [];
+
+               if (allOffers.length === 0) {
+                    this.isInternalUpdate = true;
+                    this.offerStoreService.setField('weSpendAmount', '0');
+                    this.isInternalUpdate = false;
+                    return;
+               }
+
+               allOffers.sort((a: any, b: any) => {
+                    const rateA = new BigNumber(this.utilsService.normalizeAmount(a.TakerPays)).dividedBy(this.utilsService.normalizeAmount(a.TakerGets));
+                    const rateB = new BigNumber(this.utilsService.normalizeAmount(b.TakerPays)).dividedBy(this.utilsService.normalizeAmount(b.TakerGets));
+                    return rateA.minus(rateB).toNumber();
+               });
+
+               let remainingReceive = new BigNumber(wantAmount);
+               let totalPay = new BigNumber(0);
+
+               for (const offer of allOffers) {
+                    if (remainingReceive.lte(0)) break;
+
+                    const availableReceive = new BigNumber(this.utilsService.normalizeAmount(offer.TakerGets));
+                    const payForThis = new BigNumber(this.utilsService.normalizeAmount(offer.TakerPays));
+
+                    if (availableReceive.isZero()) continue;
+
+                    const rate = payForThis.dividedBy(availableReceive);
+                    const useReceive = BigNumber.min(remainingReceive, availableReceive);
+                    const requiredPay = useReceive.multipliedBy(rate);
+                    totalPay = totalPay.plus(requiredPay);
+                    remainingReceive = remainingReceive.minus(useReceive);
+               }
+
+               const roundedAmount = this.utilsService.roundAmount(totalPay.toNumber(), weSpendCurr, 6);
+
+               // Use internal update flag to prevent circular calculation
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', roundedAmount);
+               this.isInternalUpdate = false;
+
+               this.offerStoreService.setField('insufficientLiquidityWarning', remainingReceive.gt(0));
+          } catch (error) {
+               console.error('Error in calculateWantTokenForXRP:', error);
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
+          } finally {
+               this.isUpdatingExchange = false;
+          }
      }
 
      async updateTokenBalanceAndExchange(): Promise<void> {
@@ -254,7 +530,9 @@ export class OfferUtilsService {
 
           const weSpendAmt = this.offerStoreService.weSpendAmount();
           if (!weSpendAmt || Number.parseFloat(weSpendAmt) <= 0) {
+               this.isInternalUpdate = true;
                this.offerStoreService.setField('weWantAmount', '0');
+               this.isInternalUpdate = false;
                return;
           }
 
@@ -307,8 +585,8 @@ export class OfferUtilsService {
                }
 
                allOffers.sort((a: any, b: any) => {
-                    const rateA = new BigNumber(this.normalizeAmount(a.TakerGets)).dividedBy(this.normalizeAmount(a.TakerPays));
-                    const rateB = new BigNumber(this.normalizeAmount(b.TakerGets)).dividedBy(this.normalizeAmount(b.TakerPays));
+                    const rateA = new BigNumber(this.utilsService.normalizeAmount(a.TakerGets)).dividedBy(this.utilsService.normalizeAmount(a.TakerPays));
+                    const rateB = new BigNumber(this.utilsService.normalizeAmount(b.TakerGets)).dividedBy(this.utilsService.normalizeAmount(b.TakerPays));
                     return rateA.minus(rateB).toNumber();
                });
 
@@ -318,8 +596,8 @@ export class OfferUtilsService {
                for (const offer of allOffers) {
                     if (remaining.lte(0)) break;
 
-                    const pays = new BigNumber(this.normalizeAmount(offer.TakerPays));
-                    const gets = new BigNumber(this.normalizeAmount(offer.TakerGets));
+                    const pays = new BigNumber(this.utilsService.normalizeAmount(offer.TakerPays));
+                    const gets = new BigNumber(this.utilsService.normalizeAmount(offer.TakerGets));
 
                     if (pays.isZero()) continue;
 
@@ -329,11 +607,18 @@ export class OfferUtilsService {
                     remaining = remaining.minus(use);
                }
 
-               this.offerStoreService.setField('weWantAmount', totalReceived.toFixed(8));
+               // Round based on currency type
+               const roundedAmount = this.utilsService.roundAmount(totalReceived.toNumber(), weWantCurr, 6);
+
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weWantAmount', roundedAmount);
+               this.isInternalUpdate = false;
                this.offerStoreService.setField('insufficientLiquidityWarning', remaining.gt(0));
           } catch (error: any) {
-               console.error('Error in updateTokenBalanceAndExchange:', error);
-               this.offerStoreService.setField('weWantAmount', '0');
+               console.error('Error in calculateWantTokenForXRP:', error);
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
           } finally {
                this.isUpdatingExchange = false;
           }
@@ -344,7 +629,9 @@ export class OfferUtilsService {
 
           const weWantAmt = this.offerStoreService.weWantAmount();
           if (!weWantAmt || Number.parseFloat(weWantAmt) <= 0) {
+               this.isInternalUpdate = true;
                this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
                return;
           }
 
@@ -397,8 +684,8 @@ export class OfferUtilsService {
                }
 
                allOffers.sort((a: any, b: any) => {
-                    const rateA = new BigNumber(this.normalizeAmount(a.TakerPays)).dividedBy(this.normalizeAmount(a.TakerGets));
-                    const rateB = new BigNumber(this.normalizeAmount(b.TakerPays)).dividedBy(this.normalizeAmount(b.TakerGets));
+                    const rateA = new BigNumber(this.utilsService.normalizeAmount(a.TakerPays)).dividedBy(this.utilsService.normalizeAmount(a.TakerGets));
+                    const rateB = new BigNumber(this.utilsService.normalizeAmount(b.TakerPays)).dividedBy(this.utilsService.normalizeAmount(b.TakerGets));
                     return rateA.minus(rateB).toNumber();
                });
 
@@ -408,8 +695,8 @@ export class OfferUtilsService {
                for (const offer of allOffers) {
                     if (remainingReceive.lte(0)) break;
 
-                    const availableReceive = new BigNumber(this.normalizeAmount(offer.TakerGets));
-                    const payForThis = new BigNumber(this.normalizeAmount(offer.TakerPays));
+                    const availableReceive = new BigNumber(this.utilsService.normalizeAmount(offer.TakerGets));
+                    const payForThis = new BigNumber(this.utilsService.normalizeAmount(offer.TakerPays));
 
                     if (availableReceive.isZero()) continue;
 
@@ -420,11 +707,18 @@ export class OfferUtilsService {
                     remainingReceive = remainingReceive.minus(useReceive);
                }
 
-               this.offerStoreService.setField('weSpendAmount', totalPay.toFixed(8));
+               // Round based on currency type
+               const roundedAmount = this.utilsService.roundAmount(totalPay.toNumber(), weSpendCurr, 6);
+
+               this.isInternalUpdate = true;
+               this.offerStoreService.setField('weSpendAmount', roundedAmount);
+               this.isInternalUpdate = false;
                this.offerStoreService.setField('insufficientLiquidityWarning', remainingReceive.gt(0));
           } catch (error: any) {
                console.error('Error in updateTokenBalanceAndExchangeReverse:', error);
+               this.isInternalUpdate = true;
                this.offerStoreService.setField('weSpendAmount', '0');
+               this.isInternalUpdate = false;
           } finally {
                this.isUpdatingExchange = false;
           }
@@ -432,19 +726,10 @@ export class OfferUtilsService {
 
      private async getClient(): Promise<xrpl.Client | null> {
           try {
-               const xrplService = inject(XrplService);
-               return await xrplService.getClient();
+               return await this.xrplService.getClient();
           } catch {
                return null;
           }
-     }
-
-     private normalizeAmount(val: any): string {
-          if (!val) return '0';
-          if (typeof val === 'string') {
-               return /^\d+$/.test(val) ? String(xrpl.dropsToXrp(val)) : val;
-          }
-          return val?.value ?? '0';
      }
 
      private computeBidAskSpread(tokenXrpOffers: any[], xrpTokenOffers: any[]) {
@@ -467,14 +752,6 @@ export class OfferUtilsService {
           const midPrice = bestTokenXrp > 0 && bestXrpToken > 0 ? (bestTokenXrp + bestXrpTokenInverse) / 2 : 0;
           const spreadPercent = midPrice > 0 ? (spread / midPrice) * 100 : 0;
           return { spread, spreadPercent, bestTokenXrp, bestXrpToken };
-     }
-
-     private computeLiquidityRatio(tokenXrpOffers: any[], xrpTokenOffers: any[], isTokenXrp = true) {
-          const sumVolume = (offers: any[]) => offers.reduce((sum, o) => sum + (o.TakerGets?.value ? Number.parseFloat(o.TakerGets.value) : Number.parseFloat(o.TakerGets) / 1_000_000), 0);
-          const tokenVolume = tokenXrpOffers.length > 0 ? sumVolume(tokenXrpOffers) : 0;
-          const xrpVolume = xrpTokenOffers.length > 0 ? sumVolume(xrpTokenOffers) : 0;
-          const ratio = isTokenXrp ? (xrpVolume > 0 ? tokenVolume / xrpVolume : 0) : tokenVolume > 0 ? xrpVolume / tokenVolume : 0;
-          return { tokenVolume, xrpVolume, ratio };
      }
 
      private computeAverageExchangeRateBothWays(offers: any[], tradeSizeXRP = 15) {
@@ -535,10 +812,10 @@ export class OfferUtilsService {
                     simpleAvg: meanForward,
                     bestRate: forwardRates.length > 0 ? Math.max(...forwardRates) : 0,
                     worstRate: forwardRates.length > 0 ? Math.min(...forwardRates) : 0,
-                    depthDOG: depthGets,
+                    depthToken: depthGets,
                     depthXRP: depthPays,
                     executionPrice: execPays > 0 ? execGets / execPays : 0,
-                    executionDOG: execGets,
+                    executionPriceToken: execGets,
                     executionXRP: execPays,
                     insufficientLiquidity,
                     volatility: stdDevForward,
@@ -563,4 +840,44 @@ export class OfferUtilsService {
           const selected = this.offerStoreService.selectedOffersToCancel?.();
           return selected && selected.length > 0;
      });
+
+     setIsUpdatingExchange(value: boolean): void {
+          this.isUpdatingExchange = value;
+     }
+
+     readonly actionButtonLabel = computed(() => {
+          const tab = this.offerTransactionViewModelService.activeTab();
+          switch (tab) {
+               case 'createOffer':
+                    return 'Create Offer';
+               case 'getOrderBook':
+                    return 'Get Order Book';
+               case 'cancelOffer':
+                    return 'Cancel Offer';
+               default:
+                    return 'Submit';
+          }
+     });
+
+     readonly actionButtonClass = computed(() => {
+          const tab = this.offerTransactionViewModelService.activeTab();
+          switch (tab) {
+               case 'createOffer':
+                    return 'btn-primary';
+               case 'getOrderBook':
+                    return 'btn-primary';
+               case 'cancelOffer':
+                    return 'btn-red';
+               default:
+                    return 'btn-blue';
+          }
+     });
+
+     clearInputFields(): void {
+          this.offerStoreService.resetOfferFields();
+          if (this.amountTimeout) {
+               clearTimeout(this.amountTimeout);
+               this.amountTimeout = null;
+          }
+     }
 }

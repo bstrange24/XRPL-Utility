@@ -143,6 +143,7 @@ import {
      heroShieldCheck,
      heroArrowUp,
      heroArrowDown,
+     heroArrowsRightLeft,
 } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
@@ -250,6 +251,7 @@ bootstrapApplication(AppComponent, {
                heroChevronDown,
                heroArrowUp,
                heroArrowDown,
+               heroArrowsRightLeft,
                heroPencilSquare,
                heroSquares2x2,
                heroIdentification,

@@ -1,4 +1,7 @@
+<!-- Get the view data -->
 @let vm = view;
+<!-- Get the info data from the view model -->
+@let infoData = vm.infoData();
 
 <div class="space-y-6">
      <div class="card-base">
@@ -18,9 +21,10 @@
           <!-- Currency Codes -->
           <div class="side-by-side-fields">
                <div class="space-y-2">
+                    <!-- Currency Code -->
                     <div>
                          <div class="field-label">
-                              <label for="currencyCode" class="label-primary">Currency Code</label>
+                              <label for="currencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -30,7 +34,9 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Gets Currency" [items]="takerGetsCurrencyHelperItems" [show]="showTakerGetsCurrencyHelper" />
                </div>
@@ -38,7 +44,7 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="currencyCodeSpend" class="label-primary">Currency Code</label>
+                              <label for="currencyCodeSpend" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -55,11 +61,12 @@
           </div>
 
           <!-- Issuers -->
-          <div class="side-by-side-fields">
-               <div class="space-y-2 mt-3">
+          <div class="side-by-side-fields mt-3">
+               <div class="space-y-2">
+                    <!-- Issuer -->
                     <div>
                          <div class="field-label">
-                              <label for="issuer" class="label-primary">Issuer</label>
+                              <label for="issuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -69,15 +76,17 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Gets Issuer" [items]="takerGetsIssuerHelperItems" [show]="showTakerGetsIssuerHelper" />
                </div>
 
-               <div class="space-y-2 mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="issuerSpend" class="label-primary">Issuer</label>
+                              <label for="issuerSpend" class="label-primary">Issuer <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -87,10 +96,54 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Pays Issuer" [items]="takerPaysIssuerHelperItems" [show]="showTakerPaysIssuerHelper" />
                </div>
           </div>
      </div>
+
+     @if (infoData?.isOrderBookTab && infoData?.stats) {
+     <div class="card-base">
+          <div class="field-label">
+               <label for="orderBookData" class="label-primary">Order Book Data</label>
+          </div>
+          <div class="flex flex-wrap gap-2">
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">VWAP: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.vwap }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Simple Avg: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.simpleAvg }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Best Rate: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.bestRate }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Spread: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.spread }} ({{ infoData?.stats.spreadPercent }}%)</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Depth (30% slippage): </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.depth }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Execution (15 input): </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.execution }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Volatility: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.volatility }} {{ infoData?.pair }}</span>
+               </div>
+               <div class="bg-gray-50 rounded-lg px-3 py-1.5">
+                    <span class="text-xs text-gray-500">Liquidity Ratio: </span>
+                    <span class="text-sm font-mono font-medium text-gray-700 ml-1">{{ infoData?.stats.liquidityRatio }} {{ infoData?.pair }}</span>
+               </div>
+          </div>
+     </div>
+     }
 </div>

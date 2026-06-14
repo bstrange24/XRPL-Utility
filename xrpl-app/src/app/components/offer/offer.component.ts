@@ -407,24 +407,60 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      }
 
      async invertOrder(): Promise<void> {
+          // First, prevent any automatic recalculations during invert
+          this.offerUtilsService.setIsUpdatingExchange(true);
+
+          // Call invert order to swap store values
           this.offerUtilsService.invertOrder();
           const wallet = this.currentWallet();
 
           if (!wallet) {
                this.toastService.error('No wallet selected', AppConstants.TOAST.ERROR);
+               this.offerUtilsService.setIsUpdatingExchange(false);
                return;
           }
+
+          // Wait for the store to update
+          await new Promise(resolve => setTimeout(resolve, 50));
+
+          // Get the updated values from the store after inversion
+          const newWeWantCurrency = this.offerStoreService.weWantCurrency();
+          const newWeSpendCurrency = this.offerStoreService.weSpendCurrency();
+          const newWeWantIssuer = this.offerStoreService.weWantIssuer();
+          const newWeSpendIssuer = this.offerStoreService.weSpendIssuer();
+
+          console.log('Invert - New currencies:', { newWeWantCurrency, newWeSpendCurrency });
+
+          // Update ViewModel signals WITHOUT triggering issuer reloads yet
+          this.offerTransactionViewModelService.weWantCurrency.set(newWeWantCurrency);
+          this.offerTransactionViewModelService.weSpendCurrency.set(newWeSpendCurrency);
+          this.offerTransactionViewModelService.weWantIssuer.set(newWeWantIssuer);
+          this.offerTransactionViewModelService.weSpendIssuer.set(newWeSpendIssuer);
+
+          // Wait a bit for signals to settle
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+          // Now trigger issuer list refresh
+          this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
+          this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
+
+          // Refresh balances AFTER everything is set
+          await this.offerCurrency.refreshBothBalances(wallet);
+
+          // Allow recalculations again
+          this.offerUtilsService.setIsUpdatingExchange(false);
+
+          // Refresh order book if needed
           if (this.offerTransactionViewModelService.activeTab() === 'getOrderBook') {
                let env: any = null;
                try {
                     env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {});
                     if (!env) throw new Error('Unable to get environment.');
+                    await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
                } catch (err: any) {
                     console.error('prepareTxEnvironment failed:', err);
                     this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
-                    return;
                }
-               await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
           }
      }
 

@@ -21,6 +21,7 @@ export class OfferTransactionViewModelService {
      readonly weWantIssuer = signal<string>('');
      readonly weSpendCurrency = signal<string>('XRP');
      readonly weSpendIssuer = signal<string>('');
+
      // User balances for the selected pool assets
      readonly weWantUserBalance = computed(() => this.offerCurrency.weWant.balance());
      readonly weSpendUserBalance = computed(() => this.offerCurrency.weSpend.balance());

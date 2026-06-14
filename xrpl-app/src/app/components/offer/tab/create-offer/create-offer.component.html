@@ -19,9 +19,10 @@
           <!-- Currency Code -->
           <div class="side-by-side-fields">
                <div class="space-y-2">
+                    <!-- Currency Code -->
                     <div>
                          <div class="field-label">
-                              <label for="currencyCode" class="label-primary">Currency Code</label>
+                              <label for="currencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -31,7 +32,9 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event); onWeWantCurrencyChange()" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Gets Currency" [items]="takerGetsCurrencyHelperItems" [show]="showTakerGetsCurrencyHelper" />
                </div>
@@ -39,7 +42,7 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="currencyCodeSpend" class="label-primary">Currency Code</label>
+                              <label for="currencyCodeSpend" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -55,12 +58,13 @@
                </div>
           </div>
 
-          <!-- Issuer -->
-          <div class="side-by-side-fields">
-               <div class="space-y-2 mt-3">
+          <!-- Issuers -->
+          <div class="side-by-side-fields mt-3">
+               <div class="space-y-2">
+                    <!-- Issuer -->
                     <div>
                          <div class="field-label">
-                              <label for="issuer" class="label-primary">Issuer</label>
+                              <label for="issuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -70,15 +74,17 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendCurrencySelected.emit($event); onWeSpendCurrencyChange()" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Gets Issuer" [items]="takerGetsIssuerHelperItems" [show]="showTakerGetsIssuerHelper" />
                </div>
 
-               <div class="space-y-2 mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="issuerSpend" class="label-primary">Issuer</label>
+                              <label for="issuerSpend" class="label-primary">Issuer <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
@@ -88,15 +94,17 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="vm.weSpendIssuerItems()" [value]="vm.selectedWeSpendIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                         </div>
                     </div>
                     <app-field-helper title="Taker Pays Issuer" [items]="takerPaysIssuerHelperItems" [show]="showTakerPaysIssuerHelper" />
                </div>
           </div>
 
           <!-- Your Balances -->
-          <div class="side-by-side-fields">
-               <div class="space-y-2 mt-3">
+          <div class="side-by-side-fields mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
                               <label for="balance1" class="label-primary">Your Balance – Asset 1</label>
@@ -116,7 +124,7 @@
                     <app-field-helper title="Your Balance (Receive)" [items]="balance1HelperItems" [show]="showBalance1Helper" />
                </div>
 
-               <div class="space-y-2 mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
                               <label for="balance2" class="label-primary">Your Balance – Asset 2</label>
@@ -138,8 +146,8 @@
           </div>
 
           <!-- Amounts -->
-          <div class="side-by-side-fields">
-               <div class="space-y-2 mt-3">
+          <div class="side-by-side-fields mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
                               <label for="amountTakerGets" class="label-primary">Amount – Taker Gets</label>
@@ -157,7 +165,7 @@
                     <app-field-helper title="Taker Gets Amount" [items]="takerGetsAmountHelperItems" [show]="showTakerGetsAmountHelper" />
                </div>
 
-               <div class="space-y-2 mt-3">
+               <div class="space-y-2">
                     <div>
                          <div class="field-label">
                               <label for="amountTakerPays" class="label-primary">Amount – Taker Pays</label>
@@ -178,9 +186,11 @@
 
           <!-- Insufficient Liquidity Warning -->
           @if (store.insufficientLiquidityWarning()) {
-          <div class="flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3">
-               <ng-icon name="heroExclamationTriangle" size="16" class="flex-shrink-0 text-amber-600" />
-               <span class="text-sm text-amber-800"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-600 flex-shrink-0 mt-0.5" /> Insufficient liquidity to fill the full amount at current market rates.</span>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-2 mt-4">
+               <div class="flex gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="18" class="text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div class="text-sm text-amber-800">Insufficient liquidity to fill the full amount at current market rates.</div>
+               </div>
           </div>
           }
 

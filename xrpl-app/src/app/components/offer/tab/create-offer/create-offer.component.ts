@@ -9,6 +9,7 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { NgIcon } from '@ng-icons/core';
 import { AppConstants } from '../../../../core/app.constants';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { OfferUtilsService } from '../../../../services/offer/offer-utils/offer-utils.service';
 
 @Component({
      selector: 'app-create-offer',
@@ -22,6 +23,7 @@ export class CreateOfferTabComponent {
      public readonly offerStoreService = inject(OfferStoreService);
      public readonly view = inject(OfferTransactionViewModelService);
      public readonly txUiService = inject(TransactionUiService);
+     public readonly offerUtilsService = inject(OfferUtilsService);
 
      readonly weWantCurrencySelected = output<SelectItem | null>();
      readonly weWantIssuerSelected = output<SelectItem | null>();
@@ -98,5 +100,22 @@ export class CreateOfferTabComponent {
 
      toggleBalance2Helper() {
           this.showBalance2Helper.set(!this.showBalance2Helper());
+     }
+
+     // Add these methods to CreateOfferTabComponent
+     onWeWantCurrencyChange(): void {
+          // Recalculate when currency changes
+          const weSpendAmount = this.offerStoreService.weSpendAmount();
+          if (weSpendAmount && Number.parseFloat(weSpendAmount) > 0) {
+               this.offerUtilsService.updateTokenBalanceAndExchange();
+          }
+     }
+
+     onWeSpendCurrencyChange(): void {
+          // Recalculate when currency changes
+          const weWantAmount = this.offerStoreService.weWantAmount();
+          if (weWantAmount && Number.parseFloat(weWantAmount) > 0) {
+               this.offerUtilsService.updateTokenBalanceAndExchangeReverse();
+          }
      }
 }

@@ -21,7 +21,7 @@ export interface OfferState {
 
 const initialState: OfferState = {
      weWantCurrency: '',
-     weWantIssuer: '', // Will be set when currency is selected
+     weWantIssuer: '',
      weWantAmount: '',
      weSpendCurrency: 'XRP',
      weSpendIssuer: '', // XRP has no issuer
@@ -66,7 +66,6 @@ export const OfferStoreService = signalStore(
                patchState(store, structuredClone(initialState));
           },
           getAll(): OfferState {
-               // FIXED: Properly get all state values
                return {
                     weWantCurrency: store.weWantCurrency(),
                     weWantIssuer: store.weWantIssuer(),

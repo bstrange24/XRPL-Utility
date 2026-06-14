@@ -70,6 +70,40 @@ export class UtilsService {
           return typeof input === 'string' && !!input.trim();
      }
 
+     normalizeAmount(val: any): string {
+          if (!val) return '0';
+          if (typeof val === 'string') {
+               return /^\d+$/.test(val) ? String(xrpl.dropsToXrp(val)) : val;
+          }
+          return val?.value ?? '0';
+     }
+
+     roundAmount(amount: string | number, currency: string, defaultDecimals: number = 6): string {
+          const num = typeof amount === 'string' ? Number.parseFloat(amount) : amount;
+
+          if (Number.isNaN(num)) return '0';
+
+          // XRP always uses 6 decimals
+          if (currency === 'XRP') {
+               return num.toFixed(6);
+          }
+
+          // Define custom decimal places for specific tokens
+          const tokenDecimals: Record<string, number> = {
+               USD: 2,
+               USDC: 2,
+               USDT: 2,
+               EUR: 2,
+               BTC: 8,
+               ETH: 8,
+               JOE: 6, // Adjust as needed
+               // Add more tokens as needed
+          };
+
+          const decimals = tokenDecimals[currency] || defaultDecimals;
+          return num.toFixed(decimals);
+     }
+
      formatXRPLAmount = (value: any): string => {
           if (value == null || Number.isNaN(value)) {
                return 'Invalid amount';
@@ -476,7 +510,7 @@ export class UtilsService {
 
      convertDemurrageToUTF8(demurrageCode: string): string {
           let bytes = Buffer.from(demurrageCode, 'hex');
-          let code = String.fromCharCode(bytes[1]) + String.fromCharCode(bytes[2]) + String.fromCharCode(bytes[3]);
+          let code = String.fromCodePoint(bytes[1]) + String.fromCodePoint(bytes[2]) + String.fromCodePoint(bytes[3]);
           let interest_start = (bytes[4] << 24) + (bytes[5] << 16) + (bytes[6] << 8) + bytes[7];
           let interest_period = bytes.readDoubleBE(8);
           const year_seconds = 31536000; // By convention, the XRP Ledger's interest/demurrage rules use a fixed number of seconds per year (31536000), which is not adjusted for leap days or leap seconds
