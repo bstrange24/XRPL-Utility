@@ -1,0 +1,39 @@
+<!-- Get view model -->
+@let view = ammTransactionViewModelService;
+
+<div class="side-by-side-fields mt-5">
+     <div class="space-y-2">
+          <div>
+               <div class="field-label">
+                    <label for="balanceAsset1" class="label-primary">Token Balance</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Total balance of the Asset 1 token for the selected account.</p>
+                    <button type="button" (click)="toggleAsset1TotalBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <input type="text" readonly class="input-disabled" [value]="view.asset1UserBalance() || '0'" />
+          </div>
+          <app-field-helper title="Asset 1" [items]="showAsset1TotalBalanceHelperItems" [show]="showAsset1TotalBalanceHelper" />
+     </div>
+     <div class="space-y-2">
+          <div>
+               <div class="field-label">
+                    <label for="balanceAsset2" class="label-primary">Token Balance</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Total balance of the Asset 2 token for the selected account.</p>
+                    <button type="button" (click)="toggleAsset2TotalBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <input type="text" readonly class="input-disabled" [value]="view.asset2UserBalance() || '0'" />
+          </div>
+          <app-field-helper title="Asset 2" [items]="showAsset2TotalBalanceHelperItems" [show]="showAsset2TotalBalanceHelper" />
+     </div>
+</div>

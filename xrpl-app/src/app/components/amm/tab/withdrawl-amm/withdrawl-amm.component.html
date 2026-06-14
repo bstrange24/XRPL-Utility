@@ -1,0 +1,105 @@
+@let opts = ammUtilsService;
+
+<div class="space-y-6">
+     <div class="side-by-side-fields mt-5">
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="lpTokenBalance" class="label-primary">LP Token Balance</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">LP Token Balance currently in the pool</p>
+                         <button type="button" (click)="toggleLpTokenBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+                    <input type="text" readonly class="input-disabled" [value]="ammStoreService.lpTokenBalance() || '0'" />
+               </div>
+               <app-field-helper title="LP Token Balance" [items]="showLpTokenBalanceHelperItems" [show]="showLpTokenBalanceHelper" />
+          </div>
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="lpTokenToBurn" class="label-primary">LP Tokens to Withdraw</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">LP Tokens to withdraw from pool</p>
+                         <button type="button" (click)="toggleLpWithdrawHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <input type="text" [ngModel]="ammStoreService.withdrawlLpTokenFromPoolField()" (ngModelChange)="ammStoreService.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter amount to withdraw" />
+               </div>
+               <app-field-helper title="LP Token Withdrawal" [items]="showLpTokenBalanceHelperItems" [show]="showLpTokenBalanceHelper" />
+          </div>
+     </div>
+
+     <div class="space-y-3">
+          <div>
+               <label for="lpWithdrawlStrategy" class="mb-1 block text-sm font-semibold text-gray-900">Withdrawal Strategy</label>
+               <p class="text-secondary">Choose which asset(s) to receive from the pool.</p>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+               <!-- Both Assets -->
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.bg-green-50]="opts.withdrawOptions().bothPools">
+                    <input type="radio" name="withdrawStrategy" value="bothPools" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" class="hidden" />
+
+                    <div class="mt-0.5 flex-shrink-0">
+                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.border-gray-300]="!opts.withdrawOptions().bothPools">
+                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().bothPools" [class.scale-0]="!opts.withdrawOptions().bothPools"></div>
+                         </div>
+                    </div>
+
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroArrowsRightLeft" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().bothPools"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Both Assets</span>
+                         </div>
+                         <p class="mt-1 text-xs text-gray-500">Receive proportionally from both assets</p>
+                    </div>
+               </label>
+
+               <!-- Asset 1 Only -->
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.bg-green-50]="opts.withdrawOptions().firstPoolOnly">
+                    <input type="radio" name="withdrawStrategy" value="firstPoolOnly" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" class="hidden" />
+
+                    <div class="mt-0.5 flex-shrink-0">
+                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().firstPoolOnly">
+                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().firstPoolOnly" [class.scale-0]="!opts.withdrawOptions().firstPoolOnly"></div>
+                         </div>
+                    </div>
+
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().firstPoolOnly"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Asset 1 Only</span>
+                         </div>
+                         <p class="mt-1 text-xs text-gray-500">Receive only the first asset</p>
+                    </div>
+               </label>
+
+               <!-- Asset 2 Only -->
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.bg-green-50]="opts.withdrawOptions().secondPoolOnly">
+                    <input type="radio" name="withdrawStrategy" value="secondPoolOnly" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" class="hidden" />
+
+                    <div class="mt-0.5 flex-shrink-0">
+                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().secondPoolOnly">
+                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().secondPoolOnly" [class.scale-0]="!opts.withdrawOptions().secondPoolOnly"></div>
+                         </div>
+                    </div>
+
+                    <div class="flex-1">
+                         <div class="flex items-center gap-2">
+                              <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().secondPoolOnly"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900">Asset 2 Only</span>
+                         </div>
+                         <p class="mt-1 text-xs text-gray-500">Receive only the second asset</p>
+                    </div>
+               </label>
+          </div>
+     </div>
+</div>

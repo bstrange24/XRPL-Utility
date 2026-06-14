@@ -285,6 +285,23 @@ export const AppConstants = {
      // === Cancel Offer Page Helpers ===
      CANCEL_OFFER_SELECTOR_HELPER_ITEMS: ['Select one or more existing offers you want to cancel', 'You can only cancel offers created by your current account', 'Search by sequence number, currency, or amount', 'Cancelled offers are permanently removed from the order book'],
 
+     // AMM
+     AMM_ASSET1_HELPER_ITEMS: ['The first asset in the AMM pool', 'This can be XRP, a token, or another supported asset'],
+     AMM_ASSET2_HELPER_ITEMS: ['The second asset in the AMM pool', 'This asset is paired with Asset 1 to form the liquidity pool'],
+     AMM_ISSUER_ASSET1_HELPER_ITEMS: ['The issuing account for Asset 1', 'Required for issued tokens and should be left blank when Asset 1 is XRP'],
+     AMM_ISSUER_ASSET2_HELPER_ITEMS: ['The issuing account for Asset 2', 'Required for issued tokens and should be left blank when Asset 2 is XRP'],
+     AMM_ASSET1_TOTAL_BALANCE_HELPER_ITEMS: ['The total amount of Asset 1 currently held by the selected account', 'This value represents the token liquidity available for Asset 1'],
+     AMM_ASSET2_TOTAL_BALANCE_HELPER_ITEMS: ['The total amount of Asset 2 currently held by the selected account', 'This value represents the token liquidity available for Asset 2'],
+     AMM_AMOUNT1_HELPER_ITEMS: ['The amount of Asset 1 the selected account wants to use in the pool'],
+     AMM_AMOUNT2_HELPER_ITEMS: ['The amount of Asset 2 the selected account wants to use in the pool'],
+     AMM_POOL1_TOTAL_AMOUNT_HELPER_ITEMS: ['The amount of Asset 1 the selected account currently in the pool'],
+     AMM_POOL2_TOTAL_AMOUNT_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     AMM_TRADING_FEE_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     AMM_LP_TOKEN_BALANCE_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     AMM_SWAP_DESTINATION_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     // AMM
+
      MPT_TOKEN_COUNT_PRESETS: [10, 100, 1000, 10000, 100000, 1000000, 10000000],
      ASSET_SCALE_PRESETS: [0, 2, 6, 8, 15],
      TAXON_PRESETS: [0, 5, 10, 15, 20],

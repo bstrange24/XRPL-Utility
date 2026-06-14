@@ -1,0 +1,94 @@
+<!-- Get view model -->
+@let view = ammTransactionViewModelService;
+
+<div>
+     <h4 class="mb-4 text-sm font-semibold text-gray-900">Pool Assets</h4>
+
+     <!-- Asset 1 + Asset 2 -->
+     <div class="side-by-side-fields">
+          <!-- Asset 1 -->
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="asset1" class="label-primary">Asset 1 <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">First token in the liquidity pool.</p>
+                         <button type="button" (click)="toggleAsset1Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    </div>
+               </div>
+               <app-field-helper title="Asset 1" [items]="showAsset1HelperItems" [show]="showAsset1Helper" />
+          </div>
+
+          <!-- Asset 2 -->
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="asset2" class="label-primary">Asset 2 <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Second token in the liquidity pool.</p>
+                         <button type="button" (click)="toggleAsset2Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                    </div>
+               </div>
+               <app-field-helper title="Asset 2" [items]="showAsset2HelperItems" [show]="showAsset2Helper" />
+          </div>
+     </div>
+
+     <!-- Issuer 1 + Issuer 2 -->
+     <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="issuerAsset1" class="label-primary">Issuer <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Issuer of the first token (ignored for XRP).</p>
+                         <button type="button" (click)="toggleIssuerAsset1Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    </div>
+               </div>
+               <app-field-helper title="Issuer (Asset 1)" [items]="showIssuerAsset1HelperItems" [show]="showIssuerAsset1Helper" />
+          </div>
+
+          <!-- <div class="space-y-2">
+               <div>
+                    <div class="field-label">
+                         <label for="issuerAsset2" class="label-primary">Issuer (Asset 2) <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Issuer of the second token (ignored for XRP).</p>
+                         <button type="button" (click)="toggleIssuerAsset2Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
+                    </div>
+               </div>
+               <app-field-helper title="Issuer (Asset 2)" [items]="showIssuerAsset2HelperItems" [show]="showIssuerAsset2Helper" />
+          </div> -->
+     </div>
+</div>

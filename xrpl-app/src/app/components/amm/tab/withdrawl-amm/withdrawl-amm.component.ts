@@ -1,33 +1,27 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { NgIcon } from '@ng-icons/core';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
+import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { AmmStoreService } from '../../../../services/amm/amm-store/amm-store.service';
 import { AmmTransactionViewModelService } from '../../../../services/amm/amm-transaction-view-model/amm-transaction-view-model.service';
 import { AmmUtilsService } from '../../../../services/amm/amm-utils/amm-utils.service';
+import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { PoolOptions } from '../../constants/amm.types';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
-import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
-import { NgIcon } from '@ng-icons/core';
-import { AmmAssetIssuerFieldsComponent } from '../amm-asset-issuer-fields/amm-asset-issuer-fields.component';
-import { AmmBalanceFieldsComponent } from '../amm-balance-fields/amm-balance-fields.component';
-import { AmmAmountFieldsComponent } from '../amm-amount-fields/amm-amount-fields.component';
-import { AmmPoolTotalFieldsComponent } from '../amm-pool-total-fields/amm-pool-total-fields.component';
-import { DepositAmmComponent } from '../deposit-amm/deposit-amm.component';
-import { WithdrawlAmmComponent } from '../withdrawl-amm/withdrawl-amm.component';
+import { PoolOptions } from '../../constants/amm.types';
 import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
-     selector: 'app-amm-fields',
+     selector: 'withdrawl-amm',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, AmmAssetIssuerFieldsComponent, AmmBalanceFieldsComponent, AmmAmountFieldsComponent, AmmPoolTotalFieldsComponent, DepositAmmComponent, WithdrawlAmmComponent],
-     templateUrl: './amm-fields.component.html',
-     styleUrl: './amm-fields.component.css',
-     changeDetection: ChangeDetectionStrategy.OnPush,
+     imports: [CommonModule, FieldHelperComponent, FormsModule, NgIcon],
+     templateUrl: './withdrawl-amm.component.html',
+     styleUrl: './withdrawl-amm.component.css',
 })
-export class AmmFieldsComponent {
+export class WithdrawlAmmComponent {
      public readonly connectionGuard = inject(ConnectionGuardService);
      public readonly ammStoreService = inject(AmmStoreService);
      public readonly ammTransactionViewModelService = inject(AmmTransactionViewModelService);
@@ -35,20 +29,6 @@ export class AmmFieldsComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly utilsService = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
-
-     readonly amountHintMap: Record<string, { verb: string; preposition: string }> = {
-          createAMM: { verb: 'seed', preposition: 'to create' },
-          depositToAMM: { verb: 'deposit', preposition: 'into' },
-          withdrawalFromAMM: { verb: 'withdraw', preposition: 'from' },
-          clawbackFromAMM: { verb: 'claw back', preposition: 'from' },
-          swapViaAMM: { verb: 'swap', preposition: 'through' },
-     };
-
-     // Inputs from parent (destination dropdown)
-     tab = input.required<string>();
-     destinationItems = input.required<any[]>();
-     selectedDestinationItem = input.required<any>();
-     destinationSearchQuery = input.required<string>();
 
      // Outputs to parent
      pool1CurrencySelected = output<SelectItem | null>();
@@ -61,20 +41,20 @@ export class AmmFieldsComponent {
      destinationValueChange = output<SelectItem | null>();
 
      // Helper Items
-     readonly showTradingFeeHelperItems = AppConstants.AMM_TRADING_FEE_HELPER_ITEMS;
+     readonly showLpWithdrawHelperItems = AppConstants.AMM_TRADING_FEE_HELPER_ITEMS;
      readonly showLpTokenBalanceHelperItems = AppConstants.AMM_LP_TOKEN_BALANCE_HELPER_ITEMS;
      readonly showLpHolderAddressHelperItems = AppConstants.AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS;
      readonly showSwapDestinationHelperItems = AppConstants.AMM_SWAP_DESTINATION_HELPER_ITEMS;
 
      // UI Signals
-     showTradingFeeHelper = signal(false);
+     showLpWithdrawHelper = signal(false);
      showLpTokenBalanceHelper = signal(false);
      showLpHolderAddressHelper = signal(false);
      showSwapDestinationHelper = signal(false);
 
      // Toggle Methods
-     toggleTradingFeeHelper() {
-          this.showTradingFeeHelper.set(!this.showTradingFeeHelper());
+     toggleLpWithdrawHelper() {
+          this.showLpWithdrawHelper.set(!this.showLpWithdrawHelper());
      }
 
      toggleLpTokenBalanceHelper() {

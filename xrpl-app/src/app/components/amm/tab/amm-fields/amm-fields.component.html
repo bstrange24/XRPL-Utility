@@ -1,285 +1,127 @@
 <!-- Get view model and store for easier template access -->
-@let view = ammTransactionViewModelService; @let store = ammStoreService; @let opts = ammUtilsService;
+@let store = ammStoreService;
 
 <div class="space-y-6">
      <div class="card-base">
           <!-- ── Pool Assets Section ── -->
           @if (tab() === 'createAMM' || tab() === 'depositToAMM' || tab() === 'withdrawalFromAMM' || tab() === 'clawbackFromAMM' || tab() === 'swapViaAMM' || tab() === 'deleteAMM') {
-          <div>
-               <h4 class="mb-4 text-sm font-semibold text-gray-900">Pool Assets</h4>
+          <amm-asset-issuer-fields (pool1CurrencySelected)="pool1CurrencySelected.emit($event)" (pool1IssuerSelected)="pool1IssuerSelected.emit($event)" (pool2CurrencySelected)="pool2CurrencySelected.emit($event)" (pool2IssuerSelected)="pool2IssuerSelected.emit($event)"> </amm-asset-issuer-fields>
 
-               <!-- Asset 1 + Asset 2 -->
-               <div class="side-by-side-fields">
-                    <!-- Asset 1 -->
-                    <div class="space-y-2">
-                         <label for="asset1" class="label-primary">Asset 1</label>
-                         <p class="text-secondary">First token in the liquidity pool.</p>
-
-                         <div class="h-[54px]">
-                              <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
-                         </div>
-                    </div>
-
-                    <!-- Asset 2 -->
-                    <div class="space-y-2">
-                         <label for="asset2" class="label-primary">Asset 2</label>
-                         <p class="text-secondary">Second token in the liquidity pool.</p>
-
-                         <div class="h-[54px]">
-                              <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
-                         </div>
-                    </div>
-               </div>
-
-               <!-- Issuer 1 + Issuer 2 -->
-               <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div class="space-y-2">
-                         <label for="issuerAsset1" class="label-primary">Issuer (Asset 1)</label>
-                         <p class="text-secondary">Issuer of the first token (ignored for XRP).</p>
-
-                         <div class="h-[54px]">
-                              <app-select-search-dropdown [items]="view.pool1IssuerItems()" [value]="view.selectedPool1IssuerItem()" [showShortAddress]="true" (valueChange)="pool1IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
-                         </div>
-                    </div>
-
-                    <div class="space-y-2">
-                         <label for="issuerAsset2" class="label-primary">Issuer (Asset 2)</label>
-                         <p class="text-secondary">Issuer of the second token (ignored for XRP).</p>
-
-                         <div class="h-[54px]">
-                              <app-select-search-dropdown [items]="view.pool2IssuerItems()" [value]="view.selectedPool2IssuerItem()" [showShortAddress]="true" (valueChange)="pool2IssuerSelected.emit($event)" placeholder="Search issuer..." emptyMessage="No issuers available" />
-                         </div>
-                    </div>
-               </div>
-
-               <!-- Your Balances -->
-               <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div class="space-y-2">
-                         <label for="balanceAsset1" class="label-primary">Your Balance – Asset 1</label>
-                         <input type="text" readonly class="input-disabled" [value]="view.asset1UserBalance() || '0'" />
-                    </div>
-                    <div class="space-y-2">
-                         <label for="balanceAsset2" class="label-primary">Your Balance – Asset 2</label>
-                         <input type="text" readonly class="input-disabled" [value]="view.asset2UserBalance() || '0'" />
-                    </div>
-               </div>
-          </div>
+          <token-balance-fields> </token-balance-fields>
 
           <!-- Amount Fields (except Delete) -->
           @if (tab() !== 'deleteAMM') {
-          <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="amountAsset1" class="label-primary">Amount – Asset 1</label>
-                    <p class="text-secondary">Amount of Asset 1 to use in the pool.</p>
-                    <input type="text" [ngModel]="store.weWantAmount()" (ngModelChange)="store.setField('weWantAmount', $event)" class="input-base" />
-               </div>
-               <div class="space-y-2">
-                    <label for="amountAsset2" class="label-primary">Amount – Asset 2</label>
-                    <p class="text-secondary">Amount of Asset 2 to use in the pool.</p>
-                    <input type="text" [ngModel]="store.weSpendAmount()" (ngModelChange)="store.setField('weSpendAmount', $event)" class="input-base" />
-               </div>
-          </div>
+          <amm-amount-fields> </amm-amount-fields>
           }
 
           <!-- Pool Totals -->
-          <div class="side-by-side-fields">
-               <div class="space-y-2">
-                    <label for="poolTotalAsset1" class="label-primary">Pool Total – Asset 1</label>
-                    <input type="text" readonly class="input-disabled" [value]="store.assetPool1Balance() || '0'" />
-               </div>
-               <div class="space-y-2">
-                    <label for="poolTotalAsset2" class="label-primary">Pool Total – Asset 2</label>
-                    <input type="text" readonly class="input-disabled" [value]="store.assetPool2Balance() || '0'" />
-               </div>
-          </div>
+          <amm-pool-total-fields></amm-pool-total-fields>
           }
 
           <!-- Create AMM Specific Fields -->
           @if (tab() === 'createAMM') {
-          <div class="side-by-side-fields">
+          <div class="side-by-side-fields mt-5">
                <div class="space-y-2">
-                    <label for="ammTradingFee" class="label-primary">Trading Fee (%)</label>
-                    <p class="text-secondary">Fee charged on every swap (0% – 1%).</p>
-                    <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" placeholder="e.g. 0.3" class="input-base" />
+                    <div>
+                         <div class="field-label">
+                              <label for="ammTradingFee" class="label-primary">Trading Fee (%)</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Fee charged on every swap (0% – 1%).</p>
+                              <button type="button" (click)="toggleTradingFeeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" [ngModel]="store.tradingFeeField()" (ngModelChange)="store.setField('tradingFeeField', $event)" placeholder="e.g. 0.3" class="input-base" />
+                    </div>
                </div>
                <div class="space-y-2">
-                    <label for="lpTokenBalance" class="label-primary">LP Token Balance</label>
-                    <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
+                    <div>
+                         <div class="field-label">
+                              <label for="lpTokenBalance" class="label-primary">LP Token Balance</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">LP Token Balance</p>
+                              <button type="button" (click)="toggleLpTokenBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
+                    </div>
                </div>
           </div>
           }
 
           <!-- Deposit Options -->
           @if (tab() === 'depositToAMM') {
-          <div class="space-y-3">
-               <label for="depositStrategy" class="mb-1 block text-sm font-semibold text-gray-900">Deposit Strategy</label>
-               <p class="mb-3 text-xs text-gray-500">Choose which side(s) of the pool to deposit into.</p>
-
-               <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                    <!-- Both Pools (Proportional) -->
-                    <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.depositOptions().bothPools" [class.bg-green-50]="opts.depositOptions().bothPools">
-                         <input type="radio" name="depositStrategy" value="bothPools" [checked]="opts.depositOptions().bothPools" (change)="depositOptionChange.emit('bothPools')" class="hidden" />
-
-                         <div class="mt-0.5 flex-shrink-0">
-                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().bothPools" [class.border-gray-300]="!opts.depositOptions().bothPools">
-                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().bothPools" [class.scale-0]="!opts.depositOptions().bothPools"></div>
-                              </div>
-                         </div>
-
-                         <div class="flex-1">
-                              <div class="flex items-center gap-2">
-                                   <ng-icon name="heroArrowsRightLeft" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.depositOptions().bothPools"></ng-icon>
-                                   <span class="text-sm font-medium text-gray-900">Both Pools</span>
-                              </div>
-                              <p class="mt-1 text-xs text-gray-500">Deposit proportionally to both assets</p>
-                         </div>
-                    </label>
-
-                    <!-- Asset 1 Only -->
-                    <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.bg-green-50]="opts.depositOptions().firstPoolOnly">
-                         <input type="radio" name="depositStrategy" value="firstPoolOnly" [checked]="opts.depositOptions().firstPoolOnly" (change)="depositOptionChange.emit('firstPoolOnly')" class="hidden" />
-
-                         <div class="mt-0.5 flex-shrink-0">
-                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().firstPoolOnly" [class.border-gray-300]="!opts.depositOptions().firstPoolOnly">
-                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().firstPoolOnly" [class.scale-0]="!opts.depositOptions().firstPoolOnly"></div>
-                              </div>
-                         </div>
-
-                         <div class="flex-1">
-                              <div class="flex items-center gap-2">
-                                   <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.depositOptions().firstPoolOnly"></ng-icon>
-                                   <span class="text-sm font-medium text-gray-900">Asset 1 Only</span>
-                              </div>
-                              <p class="mt-1 text-xs text-gray-500">Deposit only the first asset</p>
-                         </div>
-                    </label>
-
-                    <!-- Asset 2 Only -->
-                    <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.bg-green-50]="opts.depositOptions().secondPoolOnly">
-                         <input type="radio" name="depositStrategy" value="secondPoolOnly" [checked]="opts.depositOptions().secondPoolOnly" (change)="depositOptionChange.emit('secondPoolOnly')" class="hidden" />
-
-                         <div class="mt-0.5 flex-shrink-0">
-                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.depositOptions().secondPoolOnly" [class.border-gray-300]="!opts.depositOptions().secondPoolOnly">
-                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.depositOptions().secondPoolOnly" [class.scale-0]="!opts.depositOptions().secondPoolOnly"></div>
-                              </div>
-                         </div>
-
-                         <div class="flex-1">
-                              <div class="flex items-center gap-2">
-                                   <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.depositOptions().secondPoolOnly"></ng-icon>
-                                   <span class="text-sm font-medium text-gray-900">Asset 2 Only</span>
-                              </div>
-                              <p class="mt-1 text-xs text-gray-500">Deposit only the second asset</p>
-                         </div>
-                    </label>
-               </div>
-          </div>
+          <deposit-amm></deposit-amm>
           }
 
           <!-- Withdrawal Options -->
           @if (tab() === 'withdrawalFromAMM') {
-          <div class="space-y-6">
-               <div class="side-by-side-fields">
-                    <div class="space-y-2">
-                         <label for="lpTokenBalanceWithdrawl" class="label-primary">LP Token Balance</label>
-                         <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
-                    </div>
-                    <div class="space-y-2">
-                         <label for="lpTokenToBurn" class="label-primary">LP Tokens to Burn</label>
-                         <input type="text" [ngModel]="store.withdrawlLpTokenFromPoolField()" (ngModelChange)="store.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter amount to withdraw" />
-                    </div>
-               </div>
-
-               <div class="space-y-3">
-                    <div>
-                         <label for="lpWithdrawlStrategy" class="mb-1 block text-sm font-semibold text-gray-900">Withdrawal Strategy</label>
-                         <p class="text-secondary">Choose which asset(s) to receive from the pool.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                         <!-- Both Assets -->
-                         <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.bg-green-50]="opts.withdrawOptions().bothPools">
-                              <input type="radio" name="withdrawStrategy" value="bothPools" [checked]="opts.withdrawOptions().bothPools" (change)="withdrawOptionChange.emit('bothPools')" class="hidden" />
-
-                              <div class="mt-0.5 flex-shrink-0">
-                                   <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().bothPools" [class.border-gray-300]="!opts.withdrawOptions().bothPools">
-                                        <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().bothPools" [class.scale-0]="!opts.withdrawOptions().bothPools"></div>
-                                   </div>
-                              </div>
-
-                              <div class="flex-1">
-                                   <div class="flex items-center gap-2">
-                                        <ng-icon name="heroArrowsRightLeft" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().bothPools"></ng-icon>
-                                        <span class="text-sm font-medium text-gray-900">Both Assets</span>
-                                   </div>
-                                   <p class="mt-1 text-xs text-gray-500">Receive proportionally from both assets</p>
-                              </div>
-                         </label>
-
-                         <!-- Asset 1 Only -->
-                         <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.bg-green-50]="opts.withdrawOptions().firstPoolOnly">
-                              <input type="radio" name="withdrawStrategy" value="firstPoolOnly" [checked]="opts.withdrawOptions().firstPoolOnly" (change)="withdrawOptionChange.emit('firstPoolOnly')" class="hidden" />
-
-                              <div class="mt-0.5 flex-shrink-0">
-                                   <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().firstPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().firstPoolOnly">
-                                        <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().firstPoolOnly" [class.scale-0]="!opts.withdrawOptions().firstPoolOnly"></div>
-                                   </div>
-                              </div>
-
-                              <div class="flex-1">
-                                   <div class="flex items-center gap-2">
-                                        <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().firstPoolOnly"></ng-icon>
-                                        <span class="text-sm font-medium text-gray-900">Asset 1 Only</span>
-                                   </div>
-                                   <p class="mt-1 text-xs text-gray-500">Receive only the first asset</p>
-                              </div>
-                         </label>
-
-                         <!-- Asset 2 Only -->
-                         <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.bg-green-50]="opts.withdrawOptions().secondPoolOnly">
-                              <input type="radio" name="withdrawStrategy" value="secondPoolOnly" [checked]="opts.withdrawOptions().secondPoolOnly" (change)="withdrawOptionChange.emit('secondPoolOnly')" class="hidden" />
-
-                              <div class="mt-0.5 flex-shrink-0">
-                                   <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="opts.withdrawOptions().secondPoolOnly" [class.border-gray-300]="!opts.withdrawOptions().secondPoolOnly">
-                                        <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="opts.withdrawOptions().secondPoolOnly" [class.scale-0]="!opts.withdrawOptions().secondPoolOnly"></div>
-                                   </div>
-                              </div>
-
-                              <div class="flex-1">
-                                   <div class="flex items-center gap-2">
-                                        <ng-icon name="heroBanknotes" size="18" class="text-gray-500 transition-colors group-hover:text-gray-700" [class.text-green-600]="opts.withdrawOptions().secondPoolOnly"></ng-icon>
-                                        <span class="text-sm font-medium text-gray-900">Asset 2 Only</span>
-                                   </div>
-                                   <p class="mt-1 text-xs text-gray-500">Receive only the second asset</p>
-                              </div>
-                         </label>
-                    </div>
-               </div>
-          </div>
+          <withdrawl-amm></withdrawl-amm>
           }
 
           <!-- Clawback -->
           @if (tab() === 'clawbackFromAMM') {
-          <div class="side-by-side-fields">
+          <div class="side-by-side-fields mt-5">
                <div class="space-y-2">
-                    <label for="lpTokenClawback" class="label-primary">LP Token Balance</label>
-                    <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
+                    <div>
+                         <div class="field-label">
+                              <label for="lpTokenClawback" class="label-primary">LP Token Balance</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">LP Token Balance</p>
+                              <button type="button" (click)="toggleLpTokenBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
+                    </div>
                </div>
                <div class="space-y-2">
-                    <label for="lpTokenClawbackHolder" class="label-primary">Holder Address (optional)</label>
-                    <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" />
+                    <div>
+                         <div class="field-label">
+                              <label for="lpTokenClawbackHolder" class="label-primary">Holder Address (optional)</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">LP Holder Address</p>
+                              <button type="button" (click)="toggleLpHolderAddressHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" />
+                    </div>
                </div>
           </div>
           }
 
           <!-- Swap Destination -->
           @if (tab() === 'swapViaAMM') {
-          <div class="space-y-2">
-               <label for="swapDestinationAccount" class="label-primary">Destination Account</label>
-               <p class="text-secondary">The account that will receive the swapped tokens.</p>
+          <div class="space-y-2 mt-5">
+               <div>
+                    <div class="field-label">
+                         <label for="swapDestinationAccount" class="label-primary">Destination Account</label>
+                    </div>
 
-               <div class="h-[54px]">
-                    <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The account that will receive the swapped tokens.</p>
+                         <button type="button" (click)="toggleSwapDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+                    </div>
                </div>
           </div>
           }

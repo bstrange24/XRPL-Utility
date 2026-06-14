@@ -1,0 +1,36 @@
+<div class="side-by-side-fields mt-5">
+     <div class="space-y-2">
+          <div>
+               <div class="field-label">
+                    <label for="amountAsset1" class="label-primary">Amount</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Amount of Asset 1 to use in the pool.</p>
+                    <button type="button" (click)="toggleAsset1AmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <input type="text" [ngModel]="ammStoreService.weWantAmount()" (ngModelChange)="ammStoreService.setField('weWantAmount', $event)" class="input-base" />
+          </div>
+          <app-field-helper title="Amount" [items]="showAmount1HelperItems" [show]="showAmount1Helper" />
+     </div>
+     <div class="space-y-2">
+          <div>
+               <div class="field-label">
+                    <label for="amountAsset2" class="label-primary">Amount</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Amount of Asset 2 to use in the pool.</p>
+                    <button type="button" (click)="toggleAsset2AmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <input type="text" [ngModel]="ammStoreService.weSpendAmount()" (ngModelChange)="ammStoreService.setField('weSpendAmount', $event)" class="input-base" />
+          </div>
+          <app-field-helper title="Amount" [items]="showAmount2HelperItems" [show]="showAmount2Helper" />
+     </div>
+</div>

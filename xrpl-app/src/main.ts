@@ -1,4 +1,4 @@
-import { NgIconsModule } from '@ng-icons/core';
+import { NgIconsModule, provideIcons } from '@ng-icons/core';
 import { featherCheck, featherX, featherAlertCircle, featherChevronDown, featherCheckCircle } from '@ng-icons/feather-icons';
 import { RealTimeExpirationService } from './app/services/shared/real-time-date-expiration-check/real-time-expiration.service';
 import { bootstrapApplication } from '@angular/platform-browser';
@@ -85,7 +85,6 @@ import {
      LucideFlaskRound,
      LucideActivity,
 } from 'lucide-angular';
-import { provideIcons } from '@ng-icons/core';
 import {
      heroPencilSquare,
      heroSquares2x2,
@@ -93,6 +92,7 @@ import {
      heroMinus,
      heroCheckBadge,
      heroCheck,
+     heroUser,
      heroQuestionMarkCircle,
      heroInformationCircle,
      heroExclamationCircle,
@@ -144,6 +144,7 @@ import {
      heroArrowUp,
      heroArrowDown,
      heroArrowsRightLeft,
+     heroTag,
 } from '@ng-icons/heroicons/outline';
 
 // Make Buffer and process available globally
@@ -258,6 +259,8 @@ bootstrapApplication(AppComponent, {
                heroMinus,
                heroCheckBadge,
                heroCheck,
+               heroUser,
+               heroTag,
                heroQuestionMarkCircle,
                heroInformationCircle,
                heroExclamationCircle,
