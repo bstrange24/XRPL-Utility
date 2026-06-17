@@ -41,7 +41,7 @@ export class WithdrawlAmmComponent {
      destinationValueChange = output<SelectItem | null>();
 
      // Helper Items
-     readonly showLpWithdrawHelperItems = AppConstants.AMM_TRADING_FEE_HELPER_ITEMS;
+     readonly showLpWithdrawHelperItems = AppConstants.AMM_LP_TOKEN_WITHDRAW_HELPER_ITEMS;
      readonly showLpTokenBalanceHelperItems = AppConstants.AMM_LP_TOKEN_BALANCE_HELPER_ITEMS;
      readonly showLpHolderAddressHelperItems = AppConstants.AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS;
      readonly showSwapDestinationHelperItems = AppConstants.AMM_SWAP_DESTINATION_HELPER_ITEMS;
@@ -67,5 +67,10 @@ export class WithdrawlAmmComponent {
 
      toggleSwapDestinationHelper() {
           this.showSwapDestinationHelper.set(!this.showSwapDestinationHelper());
+     }
+
+     selectWithdrawOption(key: keyof PoolOptions) {
+          this.ammUtilsService.selectWithdrawOption(key);
+          this.withdrawOptionChange.emit(key); // keep the emit if parent still needs it
      }
 }

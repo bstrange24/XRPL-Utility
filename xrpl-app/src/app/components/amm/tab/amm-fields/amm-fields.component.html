@@ -10,12 +10,14 @@
           <token-balance-fields> </token-balance-fields>
 
           <!-- Amount Fields (except Delete) -->
-          @if (tab() !== 'deleteAMM') {
+          @if (tab() !== 'deleteAMM' && tab() !== 'clawbackFromAMM') {
           <amm-amount-fields> </amm-amount-fields>
           }
 
           <!-- Pool Totals -->
+          <!-- @if (tab() !== 'clawbackFromAMM') {
           <amm-pool-total-fields></amm-pool-total-fields>
+          }  -->
           }
 
           <!-- Create AMM Specific Fields -->
@@ -76,14 +78,32 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">LP Token Balance</p>
-                              <button type="button" (click)="toggleLpTokenBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <p class="text-secondary">Current LP token balance in this pool</p>
+                              <button type="button" (click)="toggleClawbackLpTokenHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>
 
                          <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
                     </div>
+                    <app-field-helper title="LP Token Balance" [items]="showClawbackLpTokenHelperItems" [show]="showClawbackLpTokenHelper" />
+               </div>
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="lpTokenToBurn" class="label-primary">LP Tokens to Withdraw</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Number of LP tokens to burn for withdrawal</p>
+                              <button type="button" (click)="toggleLpWithdrawHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <input type="text" [ngModel]="ammStoreService.withdrawlLpTokenFromPoolField()" (ngModelChange)="ammStoreService.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter amount to withdraw" />
+                    </div>
+                    <app-field-helper title="LP Token Withdrawal" [items]="showLpTokenBalanceHelperItems" [show]="showLpWithdrawHelper" />
                </div>
                <div class="space-y-2">
                     <div>
@@ -92,14 +112,31 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">LP Holder Address</p>
-                              <button type="button" (click)="toggleLpHolderAddressHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <p class="text-secondary">Address of the LP token holder to clawback from</p>
+                              <button type="button" (click)="toggleClawbackHolderHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>
 
-                         <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" />
+                         <app-select-search-dropdown
+                              app-focus-border
+                              [validateXrpAddress]="true"
+                              [showClearButton]="true"
+                              [clearOnEscape]="true"
+                              [validateOn]="'blur'"
+                              [closeWhenInvalid]="true"
+                              [items]="destinationItems()"
+                              [value]="selectedDestinationItem()"
+                              [searchQueryInput]="destinationSearchQuery()"
+                              (searchQueryChange)="destinationSearchQueryChange.emit($event)"
+                              (valueChange)="destinationValueChange.emit($event)"
+                              (isValid)="onDestinationValidationChange($event)"
+                              placeholder="Enter or select destination address"
+                         >
+                         </app-select-search-dropdown>
+                         <!-- <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" placeholder="Enter holder address (optional)" /> -->
                     </div>
+                    <app-field-helper title="Holder Address" [items]="showClawbackHolderHelperItems" [show]="showClawbackHolderHelper" />
                </div>
           </div>
           }

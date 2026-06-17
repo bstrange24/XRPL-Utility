@@ -5,11 +5,11 @@
      <div class="space-y-2">
           <div>
                <div class="field-label">
-                    <label for="balanceAsset1" class="label-primary">Token Balance</label>
+                    <label for="balanceAsset1" class="label-primary">Asset 1 Balance</label>
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">Total balance of the Asset 1 token for the selected account.</p>
+                    <p class="text-secondary">Your available balance of {{ view.pool1Currency() || 'Asset 1' }}</p>
                     <button type="button" (click)="toggleAsset1TotalBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
@@ -17,16 +17,16 @@
 
                <input type="text" readonly class="input-disabled" [value]="view.asset1UserBalance() || '0'" />
           </div>
-          <app-field-helper title="Asset 1" [items]="showAsset1TotalBalanceHelperItems" [show]="showAsset1TotalBalanceHelper" />
+          <app-field-helper title="Asset 1 Balance" [items]="showAsset1TotalBalanceHelperItems" [show]="showAsset1TotalBalanceHelper" />
      </div>
      <div class="space-y-2">
           <div>
                <div class="field-label">
-                    <label for="balanceAsset2" class="label-primary">Token Balance</label>
+                    <label for="balanceAsset2" class="label-primary">Asset 2 Balance</label>
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">Total balance of the Asset 2 token for the selected account.</p>
+                    <p class="text-secondary">Your available balance of {{ view.pool2Currency() || 'Asset 2' }}</p>
                     <button type="button" (click)="toggleAsset2TotalBalanceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
@@ -34,6 +34,6 @@
 
                <input type="text" readonly class="input-disabled" [value]="view.asset2UserBalance() || '0'" />
           </div>
-          <app-field-helper title="Asset 2" [items]="showAsset2TotalBalanceHelperItems" [show]="showAsset2TotalBalanceHelper" />
+          <app-field-helper title="Asset 2 Balance" [items]="showAsset2TotalBalanceHelperItems" [show]="showAsset2TotalBalanceHelper" />
      </div>
 </div>

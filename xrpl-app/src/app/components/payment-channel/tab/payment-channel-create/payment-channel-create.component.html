@@ -122,7 +122,7 @@
           <div class="options">
                <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="txUiService.toggleOptions($event)"> Include optional fields in transaction </app-toggle-slider>
 
-               <button type="button" (click)="toggleOptionalFieldsHelper()" class="text-gray-400 hover:text-gray-600" title="Include optional fields in transaction ">
+               <button type="button" class="text-gray-400 hover:text-gray-600" (click)="toggleOptionalFieldsHelper()" title="Include optional fields in transaction ">
                     <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
                </button>
           </div>

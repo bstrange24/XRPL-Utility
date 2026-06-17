@@ -84,7 +84,7 @@ describe('AMM UI Configuration', () => {
                     expect(meta.icon).toBe('heroPlusCircle');
                     expect(meta.colorClass).toBe('blue-button-submenu');
                     expect(meta.title).toBe('Create');
-                    expect(meta.desc).toBe('Create an AMM on the XRPL.');
+                    expect(meta.desc).toBe('Create an AMM.');
                     expect(meta.color).toBe('#10b981');
                });
           });

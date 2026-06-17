@@ -129,17 +129,6 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
                     this.refreshAmmData();
                }
           });
-
-          // this.rightPanelService.setPanel({
-          //      mainComponent: AmmRequirementsInfoComponent,
-          //      mainInputs: {
-          //           activeTab: this.ammTransactionViewModelService.activeTab,
-          //      },
-
-          //      // Add summary here when you want it (e.g. on Credentials page)
-          //      // summaryComponent: CredentialsSummaryComponent,
-          //      // summaryInputs: { ... }
-          // });
      }
 
      ngOnInit(): void {
@@ -206,7 +195,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
 
           await this.offerCurrency.refreshBothBalances(wallet);
 
-          // FIXED: Only set XRP if no currency selected
+          // Only set XRP if no currency selected
           const currentSpendCurrency = this.offerCurrency.weSpend.currency();
           if (!currentSpendCurrency || currentSpendCurrency === '') {
                await this.offerCurrency.selectWeSpendCurrency('XRP', wallet);
@@ -261,6 +250,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
 
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+                    await this.refreshAmmData();
                     this.ammUtilsService.clearInputFields();
                }
           } catch (error: any) {
@@ -297,6 +287,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
                this.toastService.error('Please enter a valid destination address for the swap.', AppConstants.TOAST.ERROR);
                return;
           }
+
+          this.ammStoreService.setField('holderField', destination || '');
 
           const ammState = this.ammStoreService.getAll();
           const accountState = this.accountConfiguratorStoreService.getAll();

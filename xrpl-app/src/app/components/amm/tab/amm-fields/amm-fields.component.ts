@@ -14,15 +14,15 @@ import { NgIcon } from '@ng-icons/core';
 import { AmmAssetIssuerFieldsComponent } from '../amm-asset-issuer-fields/amm-asset-issuer-fields.component';
 import { AmmBalanceFieldsComponent } from '../amm-balance-fields/amm-balance-fields.component';
 import { AmmAmountFieldsComponent } from '../amm-amount-fields/amm-amount-fields.component';
-import { AmmPoolTotalFieldsComponent } from '../amm-pool-total-fields/amm-pool-total-fields.component';
 import { DepositAmmComponent } from '../deposit-amm/deposit-amm.component';
 import { WithdrawlAmmComponent } from '../withdrawl-amm/withdrawl-amm.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 
 @Component({
      selector: 'app-amm-fields',
      standalone: true,
-     imports: [CommonModule, FormsModule, SelectSearchDropdownComponent, NgIcon, AmmAssetIssuerFieldsComponent, AmmBalanceFieldsComponent, AmmAmountFieldsComponent, AmmPoolTotalFieldsComponent, DepositAmmComponent, WithdrawlAmmComponent],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, SelectSearchDropdownComponent, NgIcon, AmmAssetIssuerFieldsComponent, AmmBalanceFieldsComponent, AmmAmountFieldsComponent, DepositAmmComponent, WithdrawlAmmComponent],
      templateUrl: './amm-fields.component.html',
      styleUrl: './amm-fields.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,16 +65,26 @@ export class AmmFieldsComponent {
      readonly showLpTokenBalanceHelperItems = AppConstants.AMM_LP_TOKEN_BALANCE_HELPER_ITEMS;
      readonly showLpHolderAddressHelperItems = AppConstants.AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS;
      readonly showSwapDestinationHelperItems = AppConstants.AMM_SWAP_DESTINATION_HELPER_ITEMS;
+     readonly showClawbackLpTokenHelperItems = AppConstants.AMM_CLAWBACK_LP_TOKEN_HELPER_ITEMS;
+     readonly showClawbackHolderHelperItems = AppConstants.AMM_CLAWBACK_HOLDER_HELPER_ITEMS;
 
      // UI Signals
+     showLpWithdrawHelper = signal(false);
      showTradingFeeHelper = signal(false);
      showLpTokenBalanceHelper = signal(false);
      showLpHolderAddressHelper = signal(false);
      showSwapDestinationHelper = signal(false);
+     showClawbackLpTokenHelper = signal(false);
+     showClawbackHolderHelper = signal(false);
+     isDestinationValid = signal(false);
 
      // Toggle Methods
      toggleTradingFeeHelper() {
           this.showTradingFeeHelper.set(!this.showTradingFeeHelper());
+     }
+
+     toggleLpWithdrawHelper() {
+          this.showLpWithdrawHelper.set(!this.showLpWithdrawHelper());
      }
 
      toggleLpTokenBalanceHelper() {
@@ -87,5 +97,17 @@ export class AmmFieldsComponent {
 
      toggleSwapDestinationHelper() {
           this.showSwapDestinationHelper.set(!this.showSwapDestinationHelper());
+     }
+
+     toggleClawbackLpTokenHelper() {
+          this.showClawbackLpTokenHelper.set(!this.showClawbackLpTokenHelper());
+     }
+
+     toggleClawbackHolderHelper() {
+          this.showClawbackHolderHelper.set(!this.showClawbackHolderHelper());
+     }
+
+     onDestinationValidationChange(isValid: boolean) {
+          this.isDestinationValid.set(isValid);
      }
 }

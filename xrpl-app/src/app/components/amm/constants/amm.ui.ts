@@ -79,7 +79,7 @@ export const AMM_TAB_META: Record<
           icon: 'heroPlusCircle',
           colorClass: 'blue-button-submenu',
           title: 'Create',
-          desc: 'Create an AMM on the XRPL.',
+          desc: 'Create an AMM.',
           color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,

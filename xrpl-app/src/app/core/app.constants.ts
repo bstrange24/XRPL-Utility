@@ -300,6 +300,9 @@ export const AppConstants = {
      AMM_LP_TOKEN_BALANCE_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
      AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
      AMM_SWAP_DESTINATION_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
+     AMM_CLAWBACK_LP_TOKEN_HELPER_ITEMS: ['The total number of LP tokens you currently hold in this AMM pool', 'Clawback allows the issuer to take back LP tokens from holders under specific conditions.'],
+     AMM_CLAWBACK_HOLDER_HELPER_ITEMS: ['Optional: Specify a specific holder address to clawback LP tokens from. If left empty, the clawback will apply to all holders.', 'Use this when you need to reclaim LP tokens from specific addresses due to regulatory or compliance requirements.'],
+     AMM_LP_TOKEN_WITHDRAW_HELPER_ITEMS: ['Number of LP tokens you want to burn to withdraw your share of the pool assets.', 'When you burn LP tokens, you receive a proportional share of both assets in the pool based on your withdrawal strategy.'],
      // AMM
 
      MPT_TOKEN_COUNT_PRESETS: [10, 100, 1000, 10000, 100000, 1000000, 10000000],

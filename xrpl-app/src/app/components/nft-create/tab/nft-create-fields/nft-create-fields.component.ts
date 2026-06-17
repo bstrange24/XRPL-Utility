@@ -87,6 +87,7 @@ export class NftCreateFieldsComponent {
      readonly minterHelperItems = AppConstants.MINTER_HELPER_ITEMS;
      readonly taxonHelperItems = AppConstants.TAXON_HELPER_ITEMS;
      readonly destinationHelperItems = AppConstants.DESTINATION_HELPER_ITEMS;
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
 
      // Inputs
      readonly lastIntendedDestination = input<string>('');
@@ -118,6 +119,7 @@ export class NftCreateFieldsComponent {
      showDestinationHelper = signal(false);
      isDestinationValid = signal(false);
      isFocused = signal(false);
+     showOptionalFieldsHelper = signal(false);
 
      private forceToXrp() {
           const current = this.currencyStoreService.currency();
@@ -240,5 +242,9 @@ export class NftCreateFieldsComponent {
 
      toggleDestinationHelper() {
           this.showDestinationHelper.set(!this.showDestinationHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
      }
 }

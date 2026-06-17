@@ -29,6 +29,7 @@ export interface AmmState {
      expiration: string;
      issuerAddress: string;
      isCollapsed: boolean;
+     isLiquidityProvider: boolean;
 }
 
 const initialState: AmmState = {
@@ -60,6 +61,7 @@ const initialState: AmmState = {
      issuerAddress: '',
      expiration: '',
      isCollapsed: false,
+     isLiquidityProvider: false,
 };
 
 export const AmmStoreService = signalStore(

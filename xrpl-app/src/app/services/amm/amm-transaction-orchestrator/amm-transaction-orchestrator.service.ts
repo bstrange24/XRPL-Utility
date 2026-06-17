@@ -7,164 +7,17 @@ import { ToastService } from '../../utils/toast/toast.service';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
-import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { AMM_VALIDATION_RULES } from '../../../components/amm/constants/amm.constants';
-import { AmmState, AmmStoreService } from '../amm-store/amm-store.service';
+import { AmmStoreService } from '../amm-store/amm-store.service';
 import { AmmTransactionBuilderService } from '../amm-transaction-builder/amm-transaction-builder.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
-
-type AmmValidationMeta = {
-     buildValidationInputs: (args: { wallet: Wallet; env: any; amm: AmmState; account: any; txOptions: any }) => any;
-};
-
-const AMM_VALIDATION_META: Record<AmmTxType, AmmValidationMeta> = {
-     createAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               firstPoolAssetAmount: amm.weWantAmount,
-               secondPoolAssetAmount: amm.weSpendAmount,
-               firstPoolCurrencyField: amm.weWantCurrency,
-               secondPoolCurrencyField: amm.weSpendCurrency,
-               firstPoolIssuerField: amm.weWantIssuer,
-               secondPoolIssuerField: amm.weSpendIssuer,
-               tradingFeeField: amm.tradingFeeField,
-          }),
-     },
-     depositToAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               weWantCurrencyField: amm.weWantCurrency,
-               weSpendCurrencyField: amm.weSpendCurrency,
-               weWantIssuerField: amm.weWantIssuer,
-               weSpendIssuerField: amm.weSpendIssuer,
-               weWantAmountField: amm.weWantAmount,
-               weSpendAmountField: amm.weSpendAmount,
-          }),
-     },
-     withdrawalFromAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               weWantCurrencyField: amm.weWantCurrency,
-               weSpendCurrencyField: amm.weSpendCurrency,
-               weWantIssuerField: amm.weWantIssuer,
-               weSpendIssuerField: amm.weSpendIssuer,
-               weWantAmountField: amm.weWantAmount,
-               weSpendAmountField: amm.weSpendAmount,
-          }),
-     },
-     clawbackFromAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               weWantCurrencyField: amm.weWantCurrency,
-               weSpendCurrencyField: amm.weSpendCurrency,
-               weWantIssuerField: amm.weWantIssuer,
-               weSpendIssuerField: amm.weSpendIssuer,
-               lpTokenAmountField: amm.withdrawlLpTokenFromPoolField,
-          }),
-     },
-     swapViaAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               weWantCurrencyField: amm.weWantCurrency,
-               weSpendCurrencyField: amm.weSpendCurrency,
-               weWantIssuerField: amm.weWantIssuer,
-               weSpendIssuerField: amm.weSpendIssuer,
-               weWantAmountField: amm.weWantAmount,
-               weSpendAmountField: amm.weSpendAmount,
-          }),
-     },
-     deleteAMM: {
-          buildValidationInputs: ({ wallet, env, amm, account, txOptions }) => ({
-               wallet,
-               network: {
-                    accountInfo: env.accountInfo,
-                    accountObjects: env.accountObjects,
-                    fee: env.fee,
-                    currentLedger: env.ledgerInfo.lastIndex,
-               },
-               regularKey: {
-                    isRegularKey: txOptions?.isRegularKeyAddress,
-                    address: account?.regularKeyAddress,
-                    seed: account?.regularKeySeed,
-               },
-               env,
-               weWantCurrencyField: amm.weWantCurrency,
-               weSpendCurrencyField: amm.weSpendCurrency,
-               weWantIssuerField: amm.weWantIssuer,
-               weSpendIssuerField: amm.weSpendIssuer,
-          }),
-     },
-};
 
 @Injectable({
      providedIn: 'root',
 })
 export class AmmTransactionOrchestratorService {
      private readonly txEnvironmentService = inject(TxEnvironmentService);
-     private readonly validator = inject(ValidationService);
      private readonly xrplTransactionService = inject(XrplTransactionService);
      private readonly txUiService = inject(TransactionUiService);
      private readonly toastService = inject(ToastService);
@@ -199,15 +52,9 @@ export class AmmTransactionOrchestratorService {
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
-               // Validate
-               const meta = AMM_VALIDATION_META[type];
-               const validationInputs = meta.buildValidationInputs({ wallet, env, amm, account, txOptions });
-               const errors = await this.validator.validate(AMM_VALIDATION_RULES[type], { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
-
                // Fetch LP token participation data for operations that need it
                let lpToken: { currency: string; issuer: string; balance: string } | undefined;
-               if (type === 'withdrawalFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM') {
+               if (type === 'withdrawalFromAMM' || type === 'clawbackFromAMM' || type === 'deleteAMM' || type === 'swapViaAMM') {
                     const pool1Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
                     const pool2Asset = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
                     try {
@@ -220,7 +67,7 @@ export class AmmTransactionOrchestratorService {
                               };
                          }
                     } catch {
-                         // AMM pool not found – builder will handle validation error
+                         return { success: false, error: 'Unexpected AMM error occurred.', validationError: true };
                     }
 
                     if (!lpToken && type !== 'deleteAMM') {
@@ -240,7 +87,7 @@ export class AmmTransactionOrchestratorService {
                // Build transaction
                const depositOptions: PoolOptions = extra?.['depositOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
                const withdrawOptions: PoolOptions = extra?.['withdrawOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
-               const destination: string = extra?.['destination'] ?? '';
+               const destination: string = wallet.address;
                const effectiveWallet: xrpl.Wallet = env.wallet || wallet;
 
                let tx: xrpl.Transaction;
@@ -257,9 +104,25 @@ export class AmmTransactionOrchestratorService {
                     case 'clawbackFromAMM':
                          tx = this.ammTransactionBuilderService.buildClawbackFromAmmTx(effectiveWallet, amm, env, lpToken!);
                          break;
-                    case 'swapViaAMM':
-                         tx = this.ammTransactionBuilderService.buildSwapViaAmmTx(effectiveWallet, amm, env, destination);
+                    case 'swapViaAMM': {
+                         const input = this.ammTransactionBuilderService.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
+                         const output = this.ammTransactionBuilderService.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
+
+                         if (!input || !output) {
+                              throw new Error('Missing swap input/output');
+                         }
+
+                         const ammState = await this.getAmmState(client, input, output);
+                         const ob = await this.getOrderBookDepth(client, input, output);
+
+                         const route = this.decideRoute(ammState, ob, Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replaceAll(',', '')));
+                         const plan = this.buildExecutionPlan(route, Number.parseFloat(amm.withdrawlLpTokenFromPoolField.replaceAll(',', '')));
+
+                         await this.debugPoolLiquidity(client);
+
+                         tx = await this.ammTransactionBuilderService.buildTx(amm, plan, effectiveWallet, input, output, env, destination, client);
                          break;
+                    }
                     case 'deleteAMM':
                          tx = this.ammTransactionBuilderService.buildDeleteAmmTx(effectiveWallet, amm, env);
                          break;
@@ -325,6 +188,139 @@ export class AmmTransactionOrchestratorService {
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
+     }
+
+     async debugPoolLiquidity(client: xrpl.Client) {
+          try {
+               const resp = await client.request({
+                    command: 'amm_info',
+                    asset: { currency: 'XRP' },
+                    asset2: {
+                         currency: 'JOE',
+                         issuer: 'rhZmA5XVLvB2dRG3wadNgxHUc9JhfBpwUM',
+                    },
+               });
+
+               const a = resp.result.amm;
+               console.log('🔍 AMM LIQUIDITY DEBUG:');
+               console.log('   XRP in pool :', a.amount ? Number(a.amount) / 1_000_000 : 'N/A');
+               console.log('   JOE in pool :', a.amount2 || 'N/A');
+               console.log('   LP tokens   :', a.lp_token?.value);
+               console.log('   Trading fee :', a.trading_fee);
+
+               return a;
+          } catch (e) {
+               console.error('Failed to get amm_info:', e);
+               return null;
+          }
+     }
+
+     async getAmmState(client: xrpl.Client, currencyA: any, currencyB: any) {
+          const resp = await client.request({
+               command: 'amm_info',
+               asset: currencyA,
+               asset2: currencyB,
+          });
+
+          const amm = resp.result.amm;
+
+          return {
+               liquidityA: amm.amount,
+               liquidityB: amm.amount2,
+               lpFeeBps: amm.trading_fee,
+               price: this.getAmountValue(amm.amount2) / this.getAmountValue(amm.amount),
+          };
+     }
+
+     getAmountValue(amount: xrpl.Amount): number {
+          if (typeof amount === 'string') {
+               return Number(amount) / 1_000_000; // XRP drops → XRP
+          }
+
+          if ('value' in amount) {
+               return Number(amount.value);
+          }
+
+          throw new Error('Unknown XRPL Amount format');
+     }
+
+     async getOrderBookDepth(client: xrpl.Client, takerPays: any, takerGets: any) {
+          const resp = await client.request({
+               command: 'book_offers',
+               taker_pays: takerPays,
+               taker_gets: takerGets,
+               limit: 50,
+          });
+
+          let total = 0;
+          let weighted = 0;
+
+          for (const offer of resp.result.offers) {
+               const gets = this.getAmountValue(offer.TakerGets);
+               const pays = this.getAmountValue(offer.TakerPays);
+
+               const price = pays / gets;
+               const size = gets;
+
+               weighted += price * size;
+               total += size;
+          }
+
+          return {
+               avgPrice: total ? weighted / total : null,
+               depth: total,
+          };
+     }
+
+     decideRoute(amm: any, ob: any, amountIn: number) {
+          const ammCapacity = Number(amm.liquidityA);
+          const obCapacity = ob.depth;
+
+          const ammPrice = amm.price;
+          const obPrice = ob.avgPrice ?? ammPrice;
+
+          const ammScore = ammCapacity > amountIn ? ammPrice : ammPrice * 1.02;
+          const obScore = obCapacity > amountIn ? obPrice : obPrice * 1.03;
+
+          const best = Math.min(ammScore, obScore);
+
+          if (Math.abs(ammScore - obScore) < 0.005) {
+               return 'HYBRID';
+          }
+
+          return best === ammScore ? 'AMM' : 'ORDERBOOK';
+     }
+
+     buildExecutionPlan(route: string, amountIn: number) {
+          // For cross-currency payments (XRP -> non-XRP), we need tfPartialPayment
+          // This is because the actual amount received may vary based on the exchange rate
+          switch (route) {
+               case 'AMM':
+                    return {
+                         type: 'AMM_ONLY',
+                         useDeliverMin: true,
+                         usePartial: true, // Always true for AMM routes with non-XRP destination
+                    };
+
+               case 'ORDERBOOK':
+                    return {
+                         type: 'BOOK_ONLY',
+                         useDeliverMin: true,
+                         usePartial: true, // Always true for order book routes with non-XRP destination
+                    };
+
+               case 'HYBRID':
+                    return {
+                         type: 'HYBRID',
+                         useDeliverMin: true,
+                         usePartial: true, // Always true for hybrid routes with non-XRP destination
+                    };
+          }
+          return {
+               type: 'AMM_ONLY',
+               useDeliverMin: true,
+               usePartial: true,
+          };
      }
 
      private getSimulationMessage(type: AmmTxType): string {

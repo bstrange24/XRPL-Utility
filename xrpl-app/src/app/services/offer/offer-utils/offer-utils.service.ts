@@ -754,7 +754,85 @@ export class OfferUtilsService {
           return { spread, spreadPercent, bestTokenXrp, bestXrpToken };
      }
 
-     private computeAverageExchangeRateBothWays(offers: any[], tradeSizeXRP = 15) {
+     computeAverageExchangeRateBothWays(offers: any[], tradeSizeXRP = 15) {
+          let totalPays = 0;
+          let totalGets = 0;
+          const forwardRates = [];
+          const inverseRates = [];
+          let bestQuality = Infinity;
+
+          for (const offer of offers) {
+               const getsValue = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const paysValue = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
+               if (getsValue > 0 && paysValue > 0) {
+                    totalPays += paysValue;
+                    totalGets += getsValue;
+                    forwardRates.push(getsValue / paysValue);
+                    inverseRates.push(paysValue / getsValue);
+                    bestQuality = Math.min(bestQuality, paysValue / getsValue);
+               }
+          }
+
+          const maxQuality = bestQuality * 1.05;
+          let depthGets = 0;
+          let depthPays = 0;
+          for (const offer of offers) {
+               const gv = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const pv = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
+               if (pv > 0 && gv > 0 && pv / gv <= maxQuality) {
+                    depthGets += gv;
+                    depthPays += pv;
+               }
+          }
+
+          let execGets = 0;
+          let execPays = 0;
+          let remainingPays = tradeSizeXRP;
+          let insufficientLiquidity = false;
+          for (const offer of offers) {
+               const gv = typeof offer.TakerGets === 'string' ? Number.parseFloat(offer.TakerGets) / 1_000_000 : Number.parseFloat(offer.TakerGets?.value ?? '0');
+               const pv = typeof offer.TakerPays === 'string' ? Number.parseFloat(offer.TakerPays) / 1_000_000 : Number.parseFloat(offer.TakerPays?.value ?? '0');
+               const xrpValue = typeof offer.TakerGets === 'string' ? gv : pv;
+               const tokenValue = typeof offer.TakerGets === 'string' ? pv : gv;
+               const paysToUse = Math.min(remainingPays, xrpValue);
+               if (paysToUse > 0) {
+                    execGets += xrpValue > 0 ? (paysToUse / xrpValue) * tokenValue : 0;
+                    execPays += paysToUse;
+                    remainingPays -= paysToUse;
+               }
+               if (remainingPays <= 0) break;
+          }
+          if (remainingPays > 0) insufficientLiquidity = true;
+
+          const meanForward = forwardRates.length > 0 ? forwardRates.reduce((a, b) => a + b, 0) / forwardRates.length : 0;
+          const varianceForward = forwardRates.length > 0 ? forwardRates.reduce((sum, r) => sum + Math.pow(r - meanForward, 2), 0) / forwardRates.length : 0;
+          const stdDevForward = Math.sqrt(varianceForward);
+
+          return {
+               forward: {
+                    vwap: totalPays > 0 ? totalGets / totalPays : 0,
+                    simpleAvg: meanForward,
+                    bestRate: forwardRates.length > 0 ? Math.max(...forwardRates) : 0,
+                    worstRate: forwardRates.length > 0 ? Math.min(...forwardRates) : 0,
+                    depthToken: depthGets,
+                    depthXRP: depthPays,
+                    executionPrice: execPays > 0 ? execGets / execPays : 0,
+                    executionPriceToken: execGets,
+                    executionXRP: execPays,
+                    insufficientLiquidity,
+                    volatility: stdDevForward,
+                    volatilityPercent: meanForward > 0 ? (stdDevForward / meanForward) * 100 : 0,
+               },
+               inverse: {
+                    vwap: totalGets > 0 ? totalPays / totalGets : 0,
+                    simpleAvg: inverseRates.length > 0 ? inverseRates.reduce((a, b) => a + b, 0) / inverseRates.length : 0,
+                    bestRate: inverseRates.length > 0 ? Math.max(...inverseRates) : 0,
+                    worstRate: inverseRates.length > 0 ? Math.min(...inverseRates) : 0,
+               },
+          };
+     }
+
+     private computeAverageExchangeRateBothWays12(offers: any[], tradeSizeXRP = 15) {
           let totalPays = 0;
           let totalGets = 0;
           const forwardRates: number[] = [];

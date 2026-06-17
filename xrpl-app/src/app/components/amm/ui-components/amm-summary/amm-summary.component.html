@@ -92,10 +92,16 @@
                                         <app-summary-key-value label="Your Share">
                                              <span class="text-green-600 font-medium">{{ pool.userShare }}%</span>
                                         </app-summary-key-value>
-                                        } @if (pool.auctionSlot) {
+                                        } @if (pool.hasAuctionSlot && pool.auctionSlot) {
                                         <app-summary-key-value label="Auction Slot">
-                                             <span class="text-purple-600 font-medium">Active</span>
-                                             <span class="text-gray-500 text-xs ml-1">({{ pool.auctionTimeLeft }})</span>
+                                             <div class="flex flex-col gap-1">
+                                                  <span class="text-purple-600 font-medium">Active</span>
+                                                  @if (pool.auctionSlot.timeLeft) {
+                                                  <span class="text-gray-500 text-xs">Expires in: {{ pool.auctionSlot.timeLeft }}</span>
+                                                  } @if (pool.auctionSlot.price && pool.auctionSlot.price !== '0') {
+                                                  <span class="text-gray-500 text-xs">Price: {{ pool.auctionSlot.price }} XRP</span>
+                                                  }
+                                             </div>
                                         </app-summary-key-value>
                                         }
                                    </div>

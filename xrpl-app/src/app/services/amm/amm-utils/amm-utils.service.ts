@@ -87,7 +87,65 @@ export class AmmUtilsService {
           });
      }
 
+     // amm-utils.service.ts
      async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any) {
+          let result: {
+               isAmmPool: boolean;
+               isLiquidityProvider: boolean;
+               ammInfo?: any;
+               lpTokens: { issuer: string; currency: string; balance: string }[];
+          } = {
+               isAmmPool: false,
+               isLiquidityProvider: false,
+               ammInfo: undefined,
+               lpTokens: [],
+          };
+
+          try {
+               if (ammResponse?.result?.amm) {
+                    this.logService.logObjects('checkAmmParticipation', ammResponse.result.amm);
+                    result.isAmmPool = true;
+                    result.ammInfo = ammResponse.result.amm;
+
+                    // Check if the user is a liquidity provider by looking for their LP tokens
+                    const lpTokenBalance = ammResponse.result.amm.lp_token?.value || '0';
+                    if (Number.parseFloat(lpTokenBalance) > 0) {
+                         result.isLiquidityProvider = true;
+                         result.lpTokens.push({
+                              issuer: ammResponse.result.amm.account,
+                              currency: ammResponse.result.amm.lp_token.currency,
+                              balance: lpTokenBalance,
+                         });
+                    }
+
+                    if (displayChanges) {
+                         this.ammStoreService.setField('lpTokenBalance', lpTokenBalance);
+                         const toDisplay = (amt: any): string => {
+                              const val = typeof amt === 'string' ? xrpl.dropsToXrp(amt) : amt.value;
+                              return this.utilsService.formatTokenBalance(val, 18);
+                         };
+                         this.ammStoreService.setField('assetPool1Balance', toDisplay(result.ammInfo.amount));
+                         this.ammStoreService.setField('assetPool2Balance', toDisplay(result.ammInfo.amount2));
+
+                         // Signal whether the user is a liquidity provider
+                         this.ammStoreService.setField('isLiquidityProvider', result.isLiquidityProvider);
+                    }
+               } else if (displayChanges) {
+                    this.ammStoreService.setField('lpTokenBalance', '0');
+                    this.ammStoreService.setField('assetPool1Balance', '0');
+                    this.ammStoreService.setField('assetPool2Balance', '0');
+                    this.ammStoreService.setField('isLiquidityProvider', false);
+               }
+          } catch (e) {
+               console.warn('Not an AMM account:', e);
+               if (displayChanges) {
+                    this.ammStoreService.setField('isLiquidityProvider', false);
+               }
+          }
+          return result;
+     }
+
+     async checkAmmParticipation234324(displayChanges: boolean = false, ammResponse?: any) {
           let result: { isAmmPool: boolean; isLiquidityProvider: boolean; ammInfo?: any; lpTokens: { issuer: string; currency: string; balance: string }[] } = {
                isAmmPool: false,
                isLiquidityProvider: false,

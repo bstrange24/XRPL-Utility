@@ -195,16 +195,18 @@
           </div>
 
           <!-- Create Sell Offer on Mint Toggle -->
-          <div class="card-base">
+          <div class="card-base pt-2.5 pb-2.5">
                <div class="options">
                     <app-toggle-slider [checked]="nftCreateStoreService.enableSellOnNftCreation()" (checkedChange)="optionsToggled.emit($event)"> Create Sell Offer on NFT Creation </app-toggle-slider>
 
                     <div class="flex items-center gap-2">
-                         <button type="button" class="btn-optional-fields" title="Additional sell offer fields will appear when this option is enabled.">
-                              <ng-icon name="heroQuestionMarkCircle" size="18"></ng-icon>
+                         <button type="button" class="text-gray-400 hover:text-gray-600" (click)="toggleOptionalFieldsHelper()" title="Additional sell offer fields will appear when this option is enabled.">
+                              <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
                          </button>
                     </div>
                </div>
+
+               <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
           </div>
 
           <!-- Sell Offer Fields -->

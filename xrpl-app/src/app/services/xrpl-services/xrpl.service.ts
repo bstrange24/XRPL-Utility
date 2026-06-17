@@ -199,11 +199,9 @@ export class XrplService {
                const currentClient = this.client();
                if (currentClient?.isConnected()) {
                     this.checkServerState(currentClient);
-               } else {
-                    if (this.syncCheckInterval) {
-                         clearInterval(this.syncCheckInterval);
-                         this.syncCheckInterval = null;
-                    }
+               } else if (this.syncCheckInterval) {
+                    clearInterval(this.syncCheckInterval);
+                    this.syncCheckInterval = null;
                }
           }, 3000);
      }
@@ -274,7 +272,7 @@ export class XrplService {
                const info = response.result.info;
 
                // Get reported state - it might be missing on some nodes
-               const reportedState = (info.server_state as XrplServerState) || 'full';
+               const reportedState = info.server_state || 'full';
 
                // TEST if we can actually query the ledger
                let canQueryLedger = false;

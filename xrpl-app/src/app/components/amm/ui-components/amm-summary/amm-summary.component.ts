@@ -12,6 +12,8 @@ import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shar
 import { AmmStoreService } from '../../../../services/amm/amm-store/amm-store.service';
 import { AmmTransactionViewModelService } from '../../../../services/amm/amm-transaction-view-model/amm-transaction-view-model.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
+import { XrplCacheService } from '../../../../services/xrpl-cache/xrpl-cache.service';
+import { XrplService } from '../../../../services/xrpl-services/xrpl.service';
 
 type SortKey = 'asset1' | 'asset2' | 'totalLiquidity' | 'lpTokens' | 'tradingFee' | 'userShare';
 type QuickFilter = 'all' | 'myPools' | 'highLiquidity' | 'lowFee';
@@ -27,9 +29,14 @@ interface AMMPool {
      tradingFee: number;
      isLiquidityProvider: boolean;
      userShare?: number;
-     auctionSlot?: boolean;
-     auctionTimeLeft?: string;
      totalLiquidity: number;
+     hasAuctionSlot?: boolean;
+     auctionSlot?: {
+          account: string;
+          price: string;
+          expiration: number;
+          timeLeft?: string;
+     };
 }
 
 @Component({
@@ -45,6 +52,8 @@ export class AmmSummaryComponent {
      public readonly txUiService = inject(TransactionUiService);
      public readonly copyUtilService = inject(CopyUtilService);
      public readonly walletManagerService = inject(WalletManagerService);
+     public readonly xrplCacheService = inject(XrplCacheService);
+     public readonly xrplService = inject(XrplService);
 
      // Inputs
      readonly infoPanelExpanded = input<boolean>();
@@ -58,6 +67,13 @@ export class AmmSummaryComponent {
      readonly sortBy = signal<SortKey>('totalLiquidity');
      readonly sortDirection = signal<'asc' | 'desc'>('desc');
      readonly selectedPoolId = signal<string | null>(null);
+     readonly isLoading = signal<boolean>(false);
+
+     // Store fetched pools
+     private readonly fetchedPools = signal<AMMPool[]>([]);
+
+     isLiquidityProvider = computed(() => this.ammStoreService.isLiquidityProvider());
+     isCreating = computed(() => this.ammTransactionViewModelService.activeTab() === 'createAMM');
 
      // Sort Options
      sortOptions: SortOption[] = [
@@ -82,11 +98,12 @@ export class AmmSummaryComponent {
           const wallet = this.walletManagerService?.getSelectedWallet();
           if (!wallet?.address) return null;
 
-          const pools = this.getAmmPools();
+          const pools = this.fetchedPools();
           const myPools = pools.filter(p => p.isLiquidityProvider);
 
           return {
                walletName: wallet.name || wallet.address.slice(0, 10) + '...',
+               walletAddress: wallet.address,
                poolCount: pools.length,
                myPoolCount: myPools.length,
                hasActivePool: pools.length > 0,
@@ -112,7 +129,7 @@ export class AmmSummaryComponent {
                     pools = pools.filter(pool => pool.isLiquidityProvider);
                     break;
                case 'highLiquidity':
-                    pools = pools.filter(pool => pool.totalLiquidity > 10000); // Adjust threshold as needed
+                    pools = pools.filter(pool => pool.totalLiquidity > 10000);
                     break;
                case 'lowFee':
                     pools = pools.filter(pool => pool.tradingFee < 0.3);
@@ -176,64 +193,139 @@ export class AmmSummaryComponent {
                this.resetTrigger(); // track changes
                this.clearSearch();
           });
+
+          // Fetch pools when wallet changes or reset trigger changes
+          effect(() => {
+               this.resetTrigger();
+               this.fetchWalletAmmPools();
+          });
      }
 
-     private getAmmPools(): AMMPool[] {
-          // This should fetch all AMM pools the account participates in
-          // For now, return the current pool if it exists
-          const currentPool = this.ammStoreService;
-          const pools: AMMPool[] = [];
-
-          if (currentPool.assetPool1Balance() && currentPool.assetPool2Balance()) {
-               const asset1Balance = Number.parseFloat(currentPool.assetPool1Balance());
-               const asset2Balance = Number.parseFloat(currentPool.assetPool2Balance());
-               const totalLiquidity = asset1Balance + asset2Balance;
-
-               pools.push({
-                    poolId: this.generatePoolId(currentPool.weWantCurrency(), currentPool.weSpendCurrency(), currentPool.weWantIssuer(), currentPool.weSpendIssuer()),
-                    poolAccount: this.walletManagerService?.getSelectedWallet()?.address || '',
-                    asset1: currentPool.weWantCurrency(),
-                    asset2: currentPool.weSpendCurrency(),
-                    asset1Balance: currentPool.assetPool1Balance(),
-                    asset2Balance: currentPool.assetPool2Balance(),
-                    lpTokenBalance: currentPool.lpTokenBalance() || '0',
-                    tradingFee: Number.parseFloat(currentPool.tradingFeeField() || '0'),
-                    isLiquidityProvider: Number.parseFloat(currentPool.lpTokenBalance() || '0') > 0,
-                    userShare: this.calculateUserShare(Number.parseFloat(currentPool.lpTokenBalance() || '0'), totalLiquidity),
-                    totalLiquidity: totalLiquidity,
-               });
+     private async fetchWalletAmmPools(): Promise<void> {
+          const wallet = this.walletManagerService?.getSelectedWallet();
+          if (!wallet?.address) {
+               this.fetchedPools.set([]);
+               return;
           }
 
-          return pools;
+          this.isLoading.set(true);
+
+          try {
+               const pools: AMMPool[] = [];
+
+               // Check if the current wallet has LP tokens or pool data
+               const lpTokenBalance = this.ammStoreService.lpTokenBalance();
+               const hasLP = lpTokenBalance && Number.parseFloat(lpTokenBalance) > 0;
+               const hasPoolData = this.ammStoreService.assetPool1Balance() && Number.parseFloat(this.ammStoreService.assetPool1Balance() || '0') > 0;
+
+               console.log('AMM Summary - Wallet:', wallet.address);
+               console.log('AMM Summary - hasLP:', hasLP, 'lpTokenBalance:', lpTokenBalance);
+               console.log('AMM Summary - hasPoolData:', hasPoolData);
+
+               // Add the current pool if the wallet has LP tokens or pool data
+               if ((hasLP || hasPoolData) && this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
+                    const asset1Balance = Number.parseFloat(this.ammStoreService.assetPool1Balance() || '0');
+                    const asset2Balance = Number.parseFloat(this.ammStoreService.assetPool2Balance() || '0');
+                    const totalLiquidity = asset1Balance + asset2Balance;
+                    // const auctionSlot = ammInfo?.auction_slot;
+
+                    pools.push({
+                         poolId: this.generatePoolId(this.ammStoreService.weWantCurrency(), this.ammStoreService.weSpendCurrency(), this.ammStoreService.weWantIssuer(), this.ammStoreService.weSpendIssuer()),
+                         poolAccount: wallet.address,
+                         asset1: this.ammStoreService.weWantCurrency(),
+                         asset2: this.ammStoreService.weSpendCurrency(),
+                         asset1Balance: this.ammStoreService.assetPool1Balance() || '0',
+                         asset2Balance: this.ammStoreService.assetPool2Balance() || '0',
+                         lpTokenBalance: lpTokenBalance || '0',
+                         tradingFee: Number.parseFloat(this.ammStoreService.tradingFeeField() || '0'),
+                         isLiquidityProvider: hasLP === true,
+                         userShare: hasLP && totalLiquidity > 0 ? (Number.parseFloat(lpTokenBalance) / totalLiquidity) * 100 : 0,
+                         totalLiquidity: totalLiquidity,
+                         // hasAuctionSlot: !!auctionSlot,
+                         // auctionSlot: auctionSlot
+                         //      ? {
+                         //             account: auctionSlot.account,
+                         //             price: auctionSlot.price?.value ?? auctionSlot.price ?? '0',
+                         //             expiration: Number(auctionSlot.expiration),
+                         //             timeLeft: this.calculateTimeLeft(Number(auctionSlot.expiration)),
+                         //        }
+                         //      : undefined,
+                    });
+
+                    console.log('AMM Summary - Added pool:', pools[0]);
+               }
+
+               this.fetchedPools.set(pools);
+
+               if (pools.length === 0) {
+                    console.log(`No AMM pools found for wallet: ${wallet.address}`);
+               } else {
+                    console.log(`Found ${pools.length} AMM pool(s) for wallet: ${wallet.address}`);
+               }
+          } catch (error) {
+               console.error('Failed to fetch AMM pools for wallet:', error);
+               this.fetchedPools.set([]);
+          } finally {
+               this.isLoading.set(false);
+          }
      }
 
      private generatePoolId(asset1: string, asset2: string, issuer1: string, issuer2: string): string {
-          // Generate a unique identifier for the pool
           return `${asset1}_${issuer1}_${asset2}_${issuer2}`.replace(/[^a-zA-Z0-9]/g, '_');
      }
 
-     private calculateUserShare(lpTokens: number, totalLiquidity: number): number {
-          if (totalLiquidity === 0) return 0;
-          return (lpTokens / totalLiquidity) * 100;
+     private calculateTimeLeft(rippleTime: number): string {
+          const rippleEpoch = 946684800; // 2000-01-01
+          const expirationMs = (rippleTime + rippleEpoch) * 1000;
+
+          const remaining = expirationMs - Date.now();
+
+          if (remaining <= 0) {
+               return 'Expired';
+          }
+
+          const hours = Math.floor(remaining / (1000 * 60 * 60));
+          const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+
+          return `${hours}h ${minutes}m`;
+     }
+
+     private formatBalance(balance: string): string {
+          const num = Number.parseFloat(balance);
+          if (Number.isNaN(num)) return '0';
+          if (num > 1000000) return (num / 1000000).toFixed(2) + 'M';
+          if (num > 1000) return (num / 1000).toFixed(2) + 'K';
+          return num.toFixed(2);
      }
 
      getSummaryText(info: any): string {
-          if (info.poolCount === 0) {
-               return ` has no active AMM pools.`;
+          if (!info || info.poolCount === 0) {
+               return ` has no active AMM participation.`;
           }
 
           if (info.myPoolCount > 0) {
-               return ` participates in <strong>${info.myPoolCount}</strong> AMM pool${info.myPoolCount === 1 ? '' : 's'} and has <strong>${info.poolCount}</strong> total pool${info.poolCount === 1 ? '' : 's'} available.`;
+               return ` is a liquidity provider in <strong>${info.myPoolCount}</strong> AMM pool${info.myPoolCount === 1 ? '' : 's'}.`;
           }
 
-          return ` has <strong>${info.poolCount}</strong> active AMM pool${info.poolCount === 1 ? '' : 's'} available for trading.`;
+          return ` has interacted with <strong>${info.poolCount}</strong> AMM pool${info.poolCount === 1 ? '' : 's'}.`;
      }
 
      getButtonLabel(info: any): string {
+          if (!info || info.poolCount === 0) return 'no pools';
           return `pool${info.poolCount === 1 ? '' : 's'}`;
      }
 
      getEmptyStateMessage(): string {
+          const wallet = this.walletManagerService?.getSelectedWallet();
+
+          if (!wallet?.address) {
+               return 'No wallet selected';
+          }
+
+          if (this.isLoading()) {
+               return 'Loading AMM pools...';
+          }
+
           const query = this.searchQuery();
           const filter = this.activeQuickFilter();
 
@@ -249,7 +341,7 @@ export class AmmSummaryComponent {
                case 'lowFee':
                     return 'No low fee pools found.';
                default:
-                    return 'No AMM pools found.';
+                    return `This wallet has no AMM participation. Create an AMM or deposit to an existing pool to get started.`;
           }
      }
 
@@ -273,7 +365,7 @@ export class AmmSummaryComponent {
                case 'lowFee':
                     return `${baseClass} ${isActive ? 'bg-purple-100 text-purple-700 border-purple-200' : 'border-gray-200 text-gray-600 hover:bg-purple-50'}`;
                default:
-                    return `${baseClass} ${isActive ? 'bg-blue-900 text-white border-gray-200' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`;
+                    return `${baseClass} ${isActive ? 'bg-gray-900 text-white border-gray-200' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`;
           }
      }
 
@@ -306,8 +398,8 @@ export class AmmSummaryComponent {
           this.selectedPoolId.set(pool.poolId);
           this.toggleInfoPanel.emit();
 
-          // Optionally update the main form with this pool's data
-          if (this.ammTransactionViewModelService) {
+          // Only update if the pool has valid assets
+          if (pool.asset1 && pool.asset2 && this.ammTransactionViewModelService) {
                this.ammTransactionViewModelService.pool1Currency.set(pool.asset1);
                this.ammTransactionViewModelService.pool2Currency.set(pool.asset2);
           }

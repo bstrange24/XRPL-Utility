@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ChangeDetectionStrategy, effect, computed, signal, OnDestroy, DestroyRef } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy, effect, computed, signal, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -62,9 +62,10 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      public readonly tabs = OFFER_TABS;
      public readonly tabMeta = OFFER_TAB_META;
 
-     private readonly destroyRef = inject(DestroyRef);
      private isInitialized = false;
      private currencySyncInProgress = false;
+     readonly activeTabForRequirements = computed(() => this.offerTransactionViewModelService.activeTab());
+     readonly summaryExpanded = signal<boolean>(false);
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
@@ -117,9 +118,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                }, 100);
           });
      }
-
-     activeTabForRequirements = computed(() => this.offerTransactionViewModelService.activeTab());
-     readonly summaryExpanded = signal<boolean>(false);
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, OFFER_TX_TYPES as any, tab => this.setTab(tab));
