@@ -1,0 +1,161 @@
+<div class="card-base">
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Broker Details
+          </h4>
+
+          <!-- Select Broker to Modify -->
+          <div>
+               <div class="field-label">
+                    <label for="selectBroker" class="label-primary">Select Loan Broker <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing Loan Broker to modify.</p>
+                    <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search by Broker ID, Vault ID, or owner..." emptyMessage="No loan brokers available to modify" />
+               </div>
+               <app-field-helper title="Select Broker" [items]="brokerSelectorHelperItems" [show]="showBrokerSelectorHelper" />
+          </div>
+
+          <!-- Current Broker Details -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Current Broker Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanBrokerStoreService.selectedBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ selectedBrokerVaultId() }}</p>
+                    </div>
+                    <!-- <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerLoanBrokerId() || 'N/A' }}</p>
+                    </div> -->
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerOwner() }}</p>
+                    </div>
+                    @if (selectedBrokerManagementFeeDisplay() !== null) {
+                    <div>
+                         <p class="text-xs text-gray-500">Management Fee</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerManagementFeeDisplay() }}%</p>
+                    </div>
+                    } @if (selectedBrokerDebtMaximum()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Debt Maximum</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerDebtMaximum() }}</p>
+                    </div>
+                    }@if (selectedBrokerCoverRateMinimumDisplay() !== null) {
+                    <div>
+                         <p class="text-xs text-gray-500">Cover Rate Minimum</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerCoverRateMinimumDisplay() }}%</p>
+                    </div>
+                    }@if (selectedBrokerCoverRateLiquidationDisplay() !== null) {
+                    <div>
+                         <p class="text-xs text-gray-500">Cover Rate Liquidation</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerCoverRateLiquidationDisplay() }}%</p>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Modify Fields -->
+          @if (loanBrokerStoreService.selectedBrokerId()) {
+          <div class="space-y-6">
+               <!-- Data (Metadata) -->
+               <div>
+                    <div class="field-label">
+                         <label for="data" class="label-primary">Data (Metadata)</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 512 bytes.</p>
+                         <button type="button" (click)="toggleDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <textarea class="input-base-with-validation min-h-[80px]" app-focus-border [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [ngModel]="data" (ngModelChange)="data = $event" placeholder="New metadata (optional)"></textarea>
+
+                         <app-input-icons [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [showClear]="!!data" (clear)="data = ''" />
+                    </div>
+
+                    @if (data && data.length > 0) {
+                    <div class="mt-2">
+                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 512 bytes limit' }}</p>
+                         <p class="text-xs text-gray-500">Bytes: {{ data.length }}</p>
+                    </div>
+                    }
+
+                    <app-field-helper title="Data" [items]="dataHelperItems" [show]="showDataHelper" />
+               </div>
+
+               <!-- Management Fee Rate -->
+               <!-- <div>
+                    <label class="label-primary">Management Fee Rate (%)</label>
+                    <p class="text-secondary text-xs">1/10th basis point fee (0-10000 = 1%-10%)</p>
+                    <input type="number" class="input-base" [ngModel]="managementFeeRate" (ngModelChange)="managementFeeRate = $event" placeholder="0 - 10000" min="0" max="10000" />
+                    @if (managementFeeRate !== null && managementFeeRate > 0) {
+                    <p class="text-xs text-gray-500">{{ managementFeeRate / 1000 }}%</p>
+                    }
+               </div> -->
+
+               <!-- Debt Maximum -->
+               <div>
+                    <label class="label-primary">Debt Maximum</label>
+                    <p class="text-secondary text-xs">Maximum amount the protocol can owe the Vault (0 = no limit)</p>
+                    <input type="text" inputmode="decimal" class="input-base" [ngModel]="debtMaximum" (ngModelChange)="debtMaximum = $event" placeholder="e.g. 100000" />
+                    @if (debtMaximum && isDebtMaximumInvalid()) {
+                    <p class="text-xs text-red-600">Debt Maximum must be a non-negative value</p>
+                    }
+               </div>
+
+               <!-- Cover Rates -->
+               <!-- <div class="space-y-4">
+                    <p class="text-secondary text-sm">Cover Rate Minimum and Cover Rate Liquidation must both be zero or both be non-zero.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                              <label class="label-primary">Cover Rate Minimum (%)</label>
+                              <p class="text-secondary text-xs">1/10th basis point (0-100000 = 0%-100%)</p>
+                              <input type="number" class="input-base" [ngModel]="coverRateMinimum" (ngModelChange)="coverRateMinimum = $event" placeholder="0 - 100000" min="0" max="100000" />
+                              @if (coverRateMinimum !== null && coverRateMinimum > 0) {
+                              <p class="text-xs text-gray-500">{{ coverRateMinimum / 1000 }}%</p>
+                              }
+                         </div>
+
+                         <div>
+                              <label class="label-primary">Cover Rate Liquidation (%)</label>
+                              <p class="text-secondary text-xs">1/10th basis point (0-100000 = 0%-100%)</p>
+                              <input type="number" class="input-base" [ngModel]="coverRateLiquidation" (ngModelChange)="coverRateLiquidation = $event" placeholder="0 - 100000" min="0" max="100000" />
+                              @if (coverRateLiquidation !== null && coverRateLiquidation > 0) {
+                              <p class="text-xs text-gray-500">{{ coverRateLiquidation / 1000 }}%</p>
+                              }
+                         </div>
+                    </div>
+
+                    @if (isCoverRatePairInvalid()) {
+                    <div class="rounded-2xl bg-red-50 p-4 border border-red-200">
+                         <p class="text-sm text-red-700">⚠️ Cover Rate Minimum and Cover Rate Liquidation must both be zero or both be non-zero.</p>
+                    </div>
+                    }
+               </div> -->
+          </div>
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="Loan Broker modify validation issues:" />
+     </div>
+</div>

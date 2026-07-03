@@ -14,6 +14,9 @@ export const routes: Routes = [
      { path: 'firewall', loadComponent: () => import('./components/firewall/firewall.component').then(m => m.FirewallComponent), data: { title: 'Firewall' } },
      { path: 'sign-transactions', loadComponent: () => import('./components/sign-transactions/sign-transactions.component').then(m => m.SignTransactionsComponent), data: { title: 'Sign Transactions' } },
 
+     { path: 'loan-broker', loadComponent: () => import('./components/loan-broker/loan-broker.component').then(m => m.LoanBrokerComponent), data: { title: 'Broker' } },
+     { path: 'loan', loadComponent: () => import('./components/loan/loan.component').then(m => m.LoanComponent), data: { title: 'Loan' } },
+     { path: 'vault', loadComponent: () => import('./components/vault/vault.component').then(m => m.VaultComponent), data: { title: 'Vault' } },
      { path: 'send-xrp', loadComponent: () => import('./components/send-xrp/send-xrp.component').then(m => m.SendXrpComponent), data: { title: 'Send XRP' } },
      { path: 'payment-channel', loadComponent: () => import('./components/payment-channel/payment-channel.component').then(m => m.CreatePaymentChannelComponent), data: { title: 'Payment Channel' } },
      { path: 'time-escrow', loadComponent: () => import('./components/escrow/time-based-escrow/time-based-escrow.component').then(m => m.TimeBasedEscrowComponent), data: { title: 'Time Escrow' } },

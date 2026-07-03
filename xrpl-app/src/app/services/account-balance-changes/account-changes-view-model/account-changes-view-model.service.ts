@@ -80,6 +80,31 @@ export class AccountChangesViewModelService {
                case 'Clawback':
                     return '#79BDD8';
 
+               case 'LoanSet':
+               case 'LoanDelete':
+               case 'LoanOfferCreate':
+               case 'LoanOfferCancel':
+               case 'LoanTake':
+               case 'LoanPay':
+                    return '#BAD47B';
+
+               case 'LoanBrokerCoverDeposit':
+               case 'LoanBrokerCoverWithdraw':
+               case 'LoanBrokerCoverClaim':
+               case 'LoanBrokerCoverClose':
+               case 'LoanBrokerCoverLiquidate':
+               case 'LoanBrokerSet':
+               case 'LoanBrokerDelete':
+               case 'LoanBrokerCoverCreate':
+                    return '#f0874bff';
+
+               case 'VaultCreate':
+               case 'VaultModify':
+               case 'VaultDeposit':
+               case 'VaultClawback':
+               case 'VaultDelete':
+                    return '#79BDD8';
+
                case 'SignerListSet':
                case 'DIDSet':
                case 'DIDDelete':

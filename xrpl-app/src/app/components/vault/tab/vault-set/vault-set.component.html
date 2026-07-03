@@ -1,0 +1,213 @@
+<div class="card-base">
+     <!-- Vault Modification Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="VaultIcon" class="section-heading-icon-green"></lucide-icon>
+               Vault Details
+          </h4>
+
+          <!-- Select Vault to Modify -->
+          <div>
+               <div class="field-label">
+                    <label for="selectVault" class="label-primary">Select Vault to Modify <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing vault to modify its properties.</p>
+                    <button type="button" (click)="toggleVaultSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="vaultItems()" [value]="selectedVaultItem()" [showShortAddress]="false" (valueChange)="onVaultSelected($event)" placeholder="Search by amount, address, or id..." emptyMessage="No vaults available to modify" />
+               </div>
+               <app-field-helper title="Select Vault" [items]="vaultSelectorHelperItems" [show]="showVaultSelectorHelper" />
+          </div>
+
+          <!-- Current Vault Details -->
+          @if (selectedVaultItem() && vaultStoreService.selectedVaultId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Current Vault Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ vaultStoreService.selectedVaultId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedVaultOwner() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Current Amount</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedVaultAmount() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Asset Type</p>
+                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium" [class.bg-yellow-100]="getAssetType() === 'XRP'" [class.text-yellow-800]="getAssetType() === 'XRP'" [class.bg-purple-100]="getAssetType() === 'MPT'" [class.text-purple-800]="getAssetType() === 'MPT'" [class.bg-blue-100]="getAssetType() === 'IOU'" [class.text-blue-800]="getAssetType() === 'IOU'"> {{ getAssetType() }} </span>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Modify Fields -->
+          @if (vaultStoreService.selectedVaultId()) {
+          <div class="space-y-6">
+               <!-- Vault Meta Data -->
+               <div>
+                    <div class="field-label">
+                         <label for="vaultMetaData" class="label-primary">Vault Meta Data</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Arbitrary Vault metadata, limited to 256 bytes.</p>
+                         <button type="button" (click)="toggleUriHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              class="input-base-with-validation pr-24"
+                              app-focus-border
+                              [isValid]="uriValidatorService.isNFtCreateUriValid() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0"
+                              [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0"
+                              [value]="vaultStoreService.vaultMetaData()"
+                              (input)="vaultStoreService.setField('vaultMetaData',$event.target.value)"
+                              name="vaultMetaData"
+                              placeholder="Enter vault metadata (optional)"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="uriValidatorService.isNFtCreateUriValid() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0" [showClear]="!!vaultMetaData" (clear)="vaultStoreService.setField('vaultMetaData','')" />
+                    </div>
+
+                    <!-- Show validation details when vault meta data has content -->
+                    @if (vaultStoreService.vaultMetaData() && vaultStoreService.vaultMetaData().trim().length > 0) {
+                    <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                         <div class="flex items-start justify-between gap-4">
+                              <div class="flex-1">
+                                   <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">URI Value</p>
+                                   <code class="block break-all font-mono text-sm text-gray-700">{{ vaultStoreService.vaultMetaData() }}</code>
+
+                                   @if (uriValidatorService.hasNftCreateInvalidUri()) {
+                                   <p class="form-error mt-2">@if ((vaultStoreService.vaultMetaData().trim().length) > 256) { URI exceeds 256 character limit } @else if (vaultStoreService.vaultMetaData().startsWith('http://') || vaultStoreService.vaultMetaData().startsWith('https://')) { Please enter a valid URL format } @else { Please enter a valid URI format }</p>
+                                   }
+                              </div>
+
+                              <div class="text-right">
+                                   <p class="text-secondary">Length</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="uriValidatorService.hasNftCreateInvalidUri()" [class.text-green-600]="!uriValidatorService.hasNftCreateInvalidUri() && uriValidatorService.isNFtCreateUriValid()">{{ vaultStoreService.vaultMetaData().length || 0 }} / 256 characters</p>
+                              </div>
+                         </div>
+                    </div>
+                    }
+
+                    <app-field-helper title="URI Guidelines" [items]="uriHelperItems" [show]="showUriHelper" />
+               </div>
+
+               <!-- Assets Maximum -->
+               <div>
+                    <div class="field-label">
+                         <label for="assetsMaximum" class="label-primary">Maximum Asset Amount</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The maximum asset amount that can be held in a vault. Cannot be lower than current AssetsTotal unless set to 0.</p>
+                         <button type="button" (click)="toggleAssetsMaximumHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="amountValidatorService.isEscrowAmountValid() && assetsMaximum !== null && assetsMaximum !== undefined && assetsMaximum.trim().length > 0"
+                              [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && assetsMaximum !== null && assetsMaximum !== undefined && assetsMaximum.trim().length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              [ngModel]="vaultStoreService.assetsMaximum()"
+                              (ngModelChange)="vaultStoreService.setField('assetsMaximum', $event)"
+                              placeholder="e.g. 1000"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="amountValidatorService.isEscrowAmountValid() && !!assetsMaximum && assetsMaximum.length > 0" [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && !!assetsMaximum && assetsMaximum.length > 0" [showClear]="!!assetsMaximum" (clear)="vaultStoreService.setField('assetsMaximum', '')" />
+                    </div>
+
+                    @if (vaultStoreService.assetsMaximum()) {
+                    <div class="mt-2">
+                         <p class="text-xs text-gray-500">Current total in vault: {{ getCurrentAssetsTotal() }}</p>
+                    </div>
+                    }
+
+                    <app-field-helper title="Assets Maximum" [items]="assetsMaximumHelperItems" [show]="showAssetsMaximumHelper" />
+               </div>
+
+               <!-- Domain ID -->
+               <div>
+                    <div class="field-label">
+                         <label for="domainId" class="label-primary">Domain ID</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier.</p>
+                         <button type="button" (click)="toggleDomainIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              class="input-base-with-validation pr-20"
+                              app-focus-border
+                              [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0"
+                              [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0"
+                              [ngModel]="vaultStoreService.domainId()"
+                              (ngModelChange)="vaultStoreService.setField('domainId', $event)"
+                              name="domainId"
+                              placeholder="Permissioned Domain ID (hex) - optional"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0" [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0" [showClear]="!!domainId" (clear)="vaultStoreService.setField('domainId', '')" />
+                    </div>
+
+                    @if (vaultStoreService.domainId()) {
+                    <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                         <div class="flex items-start justify-between gap-4">
+                              <div class="flex-1">
+                                   <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Domain Validation</p>
+                                   <code class="block break-all font-mono text-sm text-gray-700">{{ vaultStoreService.domainId() }}</code>
+
+                                   @if (domainIdValidatorService.hasInvalidDomainId()) {
+                                   <p class="form-error">Must be a valid Permissioned Domain ID (hex string)</p>
+                                   }
+                              </div>
+
+                              <div class="text-right">
+                                   <p class="text-secondary">Length</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="domainIdValidatorService.hasInvalidDomainId()" [class.text-green-600]="!domainIdValidatorService.hasInvalidDomainId()">{{ vaultStoreService.domainId().length || 0 }} / 64 chars</p>
+                              </div>
+                         </div>
+                    </div>
+                    }
+
+                    <app-field-helper title="Domain ID" [items]="domainIdHelperItems" [show]="showDomainIdHelper" />
+               </div>
+          </div>
+          }
+     </div>
+</div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Vault modify validation issues:" />

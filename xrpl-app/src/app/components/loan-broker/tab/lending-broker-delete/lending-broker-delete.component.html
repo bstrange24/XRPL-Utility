@@ -1,0 +1,109 @@
+<div class="card-base">
+     <!-- Loan Broker Deletion Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-red"></lucide-icon>
+               Loan Broker Details
+          </h4>
+
+          <!-- Select Broker to Delete -->
+          <div>
+               <div class="field-label">
+                    <label for="selectBroker" class="label-primary">Select Loan Broker to Delete <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing Loan Broker to permanently delete from the ledger.</p>
+                    <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search by Broker ID, Vault ID, or owner..." emptyMessage="No loan brokers available to delete" />
+               </div>
+               <app-field-helper title="Select Broker" [items]="brokerSelectorHelperItems" [show]="showBrokerSelectorHelper" />
+          </div>
+
+          <!-- Current Broker Details -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Broker Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanBrokerStoreService.selectedBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ selectedBrokerVaultId() }}</p>
+                    </div>
+                    <!-- <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerLoanBrokerId() || 'N/A' }}</p>
+                    </div> -->
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerOwner() }}</p>
+                    </div>
+                    @if (selectedBrokerManagementFeeDisplay() !== null) {
+                    <div>
+                         <p class="text-xs text-gray-500">Management Fee</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerManagementFeeDisplay() }}%</p>
+                    </div>
+                    } @if (selectedBrokerDebtMaximum()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Debt Maximum</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerDebtMaximum() }}</p>
+                    </div>
+                    }
+                    <div>
+                         <p class="text-xs text-gray-500">Status</p>
+                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <ng-icon name="heroCheckCircle" size="12" />
+                              Active
+                         </span>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Warning Messages -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <!-- Active Broker Warning -->
+          <!-- <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationCircle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                         <p class="text-sm font-semibold text-red-800">⚠️ Permanent Deletion</p>
+                         <p class="text-sm text-red-700 mt-1">This action will permanently delete this Loan Broker from the XRPL ledger. This cannot be undone.</p>
+                         <p class="text-sm text-red-700 mt-2"><strong>Note:</strong> Deleting a Loan Broker will also remove all associated loans and loan data. Only delete if you are certain this broker is no longer needed.</p>
+                    </div>
+               </div>
+          </div> -->
+
+          <!-- Confirmation Section -->
+          <!-- <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                    <div class="flex-1">
+                         <p class="text-sm font-semibold text-red-800">Confirmation Required</p>
+                         <div class="mt-3 space-y-3">
+                              <label class="flex items-center gap-2 cursor-pointer">
+                                   <input type="checkbox" [ngModel]="confirmationChecked()" (ngModelChange)="confirmationChecked.set($event)" class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500" />
+                                   <span class="text-sm text-red-700"> I understand that this action is permanent and cannot be undone </span>
+                              </label>
+                              <label class="flex items-center gap-2 cursor-pointer">
+                                   <input type="checkbox" [ngModel]="confirmationBrokerIdChecked()" (ngModelChange)="confirmationBrokerIdChecked.set($event)" class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500" />
+                                   <span class="text-sm text-red-700"> I confirm I want to delete Loan Broker: <strong class="font-mono">{{ selectedBrokerLoanBrokerId() || loanBrokerStoreService.selectedBrokerId() }}</strong> </span>
+                              </label>
+                         </div>
+                    </div>
+               </div>
+          </div> -->
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="Loan Broker delete validation issues:" />
+     </div>
+</div>

@@ -19,6 +19,15 @@ export interface MptFlags {
      canClawback: boolean;
 }
 
+export interface MPTokenObject {
+     LedgerEntryType: 'MPToken';
+     Account: string;
+     MPTokenIssuanceID: string;
+     MPTAmount?: string;
+     balance?: string;
+     [key: string]: any; // For other properties
+}
+
 export interface MptTxConfig {
      mpt: MptState;
      account?: AccountConfiguratorState;

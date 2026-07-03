@@ -9,6 +9,7 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { TrustlineCurrencyService } from '../../trustlines/trustline-currency/trustline-currency.service';
 import { MptStoreService } from '../mpt-store/mpt-store.service';
 import { LogServiceService } from '../../shared/log-service/log-service.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { signal, Signal, WritableSignal } from '@angular/core';
 import { MptDisplayItem } from '../../../models/interface-items.model';
@@ -24,6 +25,7 @@ describe('MptUtilService', () => {
      let mockTrustlineCurrency: jasmine.SpyObj<TrustlineCurrencyService>;
      let mockMptStoreService: jasmine.SpyObj<InstanceType<typeof MptStoreService>>;
      let mockLogService: jasmine.SpyObj<LogServiceService>;
+     let mockXrplService: jasmine.SpyObj<XrplService>;
 
      // Create writable signals for the store
      let mptIssuanceIdSignal: WritableSignal<string | null>;
@@ -56,6 +58,7 @@ describe('MptUtilService', () => {
                assetScaleCache: assetScaleCacheSignal,
           });
           mockLogService = jasmine.createSpyObj('LogServiceService', ['logObjects']);
+          mockXrplService = jasmine.createSpyObj('XrplService', ['getClient', 'doesMptExist']);
 
           TestBed.configureTestingModule({
                providers: [
@@ -69,6 +72,7 @@ describe('MptUtilService', () => {
                     { provide: TrustlineCurrencyService, useValue: mockTrustlineCurrency },
                     { provide: MptStoreService, useValue: mockMptStoreService },
                     { provide: LogServiceService, useValue: mockLogService },
+                    { provide: XrplService, useValue: mockXrplService },
                ],
           });
 
@@ -271,6 +275,30 @@ describe('MptUtilService', () => {
                     isHolder: true,
                     amount: '500',
                });
+          });
+
+          it('should handle a missing MPT node without throwing', async () => {
+               const accountObjectsResponse = {
+                    result: {
+                         account_objects: [
+                              {
+                                   LedgerEntryType: 'MPToken',
+                                   Account: classicAddress,
+                                   MPTokenIssuanceID: 'issuance-1',
+                                   MPTAmount: '500',
+                                   index: 'idx2',
+                                   Flags: 0,
+                              },
+                         ],
+                    },
+               };
+
+               mockXrplService.getClient.and.resolveTo({} as any);
+               mockXrplService.doesMptExist.and.resolveTo({ result: {} });
+
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
+
+               expect(result).toEqual([]);
           });
 
           it('should add issuances not held by current account', () => {

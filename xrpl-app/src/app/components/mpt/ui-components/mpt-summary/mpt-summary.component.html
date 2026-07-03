@@ -48,6 +48,7 @@
                @for (mpt of sortedMpts(); track mpt.id) {
                <app-summary-item [selected]="mpt.mpt_issuance_id === mptUtilService.selectedMptIssuanceId()" [copyValue]="mpt.mpt_issuance_id" copyTooltip="Copy MPT Issuance ID" (onClick)="onMptClick(mpt)" (onCopyClick)="copyUtilService.copyAndToast($event, 'MPT Issuance ID')">
                     <div item-content>
+                         <!-- Main Content -->
                          <div class="summary-item-content">
                               <!-- Status Icon based on type -->
                               @if (!mpt.isHolder) {
@@ -61,13 +62,23 @@
                               <div class="flex-1 min-w-0">
                                    <div class="flex items-center gap-2 flex-wrap">
                                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
-                                             @if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
+                                             @if (mpt.isVaultMpt || (mpt.isHolder && mpt.formattedAmount === '0' && mpt.formattedOutstanding === '0' && mpt.Issuer !== info.walletAddress)) {
+                                             <strong class="text-gray-900 hover:text-purple-600 transition-colors">
+                                                  Vault MPT
+                                                  <small class="text-gray-500">(vault share)</small>
+                                             </strong>
+                                             } @else if (mpt.formattedAmount && mpt.formattedAmount !== '0') {
                                              <strong class="text-gray-900 hover:text-purple-600 transition-colors">
                                                   {{ mpt.formattedAmount }}
                                                   <small class="text-gray-500">({{ mpt.isHolder ? 'held' : 'issued' }})</small>
                                              </strong>
-                                             } @else if (mpt.maxAmount && mpt.maxAmount !== '0' && mpt.maxAmount !== 'Unlimited') {
-                                             <span class="text-gray-900"> Max {{ mpt.maxAmount }} </span>
+                                             } @else if (mpt.isHolder) {
+                                             <span class="text-gray-900">0 held</span>
+                                             <small class="text-gray-500 ml-1">(not received yet)</small>
+                                             } @else if (mpt.maxAmountDisplay && mpt.maxAmountDisplay !== '0' && mpt.maxAmountDisplay !== 'Unlimited' && mpt.maxAmountDisplay !== 'No max set') {
+                                             <span class="text-gray-900"> Max {{ mpt.maxAmountDisplay }} </span>
+                                             } @else if (mpt.maxAmountDisplay === 'No max set') {
+                                             <span class="text-gray-900"> No max set </span>
                                              } @else {
                                              <span class="text-gray-900"> Unlimited </span>
                                              }
@@ -81,9 +92,13 @@
                                         </app-summary-key-value>
 
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
-                                             @if (!mpt.isHolder) {
+                                             @if (mpt.isVaultMpt) {
+                                             <app-summary-key-value label="Type">
+                                                  <span class="font-mono">Vault MPT</span>
+                                             </app-summary-key-value>
+                                             } @else if (!mpt.isHolder) {
                                              <app-summary-key-value label="Maximum Amount">
-                                                  <span class="font-mono">{{ mpt.formattedMaxAmount }}</span>
+                                                  <span class="font-mono">{{ mpt.maxAmountDisplay || mpt.formattedMaxAmount }}</span>
                                              </app-summary-key-value>
                                              } @else {
                                              <app-summary-key-value label="Total Amount">
@@ -111,7 +126,11 @@
                                              </app-summary-key-value>
                                              }
                                         </div>
-                                        @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
+                                        @if (mpt.Issuer && mpt.Issuer.length > 0 && mpt.Issuer !== 'Unknown') {
+                                        <app-summary-key-value label="Issuer">
+                                             <span class="font-mono">{{ mpt.Issuer }}</span>
+                                        </app-summary-key-value>
+                                        } @if (mpt.flags && mpt.flags.length > 0 && mpt.flags !== 'None') {
                                         <app-summary-key-value label="Flags">
                                              <span class="font-mono">{{ mpt.flags }}</span>
                                         </app-summary-key-value>

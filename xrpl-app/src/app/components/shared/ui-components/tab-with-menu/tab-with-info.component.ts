@@ -5,6 +5,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TabConfig, TabMetaInfo } from '../../../../core/app.constants';
 import { ThemeService } from '../../../../services/utils/theme/theme.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
+import { VaultStoreService } from '../../../../services/vault/vault-store/vault-store.service';
 
 @Component({
      selector: 'app-tab-menu-with-info',
@@ -17,6 +18,7 @@ import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.se
 export class TabMenuWithInfoComponent {
      private readonly themeService = inject(ThemeService);
      private readonly mptStoreService = inject(MptStoreService);
+     public readonly vaultStoreService = inject(VaultStoreService);
 
      // Required inputs
      tabs = input.required<TabConfig[]>();
@@ -92,6 +94,18 @@ export class TabMenuWithInfoComponent {
                     desc: action === 'lock' ? 'Prevent this account from sending the MPT.' : 'Allow this account to send the MPT again.',
                     icon: action === 'lock' ? 'heroLockClosed' : 'heroLockOpen',
                     color: action === 'lock' ? '#ef4444' : '#a855f7',
+               };
+          }
+
+          if (key === 'depositVault') {
+               const action = this.vaultStoreService.vaultAction();
+
+               return {
+                    ...base,
+                    title: action === 'deposit' ? 'Deposit Vault' : 'Withdrawl Vault',
+                    desc: action === 'deposit' ? 'Deposit an asset in the vault.' : 'Withdrawl an asset from the vault.',
+                    icon: action === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle',
+                    color: action === 'deposit' ? '#10b981' : '#60a5fa',
                };
           }
 

@@ -1,0 +1,217 @@
+<div class="card-base">
+     <!-- Cover Withdraw Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-blue"></lucide-icon>
+               Loan Broker Details
+          </h4>
+
+          <!-- Select Loan Broker -->
+          <div>
+               <div class="field-label">
+                    <label for="selectBroker" class="label-primary">Select Loan Broker <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select the Loan Broker from which to withdraw First-Loss Capital.</p>
+                    <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search by Broker ID, Vault ID, or owner..." emptyMessage="No loan brokers available" />
+               </div>
+               <app-field-helper title="Select Broker" [items]="brokerSelectorHelperItems" [show]="showBrokerSelectorHelper" />
+          </div>
+
+          <div class="mt-4">
+               <p class="text-xs text-gray-500 mb-2">Or enter Broker ID manually:</p>
+               <div class="relative">
+                    <input type="text" class="input-base-with-validation font-mono text-sm" [ngModel]="manualBrokerId()" (ngModelChange)="onManualBrokerIdChange($event)" placeholder="Enter Broker ID (hex string)" app-focus-border [isValid]="isBrokerIdValid() && !isLoadingBroker()" [isInvalid]="isBrokerIdInvalid() || !!brokerFetchError()" />
+
+                    <!-- Loading indicator -->
+                    @if (isLoadingBroker()) {
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                         <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    </div>
+                    }
+               </div>
+
+               <!-- Error message -->
+               @if (brokerFetchError()) {
+               <p class="form-error mt-2">{{ brokerFetchError() }}</p>
+               }
+          </div>
+
+          <!-- Current Broker Details -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Broker Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanBrokerStoreService.selectedBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ selectedBrokerVaultId() }}</p>
+                    </div>
+                    <!-- <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerLoanBrokerId() || 'N/A' }}</p>
+                    </div> -->
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerOwner() }}</p>
+                    </div>
+                    @if (selectedBrokerCoverBalance()) {
+                    <div>
+                         <p class="text-xs text-gray-500">First-Loss Capital Balance</p>
+                         <p class="font-mono text-sm font-semibold text-gray-900">{{ selectedBrokerCoverBalance() }}</p>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Withdraw Fields -->
+          @if (loanBrokerStoreService.selectedBrokerId()) {
+          <div class="space-y-6">
+               <!-- Amount -->
+               <div>
+                    <div class="field-label">
+                         <label for="withdrawAmount" class="label-primary">Amount to Withdraw <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The First-Loss Capital amount to withdraw from the Loan Broker.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isAmountValid() && withdrawAmount.length > 0"
+                              [isInvalid]="isAmountInvalid() && withdrawAmount.length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event, 'loan')"
+                              (blur)="amountValidatorService.onAmountBlur($event, 'loan')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              [ngModel]="withdrawAmount"
+                              (ngModelChange)="withdrawAmount = $event"
+                              placeholder="e.g. 1000"
+                         />
+
+                         <app-input-icons [isValid]="isAmountValid() && withdrawAmount.length > 0" [isInvalid]="isAmountInvalid() && withdrawAmount.length > 0" [showClear]="!!withdrawAmount" (clear)="withdrawAmount = ''" />
+                    </div>
+
+                    @if (withdrawAmount && withdrawAmount.length > 0) {
+                    <div class="mt-2">
+                         @if (isAmountInvalid()) {
+                         <p class="form-error mt-2">Invalid amount format. Please enter a valid number.</p>
+                         } @if (isAmountExceedsBalance()) {
+                         <p class="form-error mt-2">⚠️ Amount exceeds available First-Loss Capital balance</p>
+                         } @if (!isAmountInvalid() && !isAmountExceedsBalance() && parseFloat(withdrawAmount) > 0) {
+                         <p class="text-xs text-green-600">✅ Valid amount</p>
+                         }
+                    </div>
+                    }
+
+                    <app-field-helper title="Withdraw Amount" [items]="withdrawAmountHelperItems" [show]="showWithdrawAmountHelper" />
+               </div>
+
+               <!-- Destination (Optional) -->
+               <div>
+                    <div class="field-label">
+                         <label for="destination" class="label-primary">Destination Address</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Optional: Account to receive the assets. If not provided, the current wallet will be used.</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div>
+                         <app-select-search-dropdown
+                              app-focus-border
+                              [validateXrpAddress]="true"
+                              [showClearButton]="true"
+                              [clearOnEscape]="true"
+                              [validateOn]="'blur'"
+                              [closeWhenInvalid]="true"
+                              [disableCurrentAccount]="false"
+                              [allowCurrentAccountSelection]="true"
+                              [showInlineErrorMessage]="false"
+                              [items]="destinationItems()"
+                              [value]="selectedDestinationItem()"
+                              (searchQueryChange)="onSearchQueryChange($event)"
+                              (valueChange)="onDestinationChange($event)"
+                              (isValid)="onDestinationValidationChange($event)"
+                              placeholder="Enter or select destination address (optional)"
+                         />
+                    </div>
+
+                    @if (selectedDestinationItemSafe() && isDestinationCurrentWallet()) {
+                    <p class="text-xs text-gray-500 mt-2">
+                         <ng-icon name="heroInformationCircle" size="14" class="text-gray-400" />
+                         Withdrawing to your own wallet. You can also specify a different destination.
+                    </p>
+                    }
+
+                    <app-field-helper title="Destination" [items]="destinationHelperItems" [show]="showDestinationHelper" />
+               </div>
+
+               <!-- Destination Tag (Optional) -->
+               <div>
+                    <div class="field-label">
+                         <label for="destinationTag" class="label-primary">Destination Tag</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Optional tag identifying the reason for the withdrawal to the destination.</p>
+                         <button type="button" (click)="toggleDestinationTagHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input type="number" class="input-base-with-validation" app-focus-border [ngModel]="destinationTag" (ngModelChange)="destinationTag = $event" placeholder="Optional destination tag" min="0" max="4294967295" />
+                    </div>
+
+                    @if (destinationTag && (destinationTag < 0 || destinationTag > 4294967295)) {
+                    <p class="form-error mt-2">Destination Tag must be between 0 and 4294967295</p>
+                    }
+
+                    <app-field-helper title="Destination Tag" [items]="destinationTagHelperItems" [show]="showDestinationTagHelper" />
+               </div>
+
+               <!-- Warning Message -->
+               @if (withdrawAmount && parseFloat(withdrawAmount) > 0 && selectedBrokerCoverBalance()) {
+               <div class="rounded-2xl bg-purple-50 p-4 border border-purple-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-purple-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-purple-800">Withdrawal Summary</p>
+                              <p class="text-sm text-purple-700 mt-1">
+                                   You are about to withdraw <strong>{{ withdrawAmount }}</strong> from the First-Loss Capital. @if (selectedDestinationItemSafe() && !isDestinationCurrentWallet()) { Funds will be sent to <strong class="font-mono">{{ selectedDestinationId() }}</strong>
+                                   } @else { Funds will be sent to your wallet }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+               }
+          </div>
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="First-Loss Capital withdrawal validation issues:" />
+     </div>
+</div>

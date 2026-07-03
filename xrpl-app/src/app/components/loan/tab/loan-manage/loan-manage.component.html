@@ -1,0 +1,195 @@
+<div class="card-base">
+     <!-- Loan Modification Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Details
+          </h4>
+
+          <!-- Select Loan to Modify -->
+          <div>
+               <div class="field-label">
+                    <label for="selectLoan" class="label-primary">Select Loan to Modify <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing loan to modify its properties.</p>
+                    <button type="button" (click)="toggleLoanSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="loanItems()" [value]="selectedLoanItem()" [showShortAddress]="false" (valueChange)="onLoanSelected($event)" placeholder="Search by Broker ID, amount, or owner..." emptyMessage="No loans available to modify" />
+               </div>
+               <app-field-helper title="Select Loan" [items]="loanSelectorHelperItems" [show]="showLoanSelectorHelper" />
+          </div>
+
+          <!-- Current Loan Details -->
+          @if (selectedLoanItem() && loanStoreService.selectedLoanId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Current Loan Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanStoreService.selectedLoanId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Principal Requested</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanPrincipalRequested() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Principal Outstanding</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanPrincipalOutstanding() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanOwner() }}</p>
+                    </div>
+                    @if (selectedLoanCounterparty()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Counterparty</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanCounterparty() }}</p>
+                    </div>
+                    } @if (selectedLoanInterestRate()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Interest Rate</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanInterestRate() / 1000 }}%</p>
+                    </div>
+                    } @if (selectedLoanStatus()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Status</p>
+                         <span
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                              [class.bg-green-100]="selectedLoanStatus() === 'active'"
+                              [class.text-green-800]="selectedLoanStatus() === 'active'"
+                              [class.bg-red-100]="selectedLoanStatus() === 'defaulted'"
+                              [class.text-red-800]="selectedLoanStatus() === 'defaulted'"
+                              [class.bg-yellow-100]="selectedLoanStatus() === 'impaired'"
+                              [class.text-yellow-800]="selectedLoanStatus() === 'impaired'"
+                              [class.bg-gray-100]="selectedLoanStatus() === 'closed'"
+                              [class.text-gray-800]="selectedLoanStatus() === 'closed'"
+                         >
+                              @if (selectedLoanStatus() === 'active') {
+                              <ng-icon name="heroCheckCircle" size="12" />
+                              } @else if (selectedLoanStatus() === 'defaulted') {
+                              <ng-icon name="heroExclamationTriangle" size="12" />
+                              } @else if (selectedLoanStatus() === 'impaired') {
+                              <ng-icon name="heroExclamationCircle" size="12" />
+                              } @else {
+                              <ng-icon name="heroXCircle" size="12" />
+                              } {{ selectedLoanStatus() | titlecase }}
+                         </span>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Modify Fields -->
+          @if (loanStoreService.selectedLoanId()) {
+          <div class="space-y-6">
+               <!-- Data (Metadata) -->
+               <div>
+                    <div class="field-label">
+                         <label for="data" class="label-primary">Data (Metadata)</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 512 bytes.</p>
+                         <button type="button" (click)="toggleDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <textarea class="input-base-with-validation min-h-[80px]" app-focus-border [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [ngModel]="data" (ngModelChange)="data = $event" placeholder="New metadata (optional)"></textarea>
+
+                         <app-input-icons [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [showClear]="!!data" (clear)="data = ''" />
+                    </div>
+
+                    @if (data && data.length > 0) {
+                    <div class="mt-2">
+                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 512 bytes limit' }}</p>
+                         <p class="text-xs text-gray-500">Bytes: {{ data.length }}</p>
+                    </div>
+                    }
+
+                    <app-field-helper title="Data" [items]="dataHelperItems" [show]="showDataHelper" />
+               </div>
+          </div>
+          }
+
+          <!-- Flags Section (Only for LoanManage - Default, Impair, Unimpair) -->
+          @if (loanStoreService.selectedLoanId()) {
+          <div class="mt-6">
+               <div class="mb-4 flex items-center gap-2">
+                    <lucide-icon name="flag" size="18" class="section-heading-icon-red" />
+                    <span class="text-sm font-semibold text-gray-900">Loan Management Flags</span>
+                    <span class="text-xs text-gray-500">(Select one action)</span>
+               </div>
+
+               <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    @for (flag of loanManageFlagsConfig; track flag.key) {
+                    <label
+                         class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300"
+                         [class.border-red-500]="flag.key === 'tfLoanDefault' && loanStoreService[flag.key]()"
+                         [class.bg-red-50]="flag.key === 'tfLoanDefault' && loanStoreService[flag.key]()"
+                         [class.border-yellow-500]="flag.key === 'tfLoanImpair' && loanStoreService[flag.key]()"
+                         [class.bg-yellow-50]="flag.key === 'tfLoanImpair' && loanStoreService[flag.key]()"
+                         [class.border-green-500]="flag.key === 'tfLoanUnimpair' && loanStoreService[flag.key]()"
+                         [class.bg-green-50]="flag.key === 'tfLoanUnimpair' && loanStoreService[flag.key]()"
+                    >
+                         <input type="radio" name="loanManageFlag" [value]="flag.key" [checked]="loanStoreService[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" />
+
+                         <div class="mt-0.5 flex-shrink-0">
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-red-500]="flag.key === 'tfLoanDefault' && loanStoreService[flag.key]()" [class.border-yellow-500]="flag.key === 'tfLoanImpair' && loanStoreService[flag.key]()" [class.border-green-500]="flag.key === 'tfLoanUnimpair' && loanStoreService[flag.key]()" [class.border-gray-300]="!loanStoreService[flag.key]()">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200" [class.bg-red-500]="flag.key === 'tfLoanDefault' && loanStoreService[flag.key]()" [class.bg-yellow-500]="flag.key === 'tfLoanImpair' && loanStoreService[flag.key]()" [class.bg-green-500]="flag.key === 'tfLoanUnimpair' && loanStoreService[flag.key]()" [class.scale-100]="loanStoreService[flag.key]()" [class.scale-0]="!loanStoreService[flag.key]()"></div>
+                              </div>
+                         </div>
+
+                         <div class="flex-1">
+                              <div class="text-sm font-medium text-gray-900">{{ flag.title }}</div>
+                              <div class="mt-1 text-xs leading-relaxed text-gray-600">{{ flag.desc }}</div>
+                         </div>
+                    </label>
+                    }
+               </div>
+               <div class="text-xs text-gray-500 mt-2">Select one flag to perform the corresponding action on the loan.</div>
+          </div>
+          }
+
+          <!-- Warning Message for Default -->
+          @if (loanStoreService.tfLoanDefault() && loanStoreService.selectedLoanId()) {
+          <div class="rounded-2xl bg-red-50 p-4 border border-red-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-red-800">⚠️ Default Warning</p>
+                         <p class="text-sm text-red-700 mt-1">This action will mark the loan as <strong>defaulted</strong>. This is a serious action that should only be taken when the borrower has failed to make payments.</p>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Warning Message for Impair -->
+          @if (loanStoreService.tfLoanImpair() && loanStoreService.selectedLoanId()) {
+          <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationCircle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-yellow-800">⚠️ Impair Warning</p>
+                         <p class="text-sm text-yellow-700 mt-1">This action will mark the loan as <strong>impaired</strong>, indicating the loan may not be fully collectible.</p>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="Loan modify validation issues:" />
+     </div>
+</div>

@@ -240,7 +240,6 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
           }
      }
 
-     // In WalletRemoveCustomWalletComponent
      readonly selectedCustomItem = computed(() => {
           const addr = this.selectedDestinationAddress();
           if (!addr) return null;
@@ -253,7 +252,6 @@ export abstract class WalletDestinationBase extends PerformanceBaseComponent {
                id: custom.address,
                name: custom.name || this.utilsService.truncateAddress(custom.address),
                address: custom.address,
-               // ...
           };
      });
 

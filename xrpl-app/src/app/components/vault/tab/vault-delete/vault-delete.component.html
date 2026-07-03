@@ -1,0 +1,216 @@
+<div class="space-y-6">
+     <!-- Selection Card -->
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="VaultIcon" class="section-heading-icon-green"></lucide-icon>
+               Vault Details
+          </h4>
+
+          <!-- Select Vault -->
+          <div>
+               <div class="field-label">
+                    <label for="selectVault" class="label-primary">Select Vault to Delete <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing vault to delete.</p>
+                    <button type="button" (click)="toggleVaultSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="vaultItems()" [value]="selectedVaultItem()" [showShortAddress]="false" (valueChange)="onVaultSelected($event)" placeholder="Search by amount, address, or id..." emptyMessage="No vaults available to delete" />
+               </div>
+               <app-field-helper title="Select Vault" [items]="vaultSelectorHelperItems" [show]="showVaultSelectorHelper" />
+          </div>
+     </div>
+
+     <!-- Vault Details -->
+     @if (activeTab === 'deleteVault' && selectedVaultItem() && vaultStoreService.selectedVaultSequence() !== null) {
+     <div class="card-base">
+          <div class="space-y-6">
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Vault ID -->
+                    <div>
+                         <div class="field-label">
+                              <label for="vaultID" class="label-primary">Vault ID</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The unique identifier for this vault on the ledger.</p>
+                              <button type="button" (click)="toggleVaultSequenceHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" [ngModel]="vaultStoreService.selectedVaultId()" class="w-full cursor-not-allowed rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 font-mono text-sm text-gray-700" />
+                         </div>
+                         <app-field-helper title="Vault ID" [items]="vaultSequenceHelperItems" [show]="showVaultSequenceHelper" />
+                    </div>
+
+                    <!-- Vault Owner -->
+                    <div>
+                         <div class="field-label">
+                              <label for="vaultOwner" class="label-primary">Vault Owner</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The account that originally created the vault.</p>
+                              <button type="button" (click)="toggleVaultOwnerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [ngModel]="selectedVaultOwner()" />
+                         </div>
+                         <app-field-helper title="Vault Owner" [items]="vaultOwnerHelperItems" [show]="showVaultOwnerHelper" />
+                    </div>
+
+                    <!-- Amount -->
+                    <div>
+                         <div class="field-label">
+                              <label for="vaultAmount" class="label-primary">Maximum Asset Amount</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="mb-2 text-xs text-gray-500">Maximum amount that can be held in this vault</p>
+                              <button type="button" (click)="toggleVaultAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="selectedVaultAmount()" />
+                         </div>
+
+                         <!-- Show asset type badge -->
+                         @if (getSelectedVault()) {
+                         <div class="mt-2">
+                              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium" [class.bg-yellow-100]="getAssetType() === 'XRP'" [class.text-yellow-800]="getAssetType() === 'XRP'" [class.bg-purple-100]="getAssetType() === 'MPT'" [class.text-purple-800]="getAssetType() === 'MPT'" [class.bg-blue-100]="getAssetType() === 'IOU'" [class.text-blue-800]="getAssetType() === 'IOU'"> {{ getAssetType() }} </span>
+                         </div>
+                         }
+
+                         <app-field-helper title="Vault Amount" [items]="vaultAmountHelperItems" [show]="showVaultAmountHelper" />
+                    </div>
+
+                    <!-- Withdrawal Policy -->
+                    <div>
+                         <div class="field-label">
+                              <label for="withdrawalPolicy" class="label-primary">Withdrawal Policy</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The vault's withdrawal policy.</p>
+                              <button type="button" (click)="toggleVaultWithdrawalPolicyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="getWithdrawalPolicyLabel(selectedVaultWithdrawalPolicy())" />
+                         </div>
+                         <app-field-helper title="Withdrawal Policy" [items]="vaultWithdrawalPolicyHelperItems" [show]="showVaultWithdrawalPolicyHelper" />
+                    </div>
+
+                    <!-- Flags -->
+                    <div>
+                         <div class="field-label">
+                              <label for="vaultFlags" class="label-primary">Flags</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Vault configuration flags.</p>
+                              <button type="button" (click)="toggleVaultFlagsHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="selectedVaultFlags()" />
+                         </div>
+                         <app-field-helper title="Vault Flags" [items]="vaultFlagsHelperItems" [show]="showVaultFlagsHelper" />
+                    </div>
+
+                    <!-- Show asset details for non-XRP assets -->
+                    @if (getAssetType() !== 'XRP' && getAssetType() !== 'Unknown') {
+                    <div class="md:col-span-2">
+                         <!-- <div class="rounded-2xl bg-gray-50 p-3 border border-gray-200"> -->
+                         <!-- <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Asset Details</p> -->
+
+                         @if (getAssetType() === 'MPT') {
+                         <div class="rounded-2xl bg-purple-50 p-4 border border-purple-200">
+                              <p class="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-2">Asset Details</p>
+                              <div class="flex items-center gap-2">
+                                   <span class="text-sm text-gray-600">MPT Issuance ID:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</code>
+                              </div>
+                         </div>
+                         } @if (getAssetType() === 'IOU') {
+                         <div class="flex items-center gap-2">
+                              <div class="rounded-2xl bg-blue-50 p-3 border border-blue-200">
+                                   <p class="text-xs font-semibold uppercase tracking-wider text-blue-500 mb-2">Asset Details</p>
+                                   <span class="text-sm text-blue-600">Currency:</span>
+                                   <code class="font-mono text-sm text-blue-900">{{ getAssetDetails().currency }}</code>
+                              </div>
+                         </div>
+                         <div class="flex items-center gap-2 mt-1">
+                              <div class="rounded-2xl bg-gray-50 p-3 border border-gray-200">
+                                   <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Asset Details</p>
+                                   <span class="text-sm text-gray-600">Issuer:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</code>
+                              </div>
+                         </div>
+                         }
+                         <!-- </div> -->
+                    </div>
+                    }
+
+                    <!-- Share MPT ID (full width) -->
+                    @if (selectedVaultShareMPTID() !== 'N/A') {
+                    <div class="md:col-span-2">
+                         <div class="field-label">
+                              <label for="shareMPTID" class="label-primary">Share MPT ID</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The MPT ID associated with this vault.</p>
+                              <button type="button" (click)="toggleVaultShareMPTIDHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="selectedVaultShareMPTID()" />
+                         </div>
+                         <app-field-helper title="Share MPT ID" [items]="vaultShareMPTIDHelperItems" [show]="showVaultShareMPTIDHelper" />
+                    </div>
+                    }
+
+                    <!-- Data (full width) -->
+                    @if (selectedVaultData() !== 'N/A') {
+                    <div class="md:col-span-2">
+                         <div class="field-label">
+                              <label for="vaultData" class="label-primary">Vault Data</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Additional data stored in the vault (decoded from hex).</p>
+                              <button type="button" (click)="toggleVaultDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input type="text" readonly class="input-disabled" [value]="selectedVaultData()" />
+                         </div>
+                         <app-field-helper title="Vault Data" [items]="vaultDataHelperItems" [show]="showVaultDataHelper" />
+                    </div>
+                    }
+               </div>
+          </div>
+     </div>
+     }
+</div>

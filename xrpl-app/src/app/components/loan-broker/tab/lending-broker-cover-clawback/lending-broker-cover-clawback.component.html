@@ -1,0 +1,189 @@
+<div class="card-base">
+     <!-- Cover Clawback Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-blue"></lucide-icon>
+               Loan Broker Details
+          </h4>
+
+          <!-- <div class="rounded-2xl bg-red-50 p-4 border border-red-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-red-800">⚠️ Issuer Only Action</p>
+                         <p class="text-sm text-red-700 mt-1">This action can only be performed by the <strong>Issuer</strong> of the loan asset. Clawback funds are limited to the minimum cover required for current loans.</p>
+                    </div>
+               </div>
+          </div> -->
+
+          <!-- Select Loan Broker (Optional) -->
+          <div>
+               <div class="field-label">
+                    <label for="selectBroker" class="label-primary">Select Loan Broker</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Optional: Select a Loan Broker to clawback from. If not provided, the Amount must be specified.</p>
+                    <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search by Broker ID, Vault ID, or owner (optional)..." emptyMessage="No loan brokers available" />
+               </div>
+               <app-field-helper title="Select Broker" [items]="brokerSelectorHelperItems" [show]="showBrokerSelectorHelper" />
+
+               <!-- <p class="text-xs text-gray-500 mt-2">
+                    <ng-icon name="heroInformationCircle" size="14" class="text-gray-400" />
+                    Either select a Loan Broker or specify the Amount to clawback.
+               </p> -->
+          </div>
+
+          <!-- Current Broker Details -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Broker Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanBrokerStoreService.selectedBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ selectedBrokerVaultId() }}</p>
+                    </div>
+                    <!-- <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerLoanBrokerId() || 'N/A' }}</p>
+                    </div> -->
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerOwner() }}</p>
+                    </div>
+                    @if (selectedBrokerCoverBalance()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Current First-Loss Capital Balance</p>
+                         <p class="font-mono text-sm font-semibold text-gray-900">{{ selectedBrokerCoverBalance() }}</p>
+                    </div>
+                    } @if (selectedBrokerDebtTotal()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Current Debt Total</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerDebtTotal() }}</p>
+                    </div>
+                    } @if (selectedBrokerCoverMinimum()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Cover Rate Minimum</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerCoverMinimum() }}</p>
+                    </div>
+                    } @if (selectedBrokerMinimumCoverRequired()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Minimum Cover Required</p>
+                         <p class="font-mono text-sm font-semibold text-gray-900">{{ selectedBrokerMinimumCoverRequired() }}</p>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Amount (Optional) -->
+          <div>
+               <div class="field-label">
+                    <label for="clawbackAmount" class="label-primary">Amount to Clawback</label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">The First-Loss Capital amount to clawback. If 0 or not provided, claws back up to the minimum cover required.</p>
+                    <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <input
+                         type="text"
+                         inputmode="decimal"
+                         class="input-base-with-validation"
+                         app-focus-border
+                         [isValid]="isAmountValid() && clawbackAmount.length > 0"
+                         [isInvalid]="isAmountInvalid() && clawbackAmount.length > 0"
+                         (keydown)="utilsService.preventNegative($event)"
+                         (input)="amountValidatorService.onAmountInput($event, 'loan')"
+                         (blur)="amountValidatorService.onAmountBlur($event, 'loan')"
+                         (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                         [ngModel]="clawbackAmount"
+                         (ngModelChange)="clawbackAmount = $event"
+                         placeholder="Optional: Amount to clawback (empty = max allowed)"
+                    />
+
+                    <app-input-icons [isValid]="isAmountValid() && clawbackAmount.length > 0" [isInvalid]="isAmountInvalid() && clawbackAmount.length > 0" [showClear]="!!clawbackAmount" (clear)="clawbackAmount = ''" />
+               </div>
+
+               @if (clawbackAmount && clawbackAmount.length > 0) {
+               <div class="mt-2">
+                    @if (isAmountInvalid()) {
+                    <p class="form-error mt-2">Invalid amount format. Please enter a valid number.</p>
+                    } @if (!isAmountInvalid() && parseFloat(clawbackAmount) > 0) {
+                    <p class="text-xs text-green-600">✅ Valid amount</p>
+                    }
+               </div>
+               }
+
+               <app-field-helper title="Clawback Amount" [items]="clawbackAmountHelperItems" [show]="showClawbackAmountHelper" />
+          </div>
+
+          <!-- Validation Messages -->
+          @if (loanBrokerStoreService.selectedBrokerId() || clawbackAmount) {
+          <!-- No Broker ID and No Amount -->
+          @if (!loanBrokerStoreService.selectedBrokerId() && !clawbackAmount) {
+          <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-yellow-800">⚠️ Missing Information</p>
+                         <p class="text-sm text-yellow-700 mt-1">Either select a Loan Broker or specify the amount to clawback.</p>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Amount Exceeds Maximum -->
+          @if (clawbackAmount && selectedBrokerMinimumCoverRequired() && parseFloat(clawbackAmount) > parseFloat(selectedBrokerMinimumCoverRequired() || '0')) {
+          <div class="rounded-2xl bg-red-50 p-4 border border-red-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationCircle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-red-800">⚠️ Amount Exceeds Limit</p>
+                         <p class="text-sm text-red-700 mt-1">
+                              Clawback amount cannot exceed the minimum cover required of <strong>{{ selectedBrokerMinimumCoverRequired() }}</strong>. @if (!loanBrokerStoreService.selectedBrokerId()) {
+                              <span class="block mt-1">Select a Loan Broker to see the specific limit for that broker.</span>
+                              }
+                         </p>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Broker Selected - Show Summary -->
+          @if (loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-blue-800">Clawback Summary</p>
+                         <p class="text-sm text-blue-700 mt-1">
+                              You are about to clawback <strong>{{ clawbackAmount || 'maximum allowed' }}</strong> from the First-Loss Capital. @if (selectedBrokerMinimumCoverRequired()) {
+                              <span class="block mt-1"> Maximum allowed: <strong>{{ selectedBrokerMinimumCoverRequired() }}</strong> </span>
+                              } @if (!clawbackAmount) {
+                              <span class="block mt-1 text-yellow-600"> ⚠️ Amount not specified - will clawback up to the minimum cover required. </span>
+                              }
+                         </p>
+                    </div>
+               </div>
+          </div>
+          } }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="First-Loss Capital clawback validation issues:" />
+     </div>
+</div>

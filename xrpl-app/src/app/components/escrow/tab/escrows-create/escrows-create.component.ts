@@ -127,7 +127,7 @@ export class EscrowsCreateComponent implements OnDestroy {
           const currency = item?.id ?? 'XRP';
           this.trustlineCurrencyService.selectCurrency(currency);
           if (currency === 'MPT') {
-               await this.viewModel.refreshMpts(); // or this.base.refreshMpts() if you expose it
+               await this.viewModel.refreshMpts();
           } else {
                await this.trustlineUtilService.loadTrustlines(false);
                await this.trustlineCurrencyService.refreshCurrentBalance();

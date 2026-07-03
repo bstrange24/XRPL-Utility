@@ -1,0 +1,79 @@
+<!-- Get view -->
+@let viewModel = loanBrokerViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
+
+          <!-- Main Form Area -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'createBroker') {
+               <app-lending-broker-set (canCreateBrokerChange)="onCanCreateBrokerChange($event)" />
+               } @else if (tab === 'modifyBroker') {
+               <app-lending-broker-modify (canModifyBrokerChange)="onCanModifyBrokerChange($event)" />
+               } @else if (tab === 'deleteBroker') {
+               <app-lending-broker-delete (canDeleteBrokerChange)="onCanDeleteBrokerChange($event)" />
+               } @else if (tab === 'coverWithdraw') {
+               <app-lending-broker-cover-withdraw [currentAddress]="currentAddress()" [destinationSearchQuery]="destinationSearchQuery()" (canCoverWithdrawChange)="onCanCoverWithdrawChange($event)" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" (destinationTagChange)="handleDestinationTagChange($event)" />
+               } @else if (tab === 'coverDeposit') {
+               <app-lending-broker-cover-deposit (canCoverDepositChange)="onCanCoverDepositChange($event)" />
+               } @else if (tab === 'modifyLoan') {
+               <app-loan-manage (canModifyLoanChange)="onCanModifyLoanChange($event)"></app-loan-manage>
+               }@else if (tab === 'impairLoan') {
+               <app-loan-impair (canImpairLoanChange)="onCanImpairLoanChange($event)" />
+               } @else if (tab === 'unimpairLoan') {
+               <app-loan-unimpair (canUnimpairLoanChange)="onCanUnimpairLoanChange($event)" />
+               } @else if (tab === 'defaultLoan') {
+               <app-loan-default (canDefaultLoanChange)="onCanDefaultLoanChange($event)" />
+               } @else if (tab === 'coverClawback') {
+               <app-lending-broker-cover-clawback (canCoverClawbackChange)="onCanCoverClawbackChange($event)" />
+               }
+
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createBroker', 'modifyBroker', 'deleteBroker']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="main-button-section">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'createBroker') {
+                         <button type="button" class="btn-primary" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.createBrokerButtonLabel() }}</button>
+                         } @else if (tab === 'modifyBroker') {
+                         <button type="button" class="btn-green" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.modifyBrokerButtonLabel() }}</button>
+                         } @else if (tab === 'coverWithdraw') {
+                         <button type="button" class="btn-blue" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.coverWithdrawButtonLabel() }}</button>
+                         } @else if (tab === 'coverDeposit') {
+                         <button type="button" class="btn-green" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.coverDepositButtonLabel() }}</button>
+                         } @else if (tab === 'coverClawback') {
+                         <button type="button" class="btn-blue" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.coverClawbackButtonLabel() }}</button>
+                         }@else if (tab === 'deleteBroker') {
+                         <button type="button" class="btn-red" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.deleteBrokerButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
+
+                    <!-- Clear Fields -->
+                    <div class="right-buttons">
+                         <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
+                    </div>
+               </div>
+
+               <!-- Execution Time -->
+               <div class="execution-time">
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
+
+               <!-- Transaction Preview -->
+               <div class="pt-2">
+                    <app-transaction-preview></app-transaction-preview>
+               </div>
+          </form>
+     </div>
+</div>

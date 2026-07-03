@@ -22,6 +22,7 @@ export class NavbarStore {
           escrows: false,
           nft: false,
           mpt: false,
+          defi: false,
      });
 
      connectionStatus = computed(() => this.xrplService.connectionStatus$());
@@ -37,6 +38,7 @@ export class NavbarStore {
                escrows: name === 'escrows' ? !d.escrows : false,
                nft: name === 'nft' ? !d.nft : false,
                mpt: name === 'mpt' ? !d.mpt : false,
+               defi: name === 'defi' ? !d.defi : false,
           }));
      }
 
@@ -63,6 +65,7 @@ export class NavbarStore {
                escrows: false,
                nft: false,
                mpt: false,
+               defi: false,
           });
      }
 }

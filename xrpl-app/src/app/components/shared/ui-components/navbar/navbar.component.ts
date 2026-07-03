@@ -94,6 +94,11 @@ export class NavbarComponent {
           return nftRoutes.some(route => this.router.url === route || this.router.url.startsWith(route + '?'));
      }
 
+     isDeFiActive(): boolean {
+          const defiRoutes = ['/vault', '/loan', '/loan-broker'];
+          return defiRoutes.some(route => this.router.url === route || this.router.url.startsWith(route + '?'));
+     }
+
      openNetworkModal() {
           this.openNetworkModalEvent.emit();
      }

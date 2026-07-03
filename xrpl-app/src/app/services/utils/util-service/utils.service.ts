@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { sha512 } from '@noble/hashes/sha512';
 import * as xrpl from 'xrpl';
 import { walletFromSecretNumbers, Wallet } from 'xrpl';
 import { XrplService } from '../../xrpl-services/xrpl.service';
@@ -18,6 +19,7 @@ import { AccountFlags } from '../../../components/account-configurator/constants
 import { PaymentChannelStoreService } from '../../payment-channel/payment-channel-store/payment-channel-store.service';
 import { MptStoreService } from '../../mpt/mpt-store/mpt-store.service';
 import { XrplTxOptionsStore } from '../../../components/shared/stores/xrpl-tx-options.store';
+import { VaultStoreService } from '../../vault/vault-store/vault-store.service';
 
 type InputType = 'seed' | 'mnemonic' | 'secret_numbers' | 'unknown';
 
@@ -39,6 +41,7 @@ export class UtilsService {
      public readonly nftCreateStoreService = inject(CreateNftStoreService);
      public readonly mptStoreService = inject(MptStoreService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly vaultStoreService = inject(VaultStoreService);
 
      result: string = '';
      isError: boolean = false;
@@ -189,6 +192,16 @@ export class UtilsService {
                }
           }
 
+          if (type === 'vaultAssetScale') {
+               if (Number.isNaN(num) || num < 0) {
+                    this.vaultStoreService.setField('assetScale', null);
+                    return;
+               } else {
+                    const rounded = Number(num.toFixed(6));
+                    this.vaultStoreService.setField('assetScale', rounded);
+               }
+          }
+
           if (type === 'mptTransferFee') {
                if (Number.isNaN(num) || num < 0) {
                     this.mptStoreService.setField('transferFee', 0);
@@ -243,6 +256,35 @@ export class UtilsService {
           // Round to 6 decimal places (XRP precision)
           const rounded = Number(num.toFixed(10));
           this.trustlineStoreService.setField('trustlineLimitField', rounded);
+     }
+
+     /**
+      * Compute the SHA-512 hash of a transaction blob to get the transaction ID
+      * @param txBlob - The hex-encoded transaction blob
+      * @returns The transaction hash (32 bytes hex string)
+      */
+     computeHash(txBlob: string): string {
+          try {
+               // Remove any whitespace and ensure it's hex
+               const cleanBlob = txBlob.trim().replace(/\s/g, '');
+
+               // Convert hex to bytes
+               const bytes = new Uint8Array(cleanBlob.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []);
+
+               // Compute SHA-512 hash
+               const hash = sha512(bytes);
+
+               // Take the first 32 bytes (256 bits) and convert to hex
+               const txHash = Array.from(hash.slice(0, 32))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('')
+                    .toUpperCase();
+
+               return txHash;
+          } catch (error) {
+               console.error('Error computing hash:', error);
+               return '';
+          }
      }
 
      issuedAmount(currency: string, issuer: string, value: any) {

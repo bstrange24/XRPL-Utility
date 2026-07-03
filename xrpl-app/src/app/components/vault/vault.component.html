@@ -1,0 +1,67 @@
+<!-- Get view -->
+@let viewModel = vaultViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
+
+          <!-- Main Form Area -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'createVault') {
+               <app-vault-create [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" [selectedDestinationAddress]="selectedDestinationAddress()" [wantsOptions]="txUiService.wantsOptions()" [canSubmit]="canSubmit()" [tab]="tab" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" (toggleOptions)="txUiService.toggleOptions($event)"> </app-vault-create>
+               } @if (tab === 'deleteVault') {
+               <app-vault-delete></app-vault-delete>
+               } @if (tab === 'modifyVault') {
+               <app-vault-set></app-vault-set>
+               } @if (tab === 'clawbackVault') {
+               <app-vault-clawback></app-vault-clawback>
+               } @if (tab === 'depositVault') {
+               <app-vault-deposit-withdraw [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-vault-deposit-withdraw>
+               }
+
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['createVault']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="main-button-section">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'createVault') {
+                         <button type="button" class="btn-primary" (click)="performAction()" [disabled]="false">{{ vaultUtilService.createVaultButtonLabel() }}</button>
+                         } @else if (tab === 'deleteVault') {
+                         <button type="button" class="btn-red" (click)="performAction()" [disabled]="false">{{ vaultUtilService.deleteVaultButtonLabel() }}</button>
+                         }@else if (tab === 'modifyVault') {
+                         <button type="button" class="btn-green" (click)="performAction()" [disabled]="false">{{ vaultUtilService.modifyVaultButtonLabel() }}</button>
+                         } @else if (tab === 'depositVault' || tab === 'withdrawlVault') {
+                         <button type="button" class="btn-primary" [ngClass]="{'btn-green': vaultStoreService.vaultAction() === 'deposit', 'btn-blue': vaultStoreService.vaultAction() === 'withdraw'}" (click)="performAction()" [disabled]="false">{{ vaultUtilService.depositButtonLabel() }}</button>
+                         } @else if (tab === 'clawbackVault') {
+                         <button type="button" class="btn-blue" (click)="performAction()" [disabled]="false">{{ vaultUtilService.clawbackVaultButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
+
+                    <!-- Clear Fields -->
+                    <div class="right-buttons">
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    </div>
+               </div>
+
+               <!-- Execution Time -->
+               <div class="execution-time">
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
+
+               <!-- Transaction Preview -->
+               <div class="pt-2">
+                    <app-transaction-preview></app-transaction-preview>
+               </div>
+          </form>
+     </div>
+</div>

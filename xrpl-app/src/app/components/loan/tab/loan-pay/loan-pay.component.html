@@ -1,0 +1,236 @@
+<div class="card-base">
+     <!-- Loan Payment Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Details
+          </h4>
+
+          <!-- Select Loan to Pay -->
+          <div>
+               <div class="field-label">
+                    <label for="selectLoan" class="label-primary">Select Loan to Pay <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing loan to make a payment against.</p>
+                    <button type="button" (click)="toggleLoanSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="loanItems()" [value]="selectedLoanItem()" [showShortAddress]="false" (valueChange)="onLoanSelected($event)" placeholder="Search by Broker ID, amount, or owner..." emptyMessage="No loans available to pay" />
+               </div>
+               <app-field-helper title="Select Loan" [items]="loanSelectorHelperItems" [show]="showLoanSelectorHelper" />
+          </div>
+
+          <!-- Current Loan Details -->
+          @if (selectedLoanItem() && loanStoreService.selectedLoanId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Loan Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanStoreService.selectedLoanId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Principal Outstanding</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanPrincipalOutstanding() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanOwner() }}</p>
+                    </div>
+                    @if (selectedLoanCounterparty()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Counterparty</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanCounterparty() }}</p>
+                    </div>
+                    } @if (selectedLoanInterestRate()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Interest Rate</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanInterestRate() / 1000 }}%</p>
+                    </div>
+                    } @if (selectedLoanRemainingBalance()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Remaining Balance</p>
+                         <p class="font-mono text-sm font-semibold text-gray-900">{{ selectedLoanRemainingBalance() }}</p>
+                    </div>
+                    }
+                    <div>
+                         <p class="text-xs text-gray-500">Status</p>
+                         <span
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                              [class.bg-green-100]="selectedLoanStatus() === 'active'"
+                              [class.text-green-800]="selectedLoanStatus() === 'active'"
+                              [class.bg-red-100]="selectedLoanStatus() === 'defaulted'"
+                              [class.text-red-800]="selectedLoanStatus() === 'defaulted'"
+                              [class.bg-yellow-100]="selectedLoanStatus() === 'impaired'"
+                              [class.text-yellow-800]="selectedLoanStatus() === 'impaired'"
+                              [class.bg-gray-100]="selectedLoanStatus() === 'closed'"
+                              [class.text-gray-800]="selectedLoanStatus() === 'closed'"
+                         >
+                              @if (selectedLoanStatus() === 'active') {
+                              <ng-icon name="heroCheckCircle" size="12" />
+                              } @else if (selectedLoanStatus() === 'defaulted') {
+                              <ng-icon name="heroExclamationTriangle" size="12" />
+                              } @else if (selectedLoanStatus() === 'impaired') {
+                              <ng-icon name="heroExclamationCircle" size="12" />
+                              } @else {
+                              <ng-icon name="heroXCircle" size="12" />
+                              } {{ selectedLoanStatus() | titlecase }}
+                         </span>
+                    </div>
+
+                    <div>
+                         <p class="text-xs text-gray-500">Asset Type</p>
+                         <p class="font-mono text-sm">
+                              @if (isAssetMPT()) {
+                              <span class="text-purple-600">MPT Token</span>
+                              } @else {
+                              <span class="text-yellow-600">XRP</span>
+                              }
+                         </p>
+                    </div>
+                    @if (isAssetMPT()) {
+                    <div>
+                         <p class="text-xs text-gray-500">⚠️ MPT Amount</p>
+                         <p class="text-xs text-amber-600">Must be a whole number (no decimals)</p>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Payment Fields -->
+          @if (loanStoreService.selectedLoanId()) {
+          <div class="space-y-6">
+               <!-- Amount -->
+               <div>
+                    <div class="field-label">
+                         <label for="paymentAmount" class="label-primary">Payment Amount <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The amount of funds to pay against the loan.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isAmountValid() && paymentAmount.length > 0"
+                              [isInvalid]="isAmountInvalid() && paymentAmount.length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event, 'loan')"
+                              (blur)="amountValidatorService.onAmountBlur($event, 'loan')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              [ngModel]="paymentAmount"
+                              (ngModelChange)="paymentAmount = $event"
+                              placeholder="e.g. 100"
+                         />
+
+                         <app-input-icons [isValid]="isAmountValid() && paymentAmount.length > 0" [isInvalid]="isAmountInvalid() && paymentAmount.length > 0" [showClear]="!!paymentAmount" (clear)="paymentAmount = ''" />
+                    </div>
+
+                    @if (paymentAmount && paymentAmount.length > 0) {
+                    <div class="mt-2">
+                         @if (isAmountInvalid()) {
+                         <!-- <p class="form-error mt-2">{{ amountValidatorService.getAmountErrorMessage() || 'Invalid amount format' }}</p> -->
+                         } @if (isAmountExceedsBalance()) {
+                         <p class="form-error mt-2">⚠️ Amount exceeds remaining balance</p>
+                         } @if (!isAmountInvalid() && !isAmountExceedsBalance() && parseFloat(paymentAmount) > 0) {
+                         <p class="text-xs text-green-600">✅ Valid amount</p>
+                         }
+                    </div>
+                    }
+
+                    <app-field-helper title="Payment Amount" [items]="paymentAmountHelperItems" [show]="showPaymentAmountHelper" />
+               </div>
+
+               <!-- Payment Type Flags (Radio Group) -->
+               <div class="mt-6">
+                    <div class="mb-4 flex items-center gap-2">
+                         <lucide-icon name="flag" size="18" class="section-heading-icon-purple" />
+                         <span class="text-sm font-semibold text-gray-900">Payment Type</span>
+                         <span class="text-xs text-gray-500">(Select one payment type)</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                         @for (flag of loanPayFlagsConfig; track flag.key) {
+                         <label
+                              class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300"
+                              [class.border-blue-500]="flag.key === 'tfLoanFullPayment' && loanStoreService[flag.key]()"
+                              [class.bg-blue-50]="flag.key === 'tfLoanFullPayment' && loanStoreService[flag.key]()"
+                              [class.border-yellow-500]="flag.key === 'tfLoanLatePayment' && loanStoreService[flag.key]()"
+                              [class.bg-yellow-50]="flag.key === 'tfLoanLatePayment' && loanStoreService[flag.key]()"
+                              [class.border-green-500]="flag.key === 'tfLoanOverpayment' && loanStoreService[flag.key]()"
+                              [class.bg-green-50]="flag.key === 'tfLoanOverpayment' && loanStoreService[flag.key]()"
+                         >
+                              <input type="radio" name="loanPayFlag" [value]="flag.key" [checked]="loanStoreService[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" />
+
+                              <div class="mt-0.5 flex-shrink-0">
+                                   <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-blue-500]="flag.key === 'tfLoanFullPayment' && loanStoreService[flag.key]()" [class.border-yellow-500]="flag.key === 'tfLoanLatePayment' && loanStoreService[flag.key]()" [class.border-green-500]="flag.key === 'tfLoanOverpayment' && loanStoreService[flag.key]()" [class.border-gray-300]="!loanStoreService[flag.key]()">
+                                        <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200" [class.bg-blue-500]="flag.key === 'tfLoanFullPayment' && loanStoreService[flag.key]()" [class.bg-yellow-500]="flag.key === 'tfLoanLatePayment' && loanStoreService[flag.key]()" [class.bg-green-500]="flag.key === 'tfLoanOverpayment' && loanStoreService[flag.key]()" [class.scale-100]="loanStoreService[flag.key]()" [class.scale-0]="!loanStoreService[flag.key]()"></div>
+                                   </div>
+                              </div>
+
+                              <div class="flex-1">
+                                   <div class="text-sm font-medium text-gray-900">{{ flag.title }}</div>
+                                   <div class="mt-1 text-xs leading-relaxed text-gray-600">{{ flag.desc }}</div>
+                              </div>
+                         </label>
+                         }
+                    </div>
+                    <div class="text-xs text-gray-500 mt-2">Select one payment type flag to specify how the payment should be applied.</div>
+               </div>
+
+               <!-- Warning Messages based on flag selection -->
+               @if (loanStoreService.tfLoanLatePayment() && loanStoreService.selectedLoanId()) {
+               <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-yellow-800">⚠️ Late Payment</p>
+                              <p class="text-sm text-yellow-700 mt-1">This payment will be marked as <strong>late</strong>. Late interest rates may apply.</p>
+                         </div>
+                    </div>
+               </div>
+               } @if (loanStoreService.tfLoanFullPayment() && loanStoreService.selectedLoanId()) {
+               <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroCheckCircle" size="20" class="text-blue-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-blue-800">ℹ️ Full Payment</p>
+                              <p class="text-sm text-blue-700 mt-1">This will be treated as a <strong>full early repayment</strong> of the loan. Close interest rates may apply.</p>
+                         </div>
+                    </div>
+               </div>
+               } @if (loanStoreService.tfLoanOverpayment() && loanStoreService.selectedLoanId()) {
+               <div class="rounded-2xl bg-green-50 p-4 border border-green-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroArrowUpCircle" size="20" class="text-green-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-green-800">ℹ️ Overpayment</p>
+                              <p class="text-sm text-green-700 mt-1">This payment includes <strong>overpayment</strong>. Overpayment fees and interest rates may apply.</p>
+                         </div>
+                    </div>
+               </div>
+               }
+          </div>
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="Loan payment validation issues:" />
+     </div>
+</div>

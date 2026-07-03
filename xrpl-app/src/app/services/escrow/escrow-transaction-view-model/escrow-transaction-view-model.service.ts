@@ -276,8 +276,6 @@ export class EscrowTransactionViewModelService {
           }
      }
 
-     // Add these to EscrowTransactionViewModelService
-
      selectedFullEscrow = computed(() => {
           const seq = this.escrowStoreService.escrowSequenceNumber();
           if (!seq) return null;

@@ -74,7 +74,7 @@
                     @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
                     <p class="same-addrress-as-selected-account">
                          <ng-icon name="heroExclamationTriangle" size="14" />
-                         This is your currently active wallet. You cannot send the remaining XRP to yourself.
+                         This is your currently active wallet. You cannot authorize/unauthorize yourself.
                     </p>
                     } @if (mptAuthorizeValidator.getDestinationErrorMessage()) {
                     <p class="form-error mt-2">{{ mptAuthorizeValidator.getDestinationErrorMessage() }}</p>

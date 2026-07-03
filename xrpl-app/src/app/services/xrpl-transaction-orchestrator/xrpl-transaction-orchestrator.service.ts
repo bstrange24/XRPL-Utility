@@ -12,7 +12,8 @@ export class XrplTransactionOrchestratorService {
      public readonly txUiService = inject(TransactionUiService);
 
      async executeTx<TTx extends xrpl.Transaction>(params: ExecuteTxParams<TTx>): Promise<TxOrchestratorResult> {
-          const { client, wallet, buildTx, validate } = params;
+          // const { client, wallet, buildTx, validate } = params;
+          const { client, wallet, buildTx, validate, skipSigning = false, preSignedTxBlob } = params;
 
           const mode = params.mode;
           const skipBalanceCheck = params.skipBalanceCheck ?? true;
@@ -89,9 +90,33 @@ export class XrplTransactionOrchestratorService {
                     const fee = params.env?.fee;
                     if (!fee) throw new Error('Missing fee in env');
 
-                    const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
+                    let signedTx: { tx_blob: string; hash: string } | null = null;
 
-                    const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
+                    // If we have a pre-signed transaction blob, use it directly
+                    if (preSignedTxBlob) {
+                         signedTx = {
+                              tx_blob: preSignedTxBlob,
+                              hash: this.utilsService.computeHash(preSignedTxBlob), // You'll need to implement this
+                         };
+                         console.log('Using pre-signed transaction blob');
+                    } else if (skipSigning) {
+                         // If skipSigning is true but no preSignedTxBlob, use the tx as-is
+                         // This is for when the transaction is already fully signed
+                         const txBlob = (tx as any).tx_blob || (tx as any).blob;
+                         if (txBlob) {
+                              signedTx = {
+                                   tx_blob: txBlob,
+                                   hash: (tx as any).hash || this.utilsService.computeHash(txBlob),
+                              };
+                         } else {
+                              throw new Error('Transaction is not signed and no preSignedTxBlob provided');
+                         }
+                    } else {
+                         // Normal signing flow
+                         const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(params.signing?.useMultiSign || false, params.signing?.regularKeyAddress || '', params.signing?.isRegularKeyAddress || false, params.signing?.regularKeySeed || '');
+
+                         signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, params.signing?.useMultiSign || false, params.signing?.multiSignAddress || '', params.signing?.multiSignSeeds || '');
+                    }
 
                     if (!signedTx) {
                          const msg = 'Failed to sign transaction.';
@@ -100,8 +125,23 @@ export class XrplTransactionOrchestratorService {
                     }
 
                     this.txUiService.currentStep.set('waiting_validation');
-                    // response = await this.xrplTransactions.submitAndWaitTransaction(client, signedTx);
                     response = await this.xrplTransactions.submitTransaction(client, signedTx);
+                    // const fee = params.env?.fee;
+                    // if (!fee) throw new Error('Missing fee in env');
+
+                    // const { useRegularKeyWalletSignTx, regularKeyWalletSignTx } = await this.utilsService.getRegularKeyWallet(useMultiSign, regularKeyAddress, isRegularKeyAddress, regularKeySeed);
+
+                    // const signedTx = await this.xrplTransactions.signTransaction(client, wallet, tx, useRegularKeyWalletSignTx, regularKeyWalletSignTx, fee, useMultiSign, multiSignAddress, multiSignSeeds);
+
+                    // if (!signedTx) {
+                    //      const msg = 'Failed to sign transaction.';
+                    //      this.txUiService.setError(msg);
+                    //      return { success: false, mode, tx, error: msg };
+                    // }
+
+                    // this.txUiService.currentStep.set('waiting_validation');
+                    // // response = await this.xrplTransactions.submitAndWaitTransaction(client, signedTx);
+                    // response = await this.xrplTransactions.submitTransaction(client, signedTx);
                }
 
                // if (response?.result) this.txUiService.addTxResultSignal(response.result);

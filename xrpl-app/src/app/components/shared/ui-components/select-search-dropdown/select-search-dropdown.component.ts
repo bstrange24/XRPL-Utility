@@ -61,6 +61,7 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      disabled = input<boolean>(false);
      disableCurrencySelection = input<boolean>(false);
      disableCurrentAccount = input<boolean>(true);
+     allowCurrentAccountSelection = input<boolean>(false);
 
      // Outputs
      valueChange = output<SelectItem | null>();
@@ -305,7 +306,13 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
      onItemMouseDown(event: MouseEvent, item: SelectItem) {
           event.preventDefault();
 
-          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) {
+          if (item.isCurrentAccount && !this.allowCurrentAccountSelection()) {
+               return;
+          }
+          if (item.isCurrentCode && !this.allowCurrentAccountSelection()) {
+               return;
+          }
+          if (item.isCurrentToken && !this.allowCurrentAccountSelection()) {
                return;
           }
 
@@ -422,11 +429,18 @@ export class SelectSearchDropdownComponent implements AfterViewInit, OnDestroy {
 
      onSelect(item: SelectItem) {
           // Don't allow selection of disabled items
-          if (item.isCurrentAccount || item.isCurrentCode || item.isCurrentToken) return;
+          if (item.isCurrentAccount && !this.allowCurrentAccountSelection()) {
+               return;
+          }
+          if (item.isCurrentCode && !this.allowCurrentAccountSelection()) {
+               return;
+          }
+          if (item.isCurrentToken && !this.allowCurrentAccountSelection()) {
+               return;
+          }
 
           // If validating XRP addresses, check if the selected item is valid
           if (this.validateXrpAddress() && item.id && !xrpl.isValidAddress(item.id)) {
-               // Don't select invalid addresses
                return;
           }
 

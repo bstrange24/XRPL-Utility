@@ -1,0 +1,223 @@
+<div class="card-base">
+     <!-- Vault Clawback Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="VaultIcon" class="section-heading-icon-green"></lucide-icon>
+               Vault Details
+          </h4>
+
+          <!-- Select Vault -->
+          <div>
+               <div class="field-label">
+                    <label for="selectVault" class="label-primary">Select Vault <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select a vault to clawback assets from.</p>
+                    <button type="button" (click)="toggleVaultSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="vaultItems()" [value]="selectedVaultItem()" [showShortAddress]="false" (valueChange)="onVaultSelected($event)" placeholder="Search by amount, address, or id..." emptyMessage="No vaults available for clawback" />
+               </div>
+               <app-field-helper title="Select Vault" [items]="vaultSelectorHelperItems" [show]="showVaultSelectorHelper" />
+          </div>
+
+          <!-- Current Vault Details -->
+          @if (selectedVaultItem() && vaultStoreService.selectedVaultId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Vault Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ vaultStoreService.selectedVaultId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedVaultOwner() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Total Assets</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedVaultTotalAssets() }}</p>
+                    </div>
+
+                    @if (getAssetType() !== 'Unknown' && getAssetType() !== 'XRP') {
+                    <!-- Process MPT -->
+                    @if (getAssetType() === 'MPT') {
+                    <div>
+                         <p class="text-xs text-gray-500">MPT Issuance ID:</p>
+                         <p class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</p>
+                    </div>
+
+                    <!-- <div class="rounded-2xl bg-purple-50 p-4 border border-purple-200">
+                         <p class="text-xs font-semibold uppercase tracking-wider text-purple-700 mb-2">Asset Details</p>
+                         <div class="flex items-center gap-2">
+                              <span class="text-sm text-gray-600">MPT Issuance ID:</span>
+                              <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</code>
+                         </div>
+                    </div> -->
+                    }
+                    <!-- Process IOU -->
+                    @if (getAssetType() === 'IOU') {
+                    <div>
+                         <p class="text-xs text-gray-500">Currency:</p>
+                         <p class="font-mono text-sm text-gray-900">{{ getAssetDetails().currency }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Issuer:</p>
+                         <p class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</p>
+                    </div>
+                    <!-- <div class="flex items-center gap-2">
+                         <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+                              <p class="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-2">Asset Details</p>
+                              <div class="flex items-center gap-2">
+                                   <span class="text-sm text-gray-600">Currency:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().currency }}</code>
+                              </div>
+                              <div class="flex items-center gap-2 mt-1">
+                                   <span class="text-sm text-gray-600">Issuer:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</code>
+                              </div>
+                         </div>
+                    </div> -->
+                    } }
+
+                    <div>
+                         <p class="text-xs text-gray-500">Asset Type</p>
+                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium" [class.bg-yellow-100]="getAssetType() === 'XRP'" [class.text-yellow-800]="getAssetType() === 'XRP'" [class.bg-purple-100]="getAssetType() === 'MPT'" [class.text-purple-800]="getAssetType() === 'MPT'" [class.bg-blue-100]="getAssetType() === 'IOU'" [class.text-blue-800]="getAssetType() === 'IOU'"> {{ getAssetType() }} </span>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Clawback Fields -->
+          @if (vaultStoreService.selectedVaultId()) {
+          <div class="space-y-6">
+               <!-- Holder (Account to clawback from) -->
+               <div>
+                    <div class="field-label">
+                         <label for="holder" class="label-primary">Holder Account <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The account from which to clawback the assets.</p>
+                         <button type="button" (click)="toggleHolderHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         @if (isLoadingHolders()) {
+                         <div class="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
+                              <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                              <span class="ml-2 text-sm text-gray-500">Loading holders...</span>
+                         </div>
+                         } @else {
+                         <app-select-search-dropdown [items]="holderItems()" [value]="selectedHolderItem()" [showShortAddress]="true" (valueChange)="onHolderSelected($event)" placeholder="Search for a holder account..." emptyMessage="No holders found. Check if this vault has deposits." />
+                         }
+                    </div>
+
+                    <!-- Show holder count -->
+                    @if (holderItems().length > 0) {
+                    <p class="text-xs text-gray-500 mt-1">{{ holderItems().length }} holder{{ holderItems().length > 1 ? 's' : '' }} found</p>
+                    }
+
+                    <app-field-helper title="Holder Account" [items]="holderHelperItems" [show]="showHolderHelper" />
+               </div>
+
+               <!-- Amount to Clawback -->
+               <div>
+                    <div class="field-label">
+                         <label for="clawbackAmount" class="label-primary">Amount to Clawback</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The amount to clawback. Leave empty or set to 0 to clawback all funds.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isAmountValid() && clawbackAmount !== null && clawbackAmount !== undefined && clawbackAmount.trim().length > 0"
+                              [isInvalid]="isAmountInvalid() && clawbackAmount !== null && clawbackAmount !== undefined && clawbackAmount.trim().length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              [ngModel]="vaultStoreService.clawbackAmount()"
+                              (ngModelChange)="vaultStoreService.setField('clawbackAmount', $event)"
+                              placeholder="Amount to clawback (empty or 0 = all funds)"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="isAmountValid() && !!clawbackAmount && clawbackAmount.length > 0" [isInvalid]="isAmountInvalid() && !!clawbackAmount && clawbackAmount.length > 0" [showClear]="!!clawbackAmount" (clear)="vaultStoreService.setField('clawbackAmount', '')" />
+                    </div>
+
+                    @if (selectedHolderBalance()) {
+                    <div class="mt-2">
+                         <p class="text-xs text-gray-500">Holder's current balance: <strong>{{ selectedHolderBalance() }}</strong></p>
+                         @if (clawbackAmount && parseFloat(clawbackAmount) > parseFloat(selectedHolderBalance() || '0')) {
+                         <p class="text-xs text-red-500 mt-1">⚠️ Amount exceeds holder's balance</p>
+                         }
+                    </div>
+                    }
+
+                    <app-field-helper title="Clawback Amount" [items]="clawbackAmountHelperItems" [show]="showClawbackAmountHelper" />
+               </div>
+
+               <!-- Asset Details -->
+               <!-- @if (getAssetType() !== 'Unknown' && getAssetType() !== 'XRP') {
+               <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-blue-700 mb-2">Asset Details</p>
+                    @if (getAssetType() === 'MPT') {
+                    <div class="flex items-center gap-2">
+                         <span class="text-sm text-gray-600">MPT Issuance ID:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</code>
+                    </div>
+                    } @if (getAssetType() === 'IOU') {
+                    <div class="flex items-center gap-2">
+                         <span class="text-sm text-gray-600">Currency:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().currency }}</code>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                         <span class="text-sm text-gray-600">Issuer:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</code>
+                    </div>
+                    }
+               </div>
+               } -->
+
+               <!-- Warning Message -->
+               @if (getSelectedVault() && selectedHolder()) {
+               <div class="rounded-2xl bg-amber-50 p-4 border border-amber-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-amber-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-amber-800">Clawback Warning</p>
+                              <p class="text-sm text-amber-700 mt-1">
+                                   This action will clawback <strong>{{ clawbackAmount ? clawbackAmount : 'all' }}</strong> {{ getAssetType() }} from <strong class="font-mono">{{ getHolderDisplay(selectedHolder()) }}</strong>. @if (isAllAmount(clawbackAmount)) {
+                                   <span class="block mt-1 font-medium">⚠️ This will clawback all funds from this holder.</span>
+                                   }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+               }
+          </div>
+
+          }
+     </div>
+
+     <!-- Summary of validation errors -->
+     <app-validation-errors [errors]="validationErrorMessages()" title="Vault deposit/withdraw validation issues:" />
+</div>

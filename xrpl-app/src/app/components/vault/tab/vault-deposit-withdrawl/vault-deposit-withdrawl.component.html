@@ -1,0 +1,325 @@
+<div class="space-y-6">
+     <!-- Deposit/Withdraw Card -->
+     <div class="card-base">
+          <div class="space-y-6">
+               <h4 class="section-heading">
+                    <lucide-icon name="VaultIcon" class="section-heading-icon-green"></lucide-icon>
+                    Vault Details
+               </h4>
+
+               <!-- Action Selection -->
+               <div>
+                    <div class="field-label">
+                         <label for="action" class="label-primary"> Action <span class="text-red-500">*</span> </label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select whether to deposit or withdraw assets from the vault.</p>
+                         <button type="button" (click)="toggleActionHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="flex flex-wrap gap-6">
+                         <!-- Deposit Radio -->
+                         <label class="relative flex cursor-pointer items-center gap-2 group">
+                              <input type="radio" name="vaultAction" value="deposit" [checked]="vaultAction === 'deposit'" (change)="setVaultAction('deposit')" class="hidden" />
+
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="vaultAction === 'deposit'" [class.border-gray-300]="vaultAction !== 'deposit'">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="vaultAction === 'deposit'" [class.scale-0]="vaultAction !== 'deposit'"></div>
+                              </div>
+
+                              <ng-icon name="heroArrowDownCircle" size="18" class="text-green-500"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Deposit</span>
+                         </label>
+
+                         <!-- Withdraw Radio -->
+                         <label class="relative flex cursor-pointer items-center gap-2 group">
+                              <input type="radio" name="vaultAction" value="withdraw" [checked]="vaultAction === 'withdraw'" (change)="setVaultAction('withdraw')" class="hidden" />
+
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-blue-500]="vaultAction === 'withdraw'" [class.border-gray-300]="vaultAction !== 'withdraw'">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-blue-500" [class.scale-100]="vaultAction === 'withdraw'" [class.scale-0]="vaultAction !== 'withdraw'"></div>
+                              </div>
+
+                              <ng-icon name="heroArrowUpCircle" size="18" class="text-blue-500"></ng-icon>
+                              <span class="text-sm font-medium text-gray-900 transition-colors group-hover:text-gray-700">Withdraw</span>
+                         </label>
+                    </div>
+
+                    @if (vaultDepositValidator.getActionErrorMessage()) {
+                    <p class="form-error mt-2">{{ vaultDepositValidator.getActionErrorMessage() }}</p>
+                    }
+
+                    <app-field-helper title="Action" [items]="vaultActionHelperItems" [show]="showVaultActionHelper" />
+               </div>
+
+               <!-- Select Vault -->
+               <div>
+                    <div class="field-label">
+                         <label for="selectVault" class="label-primary">Select Vault <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select a vault to deposit or withdraw assets from.</p>
+                         <button type="button" (click)="toggleVaultSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="vaultItems()" [value]="selectedVaultItem()" [showShortAddress]="false" (valueChange)="onVaultSelected($event)" placeholder="Search by amount, address, or id..." emptyMessage="No vaults available" />
+                    </div>
+                    <app-field-helper title="Select Vault" [items]="vaultSelectorHelperItems" [show]="showVaultSelectorHelper" />
+               </div>
+
+               <div class="mt-2">
+                    <p class="text-xs text-gray-500 mb-2">Or enter Vault ID manually:</p>
+                    <div class="relative">
+                         <input type="text" class="input-base-with-validation font-mono text-sm" [ngModel]="vaultStoreService.manualVaultId()" (ngModelChange)="onManualVaultIdChange($event)" placeholder="Enter Vault ID (hex string)" app-focus-border [isValid]="isVaultIdValid() && !isLoadingVault()" [isInvalid]="isVaultIdInvalid() || !!vaultFetchError()" />
+
+                         <!-- Loading indicator -->
+                         @if (isLoadingVault()) {
+                         <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                              <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                         </div>
+                         }
+                    </div>
+
+                    <!-- Error message -->
+                    @if (vaultFetchError()) {
+                    <p class="form-error mt-2">{{ vaultFetchError() }}</p>
+                    }
+               </div>
+
+               <!-- Vault Details Display -->
+               @if (selectedVaultItem() && vaultStoreService.selectedVaultId()) {
+               <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+                    <h5 class="text-sm font-semibold text-gray-700 mb-3">Vault Details</h5>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                              <p class="text-xs text-gray-500">Vault ID</p>
+                              <p class="font-mono text-sm text-gray-900 break-all">{{ vaultStoreService.selectedVaultId() }}</p>
+                         </div>
+                         <div>
+                              <p class="text-xs text-gray-500">Owner</p>
+                              <p class="font-mono text-sm text-gray-900">{{ selectedVaultOwner() }}</p>
+                         </div>
+                         <div>
+                              <p class="text-xs text-gray-500">Asset Type</p>
+                              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium" [class.bg-yellow-100]="getAssetType() === 'XRP'" [class.text-yellow-800]="getAssetType() === 'XRP'" [class.bg-purple-100]="getAssetType() === 'MPT'" [class.text-purple-800]="getAssetType() === 'MPT'" [class.bg-blue-100]="getAssetType() === 'IOU'" [class.text-blue-800]="getAssetType() === 'IOU'"> {{ getAssetType() }} </span>
+                         </div>
+                         <div>
+                              <p class="text-xs text-gray-500">Total Assets</p>
+                              <p class="font-mono text-sm text-gray-900">{{ selectedVaultTotalAssets() }}</p>
+                         </div>
+                         <div>
+                              <p class="text-xs text-gray-500">Available Balance</p>
+                              <p class="font-mono text-sm text-gray-900">{{ selectedVaultAvailableBalance() }}</p>
+                         </div>
+                         <div>
+                              <p class="text-xs text-gray-500">Maximum Capacity</p>
+                              <p class="font-mono text-sm text-gray-900">{{ selectedVaultMaximumAmount() }}</p>
+                         </div>
+
+                         @if (getAssetType() !== 'Unknown' && getAssetType() !== 'XRP' && vaultStoreService.selectedVaultId()) {
+                         <div class="rounded-2xl bg-purple-50 p-4 border border-purple-200">
+                              <p class="text-xs font-semibold uppercase tracking-wider text-purple-700 mb-2">Asset Details</p>
+                              @if (getAssetType() === 'MPT') {
+                              <div class="flex items-center gap-2">
+                                   <span class="text-sm text-gray-600">MPT Issuance ID:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</code>
+                              </div>
+                              } @if (getAssetType() === 'IOU') {
+                              <div class="flex items-center gap-2">
+                                   <span class="text-sm text-gray-600">Currency:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().currency }}</code>
+                              </div>
+                              <div class="flex items-center gap-2 mt-1">
+                                   <span class="text-sm text-gray-600">Issuer:</span>
+                                   <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</code>
+                              </div>
+                              }
+                         </div>
+                         } @if (getAssetType() === 'MPT' && vaultStoreService.selectedVaultId()) {
+                         <div class="rounded-2xl p-4 border" [class.bg-yellow-50]="!isMptAuthorized()" [class.border-yellow-200]="!isMptAuthorized()" [class.bg-green-50]="isMptAuthorized()" [class.border-green-200]="isMptAuthorized()">
+                              <div class="flex items-center gap-3">
+                                   <ng-icon [name]="isMptAuthorized() ? 'heroCheckCircle' : 'heroExclamationTriangle'" [class.text-green-500]="isMptAuthorized()" [class.text-yellow-500]="!isMptAuthorized()" size="20" />
+                                   <div>
+                                        <p class="text-sm font-medium" [class.text-green-800]="isMptAuthorized()" [class.text-yellow-800]="!isMptAuthorized()">MPT Authorization Status</p>
+                                        <p class="text-sm" [class.text-green-700]="isMptAuthorized()" [class.text-yellow-700]="!isMptAuthorized()">
+                                             @if (isMptAuthorized()) { ✅ Your wallet is authorized to hold this MPT } @else { ⚠️ Your wallet is NOT authorized to hold this MPT.
+                                             <button class="text-blue-600 hover:underline" (click)="authorizeMpt()">Authorize Now</button>
+                                             }
+                                        </p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+                    </div>
+               </div>
+               }
+
+               <!-- Amount -->
+               @if (vaultStoreService.selectedVaultId()) {
+               <div>
+                    <div class="field-label">
+                         <label for="vaultAmount" class="label-primary">Amount <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The amount to {{ vaultAction }} from the vault.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isAmountValid() && vaultAmount !== null && vaultAmount !== undefined && vaultAmount.trim().length > 0"
+                              [isInvalid]="isAmountInvalid() && vaultAmount !== null && vaultAmount !== undefined && vaultAmount.trim().length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (focus)="isFocused.set(true)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                              [ngModel]="vaultStoreService.vaultAmount()"
+                              (ngModelChange)="vaultStoreService.setField('vaultAmount', $event)"
+                              [placeholder]="'Amount to ' + vaultAction"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="isAmountValid() && !!vaultAmount && vaultAmount.length > 0" [isInvalid]="isAmountInvalid() && !!vaultAmount && vaultAmount.length > 0" [showClear]="!!vaultAmount" (clear)="vaultStoreService.setField('vaultAmount', '')" />
+                    </div>
+
+                    @if (vaultAmount && vaultAmount.trim().length > 0) {
+                    <div class="mt-2">
+                         @if (vaultAction === 'deposit') {
+                         <p class="text-xs text-gray-500">
+                              Maximum deposit: <strong>{{ selectedVaultAvailableSpace() }}</strong>
+                              @if (parseFloat(vaultAmount) > parseFloat(selectedVaultAvailableSpace() || '0')) {
+                              <span class="text-red-500 block mt-1">⚠️ Amount exceeds available space in vault</span>
+                              }
+                         </p>
+                         } @else {
+                         <p class="text-xs text-gray-500">
+                              Maximum withdrawal: <strong>{{ selectedVaultAvailableBalance() }}</strong>
+                              @if (parseFloat(vaultAmount) > parseFloat(selectedVaultAvailableBalance() || '0')) {
+                              <span class="text-red-500 block mt-1">⚠️ Amount exceeds available balance</span>
+                              }
+                         </p>
+                         }
+                    </div>
+                    }
+
+                    <app-field-helper title="Amount" [items]="vaultAmountHelperItems" [show]="showVaultAmountHelper" />
+               </div>
+               }
+
+               <!-- Destination (for withdrawal) -->
+               @if (vaultAction === 'withdraw' && vaultStoreService.selectedVaultId()) {
+               <div>
+                    <div class="field-label">
+                         <label for="destination" class="label-primary">Destination Address <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The account to receive the withdrawn assets.</p>
+                         <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div>
+                         <app-select-search-dropdown
+                              app-focus-border
+                              [validateXrpAddress]="true"
+                              [showClearButton]="true"
+                              [clearOnEscape]="true"
+                              [validateOn]="'blur'"
+                              [closeWhenInvalid]="true"
+                              [disableCurrentAccount]="false"
+                              [allowCurrentAccountSelection]="true"
+                              [showInlineErrorMessage]="false"
+                              [items]="destinationItems"
+                              [value]="selectedDestinationItem"
+                              (searchQueryChange)="onSearchQueryChange($event)"
+                              (valueChange)="onDestinationChange($event)"
+                              (isValid)="onDestinationValidationChange($event)"
+                              placeholder="Enter or select destination address"
+                         />
+                    </div>
+
+                    @if (lastIntendedDestination() && lastIntendedDestination() === currentAddress()) {
+                    <p class="same-addrress-as-selected-account">
+                         <ng-icon name="heroExclamationTriangle" size="14" />
+                         This is your currently active wallet. You cannot withdraw to yourself.
+                    </p>
+                    }
+
+                    <app-field-helper title="Destination" [items]="vaultDestinationHelperItems" [show]="showVaultDestinationHelper" />
+               </div>
+               }
+               <!-- @if (getAssetType() === 'MPT' && vaultStoreService.selectedVaultId()) {
+               <div class="rounded-2xl p-4 border" [class.bg-yellow-50]="!isMptAuthorized()" [class.border-yellow-200]="!isMptAuthorized()" [class.bg-green-50]="isMptAuthorized()" [class.border-green-200]="isMptAuthorized()">
+                    <div class="flex items-center gap-3">
+                         <ng-icon [name]="isMptAuthorized() ? 'heroCheckCircle' : 'heroExclamationTriangle'" [class.text-green-500]="isMptAuthorized()" [class.text-yellow-500]="!isMptAuthorized()" size="20" />
+                         <div>
+                              <p class="text-sm font-medium" [class.text-green-800]="isMptAuthorized()" [class.text-yellow-800]="!isMptAuthorized()">MPT Authorization Status</p>
+                              <p class="text-sm" [class.text-green-700]="isMptAuthorized()" [class.text-yellow-700]="!isMptAuthorized()">
+                                   @if (isMptAuthorized()) { ✅ Your wallet is authorized to hold this MPT } @else { ⚠️ Your wallet is NOT authorized to hold this MPT.
+                                   <button class="text-blue-600 hover:underline" (click)="authorizeMpt()">Authorize Now</button>
+                                   }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+               } -->
+
+               <!-- Asset Details -->
+               <!-- @if (getAssetType() !== 'Unknown' && getAssetType() !== 'XRP' && vaultStoreService.selectedVaultId()) {
+               <div class="rounded-2xl bg-purple-50 p-4 border border-purple-200">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-purple-700 mb-2">Asset Details</p>
+                    @if (getAssetType() === 'MPT') {
+                    <div class="flex items-center gap-2">
+                         <span class="text-sm text-gray-600">MPT Issuance ID:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().mptId }}</code>
+                    </div>
+                    } @if (getAssetType() === 'IOU') {
+                    <div class="flex items-center gap-2">
+                         <span class="text-sm text-gray-600">Currency:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().currency }}</code>
+                    </div>
+                    <div class="flex items-center gap-2 mt-1">
+                         <span class="text-sm text-gray-600">Issuer:</span>
+                         <code class="font-mono text-sm text-gray-900">{{ getAssetDetails().issuer }}</code>
+                    </div>
+                    }
+               </div>
+               } -->
+
+               <!-- Warning Message -->
+               @if (vaultStoreService.selectedVaultId() && vaultAmount && parseFloat(vaultAmount) > 0) {
+               <div class="rounded-2xl" [class.bg-green-50]="vaultAction === 'deposit'" [class.bg-blue-50]="vaultAction === 'withdraw'" [class.border]="true" [class.border-green-200]="vaultAction === 'deposit'" [class.border-blue-200]="vaultAction === 'withdraw'">
+                    <div class="flex items-start gap-3 p-4">
+                         <ng-icon [name]="vaultAction === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle'" size="20" [class.text-green-500]="vaultAction === 'deposit'" [class.text-blue-500]="vaultAction === 'withdraw'" class="flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium" [class.text-green-800]="vaultAction === 'deposit'" [class.text-blue-800]="vaultAction === 'withdraw'">{{ vaultAction === 'deposit' ? 'Deposit' : 'Withdraw' }} Confirmation</p>
+                              <p class="text-sm" [class.text-green-700]="vaultAction === 'deposit'" [class.text-blue-700]="vaultAction === 'withdraw'">
+                                   You are about to <strong>{{ vaultAction }}</strong> <strong> {{ vaultAmount }}</strong> {{ getAssetType() }} @if (vaultAction === 'withdraw') { to <strong class="font-mono">{{ selectedDestinationItem?.display || selectedDestinationItem?.id || 'destination' }}</strong>
+                                   }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+               }
+          </div>
+     </div>
+</div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Vault deposit/withdraw validation issues:" />

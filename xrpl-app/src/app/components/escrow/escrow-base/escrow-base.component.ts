@@ -139,7 +139,7 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           this.setRightPanel();
      }
 
-     ngOnDestroy() {
+     ngOnDestroy(): void {
           this.rightPanelService.clearPanel();
      }
 
@@ -237,8 +237,9 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
           (event.target as HTMLInputElement).select?.();
      }
 
-     public selectedMPT(item: any) {
-          this.mptStoreService.setField('mptIssuanceId', item?.id || '');
+     public selectedMPT(item: SelectItem | null) {
+          const id = item?.id || '';
+          this.mptStoreService.setField('mptIssuanceId', id);
      }
 
      public issuerItems() {

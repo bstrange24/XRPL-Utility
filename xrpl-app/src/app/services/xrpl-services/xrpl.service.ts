@@ -930,6 +930,21 @@ export class XrplService {
           }
      }
 
+     async getMptTokens(client: Client, address: string): Promise<xrpl.AccountObjectsResponse> {
+          try {
+               const response = await client.request({
+                    command: 'account_objects',
+                    account: address, // Add the address parameter
+                    type: 'mptoken',
+                    ledger_index: 'validated',
+               } as any);
+               return response as xrpl.AccountObjectsResponse;
+          } catch (error: any) {
+               console.error('Error fetching MPT tokens:', error);
+               throw new Error(`Failed to fetch MPT tokens: ${error.message || 'Unknown error'}`);
+          }
+     }
+
      async checkAccountObjectsForDeletion(client: Client, address: string) {
           try {
                const response = await client.request({
@@ -1071,6 +1086,24 @@ export class XrplService {
           }
      }
 
+     async getVaultInfo(client: Client, vaultID: any, ledgerIndex: xrpl.LedgerIndex, type: string) {
+          const response = await client.request({
+               command: 'vault_info',
+               vault_id: vaultID,
+               ledger_index: ledgerIndex,
+          });
+          return response;
+     }
+
+     async getBrokerInfo(client: Client, brokerId: any, ledgerIndex: xrpl.LedgerIndex, type: string) {
+          const response = await client.request({
+               command: 'ledger_entry',
+               index: brokerId,
+               ledger_index: ledgerIndex,
+          });
+          return response;
+     }
+
      async getMptByIssuanceId(client: Client, issuanceId: string, ledgerIndex: xrpl.LedgerIndex): Promise<MptInfoResponse> {
           try {
                // Cast to any to bypass xrpl's strict Request constraint
@@ -1097,7 +1130,6 @@ export class XrplService {
 
                console.log('MPT found:', response.result);
 
-               // return true;
                return response.result;
           } catch (error: any) {
                if (error?.data?.error === 'objectNotFound' || error?.data?.error === 'entryNotFound') {

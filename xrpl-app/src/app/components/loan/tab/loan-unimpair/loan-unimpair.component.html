@@ -1,0 +1,108 @@
+<div class="card-base">
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Details
+          </h4>
+
+          <!-- Select Loan to Unimpair -->
+          <div>
+               <div class="field-label">
+                    <label for="selectLoan" class="label-primary">Select Loan to Unimpair <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select an existing impaired loan to remove the impairment status.</p>
+                    <button type="button" (click)="toggleLoanSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="loanItems()" [value]="selectedLoanItem()" [showShortAddress]="false" (valueChange)="onLoanSelected($event)" placeholder="Search by Broker ID, amount, or owner..." emptyMessage="No impaired loans available" />
+               </div>
+               <app-field-helper title="Select Loan" [items]="loanSelectorHelperItems" [show]="showLoanSelectorHelper" />
+          </div>
+
+          <!-- Current Loan Details -->
+          @if (selectedLoanItem() && loanStoreService.selectedLoanId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Loan Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanStoreService.selectedLoanId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Principal Outstanding</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanPrincipalOutstanding() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanOwner() }}</p>
+                    </div>
+                    @if (selectedLoanCounterparty()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Counterparty</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedLoanCounterparty() }}</p>
+                    </div>
+                    }
+                    <div>
+                         <p class="text-xs text-gray-500">Status</p>
+                         <span
+                              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                              [class.bg-green-100]="selectedLoanStatus() === 'active'"
+                              [class.text-green-800]="selectedLoanStatus() === 'active'"
+                              [class.bg-red-100]="selectedLoanStatus() === 'defaulted'"
+                              [class.text-red-800]="selectedLoanStatus() === 'defaulted'"
+                              [class.bg-yellow-100]="selectedLoanStatus() === 'impaired'"
+                              [class.text-yellow-800]="selectedLoanStatus() === 'impaired'"
+                              [class.bg-gray-100]="selectedLoanStatus() === 'closed'"
+                              [class.text-gray-800]="selectedLoanStatus() === 'closed'"
+                         >
+                              @if (selectedLoanStatus() === 'active') {
+                              <ng-icon name="heroCheckCircle" size="12" />
+                              } @else if (selectedLoanStatus() === 'defaulted') {
+                              <ng-icon name="heroExclamationTriangle" size="12" />
+                              } @else if (selectedLoanStatus() === 'impaired') {
+                              <ng-icon name="heroExclamationCircle" size="12" />
+                              } @else {
+                              <ng-icon name="heroXCircle" size="12" />
+                              } {{ selectedLoanStatus() | titlecase }}
+                         </span>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Warning Messages -->
+          @if (selectedLoanItem() && loanStoreService.selectedLoanId()) { @if (selectedLoanStatus() !== 'impaired') {
+          <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-yellow-800">⚠️ Loan Not Impaired</p>
+                         <p class="text-sm text-yellow-700 mt-1">This loan is <strong>{{ selectedLoanStatus() }}</strong>. Only impaired loans can be un-impaired.</p>
+                    </div>
+               </div>
+          </div>
+          } @else {
+          <div class="rounded-2xl bg-green-50 p-4 border border-green-200">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-green-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-green-800">ℹ️ Unimpair Action</p>
+                         <p class="text-sm text-green-700 mt-1">This action will remove the impairment status from this loan, returning it to <strong>active</strong> status.</p>
+                    </div>
+               </div>
+          </div>
+          } }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="Loan unimpair validation issues:" />
+     </div>
+</div>

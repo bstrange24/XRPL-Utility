@@ -1,0 +1,72 @@
+<!-- Get view -->
+@let viewModel = loanViewModelService;
+<!-- Get active tab -->
+@let tab = viewModel.activeTab();
+
+<div class="p-1">
+     <div>
+          <!-- Menu / Tabs -->
+          <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
+
+          <!-- Warning Message -->
+          @if (txUiService.warningMessage) {
+          <app-warning-message [warningMessage]="safeWarningMessage()"></app-warning-message>
+          }
+
+          <!-- Main Form Area -->
+          <form #theForm="ngForm">
+               <!-- Dynamic Content -->
+               @if (tab === 'createLoan') {
+               <app-loan-set
+                    (canCreateLoanChange)="onCanCreateLoanChange($event)"
+                    [currentAddress]="currentAddress()"
+                    [lastIntendedDestination]="lastIntendedDestination()"
+                    [selectedDestinationAddress]="selectedDestinationAddress()"
+                    [wantsOptions]="txUiService.wantsOptions()"
+                    [canSubmit]="canSubmit()"
+                    [tab]="tab"
+                    (clearFields)="clearInputFields()"
+                    (searchQueryChange)="handleSearchQueryChange($event)"
+                    (destinationChange)="handleDestinationChange($event)"
+                    (toggleOptions)="txUiService.toggleOptions($event)"
+               >
+               </app-loan-set>
+               } @else if (tab === 'payLoan') {
+               <app-loan-pay (canPayLoanChange)="onCanPayLoanChange($event)"></app-loan-pay>
+               } @else if (tab === 'deleteLoan') {
+               <app-loan-delete (canDeleteLoanChange)="onCanDeleteLoanChange($event)" />
+               }
+
+               <!-- Transaction Options -->
+               <app-transaction-options [showWhenTab]="['creatLoan']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+
+               <!-- Action Buttons -->
+               <div class="main-button-section">
+                    <app-button-tooltip [tooltipText]="getButtonTooltip()">
+                         @if (tab === 'createLoan') {
+                         <button type="button" class="btn-primary" (click)="performAction()" [disabled]="false">{{ loanUtilService.createLoanButtonLabel() }}</button>
+                         }@else if (tab === 'payLoan') {
+                         <button type="button" class="btn-green" (click)="performAction()" [disabled]="false">{{ loanUtilService.payLoanButtonLabel() }}</button>
+                         }@else if (tab === 'deleteLoan') {
+                         <button type="button" class="btn-red" (click)="performAction()" [disabled]="false">{{ loanUtilService.deleteLoanButtonLabel() }}</button>
+                         }
+                    </app-button-tooltip>
+
+                    <!-- Clear Fields -->
+                    <div class="right-buttons">
+                         <button type="button" class="btn-secondary" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()">Clear Fields</button>
+                    </div>
+               </div>
+
+               <!-- Execution Time -->
+               <div class="execution-time">
+                    <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
+               </div>
+
+               <!-- Transaction Preview -->
+               <div class="pt-2">
+                    <app-transaction-preview></app-transaction-preview>
+               </div>
+          </form>
+     </div>
+</div>

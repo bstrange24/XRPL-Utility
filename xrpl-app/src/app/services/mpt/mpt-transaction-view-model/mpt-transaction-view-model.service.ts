@@ -64,6 +64,24 @@ export class MptTransactionViewModelService {
           this._metadataCache.clear();
      }
 
+     private normalizeMaxAmount(value: unknown): string {
+          if (value === undefined || value === null || value === '') {
+               return 'Not set';
+          }
+
+          const normalized = String(value).trim();
+          if (!normalized) {
+               return 'Not set';
+          }
+
+          const lowered = normalized.toLowerCase();
+          if (lowered === 'not set' || lowered === 'notset' || lowered === 'n/a' || lowered === 'null') {
+               return 'Not set';
+          }
+
+          return normalized;
+     }
+
      loadXls89Template() {
           this.mptStoreService.setField('metaData', JSON.stringify(this.mptStoreService.XLS89_TEMPLATE, null, 2));
      }
@@ -86,7 +104,7 @@ export class MptTransactionViewModelService {
 
                const rawAmount = m.amount || m.MPTAmount || m.OutstandingAmount || '0';
                const rawOutstanding = m.OutstandingAmount || '0';
-               const rawMaxAmount = m.MaximumAmount || '0';
+               const rawMaxAmount = this.normalizeMaxAmount(m.MaximumAmount);
 
                // AssetScale should now be properly set on both holdings and issuances
                const assetScale = m.AssetScale ?? 0;
@@ -94,6 +112,8 @@ export class MptTransactionViewModelService {
                const formattedAmount = this.mptUtilService.formatMptAmount(rawAmount, assetScale);
                const formattedOutstanding = this.mptUtilService.formatMptAmount(rawOutstanding, assetScale);
                const formattedMaxAmount = this.mptUtilService.formatMptAmount(rawMaxAmount, assetScale);
+               const maxAmountDisplay = rawMaxAmount === 'Not set' ? 'No max set' : rawMaxAmount;
+               const isVaultMpt = Boolean(m.isVaultMpt) || (Boolean(m.isHolder) && String(rawAmount) === '0' && String(m.Account || '') === String(address) && String(m.Issuer || '') === String(address));
 
                return {
                     mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
@@ -102,12 +122,15 @@ export class MptTransactionViewModelService {
                     formattedAmount,
                     formattedOutstanding,
                     formattedMaxAmount,
+                    maxAmountDisplay,
                     isHolder: m.isHolder,
-                    maxAmount: m.MaximumAmount,
+                    isVaultMpt,
+                    maxAmount: rawMaxAmount,
                     assetScale: assetScale, // This will now be correct for holders
                     outstanding: m.OutstandingAmount,
                     transferFee: m.TransferFee,
                     flags: this.mptUtilService.decodeMptFlagsForUi(m.Flags || 0),
+                    Issuer: m.Issuer,
 
                     ticker: decodedMetadata?.ticker ? decodedMetadata?.ticker : 'N/A',
                     usefulLinks: (decodedMetadata?.uris || []).map((link: { uri: any; u: any; title: any; t: any; c: any; category: any }) => ({
@@ -132,6 +155,7 @@ export class MptTransactionViewModelService {
 
           return {
                walletName,
+               walletAddress: address,
                mptCount: count,
                mptsToShow,
                links,
@@ -153,7 +177,7 @@ export class MptTransactionViewModelService {
                } else {
                     // Issuer: show OutstandingAmount (tokens issued so far)
                     // If OutstandingAmount is 0, it means no tokens have been issued yet
-                    rawAmount = m.OutstandingAmount || '0';
+                    rawAmount = m.OutstandingAmount || m.MPTAmount || '0';
                     displayType = 'issued';
                }
 

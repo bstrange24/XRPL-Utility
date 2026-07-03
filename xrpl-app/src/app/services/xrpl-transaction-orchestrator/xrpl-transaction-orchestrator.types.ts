@@ -33,6 +33,8 @@ export interface ExecuteTxParams<TTx extends xrpl.Transaction = xrpl.Transaction
      env: any;
      mode: TxOrchestratorMode;
      skipBalanceCheck?: boolean;
+     skipSigning?: boolean;
+     preSignedTxBlob?: string;
      ui?: TxOrchestratorUiOptions;
      signing?: TxOrchestratorSigningOptions;
      buildTx: (ctx: TxOrchestratorContext) => Promise<TTx> | TTx;

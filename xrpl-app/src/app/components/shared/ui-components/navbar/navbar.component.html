@@ -35,6 +35,31 @@
                               <a routerLink="/create-credentials" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Credentials</a>
                               <a routerLink="/permissioned-domain" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Permissioned Domain</a>
                               <a routerLink="/create-did" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">DID</a>
+                              <a routerLink="/vault" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Vault</a>
+                         </div>
+                         }
+                    </div>
+
+                    <!-- DeFi Dropdown -->
+                    <div class="relative">
+                         <button
+                              class="px-3 py-2 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-1 whitespace-nowrap"
+                              [class.hover:text-green-400]="isDark()"
+                              [class.hover:bg-gray-700]="isDark()"
+                              [class.text-green-600]="isDeFiActive() && !isDark()"
+                              [class.text-green-400]="isDeFiActive() && isDark()"
+                              [class.bg-green-50]="isDeFiActive() && !isDark()"
+                              [class.bg-green-900/20]="isDeFiActive() && isDark()"
+                              (click)="store.closeAllDropdowns(); store.toggleDropdown('defi')"
+                         >
+                              DeFi <span class="text-xs">▾</span>
+                         </button>
+
+                         @if (store.dropdowns().defi) {
+                         <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50" [class.bg-gray-800]="isDark()" [class.border-gray-700]="isDark()">
+                              <a routerLink="/vault" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()"> Vault </a>
+                              <a routerLink="/loan" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()"> Loan </a>
+                              <a routerLink="/loan-broker" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="store.closeAllDropdowns()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()"> Broker </a>
                          </div>
                          }
                     </div>
@@ -189,6 +214,28 @@
                     <a routerLink="/create-credentials" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Credentials</a>
                     <a routerLink="/permissioned-domain" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">Permissioned Domain</a>
                     <a routerLink="/create-did" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()">DID</a>
+               </div>
+               }
+          </div>
+
+          <div class="relative">
+               <button
+                    class="px-4 py-5 rounded-xl hover:text-green-600 hover:bg-gray-50 transition-colors flex items-center gap-1 whitespace-nowrap"
+                    [class.hover:text-green-400]="isDark()"
+                    [class.hover:bg-gray-700]="isDark()"
+                    [class.text-green-600]="isDeFiActive() && !isDark()"
+                    [class.text-green-400]="isDeFiActive() && isDark()"
+                    [class.bg-green-50]="isDeFiActive() && !isDark()"
+                    [class.bg-green-900/20]="isDeFiActive() && isDark()"
+                    (click)="store.closeAllDropdowns(); store.toggleDropdown('defi')"
+               >
+                    DeFi <span class="text-xs">▾</span>
+               </button>
+
+               @if (store.dropdowns().defi) {
+               <div class="absolute top-full left-0 mt-2 w-48 bg-white rounded-2xl shadow-lg border border-gray-200 py-2 z-50" [class.bg-gray-800]="isDark()" [class.border-gray-700]="isDark()">
+                    <a routerLink="/vault" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()"> Vault </a>
+                    <a routerLink="/vault" routerLinkActive="bg-green-50 text-green-600" [class.bg-green-900/20]="isDark()" [class.text-green-400]="isDark()" (click)="closeMobileMenu()" class="block px-4 py-5 text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer" [class.text-gray-300]="isDark()" [class.hover:bg-gray-700]="isDark()"> Loan </a>
                </div>
                }
           </div>

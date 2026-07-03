@@ -183,6 +183,16 @@ export class XrplCacheService {
           return await this.getOrFetch(objectsKey, () => this.xrplService.getAccountObjects(client, address, 'validated', ''), this.defaultTTL);
      }
 
+     async getMptTokens(client: xrpl.Client, address: string, shareMPTID?: string, forceRefresh?: boolean): Promise<xrpl.AccountObjectsResponse> {
+          const key = `mpt:tokens:${address}`;
+
+          if (forceRefresh) {
+               this.invalidate(key);
+          }
+
+          return await this.getOrFetch(key, () => this.xrplService.getMptTokens(client, address), this.defaultTTL);
+     }
+
      async getAccountLines(client: xrpl.Client, address: string, forceRefresh?: boolean): Promise<xrpl.AccountLinesResponse> {
           const linesKey = `account:${address}:lines`;
 
@@ -213,6 +223,26 @@ export class XrplCacheService {
           }
 
           return await this.getOrFetch(gatewayKey, () => this.xrplService.getTokenBalance(client, address, 'validated', ''), this.defaultTTL);
+     }
+
+     async getVaultInfo(client: xrpl.Client, vaultId: any, forceRefresh?: boolean): Promise<any> {
+          const vaultIdKey = `vaultId:${vaultId}:gateway`;
+
+          if (forceRefresh) {
+               this.invalidate(vaultIdKey);
+          }
+
+          return await this.getOrFetch(vaultIdKey, () => this.xrplService.getVaultInfo(client, vaultId, 'validated', ''), this.defaultTTL);
+     }
+
+     async getBrokerInfo(client: xrpl.Client, brokerId: any, forceRefresh?: boolean): Promise<any> {
+          const vaultIdKey = `brokerId:${brokerId}:gateway`;
+
+          if (forceRefresh) {
+               this.invalidate(vaultIdKey);
+          }
+
+          return await this.getOrFetch(vaultIdKey, () => this.xrplService.getBrokerInfo(client, brokerId, 'validated', ''), this.defaultTTL);
      }
 
      /** Get current transaction fee (drops or XRP) – cached for 8 seconds (fees change slowly) */

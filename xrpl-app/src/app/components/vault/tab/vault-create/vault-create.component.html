@@ -1,0 +1,377 @@
+<div class="space-y-6">
+     <div class="card-base">
+          <!-- Vault Creation Form -->
+          <h4 class="section-heading">
+               <lucide-icon name="VaultIcon" class="section-heading-icon-green"></lucide-icon>
+               Vault Details
+          </h4>
+
+          <!-- Currency + Amount -->
+          <div class="side-by-side-fields">
+               <!-- Currency Code -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="escrowCurrencyCode" class="label-primary">Currency Code <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Issued asset combined with the issuer to uniquely define a token.</p>
+                              <button type="button" (click)="toggleCurrencyCodeHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="currencyItems()" [value]="selectedCurrencyItem()" [showShortAddress]="false" (valueChange)="onCurrencySelected($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                   <ng-template #itemTemplate let-item>
+                                        <div class="flex items-center gap-2">
+                                             @if (item.id === 'XRP') {
+                                             <span class="font-bold text-yellow-500">XRP</span>
+                                             } @else {
+                                             <span>{{ item.display }}</span>
+                                             }
+                                             <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                        </div>
+                                   </ng-template>
+                              </app-select-search-dropdown>
+                         </div>
+                    </div>
+                    <app-field-helper title="Currency Code" [items]="escrowCurrencyCodeHelperItems" [show]="showEscrowCurrencyCodeHelper" />
+               </div>
+
+               <!-- Amount -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="xrpAmount" class="label-primary">Maximum Asset Amount <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The maximum asset amount that can be held in a vault.</p>
+                              <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="decimal"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="amountValidatorService.isEscrowAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (focus)="isFocused.set(true)"
+                                   (input)="amountValidatorService.onAmountInput($event,'escrow')"
+                                   (blur)="amountValidatorService.onAmountBlur($event,'escrow')"
+                                   (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                                   [ngModel]="escrowStoreService.amount()"
+                                   (ngModelChange)="escrowStoreService.setField('amount', $event)"
+                                   placeholder="e.g. 10.5"
+                              />
+
+                              <!-- Icons Container -->
+                              <app-input-icons [isValid]="amountValidatorService.isEscrowAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.escrowStoreService.setField('amount', '')" />
+                         </div>
+
+                         <!-- Error Message -->
+                         @if (escrowValidatorService.getAmountErrorMessage()) {
+                         <p class="form-error mt-2">{{ escrowValidatorService.getAmountErrorMessage() }}</p>
+                         }
+
+                         <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
+                    </div>
+               </div>
+          </div>
+
+          <!-- Issuer + Balance (non-XRP, non-MPT) -->
+          @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
+          <div class="side-by-side-fields mt-3">
+               <div>
+                    <!-- Issuer -->
+                    <div class="field-label">
+                         <label for="escrowCurrencyIssuer" class="label-primary">Issuer <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The XRPL account that issues and controls this currency.</p>
+                         <button type="button" (click)="toggleIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="issuerItems()" [value]="selectedIssuerItem()" (valueChange)="onIssuerSelected($event)" placeholder="Search or select issuer..." emptyMessage="No issuers found" />
+                    </div>
+
+                    <app-field-helper title="Issuer" [items]="escrowIssuerHelperItems" [show]="showEscrowIssuerHelper" />
+               </div>
+
+               <!-- Currency Balance -->
+               <div class="space-y-2">
+                    <div>
+                         <label for="escrowCurrencyBalance" class="label-primary">Currency Balance</label>
+                         <p class="text-secondary">Total currency balance held by this account.</p>
+                         <input type="text" readonly class="input-disabled" [value]="currencyStoreService.balance()" />
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Asset Scale - ONLY for IOU -->
+          @if (currencyStoreService.currency() !== 'XRP' && currencyStoreService.currency() !== 'MPT') {
+          <div class="side-by-side-fields mt-4">
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="vaultAssetScale" class="label-primary">Asset Scale</label>
+                              <div class="flex gap-2">
+                                   @for (preset of assetScalePresets; track preset) {
+                                   <button type="button" (click)="setPresetAssetScale(preset)" class="preset-amount-btn">{{ preset }}</button>
+                                   }
+                              </div>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Decimal places for the token (0-15). Example: 2 = 0.01 precision.</p>
+                              <button type="button" (click)="toggleAssetScaleHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="decimal"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined"
+                                   [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (input)="amountValidatorService.onAmountInput($event,'vaultAssetScale')"
+                                   (blur)="amountValidatorService.onAmountBlur($event,'vaultAssetScale'); isFocusedAssetScale.set(false)"
+                                   (focus)="isFocusedAssetScale.set(true)"
+                                   (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                                   [ngModel]="assetScale"
+                                   (ngModelChange)="assetScale = $event"
+                                   placeholder="e.g. 2"
+                              />
+
+                              <!-- Icons Container -->
+                              <app-input-icons [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined" [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [showClear]="!!assetScale" (clear)="clearField('assetScale')" />
+                         </div>
+
+                         @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
+                         <p class="form-error mt-2">{{ mptValidator.getAssetScaleErrorMessage() }}</p>
+                         }
+
+                         <app-field-helper title="Asset Scale Guidelines" [items]="assetScaleHelperItems" [show]="showAssetScaleHelper" />
+                    </div>
+               </div>
+
+               <!-- Vault Meta Data -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="nftURI" class="label-primary">Vault Meta Data</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Arbitrary Vault metadata, limited to 256 bytes.</p>
+                              <button type="button" (click)="toggleUriHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   class="input-base-with-validation pr-24"
+                                   app-focus-border
+                                   [isValid]="uriValidatorService.isNFtCreateUriValid() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0"
+                                   [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0"
+                                   [value]="vaultStoreService.vaultMetaData()"
+                                   (input)="vaultStoreService.setField('vaultMetaData',$event.target.value)"
+                                   name="vaultMetaData"
+                                   placeholder="Optional metadata"
+                              />
+
+                              <!-- Icons Container -->
+                              <app-input-icons [isValid]="uriValidatorService.isNFtCreateUriValid() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0" [isInvalid]="uriValidatorService.hasNftCreateInvalidUri() && vaultMetaData !== null && vaultMetaData !== undefined && vaultMetaData.length > 0" [showClear]="!!vaultMetaData" (clear)="vaultStoreService.setField('vaultMetaData','')" />
+                         </div>
+
+                         <!-- Show validation details when vault meta data has content -->
+                         @if (vaultStoreService.vaultMetaData() && vaultStoreService.vaultMetaData().trim().length > 0) {
+                         <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                              <div class="flex items-start justify-between gap-4">
+                                   <div class="flex-1">
+                                        <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">URI Value</p>
+                                        <code class="block break-all font-mono text-sm text-gray-700">{{ vaultStoreService.vaultMetaData() }}</code>
+
+                                        @if (uriValidatorService.hasNftCreateInvalidUri()) {
+                                        <p class="form-error mt-2">@if ((vaultStoreService.vaultMetaData().trim().length) > 256) { URI exceeds 256 character limit } @else if (vaultStoreService.vaultMetaData().startsWith('http://') || vaultStoreService.vaultMetaData().startsWith('https://')) { Please enter a valid URL format } @else { Please enter a valid URI format }</p>
+                                        }
+                                   </div>
+
+                                   <div class="text-right">
+                                        <p class="text-secondary">Length</p>
+                                        <p class="font-mono text-sm font-semibold" [class.text-red-600]="uriValidatorService.hasNftCreateInvalidUri()" [class.text-green-600]="!uriValidatorService.hasNftCreateInvalidUri() && uriValidatorService.isNFtCreateUriValid()">{{ vaultStoreService.vaultMetaData().length || 0 }} / 256 characters</p>
+                                   </div>
+                              </div>
+                         </div>
+                         }
+
+                         <app-field-helper title="URI Guidelines" [items]="uriHelperItems" [show]="showUriHelper" />
+                    </div>
+               </div>
+          </div>
+          }
+
+          <!-- Token Metadata - ONLY for MPT -->
+          @if (currencyStoreService.currency() === 'MPT') {
+          <div class="side-by-side-fields mt-3">
+               <!-- Select Existing MPT -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="selectMpt" class="label-primary">Select Existing MPT <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Select an existing MPT that you have issued to use for this vault.</p>
+                              <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <!-- <app-select-search-dropdown [items]="mptViewModel.mptItems()" [value]="mptViewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available. Create an MPT first in the MPT section."> </app-select-search-dropdown> -->
+                              <app-select-search-dropdown [items]="mptItems()" [value]="selectedMptItem()" (valueChange)="selectedMPT($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available. Create an MPT first in the MPT section." />
+                         </div>
+
+                         @if (mptItems().length === 0) {
+                         <p class="text-xs text-amber-600 mt-1 flex items-center gap-1">
+                              <ng-icon name="heroExclamationTriangle" size="14" />
+                              You need to create an MPT first before creating a vault with MPT.
+                         </p>
+                         }
+                    </div>
+                    <app-field-helper title="MPT" [items]="escrowMptHelperItems" [show]="showEscrowMptHelper" />
+               </div>
+
+               <!-- MPT Issuance ID (Read-only) -->
+               <div class="space-y-2">
+                    <label for="mptIssuanceID" class="label-primary">MPT Issuance ID</label>
+                    <p class="text-secondary">The unique identifier of the selected MPT.</p>
+                    <input type="text" [ngModel]="mptStoreService.mptIssuanceId()" readonly class="input-disabled font-mono text-sm" [class.bg-gray-100]="!mptStoreService.mptIssuanceId()" />
+               </div>
+          </div>
+
+          <!-- Token Metadata (Read-only reference) -->
+          @if (mptStoreService.mptIssuanceId()) {
+          <div class="mt-4">
+               <div class="flex items-center gap-2 mb-2">
+                    <label class="label-primary flex items-center gap-2">
+                         Token Metadata
+                         <a href="https://github.com/XRPLF/XRPL-Standards/tree/master/XLS-0089-multi-purpose-token-metadata-schema" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-700 underline text-sm font-medium"> (XLS-89) </a>
+                    </label>
+                    <span class="text-xs text-gray-500 mb-2">(Read-only reference from MPT)</span>
+               </div>
+
+               <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+                    @if (selectedMptMetadata()) {
+                    <pre class="text-xs font-mono text-gray-700 whitespace-pre-wrap break-all max-h-48 overflow-y-auto">{{ selectedMptMetadata() | json }}</pre>
+                    } @else {
+                    <p class="text-sm text-gray-500">No metadata associated with this MPT.</p>
+                    }
+               </div>
+
+               <!-- Metadata Info -->
+               @if (selectedMptMetadata()) {
+               <div class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs">
+                    <span class="text-gray-600"> Metadata size: <strong class="font-semibold text-gray-900">{{ selectedMptMetadataLength() }} bytes</strong> </span>
+               </div>
+               }
+          </div>
+          } }
+
+          <!-- Domain ID - Visible for all types -->
+          <div class="side-by-side-fields mt-4">
+               <div class="space-y-2">
+                    <label for="domId" class="label-primary">Domain ID</label>
+                    <p class="text-secondary">Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier.</p>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              class="input-base-with-validation pr-20"
+                              app-focus-border
+                              [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0"
+                              [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0"
+                              [ngModel]="vaultStoreService.domainId()"
+                              (ngModelChange)="vaultStoreService.setField('domainId', $event)"
+                              name="domainId"
+                              placeholder="Permissioned Domain ID (hex)"
+                         />
+
+                         <!-- Icons Container -->
+                         <app-input-icons [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [showClear]="!!domainid" (clear)="vaultStoreService.setField('domainId', '')" />
+                    </div>
+
+                    @if (vaultStoreService.domainId()) {
+                    <div class="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                         <div class="flex items-start justify-between gap-4">
+                              <div class="flex-1">
+                                   <p class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Domain Validation</p>
+                                   <code class="block break-all font-mono text-sm text-gray-700">{{ vaultStoreService.domainId() }}</code>
+
+                                   @if (domainIdValidatorService.hasInvalidDomainId()) {
+                                   <p class="form-error">Must be a valid Permissioned Domain ID (hex string)</p>
+                                   }
+                              </div>
+
+                              <div class="text-right">
+                                   <p class="text-secondary">Length</p>
+                                   <p class="font-mono text-sm font-semibold" [class.text-red-600]="domainIdValidatorService.hasInvalidDomainId()" [class.text-green-600]="!domainIdValidatorService.hasInvalidDomainId()">{{ vaultStoreService.domainId().length || 0 }} / 64 chars</p>
+                              </div>
+                         </div>
+                    </div>
+                    }
+               </div>
+          </div>
+
+          <!-- Vault Flags -->
+          <div class="mt-6">
+               <div class="mb-4 flex items-center gap-2">
+                    <lucide-icon name="flag" size="18" class="section-heading-icon-green" />
+                    <span class="text-sm font-semibold text-gray-900">Vault Flags</span>
+               </div>
+
+               <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    @for (flag of vaultFlagsConfig; track flag.key) {
+                    <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="vaultStoreService[flag.key]()" [class.bg-green-50]="vaultStoreService[flag.key]()">
+                         <!-- <input type="radio" name="offerFlag" [value]="flag.key" [checked]="vaultStoreService[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" /> -->
+                         <input type="checkbox" [checked]="vaultStoreService[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" />
+
+                         <div class="mt-0.5 flex-shrink-0">
+                              <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="vaultStoreService[flag.key]()" [class.border-gray-300]="!vaultStoreService[flag.key]()">
+                                   <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="vaultStoreService[flag.key]()" [class.scale-0]="!vaultStoreService[flag.key]()"></div>
+                              </div>
+                         </div>
+
+                         <div class="flex-1">
+                              <div class="text-sm font-medium text-gray-900">{{ flag.title }}</div>
+                              <div class="mt-1 text-xs leading-relaxed text-gray-600">{{ flag.desc }}</div>
+                         </div>
+                    </label>
+                    }
+                    <div class="text-xs text-gray-500 mt-2">Select one or none. First Come First Serve is independent.</div>
+               </div>
+          </div>
+     </div>
+</div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Vault create validation issues:" />

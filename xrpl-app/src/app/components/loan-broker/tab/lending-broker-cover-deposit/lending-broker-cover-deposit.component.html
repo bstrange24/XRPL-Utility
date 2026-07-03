@@ -1,0 +1,183 @@
+<div class="card-base">
+     <!-- Cover Deposit Form -->
+     <div class="space-y-6">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Broker Details
+          </h4>
+
+          <!-- Select Loan Broker -->
+          <div>
+               <div class="field-label">
+                    <label for="selectBroker" class="label-primary">Select Loan Broker <span class="text-red-500">*</span></label>
+               </div>
+
+               <div class="flex items-center gap-2">
+                    <p class="text-secondary">Select the Loan Broker to deposit First-Loss Capital into.</p>
+                    <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                         <ng-icon name="heroQuestionMarkCircle" size="14" />
+                    </button>
+               </div>
+
+               <div class="relative">
+                    <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search by Broker ID, Vault ID, or owner..." emptyMessage="No loan brokers available" />
+               </div>
+               <app-field-helper title="Select Broker" [items]="brokerSelectorHelperItems" [show]="showBrokerSelectorHelper" />
+          </div>
+
+          <div class="mt-4">
+               <p class="text-xs text-gray-500 mb-2">Or enter Broker ID manually:</p>
+               <div class="relative">
+                    <input type="text" class="input-base-with-validation font-mono text-sm" [ngModel]="manualBrokerId()" (ngModelChange)="onManualBrokerIdChange($event)" placeholder="Enter Broker ID (hex string)" app-focus-border [isValid]="isBrokerIdValid() && !isLoadingBroker()" [isInvalid]="isBrokerIdInvalid() || !!brokerFetchError()" />
+
+                    <!-- Loading indicator -->
+                    @if (isLoadingBroker()) {
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                         <div class="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    </div>
+                    }
+               </div>
+
+               <!-- Error message -->
+               @if (brokerFetchError()) {
+               <p class="form-error mt-2">{{ brokerFetchError() }}</p>
+               }
+          </div>
+
+          <!-- Current Broker Details -->
+          @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
+          <div class="rounded-2xl bg-gray-50 p-4 border border-gray-200">
+               <h5 class="text-sm font-semibold text-gray-700 mb-3">Broker Details</h5>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ loanBrokerStoreService.selectedBrokerId() }}</p>
+                    </div>
+                    <div>
+                         <p class="text-xs text-gray-500">Vault ID</p>
+                         <p class="font-mono text-sm text-gray-900 break-all">{{ selectedBrokerVaultId() }}</p>
+                    </div>
+                    <!-- <div>
+                         <p class="text-xs text-gray-500">Loan Broker ID</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerLoanBrokerId() || 'N/A' }}</p>
+                    </div> -->
+                    <div>
+                         <p class="text-xs text-gray-500">Owner</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerOwner() }}</p>
+                    </div>
+                    @if (selectedBrokerCoverBalance()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Current First-Loss Capital Balance</p>
+                         <p class="font-mono text-sm font-semibold text-gray-900">{{ selectedBrokerCoverBalance() }}</p>
+                    </div>
+                    } @if (selectedBrokerCoverMinimum()) {
+                    <div>
+                         <p class="text-xs text-gray-500">Minimum Cover Required</p>
+                         <p class="font-mono text-sm text-gray-900">{{ selectedBrokerCoverMinimum() }}</p>
+                    </div>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Deposit Fields -->
+          @if (loanBrokerStoreService.selectedBrokerId()) {
+          <div class="space-y-6">
+               <!-- Amount -->
+               <!-- Amount -->
+               <div>
+                    <div class="field-label">
+                         <label for="depositAmount" class="label-primary">Amount to Deposit <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">The First-Loss Capital amount to deposit into the Loan Broker.</p>
+                         <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <input
+                              type="text"
+                              inputmode="decimal"
+                              class="input-base-with-validation"
+                              app-focus-border
+                              [isValid]="isAmountValid() && depositAmount.length > 0"
+                              [isInvalid]="isAmountInvalid() && depositAmount.length > 0"
+                              (keydown)="utilsService.preventNegative($event)"
+                              (input)="amountValidatorService.onAmountInput($event, 'loan')"
+                              (blur)="amountValidatorService.onAmountBlur($event, 'loan')"
+                              (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                              [ngModel]="depositAmount"
+                              (ngModelChange)="depositAmount = $event"
+                              placeholder="e.g. 1000"
+                         />
+
+                         <app-input-icons [isValid]="isAmountValid() && depositAmount.length > 0" [isInvalid]="isAmountInvalid() && depositAmount.length > 0" [showClear]="!!depositAmount" (clear)="depositAmount = ''" />
+                    </div>
+
+                    @if (depositAmount && depositAmount.length > 0) {
+                    <div class="mt-2">
+                         @if (isAmountInvalid()) {
+                         <p class="form-error mt-2">Invalid amount format. Please enter a valid number.</p>
+                         } @if (!isAmountInvalid() && parseFloat(depositAmount) > 0) {
+                         <p class="text-xs text-green-600">✅ Valid amount</p>
+                         }
+                    </div>
+                    }
+
+                    <app-field-helper title="Deposit Amount" [items]="depositAmountHelperItems" [show]="showDepositAmountHelper" />
+               </div>
+
+               <!-- Asset Type Info -->
+               <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-blue-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-blue-800">Asset Information</p>
+                              <p class="text-sm text-blue-700 mt-1">
+                                   First-Loss Capital is deposited in the same asset type as the Vault's asset. @if (selectedBrokerAssetType()) {
+                                   <span class="font-semibold">Asset Type: {{ selectedBrokerAssetType() }}</span>
+                                   }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+
+               <!-- Warning Message -->
+               @if (depositAmount && parseFloat(depositAmount) > 0) {
+               <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroInformationCircle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-yellow-800">Deposit Summary</p>
+                              <p class="text-sm text-yellow-700 mt-1">
+                                   You are about to deposit <strong>{{ depositAmount }}</strong> into the First-Loss Capital. @if (selectedBrokerCoverBalance()) {
+                                   <span class="block mt-1"> New balance will be: <strong>{{ (parseFloat(selectedBrokerCoverBalance() || '0') + parseFloat(depositAmount)).toString() }}</strong> </span>
+                                   }
+                              </p>
+                         </div>
+                    </div>
+               </div>
+               }
+
+               <!-- Minimum Cover Warning -->
+               @if (selectedBrokerCoverMinimum() && selectedBrokerCoverBalance()) { @if (parseFloat(selectedBrokerCoverBalance() || '0') < parseFloat(selectedBrokerCoverMinimum() || '0')) {
+               <div class="rounded-2xl bg-red-50 p-4 border border-red-200">
+                    <div class="flex items-start gap-3">
+                         <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
+                         <div>
+                              <p class="text-sm font-medium text-red-800">⚠️ Below Minimum Cover</p>
+                              <p class="text-sm text-red-700 mt-1">Current balance is below the minimum cover requirement of <strong>{{ selectedBrokerCoverMinimum() }}</strong>. You should deposit enough to meet the minimum requirement.</p>
+                         </div>
+                    </div>
+               </div>
+               } }
+          </div>
+          }
+
+          <!-- Summary of validation errors -->
+          <app-validation-errors [errors]="validationErrorMessages()" title="First-Loss Capital deposit validation issues:" />
+     </div>
+</div>

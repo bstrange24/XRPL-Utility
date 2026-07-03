@@ -1,0 +1,390 @@
+<div class="space-y-6">
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="Building2" class="section-heading-icon-green"></lucide-icon>
+               Loan Details
+          </h4>
+
+          <div class="side-by-side-fields">
+               <!-- Loan Broker ID -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="loanBrokerId" class="label-primary">Loan Broker ID <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Select a Loan Broker associated with the loan.</p>
+                              <button type="button" (click)="toggleBrokerIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <app-select-search-dropdown [items]="brokerItems()" [value]="selectedBrokerItem()" [showShortAddress]="false" (valueChange)="onBrokerSelected($event)" placeholder="Search for a Loan Broker..." emptyMessage="No Loan Brokers available. Create a Loan Broker first." />
+                         </div>
+                    </div>
+
+                    <!-- Manual entry option -->
+                    <!-- <div>
+                         <p class="text-xs text-gray-500 mb-1">Or enter Broker ID manually:</p>
+                         <div class="relative">
+                              <input type="text" class="input-base-with-validation font-mono text-sm" app-focus-border [isValid]="isBrokerIdValid() && loanBrokerId.length > 0" [isInvalid]="isBrokerIdInvalid() && loanBrokerId.length > 0" [ngModel]="loanBrokerId" (ngModelChange)="loanBrokerId = $event" placeholder="64-character hex string" />
+                              <app-input-icons [isValid]="isBrokerIdValid() && loanBrokerId.length > 0" [isInvalid]="isBrokerIdInvalid() && loanBrokerId.length > 0" [showClear]="!!loanBrokerId" (clear)="loanBrokerId = ''" />
+                         </div>
+
+                         @if (loanBrokerId && loanBrokerId.length > 0) {
+                         <div class="mt-2">
+                              <p class="text-xs" [class.text-green-600]="isBrokerIdValid()" [class.text-red-600]="isBrokerIdInvalid()">{{ isBrokerIdValid() ? '✅ Valid Loan Broker ID' : '❌ Must be 64-character hex string' }}</p>
+                              <p class="text-xs text-gray-500">Length: {{ loanBrokerId.length }} / 64 characters</p>
+                         </div>
+                         }
+
+                         <app-field-helper title="Loan Broker ID" [items]="brokerIdHelperItems" [show]="showBrokerIdHelper" />
+                    </div> -->
+               </div>
+
+               <!-- Principal Requested -->
+               <div class="space-y-2">
+                    <div>
+                         <div class="field-label">
+                              <label for="principalRequestedXrp" class="label-primary">Principal Requested <span class="text-red-500">*</span></label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The principal amount requested by the Borrower.</p>
+                              <button type="button" (click)="togglePrincipalHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <input
+                                   type="text"
+                                   inputmode="decimal"
+                                   class="input-base-with-validation"
+                                   app-focus-border
+                                   [isValid]="isPrincipalValid() && principalRequestedXrp.length > 0"
+                                   [isInvalid]="isPrincipalInvalid() && principalRequestedXrp.length > 0"
+                                   (keydown)="utilsService.preventNegative($event)"
+                                   (input)="amountValidatorService.onAmountInput($event, 'loan')"
+                                   (blur)="amountValidatorService.onAmountBlur($event, 'loan')"
+                                   (keypress)="amountValidatorService.onAmountKeyPress($event)"
+                                   [ngModel]="principalRequestedXrp"
+                                   (ngModelChange)="principalRequestedXrp = $event"
+                                   placeholder="e.g. 1000"
+                              />
+
+                              <app-input-icons [isValid]="isPrincipalValid() && principalRequestedXrp.length > 0" [isInvalid]="isPrincipalInvalid() && principalRequestedXrp.length > 0" [showClear]="!!principalRequested" (clear)="principalRequested = ''" />
+                         </div>
+
+                         @if (principalRequestedXrp && principalRequestedXrp.length > 0 && isPrincipalInvalid()) {
+                         <!-- <p class="form-error mt-2">{{ amountValidatorService.getAmountErrorMessage() || 'Invalid amount format' }}</p> -->
+                         }
+
+                         <app-field-helper title="Principal Requested" [items]="principalHelperItems" [show]="showPrincipalHelper" />
+                    </div>
+               </div>
+          </div>
+
+          <!-- Add this after the broker selection -->
+          @if (loanBrokerId && selectedBrokerItem()) {
+          <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200 mt-4">
+               <div class="flex items-start gap-3">
+                    <ng-icon name="heroInformationCircle" size="20" class="text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                         <p class="text-sm font-medium text-blue-800">Vault Asset Information</p>
+                         <div class="mt-2 space-y-1 text-sm text-blue-700">
+                              <p>
+                                   Asset Type:
+                                   <strong>
+                                        @if (loanUtilService.getLoanAssetType() === 'XRP') {
+                                        <span class="text-yellow-600">XRP</span>
+                                        } @else if (loanUtilService.getLoanAssetType() === 'MPT') {
+                                        <span class="text-purple-600">MPT</span>
+                                        } @else if (loanUtilService.getLoanAssetType() === 'IOU') {
+                                        <span class="text-blue-600">IOU</span>
+                                        } @else {
+                                        <span class="text-gray-600">Unknown</span>
+                                        }
+                                   </strong>
+                              </p>
+                              <p>
+                                   Vault Balance:
+                                   <strong>{{ loanUtilService.getVaultBalance() }}</strong>
+                                   {{ loanUtilService.getLoanAssetType() !== 'Unknown' ? loanUtilService.getLoanAssetType() : '' }}
+                              </p>
+                              <p>
+                                   Total Assets:
+                                   <strong>{{ loanUtilService.getVaultTotalAssets() }}</strong>
+                                   {{ loanUtilService.getLoanAssetType() !== 'Unknown' ? loanUtilService.getLoanAssetType() : '' }}
+                              </p>
+                              @if (loanUtilService.getLoanAssetType() === 'MPT') {
+                              <p class="text-xs text-blue-600 mt-1">⚠️ Enter principal amount in <strong>MPT tokens</strong> (not XRP drops)</p>
+                              } @if (loanUtilService.getLoanAssetType() === 'XRP') {
+                              <p class="text-xs text-blue-600 mt-1">⚠️ Enter principal amount in <strong>XRP</strong> (will be converted to drops)</p>
+                              }
+                         </div>
+                    </div>
+               </div>
+          </div>
+          }
+
+          <div class="side-by-side-fields">
+               <!-- Counterparty -->
+               <div class="space-y-2 mt-4">
+                    <div>
+                         <div class="field-label">
+                              <label for="counterparty" class="label-primary">Counterparty</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">The address of the counterparty of the Loan.</p>
+                              <button type="button" (click)="toggleCounterpartyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <app-select-search-dropdown
+                                   app-focus-border
+                                   [validateXrpAddress]="true"
+                                   [showClearButton]="true"
+                                   [clearOnEscape]="true"
+                                   [validateOn]="'blur'"
+                                   [closeWhenInvalid]="true"
+                                   [items]="destinationItems()"
+                                   [value]="selectedDestinationItem()"
+                                   [searchQueryInput]="destinationSearchQuery()"
+                                   (searchQueryChange)="searchQueryChange.emit($event)"
+                                   (valueChange)="onCounterpartyChange($event)"
+                                   (isValid)="onDestinationValidationChange($event)"
+                                   placeholder="Enter or select counterparty address"
+                              />
+                         </div>
+
+                         <app-field-helper title="Counterparty" [items]="counterpartyHelperItems" [show]="showCounterpartyHelper" />
+                    </div>
+
+                    <div>
+                         <p class="text-xs text-gray-500 mb-1">Counterparty seed (if needed for cosigning):</p>
+                         <div class="relative">
+                              <input type="text" class="input-base-with-validation font-mono text-sm" app-focus-border [isValid]="isCounterPartySeedValid() && counterpartySeed.length > 0" [isInvalid]="isCounterPartySeedInvalid() && counterpartySeed.length > 0" [ngModel]="counterpartySeed" (ngModelChange)="counterpartySeed = $event" placeholder="Counterparty seed (optional)" />
+                              <app-input-icons [isValid]="isCounterPartySeedValid() && counterpartySeed.length > 0" [isInvalid]="isCounterPartySeedInvalid() && counterpartySeed.length > 0" [showClear]="!!counterpartySeed" (clear)="counterpartySeed = ''" />
+                         </div>
+                         @if (counterpartySeed && counterpartySeed.length > 0) {
+                         <div class="mt-2">
+                              <p class="text-xs" [class.text-green-600]="isCounterPartySeedValid()" [class.text-red-600]="isCounterPartySeedInvalid()">{{ isCounterPartySeedValid() ? '✅ Valid seed' : '❌ Invalid seed format' }}</p>
+                         </div>
+                         }
+                    </div>
+               </div>
+
+               <!-- Data (Metadata) -->
+               <div class="space-y-2 mt-4">
+                    <div>
+                         <div class="field-label">
+                              <label for="data" class="label-primary">Data (Metadata)</label>
+                         </div>
+
+                         <div class="flex items-center gap-2">
+                              <p class="text-secondary">Arbitrary metadata in hex format. Limited to 512 bytes.</p>
+                              <button type="button" (click)="toggleDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
+                              </button>
+                         </div>
+
+                         <div class="relative">
+                              <textarea class="input-base-with-validation min-h-[80px]" app-focus-border [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [ngModel]="data" (ngModelChange)="data = $event" placeholder="Optional metadata (will be converted to hex)"></textarea>
+
+                              <app-input-icons [isValid]="isDataValid() && data.length > 0" [isInvalid]="isDataInvalid() && data.length > 0" [showClear]="!!data" (clear)="data = ''" />
+                         </div>
+
+                         @if (data && data.length > 0) {
+                         <div class="mt-2">
+                              <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 512 bytes limit' }}</p>
+                              <p class="text-xs text-gray-500">Bytes: {{ data.length }}</p>
+                         </div>
+                         }
+
+                         <app-field-helper title="Data" [items]="dataHelperItems" [show]="showDataHelper" />
+                    </div>
+               </div>
+          </div>
+     </div>
+
+     <!-- Fee Section -->
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="Coins" class="section-heading-icon-blue"></lucide-icon>
+               Fees & Interest Rates
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <!-- Loan Origination Fee -->
+               <div class="space-y-2">
+                    <label class="label-primary">Loan Origination Fee</label>
+                    <p class="text-secondary text-xs">Nominal funds amount paid to the LoanBroker Owner when the Loan is created.</p>
+                    <input type="text" inputmode="decimal" class="input-base" [ngModel]="loanOriginationFee" (ngModelChange)="loanOriginationFee = $event" placeholder="e.g. 10" />
+               </div>
+
+               <!-- Loan Service Fee -->
+               <div class="space-y-2">
+                    <label class="label-primary">Loan Service Fee</label>
+                    <p class="text-secondary text-xs">Nominal amount paid to the LoanBroker Owner with every Loan payment.</p>
+                    <input type="text" inputmode="decimal" class="input-base" [ngModel]="loanServiceFee" (ngModelChange)="loanServiceFee = $event" placeholder="e.g. 1" />
+               </div>
+
+               <!-- Late Payment Fee -->
+               <div class="space-y-2">
+                    <label class="label-primary">Late Payment Fee</label>
+                    <p class="text-secondary text-xs">Nominal funds amount paid to the LoanBroker Owner when a payment is late.</p>
+                    <input type="text" inputmode="decimal" class="input-base" [ngModel]="latePaymentFee" (ngModelChange)="latePaymentFee = $event" placeholder="e.g. 5" />
+               </div>
+
+               <!-- Close Payment Fee -->
+               <div class="space-y-2">
+                    <label class="label-primary">Close Payment Fee</label>
+                    <p class="text-secondary text-xs">Nominal funds amount paid to the LoanBroker Owner when an early full repayment is made.</p>
+                    <input type="text" inputmode="decimal" class="input-base" [ngModel]="closePaymentFee" (ngModelChange)="closePaymentFee = $event" placeholder="e.g. 2" />
+               </div>
+
+               <!-- Overpayment Fee -->
+               <div class="space-y-2">
+                    <label class="label-primary">Overpayment Fee (%)</label>
+                    <p class="text-secondary text-xs">Fee charged on overpayments in 1/10th basis points (0-100000 = 0%-100%).</p>
+                    <input type="number" class="input-base" [ngModel]="overpaymentFee" (ngModelChange)="overpaymentFee = $event" placeholder="0 - 100000" min="0" max="100000" />
+                    @if (overpaymentFee !== null && overpaymentFee > 0) {
+                    <p class="text-xs text-gray-500">{{ overpaymentFee / 1000 }}%</p>
+                    }
+               </div>
+
+               <!-- Interest Rate -->
+               <div class="space-y-2">
+                    <label class="label-primary">Interest Rate (%)</label>
+                    <p class="text-secondary text-xs">Annualized interest rate in 1/10th basis points (0-100000 = 0%-100%).</p>
+                    <input type="number" class="input-base" [ngModel]="interestRate" (ngModelChange)="interestRate = $event" placeholder="0 - 100000" min="0" max="100000" />
+                    @if (interestRate !== null && interestRate > 0) {
+                    <p class="text-xs text-gray-500">{{ interestRate / 1000 }}%</p>
+                    }
+               </div>
+
+               <!-- Late Interest Rate -->
+               <div class="space-y-2">
+                    <label class="label-primary">Late Interest Rate (%)</label>
+                    <p class="text-secondary text-xs">Premium added to interest rate for late payments in 1/10th basis points.</p>
+                    <input type="number" class="input-base" [ngModel]="lateInterestRate" (ngModelChange)="lateInterestRate = $event" placeholder="0 - 100000" min="0" max="100000" />
+                    @if (lateInterestRate !== null && lateInterestRate > 0) {
+                    <p class="text-xs text-gray-500">{{ lateInterestRate / 1000 }}%</p>
+                    }
+               </div>
+
+               <!-- Close Interest Rate -->
+               <div class="space-y-2">
+                    <label class="label-primary">Close Interest Rate (%)</label>
+                    <p class="text-secondary text-xs">Fee rate charged for repaying the Loan early in 1/10th basis points.</p>
+                    <input type="number" class="input-base" [ngModel]="closeInterestRate" (ngModelChange)="closeInterestRate = $event" placeholder="0 - 100000" min="0" max="100000" />
+                    @if (closeInterestRate !== null && closeInterestRate > 0) {
+                    <p class="text-xs text-gray-500">{{ closeInterestRate / 1000 }}%</p>
+                    }
+               </div>
+
+               <!-- Overpayment Interest Rate -->
+               <div class="space-y-2">
+                    <label class="label-primary">Overpayment Interest Rate (%)</label>
+                    <p class="text-secondary text-xs">Interest rate charged on over payments in 1/10th basis points.</p>
+                    <input type="number" class="input-base" [ngModel]="overpaymentInterestRate" (ngModelChange)="overpaymentInterestRate = $event" placeholder="0 - 100000" min="0" max="100000" />
+                    @if (overpaymentInterestRate !== null && overpaymentInterestRate > 0) {
+                    <p class="text-xs text-gray-500">{{ overpaymentInterestRate / 1000 }}%</p>
+                    }
+               </div>
+          </div>
+     </div>
+
+     <!-- Payment Schedule Section -->
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="Calendar" class="section-heading-icon-purple"></lucide-icon>
+               Payment Schedule
+          </h4>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <!-- Payment Total -->
+               <div class="space-y-2">
+                    <label class="label-primary">Payment Total</label>
+                    <p class="text-secondary text-xs">Total number of payments to be made against the Loan.</p>
+                    <input type="number" class="input-base" [ngModel]="paymentTotal" (ngModelChange)="paymentTotal = $event" placeholder="Number of payments" min="1" />
+               </div>
+
+               <!-- Payment Interval -->
+               <div class="space-y-2">
+                    <label class="label-primary">Payment Interval (seconds)</label>
+                    <p class="text-secondary text-xs">Number of seconds between Loan payments. Minimum 60 seconds.</p>
+                    <input type="number" class="input-base" [ngModel]="paymentInterval" (ngModelChange)="paymentInterval = $event" placeholder="e.g. 86400" min="60" />
+                    @if (paymentInterval !== null && paymentInterval > 0) {
+                    <p class="text-xs text-gray-500">{{ paymentInterval / 60 }} minutes</p>
+                    }
+               </div>
+
+               <!-- Grace Period -->
+               <div class="space-y-2">
+                    <label class="label-primary">Grace Period (seconds)</label>
+                    <p class="text-secondary text-xs">Number of seconds after Payment Due Date can be Defaulted. Must not exceed Payment Interval.</p>
+                    <input type="number" class="input-base" [ngModel]="gracePeriod" (ngModelChange)="gracePeriod = $event" placeholder="e.g. 3600" min="0" />
+                    @if (gracePeriod !== null && gracePeriod > 0) {
+                    <p class="text-xs text-gray-500">{{ gracePeriod / 60 }} minutes</p>
+                    }
+               </div>
+          </div>
+     </div>
+
+     <!-- Flags Section -->
+     <div class="card-base">
+          <h4 class="section-heading">
+               <lucide-icon name="flag" size="18" class="section-heading-icon-green" />
+               Loan Flags
+          </h4>
+
+          <div class="grid grid-cols-1 gap-3">
+               @for (flag of loanFlagsConfig; track flag.key) {
+               <label class="group relative flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all hover:border-gray-300" [class.border-green-500]="loanStoreService[flag.key]()" [class.bg-green-50]="loanStoreService[flag.key]()">
+                    <input type="checkbox" [checked]="loanStoreService[flag.key]()" (change)="selectFlag(flag.key)" class="hidden" />
+
+                    <div class="mt-0.5 flex-shrink-0">
+                         <div class="flex h-5 w-5 items-center justify-center rounded-full border-2 transition-all duration-200" [class.border-green-500]="loanStoreService[flag.key]()" [class.border-gray-300]="!loanStoreService[flag.key]()">
+                              <div class="h-2.5 w-2.5 rounded-full transition-transform duration-200 bg-green-500" [class.scale-100]="loanStoreService[flag.key]()" [class.scale-0]="!loanStoreService[flag.key]()"></div>
+                         </div>
+                    </div>
+
+                    <div class="flex-1">
+                         <div class="text-sm font-medium text-gray-900">{{ flag.title }}</div>
+                         <div class="mt-1 text-xs leading-relaxed text-gray-600">{{ flag.desc }}</div>
+                    </div>
+               </label>
+               }
+          </div>
+          <div class="text-xs text-gray-500 mt-2">Enable this flag to allow overpayments on the loan.</div>
+     </div>
+
+     <!-- In loan-set.component.html -->
+     @if (loanStoreService.counterparty()) {
+     <div class="rounded-2xl bg-yellow-50 p-4 border border-yellow-200 mt-3">
+          <div class="flex items-start gap-3">
+               <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
+               <div>
+                    <p class="text-sm font-medium text-yellow-800">⚠️ Counterparty Requires Signature</p>
+                    <p class="text-sm text-yellow-700 mt-1">A <strong>Counterparty</strong> has been specified. This means the counterparty (lender) must also sign this transaction. If you are the borrower, ensure the lender signs the transaction.</p>
+               </div>
+          </div>
+     </div>
+     }
+
+     <!-- In loan-set.component.html -->
+     <div class="rounded-2xl bg-blue-50 p-4 border border-blue-200">
+          <p class="text-sm text-blue-700">Loan Asset: <strong>{{ loanUtilService.getLoanAssetType() }}</strong></p>
+          <p class="text-xs text-blue-600 mt-1">Enter the principal amount in {{ loanUtilService.getLoanAssetType() }} units</p>
+     </div>
+</div>
+
+<!-- Summary of validation errors -->
+<app-validation-errors [errors]="validationErrorMessages()" title="Loan creation validation issues:" />

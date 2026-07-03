@@ -305,6 +305,49 @@ export const AppConstants = {
      AMM_LP_TOKEN_WITHDRAW_HELPER_ITEMS: ['Number of LP tokens you want to burn to withdraw your share of the pool assets.', 'When you burn LP tokens, you receive a proportional share of both assets in the pool based on your withdrawal strategy.'],
      // AMM
 
+     // VAULT
+     VAULT_SELECTOR_HELPER_ITEMS: ['A Vault is a smart contract on the XRP Ledger that holds assets (XRP, MPTs, or IOUs) securely until certain conditions are met.', 'Choose a vault from the dropdown list. Only vaults that you own and are eligible for deletion will appear.', 'You can only delete vaults that you own and that have no pending withdrawals or active conditions.'],
+     VAULT_SEQUENCE_HELPER_ITEMS: ['A unique identifier for the vault, generated when the vault was created on the XRP Ledger.', 'The id number is used to reference the vault in transactions and can be found in the vault details.'],
+     VAULT_OWNER_HELPER_ITEMS: ['The account that originally created and owns the vault. Only the owner can delete the vault.', 'The currently selected wallet must match the vault owner to perform deletion.'],
+     VAULT_AMOUNT_HELPER_ITEMS: ['The total amount of assets (XRP, MPTs, or IOUs) currently held in the vault.', 'Vaults can hold XRP, MPTs (Multi-Purpose Tokens), or IOUs (issued currencies).'],
+     VAULT_WITHDRAWAL_POLICY_HELPER_ITEMS: ['The withdrawal policy determines who can withdraw assets from the vault.', '0 = No Restrictions (anyone can withdraw), 1 = Owner Only (only the vault owner can withdraw), 2 = Authorized Only (only approved accounts can withdraw).'],
+     VAULT_FLAGS_HELPER_ITEMS: ["Configuration flags that control the vault's behavior and permissions.", 'tfVaultPrivate (0x00010000) - Private vault, tfVaultShareNonTransferable (0x00020000) - Shares cannot be transferred, etc.'],
+     VAULT_SHARED_MPT_ID_HELPER_ITEMS: ['The Multi-Purpose Token (MPT) ID that represents shares in this vault.', 'This MPT is used to track ownership shares of the vault. Shareholders can claim their portion of the vault assets.'],
+     VAULT_DATA_HELPER_ITEMS: ['Additional metadata or information stored in the vault, encoded as hex.', 'The data is stored in hex format on the ledger and decoded to readable text (e.g., JSON, plain text) when displayed.'],
+     ASSETS_MAXIMUM_HELPER_ITEMS: ['The maximum amount of the asset that can be held in the vault.', 'Cannot be lower than the current AssetsTotal unless set to 0.', 'Setting to 0 effectively disables the vault or allows a full reset.'],
+     DOMAIN_ID_HELPER_ITEMS: ['The Permissioned Domain object ID associated with the shares of this Vault.', 'Must be a valid hex identifier (64 characters max).', 'This field is optional and can be left empty.'],
+     HOLDER_HELPER_ITEMS: ['The account that currently holds assets in the vault.', 'The vault owner can clawback assets from any holder.'],
+     CLAWBACK_AMOUNT_HELPER_ITEMS: ['The act of recovering assets from a holder in the vault.', 'Specify the amount to clawback. Leave empty or set to 0 to clawback all funds from the holder.', 'Clawback can only recover up to the total shares the holder owns.'],
+     VAULT_ACTION_HELPER_ITEMS: ['Add assets to the vault. The holder will receive shares in the vault.', 'Remove assets from the vault. The holder will burn their shares.'],
+     VAULT_DESTINATION_HELPER_ITEMS: ['The account that will receive the withdrawn assets.', 'Cannot be the same as the current wallet.'],
+     // VAULT
+
+     // LENDING
+     LOAN_SELECTOR_HELPER_ITEMS: ['The unique identifier for a loan object on the XRPL.', 'Search by Broker ID, amount, or owner address to find the loan you want to modify.'],
+     LOAN_MODIFY_FLAGS_HELPER_ITEMS: ['Marks the loan as defaulted. This should only be used when the borrower has failed to make payments.', 'Marks the loan as impaired, indicating the loan may not be fully collectible.', 'Removes the impaired status from the loan.'],
+     LOAN_PAYMENT_AMOUNT_HELPER_ITEMS: ['Enter the amount you want to pay', 'For XRP: Amount in XRP (e.g., 100)', 'For MPT Tokens: Amount must be a whole number (e.g., 100, not 100.5)', 'Amount cannot exceed the remaining balance', 'You can make partial payments or full early repayments. Use the payment type flags to specify.', 'If you pay more than the remaining balance, the tfLoanOverpayment flag should be set.'],
+     LOAN_CLOSE_HELPER_ITEMS: ['Closing a loan removes it from the ledger and marks it as complete. This is typically done when the loan has been fully repaid or the borrower has defaulted.', 'Once a loan is closed, it cannot be reopened. The loan record is permanently deleted from the ledger.', 'If a loan still has an outstanding balance when closed, the remaining amount is considered fully paid or written off depending on the loan terms.'],
+     LOAN_BROKER_DELETE_HELPER_ITEMS: ['Deleting a Loan Broker removes it from the ledger. This is typically done when the broker is no longer needed or has been replaced.', 'Once a Loan Broker is deleted, it cannot be recovered. All associated loans and data will also be removed.', 'Ensure all loans associated with this broker have been properly closed or transferred before deletion.'],
+     LOAN_PRINCIPAL_HELPER_ITEMS: ['The principal amount requested by the Borrower.', 'The principal is in the same currency as the Vault asset.'],
+     LOAN_COUNTERPARTY_HELPER_ITEMS: ['The address of the counterparty of the Loan.', 'The counterparty is typically the lender for the loan.'],
+     LOAN_DATA_HELPER_ITEMS: ['Arbitrary metadata in hex format. Limited to 512 bytes.', 'Can be used to store additional information about the loan.'],
+     LOAN_MANAGE_FLAGS_HELPER_ITEMS: ['Marks the loan as defaulted. This should only be used when the borrower has failed to make payments.', 'Marks the loan as impaired, indicating the loan may not be fully collectible.', 'Removes the impaired status from the loan.'],
+     LOAN_PAY_FLAGS_HELPER_ITEMS: ['Indicates that remaining payment amount should be treated as an overpayment.', 'Indicates that the borrower is making a full early repayment.', 'Indicates that the borrower is making a late loan payment.'],
+     // LENDING
+
+     // LOAN BROKER
+     LOAN_BROKER_VAULT_ID_HELPER_ITEMS: ['The Vault ID that the Lending Protocol will use to access liquidity. Must be a 64-character hex string.', 'You can find Vault IDs from the Vault section of the application.'],
+     LOAN_BROKER_ID_HELPER_ITEMS: ['The Loan Broker ID that the transaction is modifying. Optional for creation.', 'If you want to set a specific Loan Broker ID, you can provide it here.'],
+     LOAN_BROKER_DATA_HELPER_ITEMS: ['Arbitrary metadata in hex format. Limited to 512 bytes.', 'Can be used to store additional information about the loan broker.'],
+     LOAN_BROKER_SELECTOR_HELPER_ITEMS: ['Choose an existing Loan Broker to modify its parameters.', 'You can modify data, management fee, debt maximum, and cover rates.'],
+     LOAN_BROKER_WITHDRAW_AMOUNT_HELPER_ITEMS: ['The amount of First-Loss Capital to withdraw from the Loan Broker.', 'The amount cannot exceed the available First-Loss Capital balance.'],
+     LOAN_BROKER_DESTINATION_HELPER_ITEMS: ['Optional: The account to receive the withdrawn assets. If not provided, the current wallet will be used.', 'The destination account must be able to receive the asset type being withdrawn.'],
+     LOAN_BROKER_DESTINATION_TAG_HELPER_ITEMS: ['Optional tag identifying the reason for the withdrawal to the destination.', 'Must be between 0 and 4294967295.'],
+     LOAN_BROKER_DEPOSIT_AMOUNT_HELPER_ITEMS: ['The amount of First-Loss Capital to deposit into the Loan Broker.', 'Ensure the deposit meets or exceeds the minimum cover requirement to keep the broker active.', "The deposit must be in the same asset type as the Vault's asset."],
+     LOAN_BROKER_CLAWBACK_AMOUNT_HELPER_ITEMS: ['The amount of First-Loss Capital to clawback. If 0 or not provided, claws back up to the minimum cover required.', 'Clawback is limited to the minimum cover required for current loans (DebtTotal × CoverRateMinimum).', 'This action can only be performed by the Issuer of the loan asset.'],
+     VAULT_ID_HELPER_ITEMS: ['You can only create a Loan Broker for a Vault that you own. The Vault owner must match the account creating the Loan Broker.', "This is a security measure to prevent unauthorized users from creating loan protocols using someone else's Vault."],
+     // LOAN BROKER
+
      MPT_TOKEN_COUNT_PRESETS: [10, 100, 1000, 10000, 100000, 1000000, 10000000],
      ASSET_SCALE_PRESETS: [0, 2, 6, 8, 15],
      TAXON_PRESETS: [0, 5, 10, 15, 20],

@@ -11,6 +11,8 @@ import { AmmUtilsService } from '../amm/amm-utils/amm-utils.service';
 export interface PrepareTxEnvironmentOptions {
      includeTickets?: boolean;
      includeEscrows?: boolean;
+     incudeVaults?: boolean;
+     includeLoanBrokers?: boolean;
      includeEscrowBySequenceId?: boolean;
      includeChecks?: boolean;
      includeTrustlines?: boolean;
@@ -33,9 +35,7 @@ export interface PrepareTxEnvironmentOptions {
      forceRefresh?: boolean;
      destinationAddress?: string;
      escrowSequenceNumberField?: string;
-     // ledgerInfoType?: 'lastIndex' | 'closeTime' | 'currentRippleTime';
      ledgerInfo?: {
-          // Change from any to a structured object
           lastIndex: number;
           closeTime: number;
           currentRippleTime: number;
@@ -61,6 +61,8 @@ export interface PrepareTxEnvironmentResult {
      accountInfo?: xrpl.AccountInfoResponse;
      destinationAccountInfo?: xrpl.AccountInfoResponse;
      destinationAccountObject?: xrpl.AccountObjectsResponse;
+     vaultObjects?: xrpl.AccountObjectsResponse;
+     loanBrokerObjects?: any;
      gatewayBalanceObject?: any;
      nftSellOffersObject?: any;
      nftBuyOffersObject?: any;
@@ -132,19 +134,6 @@ export class TxEnvironmentService {
           return env;
      }
 
-     // async refreshEnvironment(options: PrepareTxEnvironmentOptions = {}, force = false): Promise<PrepareTxEnvironmentResult> {
-     //      // const now = Date.now();
-
-     //      // if (!force && this.currentEnv() && now - this.lastRefreshTime() < this.CACHE_MS) {
-     //      //      return this.currentEnv()!;
-     //      // }
-
-     //      const env = await this.prepareTxEnvironment(options);
-     //      this.currentEnv.set(env);
-     //      // this.lastRefreshTime.set(now);
-     //      return env;
-     // }
-
      async prepareTxEnvironmentWithWallet(selectedWallet: Wallet, options: PrepareTxEnvironmentOptions = {}): Promise<PrepareTxEnvironmentResult> {
           return this.buildEnvironment(selectedWallet, options);
      }
@@ -158,6 +147,8 @@ export class TxEnvironmentService {
           const {
                includeTickets = false,
                includeEscrows = false,
+               incudeVaults = false,
+               includeLoanBrokers = false,
                includeEscrowBySequenceId = false,
                includeChecks = false,
                includeTrustlines = false,
@@ -223,6 +214,14 @@ export class TxEnvironmentService {
 
           if (includeEscrows) {
                tasks.escrowObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'escrow');
+          }
+
+          if (incudeVaults) {
+               tasks.vaultObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'vault');
+          }
+
+          if (includeLoanBrokers) {
+               tasks.vaultObjects = this.xrplCache.getAccountObjectsWithType(client, address, forceRefresh, 'LoanBroker');
           }
 
           if (includeChecks) {

@@ -233,7 +233,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
 
-                    this.refreshAccountObject(env);
+                    await this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                } catch (error: any) {
                     console.error('Error in getMptDetails:', error);
@@ -422,12 +422,12 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
-          this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(accountObjects, address));
-     }
+     // protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
+     //      this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(accountObjects, address));
+     // }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
+          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
      }
 

@@ -1,0 +1,184 @@
+@if (vaultViewModelService.infoData(); as info) {
+<app-summary-container [walletName]="info?.walletName || ''" [summaryText]="summaryText()" [itemCount]="totalCount()" [links]="info?.links || null" [buttonLabel]="'vaults'" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()">
+     <div items-list class="flex flex-col h-full">
+          <!-- Filters Section -->
+          <div class="sticky top-0 bg-white border-b border-gray-100 p-4 z-10 space-y-4">
+               <!-- Text Search -->
+               <div class="relative">
+                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search by Sequence, Amount, Owner, or MPT ID..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-blue-500" />
+                    <ng-icon name="heroMagnifyingGlass" size="18" class="absolute left-4 top-3.5 text-gray-400" />
+
+                    @if (searchQuery()) {
+                    <button (click)="clearAllFilters()" class="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600">
+                         <ng-icon name="heroXMark" size="18" />
+                    </button>
+                    }
+               </div>
+
+               <!-- Quick Filter Chips -->
+               <div class="flex flex-wrap gap-2">
+                    @for (filter of quickFilters; track filter.key) {
+                    <button (click)="setQuickFilter(filter.key)" [class]="getQuickFilterClass(filter.key)">
+                         <ng-icon [name]="filter.icon" size="16" />
+                         <span>{{ filter.label }}</span>
+                    </button>
+                    }
+               </div>
+               <!-- Sort Control & Clear Button -->
+               <div class="options">
+                    <app-sort-control [options]="sortOptions" [sortKey]="sortBy()" [direction]="sortDirection()" (sortChange)="onSortChange($event)" />
+               </div>
+
+               @if (hasActiveFilters()) {
+               <button (click)="clearAllFilters()" class="empty-state-action flex items-center gap-1">
+                    <ng-icon name="heroXMark" size="16" />
+                    Clear All Filters
+               </button>
+               }
+
+               <!-- Results Counter -->
+               @if (hasActiveFilters()) {
+               <div class="text-xs bg-gray-50 rounded-xl px-4 py-2 text-gray-600">Showing <strong>{{ filteredCount() }}</strong> of <strong>{{ totalCount() }}</strong> vaults</div>
+               }
+          </div>
+
+          <!-- Vaults List -->
+          @if (sortedVaults().length > 0) {
+          <div class="flex-1 overflow-auto custom-scrollbar p-1">
+               @for (vault of sortedVaults(); track vault.VaultSequence + vault.id) {
+               <app-summary-item [selected]="vault.index === vaultStoreService.selectedVaultId()" [copyValue]="vault.index" copyTooltip="Copy Vault ID" (onClick)="onVaultClick(vault)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Vault ID')" [secondaryCopyValue]="vault.shareMPTID" [secondaryCopyTooltip]="'Copy Shared MPT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'Shared MPT ID')" (onClick)="onSharedMPTClick(vault)">
+                    <div item-content>
+                         <!-- Main Content -->
+                         <div class="summary-item-content">
+                              <ng-icon name="heroBanknotes" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
+
+                              <div class="flex-1 min-w-0">
+                                   <!-- Amount Display with Asset Type Badge -->
+                                   <div class="flex items-center gap-2 flex-wrap">
+                                        <app-tooltip-link [href]="txUiService.explorerUrl() + 'ledger/' + vault.VaultSequence" tooltipText="View Vault on XRPL Explorer">
+                                             <strong class="text-gray-900 hover:text-blue-600 transition-colors"> {{ vault.amountDisplay }} </strong>
+                                        </app-tooltip-link>
+
+                                        <!-- Asset Type Badge -->
+                                        <span
+                                             class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium"
+                                             [class.bg-yellow-100]="vault.currency === 'XRP'"
+                                             [class.text-yellow-800]="vault.currency === 'XRP'"
+                                             [class.bg-purple-100]="vault.currency === 'MPT'"
+                                             [class.text-purple-800]="vault.currency === 'MPT'"
+                                             [class.bg-blue-100]="vault.currency && vault.currency !== 'XRP' && vault.currency !== 'MPT'"
+                                             [class.text-blue-800]="vault.currency && vault.currency !== 'XRP' && vault.currency !== 'MPT'"
+                                        >
+                                             @if (vault.currency === 'XRP') {
+                                             <lucide-icon name="Coins" size="12" />
+                                             } @else if (vault.currency === 'MPT') {
+                                             <ng-icon name="heroCube" size="12" />
+                                             } @else {
+                                             <ng-icon name="heroCurrencyDollar" size="12" />
+                                             } {{ vault.currency || 'Unknown' }}
+                                        </span>
+                                   </div>
+
+                                   <!-- Metadata -->
+                                   <div class="mt-3 text-sm space-y-1.5">
+                                        <app-summary-key-value label="Vault ID">
+                                             <span class="font-mono text-xs"> {{ formatVaultId(vault) }} </span>
+                                        </app-summary-key-value>
+
+                                        <app-summary-key-value label="Owner">
+                                             <span class="font-mono text-xs">{{ vault.owner }}</span>
+                                        </app-summary-key-value>
+
+                                        @if (vault.currency === 'MPT' && vault.issuer) {
+                                        <app-summary-key-value label="MPT Issuance ID">
+                                             <span class="font-mono text-xs">{{ vault.issuer.slice(0, 14) }}...{{ vault.issuer.slice(-14) }}</span>
+                                        </app-summary-key-value>
+                                        } @if (vault.currency !== 'XRP' && vault.currency !== 'MPT' && vault.issuer) {
+                                        <app-summary-key-value label="Issuer">
+                                             <span class="font-mono text-xs">{{ vault.issuer.slice(0, 14) }}...{{ vault.issuer.slice(-14) }}</span>
+                                        </app-summary-key-value>
+                                        }
+                                        <!-- @if (vault.data) {
+                                        <app-summary-key-value label="Data">
+                                             <span class="font-mono text-xs break-all">{{ vault.data }}</span>
+                                        </app-summary-key-value>
+                                        }  -->
+                                        @if (vault.shareMPTID) {
+                                        <app-summary-key-value label="Share MPT ID">
+                                             <span class="font-mono text-xs">{{ vault.shareMPTID.slice(0, 14) }}...{{ vault.shareMPTID.slice(-14) }}</span>
+                                        </app-summary-key-value>
+                                        } @if (vault.Shares) {
+                                        <app-summary-key-value label="Shares">
+                                             <span class="font-mono text-xs">{{ vault.Shares | json }}</span>
+                                        </app-summary-key-value>
+                                        }@if (vault.AssetsAvailable) {
+                                        <app-summary-key-value label="AssetsAvailable">
+                                             <span class="font-mono text-xs break-all">{{ vault.AssetsAvailable }}</span>
+                                        </app-summary-key-value>
+                                        } @if (vault.AssetsTotal) {
+                                        <app-summary-key-value label="AssetsTotal">
+                                             <span class="font-mono text-xs break-all">{{ vault.AssetsTotal }}</span>
+                                        </app-summary-key-value>
+                                        } @if (vault.Scale) {
+                                        <app-summary-key-value label="Scale">
+                                             <span class="font-mono text-xs break-all">{{ vault.Scale }}</span>
+                                        </app-summary-key-value>
+                                        } @if (vault.flags) {
+                                        <app-summary-key-value label="Flag">
+                                             <span class="inline-flex items-center px-1 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700" [class.bg-red-100]="vault.flags === 'Vault Private'"> {{ vault.flags }} </span>
+                                        </app-summary-key-value>
+                                        }
+
+                                        <app-summary-key-value label="Withdrawal Policy">
+                                             <span class="inline-flex items-center px-1 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700"> {{ vault.withdrawalPolicyName || vault.withdrawalPolicy }} </span>
+                                        </app-summary-key-value>
+                                   </div>
+
+                                   <!-- MPT Shares Section -->
+                                   @if (vault.shareMPTID || (vault.currency === 'MPT' && vault.issuer)) {
+                                   <div class="mt-4 pt-3 border-t border-gray-100">
+                                        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2">Vault Shares (MPT)</p>
+
+                                        @let shareId = vault.shareMPTID || vault.issuer || ''; @let myMpt = getMyMptForVault(vault);
+
+                                        <div class="bg-gray-50 rounded-2xl p-3 text-sm">
+                                             <app-summary-key-value label="Issuance ID">
+                                                  <span class="font-mono text-xs break-all">{{ shareId.slice(0, 14) }}...{{ shareId.slice(-14) }}</span>
+                                                  <!-- <span class="font-mono text-xs break-all">{{ shareId }}</span> -->
+                                             </app-summary-key-value>
+
+                                             @if (myMpt) {
+                                             <app-summary-key-value label="Balance">
+                                                  <span class="font-medium text-green-700"> {{ myMpt.display || '0' }} </span>
+                                             </app-summary-key-value>
+                                             } @else {
+                                             <app-summary-key-value label="Balance">
+                                                  <span class="text-gray-400">0 (no tokens held)</span>
+                                             </app-summary-key-value>
+                                             }
+                                        </div>
+                                   </div>
+                                   }
+                              </div>
+                         </div>
+                    </div>
+               </app-summary-item>
+               }
+          </div>
+          } @else if (hasActiveFilters()) {
+          <!-- Empty State for filtered results -->
+          <div class="empty-state">
+               <div class="empty-state-icon">
+                    <ng-icon name="heroMagnifyingGlass" size="20" class="text-gray-400" />
+               </div>
+               <p class="empty-state-title">No matching vaults found</p>
+               <p class="empty-state-subtitle">Try adjusting your search or filters</p>
+               <button (click)="clearAllFilters()" class="empty-state-action">
+                    <ng-icon name="heroXMark" size="16" class="pt-1" />
+                    Clear All Filters
+               </button>
+          </div>
+          }
+     </div>
+</app-summary-container>
+}
