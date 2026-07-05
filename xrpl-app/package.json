@@ -1,7 +1,6 @@
 {
      "name": "xrpl-app",
      "version": "0.0.0",
-     "type": "module",
      "scripts": {
           "ng": "ng",
           "start": "concurrently \"ng serve\" \"node proxy-server.js\"",
@@ -73,7 +72,7 @@
           "tslib": "^2.3.0",
           "util": "^0.12.5",
           "xrpl": "^5.0.0",
-          "xrpl-accountlib": "^8.4.0",
+          "xrpl-accountlib": "^9.2.0",
           "xrpl-hooks": "^2.2.1",
           "zone.js": "~0.15.0"
      },

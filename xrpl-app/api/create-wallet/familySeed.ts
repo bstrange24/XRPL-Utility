@@ -1,5 +1,4 @@
 import accountlib from 'xrpl-accountlib';
-export const runtime = 'nodejs';
 
 export default async function handler(req: any, res: any) {
      if (req.method !== 'POST') {
