@@ -107,7 +107,6 @@ export class LoanTransactionBuilderService {
 
      /**
       * Format amount as drops for XRP
-      * CRITICAL: All amounts in LoanSet must be in drops (1 XRP = 1,000,000 drops)
       */
      private formatAmount(amount: string): string {
           if (!amount || amount === '0') return '0';
@@ -160,7 +159,7 @@ export class LoanTransactionBuilderService {
      /**
       * Build LoanPay transaction
       */
-     buildLoanPayTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, loanState: any, amount: string, assetType: string = 'XRP', vault: any, loanBroker: any): xrpl.Transaction {
+     buildLoanPayTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, loanState: any, vault: any, loanBroker: any, amount: string, assetType: string = 'XRP'): xrpl.Transaction {
           let flags = 0;
           if (loanState.tfLoanOverpayment) {
                flags |= 0x00010000;
@@ -172,7 +171,7 @@ export class LoanTransactionBuilderService {
                flags |= 0x00040000;
           }
 
-          const amountValue = this.buildPaymentAmount(assetType, loanState, loanBroker, amount);
+          const amountValue = this.buildPaymentAmount(assetType, loanState, vault, loanBroker, amount);
 
           return {
                TransactionType: 'LoanPay',
@@ -185,9 +184,9 @@ export class LoanTransactionBuilderService {
           } as xrpl.Transaction;
      }
 
-     private buildPaymentAmount(assetType: string, loanState: any, loanBroker: any, amount?: string): any {
-          // Always use the provided amount if available, otherwise fall back to store
-          // const paymentAmount = amount ?? loanState.paymentAmount;
+     private buildPaymentAmount(assetType: string, loanState: any, vault: any, loanBroker: any, amount?: string): any {
+          console.log('Building payment amount with assetType:', assetType, 'loanState:', loanState, 'vault:', vault, 'loanBroker:', loanBroker, 'amount:', amount);
+
           const paymentAmount = loanState.paymentAmount;
 
           if (!paymentAmount) {
@@ -199,14 +198,36 @@ export class LoanTransactionBuilderService {
           } else if (assetType === 'MPT') {
                // MPT values must be integers (no decimals)
                const value = paymentAmount;
-               // Ensure it's a whole number
-               const integerValue = Math.floor(parseFloat(value));
-               if (integerValue !== parseFloat(value)) {
-                    throw new Error(`MPT amount must be a whole number, got ${value}`);
+               // const integerValue = Math.floor(parseFloat(value));
+
+               let mptIssuanceId = null;
+
+               // Check if vault has existingVaults array and get the first one
+               if (vault?.existingVaults && vault.existingVaults.length > 0) {
+                    // Get the first vault from existingVaults
+                    const selectedVault = vault.existingVaults[0];
+                    mptIssuanceId = selectedVault?.Asset?.mpt_issuance_id;
+
+                    console.log('Selected vault:', selectedVault);
+                    console.log('Asset from selected vault:', selectedVault?.Asset);
                }
+
+               // Alternative: if you have a selectedVaultId, you could find the matching vault
+               // if (vault?.selectedVaultId) {
+               //     const selectedVault = vault.existingVaults.find(v => v.index === vault.selectedVaultId);
+               //     mptIssuanceId = selectedVault?.Asset?.mpt_issuance_id;
+               // }
+
+               console.log('MPT Issuance ID found:', mptIssuanceId);
+
+               if (!mptIssuanceId) {
+                    throw new Error('MPT issuance ID not found in vault data');
+               }
+
                return {
-                    mpt_issuance_id: loanState.vault?.Asset?.mpt_issuance_id ?? loanState.vault?.mpt_issuance_id,
-                    value: integerValue.toString(),
+                    mpt_issuance_id: mptIssuanceId,
+                    // value: integerValue.toString(),
+                    value: value.toString(),
                };
           } else {
                return {
@@ -214,29 +235,6 @@ export class LoanTransactionBuilderService {
                     value: paymentAmount,
                     issuer: loanState.issuer,
                };
-          }
-     }
-
-     private buildPaymentAmount234234(assetType: string, loanState: any): any {
-          if (assetType === 'XRP') {
-               return xrpl.xrpToDrops(loanState.paymentAmount);
-          } else if (assetType === 'MPT') {
-               const mptValue: any = {
-                    mpt_issuance_id: loanState.vault.Asset.mpt_issuance_id,
-                    value: loanState.paymentAmount,
-               };
-               return mptValue;
-               // return {
-               //      mpt_issuance_id: loanState.vault.Asset.mpt_issuance_id,
-               //      value: loanState.paymentAmount,
-               // };
-          } else {
-               return {
-                    currency: this.utilsService.encodeIfNeeded(loanState.currencyValue),
-                    value: loanState.paymentAmount,
-                    issuer: loanState.issuer,
-               };
-               // return loanState.paymentAmount;
           }
      }
 
