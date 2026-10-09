@@ -24,6 +24,9 @@
           <app-delegate-clear
                [delegations]="delegateStore.existingDelegations()"
                [selectedDestination]="delegateStore.destination()"
+               [actions]="delegateStore.actions()"
+               [selectedActions]="delegateStore.selected()"
+               (actionToggle)="toggleSelection($event)"
                (destinationChange)="setDelegateDestination($event)"
           />
           }

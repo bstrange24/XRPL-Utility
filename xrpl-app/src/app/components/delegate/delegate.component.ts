@@ -111,6 +111,9 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
 
      setDelegateDestination(destination: string): void {
           this.delegateStore.setField('destination', destination);
+          if (this.delegateTransactionViewModelService.activeTab() === 'delegateClear') {
+               this.delegateStore.setField('selected', new Set<number>());
+          }
           if (this.delegateTransactionViewModelService.activeTab() === 'delegateCreate') {
                this.selectedDestinationAddress.set(destination);
           }

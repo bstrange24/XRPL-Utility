@@ -3,12 +3,12 @@
           <span class="section-heading-icon-red" aria-hidden="true">−</span>
           Remove a delegate
      </h3>
-     <p class="text-secondary">Select an active delegate to remove all permissions and release its owner reserve.</p>
+     <p class="text-secondary">Select a delegate, then tick the permissions to remove. Leave none ticked to remove the delegate entirely and release its owner reserve.</p>
 
      @if (delegations().length) {
      <div class="delegation-list">
           @for (delegation of delegations(); track delegation.index) {
-          <label class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() && selectedDestination() === delegation.Authorize">
+          <div class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() && selectedDestination() === delegation.Authorize">
                <input
                     type="radio"
                     name="delegate-to-clear"
@@ -17,15 +17,22 @@
                     (change)="destinationChange.emit(delegation.Authorize || '')"
                />
                <span class="delegation-card-copy">
-                    <span class="delegation-address">{{ delegation.Authorize }}</span>
+                    <span class="delegation-address cursor-pointer" (click)="destinationChange.emit(delegation.Authorize || '')">{{ delegation.Authorize }}</span>
                     <span class="delegation-permissions">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</span>
                     <span class="delegation-values">
                          @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) {
+                         @if (selectedDestination() === delegation.Authorize && actionIdFor(permission.Permission.PermissionValue) !== null) {
+                         <label class="permission-chip">
+                              <input type="checkbox" [checked]="isPermissionSelected(permission.Permission.PermissionValue)" (change)="actionToggle.emit(actionIdFor(permission.Permission.PermissionValue)!)" />
+                              {{ permission.Permission.PermissionValue }}
+                         </label>
+                         } @else {
                          <span class="permission-chip">{{ permission.Permission.PermissionValue }}</span>
+                         }
                          }
                     </span>
                </span>
-          </label>
+          </div>
           }
      </div>
      } @else {
