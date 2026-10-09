@@ -14,6 +14,7 @@ describe('DelegateClearComponent', () => {
 
     fixture = TestBed.createComponent(DelegateClearComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('delegations', []);
     fixture.detectChanges();
   });
 

@@ -1,23 +1,28 @@
-import { inject, Injectable } from '@angular/core';
-import { TrustlineUtilService } from '../../trustlines/trustline-utils/trustline-util.service';
-import { UtilsService } from '../../utils/util-service/utils.service';
-import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
+
+import { DelegateTxType } from '../../../components/delegate/constants/delegate.types';
+import { DelegateState } from '../delegate-store/delegate-store.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class DelegateTransactionBuilderService {
-     public readonly utilsService = inject(UtilsService);
-     public readonly xrplTransactionService = inject(XrplTransactionService);
-     public readonly trustlineUtilService = inject(TrustlineUtilService);
+     buildDelegateTx(wallet: { address?: string; classicAddress?: string }, delegate: DelegateState, type: DelegateTxType): xrpl.DelegateSet {
+          const selectedPermissions = type === 'delegateCreate'
+               ? delegate.actions
+                      .filter(action => delegate.selected.has(action.id))
+                      .map(action => ({ Permission: { PermissionValue: action.key } }))
+               : [];
 
-     buildDelegateTx(wallet: any, env: any, delegate: any, account: any, txOptions: any) {
+          const accountAddress = wallet.address || wallet.classicAddress;
+          if (!accountAddress) throw new Error('A wallet account address is required');
+
           const tx: xrpl.DelegateSet = {
                TransactionType: 'DelegateSet',
-               Account: wallet.address,
-               Authorize: delegate.ticketCountField,
-               Permissions: [],
+               Account: accountAddress,
+               Authorize: delegate.destination,
+               Permissions: selectedPermissions,
           };
           return tx;
      }

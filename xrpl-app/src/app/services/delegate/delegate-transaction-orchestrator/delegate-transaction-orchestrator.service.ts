@@ -1,9 +1,10 @@
 import { inject, Injectable } from '@angular/core';
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../wallets/manager/wallet-manager.service';
-import { DelegateTxConfig, DelegateTxType } from '../../../components/delegate/constants/delegate.types';
+
 import { DELEGATE_TX_TYPES, DELEGATE_VALIDATION_RULES } from '../../../components/delegate/constants/delegate.constants';
+import { DelegateTxConfig, DelegateTxType } from '../../../components/delegate/constants/delegate.types';
 import { PerformanceBaseComponent } from '../../../components/shared/performance-base/performance-base.component';
+import { AppConstants } from '../../../core/app.constants';
 import { TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
 import { TransactionOptionalFieldsService } from '../../transaction-optional-fields/transaction-optional-fields.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
@@ -11,18 +12,19 @@ import { SufficentAccountBalanceService } from '../../utils/sufficent-account-ba
 import { ToastService } from '../../utils/toast/toast.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { ValidationService } from '../../utils/validation/transaction-validation-rule.service';
+import { Wallet } from '../../wallets/manager/wallet-manager.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
+import { DelegateState } from '../delegate-store/delegate-store.service';
 import { DelegateTransactionBuilderService } from '../delegate-transaction-builder/delegate-transaction-builder.service';
-import { AppConstants } from '../../../core/app.constants';
 
-type DelegateMeta = {
+interface DelegateMeta {
      validationRule: string;
-     buildValidationInputs: (args: { wallet: Wallet; env: any; delegate: any; account: any; txOptions: any }) => any;
-     buildTx: (args: { orchestrator: DelegateTransactionOrchestratorService; env: any; wallet: any; delegate: any; account: any; txOptions: any }) => xrpl.Transaction;
-     simulationToastMessage: (args: { orchestrator: DelegateTransactionOrchestratorService; delegate: any }) => string;
-     successMessage: (args: { orchestrator: DelegateTransactionOrchestratorService; delegate: any }) => string;
-};
+     buildValidationInputs: (args: { wallet: Wallet; env: any; delegate: DelegateState; account: any; txOptions: any }) => any;
+     buildTx: (args: { orchestrator: DelegateTransactionOrchestratorService; env: any; wallet: any; delegate: DelegateState; account: any; txOptions: any }) => xrpl.Transaction;
+     simulationToastMessage: () => string;
+     successMessage: () => string;
+}
 
 const DELEGATE_META: Record<DelegateTxType, DelegateMeta> = {
      delegateCreate: {
@@ -40,14 +42,28 @@ const DELEGATE_META: Record<DelegateTxType, DelegateMeta> = {
                     address: account.regularKeyAddress,
                     seed: account.regularKeySeed,
                },
+               isTicket: txOptions.isTicket,
+               selectedSingleTicket: txOptions.selectedSingleTicket,
+               isRegularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               multiSign: {
+                    enabled: txOptions.useMultiSign,
+                    seeds: typeof account.multiSignSeeds === 'string' ? account.multiSignSeeds.split(/[\r\n,]+/).map((seed: string) => seed.trim()).filter(Boolean) : [],
+               },
+               multiSignAddresses: account.multiSignAddress,
+               multiSignSeeds: account.multiSignSeeds,
                env,
-               delegateCreate: { amount: txOptions.ticketCountField },
+               delegateCreate: {
+                    destination: delegate.destination,
+                    permissions: delegate.actions.filter(action => delegate.selected.has(action.id)).map(action => action.key),
+               },
           }),
-          buildTx: ({ orchestrator, env, wallet, delegate, account, txOptions }) => orchestrator.delegateTransactionBuilderService.buildDelegateTx(env.wallet || wallet, env, delegate, account, txOptions),
-          simulationToastMessage: ({ orchestrator, delegate }) => `Simulated Setting Delegation`,
-          successMessage: ({ orchestrator, delegate }) => {
-               return `Successfully Set Delegation`;
-          },
+          buildTx: ({ orchestrator, env, wallet, delegate }) => orchestrator.delegateTransactionBuilderService.buildDelegateTx(env.wallet || wallet, delegate, 'delegateCreate'),
+          simulationToastMessage: () => 'Simulated Setting Delegation',
+          successMessage: () => 'Successfully Set Delegation',
      },
      delegateClear: {
           validationRule: DELEGATE_VALIDATION_RULES[DELEGATE_TX_TYPES.CLEAR],
@@ -64,12 +80,25 @@ const DELEGATE_META: Record<DelegateTxType, DelegateMeta> = {
                     address: account.regularKeyAddress,
                     seed: account.regularKeySeed,
                },
+               isTicket: txOptions.isTicket,
+               selectedSingleTicket: txOptions.selectedSingleTicket,
+               isRegularKey: {
+                    isRegularKey: txOptions.isRegularKeyAddress,
+                    address: account.regularKeyAddress,
+                    seed: account.regularKeySeed,
+               },
+               multiSign: {
+                    enabled: txOptions.useMultiSign,
+                    seeds: typeof account.multiSignSeeds === 'string' ? account.multiSignSeeds.split(/[\r\n,]+/).map((seed: string) => seed.trim()).filter(Boolean) : [],
+               },
+               multiSignAddresses: account.multiSignAddress,
+               multiSignSeeds: account.multiSignSeeds,
                env,
-               delegateClear: { ticketId: delegate.ticketId },
+               delegateClear: { destination: delegate.destination },
           }),
-          buildTx: ({ orchestrator, env, wallet, delegate, account, txOptions }) => orchestrator.delegateTransactionBuilderService.buildDelegateTx(env.wallet || wallet, env, delegate, account, txOptions),
-          simulationToastMessage: ({ delegate }) => `Simulated Clearing Delegation`,
-          successMessage: ({ delegate }) => `Successfully Cleared Delegation`,
+          buildTx: ({ orchestrator, env, wallet, delegate }) => orchestrator.delegateTransactionBuilderService.buildDelegateTx(env.wallet || wallet, delegate, 'delegateClear'),
+          simulationToastMessage: () => 'Simulated Clearing Delegation',
+          successMessage: () => 'Successfully Cleared Delegation',
      },
 };
 
@@ -114,7 +143,7 @@ export class DelegateTransactionOrchestratorService extends PerformanceBaseCompo
                // Validation
                const meta = DELEGATE_META[type];
                const validationInputs = meta.buildValidationInputs({ wallet, env, delegate, account, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo, accountObjects: env.accountObjects });
                if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
                // Build transaction
@@ -164,7 +193,7 @@ export class DelegateTransactionOrchestratorService extends PerformanceBaseCompo
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = meta.successMessage({ orchestrator: this, delegate });
+               const message = meta.successMessage();
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
                return { success: true, hash: txHash };
@@ -178,7 +207,7 @@ export class DelegateTransactionOrchestratorService extends PerformanceBaseCompo
      }
 
      handleSimulationSuccess(type: DelegateTxType, delegate: any, currency: any, hash?: string) {
-          const msg = DELEGATE_META[type].simulationToastMessage({ orchestrator: this, delegate });
+          const msg = DELEGATE_META[type].simulationToastMessage();
 
           this.txUiService.resetCurrentStepToIdle();
           this.toastService.success(msg, AppConstants.TOAST.SUCCESS, false, hash, this.txUiService.explorerUrl() + 'tx/');

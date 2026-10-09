@@ -33,6 +33,7 @@ export class DelegateTransactionViewModelService {
 
           return {
                address: wallet?.address,
+               walletName: name,
                message,
                mode: this.activeTab(),
                delegationCount,

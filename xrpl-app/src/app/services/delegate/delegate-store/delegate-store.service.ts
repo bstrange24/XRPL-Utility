@@ -1,9 +1,10 @@
-import { signalStore, withState, withMethods, patchState } from '@ngrx/signals';
+import { patchState,signalStore, withMethods, withState } from '@ngrx/signals';
+
 import { DelegateAction, XRPLDelegate } from '../../../components/delegate/constants/delegate.types';
 import { AppConstants } from '../../../core/app.constants';
 
 export interface DelegateState {
-     actions: any[];
+     actions: DelegateAction[];
      selected: Set<number>;
      delegateSelections: Record<string, Set<number>>;
      leftActions: DelegateAction[];
@@ -15,7 +16,7 @@ export interface DelegateState {
      isCollapsed: boolean;
 }
 
-const initialState: DelegateState = {
+const createInitialState = (): DelegateState => ({
      actions: AppConstants.DELEGATE_ACTIONS,
      selected: new Set<number>(),
      delegateSelections: {},
@@ -26,12 +27,12 @@ const initialState: DelegateState = {
      destination: '',
      outstandingChecksCollapsed: false,
      isCollapsed: false,
-};
+});
 
 export const DelegateStoreService = signalStore(
      { providedIn: 'root' },
 
-     withState(initialState),
+     withState(createInitialState),
 
      withMethods(store => ({
           /** Generic setter */
@@ -48,7 +49,7 @@ export const DelegateStoreService = signalStore(
 
           /** Reset entire store */
           resetAll() {
-               patchState(store, structuredClone(initialState));
+               patchState(store, createInitialState());
           },
 
           /** Reset dropdown-related fields */

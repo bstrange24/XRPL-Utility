@@ -1,10 +1,21 @@
-@if (infoData()) {
-<div class="info-and-credentials-card">
-     <div class="summary-header">
-          <div class="summary-text">
-               <ng-icon name="heroInformationCircle" size="20" class="text-blue-600 info-icon"></ng-icon>
-               <div class="info-text" [innerHTML]="message"></div>
+@if (info(); as data) {
+<app-summary-container [walletName]="data.walletName" [summaryText]="summaryText()" [itemCount]="totalCount()" buttonLabel="delegations" [emptyStateMessage]="emptyStateMessage()" [emptyStateSubMessage]="emptyStateSubMessage()">
+     <div items-list class="flex flex-col h-full">
+          <div class="flex-1 overflow-auto custom-scrollbar p-1">
+               @for (delegation of delegations(); track delegation.index) {
+               <app-summary-item [selected]="viewModel.delegateStore.destination() === delegation.Authorize" [copyValue]="delegation.Authorize || ''" copyTooltip="Copy delegate address" (onCopyClick)="copyUtilService.copyAndToast($event, 'Delegate address')">
+                    <div item-content>
+                         <div class="font-mono text-sm break-all">{{ delegation.Authorize }}</div>
+                         <div class="text-xs text-gray-500 mt-1">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</div>
+                         <div class="flex flex-wrap gap-1 mt-2">
+                              @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) {
+                              <span class="text-xs bg-gray-100 text-gray-700 rounded-full px-2 py-0.5">{{ permission.Permission.PermissionValue }}</span>
+                              }
+                         </div>
+                    </div>
+               </app-summary-item>
+               }
           </div>
      </div>
-</div>
+</app-summary-container>
 }

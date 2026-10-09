@@ -1,0 +1,82 @@
+.delegation-list {
+     display: grid;
+     gap: 0.75rem;
+     margin-top: 1rem;
+}
+
+.delegation-card {
+     display: flex;
+     align-items: flex-start;
+     gap: 0.75rem;
+     padding: 1rem;
+     border: 1px solid var(--border-color);
+     border-radius: 1rem;
+     background: var(--card-bg, #fff);
+     cursor: pointer;
+     transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+.delegation-card:hover {
+     border-color: #fca5a5;
+     box-shadow: 0 3px 10px rgb(15 23 42 / 6%);
+}
+
+.delegation-card-selected {
+     border-color: #ef4444;
+     background: rgb(254 242 242 / 75%);
+}
+
+.delegation-card input {
+     flex-shrink: 0;
+     width: 1rem;
+     height: 1rem;
+     margin-top: 0.2rem;
+     accent-color: #dc2626;
+}
+
+.delegation-card-copy {
+     display: grid;
+     gap: 0.5rem;
+     min-width: 0;
+}
+
+.delegation-address {
+     color: var(--text-primary);
+     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+     font-size: 0.9rem;
+     overflow-wrap: anywhere;
+}
+
+.delegation-permissions {
+     color: var(--text-secondary);
+     font-size: 0.8rem;
+}
+
+.delegation-values {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 0.35rem;
+}
+
+.permission-chip {
+     border: 1px solid var(--border-color);
+     border-radius: 9999px;
+     padding: 0.2rem 0.55rem;
+     color: var(--text-secondary);
+     font-size: 0.75rem;
+}
+
+.empty-delegations {
+     display: grid;
+     gap: 0.35rem;
+     border: 1px dashed var(--border-color);
+     border-radius: 1rem;
+     margin-top: 1rem;
+     padding: 1.5rem;
+     color: var(--text-secondary);
+     text-align: center;
+}
+
+.empty-delegations strong {
+     color: var(--text-primary);
+}

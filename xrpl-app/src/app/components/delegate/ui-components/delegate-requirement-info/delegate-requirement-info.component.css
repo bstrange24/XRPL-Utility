@@ -1,0 +1,82 @@
+.delegate-help {
+     margin-bottom: 1rem;
+}
+
+.delegate-help-summary {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 1rem;
+     cursor: pointer;
+     list-style: none;
+}
+
+.delegate-help-summary::-webkit-details-marker {
+     display: none;
+}
+
+.delegate-help-title {
+     display: inline-flex;
+     align-items: center;
+     gap: 0.6rem;
+     color: var(--text-primary);
+     font-weight: 600;
+}
+
+.delegate-help-toggle {
+     color: var(--text-secondary);
+     font-size: 0.8rem;
+}
+
+.delegate-help-toggle::after {
+     content: 'Show details';
+}
+
+.delegate-help[open] .delegate-help-toggle::after {
+     content: 'Hide details';
+}
+
+.delegate-help-content {
+     margin-top: 1rem;
+     padding-top: 1rem;
+     border-top: 1px solid var(--border-color);
+     color: var(--text-secondary);
+     font-size: 0.875rem;
+     line-height: 1.55;
+}
+
+.delegate-help-content > p {
+     margin-bottom: 0.75rem;
+}
+
+.delegate-help-grid {
+     display: grid;
+     grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+     gap: 1.5rem;
+}
+
+.delegate-help-grid h4 {
+     margin-bottom: 0.4rem;
+     color: var(--text-primary);
+     font-weight: 600;
+}
+
+.delegate-help-grid ul {
+     display: grid;
+     gap: 0.35rem;
+     margin: 0;
+     padding-left: 1.2rem;
+}
+
+.delegate-help-warning {
+     margin-top: 1rem;
+     border-left: 3px solid #f59e0b;
+     padding-left: 0.75rem;
+     color: #92400e;
+}
+
+@media (max-width: 640px) {
+     .delegate-help-summary {
+          align-items: flex-start;
+     }
+}

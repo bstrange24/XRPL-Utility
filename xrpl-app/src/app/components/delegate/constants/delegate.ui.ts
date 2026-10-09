@@ -56,7 +56,7 @@ export const DELEGATE_TAB_META: Record<
           icon: 'heroTrash',
           colorClass: 'red-button-submenu',
           title: 'Clear Delegate Actions',
-          desc: 'Clear delegate actions sent from another XRPL address.',
+          desc: 'Remove an active delegation granted by the selected account.',
           color: '',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,

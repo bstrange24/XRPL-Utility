@@ -1,1 +1,56 @@
-<p>delegate-create works!</p>
+<div class="space-y-6">
+     <section class="card-base">
+          <h3 class="section-heading">
+               <span class="section-heading-icon-green" aria-hidden="true">+</span>
+               Grant permissions
+          </h3>
+          <div class="delegate-field">
+               <label class="label-primary" for="delegate-authorize">Delegate account <span class="text-red-500">*</span></label>
+               <p class="text-secondary">Choose the XRPL account that may perform the selected actions.</p>
+               <app-select-search-dropdown
+                    id="delegate-authorize"
+                    [items]="destinationItems()"
+                    app-focus-border
+                    [validateXrpAddress]="true"
+                    [showClearButton]="true"
+                    [clearOnEscape]="true"
+                    [validateOn]="'blur'"
+                    [closeWhenInvalid]="true"
+                    [value]="selectedDestinationItem()"
+                    [searchQueryInput]="destinationSearchQuery()"
+                    (searchQueryChange)="searchQueryChange.emit($event)"
+                    (valueChange)="destinationChange.emit($event?.id || '')"
+                    placeholder="Search or enter an account address..."
+                    emptyMessage="No accounts found"
+               />
+          </div>
+     </section>
+
+     <section class="card-base">
+          <div class="delegate-permissions-heading">
+               <div>
+                    <h3 class="section-heading">Permissions <span class="text-red-500">*</span></h3>
+                    <p class="text-secondary">Select up to 10 actions to grant. The delegate cannot perform other actions for this account.</p>
+               </div>
+               <span class="permission-count">{{ selectedActions().size }} / 10 selected</span>
+          </div>
+
+          <div class="permission-grid">
+               @for (action of actions(); track action.id) {
+               <label class="permission-card" [class.permission-card-selected]="selectedActions().has(action.id)">
+                    <input
+                         type="checkbox"
+                         [checked]="selectedActions().has(action.id)"
+                         [disabled]="!selectedActions().has(action.id) && selectedActions().size >= 10"
+                         (change)="actionToggle.emit(action.id)"
+                    />
+                    <span class="permission-card-copy">
+                         <span class="permission-name">{{ action.key }}</span>
+                         <span class="permission-type">{{ action.txType }}</span>
+                         <span class="permission-description">{{ action.description }}</span>
+                    </span>
+               </label>
+               }
+          </div>
+     </section>
+</div>

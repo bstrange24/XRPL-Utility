@@ -38,6 +38,9 @@ describe('DelegateTransactionOrchestratorService', () => {
      // Mock Delegate State
      const baseDelegate: any = {
           ticketId: 'ticket123',
+          actions: [{ id: 65537, key: 'TrustlineAuthorize', txType: 'Trustline Authorize', description: '' }],
+          selected: new Set<number>([65537]),
+          destination: 'rDelegateAddress1234567890',
      };
 
      // Mock Delegate transaction

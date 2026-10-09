@@ -1,18 +1,19 @@
 import { inject, Injectable } from '@angular/core';
-import { XrplService } from '../../xrpl-services/xrpl.service';
-import { UtilsService } from '../util-service/utils.service';
 import * as xrpl from 'xrpl';
-import didSchema from '../../../components/did/did-schema.json';
-import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { percentToTransferRate } from 'xrpl';
-import { XrplDateService } from '../../../core/xrpl-date.service';
-import { AppConstants } from '../../../core/app.constants';
-import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
+
+import didSchema from '../../../components/did/did-schema.json';
 import { PaymentChannelObject } from '../../../components/payment-channel/constants/payment-channel.types';
-import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
-import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
+import { AppConstants } from '../../../core/app.constants';
+import { XrplDateService } from '../../../core/xrpl-date.service';
+import { AccountConfiguratorStoreService } from '../../account-configurator/account-configurator-store/account-configurator-store.service';
 import { DidUtilService } from '../../did/did-util/did-util.service';
+import { EscrowStoreService } from '../../escrow/escrow-store/escrow-store.service';
+import { PaymentChannelUtilService } from '../../payment-channel/payment-channel-util/payment-channel-util.service';
+import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 import { XrplWrapperService } from '../../xrpl-wrapper/xrpl-wrapper.service';
+import { UtilsService } from '../util-service/utils.service';
 
 export interface ValidationContext {
      inputs: Record<string, any>;
@@ -223,7 +224,7 @@ export class ValidationService {
           return this.numeric(field, { min, allowEmpty: true });
      }
 
-     private isValidNumber(value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty: boolean = false): ValidatorFn {
+     private isValidNumber(value: string | undefined, fieldName: string, minValue?: number, maxValue?: number, allowEmpty = false): ValidatorFn {
           return async ctx => {
                if (value === undefined || (allowEmpty && value === '')) return null; // Skip if undefined or empty (when allowed)
                const num = Number.parseFloat(value);
@@ -502,7 +503,7 @@ export class ValidationService {
 
      private validateDate(action: any, field: string): ValidatorFn {
           return ctx => {
-               let value = ctx.inputs[action]?.[field];
+               const value = ctx.inputs[action]?.[field];
 
                // If field is empty, let requiredFields handle it
                if (value === '') return null;
@@ -820,6 +821,49 @@ export class ValidationService {
                               return 'Account info not loaded';
                          }
                          return null;
+                    },
+               ],
+          });
+
+          this.registerRule({
+               transactionType: 'DelegateCreate',
+               requiredFields: ['delegateCreate.destination'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+                    this.isValidAddress('delegateCreate.destination'),
+                    ctx => {
+                         const permissions = ctx.inputs['delegateCreate']?.permissions;
+                         if (!Array.isArray(permissions) || permissions.length === 0) return 'Select at least one permission';
+                         if (permissions.length > 10) return 'A maximum of 10 permissions can be granted';
+                         return permissions.some((permission: unknown) => typeof permission !== 'string' || !permission.trim())
+                              ? 'Each permission must be a non-empty value'
+                              : null;
+                    },
+               ],
+          });
+
+          this.registerRule({
+               transactionType: 'DelegateClear',
+               requiredFields: ['delegateClear.destination'],
+               validators: [
+                    this.walletCredentialRequired(),
+                    ctx => (ctx.accountInfo ? null : 'Account info not loaded'),
+                    this.masterKeyDisabledRequiresAltSigning(),
+                    this.ticketValidation(),
+                    ...this.regularKeySigningValidation(),
+                    this.multiSign(),
+                    this.isValidAddress('delegateClear.destination'),
+                    ctx => {
+                         const destination = ctx.inputs['delegateClear']?.destination;
+                         const objects = ctx.accountObjects?.result?.account_objects ?? [];
+                         return objects.some((object: { LedgerEntryType?: string; Authorize?: string }) => object.LedgerEntryType === 'Delegate' && object.Authorize === destination)
+                              ? null
+                              : 'No active delegation exists for the selected account';
                     },
                ],
           });
@@ -1432,7 +1476,7 @@ export class ValidationService {
                               return `Payment channel ${ctx.inputs['paymentChannelClose']['channelIDField']} not found`;
                          }
 
-                         let isOwnerCancelling = ctx.inputs['wallet']['address'] === channel.Account;
+                         const isOwnerCancelling = ctx.inputs['wallet']['address'] === channel.Account;
 
                          if (channel.Expiration && channel.Expiration > ctx.inputs['env']['ledgerInfo']['currentRippleTime']) {
                               return 'Cannot close channel before expiration';

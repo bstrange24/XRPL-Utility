@@ -1,6 +1,7 @@
 import * as xrpl from 'xrpl';
-import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
+
 import { DelegateState } from '../../../services/delegate/delegate-store/delegate-store.service';
+import { Wallet } from '../../../services/wallets/manager/wallet-manager.service';
 import { AccountConfiguratorState } from '../../account-configurator/constants/account-configurator.types';
 import { XrplTxOptionsState } from '../../shared/stores/xrpl-tx-options.store';
 
@@ -29,7 +30,7 @@ export interface XRPLDelegate {
 export interface DelegateAction {
      id: number;
      key: string;
-     txType: DelegateTxType;
+     txType: string;
      description: string;
 }
 
