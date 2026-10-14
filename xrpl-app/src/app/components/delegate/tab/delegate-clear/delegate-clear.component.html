@@ -1,6 +1,6 @@
 <section class="card-base">
      <h3 class="section-heading">
-          <span class="section-heading-icon-red" aria-hidden="true">−</span>
+          <lucide-icon name="minus" class="section-heading-icon-red"></lucide-icon>
           Remove a delegate
      </h3>
      <p class="text-secondary">Select a delegate, then tick the permissions to remove. Leave none ticked to remove the delegate entirely and release its owner reserve.</p>
@@ -8,7 +8,7 @@
      @if (delegations().length) {
      <div class="delegation-list">
           @for (delegation of delegations(); track delegation.index) {
-          <div class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() &&           selectedDestination() === delegation.Authorize" (click)="destinationChange.emit(delegation.Authorize || '')">
+          <div class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() && selectedDestination() === delegation.Authorize" (click)="destinationChange.emit(delegation.Authorize || '')">
                <input type="radio" name="delegate-to-clear" [value]="delegation.Authorize" [checked]="!!selectedDestination() && selectedDestination() === delegation.Authorize" (change)="destinationChange.emit(delegation.Authorize || '')" />
                <span class="delegation-card-copy">
                     <span class="delegation-address">{{ delegation.Authorize }}</span>

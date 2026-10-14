@@ -90,6 +90,7 @@ import {
      LucideFlaskRound,
      LucideActivity,
      Coins,
+     Minus,
 } from 'lucide-angular';
 import {
      heroArrowDownCircle,
@@ -186,6 +187,7 @@ bootstrapApplication(AppComponent, {
                     Wallet,
                     Send,
                     Coins,
+                    Minus,
                     ShieldCheck,
                     Flag,
                     Copy,

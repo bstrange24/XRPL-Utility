@@ -4,11 +4,12 @@ import { Component, input, output } from '@angular/core';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { DelegateAction } from '../../constants/delegate.types';
+import { LucideAngularModule } from 'lucide-angular';
 
 @Component({
      selector: 'app-delegate-create',
      standalone: true,
-     imports: [CommonModule, FocusBorderDirective, SelectSearchDropdownComponent],
+     imports: [CommonModule, FocusBorderDirective, SelectSearchDropdownComponent, LucideAngularModule],
      templateUrl: './delegate-create.component.html',
      styleUrl: './delegate-create.component.css',
 })

@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, input, output } from '@angular/core';
+import { LucideAngularModule } from 'lucide-angular';
 
 import { DelegateAction, XRPLDelegate } from '../../constants/delegate.types';
 
 @Component({
      selector: 'app-delegate-clear',
      standalone: true,
-     imports: [CommonModule],
+     imports: [CommonModule, LucideAngularModule],
      templateUrl: './delegate-clear.component.html',
      styleUrl: './delegate-clear.component.css',
 })

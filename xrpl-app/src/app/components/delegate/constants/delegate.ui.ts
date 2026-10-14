@@ -17,7 +17,7 @@ export const DELEGATE_TABS: {
           label: 'Delegate Actions',
           icon: 'heroArrowUturnLeft',
           iconType: 'ng-icon',
-          color: '',
+          color: 'blue',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -25,7 +25,7 @@ export const DELEGATE_TABS: {
           label: 'Clear Delegate Actions',
           icon: 'heroTrash',
           iconType: 'ng-icon',
-          color: '',
+          color: 'red',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
 ] as const;
@@ -57,7 +57,7 @@ export const DELEGATE_TAB_META: Record<
           colorClass: 'red-button-submenu',
           title: 'Clear Delegate Actions',
           desc: 'Remove an active delegation granted by the selected account.',
-          color: '',
+          color: 'red',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
