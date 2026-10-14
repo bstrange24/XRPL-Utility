@@ -22,6 +22,13 @@ export class DelegateSummaryComponent {
      readonly delegations = computed<XRPLDelegate[]>(() => this.info()?.existingDelegations ?? []);
      readonly totalCount = computed(() => this.info()?.delegationCount ?? 0);
 
+     onDelegationClick(delegation: XRPLDelegate): void {
+          if (this.tab() !== 'delegateClear') return;
+          const store = this.viewModel.delegateStore;
+          store.setField('destination', delegation.Authorize || '');
+          store.setField('selected', new Set<number>());
+     }
+
      readonly summaryText = computed(() => {
           const count = this.totalCount();
           if (count === 0) return 'has no active delegations.';

@@ -3,7 +3,7 @@
      <div items-list class="flex flex-col h-full">
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (delegation of delegations(); track delegation.index) {
-               <app-summary-item [selected]="viewModel.delegateStore.destination() === delegation.Authorize" [copyValue]="delegation.Authorize || ''" copyTooltip="Copy delegate address" (onCopyClick)="copyUtilService.copyAndToast($event, 'Delegate address')">
+               <app-summary-item [selected]="viewModel.delegateStore.destination() === delegation.Authorize" [copyValue]="delegation.Authorize || ''" (onClick)="onDelegationClick(delegation)" copyTooltip="Copy delegate address" (onCopyClick)="copyUtilService.copyAndToast($event, 'Delegate address')">
                     <div item-content>
                          <div class="font-mono text-sm break-all">{{ delegation.Authorize }}</div>
                          <div class="text-xs text-gray-500 mt-1">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</div>

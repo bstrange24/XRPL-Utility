@@ -8,28 +8,20 @@
      @if (delegations().length) {
      <div class="delegation-list">
           @for (delegation of delegations(); track delegation.index) {
-          <div class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() && selectedDestination() === delegation.Authorize">
-               <input
-                    type="radio"
-                    name="delegate-to-clear"
-                    [value]="delegation.Authorize"
-                    [checked]="!!selectedDestination() && selectedDestination() === delegation.Authorize"
-                    (change)="destinationChange.emit(delegation.Authorize || '')"
-               />
+          <div class="delegation-card" [class.delegation-card-selected]="!!selectedDestination() &&           selectedDestination() === delegation.Authorize" (click)="destinationChange.emit(delegation.Authorize || '')">
+               <input type="radio" name="delegate-to-clear" [value]="delegation.Authorize" [checked]="!!selectedDestination() && selectedDestination() === delegation.Authorize" (change)="destinationChange.emit(delegation.Authorize || '')" />
                <span class="delegation-card-copy">
-                    <span class="delegation-address cursor-pointer" (click)="destinationChange.emit(delegation.Authorize || '')">{{ delegation.Authorize }}</span>
+                    <span class="delegation-address">{{ delegation.Authorize }}</span>
                     <span class="delegation-permissions">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</span>
                     <span class="delegation-values">
-                         @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) {
-                         @if (selectedDestination() === delegation.Authorize && actionIdFor(permission.Permission.PermissionValue) !== null) {
-                         <label class="permission-chip">
+                         @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) { @if (selectedDestination() === delegation.Authorize && actionIdFor(permission.Permission.PermissionValue) !== null) {
+                         <label class="permission-chip" (click)="$event.stopPropagation()">
                               <input type="checkbox" [checked]="isPermissionSelected(permission.Permission.PermissionValue)" (change)="actionToggle.emit(actionIdFor(permission.Permission.PermissionValue)!)" />
                               {{ permission.Permission.PermissionValue }}
                          </label>
                          } @else {
                          <span class="permission-chip">{{ permission.Permission.PermissionValue }}</span>
-                         }
-                         }
+                         } }
                     </span>
                </span>
           </div>

@@ -10,62 +10,21 @@
 
      <form #theForm="ngForm">
           @if (tab === 'delegateCreate') {
-          <app-delegate-create
-               [destinationItems]="destinationItems()"
-               [selectedDestinationItem]="selectedDestinationItem()"
-               [destinationSearchQuery]="destinationSearchQuery()"
-               (searchQueryChange)="destinationSearchQuery.set($event)"
-               [actions]="delegateStore.actions()"
-               [selectedActions]="delegateStore.selected()"
-               (destinationChange)="setDelegateDestination($event)"
-               (actionToggle)="toggleSelection($event)"
-          />
+          <app-delegate-requirement-info class="block mt-4" />
+          <app-delegate-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" [actions]="delegateStore.actions()" [selectedActions]="delegateStore.selected()" (destinationChange)="setDelegateDestination($event)" (actionToggle)="toggleSelection($event)" />
           } @else if (tab === 'delegateClear') {
-          <app-delegate-clear
-               [delegations]="delegateStore.existingDelegations()"
-               [selectedDestination]="delegateStore.destination()"
-               [actions]="delegateStore.actions()"
-               [selectedActions]="delegateStore.selected()"
-               (actionToggle)="toggleSelection($event)"
-               (destinationChange)="setDelegateDestination($event)"
-          />
+          <app-delegate-requirement-info class="block mt-4" />
+          <app-delegate-clear [delegations]="delegateStore.existingDelegations()" [selectedDestination]="delegateStore.destination()" [actions]="delegateStore.actions()" [selectedActions]="delegateStore.selected()" (actionToggle)="toggleSelection($event)" (destinationChange)="setDelegateDestination($event)" />
           }
 
-          <app-delegate-requirement-info class="block mt-4" />
-
-          <app-transaction-options
-               [showWhenTab]="['delegateCreate', 'delegateClear']"
-               [activeTab]="delegateTransactionViewModelService.activeTab"
-               [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()"
-               [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"
-          />
+          <app-transaction-options [showWhenTab]="['delegateCreate', 'delegateClear']" [activeTab]="delegateTransactionViewModelService.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
 
           <div class="main-button-section">
                <app-button-tooltip [tooltipText]="getButtonTooltip()">
                     @if (tab === 'delegateCreate') {
-                    <button
-                         type="button"
-                         class="btn-primary"
-                         [class.opacity-50]="!canPerformAction()"
-                         [attr.aria-disabled]="!canPerformAction()"
-                         [attr.tabindex]="!canPerformAction() ? 0 : null"
-                         (click)="canPerformAction() ? performAction() : null"
-                         [disabled]="false"
-                    >
-                         Grant Permissions
-                    </button>
+                    <button type="button" class="btn-primary" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Grant Permissions</button>
                     } @else {
-                    <button
-                         type="button"
-                         class="btn-red"
-                         [class.opacity-50]="!canPerformAction()"
-                         [attr.aria-disabled]="!canPerformAction()"
-                         [attr.tabindex]="!canPerformAction() ? 0 : null"
-                         (click)="canPerformAction() ? performAction() : null"
-                         [disabled]="false"
-                    >
-                         Remove Delegate
-                    </button>
+                    <button type="button" class="btn-red" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">Remove Delegate</button>
                     }
                </app-button-tooltip>
 

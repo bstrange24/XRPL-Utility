@@ -1,5 +1,10 @@
 .delegate-field {
-     max-width: 48rem;
+     width: 100%;
+}
+
+.delegate-field app-select-search-dropdown {
+     display: block;
+     width: 100%;
 }
 
 .delegate-permissions-heading {
