@@ -16,6 +16,7 @@ import { XrplDateService } from '../../../core/xrpl-date.service';
 import { AccountConfig, AccountConfigAction } from '../../../components/account-configurator/constants/account-configurator.types';
 import { ACCOUNT_CONFIG_TX_TYPES, ACCOUNT_CONFIG_VALIDATION_RULES } from '../../../components/account-configurator/constants/account-configurator.constants';
 import { AppConstants } from '../../../core/app.constants';
+import { DelegatePermissionService } from '../../delegate/delegate-permission/delegate-permission.service';
 
 type AccountConfigTxMeta = {
      validationRule: string;
@@ -143,6 +144,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
      public readonly accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
+     private readonly delegatePermissionService = inject(DelegatePermissionService);
      public readonly toastService = inject(ToastService);
      public readonly xrplDateService = inject(XrplDateService);
 
@@ -242,13 +244,7 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           if (tx.MessageKey !== undefined) required.push('AccountMessageKeySet');
           if (required.length === 0) return 'Nothing to submit. Enter a Transfer Rate, Tick Size or Domain.';
 
-          const response: any = await client.request({ command: 'account_objects', account: tx.Account, type: 'delegate', ledger_index: 'validated' });
-          const delegation = (response.result.account_objects ?? []).find((obj: any) => obj.Authorize === tx.Delegate);
-          if (!delegation) return `${tx.Account} has not delegated any permissions to ${tx.Delegate}.`;
-
-          const granted = new Set<string>((delegation.Permissions ?? []).map((p: any) => p.Permission.PermissionValue));
-          const missing = required.filter(permission => !granted.has(permission));
-          return missing.length ? `${tx.Delegate} is missing delegated permission(s): ${missing.join(', ')}.` : null;
+          return this.delegatePermissionService.validate(client, tx.Account, tx.Delegate as string, required);
      }
 
      // Parallel Account set path

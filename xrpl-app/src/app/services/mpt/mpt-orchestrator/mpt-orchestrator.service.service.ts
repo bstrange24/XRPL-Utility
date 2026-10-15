@@ -15,6 +15,9 @@ import { MptTransactionBuilderService } from '../mpt-transaction-builder/mpt-tra
 import { MptTxConfig, MptTxType } from '../../../components/mpt/constants/mpt.types';
 import { SufficentAccountBalanceService } from '../../utils/sufficent-account-balance/sufficent-account-balance.service';
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
+import { DelegatePermissionService } from '../../delegate/delegate-permission/delegate-permission.service';
+
+const DELEGABLE_MPT_TX_TYPES: MptTxType[] = ['sendMpt', 'lockMpt', 'unlockMpt'];
 
 type MptMeta = {
      buildTx: (args: { orchestrator: MptOrchestratorServiceService; env: any; wallet: any; mpt: any; account: any; txOptions: any; type: MptTxType }) => xrpl.Transaction;
@@ -97,9 +100,13 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     private readonly delegatePermissionService = inject(DelegatePermissionService);
 
      async executeMptTx(type: MptTxType, config: MptTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
-          const { mpt, account, txOptions, preFetchedEnv, wallet } = config;
+          const { account, txOptions, preFetchedEnv, wallet } = config;
+          // Only send/lock/unlock support delegation; the delegator field is ignored for every other action
+          const isDelegated = DELEGABLE_MPT_TX_TYPES.includes(type) && !!config.mpt.delegatorAddress?.trim();
+          const mpt = { ...config.mpt, delegatorAddress: isDelegated ? config.mpt.delegatorAddress.trim() : '' };
           let env: any;
           let client: xrpl.Client;
           let txHash: string | undefined;
@@ -122,16 +129,23 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                client = env.client;
                if (!env.accountInfo || !env.fee || !env.ledgerInfo?.lastIndex) throw new Error('Required network data missing');
 
+               if (isDelegated) {
+                    const delegationError = await this.prepareDelegation(type, client, (env.wallet || wallet).classicAddress, mpt);
+                    if (delegationError) return { success: false, error: delegationError, validationError: true };
+               }
+
                // Build transaction
                const meta = MPT_META[type];
                const tx = meta.buildTx({ orchestrator: this, env, wallet, mpt, account, txOptions, type });
 
                // Optional fields
-               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.mpt, type, txOptions);
+               await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, mpt, type, txOptions);
 
-               // Balance checks (token vs xrp)
-               let isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               // The delegator pays the fee on delegated transactions, so only check the balance otherwise
+               if (!isDelegated) {
+                    const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               }
 
                //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
@@ -182,6 +196,33 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
+     }
+
+     private async prepareDelegation(type: MptTxType, client: xrpl.Client, delegate: string, mpt: any): Promise<string | null> {
+          const delegator: string = mpt.delegatorAddress;
+          if (!xrpl.isValidAddress(delegator) || delegator === delegate) return 'Delegator must be a valid address different from the selected wallet.';
+
+          const issuanceId: string = mpt.mptIssuanceId;
+          const issuer = this.mptUtilService.getIssuerFromMptId(issuanceId);
+          if (!issuer) return 'MPT Issuance ID is invalid.';
+
+          let required: string[];
+          if (type === 'sendMpt') {
+               if (issuer === delegator) required = ['PaymentMint'];
+               else if (issuer === mpt.destination) required = ['PaymentBurn'];
+               else return 'A delegated MPT payment must mint (delegator is the issuer) or burn (destination is the issuer).';
+
+               // The asset scale is normally cached from the selected wallet's own MPTs, which does not cover the delegator's
+               if (!mpt.assetScale && !mpt.assetScaleCache.has(issuanceId)) {
+                    const entry: any = await client.request({ command: 'ledger_entry', mpt_issuance: issuanceId, ledger_index: 'validated' } as any);
+                    mpt.assetScaleCache.set(issuanceId, entry.result.node?.AssetScale ?? 0);
+               }
+          } else {
+               if (issuer !== delegator) return `${delegator} is not the issuer of this MPT.`;
+               required = [type === 'lockMpt' ? 'MPTokenIssuanceLock' : 'MPTokenIssuanceUnlock'];
+          }
+
+          return this.delegatePermissionService.validate(client, delegator, delegate, required);
      }
 
      handleSimulationSuccess(type: MptTxType, mpt: any, hash?: string) {

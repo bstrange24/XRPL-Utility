@@ -40,6 +40,7 @@ import { TransactionOptionsComponent } from '../shared/transaction-options/trans
 import { MptSummaryComponent } from './ui-components/mpt-summary/mpt-summary.component';
 import { MptAuthorizeUnauthorizeComponent } from './tab/mpt-authorize-unauthorize/mpt-authorize-unauthorize.component';
 import { MptLockUnlockComponent } from './tab/mpt-lock-unlock/mpt-lock-unlock.component';
+import { MptDelegateComponent } from './tab/mpt-delegate/mpt-delegate.component';
 import { MptSendComponent } from './tab/mpt-send/mpt-send.component';
 import { MptClawbackComponent } from './tab/mpt-clawback/mpt-clawback.component';
 import { MptDestroyComponent } from './tab/mpt-destroy/mpt-destroy.component';
@@ -54,7 +55,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, FlagSelectorComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, FlagSelectorComponent, MptDelegateComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -292,14 +293,21 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                return;
           }
 
-          if (currentTab === 'sendMpt') {
+          const isDelegated = !!this.mptStoreService.delegatorAddress()?.trim();
+
+          if (currentTab === 'sendMpt' && !isDelegated) {
                if (!this.mptUtilService.isDestinationAuthorizedForMpt(env.accountObjects.result.account_objects, env.destinationAccountObject.result.account_objects, this.mptStoreService.mptIssuanceId())) {
                     this.toastService.error(`Destination ${destinationAddress} is not authorized to receive this MPT. Please ensure authorization has been completed.`, AppConstants.TOAST.ERROR);
                     return;
                }
           }
 
-          if (currentTab === 'lockMpt' || currentTab === 'unlockMpt') {
+          if ((currentTab === 'lockMpt' || currentTab === 'unlockMpt') && isDelegated && !this.mptStoreService.mptIssuanceId()) {
+               this.toastService.error('Please enter the MPT issuance ID to lock/unlock.', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          if ((currentTab === 'lockMpt' || currentTab === 'unlockMpt') && !isDelegated) {
                const mptIssuanceId = this.mptStoreService.mptIssuanceId();
                if (!mptIssuanceId) {
                     this.toastService.error('Please select an MPT to lock/unlock.', AppConstants.TOAST.ERROR);

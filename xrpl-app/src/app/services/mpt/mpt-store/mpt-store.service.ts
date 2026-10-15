@@ -45,6 +45,7 @@ export interface MptState {
      isUnauthorized: boolean;
      holderAccount: string;
      destination: string;
+     delegatorAddress: string;
      amount: string;
      mptIdSearchQuery: string;
      XLS89_TEMPLATE: string;
@@ -74,6 +75,7 @@ const initialState: MptState = {
      isUnauthorized: false,
      holderAccount: '',
      destination: '',
+     delegatorAddress: '',
      amount: '',
      mptIdSearchQuery: '',
      XLS89_TEMPLATE: `{
@@ -181,6 +183,7 @@ export const MptStoreService = signalStore(
                          holderAccount: '',
                          isMptEnabled: false,
                          destination: '',
+                         delegatorAddress: '',
                          mptIdSearchQuery: '',
                          outstandingMpts: '',
                          outstandingMptsCollapsed: false,

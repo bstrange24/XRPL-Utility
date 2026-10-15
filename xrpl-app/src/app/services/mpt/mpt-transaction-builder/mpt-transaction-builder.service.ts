@@ -79,11 +79,12 @@ export class MptTransactionBuilderService {
      buildMptLockTransaction(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, mpt: any, account?: any, txOptions?: any): xrpl.MPTokenIssuanceSet {
           const tx: xrpl.MPTokenIssuanceSet = {
                TransactionType: 'MPTokenIssuanceSet',
-               Account: wallet.classicAddress,
+               Account: mpt.delegatorAddress || wallet.classicAddress,
                MPTokenIssuanceID: mpt.mptIssuanceId,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
                Fee: env.fee,
           };
+          if (mpt.delegatorAddress) tx.Delegate = wallet.classicAddress;
 
           if (mpt.lockAction === 'unlock') tx.Flags = xrpl.MPTokenIssuanceSetFlags.tfMPTUnlock;
 
@@ -102,7 +103,7 @@ export class MptTransactionBuilderService {
           const baseUnitsAmount = this.convertToBaseUnits(mpt.amount.toString(), assetScale);
           const tx: xrpl.Payment = {
                TransactionType: 'Payment',
-               Account: wallet.classicAddress,
+               Account: mpt.delegatorAddress || wallet.classicAddress,
                Amount: {
                     mpt_issuance_id: mpt.mptIssuanceId,
                     value: baseUnitsAmount,
@@ -111,6 +112,7 @@ export class MptTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
                Fee: env.fee,
           };
+          if (mpt.delegatorAddress) tx.Delegate = wallet.classicAddress;
 
           return tx;
      }

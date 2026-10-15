@@ -45,6 +45,8 @@
                               (canAuthorizeChange)="onCanAuthorizeMptChange($event)"
                          >
                          </app-mpt-authorize-unauthorize>
+                         } @if (tab === 'lockMpt' || tab === 'unlockMpt' || tab === 'sendMpt') {
+                         <app-mpt-delegate></app-mpt-delegate>
                          } @if (tab === 'lockMpt' || tab === 'unlockMpt') {
                          <app-mpt-lock-unlock
                               [destinationItems]="destinationItems()"

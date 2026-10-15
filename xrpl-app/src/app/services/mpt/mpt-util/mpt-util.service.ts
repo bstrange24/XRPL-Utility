@@ -337,6 +337,12 @@ export class MptUtilService extends PerformanceBaseComponent {
           return isAuth;
      }
 
+     getIssuerFromMptId(id: string): string | null {
+          if (!/^[0-9A-Fa-f]{48}$/.test(id)) return null;
+          const bytes = id.slice(8).match(/../g)!.map(h => parseInt(h, 16));
+          return xrpl.encodeAccountID(bytes as any);
+     }
+
      issuanceRequiresAuth(flags: number): boolean {
           return (flags & this.flagValues.isRequireAuth) !== 0;
      }
