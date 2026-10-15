@@ -25,7 +25,9 @@
                     <!-- Main Form Area (Left) -->
                     <div class="min-w-0 flex-1">
                          <!-- Currency Flow Section -->
-                         @if (isCurrencyFlow()) {
+                         @if (tab === 'setTrustline') {
+                         <app-trustline-delegate></app-trustline-delegate>
+                         } @if (isCurrencyFlow() && !isDelegating()) {
                          <div class="card-base">
                               <app-currency-form-section
                                    #currencyFormRef
@@ -92,7 +94,7 @@
                     </div>
 
                     <!-- Right Sidebar: Flags -->
-                    @if (tab === 'setTrustline' || tab === 'removeTrustline') {
+                    @if ((tab === 'setTrustline' && !isDelegating()) || tab === 'removeTrustline') {
                     <div class="w-full flex-shrink-0 lg:w-80">
                          <app-trustline-flags />
                     </div>

@@ -14,7 +14,9 @@ import { TrustlineTransactionBuilderService } from '../trustline-transaction-bui
 import { CredentialUtilService } from '../../credentials/credential-util/credential-util.service';
 import { XrplDateService } from '../../../core/xrpl-date.service';
 import { TRUSTLINE_TX_TYPES, TRUSTLINE_VALIDATION_RULES, TrustlineTxType } from '../../../components/trustlines/constants/trustline.constants';
-import { TrustlineTxConfig } from '../../../components/trustlines/constants/trustline.types';
+import { TrustlineState, TrustlineTxConfig } from '../../../components/trustlines/constants/trustline.types';
+import { DelegatePermissionService } from '../../delegate/delegate-permission/delegate-permission.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 import { AppConstants } from '../../../core/app.constants';
 
 type TrustlineTxMeta = {
@@ -162,6 +164,8 @@ export class TrustlineTransactionOrchestratorService extends PerformanceBaseComp
      public readonly toastService = inject(ToastService);
      public readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      public readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
+     private readonly delegatePermissionService = inject(DelegatePermissionService);
+     private readonly utilsService = inject(UtilsService);
 
      async executeTrustlineTx(type: TrustlineTxType, config: TrustlineTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; tx?: xrpl.Transaction; finalResult?: any }> {
           const { trustline, currency, account, txOptions, preFetchedEnv, wallet } = config;
@@ -190,20 +194,28 @@ export class TrustlineTransactionOrchestratorService extends PerformanceBaseComp
 
                // Validation
                const meta = TRUSTLINE_META[type];
+               const isDelegated = type === 'setTrustline' && !!trustline?.delegatorAddress?.trim();
 
-               const validationInputs = meta.buildValidationInputs({ wallet, env, trustline, currency, account, txOptions });
-               const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
-               if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
+               let tx: xrpl.Transaction;
+               if (isDelegated) {
+                    const delegated = await this.prepareDelegatedTrustSet(client, env, wallet, trustline!);
+                    if ('error' in delegated) return { success: false, error: delegated.error, validationError: true };
+                    tx = delegated.tx;
+               } else {
+                    const validationInputs = meta.buildValidationInputs({ wallet, env, trustline, currency, account, txOptions });
+                    const errors = await this.validator.validate(meta.validationRule, { inputs: validationInputs, client, accountInfo: env.accountInfo });
+                    if (errors.length > 0) return { success: false, error: errors.join('\n• '), validationError: true };
 
-               // Build transaction
-               const tx = meta.buildTx({ orchestrator: this, env, wallet, currency, config });
+                    // Build transaction
+                    tx = meta.buildTx({ orchestrator: this, env, wallet, currency, config });
+               }
 
                // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.trustline, type, txOptions);
 
-               // Balance checks (token vs xrp)
+               // Balance checks (token vs xrp); the delegator pays the fee on delegated transactions
                let isInsufficientBalance;
-               if (currency?.currency === 'XRP') {
+               if (currency?.currency === 'XRP' && !isDelegated) {
                     isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, currency.amount?.toString()!);
                } else {
                     // isInsufficientBalance = await this.sufficentAccountBalanceService.checkTokenBalance(env, tx);
@@ -259,6 +271,29 @@ export class TrustlineTransactionOrchestratorService extends PerformanceBaseComp
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
+     }
+
+     private async prepareDelegatedTrustSet(client: xrpl.Client, env: any, wallet: Wallet, trustline: TrustlineState): Promise<{ tx: xrpl.Transaction } | { error: string }> {
+          const signer = (env.wallet || wallet) as xrpl.Wallet;
+          const delegator = trustline.delegatorAddress.trim();
+          const holder = trustline.delegateHolder?.trim();
+          const currencyCode = trustline.delegateCurrency?.trim();
+
+          if (!xrpl.isValidAddress(delegator) || delegator === signer.classicAddress) return { error: 'Delegator must be a valid address different from the selected wallet.' };
+          if (!holder || !xrpl.isValidAddress(holder) || holder === delegator) return { error: 'Enter the valid counterparty (holder) address of the trust line.' };
+          if (!currencyCode) return { error: 'Enter the currency code of the trust line.' };
+
+          const permissionByAction: Record<string, string> = { authorize: 'TrustlineAuthorize', freeze: 'TrustlineFreeze', unfreeze: 'TrustlineUnfreeze' };
+          const permissionError = await this.delegatePermissionService.validate(client, delegator, signer.classicAddress, [permissionByAction[trustline.delegateAction]]);
+          if (permissionError) return { error: permissionError };
+
+          // Delegated TrustSet cannot change the limit, so reuse the delegator's current limit on this line
+          const encodedCurrency = this.utilsService.encodeIfNeeded(currencyCode);
+          const lines: any = await client.request({ command: 'account_lines', account: delegator, peer: holder, ledger_index: 'validated' });
+          const line = (lines.result.lines ?? []).find((l: any) => l.currency === encodedCurrency);
+          if (!line) return { error: `No ${currencyCode} trust line found between ${delegator} and ${holder}.` };
+
+          return { tx: this.trustlineTransactionBuilderService.buildDelegatedTrustSetTx(signer, env, trustline, line.limit) };
      }
 
      handleSimulationSuccess(type: TrustlineTxType, currency: any, hash?: string) {

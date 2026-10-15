@@ -32,6 +32,31 @@ export class TrustlineTransactionBuilderService {
           return tx;
      }
 
+     // Delegated TrustSet: the delegator's side of the line is modified, so the counterparty is the LimitAmount issuer and the existing limit is kept
+     buildDelegatedTrustSetTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, trustline: any, limit: string) {
+          const flagByAction: Record<string, number> = {
+               authorize: xrpl.TrustSetFlags.tfSetfAuth,
+               freeze: xrpl.TrustSetFlags.tfSetFreeze,
+               unfreeze: xrpl.TrustSetFlags.tfClearFreeze,
+          };
+
+          const tx: xrpl.TrustSet = {
+               TransactionType: 'TrustSet',
+               Account: trustline.delegatorAddress.trim(),
+               Delegate: wallet.classicAddress,
+               LimitAmount: {
+                    currency: this.utilsService.encodeIfNeeded(trustline.delegateCurrency.trim()),
+                    issuer: trustline.delegateHolder.trim(),
+                    value: limit,
+               },
+               Flags: flagByAction[trustline.delegateAction],
+               Fee: env.fee,
+               LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
+          };
+
+          return tx;
+     }
+
      buildTrustSetRemoveTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, trustline: any, preparedConfig: any) {
           const trustlineAmount: xrpl.IssuedCurrencyAmount = {
                currency: this.utilsService.encodeIfNeeded(preparedConfig.currency.currency),

@@ -40,6 +40,7 @@ import { CurrencyStoreService } from '../../services/currency/currency-store/cur
 import { TrustlineTransactionOrchestratorService } from '../../services/trustlines/trustline-transaction-orchestrator/trustline-transaction-orchestrator.service';
 import { TrustlineIssuersComponent } from './tab/trustline-issuers/trustline-issuers.component';
 import { TrustlineIssueComponent } from './tab/trustline-issue/trustline-issue.component';
+import { TrustlineDelegateComponent } from './tab/trustline-delegate/trustline-delegate.component';
 import { TrustlineClawbackComponent } from './tab/trustline-clawback/trustline-clawback.component';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
@@ -50,7 +51,7 @@ import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, TrustlineDelegateComponent],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -347,6 +348,14 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
      });
 
+     readonly isDelegating = computed(() => this.trustlineViewModelService.activeTab() === 'setTrustline' && !!this.trustlineStoreService.delegatorAddress()?.trim());
+
+     private readonly isDelegationReady = computed(() => {
+          const delegator = this.trustlineStoreService.delegatorAddress()?.trim();
+          const holder = this.trustlineStoreService.delegateHolder()?.trim();
+          return xrpl.isValidAddress(delegator) && delegator !== this.currentWallet()?.address && !!holder && xrpl.isValidAddress(holder) && holder !== delegator && !!this.trustlineStoreService.delegateCurrency()?.trim();
+     });
+
      public canPerformAction = computed(() => {
           const idle = this.isIdle();
           const ready = this.connectionGuard.isConnectionReady();
@@ -357,6 +366,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
           switch (tab) {
                case 'setTrustline':
+                    if (this.isDelegating()) return this.isDelegationReady();
                     // Can't set if trustline exists OR if trying to set trustline to self
                     // return !this.trustlineStoreService.trustlineAlreadyExist() && !this.trustlineViewModelService.isSelfTrustline();
                     return !this.trustlineViewModelService.shouldShowSelfWarning() && !this.trustlineViewModelService.shouldShowExistsWarning();
@@ -541,7 +551,9 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                return;
           }
 
-          if (currentTab === 'setTrustline') {
+          const isDelegating = this.isDelegating();
+
+          if (currentTab === 'setTrustline' && !isDelegating) {
                const trustLineflags = this.trustlineCurrencyService.flags();
                if (trustLineflags['tfSetNoRipple'] && trustLineflags['tfClearNoRipple']) {
                     this.toastService.error(`Cannot set both tfSetNoRipple and tfClearNoRipple`, AppConstants.TOAST.ERROR);
@@ -562,7 +574,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
 
           // Validate currency form if present (prevents submitting invalid amounts)
-          if (this.currencyForm) {
+          if (this.currencyForm && !isDelegating) {
                const valid = this.currencyForm.validate();
                if (!valid) {
                     this.toastService.error('Please fix validation errors before submitting.', AppConstants.TOAST.ERROR);
@@ -770,5 +782,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.currencyStoreService.setField('amount', null);
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
+          this.trustlineStoreService.setField('delegatorAddress', '');
+          this.trustlineStoreService.setField('delegateHolder', '');
+          this.trustlineStoreService.setField('delegateCurrency', '');
      }
 }

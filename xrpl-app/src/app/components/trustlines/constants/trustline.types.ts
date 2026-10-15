@@ -15,6 +15,8 @@ export interface TrustlineFlagItem {
 export type TrustlineFlagKey = 'tfSetfAuth' | 'tfSetNoRipple' | 'tfClearNoRipple' | 'tfSetFreeze' | 'tfClearFreeze' | 'tfSetDeepFreeze' | 'tfClearDeepFreeze';
 export type TrustlineActionTypes = 'setTrustline' | 'removeTrustline' | 'issueCurrency' | 'clawbackTokens' | 'addNewIssuers';
 
+export type TrustlineDelegateAction = 'authorize' | 'freeze' | 'unfreeze';
+
 export interface TrustlineTxConfig {
      account?: AccountConfiguratorState;
      txOptions?: XrplTxOptionsState;
@@ -46,6 +48,10 @@ export interface TrustlineState {
      trustlineLimitField: number;
      tokenToRemove: string;
      trustlineFlags: number;
+     delegatorAddress: string;
+     delegateHolder: string;
+     delegateCurrency: string;
+     delegateAction: TrustlineDelegateAction;
      missingTrustlineInfo: {
           currencyCode: string;
           issuer: string;

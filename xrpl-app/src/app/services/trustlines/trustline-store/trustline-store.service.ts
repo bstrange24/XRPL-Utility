@@ -15,6 +15,10 @@ const initialState: TrustlineState = {
      trustlineLimitField: 0,
      tokenToRemove: '',
      trustlineFlags: 0,
+     delegatorAddress: '',
+     delegateHolder: '',
+     delegateCurrency: '',
+     delegateAction: 'authorize',
      missingTrustlineInfo: {
           currencyCode: '',
           issuer: '',
@@ -68,6 +72,10 @@ export const TrustlineStoreService = signalStore(
                     trustlineLimitField: 0,
                     tokenToRemove: '',
                     trustlineFlags: 0,
+                    delegatorAddress: '',
+                    delegateHolder: '',
+                    delegateCurrency: '',
+                    delegateAction: 'authorize',
                     missingTrustlineInfo: {
                          currencyCode: '',
                          issuer: '',
