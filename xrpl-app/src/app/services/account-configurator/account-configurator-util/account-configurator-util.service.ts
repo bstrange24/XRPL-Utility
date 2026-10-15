@@ -270,6 +270,9 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
           try {
                // Enable or disable NFT minter
                if (enabled === 'Y' || enabled === 'N') {
+                    if (config.account?.delegatorAddress?.trim()) {
+                         throw new Error('NFT minter cannot be changed through a delegation.');
+                    }
                     config.enableNftMinter = enabled;
                     return await this.accountConfiguratorOrchestratorService.executeModifyAccountTx('modifyMetaData', config);
                }

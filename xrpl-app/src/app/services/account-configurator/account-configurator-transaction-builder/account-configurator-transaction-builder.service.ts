@@ -39,9 +39,12 @@ export class AccountConfiguratorTransactionBuilderService {
      }
 
      buildModifyMetaDataTransaction(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, config: any): xrpl.AccountSet {
+          // When a delegator is set, the selected wallet signs on behalf of that account
+          const delegator: string | undefined = config.account.delegatorAddress?.trim() || undefined;
           const tx: xrpl.AccountSet = {
                TransactionType: 'AccountSet',
-               Account: wallet.classicAddress,
+               Account: delegator ?? wallet.classicAddress,
+               ...(delegator ? { Delegate: wallet.classicAddress } : {}),
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
@@ -51,9 +54,11 @@ export class AccountConfiguratorTransactionBuilderService {
                tx.TickSize = tickSize;
           }
 
-          if (config.account.transferRate == 0) {
+          const transferRate = config.account.transferRate;
+          const hasTransferRate = transferRate !== undefined && transferRate !== null && String(transferRate).trim() !== '';
+          if (hasTransferRate && Number(transferRate) === 0) {
                tx.TransferRate = 0;
-          } else if (config.account.transferRate) {
+          } else if (hasTransferRate) {
                tx.TransferRate = Number(config.account.tickSize);
           }
 

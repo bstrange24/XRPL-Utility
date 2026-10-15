@@ -27,6 +27,7 @@ const initialState: AccountConfiguratorState = {
      tickSize: '',
      transferRate: '',
      domain: '',
+     delegatorAddress: '',
      isMessageKey: false,
      publicKey: '',
      regularKeyAddress: '',

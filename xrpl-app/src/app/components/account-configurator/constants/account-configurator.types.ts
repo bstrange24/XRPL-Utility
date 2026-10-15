@@ -140,6 +140,7 @@ export interface AccountConfiguratorState {
      tickSize: string;
      transferRate: string;
      domain: string;
+     delegatorAddress: string;
      isMessageKey: boolean;
      publicKey: string;
      regularKeyAddress: string;

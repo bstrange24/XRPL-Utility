@@ -183,9 +183,17 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                // Optional fields
                await this.transactionOptionalFieldsService.setTxOptionalFields(client, tx, wallet, config.account, type, txOptions);
 
-               // Balance check
-               const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
-               if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               // Delegated submission: confirm the delegator granted this wallet the needed permissions
+               if ((tx as any).Delegate) {
+                    const delegationError = await this.validateDelegation(client, tx as xrpl.AccountSet);
+                    if (delegationError) return { success: false, error: delegationError, validationError: true };
+               }
+
+               // Balance check (the delegator pays the fee on delegated transactions, so it is skipped there)
+               if (!(tx as any).Delegate) {
+                    const isInsufficientBalance = await this.sufficentAccountBalanceService.checkXrpBalance(env, tx, '0');
+                    if (!isInsufficientBalance.success) return { success: false, error: isInsufficientBalance.error };
+               }
 
                //  Submit / simulate
                const submitOrSimResult = await this.xrplTransactionOrchestratorService.executeTx({
@@ -224,6 +232,23 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
           } finally {
                this.txUiService.resetCurrentStepToIdle();
           }
+     }
+
+     private async validateDelegation(client: xrpl.Client, tx: xrpl.AccountSet): Promise<string | null> {
+          const required: string[] = [];
+          if (tx.TickSize !== undefined) required.push('AccountTickSizeSet');
+          if (tx.TransferRate !== undefined) required.push('AccountTransferRateSet');
+          if (tx.Domain !== undefined) required.push('AccountDomainSet');
+          if (tx.MessageKey !== undefined) required.push('AccountMessageKeySet');
+          if (required.length === 0) return 'Nothing to submit. Enter a Transfer Rate, Tick Size or Domain.';
+
+          const response: any = await client.request({ command: 'account_objects', account: tx.Account, type: 'delegate', ledger_index: 'validated' });
+          const delegation = (response.result.account_objects ?? []).find((obj: any) => obj.Authorize === tx.Delegate);
+          if (!delegation) return `${tx.Account} has not delegated any permissions to ${tx.Delegate}.`;
+
+          const granted = new Set<string>((delegation.Permissions ?? []).map((p: any) => p.Permission.PermissionValue));
+          const missing = required.filter(permission => !granted.has(permission));
+          return missing.length ? `${tx.Delegate} is missing delegated permission(s): ${missing.join(', ')}.` : null;
      }
 
      // Parallel Account set path

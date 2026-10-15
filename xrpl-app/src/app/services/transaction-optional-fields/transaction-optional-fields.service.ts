@@ -45,7 +45,10 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                     this.utilsService.setTransferRate(tx, transferRate);
                }
 
-               if (config.isMessageKey && wallet.publicKey) {
+               // Delegated submissions must not use the signer's key or clear fields the delegator did not ask to change
+               const isDelegated = !!tx.Delegate;
+
+               if (config.isMessageKey && wallet.publicKey && !isDelegated) {
                     this.utilsService.setMessageKey(tx, wallet.publicKey);
                }
 
@@ -62,7 +65,7 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                     }
 
                     this.utilsService.setDomain(tx, domainHex);
-               } else {
+               } else if (!isDelegated) {
                     // Empty input will clear domain
                     tx.Domain = '';
                }

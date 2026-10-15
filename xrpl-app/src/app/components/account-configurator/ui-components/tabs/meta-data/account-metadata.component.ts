@@ -7,6 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import * as xrpl from 'xrpl';
 import { ConnectionGuardService } from '../../../../../services/shared/connection-guard/connection-guard.service';
+import { WalletManagerService } from '../../../../../services/wallets/manager/wallet-manager.service';
 import { NgIcon } from '@ng-icons/core';
 import { AccountConfiguratorViewModelService } from '../../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { TransactionOptionsComponent } from '../../../../shared/transaction-options/transaction-options.component';
@@ -29,6 +30,7 @@ import { ValidationErrorsComponent } from '../../../../shared/validation-errors/
 export class AccountMetadataComponent {
      public readonly accountConfiguratorViewModelService = inject(AccountConfiguratorViewModelService);
      public readonly connectionGuard = inject(ConnectionGuardService);
+     private readonly walletManagerService = inject(WalletManagerService);
      public readonly utilsService = inject(UtilsService);
      protected accountConfiguratorStoreService = inject(AccountConfiguratorStoreService);
      protected accountConfiguratorUtilService = inject(AccountConfiguratorUtilService);
@@ -75,6 +77,15 @@ export class AccountMetadataComponent {
 
      // Check if domain is too long
      readonly isDomainTooLong = computed(() => this.domainHexLengthBytes() > 256);
+
+     // Delegation: submit the update as another account that granted this wallet permissions
+     readonly isDelegating = computed(() => !!this.accountConfiguratorStoreService.delegatorAddress()?.trim());
+
+     isDelegatorInvalid = computed(() => {
+          const address = this.accountConfiguratorStoreService.delegatorAddress()?.trim();
+          if (!address) return false;
+          return !xrpl.isValidAddress(address) || address === this.walletManagerService.getSelectedWallet()?.address;
+     });
 
      // Check if NFT minter address is valid
      isNftMinterValid = computed(() => {
@@ -135,6 +146,9 @@ export class AccountMetadataComponent {
           // Must have at least one field to modify
           if (!this.hasChanges()) return false;
 
+          // Delegator validation
+          if (this.isDelegatorInvalid()) return false;
+
           // NFT Minter validation
           if (this.isNftMinterInvalid()) return false;
 
@@ -162,6 +176,9 @@ export class AccountMetadataComponent {
      // Get validation error message
      validationErrorMessage = computed(() => {
           const messages: string[] = [];
+          if (this.isDelegatorInvalid()) {
+               messages.push('Delegator must be a valid XRP address different from the selected wallet.');
+          }
           if (this.isNftMinterInvalid()) {
                messages.push('NFT Minter address is invalid. Please enter a valid XRP address.');
           }
@@ -189,6 +206,11 @@ export class AccountMetadataComponent {
           this.accountConfiguratorStoreService.setField('tickSize', '');
           this.accountConfiguratorStoreService.setField('domain', '');
           this.accountConfiguratorStoreService.setField('isMessageKey', false);
+          this.clearDelegatorField();
+     }
+
+     clearDelegatorField() {
+          this.accountConfiguratorStoreService.setField('delegatorAddress', '');
      }
 
      clearMinterAddresField() {
