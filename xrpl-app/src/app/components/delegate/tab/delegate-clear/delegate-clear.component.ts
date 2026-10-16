@@ -19,6 +19,14 @@ export class DelegateClearComponent {
      destinationChange = output<string>();
      actionToggle = output<number>();
 
+     isDelegationSelected(delegation: XRPLDelegate): boolean {
+          return !!this.selectedDestination() && this.selectedDestination() === delegation.Authorize;
+     }
+
+     toggleDelegation(delegation: XRPLDelegate): void {
+          this.destinationChange.emit(this.isDelegationSelected(delegation) ? '' : delegation.Authorize || '');
+     }
+
      actionIdFor(permissionValue: string): number | null {
           return this.actions().find(action => action.key === permissionValue)?.id ?? null;
      }
