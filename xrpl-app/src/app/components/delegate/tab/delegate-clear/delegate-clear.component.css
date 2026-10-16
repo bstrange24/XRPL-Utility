@@ -59,6 +59,10 @@
 }
 
 .permission-chip {
+     display: inline-flex;
+     align-items: center;
+     gap: 0.4rem;
+     cursor: pointer;
      border: 1px solid var(--border-color);
      border-radius: 9999px;
      padding: 0.2rem 0.55rem;

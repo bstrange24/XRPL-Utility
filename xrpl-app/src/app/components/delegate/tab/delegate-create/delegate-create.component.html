@@ -37,8 +37,13 @@
 
           <div class="permission-grid">
                @for (action of actions(); track action.id) {
-               <label class="permission-card" [class.permission-card-selected]="selectedActions().has(action.id)">
-                    <input type="checkbox" [checked]="selectedActions().has(action.id)" [disabled]="!selectedActions().has(action.id) && selectedActions().size >= 10" (change)="actionToggle.emit(action.id)" />
+               <label class="permission-card" [class.permission-card-selected]="selectedActions().has(action.id)" [class.permission-card-disabled]="!selectedActions().has(action.id) && selectedActions().size >= 10">
+                    <input type="checkbox" [checked]="selectedActions().has(action.id)" [disabled]="!selectedActions().has(action.id) && selectedActions().size >= 10" (change)="actionToggle.emit(action.id)" class="hidden" />
+                    <span class="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200" [class.border-green-500]="selectedActions().has(action.id)" [class.border-gray-300]="!selectedActions().has(action.id)" [class.bg-green-500]="selectedActions().has(action.id)">
+                         @if (selectedActions().has(action.id)) {
+                         <lucide-icon name="check" size="12" class="text-white transition-transform duration-200" />
+                         }
+                    </span>
                     <span class="permission-card-copy">
                          <span class="permission-name">{{ action.key }}</span>
                          <span class="permission-type">{{ action.txType }}</span>

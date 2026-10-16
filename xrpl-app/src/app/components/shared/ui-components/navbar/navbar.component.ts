@@ -80,7 +80,7 @@ export class NavbarComponent {
      }
 
      isAccountsActive(): boolean {
-          const accountsRoutes = ['/account-balance-changes', '/account-configurator', '/delete-account', '/create-credentials', '/permissioned-domain', '/create-did'];
+          const accountsRoutes = ['/account-balance-changes', '/account-configurator', '/account-delegate', '/delete-account', '/create-credentials', '/permissioned-domain', '/create-did'];
           return accountsRoutes.some(route => this.router.url === route || this.router.url.startsWith(route + '?'));
      }
 
