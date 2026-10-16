@@ -24,6 +24,7 @@ import { TrustlineUtilService } from '../../../../services/trustlines/trustline-
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
+import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../../core/app.constants';
 import { UriValidatorService } from '../../../../services/shared/validators/uri-validator/uri-validator.service';
 import { VaultStoreService } from '../../../../services/vault/vault-store/vault-store.service';
@@ -210,7 +211,13 @@ export class VaultSetComponent {
      public getCurrentAssetsTotal(): string {
           const vault = this.getSelectedVault();
           if (!vault) return '0';
-          return vault.AssetsTotal || '0';
+          const total = vault.AssetsTotal || '0';
+          const asset = vault.Asset || vault.SendMax;
+          // XRP vault totals are stored in drops while the user enters XRP
+          if ((asset === 'XRP' || asset?.currency === 'XRP') && /^\d+$/.test(total)) {
+               return String(xrpl.dropsToXrp(total));
+          }
+          return total;
      }
 
      // Form field accessors

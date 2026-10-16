@@ -9,6 +9,7 @@ import { SummaryTextConfig, SummaryTextConfigService } from '../../../../service
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import * as xrpl from 'xrpl';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { TooltipLinkComponent } from '../../../shared/tooltip-link/tooltip-link.component';
@@ -53,6 +54,21 @@ export class VaultSummaryComponent {
      public readonly mptStoreService = inject(MptStoreService);
      public readonly mptUtilService = inject(MptUtilService);
      public readonly vaultStoreService = inject(VaultStoreService);
+
+     /** XRP vault amounts are stored in drops; show them in XRP */
+     displayAmount(vault: any, value: any): string {
+          const text = String(value ?? '');
+          if (vault?.currency === 'XRP' && /^\d+$/.test(text)) {
+               return `${xrpl.dropsToXrp(text)} XRP`;
+          }
+          return text;
+     }
+
+     /** Ripple epoch seconds to a local date string */
+     displayRippleTime(seconds: number | undefined): string {
+          if (seconds === undefined) return '';
+          return new Date((seconds + 946684800) * 1000).toLocaleString();
+     }
 
      constructor() {
           // Auto-clear search when parent tells us to reset

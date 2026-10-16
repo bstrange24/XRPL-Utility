@@ -166,15 +166,14 @@ export class LendingBrokerDeleteComponent {
           }
 
           // Confirmation
-          // if (this.loanBrokerStoreService.selectedBrokerId()) {
-          //      if (!this.confirmationChecked()) {
-          //           errors.push('Please confirm that you understand this action is permanent.');
-          //      }
-          //      if (!this.confirmationBrokerIdChecked()) {
-          //           const brokerId = this.getBrokerIdForConfirmation();
-          //           errors.push(`Please confirm you want to delete Loan Broker: ${brokerId || 'selected'}`);
-          //      }
-          // }
+          if (this.loanBrokerStoreService.selectedBrokerId()) {
+               if (!this.confirmationChecked()) {
+                    errors.push('Please confirm that you understand this action is permanent.');
+               }
+               if (!this.confirmationBrokerIdChecked()) {
+                    errors.push('Please confirm the Loan Broker you want to delete.');
+               }
+          }
 
           return errors;
      });

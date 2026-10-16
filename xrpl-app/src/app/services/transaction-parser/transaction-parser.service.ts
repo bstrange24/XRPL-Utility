@@ -1252,6 +1252,9 @@ class GenericFormatter implements TransactionFormatter {
           if (typeof value === 'string' && value.length > 30) {
                return value.slice(0, 27) + '...';
           }
+          if (value !== null && typeof value === 'object') {
+               return JSON.stringify(value);
+          }
           return String(value);
      }
 

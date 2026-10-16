@@ -43,7 +43,7 @@ export const LOAN_BROKER_CONFIG_TX_DISPLAY_TYPES = {
 export type LoanBrokerTxTypes = (typeof LOAN_BROKER_TX_TYPES)[keyof typeof LOAN_BROKER_TX_TYPES];
 export type LoanBrokerConfigTxDisplayType = (typeof LOAN_BROKER_CONFIG_TX_DISPLAY_TYPES)[keyof typeof LOAN_BROKER_CONFIG_TX_DISPLAY_TYPES];
 
-export const MAX_DATA_LENGTH = 512;
+export const MAX_DATA_LENGTH = 256;
 export const MAX_MANAGEMENT_FEE_RATE = 10000;
 export const MAX_COVER_RATE_MINIMUM = 100000;
 export const MAX_COVER_RATE_LIQUIDATION = 100000;

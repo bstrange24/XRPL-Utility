@@ -308,7 +308,7 @@ export class LendingBrokerModifyComponent {
 
                // Data validation
                if (this.isDataTouched() && this.data && !this.isDataValid()) {
-                    errors.push('Data exceeds 512 bytes limit.');
+                    errors.push('Data exceeds 256 bytes limit.');
                }
 
                // Management Fee

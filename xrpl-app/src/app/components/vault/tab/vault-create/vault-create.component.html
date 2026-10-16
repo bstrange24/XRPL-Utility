@@ -297,6 +297,51 @@
           </div>
           } }
 
+          <!-- Vault Type -->
+          <div class="mt-4 space-y-2">
+               <label class="label-primary">Vault Type</label>
+               <p class="text-secondary">Closed-ended vaults are required to attach a Loan Broker. Open-ended vaults accept deposits and withdrawals at any time but cannot be used for lending. This cannot be changed after the vault is created.</p>
+               <div class="flex gap-2">
+                    <button type="button" class="px-4 py-2 rounded-xl border text-sm font-medium" [ngClass]="vaultStoreService.vaultKind() === 'open' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600'" (click)="onVaultKindChange('open')">Open-ended</button>
+                    <button type="button" class="px-4 py-2 rounded-xl border text-sm font-medium" [ngClass]="vaultStoreService.vaultKind() === 'closed' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-600'" (click)="onVaultKindChange('closed')">Closed-ended (for lending)</button>
+               </div>
+
+               @if (vaultStoreService.vaultKind() === 'closed') {
+               <div class="side-by-side-fields mt-3">
+                    <div class="expiration-field">
+                         <app-xrpl-expiration-input
+                              [expirationSignal]="vaultStoreService.subscriptionDate"
+                              [setExpiration]="setSubscriptionDate"
+                              [expirationType]="'generic'"
+                              [required]="true"
+                              [showError]="!!subscriptionDateError()"
+                              [errorMessage]="subscriptionDateError()"
+                              toggleLabel="Set Subscription Date"
+                              atLabel="Subscription date"
+                              label="Subscription Date *"
+                              hint="Deposits are accepted until this time. After it, the investment period begins: deposits close, and the Loan Broker can originate loans using the vault's funds. Loans can only be created during this period, so deposit before this date and create Loans after it."
+                         >
+                         </app-xrpl-expiration-input>
+                    </div>
+                    <div class="expiration-field">
+                         <app-xrpl-expiration-input
+                              [expirationSignal]="vaultStoreService.redemptionDate"
+                              [setExpiration]="setRedemptionDate"
+                              [expirationType]="'generic'"
+                              [required]="true"
+                              [showError]="!!redemptionDateError()"
+                              [errorMessage]="redemptionDateError()"
+                              toggleLabel="Set Redemption Date"
+                              atLabel="Redemption date"
+                              label="Redemption Date *"
+                              hint="The investment period ends and depositors can redeem their shares after this time. Must be at least 3 minutes after the Subscription Date. The final payment of every loan must fall at least 60 seconds before this date."
+                         >
+                         </app-xrpl-expiration-input>
+                    </div>
+               </div>
+               }
+          </div>
+
           <!-- Domain ID - Visible for all types -->
           <div class="side-by-side-fields mt-4">
                <div class="space-y-2">

@@ -167,7 +167,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">The amount to {{ vaultAction }} from the vault.</p>
+                         <p class="text-secondary">The amount to {{ vaultAction }} {{ vaultAction === 'deposit' ? 'into' : 'from' }} the vault.</p>
                          <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -224,7 +224,7 @@
                @if (vaultAction === 'withdraw' && vaultStoreService.selectedVaultId()) {
                <div>
                     <div class="field-label">
-                         <label for="destination" class="label-primary">Destination Address <span class="text-red-500">*</span></label>
+                         <label for="destination" class="label-primary">Destination Address <span class="text-xs text-gray-500">(optional)</span></label>
                     </div>
 
                     <div class="flex items-center gap-2">
@@ -310,7 +310,7 @@
                          <div>
                               <p class="text-sm font-medium" [class.text-green-800]="vaultAction === 'deposit'" [class.text-blue-800]="vaultAction === 'withdraw'">{{ vaultAction === 'deposit' ? 'Deposit' : 'Withdraw' }} Confirmation</p>
                               <p class="text-sm" [class.text-green-700]="vaultAction === 'deposit'" [class.text-blue-700]="vaultAction === 'withdraw'">
-                                   You are about to <strong>{{ vaultAction }}</strong> <strong> {{ vaultAmount }}</strong> {{ getAssetType() }} @if (vaultAction === 'withdraw') { to <strong class="font-mono">{{ selectedDestinationItem?.display || selectedDestinationItem?.id || 'destination' }}</strong>
+                                   You are about to <strong>{{ vaultAction }}</strong> <strong> {{ vaultAmount }}</strong> {{ getAssetType() }} @if (vaultAction === 'withdraw') { to <strong class="font-mono">{{ selectedDestinationItem?.display || selectedDestinationItem?.id || 'your account' }}</strong>
                                    }
                               </p>
                          </div>

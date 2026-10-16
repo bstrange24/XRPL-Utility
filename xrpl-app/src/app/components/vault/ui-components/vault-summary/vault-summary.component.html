@@ -113,13 +113,23 @@
                                         </app-summary-key-value>
                                         }@if (vault.AssetsAvailable) {
                                         <app-summary-key-value label="AssetsAvailable">
-                                             <span class="font-mono text-xs break-all">{{ vault.AssetsAvailable }}</span>
+                                             <span class="font-mono text-xs break-all">                                             {{ displayAmount(vault, vault.AssetsAvailable) }}</span>
                                         </app-summary-key-value>
                                         } @if (vault.AssetsTotal) {
                                         <app-summary-key-value label="AssetsTotal">
-                                             <span class="font-mono text-xs break-all">{{ vault.AssetsTotal }}</span>
+                                                                                          <span class="font-mono text-xs break-all">{{ displayAmount(vault, vault.AssetsTotal) }}</span>
                                         </app-summary-key-value>
-                                        } @if (vault.Scale) {
+                                                                                     } @if (vault.vaultKind === 1) {
+                                                                                     <app-summary-key-value label="Vault Type">
+                                                                                          <span class="inline-flex items-center px-1 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Closed-ended</span>
+                                                                                     </app-summary-key-value>
+                                                                                     <app-summary-key-value label="Subscription Date">
+                                                                                          <span class="font-mono text-xs">{{ displayRippleTime(vault.subscriptionDate) }}</span>
+                                                                                     </app-summary-key-value>
+                                                                                     <app-summary-key-value label="Redemption Date">
+                                                                                          <span class="font-mono text-xs">{{ displayRippleTime(vault.redemptionDate) }}</span>
+                                                                                     </app-summary-key-value>
+                                                                                     } @if (vault.Scale) {
                                         <app-summary-key-value label="Scale">
                                              <span class="font-mono text-xs break-all">{{ vault.Scale }}</span>
                                         </app-summary-key-value>

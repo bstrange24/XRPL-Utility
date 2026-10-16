@@ -189,11 +189,9 @@ export class VaultDeleteComponent {
      public getWithdrawalPolicyLabel(policy: number): string {
           switch (policy) {
                case 0:
-                    return 'No Restrictions (0)';
+                    return 'Standard (0)';
                case 1:
-                    return 'Owner Only (1)';
-               case 2:
-                    return 'Authorized Only (2)';
+                    return 'First Come First Serve (1)';
                default:
                     return `Unknown (${policy})`;
           }

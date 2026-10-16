@@ -96,6 +96,10 @@ export class VaultUtilService {
                } else if (assetsMaximum?.value) {
                     maxAmount = assetsMaximum.value;
                }
+               // XRP vault amounts are stored in drops
+               if (asset?.currency === 'XRP' && /^\d+$/.test(maxAmount)) {
+                    maxAmount = xrpl.dropsToXrp(maxAmount).toString();
+               }
           } else {
                if (typeof asset === 'string') {
                     if (isMptAsset) {
@@ -158,6 +162,9 @@ export class VaultUtilService {
                     amount = assetsMaximum.toString();
                } else if (assetsMaximum?.value) {
                     amount = assetsMaximum.value;
+               }
+               if (asset?.currency === 'XRP' && /^\d+$/.test(amount)) {
+                    amount = xrpl.dropsToXrp(amount).toString();
                }
           }
 
@@ -229,7 +236,9 @@ export class VaultUtilService {
                     // Build the full amount display
                     let fullAmountDisplay = '';
                     if (currency === 'XRP') {
-                         fullAmountDisplay = `${maxAmount} XRP`;
+                         // XRP vault amounts are stored in drops
+                         const maxXrp = /^\d+$/.test(maxAmount) ? xrpl.dropsToXrp(maxAmount) : maxAmount;
+                         fullAmountDisplay = `${maxXrp} XRP`;
                     } else if (currency === 'MPT') {
                          fullAmountDisplay = `${maxAmount} MPT`;
                     } else {
@@ -291,6 +300,9 @@ export class VaultUtilService {
                          txHash: obj.PreviousTxnID || '',
                          assetsMaximum: obj.AssetsMaximum,
                          Scale: obj.Scale,
+                         vaultKind: obj.VaultKind ?? 0,
+                         subscriptionDate: obj.SubscriptionDate,
+                         redemptionDate: obj.RedemptionDate,
                     };
                })
           );
@@ -425,7 +437,7 @@ export class VaultUtilService {
                     id: vaultId,
                     label: `Vault ${shortId} - ${amount}`,
                     secondaryLabel: `Owner: ${shortOwner}`,
-                    display: `${amount} (${shortOwner})`,
+                    display: `${amount}${vault.vaultKind === 1 ? ' · Closed-ended' : ''} (${shortOwner})`,
                };
           });
      }
@@ -543,9 +555,9 @@ export class VaultUtilService {
      readonly depositButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') {
-               return this.vaultStoreService.vaultAction() === 'deposit' ? 'Deposit Vault' : 'Withdrawl Vault';
+               return this.vaultStoreService.vaultAction() === 'deposit' ? 'Deposit Vault' : 'Withdrawal Vault';
           }
-          if (step === 'waiting_validation') return this.vaultStoreService.vaultAction() === 'deposit' ? 'Deposit Vault' : 'Withdrawl Vault';
+          if (step === 'waiting_validation') return this.vaultStoreService.vaultAction() === 'deposit' ? 'Deposit Vault' : 'Withdrawal Vault';
           return this.txUiService.stepMessage();
      });
 

@@ -88,6 +88,9 @@ export interface AnyVaultDisplayItem {
      AssetsAvailable?: any;
      AssetsTotal?: any;
      Scale?: any;
+     vaultKind?: number;
+     subscriptionDate?: number;
+     redemptionDate?: number;
 }
 
 export interface VaultDataForUI {

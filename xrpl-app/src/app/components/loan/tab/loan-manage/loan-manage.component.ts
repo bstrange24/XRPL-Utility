@@ -223,7 +223,7 @@ export class LoanManageComponent {
 
                // Data validation
                if (this.isDataTouched() && hasDataChange && this.isDataInvalid()) {
-                    errors.push('Data exceeds 512 bytes limit.');
+                    errors.push('Data exceeds 256 bytes limit.');
                }
 
                // Flag validation

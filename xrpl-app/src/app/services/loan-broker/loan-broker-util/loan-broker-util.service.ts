@@ -40,9 +40,13 @@ export class LoanBrokerUtilService {
 
      async getExistingBrokers(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string): Promise<LoanBrokerDisplayItem[]> {
           const filtered = (accountObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'LoanBroker');
+          // Vaults owned by the same account come back in the same response, so the asset type is known here
+          const xrpVaultIds = new Set((accountObjects.result.account_objects ?? []).filter((obj: any) => obj.LedgerEntryType === 'Vault' && obj.Asset?.currency === 'XRP' && !obj.Asset?.issuer).map((obj: any) => obj.index));
 
           const mapped = await Promise.all(
                filtered.map(async (obj: any): Promise<LoanBrokerDisplayItem> => {
+                    const coverBalance = obj.CoverAvailable ? (xrpVaultIds.has(obj.VaultID) && /^\d+$/.test(obj.CoverAvailable) ? xrpl.dropsToXrp(obj.CoverAvailable) : String(obj.CoverAvailable)) : '0';
+
                     // Decode Data field if present
                     let decodedData = '';
                     if (obj.Data) {
@@ -59,13 +63,13 @@ export class LoanBrokerUtilService {
                          index: obj.index || '',
                          VaultID: obj.VaultID || '',
                          Sequence: obj.Sequence,
-                         LoanBrokerID: obj.LoanBrokerID || '',
+                         LoanBrokerID: obj.LoanBrokerID || obj.index || '',
                          Data: decodedData,
                          ManagementFeeRate: obj.ManagementFeeRate,
                          CoverAvailable: obj.CoverAvailable,
                          CoverRateLiquidation: obj.CoverRateLiquidation,
                          CoverRateMinimum: obj.CoverRateMinimum,
-                         CoverBalance: obj.CoverBalance,
+                         CoverBalance: coverBalance as any,
                          DebtMaximum: this.formatXRPLNumber(obj.DebtMaximum),
                          DebtTotal: obj.DebtTotal,
                          owner: obj.Owner || '',
@@ -97,11 +101,8 @@ export class LoanBrokerUtilService {
      private formatXRPLNumber(value: any): string {
           if (!value) return '0';
           if (typeof value === 'string') {
-               try {
-                    return xrpl.dropsToXrp(value).toString();
-               } catch {
-                    return value;
-               }
+               // DebtMaximum is a plain Number in the vault asset's base units; show exactly what is stored
+               return value;
           }
           if (typeof value === 'number') {
                return value.toString();
@@ -191,7 +192,7 @@ export class LoanBrokerUtilService {
                          id: node.index || node.id || '',
                          index: node.index || node.id || '',
                          VaultID: node.VaultID || '',
-                         LoanBrokerID: node.LoanBrokerID || '',
+                         LoanBrokerID: node.LoanBrokerID || node.index || node.id || '',
                          Data: decodedData,
                          ManagementFeeRate: node.ManagementFeeRate,
                          DebtMaximum: this.formatXRPLNumber(node.DebtMaximum),

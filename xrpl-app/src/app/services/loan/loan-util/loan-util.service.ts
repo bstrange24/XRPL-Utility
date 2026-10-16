@@ -69,7 +69,7 @@ export class LoanUtilService {
                     if (flags & 0x00010000) {
                          status = 'defaulted';
                     }
-                    if (obj.isImpaired) {
+                    if (flags & 0x00020000) {
                          status = 'impaired';
                     }
 
@@ -345,7 +345,24 @@ export class LoanUtilService {
 
           if (!vault) return '0';
 
-          return vault.AssetsAvailable || '0';
+          return this.toDisplayAmount(vault.AssetsAvailable);
+     }
+
+     // Redemption Date (Ripple epoch seconds) of the selected broker's closed-ended vault, if any
+     getVaultRedemptionDate(): number | null {
+          const loanBrokerId = this.loanStoreService.loanBrokerId();
+          if (!loanBrokerId) return null;
+          const broker = this.loanBrokerStoreService.existingBrokers().find(b => (b.id || b.index) === loanBrokerId);
+          if (!broker?.VaultID) return null;
+          const vault = this.vaultStoreService.existingVaults().find(v => (v.index || v.id) === broker.VaultID);
+          return vault?.redemptionDate ?? null;
+     }
+
+     // XRP vault amounts are stored in drops; other assets are shown as stored
+     private toDisplayAmount(value: string | undefined): string {
+          if (!value) return '0';
+          if (this.getLoanAssetType() === 'XRP' && /^\d+$/.test(value)) return xrpl.dropsToXrp(value).toString();
+          return value;
      }
 
      /**
@@ -368,7 +385,7 @@ export class LoanUtilService {
 
           if (!vault) return '0';
 
-          return vault.AssetsTotal || '0';
+          return this.toDisplayAmount(vault.AssetsTotal);
      }
 
      private formatXRPLNumber(value: any): string {

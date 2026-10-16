@@ -71,19 +71,19 @@
           <!-- Warning Messages -->
           @if (selectedBrokerItem() && loanBrokerStoreService.selectedBrokerId()) {
           <!-- Active Broker Warning -->
-          <!-- <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
+          <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
                <div class="flex items-start gap-3">
                     <ng-icon name="heroExclamationCircle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
                     <div class="flex-1">
                          <p class="text-sm font-semibold text-red-800">⚠️ Permanent Deletion</p>
                          <p class="text-sm text-red-700 mt-1">This action will permanently delete this Loan Broker from the XRPL ledger. This cannot be undone.</p>
-                         <p class="text-sm text-red-700 mt-2"><strong>Note:</strong> Deleting a Loan Broker will also remove all associated loans and loan data. Only delete if you are certain this broker is no longer needed.</p>
+                         <p class="text-sm text-red-700 mt-2"><strong>Note:</strong> The Loan Broker must have no active loans and no remaining first-loss cover.</p>
                     </div>
                </div>
-          </div> -->
+          </div>
 
           <!-- Confirmation Section -->
-          <!-- <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
+          <div class="rounded-2xl bg-red-50 p-4 border-2 border-red-200">
                <div class="flex items-start gap-3">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-red-500 flex-shrink-0 mt-0.5" />
                     <div class="flex-1">
@@ -100,7 +100,7 @@
                          </div>
                     </div>
                </div>
-          </div> -->
+          </div>
           }
 
           <!-- Summary of validation errors -->

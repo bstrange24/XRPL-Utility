@@ -21,7 +21,7 @@ export const LOAN_CONFIG_TX_DISPLAY_TYPES = {
 export type LoanConfigTxDisplayType = (typeof LOAN_CONFIG_TX_DISPLAY_TYPES)[keyof typeof LOAN_CONFIG_TX_DISPLAY_TYPES];
 
 export const LOAN_BROKER_ID_LENGTH = 64;
-export const MAX_DATA_LENGTH = 512;
+export const MAX_DATA_LENGTH = 256;
 export const MAX_OVER_PAYMENT_FEE_RATE = 100000;
 export const MAX_INTEREST_RATE = 100000;
 export const MAX_LATE_INTEREST_RATE = 100000;

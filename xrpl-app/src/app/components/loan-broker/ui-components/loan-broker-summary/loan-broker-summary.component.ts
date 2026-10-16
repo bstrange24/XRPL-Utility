@@ -322,16 +322,19 @@ export class LoanBrokerSummaryComponent {
      }
 
      getBrokerStatus(broker: LoanBrokerDisplayItem): { label: string; color: string } {
-          const coverBalance = broker.CoverBalance ?? 0;
+          const cover = Number(broker.CoverAvailable ?? 0);
+          const debt = Number(broker.DebtTotal ?? 0);
           const coverMin = broker.CoverRateMinimum ?? 0;
+          // CoverRateMinimum is in 1/10th basis points of the outstanding debt
+          const required = (debt * coverMin) / 100000;
 
-          if (coverBalance <= 0) {
+          if (cover <= 0) {
                return { label: 'No Cover', color: 'gray' };
           }
-          if (coverBalance > 0 && coverMin > 0 && coverBalance < coverMin) {
+          if (required > 0 && cover < required) {
                return { label: 'Underfunded', color: 'red' };
           }
-          if (coverBalance > 0 && coverMin > 0 && coverBalance >= coverMin) {
+          if (coverMin > 0) {
                return { label: 'Fully Funded', color: 'green' };
           }
           return { label: 'Active', color: 'blue' };

@@ -14,6 +14,7 @@ import { LoanBrokerUtilService } from '../../../../services/loan-broker/loan-bro
 import { LoanBrokerViewModelService } from '../../../../services/loan-broker/loan-broker-view-model/loan-broker-view-model.service';
 import { AmountValidatorService } from '../../../../services/shared/validators/amount-validator/amount-validator.service';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
+import { VaultStoreService } from '../../../../services/vault/vault-store/vault-store.service';
 
 @Component({
      selector: 'app-lending-broker-cover-clawback',
@@ -29,6 +30,7 @@ export class LendingBrokerCoverClawbackComponent {
      public readonly loanBrokerViewModelService = inject(LoanBrokerViewModelService);
      public readonly amountValidatorService = inject(AmountValidatorService);
      public readonly utilsService = inject(UtilsService);
+     public readonly vaultStoreService = inject(VaultStoreService);
 
      // Helper Items
      readonly brokerSelectorHelperItems = AppConstants.LOAN_BROKER_SELECTOR_HELPER_ITEMS || [];
@@ -136,7 +138,17 @@ export class LendingBrokerCoverClawbackComponent {
      public selectedBrokerDebtTotal(): string | null {
           const broker = this.getSelectedBroker();
           if (!broker) return null;
-          return broker.DebtMaximum?.toString() || '0';
+          const raw = broker.DebtTotal?.toString() || '0';
+          return this.isSelectedBrokerXrp() && /^\d+$/.test(raw) ? String(Number(raw) / 1_000_000) : raw;
+     }
+
+     // XRP cannot be clawed back; the vault asset is XRP when the cover balance is held in XRP
+     public isSelectedBrokerXrp(): boolean {
+          const broker = this.getSelectedBroker();
+          if (!broker?.VaultID) return false;
+          const vault = this.vaultStoreService.existingVaults().find((v: any) => (v.index || v.id) === broker.VaultID);
+          const asset: any = vault?.Asset || vault?.SendMax;
+          return !!asset && (asset === 'XRP' || (asset.currency === 'XRP' && !asset.issuer));
      }
 
      public selectedBrokerCoverMinimum(): string | null {
@@ -217,6 +229,7 @@ export class LendingBrokerCoverClawbackComponent {
           const hasBrokerSelected = !!this.loanBrokerStoreService.selectedBrokerId();
           const hasAmount = !!this.clawbackAmount && this.clawbackAmount.trim().length > 0;
 
+          if (this.isSelectedBrokerXrp()) return false;
           if (!hasBrokerSelected && !hasAmount) return false;
 
           // If amount is provided, validate it
@@ -235,6 +248,10 @@ export class LendingBrokerCoverClawbackComponent {
 
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
+
+          if (this.isSelectedBrokerXrp()) {
+               errors.push('XRP cannot be clawed back. Clawback only works for issued tokens or MPTs where you are the issuer.');
+          }
 
           const hasBrokerSelected = !!this.loanBrokerStoreService.selectedBrokerId();
           const hasAmount = !!this.clawbackAmount && this.clawbackAmount.trim().length > 0;

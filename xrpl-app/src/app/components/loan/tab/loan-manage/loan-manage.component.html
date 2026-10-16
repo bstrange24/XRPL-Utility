@@ -100,7 +100,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 512 bytes.</p>
+                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 256 bytes.</p>
                          <button type="button" (click)="toggleDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -114,7 +114,7 @@
 
                     @if (data && data.length > 0) {
                     <div class="mt-2">
-                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 512 bytes limit' }}</p>
+                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 256 bytes limit' }}</p>
                          <p class="text-xs text-gray-500">Bytes: {{ data.length }}</p>
                     </div>
                     }

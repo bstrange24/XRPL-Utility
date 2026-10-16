@@ -138,7 +138,17 @@ export class LoanPayComponent {
 
      public selectedLoanPrincipalOutstanding(): string {
           const loan = this.getSelectedLoan();
-          return loan?.PrincipalOutstanding ?? '';
+          const raw = loan?.PrincipalOutstanding;
+          if (raw === undefined || raw === null || raw === '') return '';
+          return this.isSelectedLoanXrp() && /^\d+$/.test(String(raw)) ? `${Number(raw) / 1_000_000} XRP` : String(raw);
+     }
+
+     private isSelectedLoanXrp(): boolean {
+          const loan = this.getSelectedLoan();
+          const broker = this.loanBrokerStoreService.existingBrokers().find(b => (b.id || b.index || b.LoanBrokerID) === loan?.LoanBrokerID);
+          const vault = this.vaultStoreService.existingVaults().find(v => (v.index || v.id) === broker?.VaultID);
+          const asset = vault?.Asset || vault?.SendMax;
+          return !!asset && (asset === 'XRP' || asset.currency === 'XRP');
      }
 
      public selectedLoanOwner(): string {
@@ -153,7 +163,7 @@ export class LoanPayComponent {
 
      public selectedLoanInterestRate(): number {
           const loan = this.getSelectedLoan();
-          return loan?.InterestRate ?? -1;
+          return loan?.InterestRate ?? 0;
      }
 
      public selectedLoanStatus(): string {
@@ -176,8 +186,10 @@ export class LoanPayComponent {
           this.isFlagTouched.set(true);
           this.isFormDirty.set(true);
 
-          // Reset all flags
+          // Selecting the active flag again clears it (a regular on-time payment uses no flag)
+          const wasSelected = this.loanStoreService[key]();
           this.resetFlags();
+          if (wasSelected) return;
 
           // Set the selected flag
           this.loanStoreService.setField(key, true);
@@ -254,9 +266,6 @@ export class LoanPayComponent {
           // Check if amount exceeds remaining balance
           if (this.isAmountExceedsBalance()) return false;
 
-          // At least one flag must be selected
-          if (!this.hasFlagSelected()) return false;
-
           return true;
      });
 
@@ -293,10 +302,7 @@ export class LoanPayComponent {
                }
           }
 
-          // Flag selection
-          if (this.isFlagTouched() && !this.hasFlagSelected()) {
-               errors.push('Please select a payment type.');
-          }
+          // Flag selection is optional: no flag means a regular on-time payment
 
           return errors;
      });

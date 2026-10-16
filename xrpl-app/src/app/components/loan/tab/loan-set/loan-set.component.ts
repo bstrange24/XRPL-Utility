@@ -441,6 +441,18 @@ export class LoanSetComponent {
           this.loanStoreService.setField('tfLoanOverpayment', !this.loanStoreService.tfLoanOverpayment());
      }
 
+     // The final payment must be at least 60s before the closed-ended vault's Redemption Date
+     termError = computed(() => {
+          const redemption = this.loanUtilService.getVaultRedemptionDate();
+          const total = this.loanStoreService.paymentTotal();
+          const interval = this.loanStoreService.paymentInterval();
+          if (!redemption || !total || !interval) return '';
+          const finalPayment = Math.floor(Date.now() / 1000) - 946684800 + total * interval;
+          if (finalPayment <= redemption - 60) return '';
+          const maxSeconds = Math.max(0, redemption - 60 - (Math.floor(Date.now() / 1000) - 946684800));
+          return `Loan term is too long: the final payment must be at least 60 seconds before the vault's Redemption Date. Maximum term now: about ${Math.floor(maxSeconds / 60)} minutes.`;
+     });
+
      // Computed validation
      // In the canCreateLoan validation, make counterparty optional
      canCreateLoan = computed(() => {
@@ -454,10 +466,10 @@ export class LoanSetComponent {
           // Data validation (optional)
           if (this.data && this.isDataInvalid()) return false;
 
-          // Counterparty validation (optional - only validate if provided)
-          if (this.loanStoreService.counterparty() && !this.isCounterpartyValid()) {
-               return false;
-          }
+          // The loan is signed by the broker owner, so the borrower must be set as counterparty and co-sign
+          if (!this.loanStoreService.counterparty() || !this.isCounterpartyValid()) return false;
+          if (!this.counterpartySeed) return false;
+          if (this.termError()) return false;
 
           return true;
      });
@@ -500,17 +512,23 @@ export class LoanSetComponent {
           }
 
           // Counterparty
-          if (this.isCounterpartyTouched() && this.loanStoreService.counterparty() && !this.isCounterpartyValid()) {
+          if (!this.loanStoreService.counterparty()) {
+               errors.push('Counterparty (borrower) address is required.');
+          } else if (!this.isCounterpartyValid()) {
                errors.push('Invalid counterparty address.');
+          } else if (!this.counterpartySeed) {
+               errors.push('Counterparty seed is required so the borrower can co-sign.');
           }
 
           // Data
           if (this.isDataTouched() && this.data && this.isDataInvalid()) {
-               errors.push('Data exceeds 512 bytes limit.');
+               errors.push('Data exceeds 256 bytes limit.');
           }
 
+          if (this.termError()) errors.push(this.termError());
+
           // Add warning about counterparty signature requirement
-          if (this.loanStoreService.counterparty() && this.isCounterpartyValid()) {
+          if (this.loanStoreService.counterparty() && this.isCounterpartyValid() && this.counterpartySeed) {
                errors.push('⚠️ Counterparty specified - they must sign this transaction.');
           }
 

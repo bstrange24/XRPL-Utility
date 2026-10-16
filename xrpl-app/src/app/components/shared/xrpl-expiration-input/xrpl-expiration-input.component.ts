@@ -29,7 +29,12 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      @Input() optionsEnabledSignal?: Signal<boolean>;
      @Input() showError = false;
      @Input() errorMessage = '';
-     @Input() expirationType: 'nftOffer' | 'finish' | 'cancel' | 'paymentChannel' | 'check' | 'credential' = 'cancel'; // NEW INPUT
+     @Input() expirationType: 'nftOffer' | 'finish' | 'cancel' | 'paymentChannel' | 'check' | 'credential' | 'generic' = 'cancel';
+     @Input() toggleLabel = 'Enable expiration';
+     @Input() required = false;
+     @Input() atLabel = 'Expires at';
+     private readonly now = signal(Date.now());
+     private tickTimer: ReturnType<typeof setInterval> | null = null;
 
      @Input() label = 'Expiration (optional)';
      @Input() hint = '';
@@ -69,6 +74,13 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
                let timeRemainingText = '';
 
                switch (this.expirationType) {
+                    case 'generic': {
+                         const value = this.expirationSignal();
+                         const target = value ? new Date(value).getTime() : NaN;
+                         secondsRemaining = isNaN(target) ? 0 : Math.max(0, Math.floor((target - this.now()) / 1000));
+                         timeRemainingText = value && secondsRemaining === 0 ? 'Expired' : '';
+                         break;
+                    }
                     case 'credential':
                          secondsRemaining = this.realTimeService.credentialSecondsRemaining();
                          timeRemainingText = this.realTimeService.credentialTimeRemaining();
@@ -165,9 +177,14 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
           return '';
      }
 
-     ngAfterViewInit() {}
+     ngAfterViewInit() {
+          if (this.expirationType === 'generic') {
+               this.tickTimer = setInterval(() => this.now.set(Date.now()), 1000);
+          }
+     }
 
      ngOnDestroy() {
+          if (this.tickTimer) clearInterval(this.tickTimer);
           if (this.picker) {
                this.picker.destroy();
                this.picker = null;
@@ -316,10 +333,11 @@ export class XrplExpirationInputComponent implements AfterViewInit, OnDestroy {
      clear() {
           this.setExpiration('');
           this.xrplTxOptionsStore.setIsExpirationEnabled(false);
-          this.enabled.set(false);
-
-          if (this.setEnable) {
-               this.setEnable(false);
+          if (!this.required) {
+               this.enabled.set(false);
+               if (this.setEnable) {
+                    this.setEnable(false);
+               }
           }
 
           if (this.picker) {

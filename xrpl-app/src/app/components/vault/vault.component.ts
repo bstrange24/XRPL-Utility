@@ -1,3 +1,4 @@
+import { WorkflowStepperComponent } from '../shared/ui-components/workflow-stepper/workflow-stepper.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
@@ -56,7 +57,7 @@ import { MptTransactionViewModelService } from '../../services/mpt/mpt-transacti
 @Component({
      selector: 'app-vault',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, VaultCreateComponent, VaultDeleteComponent, VaultSetComponent, VaultClawbackComponent, VaultDepositWithdrawComponent],
+     imports: [WorkflowStepperComponent, CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, VaultCreateComponent, VaultDeleteComponent, VaultSetComponent, VaultClawbackComponent, VaultDepositWithdrawComponent],
      templateUrl: './vault.component.html',
      styleUrl: './vault.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,6 +88,11 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      public readonly tabMeta = VAULT_TAB_META;
      public readonly vaultFlagsConfig = VAULT_FLAGS_CONFIG;
      public canCreateVault = signal(false);
+     private readonly tabValidity = signal<Record<string, boolean>>({});
+
+     public setTabValidity(tab: string, valid: boolean): void {
+          this.tabValidity.update(v => (v[tab] === valid ? v : { ...v, [tab]: valid }));
+     }
      public vaultValidationErrors = signal<string[]>([]);
      public resetTrigger = input<number>(0);
      private readonly _lastIntendedDestination = signal<string>('');
@@ -138,7 +144,7 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
                if (tab.key === 'depositVault') {
                     return {
                          ...tab,
-                         label: vaultAction === 'deposit' ? 'Deposit' : 'Withdrawl',
+                         label: vaultAction === 'deposit' ? 'Deposit' : 'Withdrawal',
                          icon: vaultAction === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle',
                          color: vaultAction === 'deposit' ? '#10b981' : '#60a5fa',
                     };
@@ -287,6 +293,11 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      public async performAction(): Promise<void> {
           let currentTab = this.vaultViewModelService.activeTab();
           const wallet = this.currentWallet();
+
+          if (this.tabValidity()[currentTab] === false) {
+               this.toastService.error('Please fix the highlighted validation issues before submitting.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           let env: any = null;
           try {

@@ -54,6 +54,26 @@ export class VaultTransactionBuilderService {
                tx.DomainID = vault.domainId;
           }
 
+          // Closed-ended vaults are required to attach a Loan Broker (LendingProtocolV1_1)
+          if (vault.vaultKind === 'closed') {
+               const rippleEpochOffset = 946684800;
+               const subscription = Math.floor(new Date(vault.subscriptionDate).getTime() / 1000) - rippleEpochOffset;
+               const redemption = Math.floor(new Date(vault.redemptionDate).getTime() / 1000) - rippleEpochOffset;
+               if (!Number.isFinite(subscription) || !Number.isFinite(redemption)) {
+                    throw new Error('Closed-ended vaults require a Subscription Date and a Redemption Date.');
+               }
+               const nowRipple = Math.floor(Date.now() / 1000) - rippleEpochOffset;
+               if (subscription <= nowRipple) {
+                    throw new Error('Subscription Date must be in the future.');
+               }
+               if (redemption - subscription < 180) {
+                    throw new Error('Redemption Date must be at least 3 minutes after the Subscription Date.');
+               }
+               tx.VaultKind = xrpl.VaultKind.vaultKindClosed;
+               tx.SubscriptionDate = subscription;
+               tx.RedemptionDate = redemption;
+          }
+
           return tx;
      }
 
@@ -119,8 +139,12 @@ export class VaultTransactionBuilderService {
                Account: wallet.classicAddress,
                VaultID: selectedVault.result ? selectedVault.result.vault.index : selectedVault.index,
                Amount: amountValue,
-               Destination: vaultState.destination,
           };
+
+          // Destination is optional and defaults to the sender
+          if (vaultState.destination) {
+               tx.Destination = vaultState.destination;
+          }
 
           return tx;
      }

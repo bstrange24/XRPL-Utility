@@ -896,8 +896,8 @@ class GenericPreviewFormatter implements TransactionPreviewFormatter {
 
      getSummary(tx: any, accountInfo?: any) {
           return {
-               title: `${this.txType} Transaction`,
-               description: `Prepare to submit ${this.txType} transaction`,
+               title: `${this.txType || 'XRPL'} Transaction`,
+               description: `Prepare to submit ${this.txType || 'XRPL'} transaction`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }

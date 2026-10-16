@@ -80,7 +80,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 512 bytes.</p>
+                         <p class="text-secondary">Arbitrary metadata in hex format. Limited to 256 bytes.</p>
                          <button type="button" (click)="toggleDataHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -94,7 +94,7 @@
 
                     @if (data && data.length > 0) {
                     <div class="mt-2">
-                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 512 bytes limit' }}</p>
+                         <p class="text-xs" [class.text-green-600]="isDataValid()" [class.text-red-600]="isDataInvalid()">{{ isDataValid() ? '✅ Valid data' : '❌ Data exceeds 256 bytes limit' }}</p>
                          <p class="text-xs text-gray-500">Bytes: {{ data.length }}</p>
                     </div>
                     }
@@ -115,7 +115,7 @@
                <!-- Debt Maximum -->
                <div>
                     <label class="label-primary">Debt Maximum</label>
-                    <p class="text-secondary text-xs">Maximum amount the protocol can owe the Vault (0 = no limit)</p>
+                    <p class="text-secondary text-xs">Maximum amount the protocol can owe the Vault (in drops for XRP; cannot be 0 on modify)</p>
                     <input type="text" inputmode="decimal" class="input-base" [ngModel]="debtMaximum" (ngModelChange)="debtMaximum = $event" placeholder="e.g. 100000" />
                     @if (debtMaximum && isDebtMaximumInvalid()) {
                     <p class="text-xs text-red-600">Debt Maximum must be a non-negative value</p>

@@ -26,6 +26,9 @@ export interface VaultState {
      cachedVaults: any[];
      shareMpts: any[];
      shareMpt: string;
+     vaultKind: 'open' | 'closed';
+     subscriptionDate: string;
+     redemptionDate: string;
 }
 
 const initialState: VaultState = {
@@ -53,6 +56,9 @@ const initialState: VaultState = {
      cachedVaults: [],
      shareMpts: [],
      shareMpt: '',
+     vaultKind: 'open',
+     subscriptionDate: '',
+     redemptionDate: '',
 };
 
 export const VaultStoreService = signalStore(
@@ -104,6 +110,9 @@ export const VaultStoreService = signalStore(
                     tfVaultShareNonTransferable: false,
                     selectedVaultId: null,
                     shareMpt: '',
+                    vaultKind: 'open',
+                    subscriptionDate: '',
+                    redemptionDate: '',
                });
           },
 

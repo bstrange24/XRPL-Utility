@@ -5,6 +5,7 @@
 
 <div class="p-1">
      <div>
+          <app-workflow-stepper page="vault" [activeTab]="tab"></app-workflow-stepper>
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 
@@ -19,13 +20,13 @@
                @if (tab === 'createVault') {
                <app-vault-create [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" [selectedDestinationAddress]="selectedDestinationAddress()" [wantsOptions]="txUiService.wantsOptions()" [canSubmit]="canSubmit()" [tab]="tab" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" (toggleOptions)="txUiService.toggleOptions($event)"> </app-vault-create>
                } @if (tab === 'deleteVault') {
-               <app-vault-delete></app-vault-delete>
+               <app-vault-delete (canDeleteVaultChange)="setTabValidity('deleteVault', $event)"></app-vault-delete>
                } @if (tab === 'modifyVault') {
-               <app-vault-set></app-vault-set>
+               <app-vault-set (canModifyVaultChange)="setTabValidity('modifyVault', $event)"></app-vault-set>
                } @if (tab === 'clawbackVault') {
-               <app-vault-clawback></app-vault-clawback>
+               <app-vault-clawback (canClawbackVaultChange)="setTabValidity('clawbackVault', $event)"></app-vault-clawback>
                } @if (tab === 'depositVault') {
-               <app-vault-deposit-withdraw [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-vault-deposit-withdraw>
+               <app-vault-deposit-withdraw [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" (canDepositWithdrawChange)="setTabValidity('depositVault', $event)" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-vault-deposit-withdraw>
                }
 
                <!-- Transaction Options -->

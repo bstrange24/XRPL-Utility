@@ -102,8 +102,8 @@ export class TabMenuWithInfoComponent {
 
                return {
                     ...base,
-                    title: action === 'deposit' ? 'Deposit Vault' : 'Withdrawl Vault',
-                    desc: action === 'deposit' ? 'Deposit an asset in the vault.' : 'Withdrawl an asset from the vault.',
+                    title: action === 'deposit' ? 'Deposit Vault' : 'Withdrawal Vault',
+                    desc: action === 'deposit' ? 'Deposit an asset in the vault.' : 'Withdraw an asset from the vault.',
                     icon: action === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle',
                     color: action === 'deposit' ? '#10b981' : '#60a5fa',
                };

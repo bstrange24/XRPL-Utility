@@ -5,6 +5,7 @@
 
 <div class="p-1">
      <div>
+          <app-workflow-stepper page="loan" [activeTab]="tab"></app-workflow-stepper>
           <!-- Menu / Tabs -->
           <app-tab-menu-with-info [tabs]="tabs()" [active]="tab" [metaMap]="tabMeta" (activeChange)="setTab($event)"> </app-tab-menu-with-info>
 

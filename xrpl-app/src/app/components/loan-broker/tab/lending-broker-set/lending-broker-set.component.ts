@@ -193,10 +193,10 @@ export class LendingBrokerSetComponent {
           const currentAddress = this.walletManagerService.getSelectedWallet()?.address;
           const allVaults = this.vaultStoreService.existingVaults();
 
-          // Only show vaults owned by the current wallet
+          // Only closed-ended vaults owned by the current wallet can back a new Loan Broker
           const ownedVaults = allVaults.filter(vault => {
                const owner = vault.owner || vault.Account;
-               return owner === currentAddress;
+               return owner === currentAddress && vault.vaultKind === 1;
           });
 
           return this.vaultUtilService.vaultItems(ownedVaults, currentAddress || '');
@@ -342,7 +342,7 @@ export class LendingBrokerSetComponent {
 
           // Data
           if (this.isDataTouched() && this.data && !this.isDataValid()) {
-               errors.push('Data exceeds 512 bytes limit.');
+               errors.push('Data exceeds 256 bytes limit.');
           }
 
           // Management Fee

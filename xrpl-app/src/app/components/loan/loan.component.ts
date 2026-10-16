@@ -1,3 +1,4 @@
+import { WorkflowStepperComponent } from '../shared/ui-components/workflow-stepper/workflow-stepper.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
@@ -56,7 +57,7 @@ import { LoanBrokerUtilService } from '../../services/loan-broker/loan-broker-ut
 @Component({
      selector: 'app-loan',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, LoanSetComponent, LoanPayComponent, LoanDeleteComponent],
+     imports: [WorkflowStepperComponent, CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, LoanSetComponent, LoanPayComponent, LoanDeleteComponent],
      templateUrl: './loan.component.html',
      styleUrl: './loan.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -200,6 +201,11 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
      public async performAction(): Promise<void> {
           let currentTab = this.loanViewModelService.activeTab();
           let wallet = this.currentWallet();
+
+          if (!this.canPerformAction()) {
+               this.toastService.error('Please fix the validation issues on this tab before submitting.', AppConstants.TOAST.ERROR);
+               return;
+          }
 
           // If creating a loan, ensure we're using the vault owner
           if (currentTab === 'createLoan') {

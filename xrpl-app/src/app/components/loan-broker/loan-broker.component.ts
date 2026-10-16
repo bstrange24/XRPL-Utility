@@ -1,3 +1,4 @@
+import { WorkflowStepperComponent } from '../shared/ui-components/workflow-stepper/workflow-stepper.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
@@ -66,6 +67,7 @@ import { LoanBrokerSummaryComponent } from './ui-components/loan-broker-summary/
      selector: 'app-loan-broker',
      standalone: true,
      imports: [
+          WorkflowStepperComponent,
           CommonModule,
           FormsModule,
           LucideAngularModule,
@@ -232,6 +234,11 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           const currentTab = this.loanBrokerViewModelService.activeTab();
           const wallet = this.currentWallet();
 
+          if (!this.canPerformAction()) {
+               this.toastService.error('Please fix the validation issues on this tab before submitting.', AppConstants.TOAST.ERROR);
+               return;
+          }
+
           let env: any = null;
           try {
                env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
@@ -338,6 +345,19 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
      protected async refreshAccountObject(env: any): Promise<void> {
           const existingBrokers = await this.loanBrokerUtilService.getExistingBrokers(env.accountObjects, env.wallet.classicAddress);
           this.loanBrokerStoreService.setField('existingBrokers', existingBrokers);
+
+          // Loans live under the borrower, so read them from each broker's pseudo-account
+          const brokerLoans: any[] = [];
+          for (const broker of existingBrokers) {
+               if (!broker.Account) continue;
+               try {
+                    const res = (await env.client.request({ command: 'account_objects', account: broker.Account, type: 'loan', ledger_index: 'validated' })) as xrpl.AccountObjectsResponse;
+                    brokerLoans.push(...(await this.lendingUtilService.getExistingLoans(res, env.wallet.classicAddress)));
+               } catch (err) {
+                    console.warn('Failed to load loans for broker', broker.LoanBrokerID, err);
+               }
+          }
+          this.loanStoreService.setField('existingLoans', brokerLoans);
 
           const vaults = await this.vaultUtilService.getExistingVaults(env.accountObjects, env.wallet.classicAddress, this.vaultViewModelService.activeTab());
           this.vaultStoreService.setField('existingVaults', vaults);

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import * as xrpl from 'xrpl';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
@@ -500,7 +501,7 @@ export class VaultClawbackComponent {
           const asset = vault.Asset || vault.SendMax;
 
           if (asset?.currency === 'XRP') {
-               return `${total} XRP`;
+               return `${/^\d+$/.test(String(total)) ? xrpl.dropsToXrp(String(total)) : total} XRP`;
           } else if (asset?.mpt_issuance_id) {
                return `${total} MPT`;
           } else if (asset?.currency && asset?.issuer) {

@@ -216,7 +216,8 @@ export class VaultViewModelService {
                     } as AnyVaultDisplayItem;
                });
 
-          const allVaultsToShow = [...enrichedOwned, ...participatingVaults];
+          // Shares of vaults the wallet owns are already represented by the owned vault entry
+          const allVaultsToShow = [...enrichedOwned, ...participatingVaults.filter(p => !knownVaultShareIds.has(p.shareMPTID))];
 
           console.log('Owned vaults:', enrichedOwned.length);
           console.log('Participating via MPTs Length:', participatingVaults.length);
@@ -225,7 +226,7 @@ export class VaultViewModelService {
 
           return {
                walletName: wallet.name,
-               vaultCount: ownedVaults.length + participatingVaults.length,
+               vaultCount: allVaultsToShow.length,
                vaultsToShow: this.getVaultsForTab(allVaultsToShow, this.activeTab()),
                mpts: allMpts,
                links: this.explorerLinks(),
@@ -240,6 +241,7 @@ export class VaultViewModelService {
           switch (tab) {
                case 'createVault':
                case 'deleteVault':
+               case 'modifyVault':
                     // Only vaults this wallet actually created/owns
                     return vaults.filter(v => v.isOwned === true && (v.owner === currentAddress || v.sender === currentAddress));
 

@@ -64,7 +64,7 @@ const VAULT_META: Record<VaultTxType, VaultTxMeta> = {
                const dest = escrow.destination;
                const shortDest = dest ? `${dest.slice(0, 7)}…${dest.slice(-7)}` : '';
                const destSuffix = shortDest ? ` to ${shortDest}` : '';
-               return `Successfully Withdrawl from the Vault`;
+               return `Successfully withdrew from the Vault`;
           },
      },
      clawbackVault: {

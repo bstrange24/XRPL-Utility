@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { XrplExpirationInputComponent } from '../../../shared/xrpl-expiration-input/xrpl-expiration-input.component';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -36,7 +37,7 @@ import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-tra
 @Component({
      selector: 'app-vault-create',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon, SelectSearchDropdownComponent, ValidationErrorsComponent, InputIconsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, FieldHelperComponent, LucideAngularModule, NgIcon, SelectSearchDropdownComponent, ValidationErrorsComponent, InputIconsComponent, XrplExpirationInputComponent],
      templateUrl: './vault-create.component.html',
      styleUrl: './vault-create.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -375,8 +376,39 @@ export class VaultCreateComponent {
           return true;
      });
 
+     private parseLocalMs(value: string): number {
+          const ms = value ? new Date(value).getTime() : NaN;
+          return ms;
+     }
+
+     // Re-evaluates every second so a date that slips into the past is flagged live
+     private readonly nowTick = signal(Date.now());
+     private readonly nowTimer = setInterval(() => this.nowTick.set(Date.now()), 1000);
+     private readonly destroyRef = inject(DestroyRef);
+     private readonly clearNowTimer = this.destroyRef.onDestroy(() => clearInterval(this.nowTimer));
+
+     subscriptionDateError = computed(() => {
+          if (this.vaultStoreService.vaultKind() !== 'closed') return '';
+          const ms = this.parseLocalMs(this.vaultStoreService.subscriptionDate());
+          if (isNaN(ms)) return 'Subscription Date is required for closed-ended vaults.';
+          if (ms <= this.nowTick()) return 'Subscription Date must be a future date/time.';
+          return '';
+     });
+
+     redemptionDateError = computed(() => {
+          if (this.vaultStoreService.vaultKind() !== 'closed') return '';
+          const redemption = this.parseLocalMs(this.vaultStoreService.redemptionDate());
+          if (isNaN(redemption)) return 'Redemption Date is required for closed-ended vaults.';
+          if (redemption <= this.nowTick()) return 'Redemption Date must be a future date/time.';
+          const subscription = this.parseLocalMs(this.vaultStoreService.subscriptionDate());
+          if (!isNaN(subscription) && redemption < subscription + 3 * 60 * 1000) return 'Redemption Date must be at least 3 minutes after the Subscription Date.';
+          return '';
+     });
+
      validationErrorMessages = computed(() => {
           const errors: string[] = [];
+          if (this.subscriptionDateError()) errors.push(this.subscriptionDateError());
+          if (this.redemptionDateError()) errors.push(this.redemptionDateError());
           const destAddr = this.escrowViewModel.selectedDestinationAddress?.() ?? '';
           const amountStr = this.escrowStoreService.amount()?.trim() ?? '';
 
@@ -415,6 +447,23 @@ export class VaultCreateComponent {
 
      onDestinationValidationChange(isValid: boolean) {
           this.isDestinationValid.set(isValid);
+     }
+
+     setSubscriptionDate = (value: string) => this.vaultStoreService.setField('subscriptionDate', value);
+     setRedemptionDate = (value: string) => this.vaultStoreService.setField('redemptionDate', value);
+
+     onVaultKindChange(kind: 'open' | 'closed') {
+          this.vaultStoreService.setField('vaultKind', kind);
+          if (kind === 'closed') {
+               // Local time formatted for datetime-local inputs
+               const format = (minutesAhead: number) => {
+                    const d = new Date(Date.now() + minutesAhead * 60000);
+                    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                    return d.toISOString().slice(0, 16);
+               };
+               if (!this.vaultStoreService.subscriptionDate()) this.vaultStoreService.setField('subscriptionDate', format(5));
+               if (!this.vaultStoreService.redemptionDate()) this.vaultStoreService.setField('redemptionDate', format(15));
+          }
      }
 
      toggleCurrencyCodeHelper() {

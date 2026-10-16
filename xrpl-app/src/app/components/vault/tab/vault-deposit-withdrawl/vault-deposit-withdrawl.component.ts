@@ -423,10 +423,10 @@ export class VaultDepositWithdrawComponent {
           const vault = this.getSelectedVault();
           if (!vault) return 'N/A';
 
-          const total = vault.AssetsTotal || '0';
           const asset = vault.Asset || vault.SendMax;
+          const total = this.toAssetUnits(vault.AssetsTotal || '0', asset);
 
-          if (asset?.currency === 'XRP') {
+          if (this.isXrpAsset(asset)) {
                return `${total} XRP`;
           } else if (asset?.mpt_issuance_id) {
                return `${total} MPT`;
@@ -441,19 +441,32 @@ export class VaultDepositWithdrawComponent {
           const vault = this.getSelectedVault();
           if (!vault) return '0';
 
-          const total = parseFloat(vault.AssetsTotal || '0');
-          const withdrawn = parseFloat(vault.AssetsWithdrawn || '0');
-          return (total - withdrawn).toString();
+          const asset = vault.Asset || vault.SendMax;
+          const available = vault.AssetsAvailable ?? parseFloat(vault.AssetsTotal || '0') - parseFloat(vault.AssetsWithdrawn || '0');
+          return this.toAssetUnits(available, asset);
+     }
+
+     private isXrpAsset(asset: any): boolean {
+          return asset === 'XRP' || asset?.currency === 'XRP';
+     }
+
+     // Vault totals for XRP are stored in drops, while users enter XRP.
+     private toAssetUnits(raw: string | number, asset: any): string {
+          const value = String(raw ?? '0');
+          if (!this.isXrpAsset(asset)) return value;
+          const drops = Number(value);
+          if (!Number.isFinite(drops)) return value;
+          return String(xrpl.dropsToXrp(Math.trunc(drops).toString()));
      }
 
      public selectedVaultMaximumAmount(): string {
           const vault = this.getSelectedVault();
           if (!vault) return 'N/A';
 
-          const max = vault.AssetsMaximum || vault.AssetsMaximum || '0';
           const asset = vault.Asset || vault.SendMax;
+          const max = this.toAssetUnits(vault.AssetsMaximum || '0', asset);
 
-          if (asset?.currency === 'XRP') {
+          if (this.isXrpAsset(asset)) {
                return `${max} XRP`;
           } else if (asset?.mpt_issuance_id) {
                return `${max} MPT`;
@@ -469,8 +482,11 @@ export class VaultDepositWithdrawComponent {
           if (!vault) return '0';
 
           const max = parseFloat(vault.AssetsMaximum || '0');
+          // A maximum of 0 means the vault has no cap
+          if (!max) return 'Unlimited';
+
           const total = parseFloat(vault.AssetsTotal || '0');
-          return (max - total).toString();
+          return this.toAssetUnits(max - total, vault.Asset || vault.SendMax);
      }
 
      public getAssetType(): string {
@@ -695,9 +711,8 @@ export class VaultDepositWithdrawComponent {
                     return false;
                }
           } else {
-               // For withdrawal, destination is required
-               const hasDestination = !!this.vaultStoreService.destination() && this.isDestinationValid();
-               if (!hasDestination) return false;
+               // For withdrawal, destination is optional (defaults to the sender) but must be valid if provided
+               if (this.vaultStoreService.destination() && !this.isDestinationValid()) return false;
 
                // Check if amount exceeds available balance
                const availableBalance = parseFloat(this.selectedVaultAvailableBalance());
@@ -745,7 +760,7 @@ export class VaultDepositWithdrawComponent {
 
           // Only show destination errors if touched and action is withdraw
           if (this.isDestinationTouched() && this.vaultStoreService.vaultAction() === 'withdraw') {
-               if (!this.vaultStoreService.destination() || !this.isDestinationValid()) {
+               if (this.vaultStoreService.destination() && !this.isDestinationValid()) {
                     errors.push('Please enter a valid destination address.');
                }
           }
