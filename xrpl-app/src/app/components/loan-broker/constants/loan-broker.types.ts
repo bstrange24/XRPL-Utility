@@ -1,7 +1,7 @@
 export type LoanBrokerActionTypes = 'createBroker' | 'modifyBroker' | 'deleteBroker' | 'coverWithdraw' | 'coverDeposit' | 'coverClawback' | 'modifyLoan' | 'impairLoan' | 'unimpairLoan' | 'defaultLoan';
 export const LOAN_BROKER_TAB = ['createBroker', 'modifyBroker', 'deleteBroker', 'coverWithdraw', 'coverDeposit', 'coverClawback', 'modifyLoan', 'impairLoan', 'unimpairLoan', 'defaultLoan'] as const;
 
-export type LoanBrokerTxType = 'createBroker' | 'modifyBroker' | 'deleteBroker' | 'coverWithdraw' | 'coverDeposit' | 'coverClawback' | 'modifyLoan' | 'impairLoan' | 'unimpairLoan' | 'defaultLoan';
+export type LoanBrokerTxType = 'createBroker' | 'modifyBroker' | 'deleteBroker' | 'coverWithdraw' | 'coverDeposit' | 'coverClawback' | 'impairLoan' | 'unimpairLoan' | 'defaultLoan';
 
 export interface LoanBrokerSet {
      TransactionType: 'LoanBrokerSet';

@@ -13,4 +13,12 @@ describe('LoanBrokerTransactionOrchestratorService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('includes the selected loan ID in loan-management simulation feedback', () => {
+    const successSpy = spyOn(service.toastService, 'success');
+
+    service.handleSimulationSuccess('impairLoan', {}, undefined, { selectedLoanId: 'loan-123' });
+
+    expect(successSpy.calls.mostRecent().args[0]).toContain('loan-123');
+  });
 });

@@ -27,7 +27,10 @@
                } @else if (tab === 'coverDeposit') {
                <app-lending-broker-cover-deposit (canCoverDepositChange)="onCanCoverDepositChange($event)" />
                } @else if (tab === 'modifyLoan') {
-               <app-loan-manage (canModifyLoanChange)="onCanModifyLoanChange($event)"></app-loan-manage>
+               <div role="status" class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                    <h3 class="font-semibold">Loan modification is unavailable</h3>
+                    <p class="mt-1">XRPL does not currently support updating an existing loan's terms or metadata.</p>
+               </div>
                }@else if (tab === 'impairLoan') {
                <app-loan-impair (canImpairLoanChange)="onCanImpairLoanChange($event)" />
                } @else if (tab === 'unimpairLoan') {
@@ -39,7 +42,7 @@
                }
 
                <!-- Transaction Options -->
-               <app-transaction-options [showWhenTab]="['createBroker', 'modifyBroker', 'deleteBroker']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+               <app-transaction-options [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
 
                <!-- Action Buttons -->
                <div class="main-button-section">
@@ -56,12 +59,20 @@
                          <button type="button" class="btn-blue" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.coverClawbackButtonLabel() }}</button>
                          }@else if (tab === 'deleteBroker') {
                          <button type="button" class="btn-red" (click)="performAction()" [disabled]="false">{{ loanBrokerUtilService.deleteBrokerButtonLabel() }}</button>
+                         } @else if (tab === 'defaultLoan') {
+                         <button type="button" class="btn-red" (click)="performAction()" [disabled]="false">{{ lendingUtilService.defaultLoanButtonLabel() }}</button>
+                         } @else if (tab === 'impairLoan') {
+                         <button type="button" class="btn-blue" (click)="performAction()" [disabled]="false">{{ lendingUtilService.impairLoanButtonLabel() }}</button>
+                         } @else if (tab === 'unimpairLoan') {
+                         <button type="button" class="btn-green" (click)="performAction()" [disabled]="false">{{ lendingUtilService.unimpairLoanButtonLabel() }}</button>
                          }
                     </app-button-tooltip>
 
                     <!-- Clear Fields -->
                     <div class="right-buttons">
+                         @if (tab !== 'modifyLoan') {
                          <button type="button" (click)="clearInputFields()" [disabled]="!isIdle() || !hasWallets()" class="btn-secondary">Clear Fields</button>
+                         }
                     </div>
                </div>
 

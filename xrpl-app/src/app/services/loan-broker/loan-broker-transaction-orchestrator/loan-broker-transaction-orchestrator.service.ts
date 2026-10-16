@@ -78,16 +78,6 @@ const LOAN_BROKER_META: Record<LoanBrokerTxType, LoanBrokerTxMeta> = {
           },
      },
 
-     modifyLoan: {
-          buildTx: ({ orchestrator, env, wallet, loan }) => orchestrator.loanTransactionBuilderService.buildLoanSetTx(env.wallet || wallet, env, loan),
-          simulationToastMessage: ({ orchestrator, loan }) => `Simulated modifying Loan ${loan.selectedLoanId || 'N/A'}`,
-          successMessage: ({ orchestrator, loan }) => {
-               const loanId = loan.selectedLoanId || '';
-               const shortId = loanId.length > 16 ? `${loanId.slice(0, 8)}...${loanId.slice(-8)}` : loanId;
-               return `Successfully modified Loan ${shortId}`;
-          },
-     },
-
      impairLoan: {
           buildTx: ({ orchestrator, env, wallet, loan }) => orchestrator.loanTransactionBuilderService.buildLoanManageTx(env.wallet || wallet, env, { ...loan, tfLoanImpair: true }),
           simulationToastMessage: ({ orchestrator, loan }) => `Simulated impairing Loan ${loan.selectedLoanId || 'N/A'}`,
@@ -219,7 +209,7 @@ export class LoanBrokerTransactionOrchestratorService {
                     buildTx: () => tx as any,
                });
 
-               if (!submitOrSimResult.success) {
+               if (submitOrSimResult.success === false) {
                     return { success: false, error: submitOrSimResult.error };
                }
 
@@ -227,14 +217,14 @@ export class LoanBrokerTransactionOrchestratorService {
 
                // Simulated toast
                if (submitOrSimResult.mode === 'simulate') {
-                    return this.handleSimulationSuccess(type, broker, txHash);
+                    return this.handleSimulationSuccess(type, broker, txHash, loan);
                }
 
                // Final validated outcome
                const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, txHash!, (tx as any).LastLedgerSequence);
                this.txUiService.setTxResultSignal(finalResult);
 
-               const message = meta.successMessage({ orchestrator: this, broker });
+               const message = meta.successMessage({ orchestrator: this, broker, loan });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, {
                     success: true,
                     hash: txHash,
@@ -254,10 +244,11 @@ export class LoanBrokerTransactionOrchestratorService {
           }
      }
 
-     handleSimulationSuccess(type: LoanBrokerTxType, broker: any, hash?: string): { success: boolean; hash?: string } {
+     handleSimulationSuccess(type: LoanBrokerTxType, broker: any, hash?: string, loan?: any): { success: boolean; hash?: string } {
           const msg = LOAN_BROKER_META[type].simulationToastMessage({
                orchestrator: this,
                broker,
+               loan,
           });
 
           this.txUiService.resetCurrentStepToIdle();

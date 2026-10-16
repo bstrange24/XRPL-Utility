@@ -175,6 +175,13 @@ describe('TransactionOptionsComponent', () => {
                fixture.detectChanges();
                expect(component.showPanel()).toBeFalse();
           });
+
+         it('should hide the options panel when the active tab is not allowed', () => {
+              fixture.componentRef.setInput('activeTab', () => 'deleteLoan');
+              fixture.componentRef.setInput('showWhenTab', ['createLoan']);
+              fixture.detectChanges();
+              expect(fixture.nativeElement.textContent).not.toContain('Transaction Options');
+         });
      });
 
      describe('ticketItems', () => {

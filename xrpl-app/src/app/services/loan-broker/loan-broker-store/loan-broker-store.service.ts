@@ -54,7 +54,9 @@ export const LoanBrokerStoreService = signalStore(
                     debtMaximum: '',
                     coverRateMinimum: null,
                     coverRateLiquidation: null,
+                    selectedBrokerId: null,
                     brokerIdSearchQuery: '',
+                    manuallyFetchedBroker: null,
                });
           },
 

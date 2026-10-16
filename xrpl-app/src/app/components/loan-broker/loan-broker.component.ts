@@ -2,64 +2,65 @@ import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import * as xrpl from 'xrpl';
+import { ActivatedRoute } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
-import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
-import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
-import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
-import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
-import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
-import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { LendingBrokerModifyComponent } from './tab/lending-broker-modify/lending-broker-modify.component';
-import { LendingBrokerSetComponent } from './tab/lending-broker-set/lending-broker-set.component';
-import { LendingBrokerDeleteComponent } from './tab/lending-broker-delete/lending-broker-delete.component';
+import * as xrpl from 'xrpl';
+
+import { AppConstants } from '../../core/app.constants';
+import { DropdownItem } from '../../models/dropdown-item.model';
+import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { CheckTransactionOrchestrator } from '../../services/checks/checks-transaction-orchestrator/checks-transaction-orchestrator.service';
 import { CheckUtilService } from '../../services/checks/checks-util/check-util.service';
 import { CurrencyStoreService } from '../../services/currency/currency-store/currency-store.service';
+import { LoanStoreService } from '../../services/loan/loan-store/loan-store.service';
 import { LoanUtilService } from '../../services/loan/loan-util/loan-util.service';
 import { LoanViewModelService } from '../../services/loan/loan-view-model/loan-view-model.service';
+import { LoanBrokerStoreService } from '../../services/loan-broker/loan-broker-store/loan-broker-store.service';
+import { LoanBrokerTransactionOrchestratorService } from '../../services/loan-broker/loan-broker-transaction-orchestrator/loan-broker-transaction-orchestrator.service';
+import { LoanBrokerUtilService } from '../../services/loan-broker/loan-broker-util/loan-broker-util.service';
+import { LoanBrokerViewModelService } from '../../services/loan-broker/loan-broker-view-model/loan-broker-view-model.service';
 import { MptOrchestratorServiceService } from '../../services/mpt/mpt-orchestrator/mpt-orchestrator.service.service';
 import { MptStoreService } from '../../services/mpt/mpt-store/mpt-store.service';
 import { MptUtilService } from '../../services/mpt/mpt-util/mpt-util.service';
 import { ConnectionGuardService } from '../../services/shared/connection-guard/connection-guard.service';
+import { StorageService } from '../../services/shared/local-storage/storage.service';
+import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
+import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
+import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
 import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
+import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
 import { DownloadUtilService } from '../../services/utils/download-util/download-util.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
+import { ToastService } from '../../services/utils/toast/toast.service';
 import { VaultCacheService } from '../../services/vault/vault-cache/vault-cache.service';
 import { VaultStoreService } from '../../services/vault/vault-store/vault-store.service';
 import { VaultUtilService } from '../../services/vault/vault-util/vault-util.service';
 import { VaultViewModelService } from '../../services/vault/vault-view-model/vault-view-model.service';
 import { Wallet, WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
+import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { XrplTransactionService } from '../../services/xrpl-transactions/xrpl-transaction.service';
-import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
-import { ActivatedRoute } from '@angular/router';
-import { AcccountDataService } from '../../services/account-data/acccount-data.service';
-import { StorageService } from '../../services/shared/local-storage/storage.service';
-import { TransactionDropdownService } from '../../services/transaction-dropdown/transaction-dropdown.service';
-import { TxEnvironmentService } from '../../services/transaction-environment/tx-environment.service';
-import { CopyUtilService } from '../../services/utils/copy-util/copy-util.service';
-import { ToastService } from '../../services/utils/toast/toast.service';
-import { WalletDataService } from '../../services/wallets/refresh-wallet/refresh-wallets.service';
-import { LOAN_BROKER_TAB, LoanBrokerConfig } from './constants/loan-broker.types';
-import { DropdownItem } from '../../models/dropdown-item.model';
-import { AppConstants } from '../../core/app.constants';
-import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
-import { LoanBrokerSummaryComponent } from './ui-components/loan-broker-summary/loan-broker-summary.component';
-import { LoanBrokerUtilService } from '../../services/loan-broker/loan-broker-util/loan-broker-util.service';
-import { LoanBrokerViewModelService } from '../../services/loan-broker/loan-broker-view-model/loan-broker-view-model.service';
-import { LendingBrokerCoverWithdrawComponent } from './tab/lending-broker-cover-withdraw/lending-broker-cover-withdraw.component';
-import { LendingBrokerCoverDepositComponent } from './tab/lending-broker-cover-deposit/lending-broker-cover-deposit.component';
-import { LendingBrokerCoverClawbackComponent } from './tab/lending-broker-cover-clawback/lending-broker-cover-clawback.component';
-import { LOAN_BROKER_TAB_META, LOAN_BROKER_TABS } from './constants/loan-broker.ui';
-import { LoanBrokerTransactionOrchestratorService } from '../../services/loan-broker/loan-broker-transaction-orchestrator/loan-broker-transaction-orchestrator.service';
-import { LoanBrokerStoreService } from '../../services/loan-broker/loan-broker-store/loan-broker-store.service';
 import { LoanDefaultComponent } from '../loan/tab/loan-default/loan-default.component';
 import { LoanImpairComponent } from '../loan/tab/loan-impair/loan-impair.component';
 import { LoanUnimpairComponent } from '../loan/tab/loan-unimpair/loan-unimpair.component';
-import { LoanManageComponent } from '../loan/tab/loan-manage/loan-manage.component';
+import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
+import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
+import { TransactionPreviewComponent } from '../shared/transaction-preview/transaction-preview.component';
+import { ExecutionTimeDisplayComponent } from '../shared/ui-components/execution-time/execution-time.component';
+import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { TabMenuWithInfoComponent } from '../shared/ui-components/tab-with-menu/tab-with-info.component';
+import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
+import { LOAN_BROKER_TAB, LoanBrokerConfig } from './constants/loan-broker.types';
+import { LOAN_BROKER_TAB_META, LOAN_BROKER_TABS } from './constants/loan-broker.ui';
+import { LendingBrokerCoverClawbackComponent } from './tab/lending-broker-cover-clawback/lending-broker-cover-clawback.component';
+import { LendingBrokerCoverDepositComponent } from './tab/lending-broker-cover-deposit/lending-broker-cover-deposit.component';
+import { LendingBrokerCoverWithdrawComponent } from './tab/lending-broker-cover-withdraw/lending-broker-cover-withdraw.component';
+import { LendingBrokerDeleteComponent } from './tab/lending-broker-delete/lending-broker-delete.component';
+import { LendingBrokerModifyComponent } from './tab/lending-broker-modify/lending-broker-modify.component';
+import { LendingBrokerSetComponent } from './tab/lending-broker-set/lending-broker-set.component';
+import { LoanBrokerSummaryComponent } from './ui-components/loan-broker-summary/loan-broker-summary.component';
 
 @Component({
      selector: 'app-loan-broker',
@@ -84,7 +85,6 @@ import { LoanManageComponent } from '../loan/tab/loan-manage/loan-manage.compone
           LoanDefaultComponent,
           LoanImpairComponent,
           LoanUnimpairComponent,
-          LoanManageComponent,
      ],
      templateUrl: './loan-broker.component.html',
      styleUrl: './loan-broker.component.css',
@@ -115,6 +115,7 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
      public readonly loanBrokerUtilService = inject(LoanBrokerUtilService);
      public readonly loanBrokerTransactionOrchestratorService = inject(LoanBrokerTransactionOrchestratorService);
      public readonly loanBrokerStoreService = inject(LoanBrokerStoreService);
+     public readonly loanStoreService = inject(LoanStoreService);
 
      public readonly tabs = LOAN_BROKER_TABS;
      public readonly tabMeta = LOAN_BROKER_TAB_META;
@@ -129,7 +130,6 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
      public canCreateBroker = signal(false);
      public canCoverDeposit = signal(false);
      public canCoverClawback = signal(false);
-     public canModifyLoan = signal(false);
      public canDefaultLoan = signal(false);
      public canImpairLoan = signal(false);
      public canUnimpairLoan = signal(false);
@@ -145,7 +145,7 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           });
      }
 
-     activeTabForRequirements = computed(() => this.vaultViewModelService.activeTab());
+     activeTabForRequirements = computed(() => this.loanBrokerViewModelService.activeTab());
      readonly summaryExpanded = signal<boolean>(false);
 
      ngOnInit(): void {
@@ -219,8 +219,8 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
-                    console.error('Failed to get vaults:', error);
-                    this.toastService.error(error.message || 'Failed to get vaults', AppConstants.TOAST.ERROR);
+                    console.error('Failed to get loan brokers:', error);
+                    this.toastService.error(error.message || 'Failed to get loan brokers', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
                     this.txUiService.resetCurrentStepToIdle();
@@ -254,6 +254,7 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
           const brokerState = this.loanBrokerStoreService.getAll();
+          const loanState = this.loanStoreService.getAll();
 
           // Get destination info for withdraw
           let destinationAddress = '';
@@ -273,6 +274,7 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                     destination: destinationAddress,
                     destinationTag: destinationTag,
                },
+               loan: loanState,
                account: accountState,
                wallet: wallet,
                preFetchedEnv: env,
@@ -304,9 +306,6 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                               break;
                          case 'coverClawback':
                               txResult = await this.loanBrokerTransactionOrchestratorService.executeLoanBrokerTx('coverClawback', config);
-                              break;
-                         case 'modifyLoan':
-                              txResult = await this.loanBrokerTransactionOrchestratorService.executeLoanBrokerTx('modifyLoan', config);
                               break;
                          case 'impairLoan':
                               txResult = await this.loanBrokerTransactionOrchestratorService.executeLoanBrokerTx('impairLoan', config);
@@ -413,10 +412,6 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           this.canDefaultLoan.set(isValid);
      }
 
-     onCanModifyLoanChange(isValid: boolean) {
-          this.canModifyLoan.set(isValid);
-     }
-
      onCanImpairLoanChange(isValid: boolean) {
           this.canImpairLoan.set(isValid);
      }
@@ -441,8 +436,6 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                     return this.canCoverDeposit();
                case 'coverClawback':
                     return this.canCoverClawback();
-               case 'modifyLoan':
-                    return this.canModifyLoan();
                case 'defaultLoan':
                     return this.canDefaultLoan();
                case 'impairLoan':
@@ -509,11 +502,14 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.trustlineCurrencyService.selectIssuer('XRP');
           this.txUiService.disableAdditionalFields();
+          this.loanBrokerStoreService.resetFormFields();
+          this.loanStoreService.resetFormFields();
+          this.loanBrokerViewModelService.selectedDestinationTag.set(null);
 
-          // Reset form fields but keep existing vaults
           this.vaultStoreService.setField('amount', '');
           this.vaultStoreService.setField('vaultMetaData', '');
           this.vaultStoreService.setField('selectedVaultId', null);
           this.vaultStoreService.setField('vaultAmount', '');
+          this.vaultStoreService.setField('destination', '');
      }
 }

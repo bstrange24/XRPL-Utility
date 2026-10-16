@@ -247,11 +247,20 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
                return;
           }
 
-          let result = await this.xrplCacheService.getBrokerInfo(env.client, this.loanStoreService.loanBrokerId());
-          this.loanBrokerStoreService.setField('existingBrokers', [result.result.node]);
+          if (currentTab === 'payLoan') {
+               try {
+                    const brokerResult = await this.xrplCacheService.getBrokerInfo(env.client, this.loanStoreService.loanBrokerId());
+                    const broker = brokerResult.result.node;
+                    const vaultResult = await this.xrplCacheService.getVaultInfo(env.client, broker.VaultID);
 
-          result = await this.xrplCacheService.getVaultInfo(env.client, result.result.node.VaultID);
-          this.vaultStoreService.setField('existingVaults', [result.result.vault]);
+                    this.loanBrokerStoreService.setField('existingBrokers', [broker]);
+                    this.vaultStoreService.setField('existingVaults', [vaultResult.result.vault]);
+               } catch (error) {
+                    console.error('Failed to load the selected loan broker and vault:', error);
+                    this.toastService.error(error instanceof Error ? error.message : 'Failed to load the selected loan details.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+          }
 
           const assetType = this.loanUtilService.getLoanAssetType();
           this.loanStoreService.setField('assetType', assetType);
@@ -446,8 +455,8 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
           this.destinationSearchQuery.set('');
           this.selectedDestinationAddress.set('');
           this.txUiService.disableAdditionalFields();
+          this.loanStoreService.resetFormFields();
 
-          // Reset form fields but keep existing vaults
           this.vaultStoreService.setField('amount', '');
           this.vaultStoreService.setField('vaultMetaData', '');
           this.vaultStoreService.setField('selectedVaultId', null);

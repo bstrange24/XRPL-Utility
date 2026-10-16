@@ -165,7 +165,7 @@ export const LOAN_BROKER_TAB_META: Record<
           icon: 'heroArrowPath',
           colorClass: 'green-button-submenu',
           title: 'Modify Loan',
-          desc: 'Modify a previously created Loan.',
+          desc: "Unavailable: XRPL does not support modifying an existing loan's terms or metadata.",
           color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,

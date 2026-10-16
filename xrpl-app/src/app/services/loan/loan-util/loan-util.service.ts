@@ -470,6 +470,20 @@ export class LoanUtilService {
           return this.txUiService.stepMessage();
      });
 
+     readonly impairLoanButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Impair Loan';
+          if (step === 'waiting_validation') return 'Impair Loan';
+          return this.txUiService.stepMessage();
+     });
+
+     readonly unimpairLoanButtonLabel = computed(() => {
+          const step = this.txUiService.currentStep();
+          if (step === 'idle') return 'Unimpair Loan';
+          if (step === 'waiting_validation') return 'Unimpair Loan';
+          return this.txUiService.stepMessage();
+     });
+
      readonly deleteLoanButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();
           if (step === 'idle') return 'Delete Loan';
