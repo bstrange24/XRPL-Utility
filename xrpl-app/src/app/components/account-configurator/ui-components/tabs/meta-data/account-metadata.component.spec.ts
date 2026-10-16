@@ -31,6 +31,7 @@ describe('AccountMetadataComponent', () => {
 
           accountConfiguratorStoreService = {
                nfTokenMinterAddress: signal(''),
+               delegatorAddress: signal(''),
                transferRate: signal(''),
                number: signal(0),
                domain: signal(''),
@@ -81,6 +82,26 @@ describe('AccountMetadataComponent', () => {
 
      it('should create', () => {
           expect(component).toBeTruthy();
+     });
+
+     describe('delegate option', () => {
+          it('should be disabled by default', () => {
+               expect(component.isDelegateOptionEnabled()).toBeFalse();
+          });
+
+          it('should clear the delegator address when disabled', () => {
+               component.onDelegateToggled(true);
+               component.onDelegateToggled(false);
+
+               expect(component.isDelegateOptionEnabled()).toBeFalse();
+               expect(accountConfiguratorStoreService.setField).toHaveBeenCalledWith('delegatorAddress', '');
+          });
+
+          it('should require a delegator address when enabled', () => {
+               component.onDelegateToggled(true);
+
+               expect(component.isDelegatorInvalid()).toBeTrue();
+          });
      });
 
      describe('Input properties', () => {

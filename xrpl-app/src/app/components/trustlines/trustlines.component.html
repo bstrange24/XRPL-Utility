@@ -25,9 +25,7 @@
                     <!-- Main Form Area (Left) -->
                     <div class="min-w-0 flex-1">
                          <!-- Currency Flow Section -->
-                         @if (tab === 'setTrustline') {
-                         <app-trustline-delegate></app-trustline-delegate>
-                         } @if (isCurrencyFlow() && !isDelegating()) {
+                         @if (isCurrencyFlow() && !isDelegating()) {
                          <div class="card-base">
                               <app-currency-form-section
                                    #currencyFormRef
@@ -104,7 +102,15 @@
                <!-- Transaction Options -->
                @if (tab !== 'addNewIssuers') {
                <div class="mt-6">
-                    <app-transaction-options [showWhenTab]="['setTrustline', 'removeTrustline', 'issueCurrency', 'clawbackTokens']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
+                    <app-transaction-options [showWhenTab]="['setTrustline', 'removeTrustline', 'issueCurrency', 'clawbackTokens']" [activeTab]="view.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()">
+                         @if (tab === 'setTrustline') {
+                         <app-toggle-slider delegateOption [checked]="isDelegateOptionEnabled()" (checkedChange)="onDelegateOptionToggled($event)"> Delegate </app-toggle-slider>
+                         }
+
+                         @if (tab === 'setTrustline') {
+                         <app-trustline-delegate delegateDetails [enabled]="isDelegateOptionEnabled()"></app-trustline-delegate>
+                         }
+                    </app-transaction-options>
                </div>
                }
 

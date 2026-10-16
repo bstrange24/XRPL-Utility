@@ -51,11 +51,12 @@ import { FlagSelectorComponent } from '../shared/flag-selector/flag-selector.com
 import { DialogService } from '../../services/shared/dialog/dialog.service';
 import { MptAuthorizedStorageService } from '../../services/mpt/mpt-authorized-storage/mpt-authorized-storage.service';
 import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
+import { ToggleSliderComponent } from '../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-mpt',
      standalone: true,
-     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, FlagSelectorComponent, MptDelegateComponent],
+     imports: [CommonModule, FormsModule, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, MptAuthorizeUnauthorizeComponent, MptLockUnlockComponent, MptSendComponent, MptDestroyComponent, MptClawbackComponent, MptCreateComponent, FlagSelectorComponent, MptDelegateComponent, ToggleSliderComponent],
      templateUrl: './mpt.component.html',
      styleUrl: './mpt.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -73,6 +74,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
      public readonly mptTransactionViewModelService = inject(MptTransactionViewModelService);
      public readonly mptStoreService = inject(MptStoreService);
+     readonly delegateOptionEnabled = signal(false);
      private readonly rightPanelService = inject(RightPanelService);
      private readonly dialogService = inject(DialogService);
      private readonly authorizedStorage = inject(MptAuthorizedStorageService);
@@ -502,6 +504,12 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           }
           this.selectedDestinationAddress.set('');
           this.mptStoreService.resetMptFields();
+          this.delegateOptionEnabled.set(false);
+     }
+
+     onDelegateOptionToggled(enabled: boolean): void {
+          this.delegateOptionEnabled.set(enabled);
+          if (!enabled) this.mptStoreService.setField('delegatorAddress', '');
      }
 
      public canPerformAction = computed(() => {
@@ -509,6 +517,8 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           if (!idle || !this.hasWallets()) return false;
 
           const tab = this.mptTransactionViewModelService.activeTab();
+          const isDelegateTab = tab === 'sendMpt' || tab === 'lockMpt' || tab === 'unlockMpt';
+          if (isDelegateTab && this.isDelegateOptionEnabled() && this.isDelegatorInvalid()) return false;
 
           // Force strong reactivity by reading ALL key signals
           const mptId = this.mptStoreService.mptIssuanceId() ?? '';
@@ -539,6 +549,13 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                default:
                     return false;
           }
+     });
+
+     readonly isDelegateOptionEnabled = computed(() => this.delegateOptionEnabled() || !!this.mptStoreService.delegatorAddress()?.trim());
+     readonly isDelegatorInvalid = computed(() => {
+          if (!this.isDelegateOptionEnabled()) return false;
+          const address = this.mptStoreService.delegatorAddress()?.trim();
+          return !address || !xrpl.isValidAddress(address) || address === this.currentWallet()?.address;
      });
 
      getButtonTooltip(): string {

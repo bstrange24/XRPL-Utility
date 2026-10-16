@@ -18,11 +18,12 @@ import { FieldHelperComponent } from '../../../../shared/field-helper/field-help
 import { ButtonTooltipComponent } from '../../../../shared/button-tooltip/button-tooltip.component';
 import { InputIconsComponent } from '../../../../shared/input-icons/input-icons.component';
 import { ValidationErrorsComponent } from '../../../../shared/validation-errors/validation-errors.component';
+import { ToggleSliderComponent } from '../../../../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-account-metadata',
      standalone: true,
-     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent, InputIconsComponent, ValidationErrorsComponent],
+     imports: [CommonModule, FormsModule, FocusBorderDirective, LucideAngularModule, NgIcon, TransactionOptionsComponent, FieldHelperComponent, ButtonTooltipComponent, InputIconsComponent, ValidationErrorsComponent, ToggleSliderComponent],
      templateUrl: './account-metadata.component.html',
      styleUrl: './account-metadata.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -79,11 +80,14 @@ export class AccountMetadataComponent {
      readonly isDomainTooLong = computed(() => this.domainHexLengthBytes() > 256);
 
      // Delegation: submit the update as another account that granted this wallet permissions
+     readonly delegateOptionEnabled = signal(false);
      readonly isDelegating = computed(() => !!this.accountConfiguratorStoreService.delegatorAddress()?.trim());
+     readonly isDelegateOptionEnabled = computed(() => this.delegateOptionEnabled() || this.isDelegating());
 
      isDelegatorInvalid = computed(() => {
+          if (!this.isDelegateOptionEnabled()) return false;
           const address = this.accountConfiguratorStoreService.delegatorAddress()?.trim();
-          if (!address) return false;
+          if (!address) return true;
           return !xrpl.isValidAddress(address) || address === this.walletManagerService.getSelectedWallet()?.address;
      });
 
@@ -210,6 +214,7 @@ export class AccountMetadataComponent {
      }
 
      clearDelegatorField() {
+          this.delegateOptionEnabled.set(false);
           this.accountConfiguratorStoreService.setField('delegatorAddress', '');
      }
 
@@ -218,6 +223,11 @@ export class AccountMetadataComponent {
      }
 
      // Toggle Methods
+     onDelegateToggled(enabled: boolean) {
+          this.delegateOptionEnabled.set(enabled);
+          if (!enabled) this.clearDelegatorField();
+     }
+
      toggleNftMinterHelper() {
           this.showNftMinterHelper.set(!this.showNftMinterHelper());
      }

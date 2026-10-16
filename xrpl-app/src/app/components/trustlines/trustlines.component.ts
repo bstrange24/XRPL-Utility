@@ -47,11 +47,12 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { TrustlinesSummaryComponent } from './ui-components/trustline-summary/trustlines-summary.component';
 import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
+import { ToggleSliderComponent } from '../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-trustlines',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, TrustlineDelegateComponent],
+     imports: [CommonModule, FormsModule, NgIcon, LucideAngularModule, ButtonTooltipComponent, OverlayModule, TransactionPreviewComponent, CurrencyFormSectionComponent, ExecutionTimeDisplayComponent, TabMenuWithInfoComponent, WarningMessageComponent, TransactionOptionsComponent, TrustlineFlagsComponent, TrustlineIssuersComponent, TrustlineIssueComponent, TrustlineClawbackComponent, TrustlineDelegateComponent, ToggleSliderComponent],
      templateUrl: './trustlines.component.html',
      styleUrl: './trustlines.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +78,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      private isSwitchingWallet = false;
      activeTabForRequirements = computed(() => this.trustlineViewModelService.activeTab());
      readonly summaryExpanded = signal<boolean>(false);
+     readonly delegateOptionEnabled = signal(false);
      private readonly currentWalletAddress = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
@@ -348,7 +350,17 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
      });
 
-     readonly isDelegating = computed(() => this.trustlineViewModelService.activeTab() === 'setTrustline' && !!this.trustlineStoreService.delegatorAddress()?.trim());
+     readonly isDelegateOptionEnabled = computed(() => this.trustlineViewModelService.activeTab() === 'setTrustline' && (this.delegateOptionEnabled() || !!this.trustlineStoreService.delegatorAddress()?.trim()));
+     readonly isDelegating = computed(() => this.isDelegateOptionEnabled());
+
+     onDelegateOptionToggled(enabled: boolean): void {
+          this.delegateOptionEnabled.set(enabled);
+          if (!enabled) {
+               this.trustlineStoreService.setField('delegatorAddress', '');
+               this.trustlineStoreService.setField('delegateHolder', '');
+               this.trustlineStoreService.setField('delegateCurrency', '');
+          }
+     }
 
      private readonly isDelegationReady = computed(() => {
           const delegator = this.trustlineStoreService.delegatorAddress()?.trim();
@@ -785,5 +797,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineStoreService.setField('delegatorAddress', '');
           this.trustlineStoreService.setField('delegateHolder', '');
           this.trustlineStoreService.setField('delegateCurrency', '');
+          this.delegateOptionEnabled.set(false);
      }
 }

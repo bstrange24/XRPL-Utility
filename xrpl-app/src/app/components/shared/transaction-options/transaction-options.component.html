@@ -22,11 +22,15 @@
           <app-toggle-slider [checked]="xrplTxOptionsStore.isTicket()" (checkedChange)="xrplTxOptionsStore.setField('isTicket', $event)"> Ticket </app-toggle-slider>
           }
 
+          <ng-content select="[delegateOption]"></ng-content>
+
           <!-- Simulate Toggle -->
           @if (showSimulate()) {
           <app-toggle-slider [checked]="xrplTxOptionsStore.isSimulateEnabled()" (checkedChange)="toggleSimulate($event)"> Simulate </app-toggle-slider>
           }
      </div>
+
+     <ng-content select="[delegateDetails]"></ng-content>
 </div>
 
 <!-- Active Options Sections -->
