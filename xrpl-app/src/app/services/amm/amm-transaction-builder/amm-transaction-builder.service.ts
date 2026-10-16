@@ -69,9 +69,9 @@ export class AmmTransactionBuilderService {
           if (depositOptions.bothPools) {
                return { ...baseFields, Amount: toAmt(we_spend), Amount2: toAmt(we_want), Flags: xrpl.AMMDepositFlags.tfTwoAsset };
           } else if (depositOptions.firstPoolOnly) {
-               return { ...baseFields, Amount: toAmt(we_spend), Flags: xrpl.AMMDepositFlags.tfSingleAsset };
+               return { ...baseFields, Amount: toAmt(we_want), Flags: xrpl.AMMDepositFlags.tfSingleAsset };
           } else {
-               return { ...baseFields, Amount2: toAmt(we_want), Flags: xrpl.AMMDepositFlags.tfSingleAsset };
+               return { ...baseFields, Amount: toAmt(we_spend), Flags: xrpl.AMMDepositFlags.tfSingleAsset };
           }
      }
 
@@ -96,12 +96,15 @@ export class AmmTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
 
+          // tfOneAssetLPToken needs Amount to name the asset received; zero means no minimum payout
           if (withdrawOptions.bothPools) {
                return { ...baseFields, Flags: xrpl.AMMWithdrawFlags.tfLPToken };
           } else if (withdrawOptions.firstPoolOnly) {
-               return { ...baseFields, Flags: xrpl.AMMWithdrawFlags.tfSingleAsset };
+               const amount = this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, '0');
+               return { ...baseFields, Amount: amount, Flags: xrpl.AMMWithdrawFlags.tfOneAssetLPToken };
           } else {
-               return { ...baseFields, Flags: xrpl.AMMWithdrawFlags.tfSingleAsset };
+               const amount = this.toCurrencyAmount(amm.weSpendCurrency, amm.weSpendIssuer, '0');
+               return { ...baseFields, Amount: amount, Flags: xrpl.AMMWithdrawFlags.tfOneAssetLPToken };
           }
      }
 
@@ -156,55 +159,41 @@ export class AmmTransactionBuilderService {
           const spendAmount = Number(amm.weSpendAmount || 0);
           const slippageBps = 1500; // 15% tolerance on Devnet
 
-          let ammAccount = '';
-          let currentPrice = 2.85;
-          try {
-               const pool1 = this.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
-               const pool2 = this.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
-               const resp = await this.xrplService.getAMMInfo(client, pool1, pool2, wallet.classicAddress, 'validated');
-               if (resp.result.amm) {
-                    ammAccount = resp.result.amm.account;
-                    const xrp = this.getAmountValue(resp.result.amm.amount);
-                    const joe = this.getAmountValue(resp.result.amm.amount2);
-                    currentPrice = joe / xrp;
-                    console.log(`✅ AMM: ${ammAccount} | Price: ${currentPrice.toFixed(4)} JOE/XRP`);
-               }
-          } catch (e) {
-               console.warn('AMM info failed', e);
+          if (spendAmount <= 0) {
+               throw new Error('Invalid swap amount');
           }
 
-          const expectedOut = spendAmount * currentPrice;
-          const minOut = (expectedOut * (1 - slippageBps / 10000)).toFixed(8);
+          // Constant-product estimate: out = reserveWant * spend / (reserveSpend + spend), minus the trading fee
+          const pool1 = this.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
+          const pool2 = this.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
+          const resp = await this.xrplService.getAMMInfo(client, pool1, pool2, wallet.classicAddress, 'validated');
+          const ammInfo = resp?.result?.amm;
+          if (!ammInfo) {
+               throw new Error('AMM pool not found for this asset pair');
+          }
 
-          console.log('Swap calc:', { spend: spendAmount, expected: expectedOut.toFixed(4), minOut });
+          const matches = (amt: xrpl.Amount, currency: string) => (currency === 'XRP' ? typeof amt === 'string' : typeof amt !== 'string' && amt.currency === this.utilsService.encodeIfNeeded(currency));
+          const spendIsFirst = matches(ammInfo.amount, amm.weSpendCurrency);
+          const reserveSpend = this.getAmountValue(spendIsFirst ? ammInfo.amount : ammInfo.amount2);
+          const reserveWant = this.getAmountValue(spendIsFirst ? ammInfo.amount2 : ammInfo.amount);
+          const feeRate = (ammInfo.trading_fee ?? 0) / 100000;
 
-          const destinationAmount = {
-               currency: amm.weWantCurrency,
-               issuer: amm.weWantIssuer,
-               value: minOut,
-          };
-          const sendMax = xrpl.xrpToDrops(spendAmount.toString());
+          const expectedOut = ((reserveWant * spendAmount) / (reserveSpend + spendAmount)) * (1 - feeRate);
+          const minOut = expectedOut * (1 - slippageBps / 10000);
 
-          console.log('=== Building TX with EXPLICIT AMM Path Step ===');
+          console.log('Swap calc:', { spend: spendAmount, expected: expectedOut, minOut });
+
+          const toWantAmount = (v: number) => this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? v.toFixed(6) : v.toPrecision(15));
+          const sendMax = this.toCurrencyAmount(amm.weSpendCurrency, amm.weSpendIssuer, amm.weSpendCurrency === 'XRP' ? spendAmount.toFixed(6) : spendAmount.toPrecision(15));
 
           const tx: any = {
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
-               Destination: wallet.classicAddress,
-               Amount: destinationAmount,
+               Destination: destination || wallet.classicAddress,
+               Amount: toWantAmount(expectedOut),
                SendMax: sendMax,
                Flags: xrpl.PaymentFlags.tfPartialPayment,
-               DeliverMin: destinationAmount,
-               Paths: ammAccount
-                    ? [
-                           [
-                                {
-                                     account: ammAccount,
-                                     type: 0x00080000, // Correct AMM path type
-                                },
-                           ],
-                      ]
-                    : [],
+               DeliverMin: toWantAmount(minOut),
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
@@ -268,21 +257,15 @@ export class AmmTransactionBuilderService {
                Account: wallet.classicAddress,
                Destination: destination,
 
-               // XRP you spend
-               Amount: xrpl.xrpToDrops(spendAmount.toString()),
+               // Desired output; partial payment lets it deliver less, down to DeliverMin
+               Amount: this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? minReceiveAmount.toFixed(6) : String(amm.weWantAmount)),
+               SendMax: sendMax,
 
                // OUTPUT FLOOR
-               DeliverMin: {
-                    currency: receiveCurrency,
-                    issuer: amm.weWantIssuer,
-                    value: minOut,
-               },
+               DeliverMin: this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? (minReceiveAmount * (1 - slippageBps / 10000)).toFixed(6) : minOut),
 
                // REQUIRED for swap semantics
                Flags: xrpl.PaymentFlags.tfPartialPayment,
-
-               // 🔥 CRITICAL: enable AMM + orderbook routing
-               Paths: [], // <-- leave empty, autofilled by server if using submit
 
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,

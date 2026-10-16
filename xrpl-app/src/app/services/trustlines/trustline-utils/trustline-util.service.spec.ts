@@ -52,7 +52,7 @@ describe('TrustlineUtilService', () => {
           };
 
           walletManager = jasmine.createSpyObj('WalletManagerService', ['getSelectedWallet']);
-          trustlineCurrencyService = jasmine.createSpyObj('TrustlineCurrencyService', ['getExistingIOUs', 'clearFlagsValue', 'refreshCurrentBalanceFromEnv', 'selectCurrency', 'getTrustlineState', 'getIssuersForCurrency', 'addToken', 'removeToken', 'currencies', 'updateFlagTotal']);
+          trustlineCurrencyService = jasmine.createSpyObj('TrustlineCurrencyService', ['getExistingIOUs', 'clearFlagsValue', 'refreshCurrentBalanceFromEnv', 'selectCurrency', 'getTrustlineState', 'getFlagsForAccount', 'getIssuersForCurrency', 'addToken', 'removeToken', 'currencies', 'updateFlagTotal']);
           trustlineStoreService = new MockTrustlineStoreService();
           txUiService = jasmine.createSpyObj('TransactionUiService', ['setError']);
           utilsService = jasmine.createSpyObj('UtilsService', ['decodeIfNeeded', 'encodeIfNeeded', 'isValidCurrencyCode']);
@@ -121,7 +121,7 @@ describe('TrustlineUtilService', () => {
           it('should return early if no wallet selected', async () => {
                walletManager.getSelectedWallet.and.returnValue(null);
                await service.loadTrustlines();
-               expect(trustlineStoreService.setField).not.toHaveBeenCalled();
+               expect(trustlineStoreService.setField).toHaveBeenCalledWith('existingIOUs', []);
           });
 
           it('should load trustlines with forceRefresh true', async () => {
@@ -133,16 +133,7 @@ describe('TrustlineUtilService', () => {
 
           it('should load trustlines with forceRefresh false', async () => {
                await service.loadTrustlines(false);
-               expect(txEnvironmentService.getValidatedEnvironment).toHaveBeenCalled();
-          });
-     });
-
-     describe('loadTrustlines1', () => {
-          it('should load trustlines with refresh', async () => {
-               await service.loadTrustlines1(true);
                expect(txEnvironmentService.refreshEnvironment).toHaveBeenCalled();
-               expect(trustlineStoreService.setField).toHaveBeenCalledWith('isLoading', true);
-               expect(trustlineStoreService.setField).toHaveBeenCalledWith('isLoading', false);
           });
      });
 
@@ -159,7 +150,7 @@ describe('TrustlineUtilService', () => {
                currencyStoreService.currency.and.returnValue('');
                const result = service.checkForExistingTrustline(mockEnv);
                expect(result).toBe(false);
-               expect(currencyStoreService.setField).toHaveBeenCalledWith('amount', 0);
+               expect(currencyStoreService.setField).toHaveBeenCalledWith('amount', null);
           });
 
           it('should return true when trustline exists', () => {
@@ -204,9 +195,15 @@ describe('TrustlineUtilService', () => {
 
      describe('setRemoveFlagsBasedOnExistingTrustline', () => {
           it('should set removal flags based on trustline state', () => {
-               const accountObjects = { result: { account_objects: [] } } as any;
+               const state = { Flags: 0x00100000 } as any;
+               const accountObjects = { result: { account_objects: [state] } } as any;
+               trustlineCurrencyService.getTrustlineState.and.returnValue(state);
+               trustlineCurrencyService.getFlagsForAccount.and.returnValue(['NoRipple']);
 
                service.setRemoveFlagsBasedOnExistingTrustline(accountObjects);
+
+               expect(mockFlagsSignal().tfClearNoRipple).toBe(true);
+               expect(mockFlagsSignal().tfClearFreeze).toBe(false);
                expect(trustlineCurrencyService.updateFlagTotal).toHaveBeenCalled();
           });
      });
@@ -266,7 +263,7 @@ describe('TrustlineUtilService', () => {
           it('should show error when invalid', () => {
                utilsService.isValidCurrencyCode.and.returnValue(false);
                service.addNewCurrencyIssuer();
-               expect(txUiService.setError).toHaveBeenCalled();
+               expect(toastService.error).toHaveBeenCalled();
                expect(trustlineCurrencyService.addToken).not.toHaveBeenCalled();
           });
      });
@@ -286,7 +283,7 @@ describe('TrustlineUtilService', () => {
           it('should show error when invalid', () => {
                currencyStoreService.currency.and.returnValue('');
                service.removeCurrentCurrencyIssuer();
-               expect(txUiService.setError).toHaveBeenCalled();
+               expect(toastService.error).toHaveBeenCalled();
           });
      });
 
@@ -303,6 +300,24 @@ describe('TrustlineUtilService', () => {
                const result = service.canRemoveTrustline(line);
                expect(result.canRemove).toBe(false);
                expect(result.reasons.length).toBeGreaterThan(0);
+          });
+
+          it('should allow removal when the selected flags clear the trustline freeze', () => {
+               const line = { balance: '0', flags: ['Freeze'] };
+               mockFlagsSignal.set({ ...mockFlagsSignal(), tfClearFreeze: true });
+
+               const result = service.canRemoveTrustline(line);
+
+               expect(result).toEqual({ canRemove: true, reasons: [] });
+          });
+
+          it('should block removal when the trustline freeze is not cleared', () => {
+               const line = { balance: '0', flags: ['Freeze'] };
+               mockFlagsSignal.set({ ...mockFlagsSignal(), tfClearFreeze: false });
+
+               const result = service.canRemoveTrustline(line);
+
+               expect(result).toEqual({ canRemove: false, reasons: ['Trustline is frozen - must be unfrozen first'] });
           });
      });
 });

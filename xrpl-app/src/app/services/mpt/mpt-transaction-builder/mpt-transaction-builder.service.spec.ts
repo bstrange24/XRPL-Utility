@@ -300,6 +300,26 @@ describe('MptTransactionBuilderService', () => {
                expect(tx.TransactionType).toBe('MPTokenAuthorize');
                expect(tx.Flags).toBe(xrpl.MPTokenAuthorizeFlags.tfMPTUnauthorize);
           });
+
+          it('should include the holder when the issuer authorizes a holder', () => {
+               const env = {
+                    ...mockEnv,
+                    accountObjects: {
+                         result: {
+                              account_objects: [{ LedgerEntryType: 'MPTokenIssuance', mpt_issuance_id: 'issuance-1' }],
+                         },
+                    },
+               } as any;
+               const mpt = {
+                    mptIssuanceId: 'issuance-1',
+                    authAction: 'authorize',
+                    destination: 'rMptHolder123456789',
+               };
+
+               const tx = service.buildMptAuthorizeTransaction(mockWallet, env, mpt);
+
+               expect(tx.Holder).toBe('rMptHolder123456789');
+          });
      });
 
      describe('buildMptLockTransaction', () => {

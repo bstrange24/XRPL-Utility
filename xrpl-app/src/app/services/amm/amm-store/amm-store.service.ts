@@ -4,6 +4,8 @@ export interface AmmState {
      assetPool1Balance: string;
      assetPool2Balance: string;
      lpTokenBalance: string;
+     lpTokenTotal: string;
+     ammAccount: string;
      weWantCurrency: string;
      weSpendCurrency: string;
      availableCurrencies: string[];
@@ -36,6 +38,8 @@ const initialState: AmmState = {
      assetPool1Balance: '',
      assetPool2Balance: '',
      lpTokenBalance: '',
+     lpTokenTotal: '',
+     ammAccount: '',
      weWantCurrency: '',
      weSpendCurrency: 'XRP',
      availableCurrencies: [],

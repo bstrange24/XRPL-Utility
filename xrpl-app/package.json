@@ -7,9 +7,11 @@
           "build": "ng build",
           "watch": "ng build --watch --configuration development",
           "test": "ng test",
+          "test:trustlines": "ng run xrpl-app:test-trustlines --watch=false",
           "test:escrow-checks": "ng run xrpl-app:test-escrow-checks",
           "lint": "ng lint",
-          "e2e": "ng e2e"
+          "e2e": "ng e2e",
+          "test:e2e:mpt": "playwright test e2e/mpt-lifecycle.spec.ts --project=chromium"
      },
      "private": true,
      "dependencies": {

@@ -109,13 +109,14 @@ export class TrustlineViewModelService {
 
      private readonly removableTrustlines = computed(() => {
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
-          const clearNoRipple = this.trustlineCurrencyService.flags().tfClearNoRipple;
+          const clearFlags = this.trustlineCurrencyService.flags();
           return allTrustlines.filter((tl: any) => {
                const bal = Number(tl.balance);
                const lim = Number(tl.limit);
-               const frozen = tl.flags?.some((f: string) => f.includes('Freeze'));
-               const needsClearNoRipple = tl.flags?.includes('NoRipple') && !clearNoRipple;
-               return bal === 0 && lim === 0 && !frozen && !needsClearNoRipple;
+               const needsClearFreeze = tl.flags?.includes('Freeze') && !clearFlags.tfClearFreeze;
+               const needsClearDeepFreeze = tl.flags?.includes('DeepFreeze') && !clearFlags.tfClearDeepFreeze;
+               const needsClearNoRipple = tl.flags?.includes('NoRipple') && !clearFlags.tfClearNoRipple;
+               return bal === 0 && lim === 0 && !needsClearFreeze && !needsClearDeepFreeze && !needsClearNoRipple;
           });
      });
 
@@ -274,11 +275,13 @@ export class TrustlineViewModelService {
           const balance = typeof trustline.balance === 'string' ? Number.parseFloat(trustline.balance) : Number(trustline.balance);
           const limit = typeof trustline.limit === 'string' ? Number.parseFloat(trustline.limit) : Number(trustline.limit);
           const reasons: string[] = [];
+          const clearFlags = this.trustlineCurrencyService.flags();
 
           if (balance !== 0) reasons.push(`Balance is ${trustline.balance} (must be 0 to remove)`);
           // if (limit !== 0) reasons.push(`Limit is ${trustline.limit} (must be 0 to remove)`);
-          if (trustline.flags?.includes('Freeze')) reasons.push(`Trustline is frozen`);
-          // if (trustline.flags?.includes('NoRipple')) reasons.push(`NoRipple flag must be cleared first`);
+          if (trustline.flags?.includes('Freeze') && !clearFlags.tfClearFreeze) reasons.push(`Trustline is frozen`);
+          if (trustline.flags?.includes('DeepFreeze') && !clearFlags.tfClearDeepFreeze) reasons.push(`Trustline is deep-frozen`);
+          if (trustline.flags?.includes('NoRipple') && !clearFlags.tfClearNoRipple) reasons.push(`NoRipple flag must be cleared first`);
 
           return {
                canRemove: reasons.length === 0,

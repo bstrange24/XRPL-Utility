@@ -229,9 +229,12 @@ export class AmmSummaryComponent {
                     const totalLiquidity = asset1Balance + asset2Balance;
                     // const auctionSlot = ammInfo?.auction_slot;
 
+                    const lpTotal = Number.parseFloat(this.ammStoreService.lpTokenTotal() || '0');
+                    const lpHeld = Number.parseFloat(lpTokenBalance || '0');
+
                     pools.push({
                          poolId: this.generatePoolId(this.ammStoreService.weWantCurrency(), this.ammStoreService.weSpendCurrency(), this.ammStoreService.weWantIssuer(), this.ammStoreService.weSpendIssuer()),
-                         poolAccount: wallet.address,
+                         poolAccount: this.ammStoreService.ammAccount() || wallet.address,
                          asset1: this.ammStoreService.weWantCurrency(),
                          asset2: this.ammStoreService.weSpendCurrency(),
                          asset1Balance: this.ammStoreService.assetPool1Balance() || '0',
@@ -239,7 +242,7 @@ export class AmmSummaryComponent {
                          lpTokenBalance: lpTokenBalance || '0',
                          tradingFee: Number.parseFloat(this.ammStoreService.tradingFeeField() || '0'),
                          isLiquidityProvider: hasLP === true,
-                         userShare: hasLP && totalLiquidity > 0 ? (Number.parseFloat(lpTokenBalance) / totalLiquidity) * 100 : 0,
+                         userShare: hasLP && lpTotal > 0 ? Math.min(100, Number((((lpHeld / lpTotal) * 100)).toFixed(4))) : 0,
                          totalLiquidity: totalLiquidity,
                          // hasAuctionSlot: !!auctionSlot,
                          // auctionSlot: auctionSlot

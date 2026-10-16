@@ -3,10 +3,12 @@ import { AmmTransactionBuilderService } from './amm-transaction-builder.service'
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { AppConstants } from '../../../core/app.constants';
 import * as xrpl from 'xrpl';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 
 describe('AmmTransactionBuilderService', () => {
      let service: AmmTransactionBuilderService;
      let utilsServiceMock: any;
+     let xrplServiceMock: any;
 
      const mockWallet = { classicAddress: 'rTestWallet', address: 'rTestWallet' } as xrpl.Wallet;
      const mockEnv = {
@@ -59,9 +61,10 @@ describe('AmmTransactionBuilderService', () => {
           utilsServiceMock = {
                encodeIfNeeded: jasmine.createSpy('encodeIfNeeded').and.callFake((value: string) => value),
           };
+          xrplServiceMock = { getAMMInfo: jasmine.createSpy('getAMMInfo') };
 
           TestBed.configureTestingModule({
-               providers: [AmmTransactionBuilderService, { provide: UtilsService, useValue: utilsServiceMock }],
+               providers: [AmmTransactionBuilderService, { provide: UtilsService, useValue: utilsServiceMock }, { provide: XrplService, useValue: xrplServiceMock }],
           });
 
           service = TestBed.inject(AmmTransactionBuilderService);
@@ -123,14 +126,16 @@ describe('AmmTransactionBuilderService', () => {
                const options = { bothPools: false, firstPoolOnly: true, secondPoolOnly: false };
                const result = service.buildDepositToAmmTx(mockWallet, mockAmmState, mockEnv, options);
                expect(result.Flags).toBe(xrpl.AMMDepositFlags.tfSingleAsset);
-               expect(result.Amount).toBeDefined();
+               expect(result.Amount).toEqual({ currency: 'USD', issuer: 'rIssuer1', value: '100' });
+               expect(result.Amount2).toBeUndefined();
           });
 
           it('should build AMMDeposit transaction for second pool only', () => {
                const options = { bothPools: false, firstPoolOnly: false, secondPoolOnly: true };
                const result = service.buildDepositToAmmTx(mockWallet, mockAmmState, mockEnv, options);
                expect(result.Flags).toBe(xrpl.AMMDepositFlags.tfSingleAsset);
-               expect(result.Amount2).toBeDefined();
+               expect(typeof result.Amount).toBe('string');
+               expect(result.Amount2).toBeUndefined();
           });
      });
 
@@ -150,10 +155,18 @@ describe('AmmTransactionBuilderService', () => {
                expect(result.Flags).toBe(xrpl.AMMWithdrawFlags.tfLPToken);
           });
 
-          it('should build AMMWithdraw with single asset flag', () => {
+          it('should build AMMWithdraw for one asset (first pool) with LP token burn', () => {
                const options = { bothPools: false, firstPoolOnly: true, secondPoolOnly: false };
                const result = service.buildWithdrawFromAmmTx(mockWallet, mockAmmState, mockEnv, options, lpToken);
-               expect(result.Flags).toBe(xrpl.AMMWithdrawFlags.tfSingleAsset);
+               expect(result.Flags).toBe(xrpl.AMMWithdrawFlags.tfOneAssetLPToken);
+               expect(result.Amount).toEqual({ currency: 'USD', issuer: 'rIssuer1', value: '0' });
+          });
+
+          it('should build AMMWithdraw for one asset (second pool) with LP token burn', () => {
+               const options = { bothPools: false, firstPoolOnly: false, secondPoolOnly: true };
+               const result = service.buildWithdrawFromAmmTx(mockWallet, mockAmmState, mockEnv, options, lpToken);
+               expect(result.Flags).toBe(xrpl.AMMWithdrawFlags.tfOneAssetLPToken);
+               expect(result.Amount).toBe('0');
           });
      });
 
@@ -161,16 +174,12 @@ describe('AmmTransactionBuilderService', () => {
           const lpToken = { currency: 'LP_TOKEN', issuer: 'rLPIssuer' };
 
           it('should build AMMClawback transaction', () => {
-               const result = service.buildClawbackFromAmmTx(mockWallet, mockAmmState, mockEnv, lpToken);
+               const result: any = service.buildClawbackFromAmmTx(mockWallet, mockAmmState, mockEnv, lpToken);
                expect(result.TransactionType).toBe('AMMClawback');
                expect(result.Account).toBe(mockWallet.classicAddress);
-               expect(result.Asset).toEqual({ currency: 'XRP' });
-               expect(result.Asset2).toEqual({ currency: 'USD', issuer: 'rIssuer1' });
-               expect(result.LPTokenIn).toEqual({
-                    currency: 'LP_TOKEN',
-                    issuer: 'rLPIssuer',
-                    value: '10',
-               });
+               expect(result.Asset).toEqual({ currency: 'USD', issuer: 'rIssuer1' });
+               expect(result.Asset2).toEqual({ currency: 'XRP' });
+               expect(result.Amount).toEqual({ currency: 'USD', issuer: 'rIssuer1', value: '10' });
           });
 
           it('should include Holder field when present', () => {
@@ -194,6 +203,44 @@ describe('AmmTransactionBuilderService', () => {
           });
      });
 
+     describe('buildTx (swap)', () => {
+          const client = {} as xrpl.Client;
+          const ammInfoResponse = (amount: any, amount2: any) => ({ result: { amm: { account: 'rAmm', amount, amount2, trading_fee: 1000 } } });
+
+          it('should send to the given destination and spend XRP for USD', async () => {
+               xrplServiceMock.getAMMInfo.and.resolveTo(ammInfoResponse('10000000', { currency: 'USD', issuer: 'rIssuer1', value: '1000' }));
+               const tx: any = await service.buildTx({ ...mockAmmState, weSpendAmount: '1' }, null, mockWallet, null, null, mockEnv, 'rDest', client);
+               expect(tx.TransactionType).toBe('Payment');
+               expect(tx.Destination).toBe('rDest');
+               expect(tx.SendMax).toBe('1000000');
+               expect(tx.Flags).toBe(xrpl.PaymentFlags.tfPartialPayment);
+               expect(tx.Paths).toBeUndefined();
+               expect(tx.Amount.currency).toBe('USD');
+               expect(Number(tx.Amount.value)).toBeGreaterThan(Number(tx.DeliverMin.value));
+               // 1000 * 1 / (10 + 1) * (1 - 1%) is about 90
+               expect(Number(tx.Amount.value)).toBeCloseTo(90, 0);
+          });
+
+          it('should handle pools where amount/amount2 are reversed and the spend asset is issued', async () => {
+               xrplServiceMock.getAMMInfo.and.resolveTo(ammInfoResponse('10000000', { currency: 'USD', issuer: 'rIssuer1', value: '1000' }));
+               const amm = { ...mockAmmState, weWantCurrency: 'XRP', weWantIssuer: '', weSpendCurrency: 'USD', weSpendIssuer: 'rIssuer1', weSpendAmount: '100' };
+               const tx: any = await service.buildTx(amm, null, mockWallet, null, null, mockEnv, '', client);
+               expect(tx.Destination).toBe(mockWallet.classicAddress);
+               expect(tx.SendMax).toEqual({ currency: 'USD', issuer: 'rIssuer1', value: jasmine.any(String) });
+               expect(typeof tx.Amount).toBe('string');
+               expect(typeof tx.DeliverMin).toBe('string');
+          });
+
+          it('should reject a non-positive spend amount', async () => {
+               await expectAsync(service.buildTx({ ...mockAmmState, weSpendAmount: '0' }, null, mockWallet, null, null, mockEnv, 'rDest', client)).toBeRejectedWithError('Invalid swap amount');
+          });
+
+          it('should reject when the AMM does not exist', async () => {
+               xrplServiceMock.getAMMInfo.and.resolveTo([]);
+               await expectAsync(service.buildTx({ ...mockAmmState, weSpendAmount: '1' }, null, mockWallet, null, null, mockEnv, 'rDest', client)).toBeRejectedWithError('AMM pool not found for this asset pair');
+          });
+     });
+
      describe('buildDeleteAmmTx', () => {
           it('should build AMMDelete transaction', () => {
                const result = service.buildDeleteAmmTx(mockWallet, mockAmmState, mockEnv);
@@ -206,11 +253,10 @@ describe('AmmTransactionBuilderService', () => {
      });
 
      describe('Edge Cases', () => {
-          it('should handle empty holder field in clawback', () => {
+          it('should require a holder in clawback', () => {
                const ammWithoutHolder = { ...mockAmmState, holderField: undefined };
                const lpToken = { currency: 'LP_TOKEN', issuer: 'rLPIssuer' };
-               const result = service.buildClawbackFromAmmTx(mockWallet, ammWithoutHolder, mockEnv, lpToken);
-               expect(result.Holder).toBeUndefined();
+               expect(() => service.buildClawbackFromAmmTx(mockWallet, ammWithoutHolder, mockEnv, lpToken)).toThrowError('Holder address is required for AMMClawback');
           });
 
           it('should handle zero withdrawal amount', () => {

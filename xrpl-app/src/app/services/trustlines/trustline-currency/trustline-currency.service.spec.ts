@@ -25,6 +25,7 @@ class MockWalletManagerService {
 class MockStorageService {
      getKnownIssuers = jasmine.createSpy();
      setKnownIssuers = jasmine.createSpy();
+     getNet = jasmine.createSpy().and.returnValue('devnet');
 }
 
 class MockUtilsService {
@@ -306,6 +307,49 @@ describe('TrustlineCurrencyService', () => {
                expect(result.length).toBe(1);
                expect(result[0].currency).toBe('USD');
                expect(result[0].issuer).toBe('rIssuer');
+          });
+
+          it('should decode low-side ledger flags without mistaking reserve bits for trustline flags', () => {
+               const flaggedAccountObjects = {
+                    result: {
+                         account_objects: [
+                              {
+                                   ...accountObjects.result.account_objects[0],
+                                   Flags: 0x00010000 | 0x00020000 | 0x00100000 | 0x00400000 | 0x01000000,
+                              },
+                         ],
+                    },
+               };
+
+               const [trustline] = service.getExistingIOUs(flaggedAccountObjects as any, 'rWallet');
+
+               expect(trustline.flags).toEqual(['NoRipple', 'Freeze', 'DeepFreeze']);
+          });
+
+          it('should decode high-side ledger flags independently of low-side flags', () => {
+               const flaggedAccountObjects = {
+                    result: {
+                         account_objects: [
+                              {
+                                   LedgerEntryType: 'RippleState',
+                                   Balance: { currency: 'USD', value: '100' },
+                                   LowLimit: { issuer: 'rIssuer', value: '0' },
+                                   HighLimit: { issuer: 'rWallet', value: '1000' },
+                                   Flags: 0x00010000 | 0x00020000 | 0x00080000 | 0x00200000 | 0x00800000 | 0x02000000,
+                              },
+                         ],
+                    },
+               };
+
+               const [trustline] = service.getExistingIOUs(flaggedAccountObjects as any, 'rWallet');
+
+               expect(trustline.flags).toEqual(['Authorized', 'NoRipple', 'Freeze', 'DeepFreeze']);
+          });
+
+          it('should return no ledger flags when the account is not a side of the trustline', () => {
+               const [trustline] = service.getExistingIOUs(accountObjects, 'rOtherWallet');
+
+               expect(trustline.flags).toEqual([]);
           });
      });
 

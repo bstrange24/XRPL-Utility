@@ -46,13 +46,19 @@ ng test
 
 ## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
+For the MPT end-to-end flow, first start the app on Devnet:
 
 ```bash
-ng e2e
+npm start
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+In another terminal, run the browser-driven MPT lifecycle:
+
+```bash
+npm run test:e2e:mpt
+```
+
+This test creates faucet-funded Devnet wallets and submits MPT transactions. It requires Chromium (install it with `npx playwright install chromium`) and a reachable Devnet faucet and XRPL server. The test creates and destroys its MPT issuance but leaves the funded wallets in its isolated browser context.
 
 ## Additional Resources
 

@@ -61,7 +61,7 @@ describe('TrustlineViewModelService', () => {
                { id: 'rIssuerAddress', display: 'rIssuerAddress', group: 'Issuer' },
                { id: 'rOtherIssuer', display: 'rOtherIssuer', group: 'Issuer' },
           ]);
-          flagsSignal = signal<any>({ tfClearNoRipple: false });
+          flagsSignal = signal<any>({ tfClearNoRipple: false, tfClearFreeze: false, tfClearDeepFreeze: false });
           isLoadingSignal = signal<boolean>(false);
 
           mockWalletManagerService = jasmine.createSpyObj('WalletManagerService', ['getSelectedWallet']);
@@ -116,6 +116,40 @@ describe('TrustlineViewModelService', () => {
           it('should return false when step is idle', () => {
                currentStepSignal.set('idle');
                expect(service.isBusy()).toBe(false);
+          });
+
+          describe('canRemoveTrustline', () => {
+               beforeEach(() => service.activeTab.set('removeTrustline'));
+
+               it('allows clearing existing trustline flags during removal', () => {
+                    existingIOUsSignal.set([
+                         {
+                              currency: 'USD',
+                              issuer: 'rIssuerAddress',
+                              balance: '0',
+                              limit: '1',
+                              flags: ['NoRipple', 'Freeze'],
+                         },
+                    ]);
+                    flagsSignal.set({ tfClearNoRipple: true, tfClearFreeze: true, tfClearDeepFreeze: false });
+
+                    expect(service.canRemoveTrustline()).toEqual({ canRemove: true, reasons: [] });
+               });
+
+               it('blocks removal while a freeze flag has not been cleared', () => {
+                    existingIOUsSignal.set([
+                         {
+                              currency: 'USD',
+                              issuer: 'rIssuerAddress',
+                              balance: '0',
+                              limit: '1',
+                              flags: ['Freeze'],
+                         },
+                    ]);
+                    flagsSignal.set({ tfClearNoRipple: false, tfClearFreeze: false, tfClearDeepFreeze: false });
+
+                    expect(service.canRemoveTrustline()).toEqual({ canRemove: false, reasons: ['Trustline is frozen'] });
+               });
           });
 
           it('should return true when step is not idle', () => {

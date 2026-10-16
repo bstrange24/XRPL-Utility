@@ -87,7 +87,7 @@ export class AmmTransactionOrchestratorService {
                // Build transaction
                const depositOptions: PoolOptions = extra?.['depositOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
                const withdrawOptions: PoolOptions = extra?.['withdrawOptions'] ?? { bothPools: true, firstPoolOnly: false, secondPoolOnly: false };
-               const destination: string = wallet.address;
+               const destination: string = extra?.['destination'] || wallet.address;
                const effectiveWallet: xrpl.Wallet = env.wallet || wallet;
 
                let tx: xrpl.Transaction;

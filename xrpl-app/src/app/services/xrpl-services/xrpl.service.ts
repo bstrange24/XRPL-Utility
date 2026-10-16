@@ -732,13 +732,13 @@ export class XrplService {
           }
      }
 
-     async getAMMInfo(client: Client, asset: any, asset2: any, account: string, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
+     async getAMMInfo(client: Client, asset: any, asset2: any, account: string | undefined, ledgerIndex: xrpl.LedgerIndex): Promise<any> {
           try {
                const response = await client.request({
                     command: 'amm_info',
                     asset: asset,
                     asset2: asset2,
-                    account: account,
+                    ...(account ? { account } : {}),
                     ledger_index: ledgerIndex,
                });
                return response;

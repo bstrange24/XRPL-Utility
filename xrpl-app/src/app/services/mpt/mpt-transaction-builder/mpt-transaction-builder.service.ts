@@ -71,6 +71,9 @@ export class MptTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
 
+          const isIssuer = env.accountObjects?.result.account_objects.some(obj => obj.LedgerEntryType === 'MPTokenIssuance' && 'mpt_issuance_id' in obj && obj.mpt_issuance_id === mpt.mptIssuanceId);
+          if (isIssuer && mpt.destination) tx.Holder = mpt.destination;
+
           if (mpt.authAction === 'unauthorize') tx.Flags = xrpl.MPTokenAuthorizeFlags.tfMPTUnauthorize;
 
           return tx;

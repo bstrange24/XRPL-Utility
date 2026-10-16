@@ -88,7 +88,7 @@ export class AmmUtilsService {
      }
 
      // amm-utils.service.ts
-     async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any) {
+     async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any, totalResponse?: any) {
           let result: {
                isAmmPool: boolean;
                isLiquidityProvider: boolean;
@@ -120,6 +120,8 @@ export class AmmUtilsService {
 
                     if (displayChanges) {
                          this.ammStoreService.setField('lpTokenBalance', lpTokenBalance);
+                         this.ammStoreService.setField('ammAccount', ammResponse.result.amm.account || '');
+                         this.ammStoreService.setField('lpTokenTotal', totalResponse?.result?.amm?.lp_token?.value || '');
                          const toDisplay = (amt: any): string => {
                               const val = typeof amt === 'string' ? xrpl.dropsToXrp(amt) : amt.value;
                               return this.utilsService.formatTokenBalance(val, 18);
@@ -132,6 +134,8 @@ export class AmmUtilsService {
                     }
                } else if (displayChanges) {
                     this.ammStoreService.setField('lpTokenBalance', '0');
+                    this.ammStoreService.setField('ammAccount', '');
+                    this.ammStoreService.setField('lpTokenTotal', '');
                     this.ammStoreService.setField('assetPool1Balance', '0');
                     this.ammStoreService.setField('assetPool2Balance', '0');
                     this.ammStoreService.setField('isLiquidityProvider', false);

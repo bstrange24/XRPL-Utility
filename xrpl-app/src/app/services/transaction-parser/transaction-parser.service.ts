@@ -1228,9 +1228,11 @@ class GenericFormatter implements TransactionFormatter {
      constructor(private readonly txType: string) {}
 
      getSummary(tx: any, meta: any) {
+          const result = meta?.TransactionResult;
+          const succeeded = !result || result === 'tesSUCCESS';
           return {
                title: `${this.txType} Transaction`,
-               description: `Transaction completed successfully`,
+               description: succeeded ? 'Transaction completed successfully' : `Transaction failed: ${result}`,
                from: tx.Account,
           };
      }

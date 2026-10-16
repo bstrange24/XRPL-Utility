@@ -363,6 +363,35 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           return accountObjects.result.account_objects.find((obj): obj is xrpl.LedgerEntry.RippleState => obj.LedgerEntryType === 'RippleState' && obj.Balance?.currency === encodedCurrency && ((obj.LowLimit?.issuer === walletAddr && obj.HighLimit?.issuer === issuer) || (obj.HighLimit?.issuer === walletAddr && obj.LowLimit?.issuer === issuer)));
      }
 
+     getFlagsForAccount(state: xrpl.LedgerEntry.RippleState, accountAddress: string): string[] {
+          const side = state.LowLimit.issuer === accountAddress ? 'Low' : state.HighLimit.issuer === accountAddress ? 'High' : null;
+          if (!side) return [];
+
+          const sideFlags =
+               side === 'Low'
+                    ? {
+                           authorized: this.ledgerFlagMap.lsfLowAuth,
+                           noRipple: this.ledgerFlagMap.lsfLowNoRipple,
+                           freeze: this.ledgerFlagMap.lsfLowFreeze,
+                           deepFreeze: this.ledgerFlagMap.lsfLowDeepFreeze,
+                      }
+                    : {
+                           authorized: this.ledgerFlagMap.lsfHighAuth,
+                           noRipple: this.ledgerFlagMap.lsfHighNoRipple,
+                           freeze: this.ledgerFlagMap.lsfHighFreeze,
+                           deepFreeze: this.ledgerFlagMap.lsfHighDeepFreeze,
+                      };
+          const ledgerFlags = state.Flags ?? 0;
+          const flags: string[] = [];
+
+          if (ledgerFlags & sideFlags.authorized) flags.push('Authorized');
+          if (ledgerFlags & sideFlags.noRipple) flags.push('NoRipple');
+          if (ledgerFlags & sideFlags.freeze) flags.push('Freeze');
+          if (ledgerFlags & sideFlags.deepFreeze) flags.push('DeepFreeze');
+
+          return flags;
+     }
+
      getExistingIOUs(accountObjects: xrpl.AccountObjectsResponse | undefined, classicAddress: string) {
           // Add safety check
           if (!accountObjects?.result?.account_objects) {
@@ -398,19 +427,12 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
 
                     const currency = this.utilsService.normalizeCurrencyCode(obj.Balance?.currency ?? '');
 
-                    // Extract flags as array of strings
-                    const flags: string[] = [];
-                    const ledgerFlags = obj.Flags ?? 0;
-                    if (ledgerFlags & 0x00010000) flags.push('Authorized'); // lsfLowAuth / lsfHighAuth simplified
-                    if (ledgerFlags & 0x00020000) flags.push('NoRipple');
-                    if (ledgerFlags & 0x00100000) flags.push('Freeze'); // lsfLowFreeze or lsfHighFreeze
-
                     return {
                          currency,
                          issuer: peerLimitObj.issuer,
                          balance: signedBalance.toString(),
                          limit: myLimitValue,
-                         flags,
+                         flags: this.getFlagsForAccount(obj, classicAddress),
                          isIssuer: new Decimal(signedBalance).lt(0) && myLimitValue.gt(0),
                          rawLedgerBalance: rawBalance,
                          isHighSide,
@@ -461,6 +483,8 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      }
 
      clearFlagsValue(activeTab: string) {
+          if (activeTab === 'removeTrustline') return;
+
           this.flags.set({
                tfSetfAuth: false,
                tfSetNoRipple: false,

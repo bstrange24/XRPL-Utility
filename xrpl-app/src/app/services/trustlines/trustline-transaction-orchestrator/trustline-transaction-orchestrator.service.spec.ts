@@ -51,6 +51,10 @@ describe('TrustlineTransactionOrchestratorService', () => {
           trustlineLimitField: 0,
           tokenToRemove: '',
           trustlineFlags: 0,
+          delegatorAddress: '',
+          delegateHolder: '',
+          delegateCurrency: '',
+          delegateAction: 'authorize',
           missingTrustlineInfo: {
                currencyCode: '',
                issuer: '',

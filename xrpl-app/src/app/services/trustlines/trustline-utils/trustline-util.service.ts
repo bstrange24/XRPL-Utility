@@ -231,18 +231,13 @@ export class TrustlineUtilService {
                return;
           }
 
-          const flags = state.Flags ?? 0;
-
-          // Check BOTH sides
-          const hasNoRipple = (flags & 0x00020000) !== 0 || (flags & 0x00040000) !== 0;
-          const hasFreeze = (flags & 0x00100000) !== 0 || (flags & 0x00200000) !== 0;
-          const hasDeepFreeze = (flags & 0x00400000) !== 0 || (flags & 0x00800000) !== 0;
+          const flags = this.trustlineCurrencyService.getFlagsForAccount(state, walletAddr!);
 
           this.trustlineCurrencyService.flags.update(f => ({
                ...f,
-               tfClearNoRipple: hasNoRipple,
-               tfClearFreeze: hasFreeze,
-               tfClearDeepFreeze: hasDeepFreeze,
+               tfClearNoRipple: flags.includes('NoRipple'),
+               tfClearFreeze: flags.includes('Freeze'),
+               tfClearDeepFreeze: flags.includes('DeepFreeze'),
           }));
 
           this.trustlineCurrencyService.updateFlagTotal();
@@ -262,19 +257,15 @@ export class TrustlineUtilService {
                return;
           }
 
-          const flags = state.Flags ?? 0;
-
-          const hasNoRipple = (flags & 0x00020000) !== 0 || (flags & 0x00040000) !== 0;
-          const hasFreeze = (flags & 0x00100000) !== 0 || (flags & 0x00200000) !== 0;
-          const hasDeepFreeze = (flags & 0x00400000) !== 0 || (flags & 0x00800000) !== 0;
+          const flags = this.trustlineCurrencyService.getFlagsForAccount(state, walletAddr!);
 
           this.trustlineCurrencyService.flags.update(f => ({
                tfSetfAuth: false,
-               tfSetNoRipple: hasNoRipple,
+               tfSetNoRipple: flags.includes('NoRipple'),
                tfClearNoRipple: false,
-               tfSetFreeze: hasFreeze,
+               tfSetFreeze: flags.includes('Freeze'),
                tfClearFreeze: false,
-               tfSetDeepFreeze: hasDeepFreeze,
+               tfSetDeepFreeze: flags.includes('DeepFreeze'),
                tfClearDeepFreeze: false,
           }));
 
@@ -359,7 +350,7 @@ export class TrustlineUtilService {
           // }
 
           // Check if frozen
-          if (trustline.flags?.includes('Freeze')) {
+          if (trustline.flags?.includes('Freeze') && !this.trustlineCurrencyService.flags().tfClearFreeze) {
                reasons.push(`Trustline is frozen - must be unfrozen first`);
           }
 
@@ -369,6 +360,10 @@ export class TrustlineUtilService {
                if (!clearNoRipple) {
                     reasons.push(`NoRipple flag is set - must be cleared before removal`);
                }
+          }
+
+          if (trustline.flags?.includes('DeepFreeze') && !this.trustlineCurrencyService.flags().tfClearDeepFreeze) {
+               reasons.push(`Trustline is deep-frozen - must be unfrozen first`);
           }
 
           // Check if authorized
