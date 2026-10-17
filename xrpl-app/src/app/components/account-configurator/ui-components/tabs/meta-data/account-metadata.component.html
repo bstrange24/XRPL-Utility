@@ -124,16 +124,16 @@
                               type="text"
                               class="input-base-with-validation"
                               app-focus-border
-                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
-                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().length > 0"
+                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().length > 0"
                               [ngModel]="accountConfiguratorStoreService.tickSize()"
                               (ngModelChange)="accountConfiguratorStoreService.setField('tickSize', $event)"
                               placeholder="r..."
                          />
 
                          <app-input-icons
-                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
-                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().trim().length > 0"
+                              [isValid]="isTickSizeValid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().length > 0"
+                              [isInvalid]="isTickSizeInvalid() && accountConfiguratorStoreService.tickSize() !== null && accountConfiguratorStoreService.tickSize() !== undefined && accountConfiguratorStoreService.tickSize().length > 0"
                               [showClear]="!!accountConfiguratorStoreService.tickSize()"
                               (clear)="accountConfiguratorStoreService.setField('tickSize', '')"
                          />
@@ -248,16 +248,7 @@
                <p class="text-secondary">Submit Transfer Rate, Tick Size, or Domain changes for another account that delegated these permissions to the selected wallet.</p>
 
                <div class="relative">
-                    <input
-                         type="text"
-                         class="input-base-with-validation"
-                         app-focus-border
-                         [isValid]="isDelegating() && !isDelegatorInvalid()"
-                         [isInvalid]="isDelegatorInvalid()"
-                         [ngModel]="accountConfiguratorStoreService.delegatorAddress()"
-                         (ngModelChange)="accountConfiguratorStoreService.setField('delegatorAddress', $event)"
-                         placeholder="Delegator account r..."
-                    />
+                    <input type="text" class="input-base-with-validation" app-focus-border [isValid]="isDelegating() && !isDelegatorInvalid()" [isInvalid]="isDelegatorInvalid()" [ngModel]="accountConfiguratorStoreService.delegatorAddress()" (ngModelChange)="accountConfiguratorStoreService.setField('delegatorAddress', $event)" placeholder="Delegator account r..." />
 
                     <app-input-icons [isValid]="isDelegating() && !isDelegatorInvalid()" [isInvalid]="isDelegatorInvalid()" [showClear]="isDelegating()" (clear)="clearDelegatorField()" />
                </div>
