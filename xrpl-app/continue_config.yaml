@@ -1,0 +1,57 @@
+name: Main Config
+version: 1.0.0
+schema: v1
+
+# Context providers - enables codebase awareness and RAG
+context:
+     - provider: codebase
+     - provider: folder
+     - provider: file
+     - provider: problems
+     - provider: terminal
+     - provider: diff
+
+models:
+     # Chat model now routes through Forge proxy instead of direct Ollama
+     - name: Qwen3.5 4B - XRPL Angular Expert
+       provider: openai
+       model: qwen3.5:4b
+       apiBase: http://localhost:8081/v1
+       apiKey: forge
+       systemMessage: |
+            You are an expert full-stack TypeScript developer specializing in Angular (latest version) and XRP Ledger (XRPL) integration using xrpl.js.
+
+            Key rules:
+            - Always write clean, modern Angular code with standalone components, signals, injectors, and best practices.
+            - Use xrpl.js correctly for wallets, payments, offers, NFTs, AMM, escrow, etc. Include proper error handling, TypeScript types, and async/await.
+            - Prefer RxJS where it fits Angular patterns.
+            - Explain your reasoning step-by-step before giving code.
+            - Suggest relevant tests and security considerations (especially for blockchain code).
+            - If the user provides code, carefully analyze and improve it.
+            - Be helpful, concise, and production-focused.
+       roles:
+            - chat
+            - edit
+            - apply
+       capabilities:
+            - tool_use
+       defaultCompletionOptions:
+            contextLength: 32768
+            maxTokens: 4096
+
+     # Autocomplete stays on Ollama directly - it does not use tool calls
+     - name: Qwen3.5 4B (Autocomplete)
+       provider: ollama
+       model: qwen3.5:4b
+       roles:
+            - autocomplete
+       defaultCompletionOptions:
+            contextLength: 4096
+            maxTokens: 256
+
+     # Embeddings stay on Ollama directly
+     - name: Nomic Embed
+       provider: ollama
+       model: nomic-embed-text:latest
+       roles:
+            - embed
