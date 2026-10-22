@@ -31,8 +31,8 @@ export class DelegateSummaryComponent {
 
      readonly summaryText = computed(() => {
           const count = this.totalCount();
-          if (count === 0) return 'has no active delegations.';
-          return `has <strong>${count}</strong> active ${count === 1 ? 'delegation' : 'delegations'}${this.tab() === 'delegateClear' ? ' that can be removed.' : '.'}`;
+          if (count === 0) return ' has no active delegations.';
+          return ` has <strong>${count}</strong> active ${count === 1 ? 'delegation' : 'delegations'}${this.tab() === 'delegateClear' ? ' that can be removed.' : '.'}`;
      });
 
      readonly emptyStateMessage = computed(() => (this.tab() === 'delegateClear' ? 'This wallet has no delegations to remove.' : 'This wallet has not delegated any permissions yet.'));
