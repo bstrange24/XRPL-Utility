@@ -4,6 +4,7 @@ export interface KeyDetail {
      label: string;
      value?: string | number;
      icon?: string;
+     highlight?: boolean;
      type?: 'text' | 'credential-list' | 'memo-list' | 'signer-list';
      credentials?: Array<{
           type: string;
@@ -66,9 +67,9 @@ export class TransactionPreviewParserService {
           const fee = Number.parseInt(tx.Fee || '12');
           let xrpUsed = formatXRPAmount(fee);
 
-          if (transactionType === 'Payment' && tx.Amount && typeof tx.Amount === 'string') {
-               const amount = Number.parseInt(tx.Amount);
-               xrpUsed = formatXRPAmount(fee + amount);
+          const nativeAmount = getNativeXrpAmount(transactionType, tx);
+          if (nativeAmount > 0) {
+               xrpUsed = formatXRPAmount(fee + nativeAmount);
           }
 
           return {
@@ -117,7 +118,7 @@ export class TransactionPreviewParserService {
                DIDDelete: new DidDeletePreviewFormatter(),
           };
 
-          return formatters[transactionType] || new GenericPreviewFormatter(transactionType);
+          return formatters[transactionType] || new KnownTransactionPreviewFormatter(transactionType);
      }
 
      private addMemosToKeyDetails(keyDetails: KeyDetail[], tx: any): KeyDetail[] {
@@ -171,19 +172,19 @@ interface TransactionPreviewFormatter {
 // 1. Payment Preview Formatter
 class PaymentPreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
-          const amount = formatCurrencyAmountPreview(tx.Amount);
+          const amount = formatCurrencyAmountPreview(tx.Amount ?? tx.DeliverMax);
           const isSelfPayment = tx.Account === tx.Destination;
 
           return {
                title: 'Payment Transaction',
-               description: isSelfPayment ? `You're sending send ${amount} to yourself` : `You're sending ${amount} to ${shortenAddress(tx.Destination)}`,
+               description: isSelfPayment ? `You're sending ${amount} to yourself` : `You're sending ${amount} to ${shortenAddress(tx.Destination)}`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
 
      getKeyDetails(tx: any, accountInfo?: any) {
           return [
-               { label: 'Amount', value: formatCurrencyAmountPreview(tx.Amount ? tx.Amount : tx.DeliverMax), icon: '💰', highlight: true },
+               { label: 'Amount', value: formatCurrencyAmountPreview(tx.Amount ?? tx.DeliverMax), icon: '💰', highlight: true },
                { label: 'Sender', value: shortenAddress(tx.Account), icon: '📤' },
                { label: 'Receiver', value: shortenAddress(tx.Destination), icon: '📥' },
                { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' },
@@ -227,16 +228,17 @@ class PaymentPreviewFormatter implements TransactionPreviewFormatter {
                },
                {
                     label: 'Amount',
-                    value: tx.Amount,
-                    isValid: !!tx.Amount,
-                    message: tx.Amount ? undefined : 'Amount is required',
+                    value: tx.Amount ?? tx.DeliverMax,
+                    isValid: !!(tx.Amount ?? tx.DeliverMax),
+                    message: tx.Amount ?? tx.DeliverMax ? undefined : 'Amount is required',
                },
           ];
      }
 
      getWarnings(tx: any, accountInfo?: any) {
           const warnings = [];
-          const amount = typeof tx.Amount === 'string' ? Number.parseInt(tx.Amount) : 0;
+          const paymentAmount = tx.Amount ?? tx.DeliverMax;
+          const amount = typeof paymentAmount === 'string' ? Number(paymentAmount) : 0;
           const fee = Number.parseInt(tx.Fee || '12');
           const totalCost = amount + fee;
 
@@ -269,11 +271,11 @@ class OfferCreatePreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
           const takerGets = formatCurrencyAmountPreview(tx.TakerGets);
           const takerPays = formatCurrencyAmountPreview(tx.TakerPays);
-          const isBuy = tx.Flags === 0;
+          const isSell = hasFlag(tx.Flags, 524288, 'tfSell');
 
           return {
-               title: isBuy ? 'Buy Order' : 'Sell Order',
-               description: `${isBuy ? 'Buying' : 'Selling'} ${takerGets} for ${takerPays}`,
+               title: isSell ? 'Sell Order' : 'Buy Order',
+               description: `${isSell ? 'Selling' : 'Buying'} ${takerGets} for ${takerPays}`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
@@ -282,12 +284,17 @@ class OfferCreatePreviewFormatter implements TransactionPreviewFormatter {
           const takerGets = formatCurrencyAmountPreview(tx.TakerGets);
           const takerPays = formatCurrencyAmountPreview(tx.TakerPays);
           const rate = this.calculateRate(tx);
+          const isPassive = hasFlag(tx.Flags, 65536, 'tfPassive');
+          const isImmediateOrCancel = hasFlag(tx.Flags, 131072, 'tfImmediateOrCancel');
+          const isFillOrKill = hasFlag(tx.Flags, 262144, 'tfFillOrKill');
+          const isHybrid = hasFlag(tx.Flags, 1048576, 'tfHybrid');
+          const orderType = isFillOrKill ? 'Fill or Kill' : isImmediateOrCancel ? 'Immediate or Cancel' : isPassive ? 'Passive' : isHybrid ? 'Hybrid' : 'Standard';
 
           return [
                { label: 'You Get', value: takerGets, icon: '💰', highlight: true },
                { label: 'You Pay', value: takerPays, icon: '💳', highlight: true },
                { label: 'Exchange Rate', value: rate, icon: '📊' },
-               { label: 'Order Type', value: tx.Flags === 0 ? 'Passive' : 'Immediate or Cancel', icon: '🏷️' },
+               { label: 'Order Type', value: orderType, icon: '🏷️' },
                { label: 'Expiration', value: tx.Expiration ? formatDatePreview(tx.Expiration) : 'Never', icon: '⏰' },
                { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' },
           ];
@@ -339,17 +346,8 @@ class OfferCreatePreviewFormatter implements TransactionPreviewFormatter {
                let gets = 0,
                     pays = 0;
 
-               if (typeof tx.TakerGets === 'string') {
-                    gets = Number.parseInt(tx.TakerGets);
-               } else {
-                    gets = Number.parseInt(tx.TakerGets.value);
-               }
-
-               if (typeof tx.TakerPays === 'string') {
-                    pays = Number.parseInt(tx.TakerPays);
-               } else {
-                    pays = Number.parseInt(tx.TakerPays.value);
-               }
+               gets = getAmountInDisplayUnits(tx.TakerGets);
+               pays = getAmountInDisplayUnits(tx.TakerPays);
 
                if (gets === 0) return 'N/A';
                const rate = pays / gets;
@@ -409,7 +407,7 @@ class AccountSetPreviewFormatter implements TransactionPreviewFormatter {
           const details = [];
 
           if (tx.Domain) {
-               details.push({ label: 'Domain', value: atob(tx.Domain), icon: '🌐' });
+               details.push({ label: 'Domain', value: decodeHexPreview(tx.Domain), icon: '🌐' });
           }
           if (tx.EmailHash) {
                details.push({ label: 'Email Hash', value: tx.EmailHash.substring(0, 20) + '...', icon: '📧' });
@@ -453,7 +451,8 @@ class AccountSetPreviewFormatter implements TransactionPreviewFormatter {
           if (tx.EmailHash) changes.push('Email Hash');
           if (tx.TransferRate !== undefined) changes.push('Transfer Rate');
           if (tx.TickSize !== undefined) changes.push('Tick Size');
-          if (tx.SetFlag) changes.push(`Flag ${tx.SetFlag}`);
+          if (tx.SetFlag) changes.push(`Set flag ${tx.SetFlag}`);
+          if (tx.ClearFlag) changes.push(`Clear flag ${tx.ClearFlag}`);
           return changes;
      }
 }
@@ -479,6 +478,7 @@ class TrustSetPreviewFormatter implements TransactionPreviewFormatter {
                { label: 'Limit', value: limit.value === '0' ? 'Removing' : limit.value, icon: '📊' },
                { label: 'Quality In', value: tx.QualityIn || 'None', icon: '📈' },
                { label: 'Quality Out', value: tx.QualityOut || 'None', icon: '📉' },
+               ...getTrustSetFlagDetails(tx.Flags),
                { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' },
           ];
      }
@@ -516,11 +516,7 @@ class TrustSetPreviewFormatter implements TransactionPreviewFormatter {
 // 6. NFTokenMint Preview Formatter
 class NFTokenMintPreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
-          const isBurnable = tx.Flags & 1;
-          const isTransferable = tx.Flags & 2;
-          const properties = [];
-          if (isBurnable) properties.push('burnable');
-          if (isTransferable) properties.push('transferable');
+          const properties = getNftFlagLabels(tx.Flags).map(label => label === 'Only XRP' ? 'XRP-only' : label.toLowerCase());
 
           return {
                title: 'Mint NFT',
@@ -535,6 +531,8 @@ class NFTokenMintPreviewFormatter implements TransactionPreviewFormatter {
                { label: 'Transfer Fee', value: tx.TransferFee ? `${tx.TransferFee / 1000}%` : '0%', icon: '💸' },
                { label: 'URI', value: tx.URI ? truncatePreviewValue(decodeHexPreview(tx.URI), 50) : 'None', icon: '🔗' },
           ];
+          const flagDetails = getNftFlagLabels(tx.Flags);
+          if (flagDetails.length) details.push({ label: 'NFT Flags', value: flagDetails.join(', '), icon: '🚩' });
 
           if (tx.Issuer && tx.Issuer !== tx.Account) {
                details.push({ label: 'Issuer', value: shortenAddress(tx.Issuer), icon: '👤' });
@@ -711,7 +709,7 @@ class PermissionedDomainCreatePreviewFormatter implements TransactionPreviewForm
 // 9. PermissionedDomainSet Preview Formatter
 class PermissionedDomainSetPreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
-          const additions = tx.AcceptedCredentialsToAdd?.length || 0;
+          const additions = tx.AcceptedCredentials?.length || tx.AcceptedCredentialsToAdd?.length || 0;
           const removals = tx.AcceptedCredentialsToRemove?.length || 0;
 
           let description = '';
@@ -733,11 +731,12 @@ class PermissionedDomainSetPreviewFormatter implements TransactionPreviewFormatt
      getKeyDetails(tx: any, meta: any): KeyDetail[] {
           const details: KeyDetail[] = [];
 
-          if (tx.AcceptedCredentials?.length > 0) {
+          const credentialsToAdd = tx.AcceptedCredentials || tx.AcceptedCredentialsToAdd;
+          if (credentialsToAdd?.length > 0) {
                details.push({
-                    label: 'Credentials',
+                    label: tx.AcceptedCredentialsToAdd ? 'Credentials to Add' : 'Accepted Credentials',
                     type: 'credential-list',
-                    credentials: tx.AcceptedCredentials.map((cred: any) => ({
+                    credentials: credentialsToAdd.map((cred: any) => ({
                          type: Buffer.from(cred.Credential.CredentialType, 'hex').toString('utf8') || 'N/A',
                          issuer: shortenAddress(cred.Credential.Issuer),
                     })),
@@ -892,13 +891,14 @@ class DidDeletePreviewFormatter implements TransactionPreviewFormatter {
 
 // Generic Preview Formatter
 // Example fix for any formatter that might return undefined
-class GenericPreviewFormatter implements TransactionPreviewFormatter {
+class KnownTransactionPreviewFormatter implements TransactionPreviewFormatter {
      constructor(private readonly txType: string) {}
 
      getSummary(tx: any, accountInfo?: any) {
+          const description = this.getTransactionDescription(tx);
           return {
-               title: `${this.txType || 'XRPL'} Transaction`,
-               description: `Prepare to submit ${this.txType || 'XRPL'} transaction`,
+               title: humanizeTransactionType(this.txType),
+               description,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
@@ -947,10 +947,60 @@ class GenericPreviewFormatter implements TransactionPreviewFormatter {
           return warnings;
      }
 
+     private getTransactionDescription(tx: any): string {
+          switch (this.txType) {
+               case 'AccountDelete': return tx.Destination ? `Delete this account and send its remaining XRP to ${shortenAddress(tx.Destination)}` : 'Delete this account';
+               case 'CheckCreate': return `Create a check for ${formatCurrencyAmountPreview(tx.SendMax)} payable to ${shortenAddress(tx.Destination)}`;
+               case 'CheckCash': return `Cash check ${shortenAddress(tx.CheckID)}${tx.Amount ? ` for ${formatCurrencyAmountPreview(tx.Amount)}` : ''}`;
+               case 'CheckCancel': return `Cancel check ${shortenAddress(tx.CheckID)}`;
+               case 'CredentialCreate': return `Create a credential for ${shortenAddress(tx.Subject)}${tx.CredentialType ? ` (${decodeHexPreview(tx.CredentialType)})` : ''}`;
+               case 'CredentialAccept': return `Accept ${decodeHexPreview(tx.CredentialType || 'credential')} credential from ${shortenAddress(tx.Issuer)}`;
+               case 'CredentialDelete': return `Delete ${decodeHexPreview(tx.CredentialType || 'credential')} credential${tx.Subject ? ` for ${shortenAddress(tx.Subject)}` : ''}`;
+               case 'DepositPreauth': return tx.Authorize ? `Authorize deposits from ${shortenAddress(tx.Authorize)}` : `Remove deposit authorization for ${shortenAddress(tx.Unauthorize)}`;
+               case 'SetRegularKey': return tx.RegularKey ? `Set regular key to ${shortenAddress(tx.RegularKey)}` : 'Remove the regular key';
+               case 'TicketCreate': return `Create ${tx.TicketCount || 0} transaction ticket${tx.TicketCount === 1 ? '' : 's'}`;
+               case 'AMMCreate': return `Create an automated market maker with ${formatCurrencyAmountPreview(tx.Amount)} and ${formatCurrencyAmountPreview(tx.Amount2)}`;
+               case 'AMMDeposit': return 'Deposit liquidity into the automated market maker';
+               case 'AMMWithdraw': return 'Withdraw liquidity from the automated market maker';
+               case 'AMMVote': return `Vote on AMM trading fee${tx.TradingFee !== undefined ? ` (${tx.TradingFee})` : ''}`;
+               case 'AMMBid': return `Bid for the AMM auction slot${tx.BidMin ? ` with minimum ${formatCurrencyAmountPreview(tx.BidMin)}` : ''}`;
+               case 'AMMDelete': return 'Delete the automated market maker';
+               case 'AMMClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the AMM`;
+               case 'Clawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from ${shortenAddress(tx.Holder)}`;
+               case 'LoanSet': return `Create or update a loan${tx.Counterparty ? ` with ${shortenAddress(tx.Counterparty)}` : ''}`;
+               case 'LoanManage': return `Manage loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanPay': return `Make a payment on loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanDelete': return `Delete loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanBrokerSet': return 'Create or update a loan broker';
+               case 'LoanBrokerDelete': return 'Delete the loan broker';
+               case 'LoanBrokerCoverDeposit': return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into loan broker cover`;
+               case 'LoanBrokerCoverWithdraw': return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
+               case 'LoanBrokerCoverClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
+               case 'VaultCreate': return 'Create a tokenized vault';
+               case 'VaultSet': return 'Update vault settings';
+               case 'VaultDeposit': return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into the vault`;
+               case 'VaultWithdraw': return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
+               case 'VaultClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
+               case 'VaultDelete': return 'Delete the vault';
+               case 'MPTokenIssuanceCreate': return 'Create an MPT issuance';
+               case 'MPTokenAuthorize': return tx.MPTokenIssuanceID ? `Authorize MPT issuance ${shortenAddress(tx.MPTokenIssuanceID)}` : 'Authorize an MPT issuance';
+               case 'MPTokenIssuanceSet': return 'Update MPT issuance settings';
+               case 'MPTokenIssuanceDestroy': return 'Destroy an MPT issuance';
+               case 'NFTokenModify': return `Update NFT ${shortenAddress(tx.NFTokenID)}${tx.URI ? ` URI to ${truncatePreviewValue(decodeHexPreview(tx.URI), 50)}` : ''}`;
+               default: return `Prepare to submit ${humanizeTransactionType(this.txType).toLowerCase()}`;
+          }
+     }
+
      private formatFieldValue(field: string, value: any): string {
           if (value === undefined || value === null) return '—';
           if (['Date', 'Expiration', 'CancelAfter', 'FinishAfter'].includes(field) && typeof value === 'number') {
                return formatDatePreview(value);
+          }
+          if (Array.isArray(value)) {
+               return `${value.length} ${value.length === 1 ? 'item' : 'items'}`;
+          }
+          if (typeof value === 'object' && value.currency && value.issuer && value.value !== undefined) {
+               return formatCurrencyAmountPreview(value);
           }
           if (typeof value === 'string' && value.length > 30) {
                return value.slice(0, 27) + '...';
@@ -980,14 +1030,14 @@ class EscrowCreatePreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
           return {
                title: 'Create Escrow',
-               description: `Lock ${formatXRPAmount(tx.Amount)} in escrow`,
+               description: `Lock ${formatCurrencyAmountPreview(tx.Amount)} in escrow`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
 
      getKeyDetails(tx: any, accountInfo?: any) {
           const details = [
-               { label: 'Amount', value: formatXRPAmount(tx.Amount), icon: '💰', highlight: true },
+               { label: 'Amount', value: formatCurrencyAmountPreview(tx.Amount), icon: '💰', highlight: true },
                { label: 'Destination', value: shortenAddress(tx.Destination), icon: '🎯' },
           ];
 
@@ -1007,12 +1057,14 @@ class EscrowCreatePreviewFormatter implements TransactionPreviewFormatter {
      }
 
      getRequiredFields(tx: any) {
+          const amount = typeof tx.Amount === 'string' ? Number(tx.Amount) : Number(tx.Amount?.value);
+          const amountIsValid = Number.isFinite(amount) && amount > 0;
           return [
                {
                     label: 'Amount',
                     value: tx.Amount,
-                    isValid: !!tx.Amount && Number.parseInt(tx.Amount) > 0,
-                    message: tx.Amount ? (Number.parseInt(tx.Amount) <= 0 ? 'Amount must be greater than 0' : undefined) : 'Amount is required',
+                    isValid: amountIsValid,
+                    message: !tx.Amount ? 'Amount is required' : amountIsValid ? undefined : 'Amount must be greater than 0',
                },
                {
                     label: 'Destination',
@@ -1025,7 +1077,7 @@ class EscrowCreatePreviewFormatter implements TransactionPreviewFormatter {
 
      getWarnings(tx: any, accountInfo?: any) {
           const warnings = [];
-          const amount = Number.parseInt(tx.Amount || '0');
+          const amount = typeof tx.Amount === 'string' ? Number(tx.Amount) : 0;
 
           if (accountInfo?.Balance) {
                const balance = Number.parseInt(accountInfo.Balance);
@@ -1034,8 +1086,8 @@ class EscrowCreatePreviewFormatter implements TransactionPreviewFormatter {
                }
           }
 
-          if (!tx.CancelAfter && !tx.FinishAfter && !tx.Condition) {
-               warnings.push(`⚠️ No release or cancel conditions set. Escrow cannot be released.`);
+          if (!tx.FinishAfter && (!tx.Condition || !tx.CancelAfter)) {
+               warnings.push(`⚠️ Escrow requires a release time (Finish After) or a condition with a cancel time.`);
           }
 
           return warnings;
@@ -1172,7 +1224,7 @@ class PaymentChannelCreatePreviewFormatter implements TransactionPreviewFormatte
 
 class PaymentChannelClaimPreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
-          const isClose = tx.Flags === 1;
+          const isClose = hasFlag(tx.Flags, 131072, 'tfClose');
           return {
                title: isClose ? 'Close Payment Channel' : 'Claim from Payment Channel',
                description: isClose ? 'Close the payment channel' : 'Claim funds from payment channel',
@@ -1353,11 +1405,12 @@ class NFTokenBurnPreviewFormatter implements TransactionPreviewFormatter {
      }
 
      getKeyDetails(tx: any, accountInfo?: any) {
-          return [
+          const details: KeyDetail[] = [
                { label: 'NFT ID', value: shortenAddress(tx.NFTokenID), icon: '🖼️', highlight: true },
-               { label: 'Owner', value: shortenAddress(tx.Account), icon: '👤' },
+               { label: tx.Owner ? 'Owner' : 'Submitted By', value: shortenAddress(tx.Owner || tx.Account), icon: '👤' },
                { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' },
           ];
+          return details;
      }
 
      getRequiredFields(tx: any) {
@@ -1493,10 +1546,78 @@ function formatCurrencyAmountPreview(amount: any): string {
           return formatXRPAmount(amount);
      }
      if (amount.currency && amount.issuer) {
-          const value = Number.parseInt(amount.value).toFixed(6);
+          const numericValue = Number(amount.value);
+          if (!Number.isFinite(numericValue)) return `${amount.value} ${amount.currency}`;
+          const value = new Intl.NumberFormat(undefined, { maximumFractionDigits: 15 }).format(numericValue);
           return `${value} ${amount.currency}`;
      }
      return String(amount);
+}
+
+function getAmountInDisplayUnits(amount: any): number {
+     if (typeof amount === 'string') {
+         const drops = Number(amount);
+         return Number.isFinite(drops) ? drops / 1000000 : 0;
+     }
+     if (amount && typeof amount.value === 'string') {
+         const value = Number(amount.value);
+         return Number.isFinite(value) ? value : 0;
+     }
+     return 0;
+}
+
+function getNativeXrpAmount(transactionType: string, tx: any): number {
+     const nativeAmount = transactionType === 'Payment' ? (tx.Amount ?? tx.DeliverMax) :
+         ['EscrowCreate', 'PaymentChannelCreate', 'PaymentChannelFund'].includes(transactionType) ? tx.Amount : undefined;
+     if (typeof nativeAmount !== 'string') return 0;
+     const drops = Number(nativeAmount);
+     return Number.isFinite(drops) ? drops : 0;
+}
+
+function hasFlag(flags: any, bit: number, objectFlag: string): boolean {
+     if (typeof flags === 'number') return (flags & bit) === bit;
+     if (typeof flags === 'string') {
+         const numericFlags = Number(flags);
+         return Number.isFinite(numericFlags) && (numericFlags & bit) === bit;
+     }
+     return !!flags?.[objectFlag];
+}
+
+function getNftFlagLabels(flags: any): string[] {
+     const definitions: [number, string, string][] = [
+          [1, 'tfBurnable', 'Burnable'],
+          [2, 'tfOnlyXRP', 'Only XRP'],
+          [4, 'tfTrustLine', 'Trust Line'],
+          [8, 'tfTransferable', 'Transferable'],
+          [16, 'tfMutable', 'Mutable'],
+     ];
+     return definitions.filter(([bit, objectFlag]) => hasFlag(flags, bit, objectFlag)).map(([, , label]) => label);
+}
+
+function getTrustSetFlagDetails(flags: any): KeyDetail[] {
+     const definitions: [number, string, string][] = [
+         [65536, 'tfSetfAuth', 'Authorize issuer'],
+         [131072, 'tfSetNoRipple', 'Set no-ripple'],
+         [262144, 'tfClearNoRipple', 'Clear no-ripple'],
+         [1048576, 'tfSetFreeze', 'Freeze trust line'],
+         [2097152, 'tfClearFreeze', 'Clear freeze'],
+         [4194304, 'tfSetDeepFreeze', 'Deep-freeze trust line'],
+         [8388608, 'tfClearDeepFreeze', 'Clear deep freeze'],
+     ];
+     const activeFlags = definitions.filter(([bit, objectFlag]) => hasFlag(flags, bit, objectFlag)).map(([, , label]) => label);
+     return activeFlags.length ? [{ label: 'Trust Line Flags', value: activeFlags.join(', '), icon: '🚩' }] : [];
+}
+
+function humanizeTransactionType(transactionType: string): string {
+     if (!transactionType) return 'XRPL Transaction';
+     const knownLabels: Record<string, string> = {
+         AMMCreate: 'Create AMM', AMMDeposit: 'AMM Deposit', AMMWithdraw: 'AMM Withdraw',
+         AMMVote: 'AMM Vote', AMMBid: 'AMM Auction Bid', AMMDelete: 'Delete AMM',
+         AMMClawback: 'AMM Clawback', NFTokenModify: 'Modify NFT',
+         MPTokenIssuanceCreate: 'Create MPT Issuance', MPTokenIssuanceSet: 'Update MPT Issuance',
+         MPTokenIssuanceDestroy: 'Destroy MPT Issuance',
+     };
+     return knownLabels[transactionType] || transactionType.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
 }
 
 function shortenAddress(address: string): string {

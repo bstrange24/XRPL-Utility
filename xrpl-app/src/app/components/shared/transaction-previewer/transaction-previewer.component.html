@@ -54,6 +54,20 @@
                                    </div>
                                    }
                               </div>
+                              } @else if (detail.type === 'signer-list') {
+                              <ul class="mt-1 space-y-1">
+                                   @for (signer of detail.signers; track $index) {
+                                   <li class="text-sm text-gray-900">
+                                        {{ signer.account }}
+                                        @if (signer.signingPubKey) {
+                                        <span class="text-gray-500"> ({{ signer.signingPubKey }}) </span>
+                                        }
+                                        @if (signer.signature) {
+                                        <span class="text-gray-500"> Signature: {{ signer.signature }} </span>
+                                        }
+                                   </li>
+                                   }
+                              </ul>
                               } @else {
                               <p class="text-sm font-medium text-gray-900 break-all mt-1">{{ detail.value }}</p>
                               }
