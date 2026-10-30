@@ -49,7 +49,7 @@
                <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" max="4294967295" />
 
                @if (isDestinationTagInvalid()) {
-               <p class="form-error">Destination Tag must be a positive number</p>
+               <p class="form-error">Destination Tag must be a whole number between 1 and 4294967295.</p>
                }
 
                <app-field-helper title="Destination Tag" [items]="iouDestinationTagHelperItems" [show]="showIouDestinationTagHelper" />

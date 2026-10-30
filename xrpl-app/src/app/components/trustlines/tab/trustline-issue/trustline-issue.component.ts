@@ -57,14 +57,13 @@ export class TrustlineIssueComponent {
           const amount = this.xrplTxOptionsStore.destinationTag();
           if (amount === null || amount === '') return true;
           const numAmount = Number(amount);
-          return Number.isFinite(numAmount) && numAmount > 0;
+          return Number.isSafeInteger(numAmount) && numAmount > 0 && numAmount <= 4294967295;
      });
 
      isDestinationTagInvalid = computed(() => {
           const amount = this.xrplTxOptionsStore.destinationTag();
           if (amount === null || amount === '') return false;
-          const numAmount = parseFloat(amount);
-          return isNaN(numAmount) || numAmount <= 0;
+          return !this.isDestinationTagValid();
      });
 
      handleSearchQueryChange(query: string) {

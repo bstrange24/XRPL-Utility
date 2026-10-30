@@ -80,11 +80,11 @@
                          <!-- Special Tabs -->
                          @if (tab === 'issueCurrency') {
                          <div class="rounded-2xl border border-gray-200 bg-white p-5 mt-5 transition-shadow hover:shadow-card">
-                              <app-trustline-issue [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-issue>
+                              <app-trustline-issue [activeTab]="tab" [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-issue>
                          </div>
                          } @if (tab === 'clawbackTokens') {
                          <div class="rounded-2xl border border-gray-200 bg-white p-5 mt-5 transition-shadow hover:shadow-card">
-                              <app-trustline-clawback [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-clawback>
+                              <app-trustline-clawback [activeTab]="tab" [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-clawback>
                          </div>
                          } @if (tab === 'addNewIssuers') {
                          <app-trustline-issuers (currencySelected)="onCurrencySelected($event)" (issuerSelected)="onIssuerSelected($event)" [isIdle]="isIdle()" />

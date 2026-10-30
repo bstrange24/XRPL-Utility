@@ -71,24 +71,19 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
      private readonly rightPanelService = inject(RightPanelService);
      private readonly cdr = inject(ChangeDetectorRef);
-     public readonly tabs = TRUSTLINE_TABS;
+     public      readonly tabs = TRUSTLINE_TABS;
      public readonly tabMeta = TRUSTLINE_TAB_META;
      readonly setFlags: Record<string, any> = SET_FLAGS;
      readonly clearFlags: Record<string, any> = CLEAR_FLAGS;
      private isSwitchingWallet = false;
-     activeTabForRequirements = computed(() => this.trustlineViewModelService.activeTab());
      readonly summaryExpanded = signal<boolean>(false);
      readonly delegateOptionEnabled = signal(false);
-     private readonly currentWalletAddress = signal<string>('');
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
           super(walletManager, transactionUiService, transactionDropdownService, walletDataService, txEnvironmentService, copyUtilService, toastService, acccountDataService, route, storageService);
           this.transactionDropdownService.setupAutoSelectOnValidTypedAddress(this.destinationSearchQuery, this.selectedDestinationAddress, this.destinationMap);
           this.txUiService.clearAllOptionsAndMessages();
 
-          effect(() => {
-               this.trustlineStoreService.existingIOUs();
-          });
      }
 
      ngOnInit(): void {
@@ -99,91 +94,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.addMptInCurrencyDropdown.set(false);
           this.transactionDropdownService.loadCustomDestinations();
           this.setRightPanel();
-
-          // DO NOT call setDefaultCurrencyAndIssuer here - let the wallet change effect handle it
-          // But only for non-issuer wallets
-          setTimeout(() => {
-               const wallet = this.currentWallet()?.classicAddress;
-               const existingIOUs = this.trustlineStoreService.existingIOUs();
-               const isIssuerWallet = existingIOUs.some((tl: any) => tl.issuer === wallet);
-
-               if (!isIssuerWallet) {
-                    this.setDefaultCurrencyAndIssuer();
-               }
-          }, 500);
      }
-
-     private setDefaultCurrencyAndIssuer() {
-          const currentWallet = this.currentWallet()?.classicAddress;
-          const currentTab = this.trustlineViewModelService.activeTab();
-          const existingIOUs = this.trustlineStoreService.existingIOUs();
-
-          // CRITICAL: For Set tab, if this wallet has ANY trustlines where it's the issuer, skip entirely
-          // Because loadWalletDataPreservingSelection already handled it
-          const isIssuerWallet = existingIOUs.some((tl: any) => tl.issuer === currentWallet);
-
-          if (currentTab === 'setTrustline' && isIssuerWallet) {
-               return;
-          }
-
-          // Also skip if we already have a valid selection and this is not the initial load
-          const currentCurrency = this.currencyStoreService.currency();
-          const currentIssuer = this.currencyStoreService.issuer();
-
-          if (currentCurrency && currentIssuer && currentIssuer !== currentWallet) {
-               return;
-          }
-
-          // Wait for trustlines to load
-          setTimeout(() => {
-               const existingIOUsNow = this.trustlineStoreService.existingIOUs();
-               const currencies = this.trustlineCurrencyService.currencies();
-
-               if (existingIOUsNow.length > 0) {
-                    const nonSelfTrustline = existingIOUsNow.find((tl: any) => tl.issuer !== currentWallet);
-                    if (nonSelfTrustline) {
-                         this.currencyStoreService.setCurrency(nonSelfTrustline.currency);
-                         this.currencyStoreService.setIssuer(nonSelfTrustline.issuer);
-                    } else if (existingIOUsNow.length > 0) {
-                         const first = existingIOUsNow[0];
-                         this.currencyStoreService.setCurrency(first.currency);
-                         this.currencyStoreService.setIssuer(first.issuer);
-                    }
-               } else if (currencies.length > 0) {
-                    // Find a currency where this wallet is NOT the issuer
-                    for (const currency of currencies) {
-                         const issuers = this.trustlineCurrencyService.getIssuersForCurrency(currency);
-                         const nonSelfIssuer = issuers.find(issuer => issuer !== currentWallet);
-                         if (nonSelfIssuer) {
-                              this.currencyStoreService.setCurrency(currency);
-                              this.currencyStoreService.setIssuer(nonSelfIssuer);
-                              return;
-                         }
-                    }
-
-                    // Fallback to first available
-                    const firstCurrency = currencies[0];
-                    const issuers = this.trustlineCurrencyService.getIssuersForCurrency(firstCurrency);
-                    if (issuers.length > 0) {
-                         this.currencyStoreService.setCurrency(firstCurrency);
-                         this.currencyStoreService.setIssuer(issuers[0]);
-                    }
-               }
-          }, 100);
-     }
-
-     // Effect to watch for wallet changes
-     private readonly walletChangeEffect = effect(() => {
-          const wallet = this.currentWallet();
-          const newAddress = wallet?.classicAddress || wallet?.address || '';
-          const oldAddress = this.currentWalletAddress();
-
-          if (newAddress && newAddress !== oldAddress) {
-               this.currentWalletAddress.set(newAddress);
-               this.clearTrustlineData();
-               this.loadWalletDataPreservingSelection();
-          }
-     });
 
      private clearTrustlineData() {
           this.trustlineStoreService.setField('existingIOUs', []);
@@ -195,18 +106,12 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.cdr?.detectChanges();
      }
 
-     private async loadWalletDataPreservingSelection() {
-          const wallet = this.currentWallet();
-          if (!wallet?.classicAddress) {
-               return;
-          }
-
-          const savedCurrency = this.currencyStoreService.currency();
-          const savedIssuer = this.currencyStoreService.issuer();
+     private async loadWalletDataPreservingSelection(wallet: Wallet, savedCurrency: string, savedIssuer: string) {
+          if (!wallet?.classicAddress) return;
           const currentTab = this.trustlineViewModelService.activeTab();
 
           try {
-               const env = await this.txEnvironmentService.refreshEnvironment({
+               const env = await this.txEnvironmentService.prepareTxEnvironment({
                     includeAccountInfo: true,
                     includeAccountObject: true,
                     includeTrustlines: true,
@@ -214,7 +119,14 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     forceRefresh: true,
                });
 
-               const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(env.accountObjects!, wallet.classicAddress);
+               if (!env.accountObjects?.result || !env.accountInfo) {
+                    throw new Error('Unable to fetch wallet account data.');
+               }
+
+               this.updateSharedObjectsStore(env);
+               this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+
+               const existingIOUs = this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, wallet.classicAddress);
                this.trustlineStoreService.setField('existingIOUs', existingIOUs);
 
                let selectionRestored = false;
@@ -247,17 +159,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                          const selfAddress = wallet.classicAddress;
 
                          this.currencyStoreService.setCurrency(currencyToSelect);
-
-                         // CRITICAL: Small async delay + force refresh
-                         setTimeout(() => {
-                              this.currencyStoreService.setIssuer(selfAddress);
-
-                              // Force Angular + signals to re-evaluate everything
-                              this.cdr.detectChanges();
-
-                              // Extra push to make issuerItems recompute
-                              this.trustlineCurrencyService.forceIssuerRefresh?.(); // we'll add this below
-                         }, 50);
+                         this.currencyStoreService.setIssuer(selfAddress);
+                         this.trustlineCurrencyService.forceIssuerRefresh();
 
                          selectionRestored = true;
                     }
@@ -307,7 +210,9 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
                          // Ultimate fallback
                          if (!selectionRestored && currenciesList.length > 0) {
-                              this.trustlineCurrencyService.selectCurrency(currenciesList[0]);
+                              const currency = currenciesList[0];
+                              this.currencyStoreService.setCurrency(currency);
+                              this.currencyStoreService.setIssuer(this.trustlineCurrencyService.getIssuersForCurrency(currency)[0] ?? '');
                          }
                     }
                }
@@ -320,17 +225,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
                this.trustlineStoreService.setField('trustlineAlreadyExist', trustLineExists);
 
-               await this.trustlineCurrencyService.refreshCurrentBalanceFromEnv(env);
-
                // Force flag + limit sync
-               await this.trustlineUtilService.onCurrencyIssuerChange();
+               await this.trustlineUtilService.onCurrencyIssuerChange(env);
                this.cdr.detectChanges();
 
                this.trustlineStoreService.setField('isLoaded', true);
-
-               if (!selectionRestored && !this.currencyStoreService.currency()) {
-                    this.setDefaultCurrencyAndIssuer();
-               }
           } catch (error) {
                console.error('[loadWalletDataPreservingSelection] ERROR:', error);
                this.toastService.error('Failed to load wallet data', AppConstants.TOAST.ERROR);
@@ -408,42 +307,24 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (this.isSwitchingWallet) return;
           this.isSwitchingWallet = true;
 
-          // Save current currency/issuer before clearing
+          const wallet = this.walletManagerService.getSelectedWallet();
           const savedCurrency = this.currencyStoreService.currency();
           const savedIssuer = this.currencyStoreService.issuer();
 
-          // COMPLETELY reset all state
-          this.trustlineStoreService.reset();
-          this.currencyStoreService.reset();
-          this.rightPanelService.resetFilters();
-          this.xrplTxOptionsStore.reset();
-
-          // Force fresh load
           this.isSummaryLoading.set(true);
 
           try {
-               // Load new wallet data
-               await this.getTrustlinesForAccount(true);
+               this.trustlineStoreService.reset();
+               this.currencyStoreService.reset();
+               this.rightPanelService.resetFilters();
+               this.xrplTxOptionsStore.reset();
+               this.clearTrustlineData();
 
-               await this.trustlineUtilService.onCurrencyIssuerChange();
-
-               // Restore the currency/issuer selection if they exist for this wallet
-               if (savedCurrency && savedIssuer) {
-                    const existingIOUs = this.trustlineStoreService.existingIOUs();
-                    const stillExists = existingIOUs.some((tl: any) => tl.currency === savedCurrency && tl.issuer === savedIssuer);
-
-                    if (stillExists) {
-                         this.currencyStoreService.setCurrency(savedCurrency);
-                         this.currencyStoreService.setIssuer(savedIssuer);
-                    } else if (existingIOUs.length > 0) {
-                         // Pick the first available
-                         this.currencyStoreService.setCurrency(existingIOUs[0].currency);
-                         this.currencyStoreService.setIssuer(existingIOUs[0].issuer);
-                    }
+               if (wallet?.classicAddress) {
+                    await this.loadWalletDataPreservingSelection(wallet, savedCurrency, savedIssuer);
+               } else {
+                    this.trustlineStoreService.setField('isLoading', false);
                }
-
-               // Force balance refresh
-               await this.trustlineCurrencyService.refreshCurrentBalance();
           } finally {
                this.isSummaryLoading.set(false);
                this.isSwitchingWallet = false;
@@ -452,32 +333,29 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
 
      async onCurrencyChange(item: any) {
           // Update currency store immediately
-          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
+          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP', false);
           await this.trustlineUtilService.onCurrencyIssuerChange();
-          await this.trustlineCurrencyService.refreshCurrentBalance();
           this.cdr?.detectChanges();
      }
 
      async onIssuerChange(item: any) {
           // Update issuer store immediately
-          this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? '');
+          this.trustlineCurrencyService.selectIssuer(item?.id ?? item ?? '', false);
           await this.trustlineUtilService.onCurrencyIssuerChange();
-          await this.trustlineCurrencyService.refreshCurrentBalance();
           this.cdr?.detectChanges();
      }
 
      async onCurrencySelected(item: SelectItem | null) {
-          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP');
-          await this.trustlineUtilService.loadTrustlines(false);
+          this.trustlineCurrencyService.selectCurrency(item?.id ?? item ?? 'XRP', false);
+          await this.trustlineUtilService.onCurrencyIssuerChange();
      }
 
      async onIssuerSelected(item: SelectItem | null) {
           const address = item?.id || '';
-          this.trustlineCurrencyService.selectIssuer(address);
+          this.trustlineCurrencyService.selectIssuer(address, false);
 
-          // Add this: If both currency and issuer are set, fetch env and update flags
           if (this.currencyStoreService.currency() && address) {
-               await this.trustlineUtilService.loadTrustlines(false);
+               await this.trustlineUtilService.onCurrencyIssuerChange();
           }
      }
 
@@ -513,9 +391,10 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           this.trustlineViewModelService.activeTab.set(tab as TrustlineActionTypes);
           this.trustlineUtilService.activeTab.set(tab as TrustlineActionTypes);
           this.clearInputFields();
+          this.txUiService.resetCurrentStepToIdle();
+          this.txUiService.clearAllOptionsAndMessages();
+          this.xrplTxOptionsStore.reset();
           if (this.hasWallets() && this.trustlineStoreService.isLoaded()) {
-               await this.getTrustlinesForAccount(true);
-               // Re-check trustline for the new tab to populate amount correctly
                await this.trustlineUtilService.onCurrencyIssuerChange();
           }
      }
@@ -533,22 +412,28 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                this.trustlineStoreService.setField('isLoading', true);
                this.trustlineStoreService.setField('error', '');
 
-               if (!this.walletManagerService.ensureWalletSelected()) return;
-
                try {
-                    const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
+                    if (!this.walletManagerService.ensureWalletSelected()) return;
 
-                    if (!env) throw new Error('Unable to get environment.');
+                    const env = await this.txEnvironmentService.prepareTxEnvironment({
+                         includeAccountInfo: true,
+                         includeAccountObject: true,
+                         includeTrustlines: true,
+                         includeGatewayBalance: true,
+                         forceRefresh,
+                    });
 
-                    this.refreshAccountObject(env);
+                    if (!env.accountInfo || !env.accountObjects?.result) throw new Error('Unable to get environment.');
+
                     this.updateSharedObjectsStore(env);
-                    await this.trustlineUtilService.loadTrustlines(forceRefresh);
+                    await this.trustlineUtilService.loadTrustlines(forceRefresh, env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
                     console.error('Failed to load trustlines:', error);
                     this.toastService.error(error.message || 'Failed to load checks', AppConstants.TOAST.ERROR);
                } finally {
                     this.isSummaryLoading.set(false);
+                    this.trustlineStoreService.setField('isLoading', false);
                     this.txUiService.resetCurrentStepToIdle();
                }
           });
@@ -597,6 +482,12 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
 
           if (currentTab === 'issueCurrency' || currentTab === 'clawbackTokens') {
+               const destinationTag = this.xrplTxOptionsStore.destinationTag()?.trim();
+               if (destinationTag && (!/^\d+$/.test(destinationTag) || Number(destinationTag) <= 0 || Number(destinationTag) > 4294967295)) {
+                    this.toastService.error('Destination Tag must be a whole number between 1 and 4294967295.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
                destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
                if (!destinationAddress) {
                     this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
@@ -710,7 +601,6 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           // Reload trustlines to get updated data (newly created trustlines, updated limits, etc.)
           await this.getTrustlinesForAccount(true, true);
 
-          await this.trustlineCurrencyService.refreshCurrentBalance();
           this.txUiService.resetCurrentStepToIdle();
      }
 
@@ -733,12 +623,11 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     info: this.trustlineViewModelService.infoData(),
                     tab: this.trustlineViewModelService.activeTab(),
                     resetTrigger: this.rightPanelService.resetTrigger(),
+                    wallet: this.currentWallet(),
+                    selectedWalletAddress: this.currentWallet()?.classicAddress || this.currentWallet()?.address || '',
                },
 
                mainComponent: TrustlineRequirementsInfoComponent,
-               mainInputs: {
-                    activeTab: this.activeTabForRequirements,
-               },
           });
      }
 

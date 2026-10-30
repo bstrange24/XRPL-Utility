@@ -1,19 +1,16 @@
 <div class="space-y-6 p-3">
      <!-- Collapsible Header -->
-     <button (click)="isExpanded.set(!isExpanded())" class="requirement-main">
+     <button type="button" [attr.aria-expanded]="isExpanded()" aria-controls="trustline-info-content" (click)="toggleExpanded()" class="requirement-main">
           <div class="flex items-center gap-3">
                <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
                <span class="font-semibold text-gray-900">Trustline Info</span>
           </div>
-
-          <button (click)="isExpanded()" class="btn-ghost flex items-center gap-2" title="{{ isExpanded() ? 'Collapse Panel' : 'Expand Panel' }}">
-               <lucide-icon [name]="isExpanded() ? 'chevron-up' : 'chevron-down'" size="16" />
-          </button>
+          <lucide-icon [name]="isExpanded() ? 'chevron-up' : 'chevron-down'" size="16" />
      </button>
 
      <!-- Collapsible Content -->
      @if (isExpanded()) {
-     <div [@expandCollapse] class="space-y-6 overflow-hidden">
+     <div id="trustline-info-content" [@expandCollapse] class="space-y-6 overflow-hidden">
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Trust Lines</h3>
@@ -83,15 +80,15 @@
                     <li>Trust Lines are required to hold <strong>issued tokens (IOUs)</strong>. XRP does not need one.</li>
                     <li>Setting a positive limit creates a trust line if one does not already exist.</li>
                     <li>To remove a trust line, the balance must be exactly zero and the limit set to 0.</li>
-                    <li>Each trust line consumes <strong>owner reserve</strong> (~0.2 XRP) while active.</li>
-                    <li>The issuer can freeze a trust line if they have the Freeze feature enabled.</li>
+                    <li>Each active trust line increases the account's <strong>owner reserve requirement</strong>; the amount varies by network and current ledger settings.</li>
+                    <li>Whether an issuer can freeze a trust line depends on the issuer's permissions and the line's flags.</li>
                </ul>
 
                <div class="mt-6 pt-5 border-t border-amber-200">
                     <h5 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroExclamationTriangle" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" /> Common Gotchas</h5>
                     <ul class="text-sm text-amber-700 space-y-2 list-disc pl-5">
                          <li>Reducing the limit does not remove the trust line if balance > 0.</li>
-                         <li>Zero-balance trust lines are hidden in this app (normal XRPL behavior).</li>
+                         <li>Trust lines with zero balance and zero limits on both sides are omitted from this app's list.</li>
                          <li>Always test trustline creation/removal on Devnet/Testnet first.</li>
                     </ul>
                </div>

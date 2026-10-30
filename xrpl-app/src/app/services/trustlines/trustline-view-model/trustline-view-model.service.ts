@@ -124,10 +124,12 @@ export class TrustlineViewModelService {
           const wallet = this.walletManager.getSelectedWallet();
           const tab = this.activeTab();
 
-          if (!wallet?.address || this.trustlineStoreService.isLoading()) {
+          const walletAddress = wallet?.classicAddress || wallet?.address || '';
+
+          if (!walletAddress || this.trustlineStoreService.isLoading()) {
                return {
-                    walletName: wallet?.name || wallet?.address?.slice(0, 10) + '...' || 'Loading...',
-                    classicAddress: wallet?.classicAddress || wallet?.address || '',
+                    walletName: wallet?.name || (walletAddress ? `${walletAddress.slice(0, 10)}...` : 'Loading...'),
+                    classicAddress: walletAddress,
                     activeTab: tab,
                     trustlineCount: 0,
                     totalTrustlines: 0,
@@ -142,8 +144,8 @@ export class TrustlineViewModelService {
           }
 
           const explorerBase = this.txUiService.explorerUrl();
-          const address = wallet.address;
-          const walletName = wallet.name || address.slice(0, 10) + '...';
+          const address = walletAddress;
+          const walletName = wallet?.name || `${address.slice(0, 10)}...`;
           const allTrustlines = this.trustlineStoreService.existingIOUs() ?? [];
           const totalCount = allTrustlines.length;
 

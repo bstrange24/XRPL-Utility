@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { expandCollapse } from '../../../../services/utils/animations/animations.service';
@@ -14,8 +14,9 @@ import { CommonModule } from '@angular/common';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlineRequirementsInfoComponent {
-     activeTab = input.required<'setTrustline'>();
-
-     // Collapsible state
      isExpanded = signal(false);
+
+     toggleExpanded(): void {
+          this.isExpanded.update(expanded => !expanded);
+     }
 }

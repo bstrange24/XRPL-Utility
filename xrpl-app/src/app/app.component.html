@@ -37,7 +37,7 @@
 
           <!-- RIGHT PANEL (Summary + Info) -->
           @if (!isBalanceChangesPage() && !isSignTransactionsPage()) {
-          <aside aria-label="Summary" class="hidden lg:block lg:col-span-5 xl:col-span-5 min-h-0">
+          <aside aria-label="Summary and information" class="hidden lg:block lg:col-span-5 xl:col-span-5 min-h-0">
                <div class="h-full flex flex-col gap-4 overflow-hidden">
                     <!-- 1. SUMMARY (Top) -->
                     @if (rightPanelService.summaryComponent(); as summaryComp) {
@@ -47,12 +47,11 @@
                     }
 
                     <!-- 2. MAIN INFO PANEL -->
-                    <!-- @if (rightPanelService.component(); as comp) {
+                    @if (rightPanelService.component(); as comp) {
                     <div class="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden min-h-0">
                          <ng-container *ngComponentOutlet="comp; inputs: rightPanelService.inputs()" />
                     </div>
-                    } @else -->
-                    @if (!rightPanelService.summaryComponent()) {
+                    } @else if (!rightPanelService.summaryComponent()) {
                     <!-- Only show placeholder if there's nothing at all -->
                     <div class="flex-1 bg-white rounded-2xl shadow-sm p-6 text-sm text-gray-400 flex items-center justify-center">No info available</div>
                     }

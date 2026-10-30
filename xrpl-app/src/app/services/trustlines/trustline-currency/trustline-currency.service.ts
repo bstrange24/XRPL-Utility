@@ -136,7 +136,7 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           return this.issuerItems().find(i => i.id === issuer);
      });
 
-     selectCurrency(item: any) {
+     selectCurrency(item: any, refreshBalance = true) {
           const currency = item?.id ?? item;
           this.currencyStore.setCurrency(currency);
 
@@ -146,13 +146,13 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
                return;
           }
           this.currencyStore.setIssuer(issuers[0]);
-          this.refreshCurrentBalance().catch(console.error);
+          if (refreshBalance) this.refreshCurrentBalance().catch(console.error);
      }
 
-     selectIssuer(item: any) {
+     selectIssuer(item: any, refreshBalance = true) {
           const value = item?.id ?? item;
           this.currencyStore.setIssuer(value);
-          this.refreshCurrentBalance().catch(console.error);
+          if (refreshBalance) this.refreshCurrentBalance().catch(console.error);
      }
 
      addToken(currency: string, issuer: string) {
