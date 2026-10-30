@@ -1,0 +1,64 @@
+<section class="space-y-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm" style="margin-top: 10px">
+     <header class="space-y-2">
+          <h2 class="text-xl font-semibold tracking-tight text-gray-900">Build a Batch</h2>
+          <p class="max-w-3xl text-sm leading-6 text-gray-600">
+               Combine 2–8 transactions from the selected wallet into one XRPL Batch. The builder assigns the inner-batch flags, sequences, and fees.
+               <a class="font-medium text-green-700 underline" href="https://xrpl.org/docs/concepts/transactions/batch-transactions" target="_blank" rel="noopener noreferrer">Read the XRPL Batch documentation</a>.
+          </p>
+     </header>
+
+     <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+               <label class="mb-1 block text-sm font-semibold text-gray-700" for="batch-wallet">Signing wallet</label>
+               <div id="batch-wallet" class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700">@if (walletManager.getSelectedWallet(); as wallet) { {{ wallet.name || 'Selected wallet' }} · {{ wallet.classicAddress }} } @else { No wallet selected }</div>
+          </div>
+          <div>
+               <label class="mb-1 block text-sm font-semibold text-gray-700" for="batch-mode">Execution mode</label>
+               <select id="batch-mode" [ngModel]="selectedMode()" (ngModelChange)="onModeChange($event)" name="batchMode" class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100">
+                    @for (mode of batchModes; track mode.value) {
+                    <option [value]="mode.value">{{ mode.label }}</option>
+                    }
+               </select>
+               <p class="mt-1 text-xs text-gray-500">{{ selectedModeDescription() }}</p>
+          </div>
+     </div>
+
+     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">This builder creates single-account batches using the selected wallet. Every inner transaction is sent from that wallet. For security, do not include <code>Account</code>, <code>Sequence</code>, <code>TicketSequence</code>, <code>Fee</code>, or signature fields in the inner transaction JSON.</div>
+
+     <div>
+          <div class="mb-2 flex items-center justify-between gap-3">
+               <label class="text-sm font-semibold text-gray-700">Inner transactions (JSON array)</label>
+               <div class="flex items-center gap-2">
+                    <button type="button" (click)="innerTransactionsEditor.format()" title="Format JSON" class="btn-utility-small">
+                         <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                         Format JSON
+                    </button>
+                    <button type="button" (click)="copyUtilService.copySignTx(innerTransactionsJson())" title="Copy Inner Transactions" class="btn-utility-small">
+                         <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                         Copy
+                    </button>
+               </div>
+          </div>
+          <app-json-editor #innerTransactionsEditor [value]="innerTransactionsJson()" (valueChange)="onInnerTransactionsChange($event)"></app-json-editor>
+          <p class="mt-2 text-xs leading-5 text-gray-500">
+               Enter transaction objects with their <code>TransactionType</code> and required operation fields. Example:
+               <code>[&#123;"TransactionType":"Payment","Destination":"r...","Amount":"1000000"&#125;, &#123;"TransactionType":"Payment","Destination":"r...","Amount":"2000000"&#125;]</code>
+          </p>
+     </div>
+
+     <div class="flex flex-wrap gap-3">
+          <button type="button" class="btn-primary" [disabled]="isPreparing()" (click)="prepareBatch()">{{ isPreparing() ? 'Preparing…' : 'Prepare Batch' }}</button>
+     </div>
+
+     @if (batchError()) {
+     <p role="alert" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ batchError() }}</p>
+     } @if (batchPreview(); as batch) {
+     <div class="space-y-3 border-t border-gray-200 pt-5">
+          <div>
+               <h3 class="font-semibold text-gray-900">Prepared Batch</h3>
+               <p class="text-sm text-gray-500">Review the complete transaction below, then use the Sign and Submit controls on this page.</p>
+          </div>
+          <pre class="max-h-[32rem] overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-4 text-xs leading-5 text-gray-800"><code>{{ batch | json }}</code></pre>
+     </div>
+     }
+</section>

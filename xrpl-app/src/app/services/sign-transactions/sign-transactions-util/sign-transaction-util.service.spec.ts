@@ -95,6 +95,7 @@ describe('SignTransactionUtilService', () => {
                const items = service.transactionTypeItems();
                expect(items.length).toBeGreaterThan(0);
                expect(items[0].id).toBe('sendXrp');
+               expect(items.some(item => item.id === 'batch')).toBe(true);
           });
 
           it('should mark current selected transaction as current token', () => {
@@ -188,21 +189,6 @@ describe('SignTransactionUtilService', () => {
                const blob = 'signed_blob';
                service.setSigned(blob);
                expect(mockSignTransationStoreService.setField).toHaveBeenCalledWith('outputField', blob);
-          });
-     });
-
-     describe('createBatchpRequestText', () => {
-          it('should create batch request text', async () => {
-               const options = {
-                    client: {} as any,
-                    wallet: { classicAddress: 'rAddress' } as any,
-                    accountInfo: { result: { account_data: { Sequence: 1 } } } as any,
-                    fee: '12',
-                    currentLedger: 1000,
-               };
-               const result = await service.createBatchpRequestText(options);
-               expect(result).toContain('Batch');
-               expect(result).toContain('rAddress');
           });
      });
 

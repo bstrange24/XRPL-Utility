@@ -22,7 +22,6 @@ import { JsonEditorComponent } from '../shared/json-editor/json-editor.component
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { ActivatedRoute } from '@angular/router';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
-import { SignTransactionRequirementsInfoComponent } from './ui-components/sign-transaction-requirements-info/sign-transaction-requirements-info.component';
 import { SignTransationStoreService } from '../../services/sign-transactions/sign-transaction-store/sign-transation-store.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
@@ -37,11 +36,12 @@ import { expandCollapse } from '../../services/utils/animations/animations.servi
 import { SignTransactionValidatorService } from '../../services/shared/validators/sign-transaction-validator/sign-transaction-validator.service';
 import { FieldHelperComponent } from '../shared/field-helper/field-helper.component';
 import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
+import { BatchTransactionsComponent } from '../batch-transactions/batch-transactions.component';
 
 @Component({
      selector: 'app-sign-transactions',
      standalone: true,
-     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, FieldHelperComponent, ButtonTooltipComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent],
+     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, FieldHelperComponent, ButtonTooltipComponent, NgIcon, LucideAngularModule, SelectSearchDropdownComponent, TransactionPreviewComponent, JsonEditorComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, BatchTransactionsComponent],
      templateUrl: './sign-transactions.component.html',
      styleUrl: './sign-transactions.component.css',
      animations: [expandCollapse],
@@ -58,10 +58,26 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      public readonly signTransactionsOrchestratorService = inject(SignTransactionsOrchestratorService);
      public readonly signTransationStoreService = inject(SignTransationStoreService);
      public readonly signTransactionValidatorService = inject(SignTransactionValidatorService);
+     readonly isBatchTransaction = computed(() => {
+          try {
+               return JSON.parse(this.signTransationStoreService.txJson())?.TransactionType === 'Batch';
+          } catch {
+               return false;
+          }
+     });
+     readonly isBatchAccountMatch = computed(() => {
+          if (!this.isBatchTransaction()) return true;
+          try {
+               return JSON.parse(this.signTransationStoreService.txJson())?.Account === this.currentWallet()?.classicAddress;
+          } catch {
+               return false;
+          }
+     });
      private readonly rightPanelService = inject(RightPanelService);
      private readonly cdr = inject(ChangeDetectorRef);
      public readonly signTxTabs = SIGN_TRANSACTION_TABS;
      public readonly tabMeta = SIGN_TRANSACTION_TAB_META;
+     readonly isBatchMode = signal(false);
      // === Helper Items ===
      readonly signTransactionDetailsHelperItems = AppConstants.SIGN_TRANSACTION_DETAILS_HELPER_ITEMS;
      // UI State
@@ -76,6 +92,8 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           effect(() => {
                const isTicket = this.xrplTxOptionsStore.isTicket();
                const selectedTicket = this.xrplTxOptionsStore.selectedSingleTicket();
+
+               if (this.isBatchTransaction()) return;
 
                const txJson = untracked(() => this.signTransationStoreService.txJson());
                if (!txJson.trim()) return;
@@ -99,6 +117,8 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           effect(() => {
                const isMemo = this.xrplTxOptionsStore.isMemoEnabled();
                const memos = this.xrplTxOptionsStore.memos(); // This is now an array of objects, not strings
+
+               if (this.isBatchTransaction()) return;
 
                const txJson = untracked(() => this.signTransationStoreService.txJson());
                if (!txJson.trim()) return;
@@ -141,16 +161,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                untracked(() => this.updateSignedDisplay());
           });
 
-          this.rightPanelService.setPanel({
-               mainComponent: SignTransactionRequirementsInfoComponent,
-               mainInputs: {
-                    activeTab: 'sendXrp',
-               },
-
-               // Add summary here when you want it (e.g. on Credentials page)
-               // summaryComponent: CredentialsSummaryComponent,
-               // summaryInputs: { ... }
-          });
+          this.rightPanelService.clearPanel();
      }
 
      selectedTransactionItem = computed(() => {
@@ -178,6 +189,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, SIGN_TRANSACTION_TAB, tab => this.setTab(tab));
+          this.isBatchMode.set(false);
           this.signTransationStoreService.setField('selectedTransaction', 'sendXrp');
           this.clearMessages();
           this.txUiService.clearAllOptionsAndMessages();
@@ -304,6 +316,16 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
                          return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
                     }
 
+                    if (this.isBatchTransaction()) {
+                         const transaction = JSON.parse(this.signTransationStoreService.txJson());
+                         if (transaction.Account !== this.currentWallet()?.classicAddress) {
+                              throw new Error('The Batch Account must match the selected signing wallet.');
+                         }
+                         if (this.xrplTxOptionsStore.useMultiSign()) {
+                              throw new Error('Batch transactions cannot use the Sign page multi-signing flow. Use a single signing key or provide BatchSigners in the transaction.');
+                         }
+                    }
+
                     const env = await this.txEnvironmentService.prepareTxEnvironment({ includeLedgerIndex: true });
 
                     const txBlob = await this.signTransactionsOrchestratorService.signTransaction({
@@ -336,6 +358,10 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
                try {
                     this.signTransationStoreService.updateField('buttonLoading', s => ({ ...s, multiSign: true }));
+
+                    if (this.isBatchTransaction()) {
+                         throw new Error('Batch transactions cannot use the Sign page multi-signing flow. Use a single signing key or provide BatchSigners in the transaction.');
+                    }
 
                     if (!this.signTransationStoreService.txJson().trim()) {
                          return this.toastService.error('Transaction cannot be empty', AppConstants.TOAST.ERROR);
@@ -470,8 +496,28 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
 
      async onTransactionSelected(item: SelectItem | null) {
           const tx = item?.id || '';
+          if (tx === 'batch') {
+               this.isBatchMode.set(true);
+               this.xrplTxOptionsStore.reset();
+               this.signTransationStoreService.setField('selectedTransaction', 'batch');
+               this.signTransationStoreService.setField('outputField', '');
+               this.signTransationStoreService.setAppSigned(false);
+               this.signTransactionUtilService.onTxJsonChange('');
+               this.txUiService.isSignedTx.set(false);
+               this.cdr.markForCheck();
+               return;
+          }
+          this.isBatchMode.set(false);
           this.signTransationStoreService.setField('selectedTransaction', tx);
           await this.onTransactionChange();
+     }
+
+     onBatchPrepared(batch: xrpl.Batch | null): void {
+          this.signTransationStoreService.setField('outputField', '');
+          this.signTransationStoreService.setAppSigned(false);
+          this.txUiService.isSignedTx.set(false);
+          this.signTransactionUtilService.onTxJsonChange(batch ? JSON.stringify(batch, null, 2) : '');
+          this.cdr.markForCheck();
      }
 
      populateTxDetails(): void {
@@ -634,7 +680,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
      });
 
      canSign = computed(() => {
-          return this.isIdle() && this.hasWallets() && this.signTransactionValidatorService.jsonIsValid() && !this.isExternallySignedTx();
+          return this.isIdle() && this.hasWallets() && this.signTransactionValidatorService.jsonIsValid() && !this.isExternallySignedTx() && this.isBatchAccountMatch() && !(this.isBatchTransaction() && this.xrplTxOptionsStore.useMultiSign());
      });
 
      canSubmitTx = computed(() => {
@@ -653,6 +699,8 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           if (!this.hasWallets()) return 'No wallet selected';
           if (!this.isIdle()) return 'Please wait...';
           if (!this.signTransactionValidatorService.jsonIsValid()) return 'Invalid Transaction JSON';
+          if (this.isBatchTransaction() && !this.isBatchAccountMatch()) return 'The Batch Account must match the selected signing wallet';
+          if (this.isBatchTransaction() && this.xrplTxOptionsStore.useMultiSign()) return 'Batch transactions require a single signing key or pre-supplied BatchSigners';
           if (this.isExternallySignedTx()) return 'This transaction is already signed externally';
           return '';
      }

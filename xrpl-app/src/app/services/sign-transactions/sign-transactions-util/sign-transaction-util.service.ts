@@ -72,8 +72,10 @@ export class SignTransactionUtilService {
 
           return [
                // Basic
-               // { id: 'batch', display: 'Batch', group: 'Basic' },
                { id: 'sendXrp', display: 'Send XRP', group: 'Basic' },
+
+               // Batch
+               { id: 'batch', display: 'Batch', group: 'Batch' },
 
                // Trustline
                { id: 'setTrustline', display: 'Set Trustline', group: 'Trustline' },
@@ -226,63 +228,6 @@ export class SignTransactionUtilService {
 
      setSigned(blob: string) {
           this.signTransationStoreService.setField('outputField', blob);
-     }
-
-     async createBatchpRequestText(options: SignTransactionOptions): Promise<string> {
-          const { wallet, accountInfo } = options;
-
-          let batchRequest: any = {
-               TransactionType: 'Batch',
-               Account: wallet.classicAddress,
-               Flags: 65536,
-               RawTransactions: [
-                    {
-                         RawTransaction: {
-                              TransactionType: 'Payment',
-                              Flags: 1073741824,
-                              Account: wallet.classicAddress,
-                              Destination: 'rskBKJYGVpTDNfTWV9qmM8smPJnNXEkSYH',
-                              Amount: '0.00001',
-                              Sequence: accountInfo.result.account_data.Sequence + 1,
-                              Fee: '0',
-                              SigningPubKey: '',
-                         },
-                    },
-                    {
-                         RawTransaction: {
-                              TransactionType: 'Payment',
-                              Flags: 1073741824,
-                              Account: wallet.classicAddress,
-                              Destination: 'r9KUJAJUbLpVeVd8zs78tbHnNroW38vbAq',
-                              Amount: '0.00001',
-                              Sequence: accountInfo.result.account_data.Sequence + 2,
-                              Fee: '0',
-                              SigningPubKey: '',
-                         },
-                    },
-               ],
-               Sequence: accountInfo.result.account_data.Sequence,
-               Fee: '40',
-               SigningPubKey: '',
-               TxnSignature: '',
-               Memos: [
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-                    {
-                         Memo: {
-                              MemoData: '',
-                              MemoType: 'text/plain',
-                         },
-                    },
-               ],
-          };
-
-          const txString = JSON.stringify(batchRequest, null, 2);
-          return txString;
      }
 
      async buildTransactionText(options: SignTransactionOptions): Promise<string> {

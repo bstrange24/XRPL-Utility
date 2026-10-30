@@ -31,11 +31,13 @@
                                              <ng-icon name="heroQuestionMarkCircle" size="14" />
                                         </button>
                                    </div>
-
                                    <app-select-search-dropdown [showClearButton]="false" [items]="signTransactionUtilService.transactionTypeItems()" [value]="selectedTransactionItem()" (valueChange)="onTransactionSelected($event)" [showSecondaryInInput]="false" placeholder="Search transaction type..." emptyMessage="No transaction types available" />
 
                                    <app-field-helper title="Transaction Details" [items]="signTransactionDetailsHelperItems" [show]="showSignTransactionDetailsHelper" />
 
+                                   @if (isBatchMode()) {
+                                   <app-batch-transactions (batchPrepared)="onBatchPrepared($event)"></app-batch-transactions>
+                                   } @else {
                                    <!-- Transaction JSON Card -->
                                    <div class="mb-4 mt-6">
                                         <div class="flex items-center justify-between mb-2">
@@ -59,6 +61,7 @@
                                    </div>
 
                                    <app-json-editor [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
+                                   }
 
                                    <!-- Signed Transaction Card -->
                                    <div class="relative">
@@ -122,7 +125,9 @@
                               </div>
 
                               <!-- Transaction Options (Component handles its own card) -->
+                              @if (!isBatchMode()) {
                               <app-transaction-options [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()" />
+                              }
 
                               <!-- Action Buttons Card -->
                               <div class="main-button-section">
