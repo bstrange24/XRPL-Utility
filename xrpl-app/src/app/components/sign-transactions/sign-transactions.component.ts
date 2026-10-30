@@ -193,6 +193,7 @@ export class SignTransactionsComponent extends WalletDestinationBase implements 
           this.signTransationStoreService.setField('selectedTransaction', 'sendXrp');
           this.clearMessages();
           this.txUiService.clearAllOptionsAndMessages();
+          this.clearSignedJsonField();
           this.clearFields();
      }
 

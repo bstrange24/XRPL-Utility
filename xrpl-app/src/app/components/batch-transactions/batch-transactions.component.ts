@@ -40,7 +40,7 @@ export class BatchTransactionsComponent {
      readonly showAdvancedJson = signal(false);
      readonly expandedTransactionId = signal<number | null>(null);
      readonly selectedModeDescription = computed(() => this.batchModes.find(mode => mode.value === this.selectedMode())?.description ?? '');
-     readonly transactionTypeItems = computed(() => this.signTransactionUtilService.transactionTypeItems().filter(item => item.id !== 'batch' && this.signTransactionUtilService.supportsTransactionTemplate(item.id)));
+     readonly transactionTypeItems = computed(() => this.signTransactionUtilService.transactionTypeItems().filter(item => item.id !== 'batch' && this.signTransactionUtilService.supportsBatchTransactionTemplate(item.id)));
      readonly innerTransactionsJson = computed(() => {
           try {
                return JSON.stringify(this.transactions().map(transaction => JSON.parse(transaction.json)), null, 2);

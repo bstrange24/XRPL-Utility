@@ -83,6 +83,37 @@ export class SignTransactionUtilService {
                { id: 'claimPaymentChannel', display: 'Claim Payment Channel', group: 'Payment Channel' },
                { id: 'closePaymentChannel', display: 'Close Payment Channel', group: 'Payment Channel' },
 
+               // NFTs
+               { id: 'createNft', display: 'Mint NFT', group: 'NFT' },
+               { id: 'burnNft', display: 'Burn NFT', group: 'NFT' },
+               { id: 'updateNFTMetadata', display: 'Update NFT Metadata', group: 'NFT' },
+               { id: 'buyNft', display: 'Accept NFT Sell Offer', group: 'NFT' },
+               { id: 'sellNft', display: 'Create NFT Sell Offer', group: 'NFT' },
+               { id: 'buyNftOffer', display: 'Create NFT Buy Offer', group: 'NFT' },
+               { id: 'sellNftOffer', display: 'Create NFT Sell Offer', group: 'NFT' },
+               { id: 'cancelNftOffer', display: 'Cancel NFT Offer', group: 'NFT' },
+
+               // Credentials
+               { id: 'createCredential', display: 'Create Credential', group: 'Credentials' },
+               { id: 'acceptCredential', display: 'Accept Credential', group: 'Credentials' },
+               { id: 'deleteCredential', display: 'Delete Credential', group: 'Credentials' },
+
+               // Delegate Permission
+               { id: 'delegateCreate', display: 'Set Delegate Permissions', group: 'Delegate Permission' },
+               { id: 'delegateClear', display: 'Clear Delegate Permissions', group: 'Delegate Permission' },
+
+               // DID
+               { id: 'setDid', display: 'Set DID', group: 'DID' },
+               { id: 'deleteDid', display: 'Delete DID', group: 'DID' },
+
+               // Permissioned Domain
+               { id: 'setPermissionedDomain', display: 'Set Permissioned Domain', group: 'Permissioned Domain' },
+               { id: 'deletePermissionedDomain', display: 'Delete Permissioned Domain', group: 'Permissioned Domain' },
+
+               // Tickets
+               { id: 'createTicket', display: 'Create Tickets', group: 'Tickets' },
+               { id: 'deleteTicket', display: 'Delete Ticket', group: 'Tickets' },
+
                // MPT
                { id: 'createMPT', display: 'MPT Create', group: 'MPT' },
                { id: 'authorizeMPT', display: 'Authorize MPT', group: 'MPT' },
@@ -106,6 +137,10 @@ export class SignTransactionUtilService {
 
      supportsTransactionTemplate(transactionId: string): boolean {
           return Object.prototype.hasOwnProperty.call(this.builders, transactionId);
+     }
+
+     supportsBatchTransactionTemplate(transactionId: string): boolean {
+          return transactionId !== 'deleteTicket' && this.supportsTransactionTemplate(transactionId);
      }
 
      readonly getTransactionJsonButtonLabel = computed(() => {
@@ -463,6 +498,232 @@ export class SignTransactionUtilService {
                Fee: fee,
                LastLedgerSequence: currentLedger,
                Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          createPaymentChannel: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PaymentChannelCreate',
+               Account: wallet.classicAddress,
+               Destination: 'r...',
+               Amount: '1000000',
+               SettleDelay: 86400,
+               PublicKey: wallet.publicKey,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          fundPaymentChannel: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PaymentChannelFund',
+               Account: wallet.classicAddress,
+               Channel: 'CHANNEL_ID',
+               Amount: '1000000',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          claimPaymentChannel: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PaymentChannelClaim',
+               Account: wallet.classicAddress,
+               Channel: 'CHANNEL_ID',
+               Balance: '1000000',
+               Signature: 'SIGNATURE',
+               PublicKey: wallet.publicKey,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          closePaymentChannel: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PaymentChannelClaim',
+               Account: wallet.classicAddress,
+               Channel: 'CHANNEL_ID',
+               Flags: xrpl.PaymentChannelClaimFlags.tfClose,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          createNft: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenMint',
+               Account: wallet.classicAddress,
+               NFTokenTaxon: 0,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          burnNft: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenBurn',
+               Account: wallet.classicAddress,
+               NFTokenID: 'NF_TOKEN_ID',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          updateNFTMetadata: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenModify',
+               Account: wallet.classicAddress,
+               NFTokenID: 'NF_TOKEN_ID',
+               URI: '68747470733A2F2F6578616D706C652E636F6D2F6D657461646174612E6A736F6E',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          buyNft: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenAcceptOffer',
+               Account: wallet.classicAddress,
+               NFTokenSellOffer: 'NFT_OFFER_ID',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          sellNft: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenCreateOffer',
+               Account: wallet.classicAddress,
+               NFTokenID: 'NF_TOKEN_ID',
+               Amount: '1000000',
+               Flags: xrpl.NFTokenCreateOfferFlags.tfSellNFToken,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          buyNftOffer: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenCreateOffer',
+               Account: wallet.classicAddress,
+               NFTokenID: 'NF_TOKEN_ID',
+               Amount: '1000000',
+               Flags: 0,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          sellNftOffer: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenCreateOffer',
+               Account: wallet.classicAddress,
+               NFTokenID: 'NF_TOKEN_ID',
+               Amount: '1000000',
+               Flags: xrpl.NFTokenCreateOfferFlags.tfSellNFToken,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          cancelNftOffer: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'NFTokenCancelOffer',
+               Account: wallet.classicAddress,
+               NFTokenOffers: ['NFT_OFFER_ID'],
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          createCredential: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'CredentialCreate',
+               Account: wallet.classicAddress,
+               Subject: 'r...',
+               CredentialType: '4558414D504C45',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          acceptCredential: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'CredentialAccept',
+               Account: wallet.classicAddress,
+               Issuer: 'r...',
+               CredentialType: '4558414D504C45',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          deleteCredential: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'CredentialDelete',
+               Account: wallet.classicAddress,
+               Subject: 'r...',
+               CredentialType: '4558414D504C45',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          delegateCreate: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'DelegateSet',
+               Account: wallet.classicAddress,
+               Authorize: 'r...',
+               Permissions: [{ Permission: { PermissionValue: 'Payment' } }],
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          delegateClear: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'DelegateSet',
+               Account: wallet.classicAddress,
+               Authorize: 'r...',
+               Permissions: [],
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          setDid: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'DIDSet',
+               Account: wallet.classicAddress,
+               DIDDocument: '7B7D',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          deleteDid: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'DIDDelete',
+               Account: wallet.classicAddress,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          setPermissionedDomain: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PermissionedDomainSet',
+               Account: wallet.classicAddress,
+               AcceptedCredentials: [{ Credential: { Issuer: 'r...', CredentialType: '4558414D504C45' } }],
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          deletePermissionedDomain: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'PermissionedDomainDelete',
+               Account: wallet.classicAddress,
+               DomainID: 'DOMAIN_ID',
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          createTicket: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'TicketCreate',
+               Account: wallet.classicAddress,
+               TicketCount: 2,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
+               Sequence: accountInfo.result.account_data.Sequence,
+          }),
+
+          deleteTicket: ({ wallet, accountInfo, currentLedger, fee }) => ({
+               TransactionType: 'AccountSet',
+               Account: wallet.classicAddress,
+               TicketSequence: 1,
+               Sequence: 0,
+               Fee: fee,
+               LastLedgerSequence: currentLedger,
           }),
 
           createMPT: ({ wallet, accountInfo, currentLedger, fee }) => ({

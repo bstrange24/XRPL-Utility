@@ -104,6 +104,62 @@ describe('SignTransactionUtilService', () => {
                const trustlineItem = items.find(i => i.id === 'setTrustline');
                expect(trustlineItem?.isCurrentToken).toBe(true);
           });
+
+          it('should have a transaction template for every selectable non-Batch transaction', () => {
+               const transactionIds = service.transactionTypeItems().filter(item => item.id !== 'batch').map(item => item.id);
+
+               expect(transactionIds.every(id => service.supportsTransactionTemplate(id))).toBe(true);
+          });
+
+          it('should include NFT, credential, delegate, DID, domain, and ticket transactions', () => {
+               const expectedIds = [
+                    'createNft', 'burnNft', 'updateNFTMetadata', 'buyNft', 'sellNft', 'buyNftOffer', 'sellNftOffer', 'cancelNftOffer',
+                    'createCredential', 'acceptCredential', 'deleteCredential',
+                    'delegateCreate', 'delegateClear',
+                    'setDid', 'deleteDid',
+                    'setPermissionedDomain', 'deletePermissionedDomain',
+                    'createTicket', 'deleteTicket',
+               ];
+               const items = service.transactionTypeItems();
+
+               expect(expectedIds.every(id => items.some(item => item.id === id))).toBe(true);
+               expect(expectedIds.every(id => service.supportsTransactionTemplate(id))).toBe(true);
+               expect(service.supportsBatchTransactionTemplate('deleteTicket')).toBe(false);
+          });
+     });
+
+     describe('payment channel templates', () => {
+          it('builds starter JSON for every payment channel transaction option', async () => {
+               const wallet = { classicAddress: 'rTestAccount', publicKey: 'ED'.padEnd(66, '0') } as xrpl.Wallet;
+               const accountInfo = { result: { account_data: { Sequence: 1 } } } as xrpl.AccountInfoResponse;
+               const transactionTypes: Record<string, string> = {
+                    createPaymentChannel: 'PaymentChannelCreate',
+                    fundPaymentChannel: 'PaymentChannelFund',
+                    claimPaymentChannel: 'PaymentChannelClaim',
+                    closePaymentChannel: 'PaymentChannelClaim',
+               };
+
+               for (const [id, transactionType] of Object.entries(transactionTypes)) {
+                    expect(service.supportsTransactionTemplate(id)).toBe(true);
+                    const json = await service.buildTransactionText({
+                         client: {} as xrpl.Client,
+                         wallet,
+                         accountInfo,
+                         fee: '12',
+                         currentLedger: 100,
+                         selectedTransaction: id,
+                    });
+                    const transaction = JSON.parse(json);
+
+                    expect(transaction.TransactionType).toBe(transactionType);
+                    expect(transaction.Account).toBe(wallet.classicAddress);
+                    expect(transaction.Sequence).toBe(1);
+                    expect(transaction.Fee).toBe('12');
+                    if (id === 'closePaymentChannel') {
+                         expect(transaction.Flags).toBe(xrpl.PaymentChannelClaimFlags.tfClose);
+                    }
+               }
+          });
      });
 
      describe('getTransactionJsonButtonLabel', () => {
