@@ -122,7 +122,6 @@ export class MptUtilService extends PerformanceBaseComponent {
 
           for (const holding of holdings) {
                const issuance = issuances.get(holding.MPTokenIssuanceID);
-               const assetScale = issuance?.AssetScale ?? this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID) ?? 0;
                const rawBalance = holding.MPTAmount || '0';
                const hasPositiveBalance = Number(rawBalance) > 0;
                const isIssuerOwnedZeroBalance = !hasPositiveBalance && issuance?.Account === classicAddress;
@@ -134,6 +133,13 @@ export class MptUtilService extends PerformanceBaseComponent {
                if (!mptNode) {
                     continue;
                }
+
+               const assetScale = issuance?.AssetScale ?? mptNode.AssetScale ?? this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID) ?? 0;
+               this.mptStoreService.updateField('assetScaleCache', cache => {
+                    const newCache = new Map(cache);
+                    newCache.set(holding.MPTokenIssuanceID, assetScale);
+                    return newCache;
+               });
 
                result.push({
                     LedgerEntryType: mptNode.LedgerEntryType,
@@ -477,6 +483,27 @@ export class MptUtilService extends PerformanceBaseComponent {
 
           // Remove trailing zeros
           return `${integerPart}.${decimalPart.replace(/0+$/, '')}`;
+     }
+
+     convertToBaseUnits(amount: string | number, assetScale: number): string {
+          if (!Number.isInteger(assetScale) || assetScale < 0 || assetScale > 15) {
+               throw new Error('MPT asset scale must be an integer between 0 and 15.');
+          }
+
+          const cleanAmount = amount.toString().trim().replace(/,/g, '');
+          const parts = cleanAmount.split('.');
+          if (parts.length > 2 || !/^\d+$/.test(parts[0]) || (parts[1] !== undefined && !/^\d*$/.test(parts[1]))) {
+               throw new Error('MPT amount must be a non-negative decimal number.');
+          }
+
+          const integerPart = parts[0].replace(/^0+/, '') || '0';
+          const decimalPart = parts[1] || '';
+          if (decimalPart.length > assetScale && /[1-9]/.test(decimalPart.slice(assetScale))) {
+               throw new Error(`MPT amount cannot have more than ${assetScale} decimal places.`);
+          }
+
+          const fractionalBaseUnits = decimalPart.slice(0, assetScale).padEnd(assetScale, '0');
+          return `${integerPart}${fractionalBaseUnits}`.replace(/^0+/, '') || '0';
      }
 
      hasNoOutstandingMpts = computed(() => {

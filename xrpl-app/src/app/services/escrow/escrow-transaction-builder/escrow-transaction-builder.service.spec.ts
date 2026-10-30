@@ -3,11 +3,16 @@ import { EscrowTransactionBuilderService } from './escrow-transaction-builder.se
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { TrustlineUtilService } from '../../trustlines/trustline-utils/trustline-util.service';
+import { MptStoreService } from '../../mpt/mpt-store/mpt-store.service';
+import { MptUtilService } from '../../mpt/mpt-util/mpt-util.service';
+import { signal } from '@angular/core';
 
 describe('EscrowTransactionBuilderService', () => {
      let service: EscrowTransactionBuilderService;
      let utilsSpy: any;
      let xrplTxSpy: any;
+     let mptStore: any;
+     let mptUtil: any;
 
      const mockWallet: any = { address: 'rTEST', classicAddress: 'rTEST' };
      const mockEnv: any = {
@@ -27,9 +32,24 @@ describe('EscrowTransactionBuilderService', () => {
                buildSendMaxAmount: jasmine.createSpy('buildSendMaxAmount').and.returnValue({ sendMax: '1000000' }),
                buildAmount: jasmine.createSpy('buildAmount').and.returnValue({ amountToCash: { currency: 'USD', value: '10', issuer: 'rISSUER' } }),
           };
+          mptStore = {
+               mptIssuanceId: signal('MPTID'),
+               existingMpts: signal([{ mpt_issuance_id: 'MPTID', AssetScale: 6 }]),
+               assetScaleCache: signal(new Map()),
+          };
+          mptUtil = {
+               convertToBaseUnits: jasmine.createSpy('convertToBaseUnits').and.returnValue('1'),
+          };
 
           TestBed.configureTestingModule({
-               providers: [EscrowTransactionBuilderService, { provide: UtilsService, useValue: utilsSpy }, { provide: XrplTransactionService, useValue: xrplTxSpy }, { provide: TrustlineUtilService, useValue: {} }],
+               providers: [
+                    EscrowTransactionBuilderService,
+                    { provide: UtilsService, useValue: utilsSpy },
+                    { provide: XrplTransactionService, useValue: xrplTxSpy },
+                    { provide: TrustlineUtilService, useValue: {} },
+                    { provide: MptStoreService, useValue: mptStore },
+                    { provide: MptUtilService, useValue: mptUtil },
+               ],
           });
           service = TestBed.inject(EscrowTransactionBuilderService);
      });
@@ -48,11 +68,13 @@ describe('EscrowTransactionBuilderService', () => {
           });
 
           it('should build MPT escrow transaction', () => {
-               const escrow = { amount: '5', destination: 'rDEST', condition: '', enableEscrowFinishAfterExpirationDate: false, enableEscrowCancelAfterExpirationDate: false, escrowFinishAfterExpirationDate: '', escrowCancelAfterExpirationDate: '' };
+               const escrow = { amount: '0.000001', destination: 'rDEST', condition: '', enableEscrowFinishAfterExpirationDate: false, enableEscrowCancelAfterExpirationDate: false, escrowFinishAfterExpirationDate: '', escrowCancelAfterExpirationDate: '' };
                const currency = { currency: 'MPT', currencyCode: 'MPT', issuer: 'rISSUER' };
                const tx = service.buildCreateEscrowTx(mockWallet, mockEnv, escrow, currency);
                expect(tx.TransactionType).toBe('EscrowCreate');
-               expect(xrplTxSpy.buildSendMaxAmount).toHaveBeenCalledWith('MPT', 'rISSUER', '5', true);
+               expect(mptUtil.convertToBaseUnits).toHaveBeenCalledWith('0.000001', 6);
+               expect(tx.Amount).toEqual({ mpt_issuance_id: 'MPTID', value: '1' });
+               expect(xrplTxSpy.buildSendMaxAmount).not.toHaveBeenCalled();
           });
 
           it('should build IOU escrow transaction', () => {
@@ -61,6 +83,16 @@ describe('EscrowTransactionBuilderService', () => {
                const tx = service.buildCreateEscrowTx(mockWallet, mockEnv, escrow, currency);
                expect(tx.TransactionType).toBe('EscrowCreate');
                expect(xrplTxSpy.buildAmount).toHaveBeenCalledWith('USD', '10', 'rISSUER');
+          });
+
+          it('should use the selected token code when currencyCode is stale', () => {
+               const escrow = { amount: '10', destination: 'rDEST', condition: '', enableEscrowFinishAfterExpirationDate: false, enableEscrowCancelAfterExpirationDate: false, escrowFinishAfterExpirationDate: '', escrowCancelAfterExpirationDate: '' };
+               const currency = { currency: 'BOB', currencyCode: 'XRP', issuer: 'rISSUER' };
+
+               service.buildCreateEscrowTx(mockWallet, mockEnv, escrow, currency);
+
+               expect(xrplTxSpy.buildAmount).toHaveBeenCalledWith('BOB', '10', 'rISSUER');
+               expect(xrplTxSpy.buildSendMaxAmount).not.toHaveBeenCalled();
           });
 
           it('should set Condition when condition is provided', () => {

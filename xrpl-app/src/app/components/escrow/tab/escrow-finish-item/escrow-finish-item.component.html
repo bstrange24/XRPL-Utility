@@ -24,6 +24,12 @@
                     <span class="font-mono">{{ escrow.EscrowSequence }}</span>
                </app-summary-key-value>
 
+               @if (escrow.mptIssuanceId) {
+               <app-summary-key-value label="MPT ID">
+                    <span class="font-mono">{{ escrow.mptIssuanceId }}</span>
+               </app-summary-key-value>
+               }
+
                <app-summary-key-value label="Escrow Owner">
                     <span class="font-mono">{{ escrow.sender }}</span>
                </app-summary-key-value>

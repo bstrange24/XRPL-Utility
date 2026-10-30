@@ -204,6 +204,17 @@ describe('EscrowOrchestratorService', () => {
                expect(result.success).toBeTrue();
           });
 
+          it('should check XRP for fees when finishing a token escrow', async () => {
+               validatorSpy.validate.and.resolveTo([]);
+               const config = { ...baseConfig, currency: { currency: 'BOB', currencyCode: 'BOB' } };
+
+               const result = await service.executeEscrowTx('finishEscrow', config);
+
+               expect(result.success).toBeTrue();
+               expect(balanceSpy.checkXrpBalance).toHaveBeenCalledWith(mockEnv, jasmine.any(Object), '0');
+               expect(balanceSpy.checkTokenBalance).not.toHaveBeenCalled();
+          });
+
           it('should return success for cancelEscrow', async () => {
                validatorSpy.validate.and.resolveTo([]);
                orchestratorSpy.executeTx.and.resolveTo({ success: true, hash: 'CANCELHASH', mode: 'submit' });

@@ -35,7 +35,7 @@ describe('MptTransactionBuilderService', () => {
           mockTrustlineUtilService = jasmine.createSpyObj('TrustlineUtilService', ['someMethod']);
           mockXrplTransactionService = jasmine.createSpyObj('XrplTransactionService', ['someMethod']);
           mockUtilsService = jasmine.createSpyObj('UtilsService', ['someMethod']);
-          mockMptUtilService = jasmine.createSpyObj('MptUtilService', ['flags', 'getFlagsValue', 'formatMptAmount', 'decodeMptFlagsForUi']);
+          mockMptUtilService = jasmine.createSpyObj('MptUtilService', ['flags', 'getFlagsValue', 'formatMptAmount', 'decodeMptFlagsForUi', 'convertToBaseUnits']);
           mockXrplWrapperService = jasmine.createSpyObj('XrplWrapperService', ['convertStringToHex', 'decodeMPTokenMetadata']);
 
           // Setup MptUtilService flags mock
@@ -49,6 +49,7 @@ describe('MptTransactionBuilderService', () => {
           });
 
           mockMptUtilService.getFlagsValue.and.returnValue(0);
+          mockMptUtilService.convertToBaseUnits.and.callFake((amount: string | number, assetScale: number) => String(Math.round(Number(amount) * 10 ** assetScale)));
 
           // Make sure the mock returns a specific value
           mockXrplWrapperService.convertStringToHex.and.callFake((str: string) => {
@@ -377,6 +378,7 @@ describe('MptTransactionBuilderService', () => {
                const mpt = {
                     mptIssuanceId: 'issuance-1',
                     amount: '750.5',
+                    assetScale: 1,
                     destination: 'rDestinationAddress',
                };
 
@@ -384,7 +386,7 @@ describe('MptTransactionBuilderService', () => {
 
                expect(tx.Amount).toEqual({
                     mpt_issuance_id: 'issuance-1',
-                    value: '750.5',
+                    value: '7505',
                });
           });
 
@@ -430,6 +432,7 @@ describe('MptTransactionBuilderService', () => {
                const mpt = {
                     mptIssuanceId: 'issuance-1',
                     amount: '250.75',
+                    assetScale: 2,
                     destination: 'rHolderAddress',
                };
 
@@ -437,7 +440,7 @@ describe('MptTransactionBuilderService', () => {
 
                expect(tx.Amount).toEqual({
                     mpt_issuance_id: 'issuance-1',
-                    value: '250.75',
+                    value: '25075',
                });
           });
 

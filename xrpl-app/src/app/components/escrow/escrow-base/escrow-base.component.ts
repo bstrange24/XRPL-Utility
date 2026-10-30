@@ -426,6 +426,31 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                               return this.toastService.error('This escrow has expired.', AppConstants.TOAST.ERROR);
                          }
                     }
+
+                    const amount = escrowObject.Amount;
+                    let currencyCode: string;
+                    let currencyIssuer = '';
+                    let escrowAmount: string;
+                    if (typeof amount === 'string') {
+                         currencyCode = AppConstants.XRP_CURRENCY;
+                         escrowAmount = String(xrpl.dropsToXrp(amount));
+                    } else if (amount?.mpt_issuance_id) {
+                         currencyCode = 'MPT';
+                         escrowAmount = String(amount.value);
+                         this.mptStoreService.setField('mptIssuanceId', amount.mpt_issuance_id);
+                    } else if (amount?.currency && amount?.value !== undefined) {
+                         currencyCode = this.utilsService.decodeIfNeeded(amount.currency);
+                         currencyIssuer = amount.issuer || '';
+                         escrowAmount = String(amount.value);
+                    } else {
+                         return this.toastService.error('The selected escrow has an unsupported currency amount.', AppConstants.TOAST.ERROR);
+                    }
+
+                    this.currencyStoreService.setField('currency', currencyCode);
+                    this.currencyStoreService.setField('currencyCode', currencyCode);
+                    this.currencyStoreService.setField('issuer', currencyIssuer);
+                    this.currencyStoreService.setField('currencyIssuer', currencyIssuer);
+                    this.escrowStoreService.setField('amount', escrowAmount);
                }
           }
 
@@ -477,14 +502,20 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
                return;
           }
 
-          await this.handleTxResult(txResult, env.client, env.wallet, this.escrowStoreService.escrowOwner(), this.escrowStoreService.destination(), '', { includeCheckObjects: true });
+          const transactionSucceeded = await this.handleTxResult(txResult, env.client, env.wallet, this.escrowStoreService.escrowOwner(), this.escrowStoreService.destination(), '', { includeCheckObjects: true });
+          if (currentTab === 'createEscrow' && transactionSucceeded) {
+               this.escrowStoreService.setEscrowFinishAfterExpirationDate('');
+               this.escrowStoreService.setEscrowCancelAfterExpirationDate('');
+               this.escrowStoreService.setEnableFinishAfter(false);
+               this.escrowStoreService.setEnableCancelAfter(false);
+          }
           this.txUiService.resetCurrentStepToIdle();
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.escrowStoreService.setField('existingEscrow', await this.escrowUtilService.getExistingEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab(), this.isConditional));
           this.escrowStoreService.setField('expiredOrFulfilledEscrows', await this.escrowUtilService.getExpiredOrFulfilledEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab()));
-          this.mptStoreService.setField('existingMpts', this.mptUtilService.getExistingMpts(env.accountObjects, env.wallet.classicAddress));
+          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
           this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
           const escrows = await this.escrowUtilService.loadAllEscrows(env.accountObjects);
           this.escrowStoreService.setField('allEscrowsRaw', escrows);

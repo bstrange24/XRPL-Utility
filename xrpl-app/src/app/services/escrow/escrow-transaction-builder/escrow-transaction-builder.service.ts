@@ -5,6 +5,8 @@ import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction
 import { PrepareTxEnvironmentResult } from '../../transaction-environment/tx-environment.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
+import { MptStoreService } from '../../mpt/mpt-store/mpt-store.service';
+import { MptUtilService } from '../../mpt/mpt-util/mpt-util.service';
 
 @Injectable({
      providedIn: 'root',
@@ -13,15 +15,26 @@ export class EscrowTransactionBuilderService {
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTransactionService = inject(XrplTransactionService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
+     public readonly mptStoreService = inject(MptStoreService);
+     public readonly mptUtilService = inject(MptUtilService);
 
      buildCreateEscrowTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, escrow: any, currency: any) {
           let amountToCash: any;
-          if (currency.currency === 'XRP') {
+          const currencyCode = currency.currency || currency.currencyCode || AppConstants.XRP_CURRENCY;
+          if (currencyCode === AppConstants.XRP_CURRENCY) {
                amountToCash = this.xrplTransactionService.buildSendMaxAmount('XRP', '', escrow.amount, false).sendMax;
-          } else if (currency.currency === 'MPT') {
-               amountToCash = this.xrplTransactionService.buildSendMaxAmount(currency.currency, currency.issuer ?? '', escrow.amount, true).sendMax;
+          } else if (currencyCode === 'MPT') {
+               const issuanceId = this.mptStoreService.mptIssuanceId();
+               if (!issuanceId) throw new Error('Select an MPT before creating the escrow.');
+
+               const issuance = this.mptStoreService.existingMpts().find(mpt => mpt.mpt_issuance_id === issuanceId);
+               const assetScale = issuance?.AssetScale ?? this.mptStoreService.assetScaleCache().get(issuanceId) ?? 0;
+               amountToCash = {
+                    mpt_issuance_id: issuanceId,
+                    value: this.mptUtilService.convertToBaseUnits(escrow.amount, assetScale),
+               };
           } else {
-               amountToCash = this.xrplTransactionService.buildAmount(currency.currencyCode, escrow.amount, currency.issuer).amountToCash;
+               amountToCash = this.xrplTransactionService.buildAmount(currencyCode, escrow.amount, currency.issuer).amountToCash;
           }
 
           const tx: xrpl.EscrowCreate = {

@@ -876,6 +876,20 @@ describe('MptUtilService', () => {
           });
      });
 
+     describe('convertToBaseUnits', () => {
+          it('should convert a scaled decimal amount to integer base units', () => {
+               expect(service.convertToBaseUnits('0.000001', 6)).toBe('1');
+          });
+
+          it('should preserve whole amounts at the selected scale', () => {
+               expect(service.convertToBaseUnits('2', 6)).toBe('2000000');
+          });
+
+          it('should reject non-zero precision beyond the asset scale', () => {
+               expect(() => service.convertToBaseUnits('0.0000001', 6)).toThrowError('MPT amount cannot have more than 6 decimal places.');
+          });
+     });
+
      describe('hasNoOutstandingMpts', () => {
           it('should return true when no MPT selected', () => {
                existingMptsSignal.set([]);

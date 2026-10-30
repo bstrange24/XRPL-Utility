@@ -26,6 +26,7 @@ export type EscrowDisplayItem =
             tab: 'createEscrow' | 'cancelEscrow';
             EscrowSequence: string; // sequence as string
             amount: string;
+            mptIssuanceId?: string;
             destination: string;
             finishAfter?: number;
             cancelAfter?: number;
@@ -38,6 +39,7 @@ export type EscrowDisplayItem =
             tab: 'finishEscrow';
             EscrowSequence: string;
             amount: string;
+            mptIssuanceId?: string;
             sender: string;
             finishAfter?: number;
             cancelAfter?: number;
@@ -181,6 +183,7 @@ export type AnyEscrowDisplayItem = {
      tab: EscrowActionTypes;
      EscrowSequence: string;
      amount: string;
+     mptIssuanceId?: string;
      isExpired: boolean;
      display: string;
      secondary: string;

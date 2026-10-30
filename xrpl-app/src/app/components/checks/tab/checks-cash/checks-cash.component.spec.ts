@@ -7,6 +7,8 @@ import { TrustlineStoreService } from '../../../../services/trustlines/trustline
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
 import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
+import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 
 describe('ChecksCashComponent', () => {
      let component: ChecksCashComponent;
@@ -15,6 +17,8 @@ describe('ChecksCashComponent', () => {
      let txUiService: any;
      let trustlineStoreService: any;
      let checksStoreService: any;
+     let currencyStoreService: any;
+     let xrplTxOptionsStore: any;
 
      // Mock data - using only properties that exist in SelectItem
      const mockCheckItems = [
@@ -64,6 +68,9 @@ describe('ChecksCashComponent', () => {
           checksStoreService = {
                amount: signal(''),
                checkIdField: jasmine.createSpy('checkIdField').and.returnValue(''),
+               cashableChecks: signal([
+                    { id: 'check456', sender: 'rSENDER', sendMax: { value: '250', currency: 'USD', issuer: 'rISSUER' } },
+               ]),
                checkIdSearchQuery: signal(''),
                outstandingChecksCollapsed: signal(false),
                enableExpirationDate: signal(false),
@@ -74,14 +81,31 @@ describe('ChecksCashComponent', () => {
                setField: jasmine.createSpy('setField'),
           };
 
+          currencyStoreService = {
+               setField: jasmine.createSpy('setField'),
+          };
+
+          xrplTxOptionsStore = {
+               setField: jasmine.createSpy('setField'),
+          };
+
           await TestBed.configureTestingModule({
                imports: [ChecksCashComponent],
                providers: [
                     { provide: ChecksTransactionViewModelService, useValue: checksTransactionViewModelService },
                     { provide: TransactionUiService, useValue: txUiService },
                     { provide: TrustlineStoreService, useValue: trustlineStoreService },
-                    { provide: UtilsService, useValue: { formatAmount: jasmine.createSpy('formatAmount').and.callFake(val => val) } },
+                    {
+                         provide: UtilsService,
+                         useValue: {
+                              formatAmount: jasmine.createSpy('formatAmount').and.callFake(val => val),
+                              encodeIfNeeded: (value: string) => value,
+                              decodeIfNeeded: (value: string) => value,
+                         },
+                    },
                     { provide: ChecksStoreService, useValue: checksStoreService },
+                    { provide: CurrencyStoreService, useValue: currencyStoreService },
+                    { provide: XrplTxOptionsStore, useValue: xrplTxOptionsStore },
                ],
           })
                .overrideComponent(ChecksCashComponent, { set: { template: '<div></div>' } })
@@ -102,6 +126,29 @@ describe('ChecksCashComponent', () => {
 
      it('should create', () => {
           expect(component).toBeTruthy();
+     });
+
+     describe('onCheckSelected', () => {
+          it('should use the selected IOU check data instead of parsing its display string', () => {
+               component.onCheckSelected({ id: 'check456', display: '250 XRP ← rSENDER' } as SelectItem);
+
+               expect(checksStoreService.setField).toHaveBeenCalledWith('amount', '250');
+               expect(checksStoreService.setField).toHaveBeenCalledWith('totalCheckAmount', '250');
+               expect(checksStoreService.setField).toHaveBeenCalledWith('checkCreator', 'rSENDER');
+               expect(currencyStoreService.setField).toHaveBeenCalledWith('currencyCode', 'USD');
+               expect(currencyStoreService.setField).toHaveBeenCalledWith('currencyIssuer', 'rISSUER');
+               expect(xrplTxOptionsStore.setField).toHaveBeenCalledWith('showEnableTrustline', true);
+          });
+
+          it('should convert XRP drops to XRP when an XRP check is selected', () => {
+               checksStoreService.cashableChecks.set([{ id: 'xrp-check', sender: 'rSENDER', sendMax: '1000000' }]);
+               component.onCheckSelected({ id: 'xrp-check', display: '1 XRP ← rSENDER' } as SelectItem);
+
+               expect(checksStoreService.setField).toHaveBeenCalledWith('amount', '1');
+               expect(currencyStoreService.setField).toHaveBeenCalledWith('currencyCode', 'XRP');
+               expect(currencyStoreService.setField).toHaveBeenCalledWith('currencyIssuer', '');
+               expect(xrplTxOptionsStore.setField).toHaveBeenCalledWith('showEnableTrustline', false);
+          });
      });
 
      describe('onFocus', () => {

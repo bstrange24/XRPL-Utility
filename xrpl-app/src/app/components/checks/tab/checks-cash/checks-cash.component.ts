@@ -20,6 +20,7 @@ import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store
 import { InputIconsComponent } from '../../../shared/input-icons/input-icons.component';
 import { ValidationErrorsComponent } from '../../../shared/validation-errors/validation-errors.component';
 import { CheckValidatorService } from '../../../../services/shared/validators/check-validator/check-validator.service';
+import * as xrpl from 'xrpl';
 
 @Component({
      selector: 'app-checks-cash',
@@ -76,38 +77,49 @@ export class ChecksCashComponent {
      showDeliverMinHelper = signal(false);
      isFocused = signal(false);
 
-     // Add this method to the ChecksCashComponent class
      onCheckSelected(item: SelectItem | null) {
           if (!item?.id) {
-               // Clear the check details
                this.checksStoreService.setField('checkIdField', '');
                this.checksStoreService.setField('checkCreator', '');
                this.checksStoreService.setField('amount', '');
+               this.checksStoreService.setField('totalCheckAmount', '');
                this.currencyStoreService?.setField('currencyCode', '');
                this.currencyStoreService?.setField('currencyIssuer', '');
+               this.xrplTxOptionsStore?.setField('showEnableTrustline', false);
                return;
           }
 
-          const id = item?.id || '';
-          this.checksStoreService.setField('checkIdField', id);
-
-          // Parse the display string to get amount and currency
-          const parts = item.display?.split(' ') || [];
-          this.checksStoreService.setField('checkCreator', parts[3] || '');
-
-          if (this.currencyStoreService) {
-               this.currencyStoreService.setField('currencyCode', this.utilsService.encodeIfNeeded(parts[1]) || '');
-               this.currencyStoreService.setField('currencyIssuer', item.issuer || '');
+          const check = this.checksStoreService.cashableChecks().find(check => check.id === item.id);
+          if (!check) {
+               this.checksStoreService.setField('checkIdField', '');
+               this.checksStoreService.setField('checkCreator', '');
+               this.checksStoreService.setField('amount', '');
+               this.checksStoreService.setField('totalCheckAmount', '');
+               this.currencyStoreService?.setField('currencyCode', '');
+               this.currencyStoreService?.setField('currencyIssuer', '');
+               this.xrplTxOptionsStore?.setField('showEnableTrustline', false);
+               return;
           }
 
-          if (parts[1] === AppConstants.XRP_CURRENCY) {
+          this.checksStoreService.setField('checkIdField', check.id);
+          this.checksStoreService.setField('checkCreator', check.sender || '');
+
+          const sendMax = check.sendMax;
+          const isXrpCheck = typeof sendMax === 'string';
+          const currencyCode = isXrpCheck ? AppConstants.XRP_CURRENCY : this.utilsService.decodeIfNeeded(sendMax.currency);
+          const amount = isXrpCheck ? String(xrpl.dropsToXrp(sendMax)) : String(sendMax.value);
+
+          this.currencyStoreService?.setField('currencyCode', this.utilsService.encodeIfNeeded(currencyCode));
+          this.currencyStoreService?.setField('currencyIssuer', isXrpCheck ? '' : sendMax.issuer || '');
+
+          if (isXrpCheck) {
                this.xrplTxOptionsStore?.setField('showEnableTrustline', false);
           } else {
                this.xrplTxOptionsStore?.setField('showEnableTrustline', true);
           }
 
-          this.checksStoreService.setField('amount', parts[0]);
-          this.checksStoreService.setField('totalCheckAmount', parts[0]);
+          this.checksStoreService.setField('amount', amount);
+          this.checksStoreService.setField('totalCheckAmount', amount);
      }
 
      canCashCheck = computed(() => {

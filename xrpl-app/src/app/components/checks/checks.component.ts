@@ -320,6 +320,23 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
                }
                this.checksStoreService.setField('checkCreator', checkObject.Account);
 
+               const sendMax = checkObject.SendMax;
+               let checkCurrencyCode: string;
+               let checkCurrencyIssuer = '';
+               if (typeof sendMax === 'string') {
+                    checkCurrencyCode = AppConstants.XRP_CURRENCY;
+               } else if (sendMax && typeof sendMax === 'object' && 'currency' in sendMax) {
+                    checkCurrencyCode = this.utilsService.decodeIfNeeded(sendMax.currency);
+                    checkCurrencyIssuer = sendMax.issuer;
+               } else {
+                    return this.toastService.error('The selected check has an unsupported currency amount.', AppConstants.TOAST.ERROR);
+               }
+
+               this.currencyStoreService.setField('currency', checkCurrencyCode);
+               this.currencyStoreService.setField('currencyCode', checkCurrencyCode);
+               this.currencyStoreService.setField('issuer', checkCurrencyIssuer);
+               this.currencyStoreService.setField('currencyIssuer', checkCurrencyIssuer);
+
                // Expiration check (only if present)
                if (checkObject.Expiration) {
                     const currentRippleTime = await this.xrplService.getCurrentRippleTime(env.client);
@@ -330,7 +347,7 @@ export class SendChecksComponent extends WalletDestinationBase implements OnInit
 
                let checkIssuer;
 
-               const currencyCode = this.currencyStoreService.currencyCode();
+               const currencyCode = checkCurrencyCode;
                const accountObjects = env.checkObjects?.result.account_objects;
                if (accountObjects) {
                     if (currencyCode !== AppConstants.XRP_CURRENCY) {

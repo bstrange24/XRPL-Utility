@@ -108,10 +108,13 @@ describe('EscrowTransactionViewModelService', () => {
      const mockMptUtil = {
           computeMptItems: jasmine.createSpy('computeMptItems').and.returnValue([]),
           computeSelectedMptItem: jasmine.createSpy('computeSelectedMptItem').and.returnValue(null),
+          formatMptAmount: jasmine.createSpy('formatMptAmount').and.callFake((amount: string | number, scale: number) => scale === 6 && amount.toString() === '1' ? '0.000001' : amount.toString()),
+          getMpts: jasmine.createSpy('getMpts').and.resolveTo([]),
      };
 
      const mockMptStore = {
-          existingMpts: signal([]),
+          existingMpts: signal<any[]>([]),
+          assetScaleCache: signal(new Map<string, number>()),
           mptIssuanceId: jasmine.createSpy('mptIssuanceId').and.returnValue(''),
           setField: jasmine.createSpy('setField'),
      };
@@ -211,6 +214,20 @@ describe('EscrowTransactionViewModelService', () => {
                const items = service.escrowsToShow();
                expect(items.length).toBe(1);
                expect(items[0].tab).toBe('createEscrow');
+          });
+
+          it('should format MPT escrow amounts using AssetScale and shorten the issuance ID', () => {
+               const issuanceId = '005E528CBE39668147390D25FF501E117000015B459E7557';
+               mockMptStore.existingMpts.set([{ mpt_issuance_id: issuanceId, AssetScale: 6 }]);
+               escrowStore.setField('existingEscrow', [{ Sequence: 1, Amount: { mpt_issuance_id: issuanceId, value: '1' }, Destination: 'rDEST' }]);
+               service.activeTab.set('createEscrow');
+
+               const item = service.escrowsToShow()[0];
+
+               expect(mockMptUtil.formatMptAmount).toHaveBeenCalledWith('1', 6);
+               expect(item.amount).toBe('0.000001 MPT');
+               expect(item.mptIssuanceId).toBe(`${issuanceId.slice(0, 15)}...${issuanceId.slice(-10)}`);
+               expect(item.display).toContain(item.amount);
           });
 
           it('should return allEscrowsRaw filtered by Destination for finishEscrow tab', () => {

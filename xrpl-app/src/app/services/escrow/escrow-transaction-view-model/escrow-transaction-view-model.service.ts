@@ -141,13 +141,14 @@ export class EscrowTransactionViewModelService {
                return this.escrowStoreService.existingEscrow().map(e => ({
                     tab: 'createEscrow',
                     EscrowSequence: e.Sequence?.toString() || 'Unknown',
-                    amount: this.utilsService.formatIOUXrpAmountOutstanding(e.Amount),
+                    amount: this.formatEscrowAmount(e.Amount),
+                    mptIssuanceId: this.getFormattedMptIssuanceId(e.Amount),
                     destination: e.Destination,
                     finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
                     cancelAfter: e.CancelAfter ? Number(e.CancelAfter) : undefined,
                     isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, tab),
                     id: e.Sequence?.toString() || 'Unknown',
-                    display: `${this.utilsService.formatIOUXrpAmountOutstanding(e.Amount)} → ${e.Destination.slice(0, 8)}...`,
+                    display: `${this.formatEscrowAmount(e.Amount)} → ${e.Destination.slice(0, 8)}...`,
                     secondary: `Seq: ${e.Sequence?.toString() || 'Unknown'} • You created • ${e.Destination.slice(0, 8)}...`,
                }));
           }
@@ -158,11 +159,12 @@ export class EscrowTransactionViewModelService {
 
                return incoming.map(e => {
                     const sequence = e.EscrowSequence?.toString() || 'Unknown';
-                    const amtStr = this.utilsService.formatIOUXrpAmountOutstanding(e.Amount);
+                    const amtStr = this.formatEscrowAmount(e.Amount);
                     return {
                          tab: 'finishEscrow',
                          EscrowSequence: sequence,
                          amount: amtStr,
+                         mptIssuanceId: this.getFormattedMptIssuanceId(e.Amount),
                          sender: e.Sender,
                          finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
                          // cancelAfter usually irrelevant for finish, but include if needed
@@ -180,14 +182,15 @@ export class EscrowTransactionViewModelService {
                return this.escrowStoreService.expiredOrFulfilledEscrows().map(e => ({
                     tab: 'cancelEscrow' as const,
                     EscrowSequence: e.EscrowSequence?.toString() || 'Unknown',
-                    amount: this.utilsService.formatIOUXrpAmountOutstanding(e.Amount),
+                    amount: this.formatEscrowAmount(e.Amount),
+                    mptIssuanceId: this.getFormattedMptIssuanceId(e.Amount),
                     destination: e.Destination,
                     finishAfter: e.FinishAfter ? Number(e.FinishAfter) : undefined,
                     cancelAfter: e.CancelAfter ? Number(e.CancelAfter) : undefined,
                     isExpired: this.escrowUtilService.isEscrowExpired(e.CancelAfter, e.FinishAfter, tab),
                     // id must match what escrowItems() produces — EscrowSequence, not Sequence
                     id: e.EscrowSequence?.toString() || 'Unknown',
-                    display: `${this.utilsService.formatIOUXrpAmountOutstanding(e.Amount)} → ${e.Destination?.slice(0, 8)}...`,
+                    display: `${this.formatEscrowAmount(e.Amount)} → ${e.Destination?.slice(0, 8)}...`,
                     secondary: `Seq: ${e.EscrowSequence?.toString() || 'Unknown'} • You created • ${e.Destination?.slice(0, 8)}...`,
                     sender: e.Sender,
                }));
@@ -268,7 +271,7 @@ export class EscrowTransactionViewModelService {
           try {
                const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                if (env?.accountObjects) {
-                    const mpts = this.mptUtilService.getExistingMpts(env.accountObjects, this.currentWalletData()?.address || '');
+                    const mpts = await this.mptUtilService.getMpts(env.accountObjects, this.currentWalletData()?.address || '');
                     this.mptStoreService.setField('existingMpts', mpts);
                }
           } catch (e) {
@@ -287,10 +290,30 @@ export class EscrowTransactionViewModelService {
 
      selectedEscrowAmount = computed(() => {
           const escrow = this.selectedFullEscrow();
-          return escrow?.Amount ? this.utilsService.formatIOUXrpAmountOutstanding(escrow.Amount) : '';
+          return escrow?.Amount ? this.formatEscrowAmount(escrow.Amount) : '';
      });
 
      selectedEscrowCreator = computed(() => this.selectedFullEscrow()?.Sender ?? '');
 
      selectedEscrowDestination = computed(() => this.selectedFullEscrow()?.Destination ?? '');
+
+     private formatEscrowAmount(amount: any): string {
+          if (amount?.mpt_issuance_id) {
+               const assetScale = this.getMptAssetScale(amount.mpt_issuance_id);
+               return `${this.mptUtilService.formatMptAmount(amount.value, assetScale)} MPT`;
+          }
+
+          return this.utilsService.formatIOUXrpAmountOutstanding(amount);
+     }
+
+     private getMptAssetScale(issuanceId: string): number {
+          const issuance = this.mptStoreService.existingMpts().find(mpt => mpt.mpt_issuance_id === issuanceId);
+          return issuance?.AssetScale ?? this.mptStoreService.assetScaleCache().get(issuanceId) ?? 0;
+     }
+
+     private getFormattedMptIssuanceId(amount: any): string | undefined {
+          const issuanceId = amount?.mpt_issuance_id;
+          if (!issuanceId) return undefined;
+          return issuanceId.length > 25 ? `${issuanceId.slice(0, 15)}...${issuanceId.slice(-10)}` : issuanceId;
+     }
 }

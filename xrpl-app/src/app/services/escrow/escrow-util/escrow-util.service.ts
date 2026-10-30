@@ -71,25 +71,6 @@ export class EscrowUtilService {
 
           const mapped = await Promise.all(
                filtered.map(async (obj: any): Promise<EscrowDataForUI> => {
-                    const sendMax = obj.Amount;
-                    let amount = '0';
-                    let currency = '';
-                    let issuer = '';
-
-                    if (typeof sendMax === 'string') {
-                         if (activeTab === 'createEscrow') {
-                              amount = String(sendMax);
-                         } else {
-                              amount = String(xrpl.dropsToXrp(sendMax));
-                         }
-                    } else if (sendMax?.mpt_issuance_id) {
-                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id; // e.g. "100 MPT"
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                         issuer = sendMax.issuer;
-                    }
-
                     let EscrowSequence: number | null = null;
 
                     if (obj.PreviousTxnID) {
@@ -102,11 +83,9 @@ export class EscrowUtilService {
                          }
                     }
 
-                    const issuerText = issuer ? `issued by ${issuer}` : '';
-
                     return {
                          Account: obj.Account,
-                         Amount: `${amount} ${currency} ${issuerText}`.trim(),
+                         Amount: obj.Amount,
                          Destination: obj.Destination,
                          DestinationTag: obj.DestinationTag,
                          CancelAfter: obj.CancelAfter,
@@ -133,25 +112,6 @@ export class EscrowUtilService {
 
           const processedEscrows = await Promise.all(
                filteredEscrows.map(async (obj: any) => {
-                    const sendMax = obj.Amount;
-                    let amount = '0';
-                    let currency = '';
-                    let issuer = '';
-
-                    if (typeof sendMax === 'string') {
-                         if (activeTab === 'cancelEscrow') {
-                              amount = String(sendMax);
-                         } else {
-                              amount = String(xrpl.dropsToXrp(sendMax));
-                         }
-                    } else if (sendMax?.mpt_issuance_id) {
-                         amount = 'MPT ' + sendMax.value + ' ' + sendMax.mpt_issuance_id;
-                    } else if (sendMax?.value) {
-                         amount = sendMax.value;
-                         currency = this.utilsService.normalizeCurrencyCode(sendMax.currency);
-                         issuer = sendMax.issuer;
-                    }
-
                     let EscrowSequence: number | null = null;
                     if (obj.PreviousTxnID) {
                          try {
@@ -163,9 +123,8 @@ export class EscrowUtilService {
                          }
                     }
 
-                    const issuerText = issuer ? 'issued by ' + issuer : '';
                     return {
-                         Amount: `${amount} ${currency} ${issuerText}`.trim(),
+                         Amount: obj.Amount,
                          Sender: obj.Account,
                          Destination: obj.Destination,
                          EscrowSequence,

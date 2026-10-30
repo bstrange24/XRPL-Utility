@@ -391,8 +391,8 @@ describe('EscrowUtilService', () => {
           });
      });
 
-     describe('getExistingEscrows - amount formatting branches', () => {
-          it('should format amount as drops when activeTab is createEscrow for string amount', async () => {
+     describe('getExistingEscrows - ledger amounts', () => {
+          it('should preserve XRP amount in drops for display formatting', async () => {
                const mockObjects: any = {
                     result: {
                          account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: '1000000', Destination: 'rBOB', PreviousTxnID: 'tx1', FinishAfter: 100 }],
@@ -400,32 +400,21 @@ describe('EscrowUtilService', () => {
                };
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExistingEscrows(mockObjects, 'rALICE', 'createEscrow', false);
-               expect(result[0].Amount).toContain('1000000');
+               expect(result[0].Amount).toBe('1000000');
           });
 
-          it('should format amount as XRP when activeTab is not createEscrow for string amount', async () => {
+          it('should preserve MPT amount object for scale-aware display formatting', async () => {
                const mockObjects: any = {
                     result: {
-                         account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: '1000000', Destination: 'rBOB', PreviousTxnID: 'tx1', FinishAfter: 100 }],
-                    },
-               };
-               mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
-               const result = await service.getExistingEscrows(mockObjects, 'rALICE', 'finishEscrow', false);
-               expect(result[0].Amount).toContain('1');
-          });
-
-          it('should handle MPT amount in getExistingEscrows', async () => {
-               const mockObjects: any = {
-                    result: {
-                         account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: { mpt_issuance_id: 'MPT001', value: '100' }, Destination: 'rBOB', PreviousTxnID: 'tx1', FinishAfter: 100 }],
+                         account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: { mpt_issuance_id: 'MPT001', value: '1' }, Destination: 'rBOB', PreviousTxnID: 'tx1', FinishAfter: 100 }],
                     },
                };
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExistingEscrows(mockObjects, 'rALICE', 'createEscrow', false);
-               expect(result[0].Amount).toContain('MPT');
+               expect(result[0].Amount).toEqual({ mpt_issuance_id: 'MPT001', value: '1' });
           });
 
-          it('should handle IOU amount in getExistingEscrows', async () => {
+          it('should preserve IOU amount object for display formatting', async () => {
                const mockObjects: any = {
                     result: {
                          account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: { value: '50', currency: 'USD', issuer: 'rISSUER' }, Destination: 'rBOB', PreviousTxnID: 'tx1', FinishAfter: 100 }],
@@ -433,12 +422,12 @@ describe('EscrowUtilService', () => {
                };
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExistingEscrows(mockObjects, 'rALICE', 'createEscrow', false);
-               expect(result[0].Amount).toContain('USD');
+               expect(result[0].Amount).toEqual({ value: '50', currency: 'USD', issuer: 'rISSUER' });
           });
      });
 
      describe('getExpiredOrFulfilledEscrows - amount formatting branches', () => {
-          it('should format amount as drops when activeTab is cancelEscrow for string amount', async () => {
+          it('should preserve XRP amount in drops for display formatting', async () => {
                const mockObjects: any = {
                     result: {
                          account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: '1000000', Destination: 'rBOB', PreviousTxnID: 'tx1', CancelAfter: 100 }],
@@ -462,7 +451,7 @@ describe('EscrowUtilService', () => {
           //      expect(result[0].Amount).toContain('1');
           // });
 
-          it('should handle MPT amount in getExpiredOrFulfilledEscrows', async () => {
+          it('should preserve MPT amount object in getExpiredOrFulfilledEscrows', async () => {
                const mockObjects: any = {
                     result: {
                          account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: { mpt_issuance_id: 'MPT001', value: '100' }, Destination: 'rBOB', PreviousTxnID: 'tx1', CancelAfter: 100 }],
@@ -471,10 +460,10 @@ describe('EscrowUtilService', () => {
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExpiredOrFulfilledEscrows(mockObjects, 'rALICE', 'cancelEscrow');
                expect(result.length).toBeGreaterThan(0);
-               expect(result[0].Amount).toContain('MPT');
+               expect(result[0].Amount).toEqual({ mpt_issuance_id: 'MPT001', value: '100' });
           });
 
-          it('should handle IOU amount in getExpiredOrFulfilledEscrows', async () => {
+          it('should preserve IOU amount object in getExpiredOrFulfilledEscrows', async () => {
                const mockObjects: any = {
                     result: {
                          account_objects: [{ LedgerEntryType: 'Escrow', Account: 'rALICE', Amount: { value: '50', currency: 'USD', issuer: 'rISSUER' }, Destination: 'rBOB', PreviousTxnID: 'tx1', CancelAfter: 100 }],
@@ -483,7 +472,7 @@ describe('EscrowUtilService', () => {
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExpiredOrFulfilledEscrows(mockObjects, 'rALICE', 'cancelEscrow');
                expect(result.length).toBeGreaterThan(0);
-               expect(result[0].Amount).toContain('USD');
+               expect(result[0].Amount).toEqual({ value: '50', currency: 'USD', issuer: 'rISSUER' });
           });
      });
 

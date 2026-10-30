@@ -203,7 +203,7 @@ describe('EscrowBaseComponent', () => {
           };
 
           xrplTransactionService = { getEscrowBySequence: jasmine.createSpy('getEscrowBySequence').and.resolveTo(null), getCurrentRippleTime: jasmine.createSpy('getCurrentRippleTime').and.resolveTo(1000) };
-          mptUtilService = { getExistingMpts: jasmine.createSpy('getExistingMpts').and.returnValue([]), computeMptItems: jasmine.createSpy('computeMptItems').and.returnValue([]), computeSelectedMptItem: jasmine.createSpy('computeSelectedMptItem') };
+          mptUtilService = { getExistingMpts: jasmine.createSpy('getExistingMpts').and.returnValue([]), getMpts: jasmine.createSpy('getMpts').and.resolveTo([]), computeMptItems: jasmine.createSpy('computeMptItems').and.returnValue([]), computeSelectedMptItem: jasmine.createSpy('computeSelectedMptItem') };
           xrplDateService = { toLocalDateTimeString: jasmine.createSpy('toLocalDateTimeString').and.returnValue('2024-01-01T00:00:00') };
           currencyStoreService = { currency: signal('XRP'), issuer: signal(''), getAll: jasmine.createSpy('getAll').and.returnValue({}) };
           trustlineStoreService = { outstandingIOUCollapsed: signal(false), setField: jasmine.createSpy('setField'), reset: jasmine.createSpy('reset'), getAll: jasmine.createSpy('getAll').and.returnValue({}) };
