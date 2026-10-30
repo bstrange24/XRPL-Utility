@@ -421,6 +421,15 @@ describe('AppComponent', () => {
                // The right panel might be hidden via CSS, but the element exists based on the @if condition
                expect(rightPanel).toBeTruthy();
           });
+
+          it('should expand the main content and hide the right panel on the Sign page', () => {
+               routerSpy.url = '/sign-transactions';
+               fixture.detectChanges();
+
+               expect(fixture.nativeElement.querySelector('aside[aria-label="Summary"]')).toBeNull();
+               const mainContent = fixture.nativeElement.querySelector('main > section');
+               expect(mainContent.style.gridColumn).toBe('span 19 / span 19');
+          });
      });
 
      describe('Edge Cases', () => {

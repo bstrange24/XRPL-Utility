@@ -13,39 +13,7 @@ interface SignTransactionOptions {
      accountInfo: xrpl.AccountInfoResponse;
      fee: any;
      currentLedger: any;
-     selectedTransaction?:
-          | 'sendXrp'
-          | 'accountFlagSet'
-          | 'accountFlagClear'
-          | 'setTrustline'
-          | 'removeTrustline'
-          | 'issueCurrency'
-          | 'clawback'
-          | 'createTimeEscrow'
-          | 'createTimeEscrowToken'
-          | 'finishTimeEscrow'
-          | 'finishTimeEscrowToken'
-          | 'createConditionEscrow'
-          | 'createConditionEscrowToken'
-          | 'finishConditionEscrow'
-          | 'finishConditionEscrowToken'
-          | 'cancelEscrow'
-          | 'createCheck'
-          | 'createCheckToken'
-          | 'cashCheck'
-          | 'cashCheckToken'
-          | 'cancelCheck'
-          | 'createPaymentChannel'
-          | 'fundPaymentChannel'
-          | 'claimPaymentChannel'
-          | 'closePaymentChannel'
-          | 'createMPT'
-          | 'authorizeMPT'
-          | 'unauthorizeMPT'
-          | 'sendMPT'
-          | 'lockMPT'
-          | 'unlockMPT'
-          | 'destroyMPT';
+     selectedTransaction?: string;
      isTicketEnabled?: boolean;
      isMemoEnable?: boolean;
      ticketSequence?: string;
@@ -135,6 +103,10 @@ export class SignTransactionUtilService {
                showSecondaryInInput: true,
           }));
      });
+
+     supportsTransactionTemplate(transactionId: string): boolean {
+          return Object.prototype.hasOwnProperty.call(this.builders, transactionId);
+     }
 
      readonly getTransactionJsonButtonLabel = computed(() => {
           const step = this.txUiService.currentStep();

@@ -106,4 +106,9 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
           const isBalance = url === '/account-balance-changes' || url.startsWith('/account-balance-changes');
           return isBalance;
      }
+
+     isSignTransactionsPage(): boolean {
+          const url = this.router.url;
+          return url === '/sign-transactions' || url.startsWith('/sign-transactions?') || url.startsWith('/sign-transactions/');
+     }
 }

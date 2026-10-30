@@ -2,7 +2,7 @@
      <header class="space-y-2">
           <h2 class="text-xl font-semibold tracking-tight text-gray-900">Build a Batch</h2>
           <p class="max-w-3xl text-sm leading-6 text-gray-600">
-               Combine 2–8 transactions from the selected wallet into one XRPL Batch. The builder assigns the inner-batch flags, sequences, and fees.
+               Add 2–8 transactions from the selected wallet. Choose a transaction type to start with a Sign-page template, then edit each transaction below.
                <a class="font-medium text-green-700 underline" href="https://xrpl.org/docs/concepts/transactions/batch-transactions" target="_blank" rel="noopener noreferrer">Read the XRPL Batch documentation</a>.
           </p>
      </header>
@@ -23,31 +23,101 @@
           </div>
      </div>
 
-     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">This builder creates single-account batches using the selected wallet. Every inner transaction is sent from that wallet. For security, do not include <code>Account</code>, <code>Sequence</code>, <code>TicketSequence</code>, <code>Fee</code>, or signature fields in the inner transaction JSON.</div>
+     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">Every inner transaction is sent from the selected wallet. Review the generated template values before preparing. Do not include <code>Account</code>, <code>Sequence</code>, <code>TicketSequence</code>, <code>Fee</code>, or signature fields; the Batch builder manages them.</div>
 
-     <div>
-          <div class="mb-2 flex items-center justify-between gap-3">
-               <label class="text-sm font-semibold text-gray-700">Inner transactions (JSON array)</label>
+     <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+               <div>
+                    <label class="mb-1 block text-sm font-semibold text-gray-700" for="batch-transaction-type">Transaction to add</label>
+                    <select id="batch-transaction-type" [ngModel]="selectedTransactionType()" (ngModelChange)="selectedTransactionType.set($event)" name="batchTransactionType" class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100">
+                         @for (item of transactionTypeItems(); track item.id) {
+                         <option [value]="item.id">{{ item.group }} · {{ item.display }}</option>
+                         }
+                    </select>
+               </div>
+               <button type="button" class="btn-primary" [disabled]="isAddingTransaction() || transactions().length >= 8" (click)="addTransaction()">{{ isAddingTransaction() ? 'Adding…' : 'Add transaction' }}</button>
+          </div>
+          <p class="mt-2 text-xs leading-5 text-gray-500">The template uses the same transaction type builders as the Sign page. Edit its JSON to set the fields for this transaction.</p>
+     </div>
+
+     <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+               <div>
+                    <h3 class="text-sm font-semibold text-gray-800">Inner transactions <span class="font-normal text-gray-500">({{ transactions().length }}/8)</span></h3>
+                    <p class="text-xs text-gray-500">Use the arrows to change execution order. Each card becomes one item in the Batch.</p>
+               </div>
+               <button type="button" class="btn-utility-small" (click)="toggleAdvancedJson()">{{ showAdvancedJson() ? 'Hide JSON array' : 'Edit JSON array' }}</button>
+          </div>
+
+          @if (!transactions().length) {
+          <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center">
+               <p class="text-sm font-medium text-gray-700">No transactions added yet</p>
+               <p class="mt-1 text-xs text-gray-500">Choose a transaction type above and select Add transaction.</p>
+          </div>
+          }
+
+          @for (transaction of transactions(); track transaction.id; let index = $index) {
+          <article class="rounded-xl border border-gray-200 bg-white p-4">
+               <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2">
+                         <span class="flex h-7 w-7 items-center justify-center rounded-full bg-green-50 text-xs font-semibold text-green-800">{{ index + 1 }}</span>
+                         <div>
+                              <h4 class="text-sm font-semibold text-gray-800">{{ transaction.label }}</h4>
+                              <p class="max-w-[32rem] truncate text-xs text-gray-500" [title]="transactionSummary(transaction)">{{ transaction.transactionType }} · {{ transactionSummary(transaction) }}</p>
+                         </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                         <button type="button" class="btn-utility-small" [disabled]="index === 0" title="Move transaction up" aria-label="Move transaction up" (click)="moveTransaction(index, -1)"><ng-icon name="heroArrowUp" size="15" /></button>
+                         <button type="button" class="btn-utility-small" [disabled]="index === transactions().length - 1" title="Move transaction down" aria-label="Move transaction down" (click)="moveTransaction(index, 1)"><ng-icon name="heroArrowDown" size="15" /></button>
+                         <button type="button" class="btn-utility-small" [disabled]="transactions().length >= 8" (click)="duplicateTransaction(index)">Duplicate</button>
+                         <button type="button" class="btn-utility-small" [attr.aria-expanded]="expandedTransactionId() === transaction.id" (click)="toggleTransactionEditor(transaction.id)">{{ expandedTransactionId() === transaction.id ? 'Hide editor' : 'Edit JSON' }}</button>
+                         <button type="button" class="btn-utility-small" (click)="removeTransaction(index)">Remove</button>
+                    </div>
+               </div>
+               @if (expandedTransactionId() === transaction.id) {
+               <div class="mb-2 flex justify-end">
+                    <button type="button" class="btn-utility-small" (click)="formatTransaction(index)">Format JSON</button>
+               </div>
+               <app-json-editor [value]="transaction.json" (valueChange)="onTransactionJsonChange(index, $event)"></app-json-editor>
+               @if (!isTransactionJsonValid(transaction)) {
+               <p role="alert" class="mt-2 text-xs text-red-700">Each transaction must be valid JSON and its TransactionType must match the selected template.</p>
+               }
+               }
+          </article>
+          }
+     </div>
+
+     @if (showAdvancedJson()) {
+     <div class="space-y-2 border-t border-gray-200 pt-4">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+               <div>
+                    <h3 class="text-sm font-semibold text-gray-800">Inner transactions JSON array</h3>
+                    <p class="text-xs text-gray-500">Advanced: edit or paste the entire array. Valid changes update the transaction cards above.</p>
+               </div>
                <div class="flex items-center gap-2">
-                    <button type="button" (click)="innerTransactionsEditor.format()" title="Format JSON" class="btn-utility-small">
+                    <button type="button" (click)="formatAllTransactions()" title="Format JSON" class="btn-utility-small" [disabled]="hasInvalidTransactionJson()">
                          <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                          Format JSON
                     </button>
-                    <button type="button" (click)="copyUtilService.copySignTx(innerTransactionsJson())" title="Copy Inner Transactions" class="btn-utility-small">
+                    <button type="button" (click)="copyUtilService.copySignTx(innerTransactionsJson())" title="Copy Inner Transactions" class="btn-utility-small" [disabled]="hasInvalidTransactionJson()">
                          <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
                          Copy
                     </button>
                </div>
           </div>
-          <app-json-editor #innerTransactionsEditor [value]="innerTransactionsJson()" (valueChange)="onInnerTransactionsChange($event)"></app-json-editor>
-          <p class="mt-2 text-xs leading-5 text-gray-500">
-               Enter transaction objects with their <code>TransactionType</code> and required operation fields. Example:
-               <code>[&#123;"TransactionType":"Payment","Destination":"r...","Amount":"1000000"&#125;, &#123;"TransactionType":"Payment","Destination":"r...","Amount":"2000000"&#125;]</code>
-          </p>
+          @if (advancedJsonError()) {
+          <p role="alert" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ advancedJsonError() }}</p>
+          }
+          @if (hasInvalidTransactionJson()) {
+          <p class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">Fix the transaction JSON in its card above before viewing or editing the combined array.</p>
+          } @else {
+          <app-json-editor [value]="innerTransactionsJson()" (valueChange)="onAdvancedJsonChange($event)"></app-json-editor>
+          }
      </div>
+     }
 
      <div class="flex flex-wrap gap-3">
-          <button type="button" class="btn-primary" [disabled]="isPreparing()" (click)="prepareBatch()">{{ isPreparing() ? 'Preparing…' : 'Prepare Batch' }}</button>
+          <button type="button" class="btn-primary" [disabled]="isPreparing() || hasInvalidTransactionJson() || !!advancedJsonError()" (click)="prepareBatch()">{{ isPreparing() ? 'Preparing…' : 'Prepare Batch' }}</button>
      </div>
 
      @if (batchError()) {
