@@ -78,6 +78,9 @@ export class TransactionParserService {
           keyDetails = this.addMemosToKeyDetails(keyDetails, txJson);
           keyDetails = this.addSignersToKeyDetails(keyDetails, txJson);
           keyDetails = this.addSigningInfoToKeyDetails(keyDetails, txJson, meta);
+          keyDetails = keyDetails.map(detail =>
+               detail.label.toLowerCase() === 'fee' && txJson.Fee != null ? { ...detail, value: formatDrops(txJson.Fee) } : detail,
+          );
 
           console.debug('Parsed transaction result:', keyDetails, affectedAccounts);
 
@@ -146,7 +149,7 @@ export class TransactionParserService {
           // Check for large fee
           const fee = Number.parseInt(result.tx_json?.Fee || '0');
           if (fee > 5000) {
-               warnings.push(`High transaction fee: ${(fee / 1000000).toFixed(6)} XRP`);
+               warnings.push(`High transaction fee: ${formatDrops(fee)}`);
           }
 
           // Check for expiration
@@ -406,7 +409,7 @@ class PaymentFormatter implements TransactionFormatter {
                amount: amount,
                from: tx.Account,
                to: tx.Destination,
-               fee: this.formatAmount(tx.Fee),
+               fee: formatDrops(tx.Fee),
           };
      }
 
@@ -449,7 +452,7 @@ class PaymentFormatter implements TransactionFormatter {
      private formatAmount(amount: any): string {
           if (!amount) return '0 XRP';
           if (typeof amount === 'string') {
-               return `${(Number.parseInt(amount) / 1000000).toFixed(6)} XRP`;
+               return formatXRPAmount(amount);
           }
           if (amount.currency && amount.issuer) {
                return `${amount.value} ${amount.currency}`;
@@ -1272,8 +1275,16 @@ class GenericFormatter implements TransactionFormatter {
 }
 
 function formatXRPAmount(drops: string | number): string {
-     const amount = typeof drops === 'string' ? Number.parseInt(drops) : drops;
-     return `${(amount / 1000000).toFixed(6)} XRP`;
+     const amount = typeof drops === 'string' ? Number(drops) : drops;
+     if (!Number.isFinite(amount)) return '0 XRP';
+     const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 6 }).format(amount / 1000000);
+     return `${formatted} XRP`;
+}
+
+function formatDrops(drops: string | number): string {
+     const amount = typeof drops === 'string' ? Number(drops) : drops;
+     if (!Number.isFinite(amount)) return '0 drops';
+     return `${new Intl.NumberFormat().format(amount)} drops`;
 }
 
 function formatCurrencyAmount(amount: any): string {

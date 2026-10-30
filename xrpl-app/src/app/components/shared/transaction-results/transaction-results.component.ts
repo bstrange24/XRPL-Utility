@@ -46,6 +46,21 @@ export class TransactionResultsComponent implements OnInit, OnChanges {
           return groups.filter(group => group.details.length > 0);
      }
 
+     formatDetailLabel(label: string): string {
+          const words = label
+               .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+               .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+               .replace(/[_-]+/g, ' ')
+               .trim()
+               .split(/\s+/);
+          const isAllCaps = label === label.toUpperCase();
+
+          return words
+               .map(word => isAllCaps ? word.toLowerCase() : word.length > 1 && word === word.toUpperCase() ? word : word.toLowerCase())
+               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+               .join(' ');
+     }
+
      constructor() {}
 
      ngOnInit() {

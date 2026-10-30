@@ -20,4 +20,10 @@ describe('TransactionPreviewerComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('should format transaction field labels for readability', () => {
+    expect(component.formatDetailLabel('LastLedgerSequence')).toBe('Last Ledger Sequence');
+    expect(component.formatDetailLabel('FLAGS')).toBe('Flags');
+    expect(component.formatDetailLabel('NFTokenID')).toBe('NF Token ID');
+  });
 });

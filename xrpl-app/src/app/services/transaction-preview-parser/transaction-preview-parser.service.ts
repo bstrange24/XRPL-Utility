@@ -60,6 +60,7 @@ export class TransactionPreviewParserService {
           // Add memos and signers
           keyDetails = this.addMemosToKeyDetails(keyDetails, tx);
           keyDetails = this.addSignersToKeyDetails(keyDetails, tx);
+          keyDetails = keyDetails.map(detail => (detail.label.toLowerCase() === 'fee' && tx.Fee != null ? { ...detail, value: formatDrops(tx.Fee) } : detail));
 
           // Calculate estimated XRP impact
           const fee = Number.parseInt(tx.Fee || '12');
@@ -75,7 +76,7 @@ export class TransactionPreviewParserService {
                summary: {
                     title: summary.title || 'Transaction',
                     description: summary.description || 'Review transaction details',
-                    estimatedFee: summary.estimatedFee || formatXRPAmount(fee),
+                    estimatedFee: formatDrops(tx.Fee ?? fee),
                },
                keyDetails: keyDetails || [],
                requiredFields: requiredFields || [],
@@ -175,7 +176,7 @@ class PaymentPreviewFormatter implements TransactionPreviewFormatter {
 
           return {
                title: 'Payment Transaction',
-               description: isSelfPayment ? `You're about to send ${amount} to yourself` : `You're about to send ${amount} to ${shortenAddress(tx.Destination)}`,
+               description: isSelfPayment ? `You're sending send ${amount} to yourself` : `You're sending ${amount} to ${shortenAddress(tx.Destination)}`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
@@ -251,7 +252,7 @@ class PaymentPreviewFormatter implements TransactionPreviewFormatter {
 
           // Check for high fee
           if (fee > 5000) {
-               warnings.push(`⚠️ High transaction fee: ${formatXRPAmount(fee)} (${(fee / 12).toFixed(1)}x normal fee)`);
+               warnings.push(`⚠️ High transaction fee: ${formatDrops(fee)} (${(fee / 12).toFixed(1)}x normal fee)`);
           }
 
           // Check for missing destination tag
@@ -327,7 +328,7 @@ class OfferCreatePreviewFormatter implements TransactionPreviewFormatter {
 
           // Check for high fee
           if (fee > 5000) {
-               warnings.push(`⚠️ High transaction fee: ${formatXRPAmount(fee)}`);
+               warnings.push(`⚠️ High transaction fee: ${formatDrops(fee)}`);
           }
 
           return warnings;
@@ -399,7 +400,7 @@ class AccountSetPreviewFormatter implements TransactionPreviewFormatter {
           const changes = this.getChanges(tx);
           return {
                title: 'Update Account Settings',
-               description: `You're about to update: ${changes.join(', ')}`,
+               description: `You're updating: ${changes.join(', ')}`,
                estimatedFee: formatXRPAmount(tx.Fee || '12'),
           };
      }
@@ -903,12 +904,17 @@ class GenericPreviewFormatter implements TransactionPreviewFormatter {
      }
 
      getKeyDetails(tx: any, accountInfo?: any) {
-          const excludeFields = new Set(['Account', 'SigningPubKey', 'TxnSignature', 'hash', 'Fee']);
+          const excludeFields = new Set(['Account', 'LastLedgerSequence', 'Memos', 'Sequence', 'Signers', 'SigningPubKey', 'TicketSequence', 'TransactionType', 'TxnSignature', 'hash']);
           const details = Object.entries(tx)
-               .filter(([key]) => !excludeFields.has(key))
+               .filter(([key, value]) => {
+                    if (excludeFields.has(key) || value === undefined || value === null || value === '') return false;
+                    if (key === 'Flags' && (value === 0 || value === '0' || value === '0x0')) return false;
+                    if (Array.isArray(value)) return value.length > 0;
+                    return typeof value !== 'object' || Object.keys(value).length > 0;
+               })
                .map(([key, value]) => ({
                     label: key,
-                    value: this.formatValue(value),
+                    value: this.formatFieldValue(key, value),
                     icon: this.getIconForField(key),
                     highlight: false,
                }));
@@ -936,13 +942,16 @@ class GenericPreviewFormatter implements TransactionPreviewFormatter {
           const warnings = [];
           const fee = Number.parseInt(tx.Fee || '12');
           if (fee > 5000) {
-               warnings.push(`⚠️ High transaction fee: ${formatXRPAmount(fee)}`);
+               warnings.push(`⚠️ High transaction fee: ${formatDrops(fee)}`);
           }
           return warnings;
      }
 
-     private formatValue(value: any): string {
+     private formatFieldValue(field: string, value: any): string {
           if (value === undefined || value === null) return '—';
+          if (['Date', 'Expiration', 'CancelAfter', 'FinishAfter'].includes(field) && typeof value === 'number') {
+               return formatDatePreview(value);
+          }
           if (typeof value === 'string' && value.length > 30) {
                return value.slice(0, 27) + '...';
           }
@@ -1466,8 +1475,16 @@ class NFTokenCancelOfferPreviewFormatter implements TransactionPreviewFormatter 
 
 // Helper functions
 function formatXRPAmount(drops: string | number): string {
-     const amount = typeof drops === 'string' ? Number.parseInt(drops) : drops;
-     return `${(amount / 1000000).toFixed(6)} XRP`;
+     const amount = typeof drops === 'string' ? Number(drops) : drops;
+     if (!Number.isFinite(amount)) return '0 XRP';
+     const formatted = new Intl.NumberFormat(undefined, { maximumFractionDigits: 6 }).format(amount / 1000000);
+     return `${formatted} XRP`;
+}
+
+function formatDrops(drops: string | number): string {
+     const amount = typeof drops === 'string' ? Number(drops) : drops;
+     if (!Number.isFinite(amount)) return '0 drops';
+     return `${new Intl.NumberFormat().format(amount)} drops`;
 }
 
 function formatCurrencyAmountPreview(amount: any): string {
@@ -1489,7 +1506,8 @@ function shortenAddress(address: string): string {
 
 function formatDatePreview(timestamp: number): string {
      if (!timestamp) return 'Not set';
-     return new Date(timestamp * 1000).toLocaleString();
+     const rippleEpoch = Date.UTC(2000, 0, 1);
+     return new Date(rippleEpoch + timestamp * 1000).toLocaleString();
 }
 
 function prettyJson(value: string | undefined): string {

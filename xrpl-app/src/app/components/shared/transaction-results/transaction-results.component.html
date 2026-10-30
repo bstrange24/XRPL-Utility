@@ -16,8 +16,8 @@
                </div>
                <div class="flex-1">
                     <div class="flex flex-wrap items-center gap-2 mb-1.5">
-                         <span class="text-xs font-semibold uppercase tracking-wider" [class.text-green-700]="parsedResult.status === 'success'" [class.text-red-700]="parsedResult.status === 'failed'">{{ parsedResult.status === 'success' ? 'Transaction confirmed' : 'Transaction failed' }}</span>
-                         <span class="rounded-full bg-white/80 border px-2.5 py-0.5 text-xs font-medium" [class.border-green-200]="parsedResult.status === 'success'" [class.text-green-800]="parsedResult.status === 'success'" [class.border-red-200]="parsedResult.status === 'failed'" [class.text-red-800]="parsedResult.status === 'failed'">{{ parsedResult.transactionType }}</span>
+                         <span class="text-xs font-semibold tracking-wider" [class.text-green-700]="parsedResult.status === 'success'" [class.text-red-700]="parsedResult.status === 'failed'">{{ parsedResult.status === 'success' ? 'Transaction confirmed' : 'Transaction failed' }}</span>
+                         <span class="rounded-full bg-white/80 border px-2.5 py-0.5 text-xs font-medium" [class.border-green-200]="parsedResult.status === 'success'" [class.text-green-800]="parsedResult.status === 'success'" [class.border-red-200]="parsedResult.status === 'failed'" [class.text-red-800]="parsedResult.status === 'failed'">{{ formatDetailLabel(parsedResult.transactionType) }}</span>
                     </div>
                     <h3 class="text-xl font-semibold leading-snug" [class.text-green-950]="parsedResult.status === 'success'" [class.text-red-950]="parsedResult.status === 'failed'">{{ parsedResult.summary.title }}</h3>
                     <p class="text-sm mt-1 leading-relaxed" [class.text-green-700]="parsedResult.status === 'success'" [class.text-red-700]="parsedResult.status === 'failed'">{{ parsedResult.summary.description }}</p>
@@ -38,7 +38,7 @@
                     <div class="flex items-start gap-3">
                          <div class="text-xl flex-shrink-0">{{ detail.icon || '📄' }}</div>
                          <div class="flex-1 min-w-0">
-                              <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">{{ detail.label }}</p>
+                              <p class="text-xs font-medium text-gray-500 tracking-wide">{{ formatDetailLabel(detail.label) }}</p>
                               @if (detail.type === 'signer-list') {
                               <div class="mt-2 space-y-2">
                                    @for (signer of detail.signers; track $index) {
