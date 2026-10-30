@@ -12,7 +12,6 @@ import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orche
 import { AmmStoreService } from '../amm-store/amm-store.service';
 import { AmmTransactionBuilderService } from '../amm-transaction-builder/amm-transaction-builder.service';
 import { XrplService } from '../../xrpl-services/xrpl.service';
-import { AMM_VALIDATION_RULES } from '../../../components/amm/constants/amm.constants';
 
 // Mock Performance API
 beforeAll(() => {
@@ -110,7 +109,7 @@ describe('AmmTransactionOrchestratorService', () => {
                buildClawbackFromAmmTx: jasmine.createSpy('buildClawbackFromAmmTx').and.returnValue(mockTx),
                buildSwapViaAmmTx: jasmine.createSpy('buildSwapViaAmmTx').and.returnValue(mockTx),
                buildDeleteAmmTx: jasmine.createSpy('buildDeleteAmmTx').and.returnValue(mockTx),
-               toXRPLCurrency: jasmine.createSpy('toXRPLCurrency').and.returnValue({ currency: 'USD', issuer: 'rIssuer' }),
+               toXRPLCurrency: jasmine.createSpy('toXRPLCurrency').and.callFake((currency: string, issuer: string) => (currency === 'XRP' ? { currency: 'XRP' } : { currency, issuer })),
           };
 
           xrplServiceMock = {
@@ -185,6 +184,17 @@ describe('AmmTransactionOrchestratorService', () => {
                     expect(result.success).toBeTrue();
                     expect(result.hash).toBe(mockTxHash);
                     expect(ammTransactionBuilderServiceMock.buildCreateAmmTx).toHaveBeenCalled();
+                    expect(validatorMock.validate).toHaveBeenCalledWith(
+                         'CreateAMM',
+                         jasmine.objectContaining({
+                              inputs: jasmine.objectContaining({
+                                   firstPoolCurrencyField: 'USD',
+                                   secondPoolCurrencyField: 'XRP',
+                                   firstPoolAssetAmount: '100',
+                                   secondPoolAssetAmount: '50',
+                              }),
+                         }),
+                    );
                });
           });
 
@@ -220,7 +230,14 @@ describe('AmmTransactionOrchestratorService', () => {
                     xrplServiceMock.getAMMInfo.and.rejectWith(new Error('Pool not found'));
                     const result = await service.executeAmmTx('withdrawalFromAMM', baseConfig as any);
                     expect(result.success).toBeFalse();
-                    expect(result.error).toBe('No LP token found for this AMM pool.');
+                    expect(result.error).toBe('Failed to load AMM pool for this asset pair.');
+               });
+
+               it('should return an error when the pool has no LP token balance for this account', async () => {
+                    xrplServiceMock.getAMMInfo.and.resolveTo({ result: { amm: { account: 'rAMMAccount' } } });
+                    const result = await service.executeAmmTx('withdrawalFromAMM', baseConfig as any);
+                    expect(result.success).toBeFalse();
+                    expect(result.error).toBe('No LP token balance found for this account in the selected AMM pool.');
                });
           });
 
@@ -231,16 +248,30 @@ describe('AmmTransactionOrchestratorService', () => {
                     expect(ammTransactionBuilderServiceMock.buildClawbackFromAmmTx).toHaveBeenCalled();
                });
 
-               it('should return error when LP token not found', async () => {
+               it('should fail when the pool cannot be loaded', async () => {
                     xrplServiceMock.getAMMInfo.and.rejectWith(new Error('Pool not found'));
                     const result = await service.executeAmmTx('clawbackFromAMM', baseConfig as any);
                     expect(result.success).toBeFalse();
-                    expect(result.error).toBe('No LP token found for this AMM pool.');
+                    expect(result.error).toBe('Failed to load AMM pool for this asset pair.');
                });
           });
 
           describe('swapViaAMM', () => {
                it('should execute swapViaAMM transaction successfully', async () => {
+                    const result = await service.executeAmmTx('swapViaAMM', baseConfig as any);
+                    expect(result.success).toBeTrue();
+                    expect(ammTransactionBuilderServiceMock.buildSwapViaAmmTx).toHaveBeenCalled();
+                    expect(xrplServiceMock.getAMMInfo).toHaveBeenCalledWith(
+                         mockClient,
+                         { currency: 'USD', issuer: 'rIssuer1' },
+                         { currency: 'XRP' },
+                         undefined,
+                         'validated',
+                    );
+               });
+
+               it('should not require an LP token to swap', async () => {
+                    xrplServiceMock.getAMMInfo.and.resolveTo({ result: { amm: { account: 'rAMMAccount' } } });
                     const result = await service.executeAmmTx('swapViaAMM', baseConfig as any);
                     expect(result.success).toBeTrue();
                     expect(ammTransactionBuilderServiceMock.buildSwapViaAmmTx).toHaveBeenCalled();

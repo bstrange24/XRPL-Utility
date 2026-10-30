@@ -23,6 +23,7 @@ describe('AmmUtilsService', () => {
                amm: {
                     account: 'rAMMAccount',
                     lp_token: { currency: 'LP_TOKEN', value: '1000' },
+                    trading_fee: 300,
                     amount: '1000000', // 1 XRP in drops
                     amount2: { value: '500', currency: 'USD', issuer: 'rIssuer' },
                },
@@ -39,7 +40,7 @@ describe('AmmUtilsService', () => {
           xrplServiceMock = {};
 
           utilsServiceMock = {
-               formatTokenBalance: jasmine.createSpy('formatTokenBalance').and.callFake((value: number, decimals: number) => value.toFixed(decimals)),
+               formatTokenBalance: jasmine.createSpy('formatTokenBalance').and.callFake((value: string, decimals: number) => Number(value).toFixed(decimals)),
           };
 
           logServiceMock = {
@@ -206,6 +207,17 @@ describe('AmmUtilsService', () => {
                expect(result.lpTokens[0].issuer).toBe('rAMMAccount');
                expect(result.lpTokens[0].currency).toBe('LP_TOKEN');
                expect(logServiceMock.logObjects).toHaveBeenCalled();
+          });
+
+          it('should publish the pool trading fee as a percentage', async () => {
+               await service.checkAmmParticipation(true, mockAmmResponse);
+               expect(ammStoreServiceMock.setField).toHaveBeenCalledWith('tradingFeeField', '0.3');
+          });
+
+          it('should assign response balances to the token and XRP assets by type', async () => {
+               await service.checkAmmParticipation(true, mockAmmResponse);
+               expect(utilsServiceMock.formatTokenBalance).toHaveBeenCalledWith('500', 18);
+               expect(utilsServiceMock.formatTokenBalance).toHaveBeenCalledWith('1', 18);
           });
 
           // it('should update store fields when displayChanges is true', async () => {

@@ -2,34 +2,46 @@
      <div class="space-y-2">
           <div>
                <div class="field-label">
-                    <label for="amountAsset1" class="label-primary">Amount</label>
+                    <label for="amountAsset1" class="label-primary">{{ ammTransactionViewModelService.activeTab() === 'swapViaAMM' ? 'Target Token Amount' : 'Asset 1 Amount' }}</label>
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">Amount of Asset 1 to use in the pool.</p>
+                    <p class="text-secondary">
+                         @if (ammTransactionViewModelService.activeTab() === 'swapViaAMM') {
+                         Desired token amount to receive; the transaction allows up to 5% slippage.
+                         } @else {
+                         Amount of Asset 1 to use in the pool.
+                         }
+                    </p>
                     <button type="button" (click)="toggleAsset1AmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
                </div>
 
-               <input type="text" [ngModel]="ammStoreService.weWantAmount()" (ngModelChange)="ammStoreService.setField('weWantAmount', $event)" class="input-base" />
+               <input id="amountAsset1" type="text" [ngModel]="ammStoreService.weWantAmount()" (ngModelChange)="ammStoreService.setField('weWantAmount', $event)" class="input-base" />
           </div>
           <app-field-helper title="Amount" [items]="showAmount1HelperItems" [show]="showAmount1Helper" />
      </div>
      <div class="space-y-2">
           <div>
                <div class="field-label">
-                    <label for="amountAsset2" class="label-primary">Amount</label>
+                    <label for="amountAsset2" class="label-primary">{{ ammTransactionViewModelService.activeTab() === 'swapViaAMM' ? 'Maximum XRP to Spend' : 'Asset 2 Amount' }}</label>
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">Amount of Asset 2 to use in the pool.</p>
+                    <p class="text-secondary">
+                         @if (ammTransactionViewModelService.activeTab() === 'swapViaAMM') {
+                         Maximum XRP the payment may spend to reach the target token amount.
+                         } @else {
+                         Amount of Asset 2 to use in the pool.
+                         }
+                    </p>
                     <button type="button" (click)="toggleAsset2AmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
                </div>
 
-               <input type="text" [ngModel]="ammStoreService.weSpendAmount()" (ngModelChange)="ammStoreService.setField('weSpendAmount', $event)" class="input-base" />
+               <input id="amountAsset2" type="text" [ngModel]="ammStoreService.weSpendAmount()" (ngModelChange)="ammStoreService.setField('weSpendAmount', $event)" class="input-base" />
           </div>
           <app-field-helper title="Amount" [items]="showAmount2HelperItems" [show]="showAmount2Helper" />
      </div>

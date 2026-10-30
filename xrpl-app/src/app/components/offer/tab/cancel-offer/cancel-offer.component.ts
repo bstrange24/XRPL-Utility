@@ -39,6 +39,7 @@ export class CancelOfferTabComponent implements OnDestroy {
      readonly offerSearchQuery = signal<string>('');
      readonly selectedOfferSequences = signal<number[]>([]);
      readonly highlightedOfferIndex = signal<number>(-1);
+     private lastWalletAddress: string | null = null;
 
      readonly cancelOfferSelectorHelperItems = AppConstants.CANCEL_OFFER_SELECTOR_HELPER_ITEMS;
      showCancelOfferSelectorHelper = signal(false);
@@ -62,6 +63,15 @@ export class CancelOfferTabComponent implements OnDestroy {
      });
 
      constructor() {
+          effect(() => {
+               const wallet = this.view.walletManagerService.currentWallet();
+               const address = wallet?.classicAddress || wallet?.address || '';
+               if (this.lastWalletAddress !== null && address !== this.lastWalletAddress) {
+                    this.selectedOfferSequences.set([]);
+               }
+               this.lastWalletAddress = address;
+          });
+
           effect(() => {
                const sequences = this.selectedOfferSequences();
                if (sequences.length > 0) {
@@ -97,6 +107,7 @@ export class CancelOfferTabComponent implements OnDestroy {
 
      toggleOfferSelection(offer: any): void {
           const seq = offer.Sequence;
+          if (!Number.isInteger(seq) || seq <= 0) return;
           this.selectedOfferSequences.update(list => (list.includes(seq) ? list.filter(s => s !== seq) : [...list, seq]));
      }
 
@@ -104,7 +115,7 @@ export class CancelOfferTabComponent implements OnDestroy {
           if (this.allOffersSelected()) {
                this.selectedOfferSequences.set([]);
           } else {
-               this.selectedOfferSequences.set(this.offerStoreService.existingOffers().map((o: any) => o.Sequence));
+               this.selectedOfferSequences.set([...new Set(this.offerStoreService.existingOffers().map((o: any) => o.Sequence).filter((seq: number) => Number.isInteger(seq) && seq > 0))]);
                this.offerStoreService.setField('selectedOffersToCancel', this.selectedOfferSequences());
           }
      }

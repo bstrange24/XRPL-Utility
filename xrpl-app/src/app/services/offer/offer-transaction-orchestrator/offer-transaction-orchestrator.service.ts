@@ -10,6 +10,7 @@ import { TransactionUiService } from '../../transaction-ui/transaction-ui.servic
 import { XrplTransactionOrchestratorService } from '../../xrpl-transaction-orchestrator/xrpl-transaction-orchestrator.service';
 import { XrplTransactionService } from '../../xrpl-transactions/xrpl-transaction.service';
 import { OfferTransactionBuilderService } from '../offer-transaction-builder/offer-transaction-builder.service';
+import { UtilsService } from '../../utils/util-service/utils.service';
 
 type OfferMeta = {
      buildTx: (args: { orchestrator: OfferTransactionOrchestratorService; env: any; wallet: any; offer: any; account: any; txOptions: any }) => xrpl.Transaction;
@@ -62,6 +63,7 @@ export class OfferTransactionOrchestratorService {
      private readonly transactionOptionalFieldsService = inject(TransactionOptionalFieldsService);
      private readonly sufficentAccountBalanceService = inject(SufficentAccountBalanceService);
      private readonly xrplTransactionOrchestratorService = inject(XrplTransactionOrchestratorService);
+     private readonly utilsService = inject(UtilsService);
      public readonly offerTransactionBuilderService = inject(OfferTransactionBuilderService);
 
      async executeOfferTx(type: OfferTxType, config: OfferTxConfig): Promise<{ success: boolean; hash?: string; error?: string; validationError?: boolean; deletedHashes?: { sequence: number; hash: string }[] }> {
@@ -157,7 +159,8 @@ export class OfferTransactionOrchestratorService {
           const sequences: number[] = offer.offerSequenceField
                .split(',')
                .map((s: string) => Number(s.trim()))
-               .filter(n => !Number.isNaN(n) && n > 0);
+               .filter(n => Number.isInteger(n) && n > 0)
+               .filter((sequence, index, list) => list.indexOf(sequence) === index);
 
           if (sequences.length === 0) {
                return { success: false, error: 'No offer sequences provided.' };
@@ -195,12 +198,12 @@ export class OfferTransactionOrchestratorService {
           this.txUiService.currentStep?.set('preparing');
           this.toastService.info(`Cancelling ${sequences.length} offer(s)...`, AppConstants.TOAST.INFO);
 
-          const deletedHashes: { sequence: number; hash: string }[] = [];
-          let successCount = 0;
+          const submitted: { sequence: number; hash: string; lastLedgerSequence: number }[] = [];
 
           for (const sequence of sequences) {
                const perOffer = { ...offer, offerSequenceField: sequence.toString() };
                const freshLedger = await client.getLedgerIndex();
+               const lastLedgerSequence = freshLedger + AppConstants.LAST_LEDGER_ADD_TIME;
                const cancelEnv = { ...env, ledgerInfo: { lastIndex: freshLedger } };
 
                const tx = this.offerTransactionBuilderService.buildOfferCancelTx(env.wallet || config.wallet, sequence, cancelEnv);
@@ -230,33 +233,52 @@ export class OfferTransactionOrchestratorService {
                     continue;
                }
 
-               successCount++;
                if (submitResult.hash) {
-                    deletedHashes.push({ sequence, hash: submitResult.hash });
+                    submitted.push({
+                         sequence,
+                         hash: submitResult.hash,
+                         lastLedgerSequence,
+                    });
+               } else {
+                    this.toastService.error(`Failed to confirm offer ${sequence}: no transaction hash was returned.`, AppConstants.TOAST.ERROR);
                }
           }
 
-          // Wait for final outcomes
-          for (const { hash, sequence } of deletedHashes) {
+          const deletedHashes: { sequence: number; hash: string }[] = [];
+          for (const { hash, sequence, lastLedgerSequence } of submitted) {
                try {
-                    const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, hash, env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME);
+                    const finalResult = await this.xrplTransactionService.waitForFinalOutcome(client, hash, lastLedgerSequence);
                     this.txUiService.addTxResultSignal(finalResult);
+                    if (this.utilsService.isTxSuccessful({ result: finalResult })) {
+                         deletedHashes.push({ sequence, hash });
+                    } else {
+                         const resultMessage = this.utilsService.getTransactionResultMessage({ result: finalResult });
+                         this.toastService.error(`Offer ${sequence} cancellation failed: ${resultMessage}`, AppConstants.TOAST.ERROR);
+                    }
                } catch (waitError) {
                     console.warn(`Confirmation wait failed for offer ${sequence}:`, waitError);
+                    this.toastService.error(`Could not confirm cancellation of offer ${sequence}.`, AppConstants.TOAST.ERROR);
                }
           }
 
-          if (successCount === 0) {
+          if (deletedHashes.length === 0) {
                return { success: false, error: 'All offer cancellations failed.' };
           }
 
-          const message = meta.successMessage({ orchestrator: this, offer, txOptions });
-          this.toastService.successMultipleHashesWithTickets?.(
-               message,
-               deletedHashes.map(d => ({ ticketSeq: d.sequence.toString(), hash: d.hash })), // reuse existing toast if adapted
-               this.txUiService.explorerUrl() + 'tx/',
-               AppConstants.TOAST.SUCCESS
-          ) ?? this.toastService.success(message, AppConstants.TOAST.SUCCESS);
+          const successfulOffer = { ...offer, offerSequenceField: deletedHashes.map(item => item.sequence).join(',') };
+          const message = deletedHashes.length === sequences.length
+               ? meta.successMessage({ orchestrator: this, offer: successfulOffer, txOptions })
+               : `${deletedHashes.length} of ${sequences.length} offer(s) cancelled successfully.`;
+          if (this.toastService.successMultipleHashesWithTickets) {
+               this.toastService.successMultipleHashesWithTickets(
+                    message,
+                    deletedHashes.map(d => ({ ticketSeq: d.sequence.toString(), hash: d.hash })),
+                    this.txUiService.explorerUrl() + 'tx/',
+                    AppConstants.TOAST.SUCCESS
+               );
+          } else {
+               this.toastService.success(message, AppConstants.TOAST.SUCCESS);
+          }
 
           this.txUiService.currentStep?.set('success');
 

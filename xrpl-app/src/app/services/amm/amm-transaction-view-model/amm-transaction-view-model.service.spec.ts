@@ -36,7 +36,7 @@ describe('AmmTransactionViewModelService', () => {
           ammStoreServiceMock = {};
 
           offerCurrencyServiceMock = {
-               getAvailableCurrencies: jasmine.createSpy('getAvailableCurrencies').and.returnValue(mockAvailableCurrencies),
+               getAvailableCurrencies: jasmine.createSpy('getAvailableCurrencies').and.callFake((includeXrp = false) => (includeXrp ? mockAvailableCurrencies : mockAvailableCurrencies.filter(currency => currency !== 'XRP'))),
                getIssuersForCurrency: jasmine.createSpy('getIssuersForCurrency').and.returnValue(mockIssuers),
                weWant: {
                     currency: signal(''),
@@ -133,15 +133,10 @@ describe('AmmTransactionViewModelService', () => {
      describe('pool1CurrencyItems', () => {
           it('should return currency items', () => {
                const items = service.pool1CurrencyItems();
-               expect(items.length).toBe(3);
+               expect(items.length).toBe(2);
                expect(items[0].id).toBe('USD');
                expect(items[0].display).toBe('USD');
-          });
-
-          it('should show XRP secondary as "Native currency"', () => {
-               const items = service.pool1CurrencyItems();
-               const xrpItem = items.find(i => i.id === 'XRP');
-               expect(xrpItem?.secondary).toBe('Native currency');
+               expect(items.some(item => item.id === 'XRP')).toBeFalse();
           });
 
           it('should show issuer count for non-XRP currencies', () => {

@@ -37,21 +37,18 @@ export class AmmTransactionViewModelService {
      // Pool 1 currency dropdown
      pool1CurrencyItems = computed(() => {
           this.pool1Currency(); // reactive trigger
-          return this.offerCurrency.getAvailableCurrencies(true).map(curr => ({
+          return this.offerCurrency.getAvailableCurrencies().map(curr => ({
                id: curr,
                display: curr,
-               secondary:
-                    curr === 'XRP'
-                         ? 'Native currency'
-                         : (() => {
-                                const count = this.offerCurrency.getIssuersForCurrency(curr).length;
-                                if (count === 0) {
-                                     return 'No issuers';
-                                }
+               secondary: (() => {
+                    const count = this.offerCurrency.getIssuersForCurrency(curr).length;
+                    if (count === 0) {
+                         return 'No issuers';
+                    }
 
-                                const plural = count === 1 ? '' : 's';
-                                return `${count} issuer${plural}`;
-                           })(),
+                    const plural = count === 1 ? '' : 's';
+                    return `${count} issuer${plural}`;
+               })(),
           }));
      });
 

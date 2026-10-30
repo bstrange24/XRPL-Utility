@@ -142,16 +142,10 @@ export class OfferUtilsService {
           try {
                const weWantCurr = this.offerStoreService.weWantCurrency();
                const weSpendCurr = this.offerStoreService.weSpendCurrency();
+               const weWantIssuer = this.offerStoreService.weWantIssuer();
+               const weSpendIssuer = this.offerStoreService.weSpendIssuer();
 
                console.log(`fetchOrderBook - weWantCurr: ${weWantCurr}, weSpendCurr: ${weSpendCurr}`);
-
-               // Don't fetch if both currencies are the same (invalid market)
-               if (weWantCurr === weSpendCurr) {
-                    console.warn('Cannot fetch order book for same currency pair');
-                    this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
-                    this.offerStoreService.setField('orderBookPair', '');
-                    return;
-               }
 
                if (!weWantCurr || !weSpendCurr) {
                     this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
@@ -159,13 +153,32 @@ export class OfferUtilsService {
                     return;
                }
 
-               // FIXED: Proper issuer handling
+               const wantIsXrp = weWantCurr === AppConstants.XRP_CURRENCY;
+               const spendIsXrp = weSpendCurr === AppConstants.XRP_CURRENCY;
+               if ((!wantIsXrp && !weWantIssuer) || (!spendIsXrp && !weSpendIssuer)) {
+                    this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+                    this.offerStoreService.setField('orderBookPair', '');
+                    this.toastService.error('Select an issuer for each issued currency.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               const sameAsset =
+                    weWantCurr.toUpperCase() === weSpendCurr.toUpperCase() &&
+                    (wantIsXrp || weWantIssuer.toLowerCase() === weSpendIssuer.toLowerCase());
+               if (sameAsset) {
+                    console.warn('Cannot fetch order book for the same asset');
+                    this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+                    this.offerStoreService.setField('orderBookPair', '');
+                    this.toastService.error('Choose two different assets to fetch an order book.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
                const we_want: any =
                     weWantCurr === AppConstants.XRP_CURRENCY
                          ? { currency: 'XRP' }
                          : {
                                 currency: this.utilsService.encodeIfNeeded(weWantCurr),
-                                issuer: this.offerStoreService.weWantIssuer() || 'rKi74C4ucJZmwactLkVMjM2JxsMYruSvpm',
+                                issuer: weWantIssuer,
                            };
 
                const we_spend: any =
@@ -173,7 +186,7 @@ export class OfferUtilsService {
                          ? { currency: 'XRP' }
                          : {
                                 currency: this.utilsService.encodeIfNeeded(weSpendCurr),
-                                issuer: this.offerStoreService.weSpendIssuer(),
+                                issuer: weSpendIssuer,
                            };
 
                console.log(`we_want: ${JSON.stringify(we_want)}, we_spend: ${JSON.stringify(we_spend)}`);
@@ -189,7 +202,7 @@ export class OfferUtilsService {
                const displayWeWant = this.utilsService.decodeIfNeeded(we_want.currency);
                const displayWeSpend = this.utilsService.decodeIfNeeded(we_spend.currency);
 
-               const [orderBook] = await Promise.all([
+               const [forwardBook, reverseBook] = await Promise.all([
                     client.request({
                          command: 'book_offers',
                          taker: wallet.classicAddress,
@@ -208,38 +221,12 @@ export class OfferUtilsService {
                     }),
                ]);
 
-               const combinedOffers = [...(orderBook.result.offers || [])];
+               const forwardOffers = forwardBook.result.offers || [];
+               const reverseOffers = reverseBook.result.offers || [];
                const pair = `${displayWeWant}/${displayWeSpend}`;
 
                this.offerStoreService.setField('orderBookPair', pair);
-               this.offerStoreService.setField('orderBookStats', {
-                    vwap: '0',
-                    simpleAvg: '0',
-                    bestRate: '0',
-                    spread: '0',
-                    spreadPercent: '0',
-                    liquidityRatio: '0',
-                    depth: 'N/A',
-                    execution: 'N/A',
-                    volatility: 'N/A',
-               });
-
-               if (combinedOffers.length > 0) {
-                    const stats = this.computeAverageExchangeRateBothWays(combinedOffers, 15);
-                    if (stats) {
-                         this.offerStoreService.setField('orderBookStats', {
-                              vwap: stats.forward?.vwap?.toFixed(8) || '0',
-                              simpleAvg: stats.forward?.simpleAvg?.toFixed(8) || '0',
-                              bestRate: stats.forward?.bestRate?.toFixed(8) || '0',
-                              spread: '0',
-                              spreadPercent: '0',
-                              liquidityRatio: '0',
-                              depth: `${stats.forward?.depthToken?.toFixed(2) || '0'} ${displayWeWant} for ${stats.forward?.depthXRP?.toFixed(2) || '0'} ${displayWeSpend}`,
-                              execution: stats.forward?.insufficientLiquidity ? `Insufficient liquidity` : `Receive ${stats.forward?.executionPriceToken?.toFixed(2) || '0'} ${displayWeWant} for 15 ${displayWeSpend}`,
-                              volatility: `${stats.forward?.volatility?.toFixed(8) || '0'} (${stats.forward?.volatilityPercent?.toFixed(2) || '0'}%)`,
-                         });
-                    }
-               }
+               this.offerStoreService.setField('orderBookStats', this.computeOrderBookStats(forwardOffers, reverseOffers, displayWeWant, displayWeSpend));
           } catch (error: any) {
                console.error('Error in fetchOrderBook:', error);
                // Don't show error toast for "No such market" - it's expected for some pairs
@@ -247,7 +234,79 @@ export class OfferUtilsService {
                     this.toastService.error(error.message || 'Failed to fetch order book', AppConstants.TOAST.ERROR);
                }
                this.offerStoreService.setField('orderBookStats', this.getEmptyStats());
+               this.offerStoreService.setField('orderBookPair', '');
           }
+     }
+
+     private computeOrderBookStats(forwardOffers: any[], reverseOffers: any[], wantCurrency: string, spendCurrency: string) {
+          const amountValue = (amount: any): number => {
+               const value = typeof amount === 'string' ? Number(xrpl.dropsToXrp(amount)) : Number(amount?.value);
+               return Number.isFinite(value) ? value : 0;
+          };
+          const offers = forwardOffers
+               .map(offer => {
+                    const want = amountValue(offer.TakerGets);
+                    const spend = amountValue(offer.TakerPays);
+                    return { want, spend, rate: spend > 0 ? want / spend : 0 };
+               })
+               .filter(offer => offer.want > 0 && offer.spend > 0)
+               .sort((a, b) => b.rate - a.rate);
+          const reverse = reverseOffers
+               .map(offer => {
+                    const spend = amountValue(offer.TakerGets);
+                    const want = amountValue(offer.TakerPays);
+                    return { want, spend, rate: want > 0 ? spend / want : 0 };
+               })
+               .filter(offer => offer.want > 0 && offer.spend > 0);
+
+          if (offers.length === 0) {
+               return this.getEmptyStats();
+          }
+
+          const totalWant = offers.reduce((total, offer) => total + offer.want, 0);
+          const totalSpend = offers.reduce((total, offer) => total + offer.spend, 0);
+          const rates = offers.map(offer => offer.rate);
+          const meanRate = rates.reduce((total, rate) => total + rate, 0) / rates.length;
+          const variance = rates.reduce((total, rate) => total + (rate - meanRate) ** 2, 0) / rates.length;
+          const bestRate = offers[0].rate;
+
+          let depthWant = 0;
+          let depthSpend = 0;
+          for (const offer of offers) {
+               if (offer.rate < bestRate * 0.7) break;
+               depthWant += offer.want;
+               depthSpend += offer.spend;
+          }
+
+          let remainingSpend = 15;
+          let executionWant = 0;
+          let executionSpend = 0;
+          for (const offer of offers) {
+               if (remainingSpend <= 0) break;
+               const usedSpend = Math.min(remainingSpend, offer.spend);
+               executionWant += usedSpend * offer.rate;
+               executionSpend += usedSpend;
+               remainingSpend -= usedSpend;
+          }
+
+          const bestReverseRate = reverse.length > 0 ? Math.max(...reverse.map(offer => offer.rate)) : 0;
+          const comparableReverseRate = bestReverseRate > 0 ? 1 / bestReverseRate : 0;
+          const spread = comparableReverseRate > 0 ? Math.abs(bestRate - comparableReverseRate) : 0;
+          const midpoint = comparableReverseRate > 0 ? (bestRate + comparableReverseRate) / 2 : 0;
+          const reverseWantDepth = reverse.reduce((total, offer) => total + offer.want, 0);
+          const liquidityRatio = reverseWantDepth > 0 ? totalWant / reverseWantDepth : 0;
+
+          return {
+               vwap: (totalWant / totalSpend).toFixed(8),
+               simpleAvg: meanRate.toFixed(8),
+               bestRate: bestRate.toFixed(8),
+               spread: comparableReverseRate > 0 ? spread.toFixed(8) : 'N/A',
+               spreadPercent: midpoint > 0 ? ((spread / midpoint) * 100).toFixed(2) : 'N/A',
+               liquidityRatio: reverseWantDepth > 0 ? liquidityRatio.toFixed(2) : 'N/A',
+               depth: `${depthWant.toFixed(2)} ${wantCurrency} for ${depthSpend.toFixed(2)} ${spendCurrency}`,
+               execution: remainingSpend > 0 ? `Insufficient liquidity (${executionWant.toFixed(2)} ${wantCurrency} for ${executionSpend.toFixed(2)} ${spendCurrency})` : `Receive ${executionWant.toFixed(2)} ${wantCurrency} for 15 ${spendCurrency}`,
+               volatility: `${Math.sqrt(variance).toFixed(8)} (${meanRate > 0 ? ((Math.sqrt(variance) / meanRate) * 100).toFixed(2) : '0.00'}%)`,
+          };
      }
 
      private getEmptyStats() {
@@ -255,9 +314,9 @@ export class OfferUtilsService {
                vwap: '0',
                simpleAvg: '0',
                bestRate: '0',
-               spread: '0',
-               spreadPercent: '0',
-               liquidityRatio: '0',
+               spread: 'N/A',
+               spreadPercent: 'N/A',
+               liquidityRatio: 'N/A',
                depth: 'N/A',
                execution: 'N/A',
                volatility: 'N/A',

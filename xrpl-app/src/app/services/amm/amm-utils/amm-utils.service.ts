@@ -122,12 +122,18 @@ export class AmmUtilsService {
                          this.ammStoreService.setField('lpTokenBalance', lpTokenBalance);
                          this.ammStoreService.setField('ammAccount', ammResponse.result.amm.account || '');
                          this.ammStoreService.setField('lpTokenTotal', totalResponse?.result?.amm?.lp_token?.value || '');
-                         const toDisplay = (amt: any): string => {
-                              const val = typeof amt === 'string' ? xrpl.dropsToXrp(amt) : amt.value;
-                              return this.utilsService.formatTokenBalance(val, 18);
+                         this.ammStoreService.setField('tradingFeeField', (Number(ammResponse.result.amm.trading_fee ?? 0) / 1000).toString());
+                         const toDisplay = (amt: string | xrpl.IssuedCurrencyAmount): string => {
+                              const value = typeof amt === 'string' ? Number(xrpl.dropsToXrp(amt)) : Number(amt.value);
+                              if (!Number.isFinite(value)) {
+                                   throw new Error('Invalid AMM pool balance.');
+                              }
+                              return this.utilsService.formatTokenBalance(value.toString(), 18);
                          };
-                         this.ammStoreService.setField('assetPool1Balance', toDisplay(result.ammInfo.amount));
-                         this.ammStoreService.setField('assetPool2Balance', toDisplay(result.ammInfo.amount2));
+                         const asset1Amount = typeof result.ammInfo.amount === 'string' ? result.ammInfo.amount2 : result.ammInfo.amount;
+                         const asset2Amount = typeof result.ammInfo.amount === 'string' ? result.ammInfo.amount : result.ammInfo.amount2;
+                         this.ammStoreService.setField('assetPool1Balance', toDisplay(asset1Amount));
+                         this.ammStoreService.setField('assetPool2Balance', toDisplay(asset2Amount));
 
                          // Signal whether the user is a liquidity provider
                          this.ammStoreService.setField('isLiquidityProvider', result.isLiquidityProvider);
@@ -138,6 +144,7 @@ export class AmmUtilsService {
                     this.ammStoreService.setField('lpTokenTotal', '');
                     this.ammStoreService.setField('assetPool1Balance', '0');
                     this.ammStoreService.setField('assetPool2Balance', '0');
+                    this.ammStoreService.setField('tradingFeeField', '0.1');
                     this.ammStoreService.setField('isLiquidityProvider', false);
                }
           } catch (e) {

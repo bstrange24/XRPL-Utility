@@ -27,7 +27,7 @@ describe('AMM Constants', () => {
                expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.CREATE_AMM]).toBe('CreateAMM');
                expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.DEPOSIT_TO_AMM]).toBe('DepositToAMM');
                expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.WITHDRAWL_FROM_AMM]).toBe('WithdrawalFromAMM');
-               expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.CLAWBACK]).toBe('ClawbackFromAMM');
+               expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.CLAWBACK]).toBe('ClawbackAMM');
                expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.SWAP]).toBe('SwapViaAMM');
                expect(AMM_VALIDATION_RULES[AMM_TX_TYPES.DELETE]).toBe('DeleteAMM');
           });
@@ -41,7 +41,7 @@ describe('AMM Constants', () => {
                     createAMM: 'CreateAMM',
                     depositToAMM: 'DepositToAMM',
                     withdrawalFromAMM: 'WithdrawalFromAMM',
-                    clawbackFromAMM: 'ClawbackFromAMM',
+                    clawbackFromAMM: 'ClawbackAMM',
                     swapViaAMM: 'SwapViaAMM',
                     deleteAMM: 'DeleteAMM',
                });

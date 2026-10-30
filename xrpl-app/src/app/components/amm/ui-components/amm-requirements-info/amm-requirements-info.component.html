@@ -17,7 +17,7 @@
           <!-- Main Description -->
           <div class="rounded-2xl border border-gray-200 bg-white p-5">
                <h3 class="font-semibold text-gray-900 mb-2">Automated Market Maker (AMM)</h3>
-               <p class="text-sm text-gray-600">AMMs on XRPL enable decentralized liquidity pools for trading between any two assets (XRP or issued tokens).</p>
+               <p class="text-sm text-gray-600">This page manages XRPL liquidity pools pairing one issued token with XRP.</p>
           </div>
 
           <!-- Requirements -->
@@ -67,12 +67,16 @@
                          </div>
                          <div class="space-y-3 text-sm">
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">AMM ID</span>
+                                   <span class="text-gray-700">Pool assets (issued token + XRP)</span>
                                    <span class="text-green-600 font-medium text-right">Required</span>
                               </div>
                               <div class="flex justify-between items-center">
-                                   <span class="text-gray-700">Amount (for swap/clawback)</span>
-                                   <span class="text-green-600 font-medium text-right">Required</span>
+                                   <span class="text-gray-700">Swap target + maximum XRP spend</span>
+                                   <span class="text-green-600 font-medium text-right">Required for swap</span>
+                              </div>
+                              <div class="flex justify-between items-center">
+                                   <span class="text-gray-700">Holder address</span>
+                                   <span class="text-green-600 font-medium text-right">Required for clawback</span>
                               </div>
                          </div>
                     </div>
@@ -84,11 +88,11 @@
                <h4 class="font-semibold text-amber-800 mb-4 flex items-center gap-2"><ng-icon name="heroDocumentText" size="16" class="text-amber-800 flex-shrink-0 mt-0.5" />Important Notes</h4>
                <ul class="text-sm text-amber-700 space-y-3 list-disc pl-5">
                     <li>Requires the <strong>AMM</strong> amendment (XLS-30) to be enabled.</li>
-                    <li>Each AMM pool is uniquely identified by its <strong>AMM ID</strong>.</li>
+                    <li>Each AMM pool is identified by its issued-token and XRP asset pair.</li>
                     <li><strong>TradingFee</strong> is set once at creation (0–1%) and cannot be changed.</li>
                     <li>Depositing liquidity mints LP tokens representing your share of the pool.</li>
                     <li>Swaps are instant but subject to slippage.</li>
-                    <li>Clawback allows issuers to remove their tokens from the pool.</li>
+                    <li>Clawback requires the token issuer to sign and identify the holder; the maximum token amount is optional.</li>
                     <li>Deleting an AMM requires zero outstanding LP tokens.</li>
                </ul>
           </div>

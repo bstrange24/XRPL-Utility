@@ -33,7 +33,7 @@
                          </div>
 
                          <div class="relative">
-                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event); onWeWantCurrencyChange()" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
                          </div>
                     </div>
                     <app-field-helper title="Taker Gets Currency" [items]="takerGetsCurrencyHelperItems" [show]="showTakerGetsCurrencyHelper" />
@@ -75,7 +75,7 @@
                          </div>
 
                          <div class="relative">
-                              <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weSpendCurrencySelected.emit($event); onWeSpendCurrencyChange()" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
+                              <app-select-search-dropdown [items]="vm.weWantIssuerItems()" [value]="vm.selectedWeWantIssuerItem()" [showShortAddress]="true" (valueChange)="weWantIssuerSelected.emit($event)" placeholder="Search issuer address or name..." emptyMessage="No issuers available for this currency" />
                          </div>
                     </div>
                     <app-field-helper title="Taker Gets Issuer" [items]="takerGetsIssuerHelperItems" [show]="showTakerGetsIssuerHelper" />
@@ -89,7 +89,7 @@
 
                          <div class="flex items-center gap-2">
                               <p class="text-secondary">The XRPL account that issues the token you want to spend.</p>
-                              <button type="button" (click)="toggleTakerPaysCurrencyHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <button type="button" (click)="toggleTakerPaysIssuerHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>

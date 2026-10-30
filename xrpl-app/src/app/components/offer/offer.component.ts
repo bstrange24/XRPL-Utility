@@ -103,20 +103,6 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                }
           });
 
-          // FIXED: Debounced refresh to avoid excessive calls
-          effect(() => {
-               this.offerTransactionViewModelService.weWantIssuersTrigger();
-               setTimeout(() => {
-                    this.offerTransactionViewModelService.weWantIssuersTrigger.update(n => n + 1);
-               }, 100);
-          });
-
-          effect(() => {
-               this.offerTransactionViewModelService.weSpendIssuersTrigger();
-               setTimeout(() => {
-                    this.offerTransactionViewModelService.weSpendIssuersTrigger.update(n => n + 1);
-               }, 100);
-          });
      }
 
      ngOnInit(): void {
@@ -314,6 +300,8 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
                await this.handleTxResult(txResult, env.client, env.wallet, null, null, '');
                this.trustlineCurrencyService.refreshCurrentBalance();
                await this.offerCurrency.refreshBothBalances(wallet);
+          } else {
+               this.toastService.error(txResult.error || 'Offer action failed.', AppConstants.TOAST.ERROR);
           }
 
           this.txUiService.resetCurrentStepToIdle();
@@ -353,12 +341,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           if (!wallet) return;
 
           await this.offerCurrency.selectWeWantCurrency(currency, wallet);
-
-          // Force immediate sync to store
-          const currentIssuer = this.offerCurrency.weWant.issuer();
-          if (currentIssuer) {
-               this.offerStoreService.setField('weWantIssuer', currentIssuer);
-          }
+          this.offerStoreService.setField('weWantCurrency', currency);
+          this.offerStoreService.setField('weWantIssuer', this.offerCurrency.weWant.issuer());
+          await this.recalculateCreateOfferQuote('want');
      }
 
      async onWeWantIssuerSelected(item: SelectItem | null): Promise<void> {
@@ -369,6 +354,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           await this.offerCurrency.selectWeWantIssuer(issuer, wallet);
           this.offerStoreService.setField('weWantIssuer', issuer);
+          await this.recalculateCreateOfferQuote('want');
      }
 
      async onWeSpendCurrencySelected(item: SelectItem | null): Promise<void> {
@@ -378,12 +364,9 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           if (!wallet) return;
 
           await this.offerCurrency.selectWeSpendCurrency(currency, wallet);
-
-          // Force immediate sync to store
-          const currentIssuer = this.offerCurrency.weSpend.issuer();
-          if (currentIssuer) {
-               this.offerStoreService.setField('weSpendIssuer', currentIssuer);
-          }
+          this.offerStoreService.setField('weSpendCurrency', currency);
+          this.offerStoreService.setField('weSpendIssuer', this.offerCurrency.weSpend.issuer());
+          await this.recalculateCreateOfferQuote('spend');
      }
 
      async onWeSpendIssuerSelected(item: SelectItem | null): Promise<void> {
@@ -394,6 +377,17 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
 
           await this.offerCurrency.selectWeSpendIssuer(issuer, wallet);
           this.offerStoreService.setField('weSpendIssuer', issuer);
+          await this.recalculateCreateOfferQuote('spend');
+     }
+
+     private async recalculateCreateOfferQuote(changedSide: 'want' | 'spend'): Promise<void> {
+          if (this.offerTransactionViewModelService.activeTab() !== 'createOffer') return;
+
+          if (changedSide === 'want' && Number.parseFloat(this.offerStoreService.weSpendAmount()) > 0) {
+               await this.offerUtilsService.updateTokenBalanceAndExchange();
+          } else if (changedSide === 'spend' && Number.parseFloat(this.offerStoreService.weWantAmount()) > 0) {
+               await this.offerUtilsService.updateTokenBalanceAndExchangeReverse();
+          }
      }
 
      handleWeWantAmountChange(): void {

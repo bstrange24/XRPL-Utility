@@ -4,14 +4,42 @@ import { AppConstants } from '../../../core/app.constants';
 import { PoolOptions } from '../../../components/amm/constants/amm.types';
 import { AmmState } from '../amm-store/amm-store.service';
 import { UtilsService } from '../../utils/util-service/utils.service';
-import { XrplService } from '../../xrpl-services/xrpl.service';
 
 @Injectable({
      providedIn: 'root',
 })
 export class AmmTransactionBuilderService {
      private readonly utilsService = inject(UtilsService);
-     private readonly xrplService = inject(XrplService);
+
+     private assertTokenXrpPair(amm: AmmState): void {
+          if (!amm.weWantCurrency || amm.weWantCurrency === 'XRP' || !amm.weWantIssuer || amm.weSpendCurrency !== 'XRP') {
+               throw new Error('AMM pools require an issued token as Asset 1 and XRP as Asset 2.');
+          }
+     }
+
+     private positiveAmount(value: string, label: string): string {
+          const cleaned = value.replaceAll(',', '').trim();
+          if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(cleaned)) {
+               throw new Error(`${label} must be a positive number.`);
+          }
+
+          const normalized = cleaned.startsWith('.') ? `0${cleaned}` : cleaned.endsWith('.') ? cleaned.slice(0, -1) : cleaned;
+          if (!Number.isFinite(Number(normalized)) || Number(normalized) <= 0) {
+               throw new Error(`${label} must be a positive number.`);
+          }
+          return normalized;
+     }
+
+     private applySlippage(amount: string, slippageBps: number): string {
+          const [whole, fraction = ''] = amount.split('.');
+          const amountDigits = BigInt(`${whole}${fraction}`);
+          const slippageAdjustedDigits = amountDigits * BigInt(10_000 - slippageBps);
+          const scale = fraction.length + 4;
+          const padded = slippageAdjustedDigits.toString().padStart(scale + 1, '0');
+          const integer = padded.slice(0, -scale);
+          const decimal = padded.slice(-scale).replace(/0+$/, '');
+          return decimal ? `${integer}.${decimal}` : integer;
+     }
 
      toXRPLCurrency(currency: string, issuer: string): xrpl.Currency {
           if (currency === 'XRP') return { currency: 'XRP' };
@@ -24,23 +52,28 @@ export class AmmTransactionBuilderService {
      }
 
      buildCreateAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any): xrpl.AMMCreate {
+          this.assertTokenXrpPair(amm);
           const we_want = this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantAmount);
           const we_spend = this.toCurrencyAmount(amm.weSpendCurrency, amm.weSpendIssuer, amm.weSpendAmount);
           const tradingFeeBps = Math.round(Number(amm.tradingFeeField) * 1000);
-          const isSpendXrp = amm.weSpendCurrency === 'XRP';
+          const reserveIncrementXrp = Number(env.serverInfo?.result?.info?.validated_ledger?.reserve_inc_xrp);
+          if (!Number.isFinite(reserveIncrementXrp) || reserveIncrementXrp <= 0) {
+               throw new Error('Unable to determine the AMM creation reserve fee.');
+          }
 
           return {
                TransactionType: 'AMMCreate',
                Account: wallet.classicAddress,
-               Amount: isSpendXrp ? we_spend : we_want,
-               Amount2: isSpendXrp ? we_want : we_spend,
+               Amount: we_spend,
+               Amount2: we_want,
                TradingFee: tradingFeeBps,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-               Fee: (Number(env.fee) * 150000).toString(),
+               Fee: xrpl.xrpToDrops(reserveIncrementXrp.toString()),
           };
      }
 
      buildDepositToAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any, depositOptions: PoolOptions): xrpl.AMMDeposit {
+          this.assertTokenXrpPair(amm);
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
           const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
 
@@ -76,9 +109,10 @@ export class AmmTransactionBuilderService {
      }
 
      buildWithdrawFromAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any, withdrawOptions: PoolOptions, lpToken: { currency: string; issuer: string }): xrpl.AMMWithdraw {
+          this.assertTokenXrpPair(amm);
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
           const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
-          const cleanLpAmount = amm.withdrawlLpTokenFromPoolField.replaceAll(',', '');
+          const cleanLpAmount = this.positiveAmount(amm.withdrawlLpTokenFromPoolField, 'LP token amount');
 
           const lpTokenAmount: xrpl.IssuedCurrencyAmount = {
                currency: lpToken.currency,
@@ -89,8 +123,8 @@ export class AmmTransactionBuilderService {
           const baseFields = {
                TransactionType: 'AMMWithdraw' as const,
                Account: wallet.classicAddress,
-               Asset: this.toXRPLCurrency(weSpendCurrency, amm.weSpendIssuer) as xrpl.IssuedCurrency,
-               Asset2: this.toXRPLCurrency(weWantCurrency, amm.weWantIssuer) as xrpl.IssuedCurrency,
+               Asset: this.toXRPLCurrency(weSpendCurrency, amm.weSpendIssuer),
+               Asset2: this.toXRPLCurrency(weWantCurrency, amm.weWantIssuer),
                LPTokenIn: lpTokenAmount,
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
@@ -108,196 +142,57 @@ export class AmmTransactionBuilderService {
           }
      }
 
-     buildClawbackFromAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any, lpToken: { currency: string; issuer: string; balance?: string }): xrpl.AMMClawback {
+     buildClawbackFromAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any): xrpl.AMMClawback {
+          this.assertTokenXrpPair(amm);
+          if (amm.weWantIssuer !== wallet.classicAddress) {
+               throw new Error('The selected token issuer must be the signing account to claw back tokens.');
+          }
+
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
-          const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
-
-          const amountValue = Number.parseFloat(amm.withdrawlLpTokenFromPoolField || '0');
-          if (Number.isNaN(amountValue) || amountValue <= 0) {
-               throw new Error('Invalid LP token amount for clawback');
+          const holder = typeof amm.holderField === 'string' ? amm.holderField.trim() : '';
+          if (!xrpl.isValidAddress(holder) || holder === wallet.classicAddress) {
+               throw new Error('A valid holder address distinct from the issuer is required for AMMClawback.');
           }
 
-          const holder = amm.holderField || '';
-          if (!holder) {
-               throw new Error('Holder address is required for AMMClawback');
-          }
+          const amountValue = typeof amm.withdrawlLpTokenFromPoolField === 'string' && amm.withdrawlLpTokenFromPoolField.trim()
+               ? this.positiveAmount(amm.withdrawlLpTokenFromPoolField, 'Maximum token amount')
+               : undefined;
 
-          // Build assets
-          const asset = this.toXRPLCurrency(weWantCurrency, amm.weWantIssuer);
-          const asset2 = this.toXRPLCurrency(weSpendCurrency, amm.weSpendIssuer);
-
-          // For AMMClawback, the Amount MUST use the Asset.currency
-          const amount = {
-               currency: weWantCurrency, // Use JOE
-               issuer: amm.weWantIssuer,
-               value: amountValue.toString(),
-          };
-
-          console.log('=== AMMClawback Debug ===');
-          console.log('Asset:', asset);
-          console.log('Asset2:', asset2);
-          console.log('Amount:', amount);
-          console.log('Holder:', holder);
-
-          const tx: xrpl.AMMClawback = {
+          return {
                TransactionType: 'AMMClawback',
                Account: wallet.classicAddress,
-               Asset: asset as any,
-               Asset2: asset2 as any,
-               Amount: amount,
+               Asset: { currency: weWantCurrency, issuer: amm.weWantIssuer },
+               Asset2: { currency: 'XRP' } as xrpl.IssuedCurrency,
+               ...(amountValue ? { Amount: { currency: weWantCurrency, issuer: amm.weWantIssuer, value: amountValue } } : {}),
                Holder: holder,
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
-
-          return tx;
-     }
-
-     async buildTx(amm: AmmState, plan: any, wallet: xrpl.Wallet, input: any, output: any, env: any, destination: string, client: xrpl.Client) {
-          console.log('=== Starting buildTx - EXPLICIT AMM PATH ===');
-
-          const spendAmount = Number(amm.weSpendAmount || 0);
-          const slippageBps = 1500; // 15% tolerance on Devnet
-
-          if (spendAmount <= 0) {
-               throw new Error('Invalid swap amount');
-          }
-
-          // Constant-product estimate: out = reserveWant * spend / (reserveSpend + spend), minus the trading fee
-          const pool1 = this.toXRPLCurrency(amm.weSpendCurrency, amm.weSpendIssuer);
-          const pool2 = this.toXRPLCurrency(amm.weWantCurrency, amm.weWantIssuer);
-          const resp = await this.xrplService.getAMMInfo(client, pool1, pool2, wallet.classicAddress, 'validated');
-          const ammInfo = resp?.result?.amm;
-          if (!ammInfo) {
-               throw new Error('AMM pool not found for this asset pair');
-          }
-
-          const matches = (amt: xrpl.Amount, currency: string) => (currency === 'XRP' ? typeof amt === 'string' : typeof amt !== 'string' && amt.currency === this.utilsService.encodeIfNeeded(currency));
-          const spendIsFirst = matches(ammInfo.amount, amm.weSpendCurrency);
-          const reserveSpend = this.getAmountValue(spendIsFirst ? ammInfo.amount : ammInfo.amount2);
-          const reserveWant = this.getAmountValue(spendIsFirst ? ammInfo.amount2 : ammInfo.amount);
-          const feeRate = (ammInfo.trading_fee ?? 0) / 100000;
-
-          const expectedOut = ((reserveWant * spendAmount) / (reserveSpend + spendAmount)) * (1 - feeRate);
-          const minOut = expectedOut * (1 - slippageBps / 10000);
-
-          console.log('Swap calc:', { spend: spendAmount, expected: expectedOut, minOut });
-
-          const toWantAmount = (v: number) => this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? v.toFixed(6) : v.toPrecision(15));
-          const sendMax = this.toCurrencyAmount(amm.weSpendCurrency, amm.weSpendIssuer, amm.weSpendCurrency === 'XRP' ? spendAmount.toFixed(6) : spendAmount.toPrecision(15));
-
-          const tx: any = {
-               TransactionType: 'Payment',
-               Account: wallet.classicAddress,
-               Destination: destination || wallet.classicAddress,
-               Amount: toWantAmount(expectedOut),
-               SendMax: sendMax,
-               Flags: xrpl.PaymentFlags.tfPartialPayment,
-               DeliverMin: toWantAmount(minOut),
-               Fee: env.fee,
-               LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-
-          console.log('Final tx:', JSON.stringify(tx, null, 2));
-          return tx;
-     }
-
-     getAmountValue(amount: xrpl.Amount): number {
-          if (typeof amount === 'string') {
-               return Number(amount) / 1_000_000; // XRP drops → XRP
-          }
-
-          if ('value' in amount) {
-               return Number(amount.value);
-          }
-
-          throw new Error('Unknown XRPL Amount format');
      }
 
      buildSwapViaAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any, destination: string): xrpl.Payment {
+          this.assertTokenXrpPair(amm);
           const spendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
           const receiveCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
-
-          const spendAmount = Number(amm.weSpendAmount || 0);
-          const minReceiveAmount = Number(amm.weWantAmount || 0);
-
-          if (spendAmount <= 0 || minReceiveAmount <= 0) {
-               throw new Error('Invalid swap amounts');
-          }
-
-          // ----------------------------
-          // INPUT (what you send)
-          // ----------------------------
-          const sendMax =
-               amm.weSpendCurrency === 'XRP'
-                    ? xrpl.xrpToDrops(spendAmount.toString())
-                    : {
-                           currency: spendCurrency,
-                           issuer: amm.weSpendIssuer,
-                           value: spendAmount.toFixed(6),
-                      };
-
-          // ----------------------------
-          // OUTPUT FLOOR
-          // ----------------------------
-          const slippageBps = 500; // 5%
-          const minOut = (minReceiveAmount * (1 - slippageBps / 10000)).toFixed(6);
-
-          const deliverMin =
-               amm.weWantCurrency === 'XRP'
-                    ? undefined
-                    : {
-                           currency: receiveCurrency,
-                           issuer: amm.weWantIssuer,
-                           value: minOut,
-                      };
-
-          const tx: xrpl.Payment = {
-               TransactionType: 'Payment',
-               Account: wallet.classicAddress,
-               Destination: destination,
-
-               // Desired output; partial payment lets it deliver less, down to DeliverMin
-               Amount: this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? minReceiveAmount.toFixed(6) : String(amm.weWantAmount)),
-               SendMax: sendMax,
-
-               // OUTPUT FLOOR
-               DeliverMin: this.toCurrencyAmount(amm.weWantCurrency, amm.weWantIssuer, amm.weWantCurrency === 'XRP' ? (minReceiveAmount * (1 - slippageBps / 10000)).toFixed(6) : minOut),
-
-               // REQUIRED for swap semantics
-               Flags: xrpl.PaymentFlags.tfPartialPayment,
-
-               Fee: env.fee,
-               LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
-          };
-
-          console.log('=== HYBRID SWAP (FIXED) ===');
-          console.log('SendMax:', sendMax);
-          console.log('DeliverMin:', deliverMin);
-          console.log('Destination:', destination);
-
-          return tx;
-     }
-
-     buildSwapViaAmmTx12312(wallet: xrpl.Wallet, amm: AmmState, env: any, destination: string): xrpl.Payment {
-          const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
-          const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
-
-          const sendMax: string | xrpl.IssuedCurrencyAmount = amm.weSpendCurrency === 'XRP' ? xrpl.xrpToDrops(amm.weSpendAmount) : { currency: weSpendCurrency, issuer: amm.weSpendIssuer, value: amm.weSpendAmount };
-          const amount: string | xrpl.IssuedCurrencyAmount = amm.weWantCurrency === 'XRP' ? xrpl.xrpToDrops(amm.weWantAmount) : { currency: weWantCurrency, issuer: amm.weWantIssuer, value: amm.weWantAmount };
+          const spendAmount = this.positiveAmount(amm.weSpendAmount, 'Maximum XRP spend');
+          const targetReceiveAmount = this.positiveAmount(amm.weWantAmount, 'Target token amount');
+          const minimumReceiveAmount = this.applySlippage(targetReceiveAmount, 500);
 
           return {
                TransactionType: 'Payment',
                Account: wallet.classicAddress,
-               Destination: destination,
-               Amount: amount,
-               SendMax: sendMax,
+               Destination: destination || wallet.classicAddress,
+               Amount: { currency: receiveCurrency, issuer: amm.weWantIssuer, value: targetReceiveAmount },
+               SendMax: xrpl.xrpToDrops(spendAmount),
+               DeliverMin: { currency: receiveCurrency, issuer: amm.weWantIssuer, value: minimumReceiveAmount },
+               Flags: xrpl.PaymentFlags.tfPartialPayment,
                Fee: env.fee,
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
      }
 
      buildDeleteAmmTx(wallet: xrpl.Wallet, amm: AmmState, env: any): xrpl.AMMDelete {
+          this.assertTokenXrpPair(amm);
           const weWantCurrency = this.utilsService.encodeIfNeeded(amm.weWantCurrency);
           const weSpendCurrency = this.utilsService.encodeIfNeeded(amm.weSpendCurrency);
 

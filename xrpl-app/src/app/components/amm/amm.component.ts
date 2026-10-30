@@ -333,7 +333,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
      }
 
      async onPool1CurrencySelected(item: SelectItem | null): Promise<void> {
-          const currency = item?.id || 'XRP';
+          const currency = item?.id;
+          if (!currency || currency === 'XRP') return;
           const wallet = this.currentWallet();
 
           if (!wallet) return;
@@ -357,7 +358,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
      }
 
      async onPool2CurrencySelected(item: SelectItem | null): Promise<void> {
-          const currency = item?.id || 'XRP';
+          if (item?.id && item.id !== 'XRP') return;
+          const currency = 'XRP';
           const wallet = this.currentWallet();
 
           if (!wallet) return;

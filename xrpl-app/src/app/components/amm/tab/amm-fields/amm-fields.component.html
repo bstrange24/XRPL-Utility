@@ -91,11 +91,11 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="lpTokenToBurn" class="label-primary">LP Tokens to Withdraw</label>
+                              <label for="lpTokenToBurn" class="label-primary">Maximum Token Amount (optional)</label>
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">Number of LP tokens to burn for withdrawal</p>
+                              <p class="text-secondary">Maximum amount of your issued token to claw back from this holder. Leave blank to claw back all available tokens.</p>
                               <button type="button" (click)="toggleLpWithdrawHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -108,11 +108,11 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="lpTokenClawbackHolder" class="label-primary">Holder Address (optional)</label>
+                              <label for="lpTokenClawbackHolder" class="label-primary">Holder Address <span class="text-red-500">*</span></label>
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">Address of the LP token holder to clawback from</p>
+                              <p class="text-secondary">Account that deposited your token into this AMM pool.</p>
                               <button type="button" (click)="toggleClawbackHolderHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -131,7 +131,7 @@
                               (searchQueryChange)="destinationSearchQueryChange.emit($event)"
                               (valueChange)="destinationValueChange.emit($event)"
                               (isValid)="onDestinationValidationChange($event)"
-                              placeholder="Enter or select destination address"
+                              placeholder="Enter or select holder address"
                          >
                          </app-select-search-dropdown>
                          <!-- <input type="text" [ngModel]="store.holderField()" (ngModelChange)="store.setField('holderField', $event)" class="input-base" placeholder="Enter holder address (optional)" /> -->

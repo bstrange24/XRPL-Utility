@@ -45,6 +45,8 @@ function createFullContext(overrides: Partial<ValidationContext> = {}): Validati
                secondPoolAssetAmount: '1000',
                tradingFeeField: '50',
                lpTokenAmountField: '100',
+               holderField: VALID_DESTINATION,
+               signingAccount: VALID_ISSUER,
 
                // Credentials
                createCredential: { credentialType: 'TestType', subject: VALID_DESTINATION },

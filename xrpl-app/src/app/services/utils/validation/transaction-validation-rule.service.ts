@@ -3134,14 +3134,8 @@ export class ValidationService {
           // ClawbackAMM – only allowed if the account has the clawback flag set
           this.registerRule({
                transactionType: 'ClawbackAMM',
-               requiredFields: [
-                    'lpTokenAmountField', // amount of LP tokens to claw back
-                    'weWantCurrencyField',
-                    'weSpendCurrencyField',
-               ],
+               requiredFields: ['weWantCurrencyField', 'weSpendCurrencyField', 'holderField'],
                validators: [
-                    this.positiveNumber('lpTokenAmountField'),
-
                     this.validCurrency('weWantCurrencyField'),
                     this.validCurrency('weSpendCurrencyField'),
                     this.requireCurrencyPair(),
@@ -3150,12 +3144,16 @@ export class ValidationService {
                     this.requireIssuerIfNotXRP('weSpendCurrencyField', 'weSpendIssuerField'),
                     this.validIssuerIfProvided('weWantCurrencyField', 'weWantIssuerField'),
                     this.validIssuerIfProvided('weSpendCurrencyField', 'weSpendIssuerField'),
+                    this.isValidAddress('holderField'),
+                    ctx => (ctx.inputs['maximumTokenAmountField'] ? this.positiveNumber('maximumTokenAmountField')(ctx) : null),
+                    ctx => (ctx.inputs['holderField'] === ctx.inputs['weWantIssuerField'] ? 'Holder must be different from the token issuer' : null),
 
-                    // Only the issuer of the LP token can claw back
+                    // AMMClawback must be signed by the issued token's issuer.
+                    ctx => (ctx.inputs['weWantIssuerField'] !== ctx.inputs['signingAccount'] ? 'The selected token issuer must be the signing account to claw back tokens.' : null),
                     ctx => {
                          const flags = ctx.accountInfo?.result?.account_flags;
                          if (!flags?.clawbackEnabled) {
-                              return 'Clawback is not enabled only if the account has the lsfClawback flag set';
+                              return 'Clawback is not enabled for the signing account.';
                          }
                          return null;
                     },

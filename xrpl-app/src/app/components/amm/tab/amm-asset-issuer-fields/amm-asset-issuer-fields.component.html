@@ -14,7 +14,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">First token in the liquidity pool.</p>
+                         <p class="text-secondary">Issued token paired with XRP.</p>
                          <button type="button" (click)="toggleAsset1Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -31,18 +31,18 @@
           <div class="space-y-2">
                <div>
                     <div class="field-label">
-                         <label for="asset2" class="label-primary">Asset 2 <span class="text-red-500">*</span></label>
+                         <label for="asset2" class="label-primary">Asset 2</label>
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Second token in the liquidity pool.</p>
+                         <p class="text-secondary">XRP, the native asset in every pool.</p>
                          <button type="button" (click)="toggleAsset2Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
                     </div>
 
                     <div class="relative">
-                         <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" (valueChange)="pool2CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                         <app-select-search-dropdown [items]="view.pool2CurrencyItems()" [value]="view.selectedPool2CurrencyItem()" [showShortAddress]="false" placeholder="XRP" emptyMessage="XRP is required" />
                     </div>
                </div>
                <app-field-helper title="Asset 2" [items]="showAsset2HelperItems" [show]="showAsset2Helper" />
@@ -58,7 +58,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Issuer of the first token (ignored for XRP).</p>
+                         <p class="text-secondary">Issuer of the pool token.</p>
                          <button type="button" (click)="toggleIssuerAsset1Helper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>

@@ -5,7 +5,7 @@
           <div class="sticky top-0 bg-white border-b border-gray-100 p-4 z-10 space-y-4">
                <!-- Text Search -->
                <div class="relative">
-                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search by Pool ID, Asset, or LP Token..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-blue-500" />
+                    <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)" placeholder="Search by AMM account or asset..." class="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3 pl-11 pr-10 text-sm focus:outline-none focus:border-blue-500" />
                     <ng-icon name="heroMagnifyingGlass" size="18" class="absolute left-4 top-3.5 text-gray-400" />
 
                     @if (searchQuery()) {
@@ -46,8 +46,8 @@
           <!-- Pools List -->
           @if (sortedPools().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
-               @for (pool of sortedPools(); track pool.poolId) {
-               <app-summary-item [selected]="selectedPoolId() === pool.poolId" [copyValue]="pool.poolId" copyTooltip="Copy Pool ID" (onClick)="onPoolClick(pool)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Pool ID')">
+               @for (pool of sortedPools(); track pool.poolAccount) {
+               <app-summary-item [selected]="selectedPoolAccount() === pool.poolAccount" [copyValue]="pool.poolAccount" copyTooltip="Copy AMM Account" (onClick)="onPoolClick(pool)" (onCopyClick)="copyUtilService.copyAndToast($event, 'AMM Account')">
                     <div item-content>
                          <div class="summary-item-content">
                               <!-- Pool Icon -->
@@ -55,17 +55,13 @@
 
                               <div class="flex-1 min-w-0">
                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <app-tooltip-link [href]="txUiService.explorerUrl() + 'amm/' + pool.poolId" tooltipText="View AMM Pool on XRPL Explorer">
+                                        <app-tooltip-link [href]="txUiService.explorerUrl() + 'account/' + pool.poolAccount" tooltipText="View AMM Account on XRPL Explorer">
                                              <strong class="text-gray-900 hover:text-blue-600 transition-colors"> {{ pool.asset1 }} / {{ pool.asset2 }} </strong>
                                         </app-tooltip-link>
                                    </div>
 
                                    <div class="mt-3 text-sm">
-                                        <app-summary-key-value label="Pool ID">
-                                             <span class="font-mono">{{ pool.poolId }}</span>
-                                        </app-summary-key-value>
-
-                                        <app-summary-key-value label="Pool Account">
+                                        <app-summary-key-value label="AMM Account">
                                              <span class="font-mono">{{ pool.poolAccount }}</span>
                                         </app-summary-key-value>
 

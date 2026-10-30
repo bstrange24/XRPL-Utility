@@ -1,9 +1,10 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { icons,LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 
+import { SelectItem } from '../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { CreateAmmComponent } from './amm.component';
-import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 
 /* -----------------------------
    Safe ActivatedRoute mock
@@ -234,10 +235,11 @@ describe('CreateAmmComponent', () => {
           await expectAsync(component.performAction()).toBeResolved();
      });
 
-     it('should switch pool currency handlers', () => {
-          component.onPool1CurrencySelected({ id: 'XRP' } as any);
-          component.onPool2CurrencySelected({ id: 'USD' } as any);
+     it('should prevent changing the second pool asset from XRP', async () => {
+          await component.onPool1CurrencySelected({ id: 'XRP', display: 'XRP' } satisfies SelectItem);
+          const selectSpendCurrencySpy = spyOn(component.offerCurrency, 'selectWeSpendCurrency');
+          await component.onPool2CurrencySelected({ id: 'USD', display: 'USD' } satisfies SelectItem);
 
-          expect().nothing(); // just ensures no crash
+          expect(selectSpendCurrencySpy).not.toHaveBeenCalled();
      });
 });

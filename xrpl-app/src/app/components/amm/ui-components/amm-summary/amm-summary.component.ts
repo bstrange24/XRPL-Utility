@@ -19,7 +19,6 @@ type SortKey = 'asset1' | 'asset2' | 'totalLiquidity' | 'lpTokens' | 'tradingFee
 type QuickFilter = 'all' | 'myPools' | 'highLiquidity' | 'lowFee';
 
 interface AMMPool {
-     poolId: string;
      poolAccount: string;
      asset1: string;
      asset2: string;
@@ -66,7 +65,7 @@ export class AmmSummaryComponent {
      readonly activeQuickFilter = signal<QuickFilter>('all');
      readonly sortBy = signal<SortKey>('totalLiquidity');
      readonly sortDirection = signal<'asc' | 'desc'>('desc');
-     readonly selectedPoolId = signal<string | null>(null);
+     readonly selectedPoolAccount = signal<string | null>(null);
      readonly isLoading = signal<boolean>(false);
 
      // Store fetched pools
@@ -120,7 +119,7 @@ export class AmmSummaryComponent {
 
           // Text Search
           if (query) {
-               pools = pools.filter(pool => pool.poolId?.toLowerCase().includes(query) || pool.asset1?.toLowerCase().includes(query) || pool.asset2?.toLowerCase().includes(query) || pool.poolAccount?.toLowerCase().includes(query));
+          pools = pools.filter(pool => pool.poolAccount?.toLowerCase().includes(query) || pool.asset1?.toLowerCase().includes(query) || pool.asset2?.toLowerCase().includes(query));
           }
 
           // Quick Filters
@@ -223,7 +222,8 @@ export class AmmSummaryComponent {
                console.log('AMM Summary - hasPoolData:', hasPoolData);
 
                // Add the current pool if the wallet has LP tokens or pool data
-               if ((hasLP || hasPoolData) && this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
+               const poolAccount = this.ammStoreService.ammAccount();
+               if ((hasLP || hasPoolData) && poolAccount && this.ammStoreService.weWantCurrency() && this.ammStoreService.weSpendCurrency()) {
                     const asset1Balance = Number.parseFloat(this.ammStoreService.assetPool1Balance() || '0');
                     const asset2Balance = Number.parseFloat(this.ammStoreService.assetPool2Balance() || '0');
                     const totalLiquidity = asset1Balance + asset2Balance;
@@ -233,8 +233,7 @@ export class AmmSummaryComponent {
                     const lpHeld = Number.parseFloat(lpTokenBalance || '0');
 
                     pools.push({
-                         poolId: this.generatePoolId(this.ammStoreService.weWantCurrency(), this.ammStoreService.weSpendCurrency(), this.ammStoreService.weWantIssuer(), this.ammStoreService.weSpendIssuer()),
-                         poolAccount: this.ammStoreService.ammAccount() || wallet.address,
+                         poolAccount,
                          asset1: this.ammStoreService.weWantCurrency(),
                          asset2: this.ammStoreService.weSpendCurrency(),
                          asset1Balance: this.ammStoreService.assetPool1Balance() || '0',
@@ -271,10 +270,6 @@ export class AmmSummaryComponent {
           } finally {
                this.isLoading.set(false);
           }
-     }
-
-     private generatePoolId(asset1: string, asset2: string, issuer1: string, issuer2: string): string {
-          return `${asset1}_${issuer1}_${asset2}_${issuer2}`.replace(/[^a-zA-Z0-9]/g, '_');
      }
 
      private calculateTimeLeft(rippleTime: number): string {
@@ -398,7 +393,7 @@ export class AmmSummaryComponent {
      }
 
      onPoolClick(pool: AMMPool) {
-          this.selectedPoolId.set(pool.poolId);
+          this.selectedPoolAccount.set(pool.poolAccount);
           this.toggleInfoPanel.emit();
 
           // Only update if the pool has valid assets
