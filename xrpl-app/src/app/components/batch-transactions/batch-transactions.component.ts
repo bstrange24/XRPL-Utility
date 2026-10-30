@@ -22,7 +22,16 @@ export class BatchTransactionsComponent {
 
      readonly walletManager = inject(WalletManagerService);
      readonly batchModes = BATCH_MODES;
-     readonly innerTransactionsJson = signal('[]');
+     readonly innerTransactionsJson = signal(
+          JSON.stringify(
+               [
+                    { TransactionType: 'Payment', Destination: 'r...', Amount: '1000000' },
+                    { TransactionType: 'Payment', Destination: 'r...', Amount: '2000000' },
+               ],
+               null,
+               2,
+          ),
+     );
      readonly selectedMode = signal<BatchMode>('allOrNothing');
      readonly selectedModeDescription = computed(() => this.batchModes.find(mode => mode.value === this.selectedMode())?.description ?? '');
      readonly batchPreview = signal<xrpl.Batch | null>(null);

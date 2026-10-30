@@ -38,34 +38,34 @@
                                    @if (isBatchMode()) {
                                    <app-batch-transactions (batchPrepared)="onBatchPrepared($event)"></app-batch-transactions>
                                    } @else {
-                                   <!-- Transaction JSON Card -->
-                                   <div class="mb-4 mt-6">
-                                        <div class="flex items-center justify-between mb-2">
-                                             <label for="transactionJson" class="label-primary">Transaction JSON</label>
-                                             <div class="flex items-center gap-2">
-                                                  <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="btn-utility-small">
-                                                       <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
-                                                       Format JSON
-                                                  </button>
-                                                  <button type="button" (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())" title="Copy Transaction" class="btn-utility-small">
-                                                       <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
-                                                       Copy
-                                                  </button>
-                                                  <button type="button" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.txJson())" title="Download Transaction" class="btn-utility-small">
-                                                       <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-gray-500 mr-1"></ng-icon>
-                                                       Download
-                                                  </button>
-                                             </div>
-                                        </div>
-                                        <p class="text-secondary">Manually build or edit a raw XRPL transaction JSON. Must include <span class="font-medium">TransactionType</span>, <span class="font-medium">Account</span>, and other required fields.</p>
+                                   <div class="card-base mt-6">
+                                       <div class="mb-4">
+                                            <div class="flex items-center justify-between mb-2">
+                                                 <label for="transactionJson" class="label-primary">Transaction JSON</label>
+                                                 <div class="flex items-center gap-2">
+                                                      <button type="button" (click)="jsonEditor.format()" title="Format JSON" class="btn-utility-small">
+                                                           <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                                                           Format JSON
+                                                      </button>
+                                                      <button type="button" (click)="copyUtilService.copySignTx(signTransationStoreService.txJson())" title="Copy Transaction" class="btn-utility-small">
+                                                           <ng-icon name="heroClipboardDocumentList" size="16" class="text-gray-500 mr-1"></ng-icon>
+                                                           Copy
+                                                      </button>
+                                                      <button type="button" (click)="downloadUtilService.downloadSignTxJson(signTransationStoreService.txJson())" title="Download Transaction" class="btn-utility-small">
+                                                           <ng-icon name="heroArrowDownOnSquareStack" size="16" class="text-gray-500 mr-1"></ng-icon>
+                                                           Download
+                                                      </button>
+                                                 </div>
+                                            </div>
+                                            <p class="text-secondary">Manually build or edit a raw XRPL transaction JSON. Must include <span class="font-medium">TransactionType</span>, <span class="font-medium">Account</span>, and other required fields.</p>
+                                       </div>
+                                       <app-json-editor [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
                                    </div>
-
-                                   <app-json-editor [value]="signTransationStoreService.txJson()" (valueChange)="signTransactionUtilService.onTxJsonChange($event)" #jsonEditor> </app-json-editor>
                                    }
 
                                    <!-- Signed Transaction Card -->
-                                   <div class="relative">
-                                        <div class="mb-4 mt-6">
+                                   <div class="card-base relative mt-6">
+                                       <div class="mb-4">
                                              <div class="flex items-center justify-between mb-2">
                                                   <label class="label-primary">Signed Transaction</label>
                                                   <div class="flex items-center gap-2">
