@@ -95,6 +95,13 @@ export class MptSummaryComponent {
           return Number.parseFloat(amountStr.split(' ')[0]) || 0;
      }
 
+     isLockedMpt(mpt: any): boolean {
+           if (!mpt) return false;
+
+           const flagText = Array.isArray(mpt.flags) ? mpt.flags.join(', ') : String(mpt.flags ?? '');
+           return flagText.toLowerCase().includes('lock');
+     }
+
      // Computed values
      infoData = computed(() => this.viewModel.infoData());
      totalCount = computed(() => this.infoData()?.mptCount ?? 0);
@@ -120,7 +127,7 @@ export class MptSummaryComponent {
                          case 'held':
                               return mpt.isHolder && Number.parseFloat(mpt.formattedAmount || '0') > 0;
                          case 'locked':
-                              return mpt.flags?.includes('Locked') || false;
+                              return this.isLockedMpt(mpt);
                          default:
                               return true;
                     }

@@ -116,8 +116,8 @@ export class MptTransactionViewModelService {
                const isVaultMpt = Boolean(m.isVaultMpt) || (Boolean(m.isHolder) && String(rawAmount) === '0' && String(m.Account || '') === String(address) && String(m.Issuer || '') === String(address));
 
                return {
-                    mpt_issuance_id: m.mpt_issuance_id || 'We have issues',
-                    id: m.id || 'We have big issues',
+                    mpt_issuance_id: m.mpt_issuance_id || 'Unknown issuance ID',
+                    id: m.id || 'Unknown record ID',
                     amount: m.amount,
                     formattedAmount,
                     formattedOutstanding,

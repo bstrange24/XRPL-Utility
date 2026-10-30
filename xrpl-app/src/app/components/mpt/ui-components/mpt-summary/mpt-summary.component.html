@@ -53,7 +53,7 @@
                               <!-- Status Icon based on type -->
                               @if (!mpt.isHolder) {
                               <ng-icon name="heroPlusCircle" size="20" class="text-green-500 mt-0.5 flex-shrink-0" />
-                              } @else if (mpt.flags.includes('Locked')) {
+                              } @else if (isLockedMpt(mpt)) {
                               <ng-icon name="heroLockClosed" size="20" class="text-red-500 mt-0.5 flex-shrink-0" />
                               } @else {
                               <ng-icon name="heroCurrencyDollar" size="20" class="text-gray-400 mt-0.5 flex-shrink-0" />
