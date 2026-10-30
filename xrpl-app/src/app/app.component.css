@@ -10,6 +10,24 @@
   z-index: 9999;
 }
 
+.balance-changes-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 1023px) {
+  .balance-changes-shell {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+}
+
 @keyframes loading-slide {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }

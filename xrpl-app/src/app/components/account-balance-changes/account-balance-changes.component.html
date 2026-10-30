@@ -34,14 +34,14 @@
 
                <!-- Main Content -->
                @if (walletManager.getSelectedWallet()?.address) {
-               <div class="flex-1 flex flex-col bg-white border border-gray-200 rounded-2xl overflow-hidden mt-4 transition-shadow hover:shadow-card">
+               <div class="flex-1 flex flex-col min-h-0 bg-white border border-gray-200 rounded-2xl overflow-hidden mt-4 transition-shadow hover:shadow-card">
                     <!-- Filters -->
                     <div class="border-b border-gray-100 p-4">
                          <app-account-changes-filters (refresh)="onRefresh()"></app-account-changes-filters>
                     </div>
 
                     <!-- Table Area -->
-                    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
+                    <div class="flex flex-1 flex-col min-h-0 overflow-hidden">
                          @if (store.loadingInitial()) {
                          <!-- Loading State -->
                          <div class="flex-1 p-8 space-y-6 overflow-auto">
@@ -51,9 +51,7 @@
                          </div>
                          } @else {
                          <!-- Table -->
-                         <div class="flex-1 overflow-auto">
-                              <app-account-changes-table (scrolledToBottom)="onLoadMore()"></app-account-changes-table>
-                         </div>
+                         <app-account-changes-table class="flex-1 min-h-0" (scrolledToBottom)="onLoadMore()"></app-account-changes-table>
                          }
                     </div>
                </div>

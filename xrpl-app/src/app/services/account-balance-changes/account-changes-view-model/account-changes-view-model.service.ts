@@ -112,6 +112,7 @@ export class AccountChangesViewModelService {
                case 'AccountDelete':
                case 'SetRegularKey':
                case 'MPTokenIssuanceDestroy':
+               case 'DelegateSet':
                     return '#BAD47B';
 
                case 'NFTokenMint':

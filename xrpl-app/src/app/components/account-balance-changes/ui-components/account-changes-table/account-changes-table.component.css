@@ -1,3 +1,16 @@
+:host {
+     width: 100%;
+     height: 100%;
+     flex: 1 1 0%;
+     min-height: 0;
+}
+
+:host cdk-virtual-scroll-viewport {
+     flex: 1 1 0%;
+     min-height: 0;
+     height: 100% !important;
+}
+
 .table-wrapper {
      display: flex;
      flex-direction: column;
@@ -56,8 +69,16 @@
      align-items: center;
 }
 
-.col.date { flex: 1.8; color: #374151; }
-.col.hash { flex: 1.8; gap: 6px; }
+.col.date {
+     flex: 1.8;
+     color: #374151;
+}
+
+.col.hash {
+     flex: 1.8;
+     gap: 6px;
+}
+
 .col.type {
      flex: 1.5;
      min-width: 140px;
@@ -66,15 +87,36 @@
      line-height: 1.4;
      font-weight: 600;
 }
-.col.change { flex: 1; gap: 4px; }
-.col.fees { flex: 1.1; color: #dc2626; font-weight: 600; }
-.col.counterparty { flex: 1.4; color: #4b5563; }
 
-.table-header .col { color: white; font-size: 12px; }
+.col.change {
+     flex: 1;
+     gap: 4px;
+}
+
+.col.fees {
+     flex: 1.1;
+     color: #dc2626;
+     font-weight: 600;
+}
+
+.col.counterparty {
+     flex: 1.4;
+     color: #4b5563;
+}
+
+.table-header .col {
+     color: white;
+     font-size: 12px;
+}
 
 /* ─── Change badge ─── */
-.positive { color: #16a34a !important; }
-.negative { color: #dc2626 !important; }
+.positive {
+     color: #16a34a !important;
+}
+
+.negative {
+     color: #dc2626 !important;
+}
 
 .currency {
      font-size: 0.88em;
@@ -106,8 +148,13 @@
      justify-content: center;
 }
 
-.data-row:hover .copy-btn { opacity: 1; }
-.copy-btn:hover { color: #2563eb; }
+.data-row:hover .copy-btn {
+     opacity: 1;
+}
+
+.copy-btn:hover {
+     color: #2563eb;
+}
 
 /* ─── Virtual scroll container ─── */
 .virtual-table-container {
@@ -140,5 +187,11 @@
      opacity: 0.6;
 }
 
-.loading-row { opacity: 0.9; }
-.end-row { color: #9ca3af; font-size: 13px; }
+.loading-row {
+     opacity: 0.9;
+}
+
+.end-row {
+     color: #9ca3af;
+     font-size: 13px;
+}
