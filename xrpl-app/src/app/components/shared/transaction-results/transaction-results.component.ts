@@ -1,5 +1,5 @@
 import { Component, inject, Input, OnChanges, OnInit } from '@angular/core';
-import { ParsedTransactionResult, TransactionParserService } from '../../../services/transaction-parser/transaction-parser.service';
+import { KeyDetail, ParsedTransactionResult, TransactionParserService } from '../../../services/transaction-parser/transaction-parser.service';
 import { CommonModule } from '@angular/common';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
@@ -23,6 +23,28 @@ export class TransactionResultsComponent implements OnInit, OnChanges {
      parsedResult: ParsedTransactionResult | null = null;
      showAffectedAccounts = false;
      showRawData = false;
+
+     get keyDetailGroups(): Array<{ title: string; details: KeyDetail[] }> {
+          if (!this.parsedResult) return [];
+
+          const groups = [
+               { title: 'Participants', details: [] as KeyDetail[] },
+               { title: 'Amounts & assets', details: [] as KeyDetail[] },
+               { title: 'Other details', details: [] as KeyDetail[] },
+          ];
+
+          for (const detail of this.parsedResult.keyDetails) {
+               const label = detail.label.toLowerCase();
+               const group = !/sequence/.test(label) && /sender|receiver|destination|account|owner|issuer|buyer|seller|source|recipient|signer/.test(label)
+                    ? groups[0]
+                    : /amount|fee|currency|asset|price|limit|balance|rate|cost|xrp|token/.test(label)
+                         ? groups[1]
+                         : groups[2];
+               group.details.push(detail);
+          }
+
+          return groups.filter(group => group.details.length > 0);
+     }
 
      constructor() {}
 
