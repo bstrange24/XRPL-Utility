@@ -14,6 +14,7 @@ import { TrustlineActionTypes } from '../../constants/trustline.types';
 import { TrustlineStoreService } from '../../../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineViewModelService } from '../../../../services/trustlines/trustline-view-model/trustline-view-model.service';
 import Decimal from 'decimal.js';
+import { formatTrustlineAmount } from '../../constants/trustline.ui';
 
 export interface TrustlineItem {
      currency: string;
@@ -45,6 +46,8 @@ type SortDirection = 'asc' | 'desc';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TrustlinesSummaryComponent {
+     readonly formatAmount = formatTrustlineAmount;
+
      private readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);

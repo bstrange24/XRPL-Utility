@@ -4,6 +4,17 @@ import { TrustlineFlagKey } from './trustline.types';
 
 type IconType = 'ng-icon' | 'lucide-icon';
 
+export function formatTrustlineAmount(value: string | number | null | undefined): string {
+     if (value === null || value === undefined || value === '') return '';
+
+     const amount = String(value);
+     const match = amount.match(/^([+-]?)(\d+)(\.\d+)?$/);
+     if (!match) return amount;
+
+     const [, sign, integer, fraction = ''] = match;
+     return `${sign}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${fraction}`;
+}
+
 // Tab configuration constants
 export const TRUSTLINE_TABS: {
      key: TrustlineConfigTxDisplayType;

@@ -1,7 +1,26 @@
 import { AppConstants } from '../../../core/app.constants';
-import { TRUSTLINE_TABS, TRUSTLINE_TAB_META } from './trustline.ui';
+import { formatTrustlineAmount, TRUSTLINE_TABS, TRUSTLINE_TAB_META } from './trustline.ui';
 
 describe('Trustline UI Configuration', () => {
+     describe('formatTrustlineAmount', () => {
+          it('groups large whole amounts without changing their value', () => {
+               expect(formatTrustlineAmount('202500000000')).toBe('202,500,000,000');
+          });
+
+          it('groups the whole part and preserves all decimal digits', () => {
+               expect(formatTrustlineAmount('561652836.123456789012345')).toBe('561,652,836.123456789012345');
+          });
+
+          it('preserves signs and leaves non-decimal values unchanged', () => {
+               expect(formatTrustlineAmount('-1234.5')).toBe('-1,234.5');
+               expect(formatTrustlineAmount('1e+21')).toBe('1e+21');
+          });
+
+          it('returns an empty string for an empty amount', () => {
+               expect(formatTrustlineAmount(null)).toBe('');
+          });
+     });
+
      describe('TRUSTLINE_TABS', () => {
           it('should have exactly 5 tabs', () => {
                expect(TRUSTLINE_TABS.length).toBe(5);

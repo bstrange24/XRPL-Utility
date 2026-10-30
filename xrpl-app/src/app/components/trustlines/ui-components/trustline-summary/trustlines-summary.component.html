@@ -80,11 +80,11 @@
                                         <!-- Limit + Balance on the SAME ROW -->
                                         <div class="flex gap-6 md:gap-12">
                                              <app-summary-key-value label="Limit" class="flex-1">
-                                                  <span class="font-mono">{{ tl.limit }}</span>
+                                                  <span class="font-mono">{{ formatAmount(tl.limit) }}</span>
                                              </app-summary-key-value>
 
                                              <app-summary-key-value label="Balance" class="flex-1">
-                                                  <span class="font-mono" [class.text-green-600]="tl.balanceNum > 0" [class.text-red-600]="tl.balanceNum < 0"> {{ tl.balance }} </span>
+                                                  <span class="font-mono" [class.text-green-600]="tl.balanceNum > 0" [class.text-red-600]="tl.balanceNum < 0"> {{ formatAmount(tl.balance) }} </span>
                                              </app-summary-key-value>
                                         </div>
 

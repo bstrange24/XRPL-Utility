@@ -287,6 +287,21 @@ describe('CurrencyFormSectionComponent', () => {
                fixture.detectChanges();
                expect(component.isReadOnly).toBeFalse();
           });
+
+          it('formats read-only trustline amounts without changing editable input', () => {
+               component.amount = '202500000000';
+               component.isReadOnly = true;
+               fixture.detectChanges();
+
+               expect(component.amountDisplay).toBe('202,500,000,000');
+
+               component.isReadOnly = false;
+               expect(component.amountDisplay).toBe(component.getAmount);
+          });
+
+          it('formats currency balances without rounding decimal precision', () => {
+               expect(component.formatAmount('561652836.123456789012345')).toBe('561,652,836.123456789012345');
+          });
      });
 
      describe('Edge cases', () => {

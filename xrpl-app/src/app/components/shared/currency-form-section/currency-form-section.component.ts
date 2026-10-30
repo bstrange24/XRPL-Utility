@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { AmountValidatorService } from '../../../services/shared/validators/amount-validator/amount-validator.service';
 import { InputIconsComponent } from '../input-icons/input-icons.component';
 import { ValidationErrorsComponent } from '../validation-errors/validation-errors.component';
+import { formatTrustlineAmount } from '../../trustlines/constants/trustline.ui';
 
 @Component({
      selector: 'app-currency-form-section',
@@ -43,6 +44,8 @@ export class CurrencyFormSectionComponent implements OnChanges {
      @Output() issuerChange = new EventEmitter<any>();
      @Output() amountChange = new EventEmitter<number | null>();
      @Output() validationChange = new EventEmitter<{ isValid: boolean; errors: string[] }>();
+
+     readonly formatAmount = formatTrustlineAmount;
 
      // Helper Items
      readonly currencyCodeHelperItems = AppConstants.CURRENCY_FORM_CODE_HELPER_ITEMS;
@@ -259,6 +262,11 @@ export class CurrencyFormSectionComponent implements OnChanges {
 
      get getAmount(): number | null {
           return this.amountValue();
+     }
+
+     get amountDisplay(): number | string | null {
+          if (!this.isReadOnly) return this.getAmount;
+          return formatTrustlineAmount(this.amount ?? this.getAmount);
      }
 
      set setAmount(value: number | null | string) {
