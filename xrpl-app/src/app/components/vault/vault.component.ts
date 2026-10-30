@@ -53,6 +53,7 @@ import { VaultClawbackComponent } from './tab/vault-clawback/vault-clawback.comp
 import { VaultDepositWithdrawComponent } from './tab/vault-deposit-withdrawl/vault-deposit-withdrawl.component';
 import { VaultCacheService } from '../../services/vault/vault-cache/vault-cache.service';
 import { MptTransactionViewModelService } from '../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
+import { PermissionedDomainStoreService } from '../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 
 @Component({
      selector: 'app-vault',
@@ -77,6 +78,7 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      public readonly mptOrchestratorServiceService = inject(MptOrchestratorServiceService);
      public readonly vaultViewModelService = inject(VaultViewModelService);
      public readonly mptStoreService = inject(MptStoreService);
+     private readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      private readonly rightPanelService = inject(RightPanelService);
      private readonly escrowStoreService = inject(EscrowStoreService);
      public readonly mptViewModel = inject(MptTransactionViewModelService);
@@ -251,7 +253,11 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
 
      async setTab(tab: string): Promise<void> {
           if (!VAULT_TAB.includes(tab as any)) return;
-          this.vaultViewModelService.activeTab.set(tab as VaultActionTypes);
+          const activeTab = tab === 'withdrawlVault' ? 'depositVault' : (tab as VaultActionTypes);
+          this.vaultViewModelService.activeTab.set(activeTab);
+          if (tab === 'withdrawlVault') {
+               this.vaultStoreService.setField('vaultAction', 'withdraw');
+          }
           this.clearInputFields();
           if (this.hasWallets()) await this.getVaults(false);
      }
@@ -294,7 +300,7 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
           let currentTab = this.vaultViewModelService.activeTab();
           const wallet = this.currentWallet();
 
-          if (this.tabValidity()[currentTab] === false) {
+          if (this.tabValidity()[currentTab] !== true) {
                this.toastService.error('Please fix the highlighted validation issues before submitting.', AppConstants.TOAST.ERROR);
                return;
           }
@@ -519,6 +525,8 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
           // Reset form fields but keep existing vaults
           this.vaultStoreService.setField('amount', '');
           this.vaultStoreService.setField('vaultMetaData', '');
+          this.vaultStoreService.setField('domainId', '');
+          this.permissionedDomainStoreService.setField('domainId', '');
           this.vaultStoreService.setField('selectedVaultId', null);
           this.vaultStoreService.setField('vaultAmount', '');
           this.vaultStoreService.setField('selectedVaultSequence', null);

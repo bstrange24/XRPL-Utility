@@ -225,12 +225,11 @@ export class LendingBrokerCoverClawbackComponent {
 
      // Computed validation
      canCoverClawback = computed(() => {
-          // Either LoanBrokerID or Amount must be provided
           const hasBrokerSelected = !!this.loanBrokerStoreService.selectedBrokerId();
           const hasAmount = !!this.clawbackAmount && this.clawbackAmount.trim().length > 0;
 
           if (this.isSelectedBrokerXrp()) return false;
-          if (!hasBrokerSelected && !hasAmount) return false;
+          if (!hasBrokerSelected) return false;
 
           // If amount is provided, validate it
           if (hasAmount) {
@@ -256,10 +255,9 @@ export class LendingBrokerCoverClawbackComponent {
           const hasBrokerSelected = !!this.loanBrokerStoreService.selectedBrokerId();
           const hasAmount = !!this.clawbackAmount && this.clawbackAmount.trim().length > 0;
 
-          // Either LoanBrokerID or Amount required
           if (this.isFormDirty() || this.isBrokerSelectorTouched() || this.isAmountTouched()) {
-               if (!hasBrokerSelected && !hasAmount) {
-                    errors.push('Either select a Loan Broker or specify the amount to clawback.');
+               if (!hasBrokerSelected) {
+                    errors.push('Select a Loan Broker so the clawback asset can be determined.');
                }
           }
 

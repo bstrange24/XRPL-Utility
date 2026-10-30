@@ -150,6 +150,13 @@ export class LoanBrokerTransactionBuilderService {
      async buildLoanBrokerCoverClawbackTx(wallet: xrpl.Wallet, client: xrpl.Client, env: PrepareTxEnvironmentResult, brokerState: any): Promise<xrpl.Transaction> {
           const selectedBroker = this.findSelectedBroker(brokerState);
           const amount = brokerState.debtMaximum; // Reusing debtMaximum as clawback amount
+          if (!selectedBroker) {
+               throw new Error('Select a Loan Broker so the clawback asset can be determined');
+          }
+          const asset = await this.getBrokerAsset(client, selectedBroker.VaultID);
+          if (asset?.currency === 'XRP') {
+               throw new Error('XRP cover cannot be clawed back');
+          }
 
           const tx: any = {
                TransactionType: 'LoanBrokerCoverClawback',
@@ -158,15 +165,11 @@ export class LoanBrokerTransactionBuilderService {
                LastLedgerSequence: env.ledgerInfo.lastIndex + AppConstants.LAST_LEDGER_ADD_TIME,
           };
 
-          // LoanBrokerID is optional - include if selected
-          if (selectedBroker) {
-               tx.LoanBrokerID = brokerState.selectedBrokerId;
-          }
+          tx.LoanBrokerID = brokerState.selectedBrokerId;
 
           // Amount is optional - include if provided
           if (amount && amount.trim().length > 0 && parseFloat(amount) > 0) {
-               const asset = selectedBroker ? await this.getBrokerAsset(client, selectedBroker.VaultID) : null;
-               const amountValue = asset ? this.buildAmount(asset, amount) : { value: amount };
+               const amountValue = this.buildAmount(asset, amount);
                tx.Amount = amountValue;
           }
 
@@ -211,17 +214,12 @@ export class LoanBrokerTransactionBuilderService {
       * Helper: Get broker asset from vault
       */
      private async getBrokerAsset(client: xrpl.Client, vaultId: string): Promise<any> {
-          try {
-               const result = await this.xrplCache.getVaultInfo(client, vaultId);
-
-               const node = result.result.vault;
-               if (node && node.LedgerEntryType === 'Vault') {
-                    return node.Asset || { currency: 'XRP' };
-               }
-               return { currency: 'XRP' };
-          } catch {
-               return { currency: 'XRP' };
+          const result = await this.xrplCache.getVaultInfo(client, vaultId);
+          const node = result.result.vault;
+          if (!node || node.LedgerEntryType !== 'Vault' || !node.Asset) {
+               throw new Error(`Unable to determine the asset for Loan Broker vault ${vaultId}`);
           }
+          return node.Asset;
      }
      // private getBrokerAsset(broker: LoanBrokerDisplayItem): any {
      //      // This would need to fetch the vault's asset

@@ -291,12 +291,20 @@ export class VaultCreateComponent {
           this.vaultStoreService.setField('assetScale', value);
      }
 
+     isVaultAssetScaleInvalid = computed(() => {
+          const scale = this.vaultStoreService.assetScale();
+          if (scale === null || scale === undefined || scale === '') return false;
+          const value = Number(scale);
+          return !Number.isInteger(value) || value < 0 || value > 15;
+     });
+
      get domainid() {
           return this.permissionedDomainStoreService.domainId();
      }
 
      set domainid(value: string) {
           this.permissionedDomainStoreService.setField('domainId', value);
+          this.vaultStoreService.setField('domainId', value);
      }
 
      get metaData() {
@@ -354,26 +362,28 @@ export class VaultCreateComponent {
      }
 
      canCreateVault = computed(() => {
-          const destAddr = this.escrowViewModel.selectedDestinationAddress?.() ?? '';
           const amountStr = this.escrowStoreService.amount()?.trim() ?? '';
-          const isDestinationValid = this.isDestinationValid();
-          const amountValid = !this.amountValidatorService.isEscrowAmountInvalid();
+          if (this.isMaximumAmountInvalid() || this.isVaultAssetScaleInvalid() || this.domainIdValidatorService.hasInvalidDomainId()) return false;
 
-          if (!destAddr || !isDestinationValid) {
-               return false;
-          }
-          if (!amountStr || !amountValid) {
-               return false;
-          }
+          const currency = this.currencyStoreService.currency() || 'XRP';
+          if (currency === 'MPT' && !this.mptStoreService.mptIssuanceId()) return false;
+          if (currency !== 'XRP' && currency !== 'MPT' && !this.currencyStoreService.issuer()) return false;
+          if (this.vaultStoreService.vaultKind() === 'closed' && (this.subscriptionDateError() || this.redemptionDateError())) return false;
 
           const wantsOptions = this.txUiService.wantsOptions();
           const optionsError = this.optionsHasError();
 
-          if (wantsOptions && optionsError) {
-               return false;
-          }
+          if (wantsOptions && optionsError) return false;
 
           return true;
+     });
+
+     isMaximumAmountInvalid = computed(() => {
+          const amount = this.escrowStoreService.amount()?.trim() ?? '';
+          if (!amount || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(amount)) return true;
+
+          const value = Number(amount);
+          return !Number.isFinite(value) || value < 0 || value > AppConstants.MAX_TOKEN_COUNT;
      });
 
      private parseLocalMs(value: string): number {
@@ -409,15 +419,16 @@ export class VaultCreateComponent {
           const errors: string[] = [];
           if (this.subscriptionDateError()) errors.push(this.subscriptionDateError());
           if (this.redemptionDateError()) errors.push(this.redemptionDateError());
-          const destAddr = this.escrowViewModel.selectedDestinationAddress?.() ?? '';
           const amountStr = this.escrowStoreService.amount()?.trim() ?? '';
 
-          if (destAddr && !this.isDestinationValid()) errors.push('Destination address is invalid.');
+          if (!amountStr) errors.push('Maximum asset amount is required.');
+          else if (this.isMaximumAmountInvalid()) errors.push(`Maximum asset amount must be between 0 and ${AppConstants.MAX_TOKEN_COUNT}.`);
+          if (this.isVaultAssetScaleInvalid()) errors.push('Asset Scale must be a whole number between 0 and 15.');
+          if (this.domainIdValidatorService.hasInvalidDomainId()) errors.push('Domain ID must contain an even number of hexadecimal characters.');
 
-          if (amountStr) {
-               const err = this.escrowValidatorService.getAmountErrorMessage();
-               if (err) errors.push(err);
-          }
+          const currency = this.currencyStoreService.currency() || 'XRP';
+          if (currency === 'MPT' && !this.mptStoreService.mptIssuanceId()) errors.push('Select an MPT issuance.');
+          if (currency !== 'XRP' && currency !== 'MPT' && !this.currencyStoreService.issuer()) errors.push('Select an issuer for the issued currency.');
 
           // if (this.escrowValidatorService.hasMissingFinishAfter()) {
           //      errors.push('Finish After is enabled but no date is set.');

@@ -33,7 +33,7 @@ const LOAN_META: Record<LoanTxTypes, LoanTxMeta> = {
      payLoan: {
           buildTx: ({ orchestrator, env, wallet, loan, vault, loanBroker, amount }) => {
                const loanAsset = loan.assetType || { currency: 'XRP' };
-               return orchestrator.loanTransactionBuilderService.buildLoanPayTx(env.wallet || wallet, env, loan, vault, loanBroker, amount || '0', loanAsset);
+               return orchestrator.loanTransactionBuilderService.buildLoanPayTx(env.wallet || wallet, env, loan, vault, loanBroker, amount, loanAsset);
           },
           simulationToastMessage: ({ orchestrator, loan, amount }) => `Simulated paying ${amount || '0'} on Loan ${loan.selectedLoanId || 'N/A'}`,
           successMessage: ({ orchestrator, loan, amount }) => {

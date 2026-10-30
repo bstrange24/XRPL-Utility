@@ -48,7 +48,7 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">The maximum asset amount that can be held in a vault.</p>
+                              <p class="text-secondary">The maximum asset amount that can be held in a vault. Enter 0 for no cap.</p>
                               <button type="button" (click)="toggleAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -60,8 +60,8 @@
                                    inputmode="decimal"
                                    class="input-base-with-validation"
                                    app-focus-border
-                                   [isValid]="amountValidatorService.isEscrowAmountValid() && amount !== null && amount !== undefined && amount.trim().length > 0"
-                                   [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   [isValid]="!isMaximumAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
+                                   [isInvalid]="isMaximumAmountInvalid() && amount !== null && amount !== undefined && amount.trim().length > 0"
                                    (keydown)="utilsService.preventNegative($event)"
                                    (focus)="isFocused.set(true)"
                                    (input)="amountValidatorService.onAmountInput($event,'escrow')"
@@ -73,12 +73,12 @@
                               />
 
                               <!-- Icons Container -->
-                              <app-input-icons [isValid]="amountValidatorService.isEscrowAmountValid() && !!amount && amount.length > 0" [isInvalid]="amountValidatorService.isEscrowAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.escrowStoreService.setField('amount', '')" />
+                              <app-input-icons [isValid]="!isMaximumAmountInvalid() && !!amount && amount.length > 0" [isInvalid]="isMaximumAmountInvalid() && !!amount && amount.length > 0" [showClear]="!!amount" (clear)="this.escrowStoreService.setField('amount', '')" />
                          </div>
 
                          <!-- Error Message -->
-                         @if (escrowValidatorService.getAmountErrorMessage()) {
-                         <p class="form-error mt-2">{{ escrowValidatorService.getAmountErrorMessage() }}</p>
+                         @if (amount && isMaximumAmountInvalid()) {
+                         <p class="form-error mt-2">Maximum asset amount must be zero or a positive number within the supported limit.</p>
                          }
 
                          <app-field-helper title="Escrow Amount" [items]="escrowAmountHelperItems" [show]="showEscrowAmountHelper" />
@@ -147,8 +147,8 @@
                                    inputmode="decimal"
                                    class="input-base-with-validation"
                                    app-focus-border
-                                   [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined"
-                                   [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined"
+                                   [isValid]="!isVaultAssetScaleInvalid() && assetScale !== null && assetScale !== undefined"
+                                   [isInvalid]="isVaultAssetScaleInvalid() && assetScale !== null && assetScale !== undefined"
                                    (keydown)="utilsService.preventNegative($event)"
                                    (input)="amountValidatorService.onAmountInput($event,'vaultAssetScale')"
                                    (blur)="amountValidatorService.onAmountBlur($event,'vaultAssetScale'); isFocusedAssetScale.set(false)"
@@ -160,10 +160,10 @@
                               />
 
                               <!-- Icons Container -->
-                              <app-input-icons [isValid]="mptValidator.isAssetScaleValid() && assetScale !== null && assetScale !== undefined" [isInvalid]="mptValidator.isAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [showClear]="!!assetScale" (clear)="clearField('assetScale')" />
+                              <app-input-icons [isValid]="!isVaultAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [isInvalid]="isVaultAssetScaleInvalid() && assetScale !== null && assetScale !== undefined" [showClear]="!!assetScale" (clear)="clearField('assetScale')" />
                          </div>
 
-                         @if (assetScale !== null && assetScale !== undefined && mptValidator.isAssetScaleInvalid()) {
+                         @if (assetScale !== null && assetScale !== undefined && isVaultAssetScaleInvalid()) {
                          <p class="form-error mt-2">{{ mptValidator.getAssetScaleErrorMessage() }}</p>
                          }
 

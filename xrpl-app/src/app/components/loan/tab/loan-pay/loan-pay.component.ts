@@ -258,7 +258,7 @@ export class LoanPayComponent {
 
           const amount = this.paymentAmount;
           if (!amount || amount.trim().length === 0) return false;
-          if (this.isAmountInvalid()) return false;
+          if (!this.isAmountValid()) return false;
 
           const amountNum = parseFloat(amount);
           if (isNaN(amountNum) || amountNum <= 0) return false;

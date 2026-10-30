@@ -159,7 +159,7 @@ export class LoanTransactionBuilderService {
      /**
       * Build LoanPay transaction
       */
-     buildLoanPayTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, loanState: any, vault: any, loanBroker: any, amount: string, assetType: string = 'XRP'): xrpl.Transaction {
+     buildLoanPayTx(wallet: xrpl.Wallet, env: PrepareTxEnvironmentResult, loanState: any, vault: any, loanBroker: any, amount?: string, _assetType: string = 'XRP'): xrpl.Transaction {
           let flags = 0;
           if (loanState.tfLoanOverpayment) {
                flags |= 0x00010000;
@@ -171,7 +171,7 @@ export class LoanTransactionBuilderService {
                flags |= 0x00040000;
           }
 
-          const amountValue = this.buildPaymentAmount(assetType, loanState, vault, loanBroker, amount);
+          const amountValue = this.buildPaymentAmount(loanState, vault, loanBroker, amount);
 
           return {
                TransactionType: 'LoanPay',
@@ -184,58 +184,43 @@ export class LoanTransactionBuilderService {
           } as xrpl.Transaction;
      }
 
-     private buildPaymentAmount(assetType: string, loanState: any, vault: any, loanBroker: any, amount?: string): any {
-          console.log('Building payment amount with assetType:', assetType, 'loanState:', loanState, 'vault:', vault, 'loanBroker:', loanBroker, 'amount:', amount);
-
-          const paymentAmount = loanState.paymentAmount;
-
-          if (!paymentAmount) {
+     private buildPaymentAmount(loanState: any, vaultState: any, loanBrokerState: any, amount?: string): any {
+          const paymentAmount = amount ?? loanState.paymentAmount;
+          if (!paymentAmount || !Number.isFinite(Number(paymentAmount)) || Number(paymentAmount) <= 0) {
                throw new Error('Payment amount is required');
           }
 
-          if (assetType === 'XRP') {
+          const brokerId = loanState.loanBrokerId || loanBrokerState?.selectedBrokerId;
+          const broker = loanBrokerState?.existingBrokers?.find((item: any) => [item.id, item.index, item.LoanBrokerID].some(id => id && String(id) === String(brokerId)));
+          if (!broker?.VaultID) {
+               throw new Error('The selected loan broker could not be matched to a vault');
+          }
+
+          const selectedVault = vaultState?.existingVaults?.find((item: any) => [item.index, item.id].some(id => id && String(id) === String(broker.VaultID)));
+          const asset = selectedVault?.Asset || selectedVault?.SendMax;
+          if (!asset) {
+               throw new Error('The loan vault asset could not be determined');
+          }
+
+          if (asset?.currency === 'XRP') {
                return xrpl.xrpToDrops(paymentAmount);
-          } else if (assetType === 'MPT') {
-               // MPT values must be integers (no decimals)
-               const value = paymentAmount;
-               // const integerValue = Math.floor(parseFloat(value));
-
-               let mptIssuanceId = null;
-
-               // Check if vault has existingVaults array and get the first one
-               if (vault?.existingVaults && vault.existingVaults.length > 0) {
-                    // Get the first vault from existingVaults
-                    const selectedVault = vault.existingVaults[0];
-                    mptIssuanceId = selectedVault?.Asset?.mpt_issuance_id;
-
-                    console.log('Selected vault:', selectedVault);
-                    console.log('Asset from selected vault:', selectedVault?.Asset);
+          } else if (asset?.mpt_issuance_id) {
+               if (!/^\d+$/.test(paymentAmount.trim())) {
+                    throw new Error('MPT loan payments must be whole numbers');
                }
-
-               // Alternative: if you have a selectedVaultId, you could find the matching vault
-               // if (vault?.selectedVaultId) {
-               //     const selectedVault = vault.existingVaults.find(v => v.index === vault.selectedVaultId);
-               //     mptIssuanceId = selectedVault?.Asset?.mpt_issuance_id;
-               // }
-
-               console.log('MPT Issuance ID found:', mptIssuanceId);
-
-               if (!mptIssuanceId) {
-                    throw new Error('MPT issuance ID not found in vault data');
-               }
-
                return {
-                    mpt_issuance_id: mptIssuanceId,
-                    // value: integerValue.toString(),
-                    value: value.toString(),
-               };
-          } else {
-               return {
-                    currency: this.utilsService.encodeIfNeeded(loanState.currencyValue),
+                    mpt_issuance_id: asset.mpt_issuance_id,
                     value: paymentAmount,
-                    issuer: loanState.issuer,
+               };
+          } else if (asset?.currency && asset?.issuer) {
+               return {
+                    currency: this.utilsService.encodeIfNeeded(asset.currency),
+                    value: paymentAmount,
+                    issuer: asset.issuer,
                };
           }
+
+          throw new Error('Unsupported asset type for loan payment');
      }
 
      /**

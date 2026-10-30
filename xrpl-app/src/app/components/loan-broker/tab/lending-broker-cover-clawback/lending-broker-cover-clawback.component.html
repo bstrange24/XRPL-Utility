@@ -23,7 +23,7 @@
                </div>
 
                <div class="flex items-center gap-2">
-                    <p class="text-secondary">Optional: Select a Loan Broker to clawback from. If not provided, the Amount must be specified.</p>
+                    <p class="text-secondary">Select the Loan Broker to clawback from. Its Vault determines the asset for this transaction.</p>
                     <button type="button" (click)="toggleBrokerSelectorHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                          <ng-icon name="heroQuestionMarkCircle" size="14" />
                     </button>
@@ -36,7 +36,7 @@
 
                <!-- <p class="text-xs text-gray-500 mt-2">
                     <ng-icon name="heroInformationCircle" size="14" class="text-gray-400" />
-                    Either select a Loan Broker or specify the Amount to clawback.
+                    Select a Loan Broker to identify the asset. The amount is optional and may be left blank to claw back the maximum allowed.
                </p> -->
           </div>
 
@@ -141,7 +141,7 @@
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-yellow-500 flex-shrink-0 mt-0.5" />
                     <div>
                          <p class="text-sm font-medium text-yellow-800">⚠️ Missing Information</p>
-                         <p class="text-sm text-yellow-700 mt-1">Either select a Loan Broker or specify the amount to clawback.</p>
+                         <p class="text-sm text-yellow-700 mt-1">Select a Loan Broker before submitting a clawback.</p>
                     </div>
                </div>
           </div>
