@@ -39,4 +39,15 @@ describe('TransactionPreviewParserService', () => {
     expect(preview.keyDetails.find(detail => detail.label === 'Fee')?.value).toBe('12 drops');
     expect(preview.estimatedImpact.xrpUsed).toBe('1.250012 XRP');
   });
+
+  it('should decode the hex-encoded URI in an NFT mint preview', () => {
+    const preview = service.parse({
+      TransactionType: 'NFTokenMint',
+      NFTokenTaxon: 0,
+      URI: Buffer.from('https://example.com/nft.json', 'utf8').toString('hex'),
+      Fee: '12',
+    });
+
+    expect(preview.keyDetails.find(detail => detail.label === 'URI')?.value).toBe('https://example.com/nft.json');
+  });
 });

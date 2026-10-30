@@ -533,7 +533,7 @@ class NFTokenMintPreviewFormatter implements TransactionPreviewFormatter {
           const details = [
                { label: 'Taxon', value: tx.NFTokenTaxon, icon: '🔢', highlight: true },
                { label: 'Transfer Fee', value: tx.TransferFee ? `${tx.TransferFee / 1000}%` : '0%', icon: '💸' },
-               { label: 'URI', value: tx.URI ? atob(tx.URI).substring(0, 50) + (tx.URI.length > 50 ? '...' : '') : 'None', icon: '🔗' },
+               { label: 'URI', value: tx.URI ? truncatePreviewValue(decodeHexPreview(tx.URI), 50) : 'None', icon: '🔗' },
           ];
 
           if (tx.Issuer && tx.Issuer !== tx.Account) {
@@ -1502,6 +1502,15 @@ function formatCurrencyAmountPreview(amount: any): string {
 function shortenAddress(address: string): string {
      if (!address || address.length < 10) return address || 'Unknown';
      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function decodeHexPreview(value: string): string {
+     if (!/^(?:[0-9a-f]{2})+$/i.test(value)) return value;
+     return Buffer.from(value, 'hex').toString('utf8');
+}
+
+function truncatePreviewValue(value: string, maxLength: number): string {
+     return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 }
 
 function formatDatePreview(timestamp: number): string {

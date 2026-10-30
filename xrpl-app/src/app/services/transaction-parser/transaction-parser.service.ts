@@ -847,7 +847,7 @@ export class SignerListSetFormatter implements TransactionFormatter {
 export class NFTokenMintFormatter implements TransactionFormatter {
      getSummary(tx: any, meta: any): ParsedTransactionResult['summary'] {
           const isBurnable = tx.Flags & 1;
-          const isTransferable = tx.Flags & 2;
+          const isTransferable = tx.Flags & 8;
 
           return {
                title: 'NFT Minted',
@@ -861,7 +861,7 @@ export class NFTokenMintFormatter implements TransactionFormatter {
           const details = [
                { label: 'NFT ID', value: formatNFTokenID(tx.NFTokenID || 'New'), icon: '🖼️' },
                { label: 'Taxon', value: tx.NFTokenTaxon, icon: '🔢' },
-               { label: 'URI', value: tx.URI ? atob(tx.URI) : 'None', icon: '🔗' },
+               { label: 'URI', value: tx.URI ? decodeHexValue(tx.URI) : 'None', icon: '🔗' },
                { label: 'Transfer Fee', value: tx.TransferFee ? `${tx.TransferFee / 1000}%` : '0%', icon: '💸' },
                { label: 'Issuer', value: shortenAddress(tx.Issuer || tx.Account), icon: '👤' },
           ];
@@ -869,8 +869,10 @@ export class NFTokenMintFormatter implements TransactionFormatter {
           // Parse flags
           const flags = [];
           if (tx.Flags & 1) flags.push('Burnable');
-          if (tx.Flags & 2) flags.push('Transferable');
-          if (tx.Flags & 8) flags.push('Only XRP');
+          if (tx.Flags & 2) flags.push('Only XRP');
+          if (tx.Flags & 4) flags.push('Trust Line');
+          if (tx.Flags & 8) flags.push('Transferable');
+          if (tx.Flags & 16) flags.push('Mutable');
           if (flags.length) {
                details.push({ label: 'Properties', value: flags.join(', '), icon: '⭐' });
           }
@@ -1302,6 +1304,11 @@ function formatCurrencyAmount(amount: any): string {
 function shortenAddress(address: string): string {
      if (!address || address.length < 10) return address || 'Unknown';
      return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function decodeHexValue(value: string): string {
+     if (!/^(?:[0-9a-f]{2})+$/i.test(value)) return value;
+     return Buffer.from(value, 'hex').toString('utf8');
 }
 
 function formatDate(timestamp: number): string {
