@@ -440,6 +440,12 @@ describe('TrustlinesComponent', () => {
                expect(component.isSummaryLoading()).toBeFalse();
           });
 
+          it('should preserve the transaction display when refreshing after a transaction', async () => {
+               await component.getTrustlinesForAccount(true, true);
+               expect(transactionUiService.clearAllOptionsAndMessages).not.toHaveBeenCalled();
+               expect(trustlineUtilService.loadTrustlines).toHaveBeenCalledWith(true);
+          });
+
           it('should handle error when fetching trustlines', async () => {
                txEnvironmentService.getValidatedEnvironment.and.returnValue(Promise.reject(new Error('Failed to fetch')));
                await component.getTrustlinesForAccount();

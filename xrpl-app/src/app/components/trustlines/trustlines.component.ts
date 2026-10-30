@@ -520,12 +520,14 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           }
      }
 
-     async getTrustlinesForAccount(forceRefresh = false): Promise<void> {
+     async getTrustlinesForAccount(forceRefresh = false, preserveTransactionDisplay = false): Promise<void> {
           this.isSummaryLoading.set(true);
 
           await this.measure('getTrustlinesForAccount', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
-               this.txUiService.clearAllOptionsAndMessages();
+               if (!preserveTransactionDisplay) {
+                    this.txUiService.clearAllOptionsAndMessages();
+               }
                this.xrplTxOptionsStore.reset();
 
                this.trustlineStoreService.setField('isLoading', true);
@@ -706,7 +708,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           await this.handleTxResult(txResult, env.client, env.wallet, destinationAddress);
 
           // Reload trustlines to get updated data (newly created trustlines, updated limits, etc.)
-          await this.getTrustlinesForAccount(true);
+          await this.getTrustlinesForAccount(true, true);
 
           await this.trustlineCurrencyService.refreshCurrentBalance();
           this.txUiService.resetCurrentStepToIdle();
