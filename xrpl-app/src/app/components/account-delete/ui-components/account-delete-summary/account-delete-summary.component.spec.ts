@@ -139,7 +139,7 @@ describe('AccountDeleteSummaryComponent', () => {
           expect(fixture.nativeElement.textContent).not.toContain('Resolve →');
      });
 
-     it('should call getEmptyStateMessage correctly', () => {
+     it('should expose the empty-state message for a ready account', () => {
           setInfo({
                walletName: 'My Wallet',
                canDelete: true,
@@ -147,7 +147,7 @@ describe('AccountDeleteSummaryComponent', () => {
                balanceWarning: null,
           });
 
-          expect(component.getEmptyStateMessage()).toBe('There are no blockers prohibiting account deletion.');
+          expect(component.emptyStateMessage()).toBe('This account has no blockers and is ready for deletion.');
      });
 
      it('should react to info changes', () => {

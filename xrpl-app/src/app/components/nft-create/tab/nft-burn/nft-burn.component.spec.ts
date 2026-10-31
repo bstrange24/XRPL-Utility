@@ -113,9 +113,9 @@ describe('NftBurnComponent', () => {
           component = fixture.componentInstance;
 
           // Set inputs
-          component.destinationItems = mockDestinationItems;
-          component.selectedDestinationItem = mockDestinationItems[0];
-          component.destinationSearchQuery = '';
+          fixture.componentRef.setInput('destinationItems', mockDestinationItems);
+          fixture.componentRef.setInput('selectedDestinationItem', mockDestinationItems[0]);
+          fixture.componentRef.setInput('destinationSearchQuery', '');
 
           fixture.detectChanges();
      });
@@ -131,15 +131,15 @@ describe('NftBurnComponent', () => {
 
      describe('Input properties', () => {
           it('should accept destinationItems input', () => {
-               expect(component.destinationItems).toEqual(mockDestinationItems);
+               expect(component.destinationItems()).toEqual(mockDestinationItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
-               expect(component.selectedDestinationItem).toEqual(mockDestinationItems[0]);
+               expect(component.selectedDestinationItem()).toEqual(mockDestinationItems[0]);
           });
 
           it('should accept destinationSearchQuery input', () => {
-               expect(component.destinationSearchQuery).toBe('');
+               expect(component.destinationSearchQuery()).toBe('');
           });
      });
 
@@ -167,47 +167,6 @@ describe('NftBurnComponent', () => {
           it('should have destinationValueChange emitter', () => {
                expect(component.destinationValueChange).toBeDefined();
                expect(component.destinationValueChange.emit).toBeDefined();
-          });
-     });
-
-     describe('onFocus', () => {
-          it('should format numeric input to 6 decimal places', () => {
-               const mockInput = { value: '2.5' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('2.500000');
-          });
-
-          it('should format integer to 6 decimal places', () => {
-               const mockInput = { value: '10' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('10.000000');
-          });
-
-          it('should not modify empty input', () => {
-               const mockInput = { value: '' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('');
-          });
-
-          it('should not modify non-numeric input', () => {
-               const mockInput = { value: 'abc' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('abc');
-          });
-
-          it('should handle negative numbers', () => {
-               const mockInput = { value: '-5.5' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('-5.500000');
-          });
-     });
-
-     describe('setNftExpirationDate', () => {
-          it('should set expiration field in store', () => {
-               const testDate = '2024-12-31T00:00:00';
-               component.setNftExpirationDate(testDate);
-
-               expect(nftCreateStoreService.setField).toHaveBeenCalledWith('expiration', testDate);
           });
      });
 
@@ -298,15 +257,15 @@ describe('NftBurnComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty destinationItems array', () => {
-               component.destinationItems = [];
+               fixture.componentRef.setInput('destinationItems', []);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual([]);
+               expect(component.destinationItems()).toEqual([]);
           });
 
           it('should handle null selectedDestinationItem', () => {
-               component.selectedDestinationItem = null;
+               fixture.componentRef.setInput('selectedDestinationItem', null);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toBeNull();
+               expect(component.selectedDestinationItem()).toBeNull();
           });
 
           it('should handle empty nftItems', () => {

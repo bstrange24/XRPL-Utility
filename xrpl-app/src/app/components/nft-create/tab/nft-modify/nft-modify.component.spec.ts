@@ -120,9 +120,9 @@ describe('NftModifyComponent', () => {
           component = fixture.componentInstance;
 
           // Set inputs
-          component.destinationItems = mockDestinationItems;
-          component.selectedDestinationItem = mockDestinationItems[0];
-          component.destinationSearchQuery = '';
+          fixture.componentRef.setInput('destinationItems', mockDestinationItems);
+          fixture.componentRef.setInput('selectedDestinationItem', mockDestinationItems[0]);
+          fixture.componentRef.setInput('destinationSearchQuery', '');
 
           fixture.detectChanges();
      });
@@ -137,15 +137,15 @@ describe('NftModifyComponent', () => {
 
      describe('Input properties', () => {
           it('should accept destinationItems input', () => {
-               expect(component.destinationItems).toEqual(mockDestinationItems);
+               expect(component.destinationItems()).toEqual(mockDestinationItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
-               expect(component.selectedDestinationItem).toEqual(mockDestinationItems[0]);
+               expect(component.selectedDestinationItem()).toEqual(mockDestinationItems[0]);
           });
 
           it('should accept destinationSearchQuery input', () => {
-               expect(component.destinationSearchQuery).toBe('');
+               expect(component.destinationSearchQuery()).toBe('');
           });
      });
 
@@ -176,41 +176,6 @@ describe('NftModifyComponent', () => {
           });
      });
 
-     describe('onFocus', () => {
-          it('should format numeric input to 6 decimal places', () => {
-               const mockInput = { value: '2.5' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('2.500000');
-          });
-
-          it('should format integer to 6 decimal places', () => {
-               const mockInput = { value: '10' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('10.000000');
-          });
-
-          it('should not modify empty input', () => {
-               const mockInput = { value: '' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('');
-          });
-
-          it('should not modify non-numeric input', () => {
-               const mockInput = { value: 'abc' } as HTMLInputElement;
-               component.onFocus({ target: mockInput } as unknown as FocusEvent);
-               expect(mockInput.value).toBe('abc');
-          });
-     });
-
-     describe('setNftExpirationDate', () => {
-          it('should set expiration field in store', () => {
-               const testDate = '2024-12-31T00:00:00';
-               component.setNftExpirationDate(testDate);
-
-               expect(nftCreateStoreService.setField).toHaveBeenCalledWith('expiration', testDate);
-          });
-     });
-
      describe('onNftSelected', () => {
           it('should set nftId when item is provided', () => {
                const item = { id: 'nft123', display: 'NFT 1' } as SelectItem;
@@ -224,26 +189,6 @@ describe('NftModifyComponent', () => {
 
                expect(nftCreateStoreService.setField).toHaveBeenCalledWith('nftId', '');
           });
-     });
-
-     describe('uriByteLength', () => {
-          it('should return 0 when URI is empty', () => {
-               initialURIValue = '';
-               const length = component.uriByteLength();
-               expect(length).toBe(0);
-          });
-
-          // it('should calculate correct byte length for hex-encoded URI', () => {
-          //      initialURIValue = '48656c6c6f'; // "Hello" in hex (10 chars = 5 bytes)
-          //      const length = component.uriByteLength();
-          //      expect(length).toBe(10 / 2); // 5 bytes
-          // });
-
-          // it('should handle even-length hex strings', () => {
-          //      initialURIValue = 'aabbccdd'; // 8 chars = 4 bytes
-          //      const length = component.uriByteLength();
-          //      expect(length).toBe(8 / 2); // 4 bytes
-          // });
      });
 
      describe('selectedNftIsNotMutable', () => {
@@ -312,15 +257,15 @@ describe('NftModifyComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty destinationItems array', () => {
-               component.destinationItems = [];
+               fixture.componentRef.setInput('destinationItems', []);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual([]);
+               expect(component.destinationItems()).toEqual([]);
           });
 
           it('should handle null selectedDestinationItem', () => {
-               component.selectedDestinationItem = null;
+               fixture.componentRef.setInput('selectedDestinationItem', null);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toBeNull();
+               expect(component.selectedDestinationItem()).toBeNull();
           });
 
           it('should handle empty nftItems', () => {

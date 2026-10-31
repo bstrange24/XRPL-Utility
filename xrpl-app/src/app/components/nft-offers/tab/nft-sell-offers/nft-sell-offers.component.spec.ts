@@ -3,8 +3,7 @@ import { signal } from '@angular/core';
 import { NftSellOffersComponent } from './nft-sell-offers.component';
 import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { XrplDateService } from '../../../../core/xrpl-date.service';
-import { ChecksStoreService } from '../../../../services/checks/checks-store/checks-store.service';
-import { ChecksTransactionViewModelService } from '../../../../services/checks/checks-transaction-view-model/checks-transaction-view-model.service';
+import { NftOffersTransactionViewModelService } from '../../../../services/nft/nft-offers-transaction-view-model/nft-offers-transaction-view-model.service';
 import { CurrencyStoreService } from '../../../../services/currency/currency-store/currency-store.service';
 import { CreateNftStoreService } from '../../../../services/nft/nft-store/nft-store.service';
 import { NftUtilService } from '../../../../services/nft/nft-util/nft-util.service';
@@ -19,9 +18,8 @@ describe('NftSellOffersComponent', () => {
 
      // Services
      let txUiService: any;
-     let checksStoreService: any;
      let currencyStoreService: any;
-     let checksTransactionViewModelService: any;
+     let nftOffersTransactionViewModelService: any;
      let utilsService: any;
      let trustlineCurrencyService: any;
      let trustlineUtilService: any;
@@ -57,15 +55,13 @@ describe('NftSellOffersComponent', () => {
                explorerUrl: signal('https://testnet.xrpl.org/'),
           };
 
-          checksStoreService = {};
-
           currencyStoreService = {
                currency: signal('XRP'),
                issuer: signal(''),
                balance: signal('1000'),
           };
 
-          checksTransactionViewModelService = {
+          nftOffersTransactionViewModelService = {
                currencyItems: jasmine.createSpy('currencyItems').and.returnValue(mockCurrencyItems),
                selectedCurrencyItem: jasmine.createSpy('selectedCurrencyItem').and.returnValue(mockCurrencyItems[0]),
                issuerItems: jasmine.createSpy('issuerItems').and.returnValue(mockIssuerItems),
@@ -108,9 +104,8 @@ describe('NftSellOffersComponent', () => {
                imports: [NftSellOffersComponent],
                providers: [
                     { provide: TransactionUiService, useValue: txUiService },
-                    { provide: ChecksStoreService, useValue: checksStoreService },
                     { provide: CurrencyStoreService, useValue: currencyStoreService },
-                    { provide: ChecksTransactionViewModelService, useValue: checksTransactionViewModelService },
+                    { provide: NftOffersTransactionViewModelService, useValue: nftOffersTransactionViewModelService },
                     { provide: UtilsService, useValue: utilsService },
                     { provide: TrustlineCurrencyService, useValue: trustlineCurrencyService },
                     { provide: TrustlineUtilService, useValue: trustlineUtilService },
@@ -126,9 +121,9 @@ describe('NftSellOffersComponent', () => {
           component = fixture.componentInstance;
 
           // Set inputs
-          component.destinationItems = mockDestinationItems;
-          component.selectedDestinationItem = mockDestinationItems[0];
-          component.destinationSearchQuery = '';
+          fixture.componentRef.setInput('destinationItems', mockDestinationItems);
+          fixture.componentRef.setInput('selectedDestinationItem', mockDestinationItems[0]);
+          fixture.componentRef.setInput('destinationSearchQuery', '');
 
           fixture.detectChanges();
      });
@@ -144,15 +139,15 @@ describe('NftSellOffersComponent', () => {
 
      describe('Input properties', () => {
           it('should accept destinationItems input', () => {
-               expect(component.destinationItems).toEqual(mockDestinationItems);
+               expect(component.destinationItems()).toEqual(mockDestinationItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
-               expect(component.selectedDestinationItem).toEqual(mockDestinationItems[0]);
+               expect(component.selectedDestinationItem()).toEqual(mockDestinationItems[0]);
           });
 
           it('should accept destinationSearchQuery input', () => {
-               expect(component.destinationSearchQuery).toBe('');
+               expect(component.destinationSearchQuery()).toBe('');
           });
      });
 
@@ -261,16 +256,12 @@ describe('NftSellOffersComponent', () => {
                expect(component.txUiService).toBe(txUiService);
           });
 
-          it('should have checksStoreService injected', () => {
-               expect(component.checksStoreService).toBe(checksStoreService);
-          });
-
           it('should have currencyStoreService injected', () => {
                expect(component.currencyStoreService).toBe(currencyStoreService);
           });
 
-          it('should have checksTransactionViewModelService injected', () => {
-               expect(component.checksTransactionViewModelService).toBe(checksTransactionViewModelService);
+          it('should have nftOffersTransactionViewModelService injected', () => {
+               expect(component.nftOffersTransactionViewModelService).toBe(nftOffersTransactionViewModelService);
           });
 
           it('should have utilsService injected', () => {
@@ -356,15 +347,15 @@ describe('NftSellOffersComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty destinationItems array', () => {
-               component.destinationItems = [];
+               fixture.componentRef.setInput('destinationItems', []);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual([]);
+               expect(component.destinationItems()).toEqual([]);
           });
 
           it('should handle null selectedDestinationItem', () => {
-               component.selectedDestinationItem = null;
+               fixture.componentRef.setInput('selectedDestinationItem', null);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toBeNull();
+               expect(component.selectedDestinationItem()).toBeNull();
           });
 
           it('should handle empty nftItems', () => {

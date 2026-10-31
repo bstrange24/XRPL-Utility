@@ -224,14 +224,14 @@ describe('ChecksCashComponent', () => {
 
      describe('@Input properties', () => {
           it('should accept showEnableTrustline input', () => {
-               expect(component.showEnableTrustline).toBeFalse();
+               expect(component.showEnableTrustline()).toBeFalse();
 
-               component.showEnableTrustline = true;
-               expect(component.showEnableTrustline).toBeTrue();
+               fixture.componentRef.setInput('showEnableTrustline', true);
+               expect(component.showEnableTrustline()).toBeTrue();
           });
 
           it('should default showEnableTrustline to false', () => {
-               expect(component.showEnableTrustline).toBeFalse();
+               expect(component.showEnableTrustline()).toBeFalse();
           });
      });
 
@@ -380,16 +380,16 @@ describe('ChecksCashComponent', () => {
      describe('Component lifecycle', () => {
           it('should initialize with default values', () => {
                expect(component).toBeDefined();
-               expect(component.showEnableTrustline).toBeFalse();
+               expect(component.showEnableTrustline()).toBeFalse();
           });
 
           it('should maintain component state between change detection cycles', () => {
-               component.showEnableTrustline = true;
+               fixture.componentRef.setInput('showEnableTrustline', true);
                fixture.detectChanges();
-               expect(component.showEnableTrustline).toBeTrue();
+               expect(component.showEnableTrustline()).toBeTrue();
 
                fixture.detectChanges(); // Second change detection
-               expect(component.showEnableTrustline).toBeTrue();
+               expect(component.showEnableTrustline()).toBeTrue();
           });
      });
 

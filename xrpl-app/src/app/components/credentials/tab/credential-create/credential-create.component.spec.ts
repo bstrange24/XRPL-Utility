@@ -5,7 +5,6 @@ import { CredentialStore } from '../../../../services/credentials/credential-sto
 import { CredentialUtilService } from '../../../../services/credentials/credential-util/credential-util.service';
 import { ConnectionGuardService } from '../../../../services/shared/connection-guard/connection-guard.service';
 import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
-import { SelectItem } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 
 describe('CredentialCreateComponent', () => {
      let component: CredentialCreateComponent;
@@ -50,6 +49,7 @@ describe('CredentialCreateComponent', () => {
                wantsOptions: signal(false),
                explorerUrl: signal('https://testnet.xrpl.org/'),
                clearAllOptionsAndMessages: jasmine.createSpy('clearAllOptionsAndMessages'),
+               toggleOptions: jasmine.createSpy('toggleOptions'),
           };
 
           await TestBed.configureTestingModule({
@@ -198,41 +198,14 @@ describe('CredentialCreateComponent', () => {
           });
      });
 
-     describe('EventEmitters', () => {
-          it('should have currencySelected EventEmitter', () => {
-               expect(component.currencySelected).toBeDefined();
-               expect(component.currencySelected.emit).toBeDefined();
-          });
+     describe('onOptionsToggled', () => {
+          it('should update the transaction options state and notify the parent', () => {
+               spyOn(component.optionsToggled, 'emit');
 
-          it('should emit currencySelected when called', () => {
-               spyOn(component.currencySelected, 'emit');
-               const mockCurrency = { id: 'USD', display: 'USD' } as SelectItem;
-               component.currencySelected.emit(mockCurrency);
-               expect(component.currencySelected.emit).toHaveBeenCalledWith(mockCurrency);
-          });
+               component.onOptionsToggled(true);
 
-          it('should emit currencySelected with null', () => {
-               spyOn(component.currencySelected, 'emit');
-               component.currencySelected.emit(null);
-               expect(component.currencySelected.emit).toHaveBeenCalledWith(null);
-          });
-
-          it('should have issuerSelected EventEmitter', () => {
-               expect(component.issuerSelected).toBeDefined();
-               expect(component.issuerSelected.emit).toBeDefined();
-          });
-
-          it('should emit issuerSelected when called', () => {
-               spyOn(component.issuerSelected, 'emit');
-               const mockIssuer = { id: 'rIssuer', display: 'Issuer' } as SelectItem;
-               component.issuerSelected.emit(mockIssuer);
-               expect(component.issuerSelected.emit).toHaveBeenCalledWith(mockIssuer);
-          });
-
-          it('should emit issuerSelected with null', () => {
-               spyOn(component.issuerSelected, 'emit');
-               component.issuerSelected.emit(null);
-               expect(component.issuerSelected.emit).toHaveBeenCalledWith(null);
+               expect(txUiService.toggleOptions).toHaveBeenCalledWith(true);
+               expect(component.optionsToggled.emit).toHaveBeenCalledWith(true);
           });
      });
 

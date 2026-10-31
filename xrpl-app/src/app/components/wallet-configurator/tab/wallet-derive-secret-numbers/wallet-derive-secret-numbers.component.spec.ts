@@ -58,16 +58,15 @@ describe('WalletDeriveSecretNumbersComponent', () => {
           expect(component).toBeTruthy();
      });
 
-     it('should update secret numbers on input', () => {
+     it('should update an individual secret number on input', () => {
           const event = {
-               target: { value: '123456, 654321' },
+               target: { value: '123456' },
           } as any;
 
-          component.onSecretNumberInput(event);
+          component.onSecretPartInput(0, event);
 
-          expect(storeMock.setField).toHaveBeenCalledWith('secretNumbers', '123456, 654321');
-
-          expect(utilMock.onSecretNumberInput).toHaveBeenCalled();
+          expect(component.secretNumberParts()[0]).toBe('123456');
+          expect(storeMock.setField).toHaveBeenCalledWith('secretNumbers', '123456');
      });
 
      it('should return correct initial validity state', () => {

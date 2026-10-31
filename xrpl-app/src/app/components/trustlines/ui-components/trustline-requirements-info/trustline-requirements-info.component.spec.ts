@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, signal } from '@angular/core';
 import { TrustlineRequirementsInfoComponent } from './trustline-requirements-info.component';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
@@ -25,26 +24,11 @@ describe('TrustlineRequirementsInfoComponent', () => {
           fixture = TestBed.createComponent(TrustlineRequirementsInfoComponent);
           component = fixture.componentInstance;
 
-          // Set required inputs
-          fixture.componentRef.setInput('activeTab', 'setTrustline');
-
           fixture.detectChanges();
      });
 
      it('should create', () => {
           expect(component).toBeTruthy();
-     });
-
-     describe('Inputs', () => {
-          it('should have activeTab input', () => {
-               expect(component.activeTab()).toBe('setTrustline');
-          });
-
-          it('should accept only setTrustline value', () => {
-               fixture.componentRef.setInput('activeTab', 'setTrustline');
-               fixture.detectChanges();
-               expect(component.activeTab()).toBe('setTrustline');
-          });
      });
 
      describe('isExpanded signal', () => {
@@ -53,15 +37,15 @@ describe('TrustlineRequirementsInfoComponent', () => {
           });
 
           it('should toggle to true when button clicked', () => {
-               component.isExpanded.set(true);
+               component.toggleExpanded();
                expect(component.isExpanded()).toBeTrue();
           });
 
           it('should toggle back to false', () => {
-               component.isExpanded.set(true);
+               component.toggleExpanded();
                expect(component.isExpanded()).toBeTrue();
 
-               component.isExpanded.set(false);
+               component.toggleExpanded();
                expect(component.isExpanded()).toBeFalse();
           });
      });

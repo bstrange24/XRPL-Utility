@@ -274,7 +274,7 @@ describe('NftOffersComponent', () => {
 
      describe('onNftSelected', () => {
           it('should update nft fields', () => {
-               component.onNftSelected({ nftId: '0000000000000001', index: 'offer123' });
+               component.onNftSelected({ id: '0000000000000001', display: 'NFT offer' });
                expect(nftCreateStoreService.setField).toHaveBeenCalledWith('nftId', '0000000000000001');
           });
      });

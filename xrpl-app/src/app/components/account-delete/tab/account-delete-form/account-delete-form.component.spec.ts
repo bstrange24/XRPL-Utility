@@ -129,17 +129,6 @@ describe('AccountDeleteFormComponent', () => {
      });
 
      describe('Output emitters', () => {
-          it('should have optionsToggled EventEmitter', () => {
-               expect(component.optionsToggled).toBeDefined();
-               expect(component.optionsToggled.emit).toBeDefined();
-          });
-
-          it('should emit optionsToggled when called', () => {
-               spyOn(component.optionsToggled, 'emit');
-               component.optionsToggled.emit(true);
-               expect(component.optionsToggled.emit).toHaveBeenCalledWith(true);
-          });
-
           it('should have performAction output', () => {
                expect(component.performAction).toBeDefined();
                expect(component.performAction.emit).toBeDefined();

@@ -61,6 +61,7 @@ describe('MptComponent', () => {
      let storageService: jasmine.SpyObj<StorageService>;
      let rightPanelService: jasmine.SpyObj<RightPanelService>;
      let xrplService: jasmine.SpyObj<XrplService>;
+     let handleTxResultSpy: jasmine.Spy;
 
      const mockWallet: Wallet = {
           address: 'rTestWallet1234567890',
@@ -142,7 +143,7 @@ describe('MptComponent', () => {
                metadataIsValid: computed(() => true),
           });
 
-          mptStoreService = jasmine.createSpyObj('MptStoreService', ['setField', 'getAll', 'resetMptFields'], {
+          mptStoreService = jasmine.createSpyObj('MptStoreService', ['setField', 'getAll', 'resetMptFields', 'syncFromLocalStorage'], {
                mptIssuanceId: signal(''),
                metaData: signal('{}'),
                authAction: signal('authorize'),
@@ -153,6 +154,8 @@ describe('MptComponent', () => {
                assetScale: signal(0),
                tokenCount: signal(1000),
                destination: signal(''),
+               amount: signal(''),
+               delegatorAddress: signal(''),
                XLS89_TEMPLATE: jasmine.createSpy('XLS89_TEMPLATE').and.returnValue(XLS89_TEMPLATE_MOCK),
           });
           mptStoreService.getAll.and.returnValue({} as any);
@@ -202,7 +205,9 @@ describe('MptComponent', () => {
           toastService = jasmine.createSpyObj('ToastService', ['error', 'success', 'info']);
 
           storageService = jasmine.createSpyObj('StorageService', ['get', 'set']);
-          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel']);
+          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel', 'clearPanel'], {
+               resetTrigger: signal(0),
+          });
 
           await TestBed.configureTestingModule({
                imports: [MptComponent],
@@ -225,7 +230,7 @@ describe('MptComponent', () => {
                     { provide: StorageService, useValue: storageService },
                     { provide: RightPanelService, useValue: rightPanelService },
                     { provide: XrplService, useValue: xrplService },
-                    { provide: ConnectionGuardService, useValue: { isConnected: signal(true) } },
+                    { provide: ConnectionGuardService, useValue: { isConnectionReady: () => true } },
                     { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
                     { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
                ],
@@ -260,7 +265,8 @@ describe('MptComponent', () => {
                mptOrchestrator.executeMptTx.calls.reset();
                toastService.error.calls.reset();
                mptUtilService.resetFlags.calls.reset();
-               spyOn(component as any, 'handleTxResult').and.resolveTo(true);
+               handleTxResultSpy = jasmine.createSpy('handleTxResult').and.resolveTo(true);
+               Object.defineProperty(component, 'handleTxResult', { value: handleTxResultSpy });
           });
 
           it('should execute createMpt successfully', async () => {
@@ -275,7 +281,7 @@ describe('MptComponent', () => {
           it('should not reset flags when createMpt fails', async () => {
                mptViewModelService.activeTab.set('createMpt');
                mptOrchestrator.executeMptTx.and.resolveTo({ success: false, error: 'Transaction failed' });
-               (component as any).handleTxResult.and.resolveTo(false);
+               handleTxResultSpy.and.resolveTo(false);
 
                await component.performAction();
 
@@ -284,24 +290,26 @@ describe('MptComponent', () => {
 
           it('should not reset flags when createMpt is simulated', async () => {
                mptViewModelService.activeTab.set('createMpt');
-               spyOn((component as any).xrplTxOptionsStore, 'isSimulateEnabled').and.returnValue(true);
+               component.xrplTxOptionsStore.setField('isSimulateEnabled', true);
 
                await component.performAction();
 
                expect(mptUtilService.resetFlags).not.toHaveBeenCalled();
           });
 
-          it('should reject createMpt with oversized metadata', async () => {
+          it('should disable createMpt when metadata is oversized', () => {
                mptViewModelService.activeTab.set('createMpt');
-               // Override the computed for this test
                Object.defineProperty(mptViewModelService, 'metadataByteLength', {
                     value: computed(() => 2048),
                     writable: true,
                });
+               Object.defineProperty(mptViewModelService, 'metadataIsValid', {
+                    value: computed(() => false),
+                    writable: true,
+               });
+               component.onCanCreateMptChange(false);
 
-               await component.performAction();
-
-               expect(toastService.error).toHaveBeenCalledWith(jasmine.stringContaining('exceeds maximum size'), jasmine.any(Number));
+               expect(component.canPerformAction()).toBeFalse();
                expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
           });
 

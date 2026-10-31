@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { NftOfferValidatorService } from './nft-offer-validator/nft-offer-validator.service';
+import { NftOfferValidatorService } from './nft-offer-validator.service';
 
 describe('NftOfferValidatorService', () => {
      let service: NftOfferValidatorService;

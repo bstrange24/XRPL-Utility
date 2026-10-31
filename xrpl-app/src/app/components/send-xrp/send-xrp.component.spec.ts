@@ -266,9 +266,14 @@ describe('SendXrpComponent', () => {
                component.ngOnInit();
 
                expect(transactionDropdownService.loadCustomDestinations).toHaveBeenCalled();
-               expect(rightPanelService.setPanel).toHaveBeenCalledWith(SendXrpRequirementsInfoComponent, {
-                    activeTab: sendXrpViewModelService.activeTab,
-               });
+               expect(rightPanelService.setPanel).toHaveBeenCalledWith(
+                    jasmine.objectContaining({
+                         mainComponent: SendXrpRequirementsInfoComponent,
+                         mainInputs: {
+                              activeTab: sendXrpViewModelService.activeTab,
+                         },
+                    }),
+               );
                expect((component as any).applyTabFromQueryParam).toHaveBeenCalled();
           });
      });

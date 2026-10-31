@@ -229,7 +229,7 @@ describe('MptUtilService', () => {
      describe('getMpts', () => {
           const classicAddress = 'rTestAddress';
 
-          it('should process issuances and holdings correctly', () => {
+          it('should process issuances and holdings correctly', async () => {
                const accountObjectsResponse = {
                     result: {
                          account_objects: [
@@ -256,8 +256,20 @@ describe('MptUtilService', () => {
                          ],
                     },
                };
+               mockXrplService.getClient.and.resolveTo({} as any);
+               mockXrplService.doesMptExist.and.resolveTo({
+                    node: {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         index: 'idx1',
+                         mpt_issuance_id: 'issuance-1',
+                         OutstandingAmount: '1000',
+                         AssetScale: 2,
+                         Flags: 0,
+                         Issuer: 'rIssuer',
+                    },
+               } as any);
 
-               const result = service.getMpts(accountObjectsResponse as any, classicAddress);
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
 
                expect(result.length).toBe(1);
                expect(result[0]).toEqual({
@@ -266,14 +278,16 @@ describe('MptUtilService', () => {
                     mpt_issuance_id: 'issuance-1',
                     MPTAmount: '500',
                     AssetScale: 2,
-                    OutstandingAmount: '0',
-                    MaximumAmount: 'Unlimited',
+                    OutstandingAmount: '1000',
+                    MaximumAmount: 'Not Set',
                     TransferFee: '0',
                     MPTokenMetadata: 'N/A',
                     Flags: 0,
-                    Issuer: 'Unknown',
+                    Issuer: 'rIssuer',
                     isHolder: true,
+                    isVaultMpt: false,
                     amount: '500',
+                    Account: classicAddress,
                });
           });
 
@@ -301,7 +315,7 @@ describe('MptUtilService', () => {
                expect(result).toEqual([]);
           });
 
-          it('should add issuances not held by current account', () => {
+          it('should add issuances not held by current account', async () => {
                const accountObjectsResponse = {
                     result: {
                          account_objects: [
@@ -321,7 +335,7 @@ describe('MptUtilService', () => {
                     },
                };
 
-               const result = service.getMpts(accountObjectsResponse as any, classicAddress);
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
 
                expect(result.length).toBe(1);
                expect(result[0].LedgerEntryType).toBe('MPTokenIssuance');
@@ -329,21 +343,31 @@ describe('MptUtilService', () => {
                expect(result[0].mpt_issuance_id).toBe('issuance-2');
           });
 
-          it('should handle empty account_objects', () => {
+          it('should handle empty account_objects', async () => {
                const accountObjectsResponse = {
                     result: {
                          account_objects: undefined,
                     },
                };
 
-               const result = service.getMpts(accountObjectsResponse as any, classicAddress);
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
                expect(result).toEqual([]);
           });
 
-          it('should use asset scale from cache when available', () => {
+          it('should use asset scale from cache when available', async () => {
                const assetScaleCache = new Map();
                assetScaleCache.set('issuance-1', 5);
                assetScaleCacheSignal.set(assetScaleCache);
+               mockXrplService.getClient.and.resolveTo({} as any);
+               mockXrplService.doesMptExist.and.resolveTo({
+                    node: {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         index: 'idx2',
+                         mpt_issuance_id: 'issuance-1',
+                         OutstandingAmount: '1000',
+                         Flags: 0,
+                    },
+               } as any);
 
                const accountObjectsResponse = {
                     result: {
@@ -360,7 +384,7 @@ describe('MptUtilService', () => {
                     },
                };
 
-               const result = service.getMpts(accountObjectsResponse as any, classicAddress);
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
                expect(result[0].AssetScale).toBe(5);
           });
      });

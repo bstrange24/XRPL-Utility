@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { VaultStoreService } from './vault-store.service';
 
 describe('VaultStoreService', () => {
-  let service: VaultStoreService;
+  let service: InstanceType<typeof VaultStoreService>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});

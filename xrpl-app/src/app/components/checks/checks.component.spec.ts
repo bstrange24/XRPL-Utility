@@ -564,7 +564,7 @@ describe('SendChecksComponent', () => {
           });
 
           it('should handle onCheckSelectedInUi', () => {
-               const item = { amount: '250', checkId: 'abc' };
+               const item: SelectItem = { id: 'abc', display: '250 XRP', amount: '250' };
                component.onCheckSelectedInUi(item);
 
                expect(checksStoreMock.setField).toHaveBeenCalledWith('amount', '250');

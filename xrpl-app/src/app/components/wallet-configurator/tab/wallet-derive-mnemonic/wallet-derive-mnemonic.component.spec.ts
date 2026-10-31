@@ -60,20 +60,19 @@ describe('WalletDeriveMnemonicComponent', () => {
      });
 
      it('should return correct word count', () => {
-          storeMock.mnemonicInput.set('one two three');
-          expect(component.wordCount()).toBe(3);
+          storeMock.mnemonic.set('one two three');
+          expect(component.enteredWordCount()).toBe(3);
      });
 
      it('should update mnemonic on input', () => {
           const event = {
-               target: { value: 'alpha beta gamma' },
+               target: { value: 'alpha' },
           } as any;
 
-          component.onMnemonicInput(event);
+          component.onMnemonicWordInput(0, event);
 
-          expect(storeMock.setField).toHaveBeenCalledWith('mnemonic', 'alpha beta gamma');
-
-          expect(utilMock.onMnemonicInput).toHaveBeenCalled();
+          expect(component.mnemonicWords()[0]).toBe('alpha');
+          expect(storeMock.setField).toHaveBeenCalledWith('mnemonic', 'alpha');
      });
 
      it('should call derive wallet function', () => {

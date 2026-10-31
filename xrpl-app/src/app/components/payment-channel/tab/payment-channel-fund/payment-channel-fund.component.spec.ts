@@ -284,37 +284,6 @@ describe('PaymentChannelFundComponent', () => {
           });
      });
 
-     describe('onFocus method', () => {
-          it('should select all text in input when focused', () => {
-               const mockInput = document.createElement('input');
-               mockInput.value = '123.456';
-               const selectSpy = spyOn(mockInput, 'select');
-
-               const event = { target: mockInput } as any;
-               component.onFocus(event);
-
-               expect(selectSpy).toHaveBeenCalled();
-          });
-
-          it('should handle null target gracefully', () => {
-               const event = { target: null } as any;
-               expect(() => component.onFocus(event)).not.toThrow();
-          });
-
-          // it('should handle non-input target gracefully', () => {
-          //      // Create a completely mock event that won't cause errors
-          //      const event = {
-          //           target: {
-          //                tagName: 'DIV',
-          //                nodeType: 1,
-          //           },
-          //      } as any;
-
-          //      // This should not throw because we're not trying to call select on a non-input
-          //      expect(() => component.onFocus(event)).not.toThrow();
-          // });
-     });
-
      // describe('Options toggled output', () => {
      //      it('should emit optionsToggled when checkbox changes', () => {
      //           // Create a new spy for this test

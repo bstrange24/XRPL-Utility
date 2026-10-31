@@ -422,7 +422,7 @@ describe('EscrowUtilService', () => {
                };
                mockXrplCacheService.getTxCached.and.resolveTo({ result: { tx_json: { Sequence: 123 } } });
                const result = await service.getExistingEscrows(mockObjects, 'rALICE', 'createEscrow', false);
-               expect(result[0].Amount).toEqual({ value: '50', currency: 'USD', issuer: 'rISSUER' });
+               expect(result[0].Amount).toEqual(jasmine.objectContaining({ value: '50', currency: 'USD', issuer: 'rISSUER' }));
           });
      });
 

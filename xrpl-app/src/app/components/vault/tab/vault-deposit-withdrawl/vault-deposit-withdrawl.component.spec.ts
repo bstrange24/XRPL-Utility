@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { VaultDepositWithdrawlComponent } from './vault-deposit-withdrawl.component';
+import { VaultDepositWithdrawComponent } from './vault-deposit-withdrawl.component';
 
-describe('VaultDepositWithdrawlComponent', () => {
-  let component: VaultDepositWithdrawlComponent;
-  let fixture: ComponentFixture<VaultDepositWithdrawlComponent>;
+describe('VaultDepositWithdrawComponent', () => {
+  let component: VaultDepositWithdrawComponent;
+  let fixture: ComponentFixture<VaultDepositWithdrawComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [VaultDepositWithdrawlComponent]
+      imports: [VaultDepositWithdrawComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(VaultDepositWithdrawlComponent);
+    fixture = TestBed.createComponent(VaultDepositWithdrawComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

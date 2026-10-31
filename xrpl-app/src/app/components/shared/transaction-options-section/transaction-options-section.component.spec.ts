@@ -125,27 +125,28 @@ describe('TransactionOptionsSectionComponent', () => {
      describe('invoiceIdHex', () => {
           it('should return empty string when invoiceId is empty', () => {
                xrplTxOptionsStore.invoiceId.set('');
-               const result = component.invoiceIdHex();
+               const result = component.invoiceIdValidatorService.invoiceIdHex();
                expect(result).toBe('');
           });
 
-          it('should return uppercase hex when input is already hex', () => {
-               xrplTxOptionsStore.invoiceId.set('a1b2c3');
-               const result = component.invoiceIdHex();
-               expect(result).toBe('A1B2C3');
+          it('should return uppercase hex when input is already a 32-byte invoice ID', () => {
+               const invoiceId = 'a1'.repeat(32);
+               xrplTxOptionsStore.invoiceId.set(invoiceId);
+               const result = component.invoiceIdValidatorService.invoiceIdHex();
+               expect(result).toBe(invoiceId.toUpperCase());
           });
 
-          it('should convert string to hex when input is not hex', () => {
+          it('should leave non-hex input unchanged for validation', () => {
                xrplTxOptionsStore.invoiceId.set('test');
-               const result = component.invoiceIdHex();
-               expect(result).toBe(xrpl.convertStringToHex('test'));
+               const result = component.invoiceIdValidatorService.invoiceIdHex();
+               expect(result).toBe('test');
           });
      });
 
      describe('invoiceIdHexLengthBytes', () => {
           it('should return 0 when hex is empty', () => {
                xrplTxOptionsStore.invoiceId.set('');
-               const result = component.invoiceIdHexLengthBytes();
+               const result = component.invoiceIdValidatorService.invoiceIdHexLengthBytes();
                expect(result).toBe(0);
           });
 
@@ -153,7 +154,7 @@ describe('TransactionOptionsSectionComponent', () => {
                xrplTxOptionsStore.invoiceId.set('test');
                const hex = xrpl.convertStringToHex('test');
                const expectedLength = Math.ceil(hex.length / 2);
-               const result = component.invoiceIdHexLengthBytes();
+               const result = component.invoiceIdValidatorService.invoiceIdHexLengthBytes();
                expect(result).toBe(expectedLength);
           });
      });
@@ -161,54 +162,52 @@ describe('TransactionOptionsSectionComponent', () => {
      describe('isInvoiceIdTooLong', () => {
           it('should return false when within limit', () => {
                xrplTxOptionsStore.invoiceId.set('test');
-               const result = component.isInvoiceIdTooLong();
+               const result = component.invoiceIdValidatorService.isInvoiceIdTooLong();
                expect(result).toBeFalse();
           });
 
           // it('should return true when exceeds 256 bytes', () => {
           //      const longString = 'a'.repeat(300);
           //      xrplTxOptionsStore.invoiceId.set(longString);
-          //      const result = component.isInvoiceIdTooLong();
+          //      const result = component.invoiceIdValidatorService.isInvoiceIdTooLong();
           //      expect(result).toBeTrue();
           // });
      });
 
      describe('invoiceIdToHex', () => {
           it('should return empty string for empty value', () => {
-               const result = component.invoiceIdToHex('');
+               const result = component.invoiceIdValidatorService.invoiceIdToHex('');
                expect(result).toBe('');
           });
 
           it('should return uppercase hex for hex input', () => {
-               const result = component.invoiceIdToHex('a1b2c3');
+               const result = component.invoiceIdValidatorService.invoiceIdToHex('a1b2c3');
                expect(result).toBe('A1B2C3');
           });
 
           it('should convert string to hex', () => {
-               const result = component.invoiceIdToHex('test');
+               const result = component.invoiceIdValidatorService.invoiceIdToHex('test');
                expect(result).toBe(xrpl.convertStringToHex('test'));
           });
      });
 
-     describe('onCredentialIDsChange', () => {
-          it('should set credentialID field', () => {
-               component.onCredentialIDsChange('cred1, cred2, cred3');
+     describe('addCredentialId', () => {
+          it('should append a trimmed credential ID', () => {
+               const credentialId = 'A'.repeat(64);
+               component.newCredentialId.set(` ${credentialId} `);
 
-               expect(credentialStore.setField).toHaveBeenCalledWith('credentialID', 'cred1, cred2, cred3');
-               expect(credentialStore.setField).toHaveBeenCalledWith('credentialIDs', ['cred1', 'cred2', 'cred3']);
+               component.addCredentialId();
+
+               expect(credentialStore.setField).toHaveBeenCalledWith('credentialIDs', [credentialId]);
+               expect(component.newCredentialId()).toBe('');
           });
 
-          it('should handle empty string', () => {
-               component.onCredentialIDsChange('');
+          it('should not add an empty credential ID', () => {
+               component.newCredentialId.set('   ');
 
-               expect(credentialStore.setField).toHaveBeenCalledWith('credentialID', '');
-               expect(credentialStore.setField).toHaveBeenCalledWith('credentialIDs', []);
-          });
+               component.addCredentialId();
 
-          it('should trim spaces from credential IDs', () => {
-               component.onCredentialIDsChange('  cred1  ,  cred2  ,  cred3  ');
-
-               expect(credentialStore.setField).toHaveBeenCalledWith('credentialIDs', ['cred1', 'cred2', 'cred3']);
+               expect(credentialStore.setField).not.toHaveBeenCalledWith('credentialIDs', jasmine.anything());
           });
      });
 

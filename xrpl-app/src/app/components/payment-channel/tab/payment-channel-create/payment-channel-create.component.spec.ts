@@ -69,8 +69,11 @@ describe('PaymentChannelCreateComponent', () => {
           component = fixture.componentInstance;
 
           // Set inputs
-          component.destinationItems = mockDestinationItems;
-          component.selectedDestinationItem = mockSelectedDestinationItem;
+          fixture.componentRef.setInput('destinationItems', mockDestinationItems);
+          fixture.componentRef.setInput('selectedDestinationItem', mockSelectedDestinationItem);
+          fixture.componentRef.setInput('destinationSearchQuery', '');
+          fixture.componentRef.setInput('wantsOptions', false);
+          fixture.componentRef.setInput('tab', 'createPaymentChannel');
 
           fixture.detectChanges();
      });
@@ -86,39 +89,39 @@ describe('PaymentChannelCreateComponent', () => {
 
      describe('Input properties', () => {
           it('should accept destinationItems input', () => {
-               expect(component.destinationItems).toEqual(mockDestinationItems);
+               expect(component.destinationItems()).toEqual(mockDestinationItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
-               expect(component.selectedDestinationItem).toEqual(mockSelectedDestinationItem);
+               expect(component.selectedDestinationItem()).toEqual(mockSelectedDestinationItem);
           });
 
           it('should update destinationItems when changed', () => {
                const newItems = [{ id: 'rNew', display: 'New' }];
-               component.destinationItems = newItems;
+               fixture.componentRef.setInput('destinationItems', newItems);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual(newItems);
+               expect(component.destinationItems()).toEqual(newItems);
           });
 
           it('should update selectedDestinationItem when changed', () => {
                const newSelected = { id: 'rNew', display: 'New Selected' };
-               component.selectedDestinationItem = newSelected;
+               fixture.componentRef.setInput('selectedDestinationItem', newSelected);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toEqual(newSelected);
+               expect(component.selectedDestinationItem()).toEqual(newSelected);
           });
      });
 
      describe('Output emitters', () => {
-          it('should have destinationChanged EventEmitter', () => {
-               expect(component.destinationChanged).toBeDefined();
-               expect(component.destinationChanged.emit).toBeDefined();
+          it('should have destinationChange output', () => {
+               expect(component.destinationChange).toBeDefined();
+               expect(component.destinationChange.emit).toBeDefined();
           });
 
-          it('should emit destinationChanged when called', () => {
-               spyOn(component.destinationChanged, 'emit');
+          it('should emit destinationChange when called', () => {
+               spyOn(component.destinationChange, 'emit');
                const mockItem = { id: 'rDest', display: 'Destination' };
-               component.destinationChanged.emit(mockItem);
-               expect(component.destinationChanged.emit).toHaveBeenCalledWith(mockItem);
+               component.handleDestinationChange(mockItem);
+               expect(component.destinationChange.emit).toHaveBeenCalledWith(mockItem);
           });
 
           it('should have optionsToggled output', () => {
@@ -133,14 +136,11 @@ describe('PaymentChannelCreateComponent', () => {
           });
      });
 
-     describe('onFocus', () => {
-          it('should call select on input element when select exists', () => {
-               const mockInput = { select: jasmine.createSpy('select') } as any;
-               const event = { target: mockInput } as FocusEvent;
-
-               component.onFocus(event);
-
-               expect(mockInput.select).toHaveBeenCalled();
+     describe('input event handlers', () => {
+          it('should forward search query changes', () => {
+               spyOn(component.searchQueryChange, 'emit');
+               component.handleSearchQueryChange('query');
+               expect(component.searchQueryChange.emit).toHaveBeenCalledWith('query');
           });
      });
 
@@ -205,15 +205,15 @@ describe('PaymentChannelCreateComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty destinationItems', () => {
-               component.destinationItems = [];
+               fixture.componentRef.setInput('destinationItems', []);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual([]);
+               expect(component.destinationItems()).toEqual([]);
           });
 
           it('should handle null selectedDestinationItem', () => {
-               component.selectedDestinationItem = null;
+               fixture.componentRef.setInput('selectedDestinationItem', null);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toBeNull();
+               expect(component.selectedDestinationItem()).toBeNull();
           });
 
           it('should handle amount with decimal places', () => {

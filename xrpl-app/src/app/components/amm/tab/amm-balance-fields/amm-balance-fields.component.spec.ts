@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BalanceFieldsComponent } from './amm-balance-fields.component';
+import { AmmBalanceFieldsComponent } from './amm-balance-fields.component';
 
 describe('BalanceFieldsComponent', () => {
-     let component: BalanceFieldsComponent;
-     let fixture: ComponentFixture<BalanceFieldsComponent>;
+     let component: AmmBalanceFieldsComponent;
+     let fixture: ComponentFixture<AmmBalanceFieldsComponent>;
 
      beforeEach(async () => {
           await TestBed.configureTestingModule({
-               imports: [BalanceFieldsComponent],
+               imports: [AmmBalanceFieldsComponent],
           }).compileComponents();
 
-          fixture = TestBed.createComponent(BalanceFieldsComponent);
+          fixture = TestBed.createComponent(AmmBalanceFieldsComponent);
           component = fixture.componentInstance;
           fixture.detectChanges();
      });

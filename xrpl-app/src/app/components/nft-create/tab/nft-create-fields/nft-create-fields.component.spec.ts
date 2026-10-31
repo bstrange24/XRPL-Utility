@@ -174,9 +174,9 @@ describe('NftCreateFieldsComponent', () => {
           component = fixture.componentInstance;
 
           // Set inputs
-          component.destinationItems = mockDestinationItems;
-          component.selectedDestinationItem = mockDestinationItems[0];
-          component.destinationSearchQuery = '';
+          fixture.componentRef.setInput('destinationItems', mockDestinationItems);
+          fixture.componentRef.setInput('selectedDestinationItem', mockDestinationItems[0]);
+          fixture.componentRef.setInput('destinationSearchQuery', '');
 
           fixture.detectChanges();
      });
@@ -195,15 +195,15 @@ describe('NftCreateFieldsComponent', () => {
 
      describe('Input properties', () => {
           it('should accept destinationItems input', () => {
-               expect(component.destinationItems).toEqual(mockDestinationItems);
+               expect(component.destinationItems()).toEqual(mockDestinationItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
-               expect(component.selectedDestinationItem).toEqual(mockDestinationItems[0]);
+               expect(component.selectedDestinationItem()).toEqual(mockDestinationItems[0]);
           });
 
           it('should accept destinationSearchQuery input', () => {
-               expect(component.destinationSearchQuery).toBe('');
+               expect(component.destinationSearchQuery()).toBe('');
           });
      });
 
@@ -404,15 +404,15 @@ describe('NftCreateFieldsComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty destinationItems array', () => {
-               component.destinationItems = [];
+               fixture.componentRef.setInput('destinationItems', []);
                fixture.detectChanges();
-               expect(component.destinationItems).toEqual([]);
+               expect(component.destinationItems()).toEqual([]);
           });
 
           it('should handle null selectedDestinationItem', () => {
-               component.selectedDestinationItem = null;
+               fixture.componentRef.setInput('selectedDestinationItem', null);
                fixture.detectChanges();
-               expect(component.selectedDestinationItem).toBeNull();
+               expect(component.selectedDestinationItem()).toBeNull();
           });
 
           it('should handle transfer fee update', () => {

@@ -304,21 +304,18 @@ describe('UtilsService', () => {
      });
 
      describe('updateAmount', () => {
-          it('should update amount in multiple stores', () => {
-               service.updateAmount('123.456');
-               expect(accountConfiguratorStoreService.setField).toHaveBeenCalled();
-               expect(checksStoreService.setField).toHaveBeenCalled();
-               expect(escrowStoreService.setField).toHaveBeenCalled();
-               expect(nftCreateStoreService.setField).toHaveBeenCalled();
+          it('should update the selected amount store with rounded value', () => {
+               service.updateAmount('123.456', 'checks');
+               expect(checksStoreService.setField).toHaveBeenCalledWith('amount', '123.456');
           });
 
           it('should handle negative numbers by clearing field', () => {
-               service.updateAmount('-5');
+               service.updateAmount('-5', 'checks');
                expect(checksStoreService.setField).toHaveBeenCalledWith('amount', '');
           });
 
           it('should handle invalid numbers by clearing field', () => {
-               service.updateAmount('invalid');
+               service.updateAmount('invalid', 'checks');
                expect(checksStoreService.setField).toHaveBeenCalledWith('amount', '');
           });
      });

@@ -263,111 +263,29 @@ describe('CredentialsSummaryComponent', () => {
      describe('onCredentialClick', () => {
           const mockCred = mockCreds.list[0];
 
-          it('should not emit when tab is createCredential', () => {
+          it('should not select a credential when tab is createCredential', () => {
                fixture.componentRef.setInput('tab', 'createCredential');
                fixture.detectChanges();
 
-               spyOn(component.credentialSelected, 'emit');
-
                component.onCredentialClick(mockCred);
 
-               expect(component.credentialSelected.emit).not.toHaveBeenCalled();
+               expect(credentialUtilService.selectCredentialFromList).not.toHaveBeenCalled();
           });
 
-          it('should emit credentialSelected when tab is acceptCredential', () => {
-               fixture.componentRef.setInput('tab', 'acceptCredential');
-               fixture.detectChanges();
-
-               spyOn(component.credentialSelected, 'emit');
-
+          it('should delegate selection with the active tab and wallet address', () => {
                component.onCredentialClick(mockCred);
-
-               expect(component.credentialSelected.emit).toHaveBeenCalledWith(mockCred);
-          });
-
-          it('should emit credentialSelected when tab is deleteCredential', () => {
-               fixture.componentRef.setInput('tab', 'deleteCredential');
-               fixture.detectChanges();
-
-               spyOn(component.credentialSelected, 'emit');
-
-               component.onCredentialClick(mockCred);
-
-               expect(component.credentialSelected.emit).toHaveBeenCalledWith(mockCred);
-          });
-
-          it('should emit credentialSelected when tab is verifyCredential', () => {
-               fixture.componentRef.setInput('tab', 'verifyCredential');
-               fixture.detectChanges();
-
-               spyOn(component.credentialSelected, 'emit');
-
-               component.onCredentialClick(mockCred);
-
-               expect(component.credentialSelected.emit).toHaveBeenCalledWith(mockCred);
-          });
-     });
-
-     describe('selectCredential', () => {
-          const mockCred = mockCreds.list[0];
-
-          it('should call credentialUtilService.selectCredentialFromList', () => {
-               component.selectCredential(mockCred, 'list');
 
                expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(mockCred, 'acceptCredential', mockWallet.address);
           });
-     });
 
-     describe('canSelectCredential', () => {
-          const credentialFromIssuer = { id: 'cred1', Issuer: 'rTestAddress123' } as unknown as CredentialItemVm;
-          const credentialFromOther = { id: 'cred2', Issuer: 'rOtherAddress' } as unknown as CredentialItemVm;
-
-          it('should return false when no wallet address', () => {
-               fixture.componentRef.setInput('wallet', null);
-               fixture.detectChanges();
-
-               const result = component.canSelectCredential(credentialFromIssuer);
-               expect(result).toBeFalse();
-          });
-
-          it('should return false for createCredential tab', () => {
-               fixture.componentRef.setInput('tab', 'createCredential');
-               fixture.detectChanges();
-
-               const result = component.canSelectCredential(credentialFromIssuer);
-               expect(result).toBeFalse();
-          });
-
-          it('should return true for acceptCredential tab', () => {
-               fixture.componentRef.setInput('tab', 'acceptCredential');
-               fixture.detectChanges();
-
-               const result = component.canSelectCredential(credentialFromIssuer);
-               expect(result).toBeTrue();
-          });
-
-          it('should return true for deleteCredential tab', () => {
-               fixture.componentRef.setInput('tab', 'deleteCredential');
-               fixture.detectChanges();
-
-               const result = component.canSelectCredential(credentialFromIssuer);
-               expect(result).toBeTrue();
-          });
-
-          it('should return true for verifyCredential when issuer matches wallet', () => {
+          it('should delegate credentials from other issuers for verification to the utility service', () => {
+               const credentialFromOther = { id: 'cred2', Issuer: 'rOtherAddress' } as unknown as CredentialItemVm;
                fixture.componentRef.setInput('tab', 'verifyCredential');
                fixture.detectChanges();
 
-               const result = component.canSelectCredential(credentialFromIssuer);
-               expect(result).toBeTrue();
-          });
+               component.onCredentialClick(credentialFromOther);
 
-          it('should return false for verifyCredential when issuer does not match wallet', () => {
-               fixture.componentRef.setInput('tab', 'verifyCredential');
-               fixture.detectChanges();
-
-               const result = component.canSelectCredential(credentialFromOther);
-               expect(result).toBeFalse();
+               expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(credentialFromOther, 'verifyCredential', mockWallet.address);
           });
      });
 

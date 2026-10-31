@@ -104,57 +104,52 @@ describe('ChecksCancelComponent', () => {
      });
 
      describe('Service injection', () => {
-          it('should have checksTransactionViewModelService injected', () => {
-               expect(component.checksTransactionViewModelService).toBe(checksTransactionViewModelService);
+          it('should have the checks view model injected', () => {
+               expect(component.viewModel).toBe(checksTransactionViewModelService);
           });
      });
 
      describe('Signal access (from view model)', () => {
           it('should have access to checkItems signal', () => {
-               const items = component.checksTransactionViewModelService.checkItems();
+               const items = component.viewModel.checkItems();
                expect(items).toEqual(mockCheckItems);
           });
 
-          // it('should have access to filteredCheckIds signal', () => {
-          //      const filteredIds = component.checksTransactionViewModelService.filteredCheckIds();
-          //      expect(filteredIds).toEqual(['check123', 'check456']);
-          // });
-
           it('should have access to selectedCheckItem signal', () => {
-               const selected = component.checksTransactionViewModelService.selectedCheckItem();
+               const selected = component.viewModel.selectedCheckItem();
                expect(selected).toBeNull();
           });
 
           it('should have access to selectedCheckIsExpired signal', () => {
-               const isExpired = component.checksTransactionViewModelService.selectedCheckIsExpired();
+               const isExpired = component.viewModel.selectedCheckIsExpired();
                expect(isExpired).toBeFalse();
           });
 
           it('should have access to activeTab signal', () => {
-               const activeTab = component.checksTransactionViewModelService.activeTab();
+               const activeTab = component.viewModel.activeTab();
                expect(activeTab).toBe('cancelCheck');
           });
 
           it('should have access to explorerLinks signal', () => {
-               const explorerLinks = component.checksTransactionViewModelService.explorerLinks();
+               const explorerLinks = component.viewModel.explorerLinks();
                expect(explorerLinks).toBeNull();
           });
 
           it('should have access to infoData signal', () => {
-               const infoData = component.checksTransactionViewModelService.infoData();
+               const infoData = component.viewModel.infoData();
                expect(infoData).toBeNull();
           });
      });
 
      describe('Template bindings (indirect tests)', () => {
           it('should have checkItems signal available for template binding', () => {
-               const items = component.checksTransactionViewModelService.checkItems();
+               const items = component.viewModel.checkItems();
                expect(items).toBeDefined();
                expect(items.length).toBe(2);
           });
 
           it('should have selectedCheckItem signal available for template', () => {
-               const selected = component.checksTransactionViewModelService.selectedCheckItem();
+               const selected = component.viewModel.selectedCheckItem();
                expect(selected).toBeNull();
           });
      });
@@ -206,37 +201,21 @@ describe('ChecksCancelComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle empty check items list', () => {
-               const emptyCheckItemsService = {
-                    checkItems: signal([]),
-                    filteredCheckIds: signal([]),
-                    selectedCheckItem: signal(null),
-                    activeTab: signal('cancelCheck'),
-               };
+               checksTransactionViewModelService.checkItems.set([]);
 
-               // Reconfigure with empty items
-               const emptyService = { ...checksTransactionViewModelService, ...emptyCheckItemsService };
-               (component as any).checksTransactionViewModelService = emptyService;
-
-               const items = component.checksTransactionViewModelService.checkItems();
+               const items = component.viewModel.checkItems();
                expect(items).toEqual([]);
           });
 
           it('should handle undefined selectedCheckItem', () => {
-               const selected = component.checksTransactionViewModelService.selectedCheckItem();
+               const selected = component.viewModel.selectedCheckItem();
                expect(selected).toBeNull();
           });
 
           it('should handle undefined check items gracefully', () => {
-               const undefinedItemsService = {
-                    checkItems: signal(undefined),
-                    filteredCheckIds: signal([]),
-                    selectedCheckItem: signal(null),
-                    activeTab: signal('cancelCheck'),
-               };
+               checksTransactionViewModelService.checkItems.set(undefined);
 
-               (component as any).checksTransactionViewModelService = undefinedItemsService;
-
-               const items = component.checksTransactionViewModelService.checkItems();
+               const items = component.viewModel.checkItems();
                expect(items).toBeUndefined();
           });
      });

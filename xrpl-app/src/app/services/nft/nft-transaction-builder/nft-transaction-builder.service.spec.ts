@@ -330,7 +330,7 @@ describe('NftTransactionBuilderService', () => {
 
                expect(tx.TransactionType).toBe('NFTokenAcceptOffer');
                expect(tx.Account).toBe(mockWallet.classicAddress);
-               expect(tx.NFTokenSellOffer).toBe('offer456');
+               expect(tx['NFTokenSellOffer']).toBe('offer456');
                expect(tx.Flags).toBe(0);
                expect(tx.Fee).toBe('12');
                expect(tx.LastLedgerSequence).toBe(1000 + AppConstants.LAST_LEDGER_ADD_TIME);
@@ -348,7 +348,7 @@ describe('NftTransactionBuilderService', () => {
 
                expect(tx.TransactionType).toBe('NFTokenAcceptOffer');
                expect(tx.Account).toBe(mockWallet.classicAddress);
-               expect(tx.NFTokenSellOffer).toBe('offer789');
+               expect(tx['NFTokenSellOffer']).toBe('offer789');
                expect(tx.Flags).toBe(1);
                expect(tx.Fee).toBe('12');
                expect(tx.LastLedgerSequence).toBe(1000 + AppConstants.LAST_LEDGER_ADD_TIME);

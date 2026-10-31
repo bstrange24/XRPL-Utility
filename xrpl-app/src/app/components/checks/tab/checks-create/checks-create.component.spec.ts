@@ -295,19 +295,19 @@ describe('ChecksCreateComponent', () => {
      describe('@Input properties', () => {
           it('should accept destinationItems input', () => {
                const mockItems = [{ id: 'dest1', display: 'Destination 1' }] as any;
-               component.destinationItems = mockItems;
-               expect(component.destinationItems).toBe(mockItems);
+               fixture.componentRef.setInput('destinationItems', mockItems);
+               expect(component.destinationItems()).toBe(mockItems);
           });
 
           it('should accept selectedDestinationItem input', () => {
                const mockItem = { id: 'dest1', display: 'Destination 1' } as any;
-               component.selectedDestinationItem = mockItem;
-               expect(component.selectedDestinationItem).toBe(mockItem);
+               fixture.componentRef.setInput('selectedDestinationItem', mockItem);
+               expect(component.selectedDestinationItem()).toBe(mockItem);
           });
 
           it('should accept destinationSearchQuery input', () => {
-               component.destinationSearchQuery = 'test query';
-               expect(component.destinationSearchQuery).toBe('test query');
+               fixture.componentRef.setInput('destinationSearchQuery', 'test query');
+               expect(component.destinationSearchQuery()).toBe('test query');
           });
      });
 });

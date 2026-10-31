@@ -98,19 +98,19 @@ describe('MptDestroyComponent', () => {
           });
      });
 
-     describe('mptIssuanceId getter/setter', () => {
+     describe('mptIssuanceId getter and setter method', () => {
           it('should return mptIssuanceId from store', () => {
                mptStoreService.mptIssuanceId.set('test123');
                expect(component.mptIssuanceId).toBe('test123');
           });
 
           it('should set mptIssuanceId in store', () => {
-               component.mptIssuanceId = 'newId123';
+               component.setMptIssuanceId('newId123');
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', 'newId123');
           });
 
           it('should handle empty string', () => {
-               component.mptIssuanceId = '';
+               component.setMptIssuanceId('');
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', '');
           });
      });
@@ -179,9 +179,9 @@ describe('MptDestroyComponent', () => {
 
      describe('Edge cases', () => {
           it('should handle rapid issuance ID changes', () => {
-               component.mptIssuanceId = 'id1';
-               component.mptIssuanceId = 'id2';
-               component.mptIssuanceId = 'id3';
+               component.setMptIssuanceId('id1');
+               component.setMptIssuanceId('id2');
+               component.setMptIssuanceId('id3');
 
                expect(mptStoreService.setField).toHaveBeenCalledTimes(3);
                expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', 'id1');

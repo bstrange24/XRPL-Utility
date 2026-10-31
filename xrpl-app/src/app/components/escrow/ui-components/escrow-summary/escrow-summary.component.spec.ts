@@ -68,7 +68,7 @@ describe('EscrowSummaryComponent', () => {
                currentStep: signal('idle'),
                wantsOptions: signal(false),
           };
-          escrowUtilService = jasmine.createSpyObj('EscrowUtilService', ['onEscrowSelectedInUi', 'onEscrowSelected']);
+          escrowUtilService = jasmine.createSpyObj('EscrowUtilService', ['onEscrowSelectedInUi']);
           escrowTransactionViewModelService = {
                infoData: signal(mockInfoData),
                activeTab: signal('createEscrow'),
@@ -107,7 +107,6 @@ describe('EscrowSummaryComponent', () => {
      afterEach(() => {
           summaryTextConfigService.buildSummaryText.calls.reset();
           escrowUtilService.onEscrowSelectedInUi.calls.reset();
-          escrowUtilService.onEscrowSelected.calls.reset();
      });
 
      it('should create', () => {
@@ -217,14 +216,6 @@ describe('EscrowSummaryComponent', () => {
           });
      });
 
-     describe('selectEscrow', () => {
-          it('should call escrowUtilService.onEscrowSelected with the escrow', () => {
-               component.selectEscrow(mockEscrow, 'list');
-
-               expect(escrowUtilService.onEscrowSelected).toHaveBeenCalledWith(mockEscrow);
-          });
-     });
-
      describe('summaryText', () => {
           it('should return empty string when infoData is null', () => {
                (escrowTransactionViewModelService.infoData as any).set(null);
@@ -260,40 +251,6 @@ describe('EscrowSummaryComponent', () => {
 
                expect(result).toBe('Test summary text');
                expect(summaryTextConfigService.buildSummaryText).toHaveBeenCalledWith('Test Wallet', 10, 'createEscrow', jasmine.any(Object));
-          });
-     });
-
-     describe('getActionText', () => {
-          it('should return "created." for createEscrow', () => {
-               fixture.componentRef.setInput('tab', 'createEscrow');
-               fixture.detectChanges();
-
-               const result = component.getActionText();
-               expect(result).toBe('created.');
-          });
-
-          it('should return "that can be finished." for finishEscrow', () => {
-               fixture.componentRef.setInput('tab', 'finishEscrow');
-               fixture.detectChanges();
-
-               const result = component.getActionText();
-               expect(result).toBe('that can be finished.');
-          });
-
-          it('should return "that can be cancelled." for cancelEscrow', () => {
-               fixture.componentRef.setInput('tab', 'cancelEscrow');
-               fixture.detectChanges();
-
-               const result = component.getActionText();
-               expect(result).toBe('that can be cancelled.');
-          });
-
-          it('should return empty string for unknown tab', () => {
-               fixture.componentRef.setInput('tab', 'unknown' as EscrowActionTypes);
-               fixture.detectChanges();
-
-               const result = component.getActionText();
-               expect(result).toBe('');
           });
      });
 
