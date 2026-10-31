@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MptRequirementsInfoComponent } from './mpt-requirements-info.component';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideIcons } from '@ng-icons/core';
-import { heroExclamationTriangle, heroClock, heroChevronDown, heroInformationCircle, heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
-import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
+import { heroChevronDown, heroClock, heroDocumentText, heroExclamationTriangle, heroInformationCircle, heroMagnifyingGlass } from '@ng-icons/heroicons/outline';
+import { icons, LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
+
+import { MptRequirementsInfoComponent } from './mpt-requirements-info.component';
 
 describe('MptRequirementsInfoComponent', () => {
      let component: MptRequirementsInfoComponent;
@@ -19,6 +20,7 @@ describe('MptRequirementsInfoComponent', () => {
                          heroExclamationTriangle,
                          heroClock,
                          heroChevronDown,
+                         heroDocumentText,
                          heroInformationCircle,
                          heroMagnifyingGlass,
                     }),
@@ -128,17 +130,17 @@ describe('MptRequirementsInfoComponent', () => {
      // ---------------------------------
      // UI State Text
      // ---------------------------------
-     it('should show Expand text when collapsed', () => {
-          const text = fixture.nativeElement.textContent;
-          expect(text).toContain('Expand');
+     it('should label the toggle button Expand when collapsed', () => {
+          const toggleButton = fixture.nativeElement.querySelectorAll('button')[1];
+          expect(toggleButton.getAttribute('aria-label')).toBe('Expand Panel');
      });
 
-     it('should show Collapse text when expanded', () => {
+     it('should label the toggle button Collapse when expanded', () => {
           component.isExpanded.set(true);
           fixture.detectChanges();
 
-          const text = fixture.nativeElement.textContent;
-          expect(text).toContain('Collapse');
+          const toggleButton = fixture.nativeElement.querySelectorAll('button')[1];
+          expect(toggleButton.getAttribute('aria-label')).toBe('Collapse Panel');
      });
 
      // ---------------------------------

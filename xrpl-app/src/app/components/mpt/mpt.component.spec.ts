@@ -259,6 +259,8 @@ describe('MptComponent', () => {
                component.currentWallet.set(mockWallet);
                mptOrchestrator.executeMptTx.calls.reset();
                toastService.error.calls.reset();
+               mptUtilService.resetFlags.calls.reset();
+               spyOn(component as any, 'handleTxResult').and.resolveTo(true);
           });
 
           it('should execute createMpt successfully', async () => {
@@ -267,6 +269,26 @@ describe('MptComponent', () => {
 
                expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalled();
                expect(mptOrchestrator.executeMptTx).toHaveBeenCalled();
+               expect(mptUtilService.resetFlags).toHaveBeenCalled();
+          });
+
+          it('should not reset flags when createMpt fails', async () => {
+               mptViewModelService.activeTab.set('createMpt');
+               mptOrchestrator.executeMptTx.and.resolveTo({ success: false, error: 'Transaction failed' });
+               (component as any).handleTxResult.and.resolveTo(false);
+
+               await component.performAction();
+
+               expect(mptUtilService.resetFlags).not.toHaveBeenCalled();
+          });
+
+          it('should not reset flags when createMpt is simulated', async () => {
+               mptViewModelService.activeTab.set('createMpt');
+               spyOn((component as any).xrplTxOptionsStore, 'isSimulateEnabled').and.returnValue(true);
+
+               await component.performAction();
+
+               expect(mptUtilService.resetFlags).not.toHaveBeenCalled();
           });
 
           it('should reject createMpt with oversized metadata', async () => {

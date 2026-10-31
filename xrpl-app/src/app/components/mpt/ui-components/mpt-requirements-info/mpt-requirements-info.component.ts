@@ -1,8 +1,9 @@
+import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
+
 import { expandCollapse } from '../../../../services/utils/animations/animations.service';
-import { CommonModule } from '@angular/common';
 
 @Component({
      selector: 'app-mpt-requirements-info',

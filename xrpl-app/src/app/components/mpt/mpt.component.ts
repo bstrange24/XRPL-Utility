@@ -428,7 +428,10 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                this.authorizedStorage.removeIssuance(config.mpt.mptIssuanceId);
           }
 
-          await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
+          const transactionSucceeded = await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
+          if (currentTab === 'createMpt' && transactionSucceeded && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+               this.mptUtilService.resetFlags();
+          }
           this.txUiService.resetCurrentStepToIdle();
      }
 

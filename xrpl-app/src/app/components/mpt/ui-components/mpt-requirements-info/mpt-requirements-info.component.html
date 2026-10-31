@@ -7,7 +7,7 @@
                     <span class="font-semibold text-gray-900">MPT Info</span>
                </button>
 
-               <button type="button" (click)="isExpanded.set(!isExpanded())" class="btn-ghost flex items-center gap-2" title="{{ isExpanded() ? 'Collapse Panel' : 'Expand Panel' }}">
+               <button type="button" (click)="isExpanded.set(!isExpanded())" class="btn-ghost flex items-center gap-2" [attr.aria-label]="isExpanded() ? 'Collapse Panel' : 'Expand Panel'" [title]="isExpanded() ? 'Collapse Panel' : 'Expand Panel'">
                     <lucide-icon [name]="isExpanded() ? 'chevron-up' : 'chevron-down'" size="16" />
                </button>
           </div>
