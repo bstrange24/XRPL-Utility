@@ -34,7 +34,7 @@ describe('WalletConfiguratorOrchestratorService', () => {
 
      beforeEach(async () => {
           walletGeneratorMock = jasmine.createSpyObj<WalletGeneratorService>('WalletGeneratorService', ['generateWallet', 'importWallet']);
-          txUiMock = jasmine.createSpyObj<TransactionUiService>('TransactionUiService', ['clearTxResultsHash', 'resetCurrentStepToIdle', 'setTxResultSignal'], { currentStep: signal('idle') });
+          txUiMock = jasmine.createSpyObj<TransactionUiService>('TransactionUiService', ['clearTxResultsHash', 'resetCurrentStepToIdle', 'setTxResultSignal', 'setWalletOperationResult'], { currentStep: signal('idle') });
 
           walletsStoreMock = jasmine.createSpyObj<InstanceType<typeof WalletsStoreService>>('WalletsStoreService', ['updateField']);
           walletsUtilMock = jasmine.createSpyObj<WalletsUtilService>('WalletsUtilService', ['getEncryptionType']);
@@ -88,7 +88,8 @@ describe('WalletConfiguratorOrchestratorService', () => {
 
                expect(result.success).toBeTrue();
                expect(result.wallet).toEqual(mockWallet);
-               expect(txUiMock.setTxResultSignal).toHaveBeenCalledWith(mockWallet);
+               expect(txUiMock.setTxResultSignal).not.toHaveBeenCalled();
+               expect(txUiMock.setWalletOperationResult).toHaveBeenCalledWith(mockWallet, 'created');
                expect(toastMock.success).toHaveBeenCalled();
           });
 
@@ -104,6 +105,7 @@ describe('WalletConfiguratorOrchestratorService', () => {
 
                const result = await service.executeWalletFlow(importConfig);
                expect(result.success).toBeTrue();
+               expect(txUiMock.setWalletOperationResult).toHaveBeenCalledWith(mockWallet, 'derived');
           });
 
           it('should reject invalid validation', async () => {

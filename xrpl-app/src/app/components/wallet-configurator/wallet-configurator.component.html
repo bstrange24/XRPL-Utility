@@ -28,9 +28,11 @@
                <app-wallet-generate></app-wallet-generate>
 
                <!-- Execution Time -->
+               @if (walletConfiguratorOrchestrator.executionTimeValue()) {
                <div class="text-sm text-gray-500 mt-4">
                     <app-execution-time-display [time]="walletConfiguratorOrchestrator.executionTimeValue()"></app-execution-time-display>
                </div>
+               }
 
                <!-- Transaction Preview -->
                <div class="pt-2">

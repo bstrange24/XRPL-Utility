@@ -46,7 +46,9 @@ export class TransactionResultsComponent implements OnInit, OnChanges {
           return groups.filter(group => group.details.length > 0);
      }
 
-     formatDetailLabel(label: string): string {
+     formatDetailLabel(label: string | null | undefined): string {
+          if (!label) return 'Unknown';
+
           const words = label
                .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
                .replace(/([a-z0-9])([A-Z])/g, '$1 $2')

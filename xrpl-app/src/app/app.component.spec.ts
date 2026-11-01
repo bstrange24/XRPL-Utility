@@ -117,6 +117,7 @@ describe('AppComponent', () => {
                setWarning: jasmine.createSpy('setWarning'),
                setError: jasmine.createSpy('setError'),
                setInfoMessage: jasmine.createSpy('setInfoMessage'),
+               clearWalletOperationResult: jasmine.createSpy('clearWalletOperationResult'),
                clearTxResultsHash: jasmine.createSpy('clearTxResultsHash'),
                resetCurrentStepToIdle: jasmine.createSpy('resetCurrentStepToIdle'),
           };
@@ -218,6 +219,7 @@ describe('AppComponent', () => {
 
                routerEventsSubject.next(new NavigationEnd(1, '/test', '/test'));
                expect(component.isNavigating()).toBeFalse();
+               expect(transactionUiService.clearWalletOperationResult).toHaveBeenCalled();
           });
 
           it('should set isNavigating to false on NavigationCancel', () => {

@@ -29,6 +29,7 @@ export class TransactionUiService {
      result = signal<string>('');
      txSignal = signal<any[]>([]);
      txResultSignal = signal<any[]>([]);
+     walletOperationResult = signal<{ address: string; name?: string; encryptionAlgorithm?: string; action: 'created' | 'derived' } | null>(null);
      txHashSignal = signal<string[]>([]);
      wantsOptions = signal<boolean>(false);
      infoPanelExpanded = signal<boolean>(false);
@@ -75,10 +76,12 @@ export class TransactionUiService {
      }
 
      setTxResultSignal(result: any) {
+          this.walletOperationResult.set(null);
           this.txResultSignal.set(Array.isArray(result) ? result : [result]);
      }
 
      addTxResultSignal(tx: any) {
+          this.walletOperationResult.set(null);
           this.txResultSignal.update(arr => [...arr, tx]);
      }
 
@@ -96,6 +99,20 @@ export class TransactionUiService {
 
      clearTxResultSignal() {
           this.txResultSignal.set([]);
+          this.clearWalletOperationResult();
+     }
+
+     clearWalletOperationResult() {
+          this.walletOperationResult.set(null);
+     }
+
+     setWalletOperationResult(wallet: { address: string; name?: string; encryptionAlgorithm?: string }, action: 'created' | 'derived') {
+          this.walletOperationResult.set({
+               address: wallet.address,
+               name: wallet.name,
+               encryptionAlgorithm: wallet.encryptionAlgorithm,
+               action,
+          });
      }
 
      clearTxHashSignal() {
@@ -235,6 +252,7 @@ export class TransactionUiService {
      clearAllOptionsAndMessages() {
           // Keep the txJson and txResult displayed when deleting an account,
           // or when a background wallet refresh is in progress after a transaction.
+          this.clearWalletOperationResult();
           if (!this.suppressTxClear() && this.accountDeleteStoreService.savedTxJson().length <= 0 && this.accountDeleteStoreService.savedTxResult().length <= 0) {
                this.clearTxResultsHash();
           }

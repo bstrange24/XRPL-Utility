@@ -26,4 +26,9 @@ describe('TransactionResultsComponent', () => {
     expect(component.formatDetailLabel('FLAGS')).toBe('Flags');
     expect(component.formatDetailLabel('PaymentChannelFund')).toBe('Payment Channel Fund');
   });
+
+  it('should handle missing transaction labels', () => {
+    expect(component.formatDetailLabel(undefined)).toBe('Unknown');
+    expect(component.formatDetailLabel(null)).toBe('Unknown');
+  });
 });

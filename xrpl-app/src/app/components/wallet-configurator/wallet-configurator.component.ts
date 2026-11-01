@@ -94,6 +94,8 @@ export class WalletConfiguratorComponent extends WalletDestinationBase implement
 
      async setTab(tab: string): Promise<void> {
           if (!WALLET_GENERATOR_TAB.includes(tab as any)) return;
+          this.txUiService.clearTxResultsHash();
+          this.walletConfiguratorOrchestrator.clearExecutionTime();
           this.walletsViewModelService.activeTab.set(tab as WalletGeneratorActionTypes);
           this.clearInputFields();
           this.walletsStoreService.resetAll();

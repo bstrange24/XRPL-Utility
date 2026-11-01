@@ -71,6 +71,9 @@ export class AppComponent extends WalletDestinationBase implements OnInit {
                if (event instanceof NavigationStart) {
                     this.isNavigating.set(true);
                } else if (event instanceof NavigationEnd || event instanceof NavigationCancel || event instanceof NavigationError) {
+                    if (event instanceof NavigationEnd) {
+                         this.txUiService.clearWalletOperationResult();
+                    }
                     this.isNavigating.set(false);
                }
           });

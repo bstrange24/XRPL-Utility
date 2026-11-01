@@ -131,6 +131,7 @@ describe('WalletConfiguratorComponent', () => {
 
           walletConfiguratorOrchestrator = {
                executionTimeValue: signal(''),
+               clearExecutionTime: jasmine.createSpy('clearExecutionTime'),
                executeWalletFlow: jasmine.createSpy('executeWalletFlow').and.returnValue(Promise.resolve({ success: true, wallet: mockWallets[0] })),
                removeCustomWallet: jasmine.createSpy('removeCustomWallet').and.returnValue({ success: true }),
           };
@@ -406,6 +407,8 @@ describe('WalletConfiguratorComponent', () => {
                await component.setTab('deriveSeed');
                expect(walletsViewModelService.activeTab()).toBe('deriveSeed');
                expect(walletsStoreService.resetAll).toHaveBeenCalled();
+               expect(transactionUiService.clearTxResultsHash).toHaveBeenCalled();
+               expect(walletConfiguratorOrchestrator.clearExecutionTime).toHaveBeenCalled();
           });
 
           it('should ignore invalid tab', async () => {

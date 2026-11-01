@@ -59,12 +59,14 @@ describe('TransactionUiService', () => {
      it('should clear all signals', () => {
           service.setTxSignal({ a: 1 });
           service.setTxResultSignal({ b: 1 });
+          service.setWalletOperationResult({ address: 'rWallet' }, 'created');
           // service.setTxHashSignal('h1');
 
           service.clearTxResultsHash();
 
           expect(service.txSignal().length).toBe(0);
           expect(service.txResultSignal().length).toBe(0);
+          expect(service.walletOperationResult()).toBeNull();
           expect(service.txHashSignal().length).toBe(0);
      });
 
