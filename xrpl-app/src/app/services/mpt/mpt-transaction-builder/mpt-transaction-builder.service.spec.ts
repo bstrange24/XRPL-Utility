@@ -328,6 +328,7 @@ describe('MptTransactionBuilderService', () => {
                const mpt = {
                     mptIssuanceId: 'issuance-1',
                     lockAction: 'lock',
+                    destination: 'rMptHolder123456789',
                };
 
                const tx = service.buildMptLockTransaction(mockWallet, mockEnv, mpt);
@@ -337,18 +338,21 @@ describe('MptTransactionBuilderService', () => {
                expect(tx.MPTokenIssuanceID).toBe('issuance-1');
                expect(tx.Fee).toBe('12');
                expect(tx.LastLedgerSequence).toBe(1000 + AppConstants.LAST_LEDGER_ADD_TIME);
-               expect(tx.Flags).toBeUndefined();
+               expect(tx.Holder).toBe('rMptHolder123456789');
+               expect(tx.Flags).toBe(xrpl.MPTokenIssuanceSetFlags.tfMPTLock);
           });
 
           it('should build MPTokenIssuanceSet transaction with unlock flag', () => {
                const mpt = {
                     mptIssuanceId: 'issuance-1',
                     lockAction: 'unlock',
+                    destination: 'rMptHolder123456789',
                };
 
                const tx = service.buildMptLockTransaction(mockWallet, mockEnv, mpt);
 
                expect(tx.TransactionType).toBe('MPTokenIssuanceSet');
+               expect(tx.Holder).toBe('rMptHolder123456789');
                expect(tx.Flags).toBe(xrpl.MPTokenIssuanceSetFlags.tfMPTUnlock);
           });
      });

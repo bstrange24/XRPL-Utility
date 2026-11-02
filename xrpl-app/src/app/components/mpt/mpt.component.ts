@@ -281,7 +281,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           const wallet = this.currentWallet();
 
           let destinationAddress = '';
-          if (currentTab === 'sendMpt' || currentTab === 'clawbackMpt' || currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt') {
+          if (currentTab === 'sendMpt' || currentTab === 'clawbackMpt' || currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt' || currentTab === 'lockMpt' || currentTab === 'unlockMpt') {
                destinationAddress = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
                if (!destinationAddress || !xrpl.isValidAddress(destinationAddress)) {
                     this.toastService.error(`Please enter a valid destination address or select one from the dropdown.`, AppConstants.TOAST.ERROR);
@@ -516,7 +516,11 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      // }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
+          const existingMpts = await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress);
+          const selectedAddress = this.walletManagerService.getSelectedWallet()?.classicAddress;
+          if (selectedAddress !== env.wallet.classicAddress) return;
+
+          this.mptStoreService.setField('existingMpts', existingMpts);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
      }
 

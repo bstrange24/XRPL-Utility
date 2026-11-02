@@ -96,10 +96,7 @@ export class MptSummaryComponent {
      }
 
      isLockedMpt(mpt: any): boolean {
-           if (!mpt) return false;
-
-           const flagText = Array.isArray(mpt.flags) ? mpt.flags.join(', ') : String(mpt.flags ?? '');
-           return flagText.toLowerCase().includes('lock');
+          return mpt?.isHolder === true && ((Number(mpt.holderFlags) || 0) & 0x00000001) !== 0;
      }
 
      // Computed values

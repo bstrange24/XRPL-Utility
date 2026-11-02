@@ -89,7 +89,8 @@ export class MptTransactionBuilderService {
           };
           if (mpt.delegatorAddress) tx.Delegate = wallet.classicAddress;
 
-          if (mpt.lockAction === 'unlock') tx.Flags = xrpl.MPTokenIssuanceSetFlags.tfMPTUnlock;
+          if (mpt.destination) tx.Holder = mpt.destination;
+          tx.Flags = mpt.lockAction === 'unlock' ? xrpl.MPTokenIssuanceSetFlags.tfMPTUnlock : xrpl.MPTokenIssuanceSetFlags.tfMPTLock;
 
           return tx;
      }

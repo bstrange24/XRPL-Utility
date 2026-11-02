@@ -376,6 +376,12 @@ describe('MptSummaryComponent', () => {
      });
 
      describe('Edge cases', () => {
+          it('should identify a holder as locked only from its holder lock state', () => {
+               expect(component.isLockedMpt({ isHolder: true, holderFlags: 1, flags: 'canLock' })).toBeTrue();
+               expect(component.isLockedMpt({ isHolder: true, holderFlags: 0, flags: 'canLock' })).toBeFalse();
+               expect(component.isLockedMpt({ isHolder: false, holderFlags: 1 })).toBeFalse();
+          });
+
           it('should handle empty mptsToShow', () => {
                viewModel.infoData.set({ ...mockInfoData, mptCount: 0, mptsToShow: [] });
                fixture.detectChanges();

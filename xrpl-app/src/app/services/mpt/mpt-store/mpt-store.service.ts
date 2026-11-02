@@ -26,6 +26,7 @@ export interface MPTokenHolding {
      MPTAmount?: string;
      AssetScale?: number;
      Flags?: number;
+     holderFlags?: number;
      Account?: string;
      isHolder?: boolean;
      amount?: string;

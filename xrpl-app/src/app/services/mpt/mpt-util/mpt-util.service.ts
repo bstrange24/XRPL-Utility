@@ -159,6 +159,7 @@ export class MptUtilService extends PerformanceBaseComponent {
                     TransferFee: '0',
                     MPTokenMetadata: 'N/A',
                     Flags: mptNode.Flags || 0,
+                    holderFlags: Number(holding.Flags) || 0,
                     Issuer: issuer,
                     isHolder: !isIssuerOwnedZeroBalance,
                     isVaultMpt: vaultShareIds.has(holding.MPTokenIssuanceID),

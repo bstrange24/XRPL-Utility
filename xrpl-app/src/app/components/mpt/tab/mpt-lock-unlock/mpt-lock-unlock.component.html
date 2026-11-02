@@ -60,14 +60,14 @@
                     <app-field-helper title="Action" [items]="mptLockActionHelperItems" [show]="showMptLockActionHelper" />
                </div>
 
-               <!-- MPT Issuer -->
+               <!-- MPT Holder -->
                <div>
                     <div class="field-label">
-                         <label for="mptIssuerHolder" class="label-primary"> MPT Issuer <span class="text-red-500">*</span> </label>
+                         <label for="mptIssuerHolder" class="label-primary"> MPT Holder <span class="text-red-500">*</span> </label>
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Account that issued the MPT (the holder's account that needs authorization).</p>
+                         <p class="text-secondary">Holder account whose MPT balance will be locked or unlocked.</p>
                          <button type="button" (click)="toggleDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
@@ -87,7 +87,7 @@
                     <p class="form-error mt-2">{{ mptAuthorizeValidator.getDestinationErrorMessage() }}</p>
                     }
 
-                    <app-field-helper title="MPT Issuer" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
+                    <app-field-helper title="MPT Holder" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
                </div>
 
                <!-- Select MPT -->

@@ -131,6 +131,7 @@ export class MptTransactionViewModelService {
                     outstanding: m.OutstandingAmount,
                     transferFee: m.TransferFee,
                     flags: this.mptUtilService.decodeMptFlagsForUi(m.Flags || 0),
+                    holderFlags: m.holderFlags ?? 0,
                     Issuer: m.Issuer,
 
                     ticker: decodedMetadata?.ticker ? decodedMetadata?.ticker : 'N/A',

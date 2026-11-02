@@ -191,6 +191,7 @@ describe('MptTransactionViewModelService', () => {
                          AssetScale: 2,
                          isHolder: true,
                          Flags: 2,
+                         holderFlags: 1,
                          TransferFee: '0.5',
                          MPTokenMetadata: 'metadata',
                     },
@@ -211,6 +212,7 @@ describe('MptTransactionViewModelService', () => {
                expect(result?.mptsToShow[0].mpt_issuance_id).toBe('issuance-1');
                // expect(result?.mptsToShow[0].ticker).toBe('TEST');
                expect(result?.mptsToShow[0].flags).toBe('canLock, canTrade');
+               expect(result?.mptsToShow[0].holderFlags).toBe(1);
                expect(result?.mptsToShow[0].formattedAmount).toBe('5.00');
                // expect(result?.mptsToShow[0].usefulLinks.length).toBe(1);
                expect(result?.links).toContain('View MPTs');
