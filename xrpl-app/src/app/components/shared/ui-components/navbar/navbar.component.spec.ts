@@ -62,6 +62,7 @@ describe('NavbarComponent', () => {
                          { path: 'create-credentials', component: {} as any },
                          { path: 'permissioned-domain', component: {} as any },
                          { path: 'create-did', component: {} as any },
+                         { path: 'tickets', component: {} as any },
                          { path: 'time-escrow', component: {} as any },
                          { path: 'conditional-escrow', component: {} as any },
                          { path: 'create-nft', component: {} as any },
@@ -155,6 +156,12 @@ describe('NavbarComponent', () => {
      describe('Route active detection', () => {
           it('should detect accounts routes as active', async () => {
                await router.navigate(['/account-balance-changes']);
+               fixture.detectChanges();
+               expect(component.isAccountsActive()).toBeTrue();
+          });
+
+          it('should detect tickets route as active', async () => {
+               await router.navigate(['/tickets']);
                fixture.detectChanges();
                expect(component.isAccountsActive()).toBeTrue();
           });
