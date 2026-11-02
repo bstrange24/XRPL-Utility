@@ -83,6 +83,11 @@ describe('AccountChangesComponent', () => {
      const filterValueSignal: WritableSignal<string> = signal('');
      const dateRangeSignal: WritableSignal<{ start: Date | null; end: Date | null }> = signal({ start: null, end: null });
      const balanceChangesSignal: WritableSignal<BalanceChange[]> = signal([]);
+     const directionSignal: WritableSignal<'all' | 'incoming' | 'outgoing'> = signal('all');
+     const transactionTypeSignal: WritableSignal<string> = signal('');
+     const currencySignal: WritableSignal<string> = signal('');
+     const changeRangeSignal: WritableSignal<{ min: number | null; max: number | null }> = signal({ min: null, max: null });
+     const feeRangeSignal: WritableSignal<{ min: number | null; max: number | null }> = signal({ min: null, max: null });
 
      beforeEach(async () => {
           // Reset performance spies
@@ -99,6 +104,11 @@ describe('AccountChangesComponent', () => {
           filterValueSignal.set('');
           dateRangeSignal.set({ start: null, end: null });
           balanceChangesSignal.set(mockBalanceChanges);
+          directionSignal.set('all');
+          transactionTypeSignal.set('');
+          currencySignal.set('');
+          changeRangeSignal.set({ min: null, max: null });
+          feeRangeSignal.set({ min: null, max: null });
 
           xrplService = jasmine.createSpyObj('XrplService', ['getNet']);
           xrplService.getNet.and.returnValue({ net: 'wss://s.devnet.rippletest.net:51233', environment: 'devnet' });
@@ -147,6 +157,11 @@ describe('AccountChangesComponent', () => {
                filterValue: () => filterValueSignal(),
                dateRange: () => dateRangeSignal(),
                balanceChanges: () => balanceChangesSignal(),
+               direction: () => directionSignal(),
+               transactionType: () => transactionTypeSignal(),
+               currency: () => currencySignal(),
+               changeRange: () => changeRangeSignal(),
+               feeRange: () => feeRangeSignal(),
                setField: jasmine.createSpy('setField'),
           };
 
@@ -155,6 +170,8 @@ describe('AccountChangesComponent', () => {
 
           viewModel = {
                filteredBalanceChanges: signal(mockBalanceChanges),
+               transactionTypes: signal(['Payment']),
+               currencies: signal(['XRP']),
                infoData: computed(() => 'Test info data'),
           };
 

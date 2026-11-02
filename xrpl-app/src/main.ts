@@ -92,6 +92,7 @@ import {
      Coins,
      Minus,
      ChartNoAxesCombined,
+     SlidersHorizontal,
 } from 'lucide-angular';
 import {
      heroArrowDownCircle,
@@ -203,6 +204,7 @@ bootstrapApplication(AppComponent, {
                     RefreshCw,
                     SplitIcon,
                     ChartNoAxesCombined,
+                    SlidersHorizontal,
                     Gem,
                     Signature,
                     ShieldEllipsis,

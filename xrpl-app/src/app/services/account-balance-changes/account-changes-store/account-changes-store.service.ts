@@ -1,5 +1,10 @@
 import { signalStore, withState, withMethods, withComputed, patchState } from '@ngrx/signals';
-import { BalanceChange } from '../../../components/account-balance-changes/constants/account-balance.types';
+import { BalanceChange, BalanceChangeDirection } from '../../../components/account-balance-changes/constants/account-balance.types';
+
+export interface NumericRange {
+     min: number | null;
+     max: number | null;
+}
 
 export interface AccountChangesState {
      balanceChanges: BalanceChange[];
@@ -8,6 +13,11 @@ export interface AccountChangesState {
      hasMoreData: boolean;
      filterValue: string;
      dateRange: { start: Date | null; end: Date | null };
+     direction: BalanceChangeDirection;
+     transactionType: string;
+     currency: string;
+     changeRange: NumericRange;
+     feeRange: NumericRange;
 }
 
 const initialState: AccountChangesState = {
@@ -17,6 +27,11 @@ const initialState: AccountChangesState = {
      hasMoreData: true,
      filterValue: '',
      dateRange: { start: null, end: null },
+     direction: 'all',
+     transactionType: '',
+     currency: '',
+     changeRange: { min: null, max: null },
+     feeRange: { min: null, max: null },
 };
 
 export const AccountChangesStoreService = signalStore(

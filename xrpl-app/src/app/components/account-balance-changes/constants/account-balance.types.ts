@@ -12,3 +12,5 @@ export interface BalanceChange {
      counterparty: string;
      _searchIndex?: string;
 }
+
+export type BalanceChangeDirection = 'all' | 'incoming' | 'outgoing';

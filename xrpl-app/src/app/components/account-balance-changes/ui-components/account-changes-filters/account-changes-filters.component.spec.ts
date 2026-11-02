@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { AccountChangesFiltersComponent } from './account-changes-filters.component';
 import { AccountChangesStoreService } from '../../../../services/account-balance-changes/account-changes-store/account-changes-store.service';
 import { AccountChangesOrchestratorService } from '../../../../services/account-balance-changes/account-changes-orchestrator/account-changes-orchestrator.service';
+import { AccountChangesViewModelService } from '../../../../services/account-balance-changes/account-changes-view-model/account-changes-view-model.service';
 import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 
 describe('AccountChangesFiltersComponent', () => {
@@ -10,6 +11,7 @@ describe('AccountChangesFiltersComponent', () => {
      let fixture: ComponentFixture<AccountChangesFiltersComponent>;
      let store: any;
      let orchestrator: any;
+     let viewModel: any;
 
      // Mock date range
      const mockDateRange = { start: null, end: null };
@@ -19,16 +21,30 @@ describe('AccountChangesFiltersComponent', () => {
                filterValue: signal(''),
                dateRange: signal(mockDateRange),
                loadingInitial: signal(false),
+               loadingMore: signal(false),
+               hasMoreData: signal(true),
+               balanceChanges: signal([]),
+               direction: signal('all'),
+               transactionType: signal(''),
+               currency: signal(''),
+               changeRange: signal({ min: null, max: null }),
+               feeRange: signal({ min: null, max: null }),
                setField: jasmine.createSpy('setField'),
           };
 
           orchestrator = {};
+          viewModel = {
+               filteredBalanceChanges: signal([]),
+               transactionTypes: signal([]),
+               currencies: signal([]),
+          };
 
           await TestBed.configureTestingModule({
                imports: [AccountChangesFiltersComponent],
                providers: [
                     { provide: AccountChangesStoreService, useValue: store },
                     { provide: AccountChangesOrchestratorService, useValue: orchestrator },
+                    { provide: AccountChangesViewModelService, useValue: viewModel },
                     { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
                ],
           }).compileComponents();
@@ -125,6 +141,30 @@ describe('AccountChangesFiltersComponent', () => {
 
                expect(component.clearFilter).toHaveBeenCalled();
                expect(component.clearDateFilter).toHaveBeenCalled();
+          });
+
+          it('should reset all additional filter fields', () => {
+               component.clearAll();
+               expect(store.setField).toHaveBeenCalledWith('direction', 'all');
+               expect(store.setField).toHaveBeenCalledWith('transactionType', '');
+               expect(store.setField).toHaveBeenCalledWith('currency', '');
+               expect(store.setField).toHaveBeenCalledWith('changeRange', { min: null, max: null });
+               expect(store.setField).toHaveBeenCalledWith('feeRange', { min: null, max: null });
+          });
+     });
+
+     describe('date presets', () => {
+          it('should apply a date range for recent presets', () => {
+               component.setDatePreset('7d');
+               const call = store.setField.calls.mostRecent();
+               expect(call.args[0]).toBe('dateRange');
+               expect(call.args[1].start.getTime()).toBeLessThan(call.args[1].end.getTime());
+               expect(component.selectedDatePreset()).toBe('7d');
+          });
+
+          it('should clear the date range for all time', () => {
+               component.setDatePreset('all');
+               expect(store.setField).toHaveBeenCalledWith('dateRange', { start: null, end: null });
           });
      });
 

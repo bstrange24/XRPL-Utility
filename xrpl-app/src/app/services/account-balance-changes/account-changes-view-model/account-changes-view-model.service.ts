@@ -18,12 +18,26 @@ export class AccountChangesViewModelService {
           const data = this.store.balanceChanges();
           const text = this.store.filterValue();
           const { start, end } = this.store.dateRange();
+          const direction = this.store.direction();
+          const transactionType = this.store.transactionType();
+          const currency = this.store.currency();
+          const changeRange = this.store.changeRange();
+          const feeRange = this.store.feeRange();
 
           return data.filter(item => {
                const inRange = this.isInDateRange(item.date, start, end);
-               return (!text || item._searchIndex?.includes(text)) && inRange;
+               const matchesText = !text || item._searchIndex?.includes(text);
+               const matchesDirection = direction === 'all' || (direction === 'incoming' && item.change > 0) || (direction === 'outgoing' && item.change < 0);
+               const matchesType = !transactionType || item.type === transactionType;
+               const matchesCurrency = !currency || item.currency === currency;
+               const matchesChange = this.isWithinRange(item.change, changeRange.min, changeRange.max);
+               const matchesFee = this.isWithinRange(item.fees, feeRange.min, feeRange.max);
+               return matchesText && inRange && matchesDirection && matchesType && matchesCurrency && matchesChange && matchesFee;
           });
      });
+
+     readonly transactionTypes = computed(() => [...new Set(this.store.balanceChanges().map(item => item.type))].sort((a, b) => a.localeCompare(b)));
+     readonly currencies = computed(() => [...new Set(this.store.balanceChanges().map(item => item.currency))].sort((a, b) => a.localeCompare(b)));
 
      readonly infoData = computed(() => {
           const wallet = this.walletManagerService.getSelectedWallet();
@@ -139,6 +153,10 @@ export class AccountChangesViewModelService {
           if (start && txTime < start.getTime()) return false;
           if (end && txTime > end.getTime()) return false;
           return true;
+     }
+
+     private isWithinRange(value: number, min: number | null, max: number | null): boolean {
+          return (min === null || value >= min) && (max === null || value <= max);
      }
 
      roundToEightDecimals(value: number): number {

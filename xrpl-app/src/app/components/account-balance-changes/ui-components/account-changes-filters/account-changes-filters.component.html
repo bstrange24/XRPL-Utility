@@ -1,46 +1,128 @@
-<div class="card-base">
-     <div class="flex flex-col lg:flex-row gap-6">
-          <!-- Search -->
-          <div class="flex-1">
-               <label for="search" class="text-sm font-semibold text-gray-600 block mb-1.5">Search</label>
+<div class="space-y-4">
+     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+               <label for="balance-change-search" class="text-sm font-semibold text-gray-600 block mb-1.5">Search</label>
                <div class="relative">
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex w-12 items-center justify-center text-gray-400" aria-hidden="true">
                          <lucide-icon name="search" size="18" />
-                    </div>
-
-                    <input type="text" [ngModel]="store.filterValue()" (ngModelChange)="onSearchInput($event)" placeholder="Hash, type, amount..." class="w-full pl-11 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900" />
-
+                    </span>
+                    <input id="balance-change-search" type="text" [ngModel]="store.filterValue()" (ngModelChange)="onSearchInput($event)" placeholder="Hash, type, counterparty, amount..." class="w-full pl-14 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900" />
                     @if (store.filterValue()) {
-                    <button type="button" (click)="clearFilter()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <button type="button" (click)="clearFilter()" aria-label="Clear search" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
                          <lucide-icon name="x" size="18" />
                     </button>
                     }
                </div>
           </div>
 
-          <div class="flex-1">
-               <label for="dateRange" class="text-sm font-semibold text-gray-600 block mb-1.5"> Date Range </label>
-
+          <div>
+               <label for="dateRange" class="text-sm font-semibold text-gray-600 block mb-1.5">Date range</label>
                <div class="relative">
-                    <input #rangeInput type="text" readonly placeholder="Select date range..." class="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900 cursor-pointer" />
-
-                    <button type="button" (click)="clearDateFilter()" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors" matTooltip="Clear date filter">
+                    <input #rangeInput id="dateRange" type="text" readonly placeholder="Select date range..." class="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900 cursor-pointer" />
+                    @if (store.dateRange().start || store.dateRange().end) {
+                    <button type="button" (click)="clearDateFilter()" aria-label="Clear date range" matTooltip="Clear date filter" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
                          <lucide-icon name="x" size="16" />
                     </button>
+                    }
+               </div>
+               <div class="flex flex-wrap gap-2 mt-2" aria-label="Date range shortcuts">
+                    @for (preset of datePresets; track preset.value) {
+                    <button type="button" (click)="setDatePreset(preset.value)" [attr.aria-pressed]="selectedDatePreset() === preset.value" [class.bg-green-50]="selectedDatePreset() === preset.value" [class.border-green-500]="selectedDatePreset() === preset.value" [class.text-green-700]="selectedDatePreset() === preset.value" class="px-3 py-1 rounded-full border border-gray-200 text-xs text-gray-600 hover:border-green-400 hover:text-green-700 transition-colors">
+                         {{ preset.label }}
+                    </button>
+                    }
                </div>
           </div>
      </div>
 
-     <!-- Action Buttons -->
-     <div class="main-button-section">
-          <!-- Primary Actions -->
-          <div class="flex flex-col gap-3 sm:flex-row">
-               <button type="button" class="btn-green" (click)="onRefresh()" [disabled]="store.loadingInitial()">{{ store.loadingInitial() ? 'Loading…' : 'Refresh' }}</button>
+     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div>
+               <span class="text-sm font-semibold text-gray-600 block mb-1.5">Direction</span>
+               <div class="flex rounded-xl border border-gray-200 p-1" role="group" aria-label="Balance change direction">
+                    @for (option of directionOptions; track option.value) {
+                    <button type="button" (click)="setDirection(option.value)" [attr.aria-pressed]="store.direction() === option.value" [class.bg-green-50]="store.direction() === option.value" [class.text-green-700]="store.direction() === option.value" class="flex-1 rounded-lg px-2 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">
+                         {{ option.label }}
+                    </button>
+                    }
+               </div>
           </div>
 
-          <!-- Secondary Actions -->
-          <div class="flex items-center justify-end">
-               <button type="button" class="btn-secondary" (click)="clearAll()">Clear Filters</button>
+          <div>
+               <label for="transactionType" class="text-sm font-semibold text-gray-600 block mb-1.5">Transaction type</label>
+               <select id="transactionType" [ngModel]="store.transactionType()" (ngModelChange)="store.setField('transactionType', $event)" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none">
+                    <option value="">All types</option>
+                    @for (type of viewModel.transactionTypes(); track type) {
+                    <option [value]="type">{{ type }}</option>
+                    }
+               </select>
+          </div>
+
+          <div>
+               <label for="currency" class="text-sm font-semibold text-gray-600 block mb-1.5">Currency</label>
+               <select id="currency" [ngModel]="store.currency()" (ngModelChange)="store.setField('currency', $event)" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none">
+                    <option value="">All currencies</option>
+                    @for (currency of viewModel.currencies(); track currency) {
+                    <option [value]="currency">{{ currency }}</option>
+                    }
+               </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+               <label class="text-sm font-semibold text-gray-600">
+                    Min change
+                    <input type="number" step="any" [ngModel]="store.changeRange().min" (ngModelChange)="setChangeRangeBound('min', $event)" placeholder="No minimum" class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-normal text-gray-900 focus:border-green-500 focus:outline-none" />
+               </label>
+               <label class="text-sm font-semibold text-gray-600">
+                    Max change
+                    <input type="number" step="any" [ngModel]="store.changeRange().max" (ngModelChange)="setChangeRangeBound('max', $event)" placeholder="No maximum" class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-normal text-gray-900 focus:border-green-500 focus:outline-none" />
+               </label>
           </div>
      </div>
+
+     <details class="group">
+          <summary class="w-fit cursor-pointer list-none text-sm font-medium text-gray-600 hover:text-gray-900">
+               <span class="inline-flex items-center gap-2"><lucide-icon name="sliders-horizontal" size="16" /> Advanced filters: fee range</span>
+          </summary>
+          <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl">
+               <label class="text-sm font-semibold text-gray-600">
+                    Min fee (XRP)
+                    <input type="number" min="0" step="any" [ngModel]="store.feeRange().min" (ngModelChange)="setFeeRangeBound('min', $event)" placeholder="No minimum" class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-normal text-gray-900 focus:border-green-500 focus:outline-none" />
+               </label>
+               <label class="text-sm font-semibold text-gray-600">
+                    Max fee (XRP)
+                    <input type="number" min="0" step="any" [ngModel]="store.feeRange().max" (ngModelChange)="setFeeRangeBound('max', $event)" placeholder="No maximum" class="mt-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-normal text-gray-900 focus:border-green-500 focus:outline-none" />
+               </label>
+          </div>
+     </details>
+
+     <div class="flex flex-col gap-3 border-t border-gray-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="text-sm text-gray-600" aria-live="polite">
+               Showing <span class="font-semibold text-gray-900">{{ matchedCount() }}</span> of <span class="font-semibold text-gray-900">{{ loadedCount() }}</span> loaded changes
+               @if (store.hasMoreData()) {
+               <span class="block text-xs text-gray-500 mt-1">Load more history to include older transactions in these results.</span>
+               }
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+               @if (store.hasMoreData()) {
+               <button type="button" class="btn-secondary" (click)="loadMore.emit()" [disabled]="store.loadingMore() || store.loadingInitial()">
+                    {{ store.loadingMore() ? 'Loading…' : 'Load more history' }}
+               </button>
+               }
+               <button type="button" class="btn-green" (click)="onRefresh()" [disabled]="store.loadingInitial()">{{ store.loadingInitial() ? 'Loading…' : 'Refresh' }}</button>
+               <button type="button" class="btn-secondary" (click)="clearAll()" [disabled]="activeFilters().length === 0">Clear all</button>
+          </div>
+     </div>
+
+     @if (activeFilters().length) {
+     <div class="flex flex-wrap items-center gap-2" aria-label="Active filters">
+          @for (filter of activeFilters(); track filter.key) {
+          <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-700">
+               {{ filter.label }}
+               <button type="button" (click)="clearActiveFilter(filter.key)" [attr.aria-label]="'Remove ' + filter.label + ' filter'" class="rounded-full text-gray-500 hover:text-gray-900">
+                    <lucide-icon name="x" size="13" />
+               </button>
+          </span>
+          }
+     </div>
+     }
 </div>

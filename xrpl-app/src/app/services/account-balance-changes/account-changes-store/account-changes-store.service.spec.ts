@@ -69,6 +69,14 @@ describe('AccountChangesStoreService', () => {
           it('should have dateRange with null values', () => {
                expect(store.dateRange()).toEqual({ start: null, end: null });
           });
+
+          it('should initialize all additional filters to their defaults', () => {
+               expect(store.direction()).toBe('all');
+               expect(store.transactionType()).toBe('');
+               expect(store.currency()).toBe('');
+               expect(store.changeRange()).toEqual({ min: null, max: null });
+               expect(store.feeRange()).toEqual({ min: null, max: null });
+          });
      });
 
      describe('setField', () => {
@@ -200,6 +208,22 @@ describe('AccountChangesStoreService', () => {
           it('should reset dateRange to nulls', () => {
                store.resetAll();
                expect(store.dateRange()).toEqual({ start: null, end: null });
+          });
+
+          it('should reset all additional filters', () => {
+               store.setField('direction', 'incoming');
+               store.setField('transactionType', 'Payment');
+               store.setField('currency', 'XRP');
+               store.setField('changeRange', { min: 1, max: 2 });
+               store.setField('feeRange', { min: 0.1, max: 0.2 });
+
+               store.resetAll();
+
+               expect(store.direction()).toBe('all');
+               expect(store.transactionType()).toBe('');
+               expect(store.currency()).toBe('');
+               expect(store.changeRange()).toEqual({ min: null, max: null });
+               expect(store.feeRange()).toEqual({ min: null, max: null });
           });
      });
 

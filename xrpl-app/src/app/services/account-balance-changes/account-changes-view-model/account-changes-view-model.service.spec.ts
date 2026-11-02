@@ -61,6 +61,11 @@ describe('AccountChangesViewModelService', () => {
                balanceChanges: signal([...mockBalanceChanges]),
                filterValue: signal(''),
                dateRange: signal({ start: null, end: null }),
+               direction: signal('all'),
+               transactionType: signal(''),
+               currency: signal(''),
+               changeRange: signal({ min: null, max: null }),
+               feeRange: signal({ min: null, max: null }),
           };
 
           walletManagerMock = {
@@ -142,6 +147,31 @@ describe('AccountChangesViewModelService', () => {
                storeMock.filterValue.set('nonexistent');
                const result = service.filteredBalanceChanges();
                expect(result.length).toBe(0);
+          });
+
+          it('should filter by incoming and outgoing direction', () => {
+               storeMock.direction.set('incoming');
+               expect(service.filteredBalanceChanges().map((change: any) => change.hash)).toEqual(['hash1']);
+
+               storeMock.direction.set('outgoing');
+               expect(service.filteredBalanceChanges().map((change: any) => change.hash)).toEqual(['hash2']);
+          });
+
+          it('should exclude zero balance changes from direction filters', () => {
+               storeMock.direction.set('incoming');
+               expect(service.filteredBalanceChanges().some((change: any) => change.hash === 'hash3')).toBeFalse();
+          });
+
+          it('should filter by transaction type and currency', () => {
+               storeMock.transactionType.set('OfferCreate');
+               storeMock.currency.set('XRP');
+               expect(service.filteredBalanceChanges().map((change: any) => change.hash)).toEqual(['hash2']);
+          });
+
+          it('should apply minimum and maximum change and fee values', () => {
+               storeMock.changeRange.set({ min: -6, max: 0 });
+               storeMock.feeRange.set({ min: 0.01, max: 0.02 });
+               expect(service.filteredBalanceChanges().map((change: any) => change.hash)).toEqual(['hash2', 'hash3']);
           });
      });
 

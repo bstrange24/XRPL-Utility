@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideAngularModule } from 'lucide-angular';
-import { NgIcon } from '@ng-icons/core';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
 import { WalletManagerService } from '../../services/wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../services/transaction-ui/transaction-ui.service';
@@ -13,7 +12,6 @@ import { AcccountDataService } from '../../services/account-data/acccount-data.s
 import { ActivatedRoute } from '@angular/router';
 import { StorageService } from '../../services/shared/local-storage/storage.service';
 import { WarningMessageComponent } from '../shared/ui-components/warning-message/warning-message.component';
-import { AccountChangesSummaryComponent } from './ui-components/account-changes-summary/account-changes-summary.component';
 import { AccountChangesFiltersComponent } from './ui-components/account-changes-filters/account-changes-filters.component';
 import { AccountChangesTableComponent } from './ui-components/account-changes-table/account-changes-table.component';
 import { AccountChangesOrchestratorService } from '../../services/account-balance-changes/account-changes-orchestrator/account-changes-orchestrator.service';
@@ -30,7 +28,7 @@ import { AccountBalanceActionTypes } from './constants/account-balance.types';
      selector: 'app-account-changes',
      standalone: true,
      changeDetection: ChangeDetectionStrategy.OnPush,
-     imports: [CommonModule, LucideAngularModule, WarningMessageComponent, AccountChangesSummaryComponent, AccountChangesFiltersComponent, AccountChangesTableComponent, TabMenuWithInfoComponent],
+     imports: [CommonModule, LucideAngularModule, WarningMessageComponent, AccountChangesFiltersComponent, AccountChangesTableComponent, TabMenuWithInfoComponent],
      templateUrl: './account-balance-changes.component.html',
      styleUrl: './account-balance-changes.component.css',
      host: { class: 'balance-page-component' },

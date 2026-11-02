@@ -142,7 +142,7 @@ export class AccountChangesOrchestratorService {
                               balanceBefore: prevXrp,
                               balanceAfter: finalXrp,
                               counterparty,
-                              _searchIndex: `${type} ${delta} XRP ${hash}`.toLowerCase(),
+                              _searchIndex: `${type} ${delta} XRP ${feeXrp} ${hash} ${counterparty} ${prevXrp} ${finalXrp}`.toLowerCase(),
                          });
                     }
                }

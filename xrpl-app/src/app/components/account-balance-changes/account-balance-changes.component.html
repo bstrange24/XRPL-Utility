@@ -23,7 +23,7 @@
                </div> -->
 
                <!-- Summary Component -->
-               <app-account-changes-summary></app-account-changes-summary>
+               <!-- <app-account-changes-summary></app-account-changes-summary> -->
 
                <!-- Warning Message -->
                @if (txUiService.warningMessage) {
@@ -37,7 +37,7 @@
                <div class="flex-1 flex flex-col min-h-0 bg-white border border-gray-200 rounded-2xl overflow-hidden mt-4 transition-shadow hover:shadow-card">
                     <!-- Filters -->
                     <div class="border-b border-gray-100 p-4">
-                         <app-account-changes-filters (refresh)="onRefresh()"></app-account-changes-filters>
+                         <app-account-changes-filters (refresh)="onRefresh()" (loadMore)="onLoadMore()"></app-account-changes-filters>
                     </div>
 
                     <!-- Table Area -->
