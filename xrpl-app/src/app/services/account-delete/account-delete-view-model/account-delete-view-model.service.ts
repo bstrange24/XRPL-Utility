@@ -116,7 +116,7 @@ export class AccountDeleteViewModelService {
 
      readonly deleteBlockers = computed(() => this.blockersList());
 
-     readonly deleteWalletButtonLabel = computed(() => 'Delete Wallet');
+     readonly deleteWalletButtonLabel = computed(() => 'Delete Account');
 
      readonly summaryMessage = computed(() => {
           const info = this.infoData();

@@ -29,7 +29,7 @@ export const ACCOUNT_DELETE_TABS: {
 }[] = [
      {
           key: 'deleteAccount',
-          label: 'Delete Wallet',
+          label: 'Delete Account',
           icon: 'heroTrash',
           iconType: 'ng-icon',
           color: '',
@@ -41,7 +41,7 @@ export const ACCOUNT_DELETE_TAB_META = {
      deleteAccount: {
           icon: 'heroTrash',
           colorClass: 'red-button-submenu',
-          title: 'Delete Wallet',
+          title: 'Delete Account',
           desc: 'Delete currently selected wallet.',
           color: '#ef4444',
           iconType: 'ng-icon',

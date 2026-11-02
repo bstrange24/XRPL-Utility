@@ -358,7 +358,7 @@ describe('WalletPanelComponent', () => {
           });
      });
 
-     describe('Delete Wallet', () => {
+     describe('Delete Account', () => {
           beforeEach(() => {
                spyOn(window, 'confirm').and.returnValue(true);
           });

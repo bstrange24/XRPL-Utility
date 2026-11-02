@@ -10,7 +10,7 @@ describe('Account Delete UI Configuration', () => {
           it('should have deleteAccount tab configuration', () => {
                const tab = ACCOUNT_DELETE_TABS[0];
                expect(tab.key).toBe('deleteAccount');
-               expect(tab.label).toBe('Delete Wallet');
+               expect(tab.label).toBe('Delete Account');
                expect(tab.icon).toBe('heroTrash');
                expect(tab.iconType).toBe('ng-icon');
                expect(tab.color).toBe(''); // Empty color as defined
@@ -40,7 +40,7 @@ describe('Account Delete UI Configuration', () => {
                it('should have correct values', () => {
                     expect(meta.icon).toBe('heroTrash');
                     expect(meta.colorClass).toBe('red-button-submenu');
-                    expect(meta.title).toBe('Delete Wallet');
+                    expect(meta.title).toBe('Delete Account');
                     expect(meta.desc).toBe('Delete currently selected wallet.');
                     expect(meta.color).toBe('#ef4444');
                     expect(meta.iconType).toBe('ng-icon');
