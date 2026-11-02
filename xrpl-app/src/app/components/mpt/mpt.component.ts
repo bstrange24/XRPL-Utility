@@ -147,7 +147,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           this.rightPanelService.resetFilters();
           this.mptTransactionViewModelService.clearMetadataCache();
           this.clearInputFields();
-          await this.getMptDetails(true);
+          await this.getMptDetails(false);
      }
 
      @ViewChild('jsonEditor')
@@ -511,9 +511,16 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           this.txUiService.resetCurrentStepToIdle();
      }
 
-     // protected override handleCachedAccountObjects(accountObjects: any, address: string): void {
-     //      this.mptStoreService.setField('existingMpts', this.mptUtilService.getMpts(accountObjects, address));
-     // }
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          void this.mptUtilService.getMpts(accountObjects, address).then(existingMpts => {
+               const selectedAddress = this.walletManagerService.getSelectedWallet()?.classicAddress;
+               if (selectedAddress === address) {
+                    this.mptStoreService.setField('existingMpts', existingMpts);
+               }
+          }).catch(error => {
+               console.error('Unable to populate cached MPT account objects:', error);
+          });
+     }
 
      protected async refreshAccountObject(env: any): Promise<void> {
           const existingMpts = await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress);

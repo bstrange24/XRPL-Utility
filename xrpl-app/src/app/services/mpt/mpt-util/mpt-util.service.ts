@@ -30,6 +30,10 @@ export class MptUtilService extends PerformanceBaseComponent {
      public readonly logService = inject(LogServiceService);
      override readonly xrplService = inject(XrplService);
 
+     private readonly mptIssuanceCache = new Map<string, { node: any; timestamp: number }>();
+     private readonly mptIssuanceRequests = new Map<string, Promise<any | null>>();
+     private static readonly MPT_ISSUANCE_CACHE_TTL = 15_000;
+
      private readonly flagValues = {
           canLock: 0x00000002,
           isRequireAuth: 0x00000004,
@@ -114,6 +118,7 @@ export class MptUtilService extends PerformanceBaseComponent {
 
                if (o.LedgerEntryType === 'MPTokenIssuance') {
                     issuances.set(o.mpt_issuance_id, o);
+                    this.cacheMptIssuance(o.mpt_issuance_id, o);
                     this.mptStoreService.updateField('assetScaleCache', cache => {
                          const newCache = new Map(cache);
                          newCache.set(o.mpt_issuance_id, o.AssetScale ?? 0);
@@ -125,16 +130,16 @@ export class MptUtilService extends PerformanceBaseComponent {
           });
 
           const result: any[] = [];
+          const client = holdings.length > 0 ? await this.xrplService.getClient() : null;
+          const mptNodes = client
+               ? await Promise.all(holdings.map(holding => this.getMptIssuanceNode(client, holding.MPTokenIssuanceID)))
+               : [];
 
-          for (const holding of holdings) {
+          for (const [index, holding] of holdings.entries()) {
                const issuance = issuances.get(holding.MPTokenIssuanceID);
                const rawBalance = holding.MPTAmount || '0';
                const hasPositiveBalance = Number(rawBalance) > 0;
-
-               const client = await this.xrplService.getClient();
-               const mptData = await this.xrplService.doesMptExist(client, holding.MPTokenIssuanceID);
-
-               const mptNode = mptData?.node ?? mptData?.result?.node ?? null;
+               const mptNode = mptNodes[index];
                if (!mptNode) {
                     continue;
                }
@@ -193,6 +198,41 @@ export class MptUtilService extends PerformanceBaseComponent {
           }
 
           return result;
+     }
+
+     private getMptIssuanceCacheKey(issuanceId: string): string {
+          const network = this.xrplService.getNet().environment;
+          return `${network}:${issuanceId.toUpperCase()}`;
+     }
+
+     private cacheMptIssuance(issuanceId: string, node: any): void {
+          if (!issuanceId || !node) return;
+          this.mptIssuanceCache.set(this.getMptIssuanceCacheKey(issuanceId), {
+               node,
+               timestamp: Date.now(),
+          });
+     }
+
+     private async getMptIssuanceNode(client: xrpl.Client, issuanceId: string): Promise<any | null> {
+          const key = this.getMptIssuanceCacheKey(issuanceId);
+          const cached = this.mptIssuanceCache.get(key);
+          if (cached && Date.now() - cached.timestamp < MptUtilService.MPT_ISSUANCE_CACHE_TTL) {
+               return cached.node;
+          }
+          this.mptIssuanceCache.delete(key);
+
+          const inFlight = this.mptIssuanceRequests.get(key);
+          if (inFlight) return inFlight;
+
+          const request = this.xrplService.doesMptExist(client, issuanceId).then(mptData => {
+               const node = mptData?.node ?? mptData?.result?.node ?? null;
+               if (node) this.cacheMptIssuance(issuanceId, node);
+               return node;
+          }).finally(() => {
+               this.mptIssuanceRequests.delete(key);
+          });
+          this.mptIssuanceRequests.set(key, request);
+          return request;
      }
 
      getExistingMpts(escrowObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
