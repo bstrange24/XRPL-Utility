@@ -1,3 +1,10 @@
+@if (showIssuerRequiredWarning()) {
+<div class="alert-warning mb-4">
+     <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
+     <div class="alert-content">Only the MPT creator (issuer) can claw back tokens. Select an MPT issued by the currently selected wallet.</div>
+</div>
+}
+
 <div class="card-base">
      <!-- Clawback Card -->
      <div class="space-y-6">
@@ -20,7 +27,7 @@
                </div>
 
                <div class="relative">
-                    <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available" />
+                    <app-select-search-dropdown [items]="viewModel.issuerMptItems()" [value]="viewModel.selectedIssuerMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs issued by this wallet" />
                </div>
 
                @if (mptSendValidator.getMptSelectedErrorMessage()) {

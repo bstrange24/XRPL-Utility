@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { MptTransactionViewModelService } from '../../../../services/mpt/mpt-transaction-view-model/mpt-transaction-view-model.service';
 import { MptStoreService } from '../../../../services/mpt/mpt-store/mpt-store.service';
@@ -74,6 +74,10 @@ export class MptClawbackComponent {
      readonly amountPresets = [10, 100, 1000, 10000, 100000];
      // Preset examples for MPT Issuance ID
      readonly mptIdExamples = AppConstants.MPT_ID_EXAMPLES;
+     readonly showIssuerRequiredWarning = computed(() => {
+          const mpt = this.viewModel.nonIssuerMptSelection();
+          return !!mpt && !this.viewModel.isMptIssuedBySelectedWallet(mpt);
+     });
 
      constructor() {
           // Emit validation status changes
@@ -147,6 +151,7 @@ export class MptClawbackComponent {
      }
 
      onMptSelection(item: SelectItem | null) {
+          this.viewModel.nonIssuerMptSelection.set(null);
           if (!item?.id) {
                this.mptStoreService.setField('mptIssuanceId', '');
                this.mptStoreService.setField('amount', '');

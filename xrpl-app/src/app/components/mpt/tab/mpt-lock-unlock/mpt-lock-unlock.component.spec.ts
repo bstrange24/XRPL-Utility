@@ -92,6 +92,16 @@ describe('MptLockUnlockComponent', () => {
                expect(component.selectedMPT).toBeDefined();
                expect(component.selectedMPT.emit).toBeDefined();
           });
+
+          it('should set the issuance ID and emit the selected MPT', () => {
+               const item = { id: 'issuer-mpt', display: 'MPT • 100 issued' };
+               spyOn(component.selectedMPT, 'emit');
+
+               component.onMptSelection(item);
+
+               expect(mptStoreService.setField).toHaveBeenCalledWith('mptIssuanceId', 'issuer-mpt');
+               expect(component.selectedMPT.emit).toHaveBeenCalledWith(item);
+          });
      });
 
      describe('lockAction getter', () => {

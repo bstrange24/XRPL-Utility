@@ -64,6 +64,7 @@ describe('MptSummaryComponent', () => {
 
           mptUtilService = {
                selectedMptIssuanceId: jasmine.createSpy('selectedMptIssuanceId').and.returnValue('mpt123'),
+               selectMptFromList: jasmine.createSpy('selectMptFromList'),
           };
 
           summaryTextConfigService = jasmine.createSpyObj('SummaryTextConfigService', ['buildSummaryText']);
@@ -72,6 +73,7 @@ describe('MptSummaryComponent', () => {
           viewModel = {
                infoData: signal(mockInfoData),
                activeTab: signal('createMpt'),
+               isMptIssuedBySelectedWallet: jasmine.createSpy('isMptIssuedBySelectedWallet').and.returnValue(true),
           };
 
           await TestBed.configureTestingModule({
@@ -299,6 +301,38 @@ describe('MptSummaryComponent', () => {
 
                expect(component.mptSelected.emit).not.toHaveBeenCalled();
                expect(component.toggleInfoPanel.emit).not.toHaveBeenCalled();
+          });
+
+          it('should not select an MPT not issued by the selected wallet on the clawback tab', () => {
+               viewModel.activeTab.set('clawbackMpt');
+               viewModel.isMptIssuedBySelectedWallet.and.returnValue(false);
+               fixture.detectChanges();
+
+               spyOn(component.mptSelected, 'emit');
+               spyOn(component.toggleInfoPanel, 'emit');
+
+               component.onMptClick(mockMpt);
+
+               expect(mptUtilService.selectMptFromList).not.toHaveBeenCalled();
+               expect(component.mptSelected.emit).not.toHaveBeenCalled();
+               expect(component.toggleInfoPanel.emit).not.toHaveBeenCalled();
+          });
+
+          ['lockMpt', 'unlockMpt'].forEach(tab => {
+               it(`should not select an MPT not issued by the selected wallet on the ${tab} tab`, () => {
+                    viewModel.activeTab.set(tab);
+                    viewModel.isMptIssuedBySelectedWallet.and.returnValue(false);
+                    fixture.detectChanges();
+
+                    spyOn(component.mptSelected, 'emit');
+                    spyOn(component.toggleInfoPanel, 'emit');
+
+                    component.onMptClick(mockMpt);
+
+                    expect(mptUtilService.selectMptFromList).not.toHaveBeenCalled();
+                    expect(component.mptSelected.emit).not.toHaveBeenCalled();
+                    expect(component.toggleInfoPanel.emit).not.toHaveBeenCalled();
+               });
           });
      });
 

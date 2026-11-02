@@ -237,6 +237,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
 
      async setTab(tab: string): Promise<void> {
           if (!MPT_TAB.includes(tab as any)) return;
+          this.mptTransactionViewModelService.nonIssuerMptSelection.set(null);
           this.mptTransactionViewModelService.activeTab.set(tab as MptActionTypes);
           this.clearInputFields();
           if (this.hasWallets()) await this.getMptDetails(false);
@@ -601,12 +602,14 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                     return this.canAuthorizeMpt();
 
                case 'sendMpt':
-               case 'clawbackMpt':
                     return !!mptId && !!(storeDestination || selectedDestination) && !!amount.trim();
+
+               case 'clawbackMpt':
+                    return !!mptId && this.isSelectedMptOwnedByCurrentWallet() && !!(storeDestination || selectedDestination) && !!amount.trim();
 
                case 'lockMpt':
                case 'unlockMpt':
-                    return !!mptId && !!(storeDestination || selectedDestination);
+                    return !!mptId && this.isSelectedMptOwnedByCurrentWallet() && !!(storeDestination || selectedDestination);
 
                case 'destroyMpt':
                     return !!mptId && this.isSelectedMptOwnedByCurrentWallet() && !hasOutstanding;
@@ -645,14 +648,20 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                     case 'unauthorizeMpt':
                          return 'Please select MPT and Destination';
                     case 'sendMpt':
+                         if (!mptId) return 'Please select an MPT';
+                         if (!destination) return 'Please enter a Destination';
+                         if (!amount.trim()) return 'Please enter an Amount';
+                         return 'Please fill MPT, Destination and Amount';
                     case 'clawbackMpt':
                          if (!mptId) return 'Please select an MPT';
+                         if (!this.isSelectedMptOwnedByCurrentWallet()) return 'Only the wallet that issued an MPT can claw it back';
                          if (!destination) return 'Please enter a Destination';
                          if (!amount.trim()) return 'Please enter an Amount';
                          return 'Please fill MPT, Destination and Amount';
                     case 'lockMpt':
                     case 'unlockMpt':
                          if (!mptId) return 'Please select an MPT';
+                         if (!this.isSelectedMptOwnedByCurrentWallet()) return 'Only the wallet that issued an MPT can lock or unlock it';
                          if (!destination) return 'Please enter a Destination';
                          return 'Please fill MPT and Destination';
                     case 'destroyMpt':

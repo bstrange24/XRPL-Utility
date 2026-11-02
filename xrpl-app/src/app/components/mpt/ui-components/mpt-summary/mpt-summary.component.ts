@@ -290,6 +290,14 @@ export class MptSummaryComponent {
           if (!mpt) return;
           const currentTab = this.viewModel.activeTab();
           if (currentTab === 'createMpt') return;
+          const issuerOnlyTab = currentTab === 'clawbackMpt' || currentTab === 'lockMpt' || currentTab === 'unlockMpt';
+          if (issuerOnlyTab && !this.viewModel.isMptIssuedBySelectedWallet(mpt)) {
+               this.viewModel.nonIssuerMptSelection.set(mpt);
+               this.viewModel.mptStoreService.setField('mptIssuanceId', '');
+               return;
+          }
+
+          this.viewModel.nonIssuerMptSelection.set(null);
           this.mptUtilService.selectMptFromList(mpt);
           this.mptSelected.emit(mpt);
           this.toggleInfoPanel.emit();

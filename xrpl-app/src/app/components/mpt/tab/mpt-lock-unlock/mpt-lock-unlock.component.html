@@ -1,4 +1,11 @@
 <div class="space-y-6">
+     @if (showIssuerRequiredWarning()) {
+     <div class="alert-warning mb-0">
+          <ng-icon name="heroExclamationTriangle" size="18" class="alert-icon" />
+          <div class="alert-content">Only the MPT creator (issuer) can lock or unlock its holders. Select an MPT issued by the currently selected wallet.</div>
+     </div>
+     }
+
      <!-- Lock/Unlock Card -->
      <div class="card-base">
           <div class="space-y-6">
@@ -81,6 +88,26 @@
                     }
 
                     <app-field-helper title="MPT Issuer" [items]="mptDestinationHelperItems" [show]="showMptDestinationHelper" />
+               </div>
+
+               <!-- Select MPT -->
+               <div>
+                    <div class="field-label">
+                         <label for="selectMptToLockUnlock" class="label-primary">Select MPT <span class="text-red-500">*</span></label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Select an MPT issued by the currently selected wallet.</p>
+                         <button type="button" (click)="toggleMptHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <div class="relative">
+                         <app-select-search-dropdown [items]="mptTransactionViewModelService.issuerMptItems()" [value]="mptTransactionViewModelService.selectedIssuerMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs issued by this wallet" />
+                    </div>
+
+                    <app-field-helper title="Select MPT" [items]="mptLockUnlockSelectHelperItems" [show]="showMptHelper" />
                </div>
 
                <!-- MPT Issuance ID -->

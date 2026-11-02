@@ -108,6 +108,7 @@ export const AppConstants = {
      MPT_DESTINATION_SEND_HELPER_ITEMS: ['The destination address that will receive the MPT', 'Must be a valid XRPL address (starts with r...)', 'The destination may need authorization to hold this MPT'],
      MPT_AMOUNT_SEND_HELPER_ITEMS: ['Amount of the selected MPT to send', 'Cannot exceed your available balance', "Precision is determined by the MPT's AssetScale"],
      // === MPT Lock / Unlock Page Helpers ===
+     MPT_LOCK_UNLOCK_SELECT_HELPER_ITEMS: ['Select an MPT issued by the currently selected wallet', 'Only the MPT creator (issuer) can lock or unlock its holders', 'The selected MPT issuance ID will be used for the lock or unlock action'],
      MPT_LOCK_ACTION_HELPER_ITEMS: ['Lock: Prevents the MPT from being transferred or used', 'Unlock: Allows the MPT to be transferred or used again', 'Some MPTs may have transfer restrictions that require locking/unlocking'],
      MPT_DESTINATION_LOCK_UNLOCK_HELPER_ITEMS: ['The holder’s account that will have its MPT lock status changed', 'Must be a valid XRPL address (starts with r...)', 'This is usually the account that currently holds the MPT'],
      MPT_ISSUANCE_ID_LOCK_UNLOCK_HELPER_ITEMS: ['Unique 48-character hexadecimal identifier of the MPTokenIssuance', 'This specifies exactly which MPT you want to lock or unlock', 'You can find this ID in your MPT holdings'],

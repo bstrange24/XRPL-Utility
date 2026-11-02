@@ -28,6 +28,7 @@ export class MptTransactionViewModelService {
      public readonly mptStoreService = inject(MptStoreService);
 
      readonly activeTab = signal<MptActionTypes>('createMpt');
+     readonly nonIssuerMptSelection = signal<{ id?: string; mpt_issuance_id?: string; Issuer?: string | null } | null>(null);
 
      /** Memoize decoded MPT metadata by issuance ID to avoid repeated decoding. */
      private readonly _metadataCache = new Map<string, any>();
@@ -191,7 +192,7 @@ export class MptTransactionViewModelService {
           });
      });
 
-     destroyMptItems = computed(() => {
+     issuerMptItems = computed(() => {
           const wallet = this.walletManagerService.getSelectedWallet();
           const walletAddress = wallet?.classicAddress || wallet?.address;
           if (!walletAddress) return [];
@@ -206,6 +207,20 @@ export class MptTransactionViewModelService {
 
           return this.mptItems().filter(item => ownedIssuanceIds.has(item.id));
      });
+
+     destroyMptItems = computed(() => this.issuerMptItems());
+
+     selectedIssuerMptItem = computed(() => {
+          const id = this.mptStoreService.mptIssuanceId();
+          if (!id) return null;
+          return this.issuerMptItems().find(item => item.id === id) || null;
+     });
+
+     isMptIssuedBySelectedWallet(mpt: { Issuer?: string | null } | null | undefined): boolean {
+          const wallet = this.walletManagerService.getSelectedWallet();
+          const walletAddress = wallet?.classicAddress || wallet?.address;
+          return !!walletAddress && mpt?.Issuer === walletAddress;
+     }
 
      selectedDestroyMptItem = computed(() => {
           const id = this.mptStoreService.mptIssuanceId();

@@ -60,6 +60,7 @@ export class MptLockUnlockComponent {
 
      // Preset examples for MPT Issuance ID
      readonly mptIdExamples = AppConstants.MPT_ID_EXAMPLES;
+     readonly mptLockUnlockSelectHelperItems = AppConstants.MPT_LOCK_UNLOCK_SELECT_HELPER_ITEMS;
      readonly mptLockActionHelperItems = AppConstants.MPT_LOCK_ACTION_HELPER_ITEMS;
      readonly mptDestinationHelperItems = AppConstants.MPT_DESTINATION_LOCK_UNLOCK_HELPER_ITEMS;
      readonly mptIssuanceIdHelperItems = AppConstants.MPT_ISSUANCE_ID_LOCK_UNLOCK_HELPER_ITEMS;
@@ -79,6 +80,11 @@ export class MptLockUnlockComponent {
           // Get the full MPT object from the summary data
           const mpts = this.mptTransactionViewModelService?.infoData()?.mptsToShow || this.availableMpts();
           return mpts.find(m => m.mpt_issuance_id === issuanceId || m.id === issuanceId) || null;
+     });
+
+     readonly showIssuerRequiredWarning = computed(() => {
+          const mpt = this.mptTransactionViewModelService.nonIssuerMptSelection();
+          return !!mpt && !this.mptTransactionViewModelService.isMptIssuedBySelectedWallet(mpt);
      });
 
      // Local getters for cleaner template
@@ -122,6 +128,13 @@ export class MptLockUnlockComponent {
 
      setMptIssuanceId(value: string) {
           this.mptStoreService.setField('mptIssuanceId', value);
+     }
+
+     onMptSelection(item: SelectItem | null) {
+          this.mptTransactionViewModelService.nonIssuerMptSelection.set(null);
+          const id = item?.id || '';
+          this.setMptIssuanceId(id);
+          this.selectedMPT.emit(item);
      }
 
      onMptIssuanceIdBlur() {
