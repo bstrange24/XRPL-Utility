@@ -1,4 +1,4 @@
-import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect } from '@angular/core';
+import { OnInit, Component, inject, ChangeDetectionStrategy, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -38,6 +38,7 @@ import { ConnectionGuardService } from '../../services/shared/connection-guard/c
 import { animation, toastAnimation } from '../../services/utils/animations/animations.service';
 import { RightPanelService } from '../../services/utils/right-panel/right-panel.service';
 import { ACCOUNT_CONFIG_TAB_META, ACCOUNT_CONFIG_TABS } from './constants/account-configurator.ui';
+import * as xrpl from 'xrpl';
 
 @Component({
      selector: 'app-account-configurator',
@@ -83,13 +84,13 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
      private readonly updateRightPanelEffect = effect(() => {
           const wallet = this.currentWallet();
           if (wallet?.address) {
-               this.setRightPanel();
+               untracked(() => this.setRightPanel());
           }
      });
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
-          await this.getAccountDetails(true);
+          await this.getAccountDetails();
      }
 
      selectWallet(wallet: Wallet): void {
@@ -105,12 +106,18 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           const isValidTab = (t: string): t is AccountConfigAction => Object.values(ACCOUNT_CONFIG_ACTIONS).includes(t as AccountConfigAction);
           if (!isValidTab(tab)) return;
           this.accountConfiguratorViewModelService.activeTab.set(tab);
-          this.rightPanelService.resetFilters();
-          if (this.hasWallets()) await this.getAccountDetails(true);
+          const accountInfo = this.accountConfiguratorViewModelService.accountInfo();
+          if (tab === 'modifyAccountFlags' && accountInfo) {
+               this.accountConfiguratorUtilService.setAccountFlags(tab, accountInfo);
+          }
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          this.accountConfiguratorViewModelService.accountInfo.set(null);
+          this.accountConfiguratorStoreService.setField('accountInfo', null);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -123,21 +130,26 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (!env.accountInfo) throw new Error('Unable to get account information.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
 
                     const currentTab = this.accountConfiguratorViewModelService.activeTab();
                     this.accountConfiguratorStoreService.setField('accountInfo', env.accountInfo);
 
-                    this.accountConfiguratorUtilService.setAccountFlags(currentTab, env);
+                    this.accountConfiguratorUtilService.setAccountFlags(currentTab, env.accountInfo);
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                     if (currentTab === 'modifyMultiSigners') this.accountConfiguratorStoreService.setField('signerQuorum', 1);
                } catch (error: any) {
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
                     console.error('Error in getAccountDetails:', error);
                     this.toastService.error(error.message || 'Failed to load account', AppConstants.TOAST.ERROR);
                } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+                         this.isSummaryLoading.set(false);
+                         this.txUiService.resetCurrentStepToIdle();
+                    }
                }
           });
      }
@@ -219,6 +231,24 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
           this.acccountDataService.refreshUiStateAccountConfigure(env.wallet, env);
      }
 
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
+
+          const accountInfo = this.xrplCache.get<xrpl.AccountInfoResponse>(`account:${address}:info`);
+          if (!accountInfo) return;
+
+          const env = {
+               accountInfo,
+               accountObjects,
+               wallet: this.walletManagerService.getSelectedWallet(),
+          };
+          const currentTab = this.accountConfiguratorViewModelService.activeTab();
+          this.accountConfiguratorStoreService.setField('accountInfo', accountInfo);
+          this.accountConfiguratorUtilService.setAccountFlags(currentTab, accountInfo);
+          this.refreshAccountObject(env);
+          if (currentTab === 'modifyMultiSigners') this.accountConfiguratorStoreService.setField('signerQuorum', 1);
+     }
+
      // In account-configurator.component.ts
      private setRightPanel(): void {
           this.rightPanelService.setPanel({
@@ -229,8 +259,6 @@ export class AccountConfiguratorComponent extends WalletDestinationBase implemen
 
                summaryComponent: AccountConfiguratorSummaryComponent,
                summaryInputs: {
-                    info: this.accountConfiguratorViewModelService.infoData(),
-                    tab: this.accountConfiguratorViewModelService.activeTab(),
                     resetTrigger: this.rightPanelService.resetTrigger(),
                },
           });

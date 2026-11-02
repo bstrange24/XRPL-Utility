@@ -30,6 +30,7 @@ import { TxEnvironmentService } from '../../services/transaction-environment/tx-
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
 import { NFT_FLAGS, NFT_OFFERS_TAB } from './constants/nft-offers.constants';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
+import * as xrpl from 'xrpl';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 import { NftUtilService } from '../../services/nft/nft-util/nft-util.service';
 import { CreateNftStoreService } from '../../services/nft/nft-store/nft-store.service';
@@ -121,7 +122,7 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
-          await this.getNFTOffers(true);
+          await this.getNFTOffers(false);
      }
 
      async onCurrencyChange(item: any) {
@@ -224,7 +225,9 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      async getNFTOffers(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getNFTOffers', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -238,15 +241,10 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
                     if (!env) throw new Error('Unable to get environment.');
 
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-
-                    const { ledgerInfo } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet, {
-                         accountInfo: env.accountInfo,
-                         accountObjects: env.accountObjects,
-                    });
-
+                    const ledgerInfo = await this.xrplCache.getLedgerInfo(env.client);
                     this.nftUtilService.getExistingSellOffers(env.accountObjects, ledgerInfo);
                     this.nftUtilService.getExistingBuyOffers(env.accountObjects, ledgerInfo);
-                    this.nftUtilService.getExistingNfts(env.accountObjects, this.currentWallet().address);
+                    this.nftUtilService.getExistingNfts(env.accountObjects, env.wallet.classicAddress);
                     this.updateSharedObjectsStore(env);
 
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
@@ -404,13 +402,18 @@ export class NftOffersComponent extends WalletDestinationBase implements OnInit 
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          const { ledgerInfo, accountInfo, accountObjects, nftInfo, sellOffersResponse, buyOffersResponse } = await this.nftUtilService.getNftOfferDetails(env.client, env.wallet, {
-               accountInfo: env.accountInfo,
-               accountObjects: env.accountObjects,
-          });
+          const ledgerInfo = await this.xrplCache.getLedgerInfo(env.client);
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
+          this.nftUtilService.getExistingSellOffers(env.accountObjects, ledgerInfo);
+          this.nftUtilService.getExistingBuyOffers(env.accountObjects, ledgerInfo);
+          this.nftUtilService.getExistingNfts(env.accountObjects, env.wallet.classicAddress);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          const ledgerInfo = this.xrplCache.get<{ currentRippleTime: number }>('server:ledgerInfo:all');
           this.nftUtilService.getExistingSellOffers(accountObjects, ledgerInfo);
           this.nftUtilService.getExistingBuyOffers(accountObjects, ledgerInfo);
-          this.nftUtilService.getExistingNfts(accountObjects, env.wallet.classicAddress);
+          this.nftUtilService.getExistingNfts(accountObjects, address);
      }
 
      onCanBuyNftChange(canBuy: boolean) {

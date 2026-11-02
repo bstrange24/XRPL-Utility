@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, input, output, computed, signal, effect } from '@angular/core';
 import { AccountConfiguratorViewModelService } from '../../../../services/account-configurator/account-configurator-view-model/account-configurator-view-model.service';
 import { NgIcon } from '@ng-icons/core';
-import { ACCOUNT_ACTIONS } from '../../constants/account-configurator.constants';
 import { SummaryContainerComponent } from '../../../shared/ui-components/summary/summary-container/summary-container.component';
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
@@ -47,9 +46,7 @@ export class AccountConfiguratorSummaryComponent {
      }
 
      // Inputs
-     info = input<AccountConfiguratorInfo | null>(null);
      infoPanelExpanded = input<boolean>();
-     tab = input.required<ACCOUNT_ACTIONS>();
      resetTrigger = input<number>(0);
 
      // Outputs

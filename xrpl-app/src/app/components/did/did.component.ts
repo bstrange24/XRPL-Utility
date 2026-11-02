@@ -119,7 +119,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
-          await this.getDidForAccount(true);
+          await this.getDidForAccount();
      }
 
      onWalletSelected(wallet: Wallet): void {
@@ -144,6 +144,7 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
      async getDidForAccount(forceRefresh = false): Promise<void> {
           const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          this.didStoreService.setField('existingDid', []);
           if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getDidForAccount', true, async () => {
                this.txUiService.clearAllOptionsAndMessages();
@@ -155,16 +156,20 @@ export class DidComponent extends WalletDestinationBase implements OnInit, After
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
                     console.error('Error in getDidForAccount:', error);
                     this.toastService.error(error.message || 'Error getting did detail', AppConstants.TOAST.ERROR);
                } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+                         this.isSummaryLoading.set(false);
+                         this.txUiService.resetCurrentStepToIdle();
+                    }
                }
           });
      }

@@ -121,7 +121,13 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          this.deleteAccountStoreService.setField('accountInfo', null);
+          this.deleteAccountStoreService.setField('accountObjects', null);
+          this.deleteAccountStoreService.setField('serverInfo', null);
+          this.deleteAccountStoreService.setField('blockingObjects', null);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getAccountDetails', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
@@ -138,16 +144,20 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                          forceRefresh: forceRefresh,
                     });
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
                     console.error('Error in getting account details:', error);
                     this.toastService.error(error.message || 'Error getting account detail', AppConstants.TOAST.ERROR);
                } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+                         this.isSummaryLoading.set(false);
+                         this.txUiService.resetCurrentStepToIdle();
+                    }
                }
           });
      }
@@ -229,6 +239,21 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           this.deleteAccountStoreService.setField('accountObjects', env.accountObjects);
           this.deleteAccountStoreService.setField('serverInfo', env.serverInfo);
           this.deleteAccountStoreService.setField('blockingObjects', env.blockingObjects);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
+
+          this.deleteAccountStoreService.setField('accountObjects', accountObjects);
+
+          const accountInfo = this.xrplCache.get<xrpl.AccountInfoResponse>(`account:${address}:info`);
+          if (accountInfo) this.deleteAccountStoreService.setField('accountInfo', accountInfo);
+
+          const blockingObjects = this.xrplCache.get<any>(`account:${address}:blocking`);
+          if (blockingObjects) this.deleteAccountStoreService.setField('blockingObjects', blockingObjects);
+
+          const serverInfo = this.xrplCache.get<xrpl.ServerInfoResponse>(`${this.environment()}:server:info:current`);
+          if (serverInfo) this.deleteAccountStoreService.setField('serverInfo', serverInfo);
      }
 
      private setRightPanel(): void {

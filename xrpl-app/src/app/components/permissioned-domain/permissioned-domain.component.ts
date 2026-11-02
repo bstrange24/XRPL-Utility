@@ -1,6 +1,7 @@
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import * as xrpl from 'xrpl';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { AppConstants } from '../../core/app.constants';
@@ -104,7 +105,7 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
-          await this.getPermissionedDomainForAccount();
+          await this.getPermissionedDomainForAccount(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -142,19 +143,22 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
      });
 
      async getPermissionedDomainForAccount(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          this.permissionedDomainStoreService.resetDomainDropDown();
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getPermissionedDomainForAccount', true, async () => {
                // Reset all fields and options
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
                this.txUiService.resetCurrentStepToIdle();
-               this.permissionedDomainStoreService.resetDomainDropDown();
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
@@ -275,6 +279,12 @@ export class PermissionedDomainComponent extends WalletDestinationBase implement
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.permissionedDomainViewModelService.getCreatedPermissionedDomains(env.accountObjects, env.wallet.classicAddress);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+               this.permissionedDomainViewModelService.getCreatedPermissionedDomains(accountObjects, address);
+          }
      }
 
      private setRightPanel(): void {

@@ -334,7 +334,9 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      async getEscrows(forceRefresh = false): Promise<void> {
+          const address = this.walletManager.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getEscrows', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -513,12 +515,24 @@ export abstract class EscrowBaseComponent extends WalletDestinationBase implemen
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.escrowStoreService.setField('existingEscrow', await this.escrowUtilService.getExistingEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab(), this.isConditional));
-          this.escrowStoreService.setField('expiredOrFulfilledEscrows', await this.escrowUtilService.getExpiredOrFulfilledEscrows(env.accountObjects, env.wallet.classicAddress, this.escrowTransactionViewModelService.activeTab()));
-          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
-          this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
-          const escrows = await this.escrowUtilService.loadAllEscrows(env.accountObjects);
-          this.escrowStoreService.setField('allEscrowsRaw', escrows);
+          const address = env.wallet.classicAddress;
+          const existingEscrows = await this.escrowUtilService.getExistingEscrows(env.accountObjects, address, this.escrowTransactionViewModelService.activeTab(), this.isConditional);
+          const expiredOrFulfilledEscrows = await this.escrowUtilService.getExpiredOrFulfilledEscrows(env.accountObjects, address, this.escrowTransactionViewModelService.activeTab());
+          const existingMpts = await this.mptUtilService.getMpts(env.accountObjects, address);
+          const allEscrows = await this.escrowUtilService.loadAllEscrows(env.accountObjects);
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
+
+          this.escrowStoreService.setField('existingEscrow', existingEscrows);
+          this.escrowStoreService.setField('expiredOrFulfilledEscrows', expiredOrFulfilledEscrows);
+          this.mptStoreService.setField('existingMpts', existingMpts);
+          this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, address));
+          this.escrowStoreService.setField('allEscrowsRaw', allEscrows);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          void this.refreshAccountObject({ accountObjects, wallet: { classicAddress: address } }).catch(error => {
+               console.error('Unable to populate cached escrow account objects:', error);
+          });
      }
 
      toggleOptions(enabled: boolean): void {

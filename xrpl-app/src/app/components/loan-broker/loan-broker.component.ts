@@ -178,7 +178,7 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.rightPanelService.resetFilters();
           this.clearInputFields();
-          await this.getLoanBroker(true);
+          await this.getLoanBroker(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -205,7 +205,9 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
      }
 
      async getLoanBroker(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getLoanBroker', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -216,8 +218,10 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     await this.refreshAccountObject(env);
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
@@ -343,23 +347,25 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
+          const address = env.wallet.classicAddress;
           const existingBrokers = await this.loanBrokerUtilService.getExistingBrokers(env.accountObjects, env.wallet.classicAddress);
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
           this.loanBrokerStoreService.setField('existingBrokers', existingBrokers);
 
-          // Loans live under the borrower, so read them from each broker's pseudo-account
-          const brokerLoans: any[] = [];
-          for (const broker of existingBrokers) {
-               if (!broker.Account) continue;
-               try {
-                    const res = (await env.client.request({ command: 'account_objects', account: broker.Account, type: 'loan', ledger_index: 'validated' })) as xrpl.AccountObjectsResponse;
-                    brokerLoans.push(...(await this.lendingUtilService.getExistingLoans(res, env.wallet.classicAddress)));
-               } catch (err) {
-                    console.warn('Failed to load loans for broker', broker.LoanBrokerID, err);
-               }
-          }
-          this.loanStoreService.setField('existingLoans', brokerLoans);
-
           const vaults = await this.vaultUtilService.getExistingVaults(env.accountObjects, env.wallet.classicAddress, this.vaultViewModelService.activeTab());
+          const brokerLoanResults = await Promise.all(existingBrokers.map(async broker => {
+               if (!broker.Account) return [];
+                    try {
+                         const response = await this.xrplCache.getAccountObjectsWithType(env.client, broker.Account, false, 'loan');
+                         return await this.lendingUtilService.getExistingLoans(response, address);
+                    } catch (error) {
+                         console.warn('Failed to load loans for broker', broker.LoanBrokerID, error);
+                         return [];
+                    }
+          }));
+               if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
+
+               this.loanStoreService.setField('existingLoans', brokerLoanResults.flat());
           this.vaultStoreService.setField('existingVaults', vaults);
           // Update cache
           vaults.forEach((vault: any) => {
@@ -367,6 +373,17 @@ export class LoanBrokerComponent extends WalletDestinationBase implements OnInit
                     this.vaultCacheService.setVault(vault.index || vault.id, vault);
                }
           });
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          void this.loadCachedBrokerData(accountObjects, address).catch(error => {
+               console.error('Unable to populate cached loan broker account objects:', error);
+          });
+     }
+
+     private async loadCachedBrokerData(accountObjects: xrpl.AccountObjectsResponse, address: string): Promise<void> {
+          const client = await this.xrplCache.getClient(() => this.xrplService.getClient());
+          await this.refreshAccountObject({ accountObjects, wallet: { classicAddress: address }, client });
      }
 
      toggleOptions(enabled: boolean): void {

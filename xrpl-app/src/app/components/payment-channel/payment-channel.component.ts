@@ -189,7 +189,7 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
 
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
-          await this.getPaymentChannels(true);
+          await this.getPaymentChannels(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -233,11 +233,11 @@ export class CreatePaymentChannelComponent extends WalletDestinationBase impleme
                     const env = await this.txEnvironmentService.prepareTxEnvironment({
                          includeAccountInfo: true,
                          includeAccountObject: true,
-                         includePaymentChannelObjects: true,
                          forceRefresh: forceRefresh,
                     });
 
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);

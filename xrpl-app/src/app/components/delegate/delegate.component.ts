@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import * as xrpl from 'xrpl';
 
 import { AppConstants, TabConfig, TabMetaInfo } from '../../core/app.constants';
 import { AcccountDataService } from '../../services/account-data/acccount-data.service';
@@ -104,7 +105,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           this.delegateStore.setField('destination', '');
           this.delegateStore.setField('selected', new Set<number>());
           this.delegateStore.setField('existingDelegations', []);
-          await this.getAccountDetails(true);
+          await this.getAccountDetails(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -146,6 +147,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           const selectedAddress = this.walletManagerService.getSelectedWallet()?.address;
           const requestId = ++this.accountDetailsRequestId;
           this.isSummaryLoading.set(true);
+          if (!forceRefresh && selectedAddress) this.tryPrePopulateFromCache(selectedAddress);
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -249,6 +251,12 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
           this.delegateUtilService.getExistingDelegations(env.accountObjects, env.wallet.classicAddress);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+               this.delegateUtilService.getExistingDelegations(accountObjects, address);
+          }
      }
 
      protected clearInputFields(): void {

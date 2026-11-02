@@ -167,6 +167,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);

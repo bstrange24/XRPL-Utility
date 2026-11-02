@@ -116,7 +116,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                     includeAccountObject: true,
                     includeTrustlines: true,
                     includeGatewayBalance: true,
-                    forceRefresh: true,
+                    forceRefresh: false,
                });
 
                if (!env.accountObjects?.result || !env.accountInfo) {
@@ -321,6 +321,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                this.clearTrustlineData();
 
                if (wallet?.classicAddress) {
+                    this.tryPrePopulateFromCache(wallet.classicAddress);
                     await this.loadWalletDataPreservingSelection(wallet, savedCurrency, savedIssuer);
                } else {
                     this.trustlineStoreService.setField('isLoading', false);

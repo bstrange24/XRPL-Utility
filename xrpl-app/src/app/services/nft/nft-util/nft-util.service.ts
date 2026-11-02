@@ -528,7 +528,7 @@ export class NftUtilService {
                     Destination: obj.Destination,
                     Expiration: obj.Expiration,
                     Flags: obj.Flags,
-                    isExpired: obj.Expiration ? ledgerInfo.currentRippleTime > obj.Expiration : false,
+                    isExpired: obj.Expiration ? (ledgerInfo?.currentRippleTime ?? 0) > obj.Expiration : false,
                }));
 
           this.nftCreateStoreService.setField('existingSellOffers', offers);
@@ -546,7 +546,7 @@ export class NftUtilService {
                     Destination: obj.Destination,
                     Expiration: obj.Expiration,
                     Flags: obj.Flags,
-                    isExpired: obj.Expiration ? ledgerInfo.currentRippleTime > obj.Expiration : false,
+                    isExpired: obj.Expiration ? (ledgerInfo?.currentRippleTime ?? 0) > obj.Expiration : false,
                }));
 
           this.nftCreateStoreService.setField('existingBuyOffers', offers);

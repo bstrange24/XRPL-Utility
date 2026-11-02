@@ -2,6 +2,7 @@ import { WorkflowStepperComponent } from '../shared/ui-components/workflow-stepp
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import * as xrpl from 'xrpl';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { ButtonTooltipComponent } from '../shared/button-tooltip/button-tooltip.component';
@@ -202,7 +203,7 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
           this.trustlineCurrencyService.selectCurrency('XRP');
           this.rightPanelService.resetFilters();
           this.clearInputFields();
-          await this.getVaults(true);
+          await this.getVaults(false);
      }
 
      async onCurrencyChange(item: any) {
@@ -263,7 +264,9 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      }
 
      async getVaults(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getVaults', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -275,8 +278,10 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     await this.refreshAccountObject(env);
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
                     this.updateSharedObjectsStore(env);
                     const currencyValue = this.currencyStoreService.currency() ?? 'XRP';
                     if (currencyValue !== 'XRP' && currencyValue !== 'MPT' && this.currencyStoreService.issuer()) {
@@ -416,10 +421,15 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
-          this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, env.wallet.classicAddress));
+          const address = env.wallet.classicAddress;
+          const [existingMpts, vaults] = await Promise.all([
+               this.mptUtilService.getMpts(env.accountObjects, address),
+               this.vaultUtilService.getExistingVaults(env.accountObjects, address, this.vaultViewModelService.activeTab()),
+          ]);
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
 
-          const vaults = await this.vaultUtilService.getExistingVaults(env.accountObjects, env.wallet.classicAddress, this.vaultViewModelService.activeTab());
+          this.mptStoreService.setField('existingMpts', existingMpts);
+          this.escrowStoreService.setField('existingIOUs', this.trustlineCurrencyService.getExistingIOUs(env.accountObjects, address));
 
           this.vaultStoreService.setField('existingVaults', vaults);
 
@@ -428,6 +438,12 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
                if (vault.index || vault.id) {
                     this.vaultCacheService.setVault(vault.index || vault.id, vault);
                }
+          });
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          void this.refreshAccountObject({ accountObjects, wallet: { classicAddress: address } }).catch(error => {
+               console.error('Unable to populate cached vault account objects:', error);
           });
      }
 

@@ -347,8 +347,11 @@ export class CreateNftComponent extends WalletDestinationBase implements OnInit,
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          const accountNfts = await this.xrplService.getAccountNFTs(env.client, env.wallet.classicAddress, 'validated', '').catch(() => ({ result: { account_nfts: [] } }));
-          this.nftCreateStoreService.setField('existingNfts', this.nftCreateTransactionViewModelService.getExistingNfts(accountNfts, this.currentWallet().address));
+          this.nftUtilService.getExistingNfts(env.accountObjects, env.wallet.classicAddress);
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          this.nftUtilService.getExistingNfts(accountObjects, address);
      }
 
      onCanCreateNftChange(canCreate: boolean) {

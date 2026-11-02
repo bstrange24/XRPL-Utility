@@ -2,6 +2,7 @@ import { WorkflowStepperComponent } from '../shared/ui-components/workflow-stepp
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import * as xrpl from 'xrpl';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
 import { WalletDestinationBase } from '../../services/wallets/walletDestinationBase';
@@ -146,7 +147,7 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
      protected async onSelectedWalletIndexChange(): Promise<void> {
           this.rightPanelService.resetFilters();
           this.clearInputFields();
-          await this.getLoans(true);
+          await this.getLoans(false);
      }
 
      selectWallet(wallet: Wallet): void {
@@ -172,7 +173,9 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
      }
 
      async getLoans(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
+          if (!forceRefresh) this.tryPrePopulateFromCache(address);
           await this.measure('getLoans', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
@@ -184,8 +187,10 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     await this.refreshAccountObject(env);
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
                     this.updateSharedObjectsStore(env);
                     this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
                } catch (error: any) {
@@ -333,21 +338,30 @@ export class LoanComponent extends WalletDestinationBase implements OnInit, OnDe
      }
 
      protected async refreshAccountObject(env: any): Promise<void> {
-          this.mptStoreService.setField('existingMpts', await this.mptUtilService.getMpts(env.accountObjects, env.wallet.classicAddress));
+          const address = env.wallet.classicAddress;
+          const [existingMpts, loans, existingBrokers, vaults] = await Promise.all([
+               this.mptUtilService.getMpts(env.accountObjects, address),
+               this.loanUtilService.getExistingLoans(env.accountObjects, address),
+               this.loanBrokerUtilService.getExistingBrokers(env.accountObjects, address),
+               this.vaultUtilService.getExistingVaults(env.accountObjects, address, 'createVault'),
+          ]);
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress !== address) return;
 
-          const loans = await this.loanUtilService.getExistingLoans(env.accountObjects, env.wallet.classicAddress);
+          this.mptStoreService.setField('existingMpts', existingMpts);
           this.loanStoreService.setField('existingLoans', loans);
-
-          const existingBrokers = await this.loanBrokerUtilService.getExistingBrokers(env.accountObjects, env.wallet.classicAddress);
           this.loanBrokerStoreService.setField('existingBrokers', existingBrokers);
-
-          const vaults = await this.vaultUtilService.getExistingVaults(env.accountObjects, env.wallet.classicAddress, 'createVault');
           this.vaultStoreService.setField('existingVaults', vaults);
           // Update cache
           vaults.forEach((vault: any) => {
                if (vault.index || vault.id) {
                     this.vaultCacheService.setVault(vault.index || vault.id, vault);
                }
+          });
+     }
+
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          void this.refreshAccountObject({ accountObjects, wallet: { classicAddress: address } }).catch(error => {
+               console.error('Unable to populate cached loan account objects:', error);
           });
      }
 

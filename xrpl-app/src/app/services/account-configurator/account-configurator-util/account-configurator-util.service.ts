@@ -93,16 +93,14 @@ export class AccountConfiguratorUtilService extends PerformanceBaseComponent {
      readonly setNftMinterButtonLabel = this.buildTxLabel('Set NFT Minter');
      readonly removeNftMinterButtonLabel = this.buildTxLabel('Remove NFT Minter');
 
-     setAccountFlags(currentTab: string, env: PrepareTxEnvironmentResult) {
+     setAccountFlags(currentTab: string, accountInfo: xrpl.AccountInfoResponse) {
           if (currentTab === 'modifyAccountFlags') {
                AppConstants.FLAGS.forEach(flag => {
                     const flagKey = AppConstants.FLAGMAP[flag.name as keyof typeof AppConstants.FLAGMAP];
                     if (flagKey) {
-                         if (env?.accountInfo) {
-                              const isEnabled = !!this.accountConfiguratorStoreService.accountInfo()?.result.account_flags?.[flagKey as keyof typeof env.accountInfo.result.account_flags];
-                              const flagName = flag.name as keyof XrplAccountFlags;
-                              this.flags[flagName] = isEnabled;
-                         }
+                         const isEnabled = !!accountInfo.result.account_flags?.[flagKey as keyof typeof accountInfo.result.account_flags];
+                         const flagName = flag.name as keyof XrplAccountFlags;
+                         this.flags[flagName] = isEnabled;
                     }
                });
                this.updateFlagTotal();

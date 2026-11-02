@@ -1,4 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy, ChangeDetectorRef, computed, effect, signal, output } from '@angular/core';
+import * as xrpl from 'xrpl';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -111,25 +112,20 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
      }
 
      async getTickets(forceRefresh = false): Promise<void> {
+          const address = this.walletManagerService.getSelectedWallet()?.classicAddress ?? '';
           this.isSummaryLoading.set(true);
           await this.measure('getTickets', true, async () => {
                this.txUiService.resetCurrentStepToIdle();
                this.txUiService.clearAllOptionsAndMessages();
                this.xrplTxOptionsStore.reset();
+               if (!forceRefresh) this.tryPrePopulateFromCache(address);
 
                if (!this.walletManagerService.ensureWalletSelected()) return;
 
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
-
-                    const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
-
-                    // Extract sequences
-                    const allTicketsForWallet: string[] = (ticketObjects?.result?.account_objects ?? []).map((ticket: any) => String(ticket.TicketSequence)).sort((a, b) => Number(a) - Number(b)); // keeps them in ascending order
-
-                    this.xrplTxOptionsStore.setField('allTicketsForWallet', allTicketsForWallet);
-                    this.xrplTxOptionsStore.setField('walletTicketCount', allTicketsForWallet.length);
+                    if (this.walletManagerService.getSelectedWallet()?.classicAddress !== env.wallet.classicAddress) return;
 
                     this.refreshAccountObject(env);
                     this.updateSharedObjectsStore(env);
@@ -228,9 +224,17 @@ export class CreateTicketsComponent extends WalletDestinationBase implements OnI
 
      protected async refreshAccountObject(env: any): Promise<void> {
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
+          this.populateTicketData(env.accountObjects);
+     }
 
-          // NEW: Always refresh ticket count from the fresh account_objects
-          const ticketObjects = env.accountObjects ? this.ticketsUtilService.filterAccountObjectsByTypes(env.accountObjects, ['Ticket']) : { result: { account_objects: [] } };
+     protected override handleCachedAccountObjects(accountObjects: xrpl.AccountObjectsResponse, address: string): void {
+          if (this.walletManagerService.getSelectedWallet()?.classicAddress === address) {
+               this.populateTicketData(accountObjects);
+          }
+     }
+
+     private populateTicketData(accountObjects: xrpl.AccountObjectsResponse): void {
+          const ticketObjects = this.ticketsUtilService.filterAccountObjectsByTypes(accountObjects, ['Ticket']);
           const newCount = ticketObjects?.result?.account_objects?.length ?? 0;
           this.xrplTxOptionsStore.setField('walletTicketCount', newCount);
           const allTicketsForWallet: string[] = (ticketObjects?.result?.account_objects ?? []).map((ticket: any) => String(ticket.TicketSequence)).sort((a, b) => Number(a) - Number(b)); // keeps them in ascending order

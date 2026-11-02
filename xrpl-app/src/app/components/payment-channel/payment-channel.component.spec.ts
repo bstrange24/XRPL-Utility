@@ -742,10 +742,10 @@ describe('CreatePaymentChannelComponent', () => {
      });
 
      describe('onSelectedWalletIndexChange', () => {
-          it('should call getPaymentChannels with forceRefresh true', async () => {
+          it('should call getPaymentChannels with cached refresh enabled', async () => {
                spyOn(component, 'getPaymentChannels');
                await (component as any).onSelectedWalletIndexChange();
-               expect(component.getPaymentChannels).toHaveBeenCalledWith(true);
+               expect(component.getPaymentChannels).toHaveBeenCalledWith(false);
           });
      });
 
