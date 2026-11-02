@@ -10,10 +10,8 @@
 
      <form #theForm="ngForm">
           @if (tab === 'delegateCreate') {
-          <app-delegate-requirement-info class="block mt-4" />
           <app-delegate-create [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQuery.set($event)" [actions]="delegateStore.actions()" [selectedActions]="delegateStore.selected()" (destinationChange)="setDelegateDestination($event)" (actionToggle)="toggleSelection($event)" />
           } @else if (tab === 'delegateClear') {
-          <app-delegate-requirement-info class="block mt-4" />
           <app-delegate-clear [delegations]="delegateStore.existingDelegations()" [selectedDestination]="delegateStore.destination()" [actions]="delegateStore.actions()" [selectedActions]="delegateStore.selected()" (actionToggle)="toggleSelection($event)" (destinationChange)="setDelegateDestination($event)" />
           }
 
@@ -33,9 +31,11 @@
                </div>
           </div>
 
+          @if (!isIdle()) {
           <div class="execution-time">
                <app-execution-time-display [time]="executionTime()"></app-execution-time-display>
           </div>
+          }
 
           <div class="pt-2">
                <app-transaction-preview></app-transaction-preview>

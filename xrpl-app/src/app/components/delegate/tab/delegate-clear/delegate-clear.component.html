@@ -1,9 +1,9 @@
 <section class="card-base">
      <h3 class="section-heading">
           <lucide-icon name="minus" class="section-heading-icon-red"></lucide-icon>
-          Remove a delegate
+          Delegations granted by this wallet
      </h3>
-     <p class="text-secondary">Select a delegate, then tick the permissions to remove. Leave none ticked to remove the delegate entirely and release its owner reserve.</p>
+     <p class="text-secondary">These are permissions granted by the selected wallet. Select a delegate account, then tick permissions to remove. Leave none ticked to remove the delegation entirely and release its owner reserve.</p>
 
      @if (delegations().length) {
      <div class="delegation-list">
@@ -11,8 +11,9 @@
           <div class="delegation-card" [class.delegation-card-selected]="isDelegationSelected(delegation)" (click)="toggleDelegation(delegation)">
                <input type="radio" name="delegate-to-clear" class="pointer-events-none" [value]="delegation.Authorize" [checked]="isDelegationSelected(delegation)" tabindex="-1" readonly />
                <span class="delegation-card-copy">
+                    <span class="delegation-permissions">Delegate account</span>
                     <span class="delegation-address">{{ delegation.Authorize }}</span>
-                    <span class="delegation-permissions">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</span>
+                    <span class="delegation-permissions">{{ delegation.Permissions.length }} granted permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</span>
                     <span class="delegation-values">
                          @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) { @if (selectedDestination() === delegation.Authorize && actionIdFor(permission.Permission.PermissionValue) !== null) {
                          <label class="permission-chip" (click)="$event.stopPropagation()">
@@ -34,8 +35,8 @@
      </div>
      } @else {
      <div class="empty-delegations" role="status">
-          <strong>No active delegations</strong>
-          <span>This account does not currently have any delegates to remove.</span>
+          <strong>No permissions granted</strong>
+          <span>This wallet has not granted permissions to any delegate.</span>
      </div>
      }
 </section>

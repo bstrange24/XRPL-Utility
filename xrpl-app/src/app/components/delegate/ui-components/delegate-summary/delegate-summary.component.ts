@@ -31,11 +31,11 @@ export class DelegateSummaryComponent {
 
      readonly summaryText = computed(() => {
           const count = this.totalCount();
-          if (count === 0) return ' has no active delegations.';
-          return ` has <strong>${count}</strong> active ${count === 1 ? 'delegation' : 'delegations'}${this.tab() === 'delegateClear' ? ' that can be removed.' : '.'}`;
+          if (count === 0) return ' has not granted permissions to any delegate.';
+          return ` has granted permissions to <strong>${count}</strong> delegate${count === 1 ? '' : 's'}${this.tab() === 'delegateClear' ? ' that can be changed or removed.' : '.'}`;
      });
 
-     readonly emptyStateMessage = computed(() => (this.tab() === 'delegateClear' ? 'This wallet has no delegations to remove.' : 'This wallet has not delegated any permissions yet.'));
+     readonly emptyStateMessage = computed(() => (this.tab() === 'delegateClear' ? 'This wallet has not granted permissions to any delegate.' : 'This wallet has not delegated any permissions yet.'));
 
-     readonly emptyStateSubMessage = computed(() => (this.tab() === 'delegateClear' ? 'Use the Grant Permissions tab to delegate actions to another account.' : 'Choose an account and the actions it may perform on your behalf.'));
+     readonly emptyStateSubMessage = computed(() => (this.tab() === 'delegateClear' ? 'Only the wallet that granted the permissions can change or remove them.' : 'Choose an account to receive the actions it may perform on your behalf.'));
 }

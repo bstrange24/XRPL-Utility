@@ -1,32 +1,44 @@
-<details class="card-base delegate-help">
-     <summary class="delegate-help-summary">
-          <span class="delegate-help-title">
-               <ng-icon name="heroInformationCircle" size="20" class="section-heading-icon-blue"></ng-icon>
-               About Delegate Permissions
+<div class="space-y-6 p-3">
+     <button type="button" class="requirement-main" [attr.aria-expanded]="isExpanded()" aria-controls="delegate-permissions-info" (click)="isExpanded.set(!isExpanded())">
+          <span class="flex items-center gap-3">
+               <ng-icon name="heroInformationCircle" size="22" class="text-blue-600" />
+               <span class="font-semibold text-gray-900">Delegate Permissions Info</span>
           </span>
-          <span class="delegate-help-toggle" aria-hidden="true"></span>
-     </summary>
+          <lucide-icon [name]="isExpanded() ? 'chevron-up' : 'chevron-down'" size="16" class="text-gray-500" />
+     </button>
 
-     <div class="delegate-help-content">
-          <p>DelegateSet grants another XRPL account only the transaction permissions you select. The delegate never receives your account's signing keys, and can perform only the granted actions.</p>
-          <div class="delegate-help-grid">
-               <section>
-                    <h4>Granting permissions</h4>
-                    <ul>
-                         <li>Select the delegate account and one or more permissions (up to 10).</li>
-                         <li>Changes take effect when the DelegateSet transaction is validated.</li>
-                         <li>Each delegate object uses owner reserve while it remains on the ledger.</li>
-                    </ul>
+     <div id="delegate-permissions-info">
+          @if (isExpanded()) {
+          <div [@expandCollapse] class="space-y-6 overflow-hidden">
+               <section class="rounded-2xl border border-gray-200 bg-white p-5">
+                    <p class="text-sm text-gray-600">DelegateSet grants another XRPL account only the transaction permissions you select. The delegate never receives your account's signing keys, and can perform only the granted actions.</p>
                </section>
-               <section>
-                    <h4>Removing a delegate</h4>
-                    <ul>
-                         <li>Select an active delegation to remove all of its permissions.</li>
-                         <li>Revocation does not reverse transactions the delegate already submitted.</li>
-                         <li>Only the delegating account can create or remove its delegate objects.</li>
-                    </ul>
+
+               <section class="rounded-2xl border border-gray-200 bg-white p-5">
+                    <div class="delegate-help-grid">
+                         <section>
+                              <h4>Granting permissions</h4>
+                              <ul>
+                                   <li>Select the delegate account and one or more permissions (up to 10).</li>
+                                   <li>Changes take effect when the DelegateSet transaction is validated.</li>
+                                   <li>Each delegate object uses owner reserve while it remains on the ledger.</li>
+                              </ul>
+                         </section>
+                         <section>
+                              <h4>Removing a delegate</h4>
+                              <ul>
+                                   <li>Select an active delegation to remove all of its permissions.</li>
+                                   <li>Revocation does not reverse transactions the delegate already submitted.</li>
+                                   <li>Only the delegating account can create or remove its delegate objects.</li>
+                              </ul>
+                         </section>
+                    </div>
+               </section>
+
+               <section class="delegate-help-warning rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <p class="text-sm text-amber-800">Grant permissions only to accounts you trust. Delegated permissions are visible on the ledger and remain active until changed or removed.</p>
                </section>
           </div>
-          <p class="delegate-help-warning">Grant permissions only to accounts you trust. Delegated permissions are visible on the ledger and remain active until changed or removed.</p>
+          }
      </div>
-</details>
+</div>

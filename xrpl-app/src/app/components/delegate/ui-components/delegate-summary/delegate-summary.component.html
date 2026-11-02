@@ -5,8 +5,9 @@
                @for (delegation of delegations(); track delegation.index) {
                <app-summary-item [selected]="viewModel.delegateStore.destination() === delegation.Authorize" [copyValue]="delegation.Authorize || ''" (onClick)="onDelegationClick(delegation)" copyTooltip="Copy delegate address" (onCopyClick)="copyUtilService.copyAndToast($event, 'Delegate address')">
                     <div item-content>
+                         <div class="text-xs text-gray-500">Delegate account</div>
                          <div class="font-mono text-sm break-all">{{ delegation.Authorize }}</div>
-                         <div class="text-xs text-gray-500 mt-1">{{ delegation.Permissions.length }} permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</div>
+                         <div class="text-xs text-gray-500 mt-1">{{ delegation.Permissions.length }} granted permission{{ delegation.Permissions.length === 1 ? '' : 's' }}</div>
                          <div class="flex flex-wrap gap-1 mt-2">
                               @for (permission of delegation.Permissions; track permission.Permission.PermissionValue) {
                               <span class="text-xs bg-gray-100 text-gray-700 rounded-full px-2 py-0.5">{{ permission.Permission.PermissionValue }}</span>

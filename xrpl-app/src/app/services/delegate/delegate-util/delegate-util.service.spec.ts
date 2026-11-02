@@ -15,6 +15,12 @@ describe('DelegateUtilService', () => {
                updateField: jasmine.createSpy('updateField'),
                resetAll: jasmine.createSpy('resetAll'),
                getAll: jasmine.createSpy('getAll'),
+               existingDelegations: jasmine.createSpy('existingDelegations').and.returnValue([]),
+               actions: jasmine.createSpy('actions').and.returnValue([
+                    { id: 1, key: 'Payment' },
+                    { id: 2, key: 'TrustSet' },
+                    { id: 3, key: 'AccountSet' },
+               ]),
           };
 
           mockLogService = jasmine.createSpyObj('LogServiceService', ['logObjects']);
@@ -39,6 +45,7 @@ describe('DelegateUtilService', () => {
                          account_objects: [
                               {
                                    LedgerEntryType: 'Delegate',
+                                   Account: 'rOwnerAddress',
                                    index: 'index1',
                                    Authorize: 'rAuthAddress1',
                                    Permissions: { some: 'permissions1' },
@@ -46,25 +53,35 @@ describe('DelegateUtilService', () => {
                               },
                               {
                                    LedgerEntryType: 'Delegate',
+                                   Account: 'rOwnerAddress',
                                    index: 'index2',
                                    Authorize: 'rAuthAddress2',
                                    Permissions: { some: 'permissions2' },
                                    Flags: 2,
                               },
                               {
-                                   LedgerEntryType: 'Other',
+                                   LedgerEntryType: 'Delegate',
+                                   Account: 'rDifferentOwner',
                                    index: 'index3',
+                                   Authorize: 'rAuthAddress3',
+                                   Permissions: { some: 'permissions3' },
+                                   Flags: 3,
+                              },
+                              {
+                                   LedgerEntryType: 'Other',
+                                   index: 'index4',
                                    OtherField: 'value',
                               },
                          ],
                     },
                };
 
-               service.getExistingDelegations(accountObjects);
+               service.getExistingDelegations(accountObjects, 'rOwnerAddress');
 
                const expectedMapped = [
                     {
                          LedgerEntryType: 'Delegate',
+                         Account: 'rOwnerAddress',
                          index: 'index1',
                          Authorize: 'rAuthAddress1',
                          Permissions: { some: 'permissions1' },
@@ -72,6 +89,7 @@ describe('DelegateUtilService', () => {
                     },
                     {
                          LedgerEntryType: 'Delegate',
+                         Account: 'rOwnerAddress',
                          index: 'index2',
                          Authorize: 'rAuthAddress2',
                          Permissions: { some: 'permissions2' },
@@ -90,7 +108,7 @@ describe('DelegateUtilService', () => {
                     },
                };
 
-               service.getExistingDelegations(accountObjects);
+               service.getExistingDelegations(accountObjects, 'rOwnerAddress');
 
                expect(mockDelegateStore.setField).toHaveBeenCalledWith('existingDelegations', []);
                expect(mockLogService.logObjects).toHaveBeenCalledWith('existingDelegations', []);
@@ -103,7 +121,7 @@ describe('DelegateUtilService', () => {
                     },
                };
 
-               service.getExistingDelegations(accountObjects);
+               service.getExistingDelegations(accountObjects, 'rOwnerAddress');
 
                expect(mockDelegateStore.setField).toHaveBeenCalledWith('existingDelegations', []);
                expect(mockLogService.logObjects).toHaveBeenCalledWith('existingDelegations', []);
@@ -115,6 +133,7 @@ describe('DelegateUtilService', () => {
                          account_objects: [
                               {
                                    LedgerEntryType: 'Delegate',
+                                   Account: 'rOwnerAddress',
                                    index: 'delegate1',
                                    Authorize: 'rAuth1',
                                    Permissions: {},
@@ -132,6 +151,7 @@ describe('DelegateUtilService', () => {
                               },
                               {
                                    LedgerEntryType: 'Delegate',
+                                   Account: 'rOwnerAddress',
                                    index: 'delegate2',
                                    Authorize: 'rAuth2',
                                    Permissions: {},
@@ -141,11 +161,12 @@ describe('DelegateUtilService', () => {
                     },
                };
 
-               service.getExistingDelegations(accountObjects);
+               service.getExistingDelegations(accountObjects, 'rOwnerAddress');
 
                const expectedMapped = [
                     {
                          LedgerEntryType: 'Delegate',
+                         Account: 'rOwnerAddress',
                          index: 'delegate1',
                          Authorize: 'rAuth1',
                          Permissions: {},
@@ -153,6 +174,7 @@ describe('DelegateUtilService', () => {
                     },
                     {
                          LedgerEntryType: 'Delegate',
+                         Account: 'rOwnerAddress',
                          index: 'delegate2',
                          Authorize: 'rAuth2',
                          Permissions: {},
@@ -170,6 +192,7 @@ describe('DelegateUtilService', () => {
                          account_objects: [
                               {
                                    LedgerEntryType: 'Delegate',
+                                   Account: 'rOwnerAddress',
                                    index: 'delegate1',
                                    Authorize: 'rAuthAddress',
                                    Permissions: {
@@ -184,11 +207,12 @@ describe('DelegateUtilService', () => {
                     },
                };
 
-               service.getExistingDelegations(accountObjects);
+               service.getExistingDelegations(accountObjects, 'rOwnerAddress');
 
                const expectedMapped = [
                     {
                          LedgerEntryType: 'Delegate',
+                         Account: 'rOwnerAddress',
                          index: 'delegate1',
                          Authorize: 'rAuthAddress',
                          Permissions: {
@@ -201,6 +225,42 @@ describe('DelegateUtilService', () => {
                ];
 
                expect(mockDelegateStore.setField).toHaveBeenCalledWith('existingDelegations', expectedMapped);
+          });
+     });
+
+     describe('getSelectedActionIds', () => {
+          it('returns only known permissions for the matching owner and delegate', () => {
+               mockDelegateStore.existingDelegations.and.returnValue([
+                    {
+                         Account: 'rOwnerAddress',
+                         Authorize: 'rDelegateAddress',
+                         Permissions: [
+                              { Permission: { PermissionValue: 'Payment' } },
+                              { Permission: { PermissionValue: 'TrustSet' } },
+                              { Permission: { PermissionValue: 'UnknownPermission' } },
+                         ],
+                    },
+                    {
+                         Account: 'rOtherOwner',
+                         Authorize: 'rDelegateAddress',
+                         Permissions: [{ Permission: { PermissionValue: 'AccountSet' } }],
+                    },
+               ]);
+
+               expect(service.getSelectedActionIds('rOwnerAddress', 'rDelegateAddress')).toEqual(new Set([1, 2]));
+          });
+
+          it('returns no selected actions when there is no matching owner and delegate', () => {
+               mockDelegateStore.existingDelegations.and.returnValue([
+                    {
+                         Account: 'rOwnerAddress',
+                         Authorize: 'rDelegateAddress',
+                         Permissions: [{ Permission: { PermissionValue: 'Payment' } }],
+                    },
+               ]);
+
+               expect(service.getSelectedActionIds('rOwnerAddress', 'rOtherDelegate')).toEqual(new Set());
+               expect(service.getSelectedActionIds('rOtherOwner', 'rDelegateAddress')).toEqual(new Set());
           });
      });
 });

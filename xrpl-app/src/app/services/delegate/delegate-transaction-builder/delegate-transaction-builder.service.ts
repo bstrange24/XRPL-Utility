@@ -11,6 +11,7 @@ export class DelegateTransactionBuilderService {
      buildDelegateTx(wallet: { address?: string; classicAddress?: string }, delegate: DelegateState, type: DelegateTxType): xrpl.DelegateSet {
           const accountAddress = wallet.address || wallet.classicAddress;
           if (!accountAddress) throw new Error('A wallet account address is required');
+          if (accountAddress === delegate.destination) throw new Error('A wallet cannot delegate permissions to itself');
 
           const selectedKeys = new Set(delegate.actions.filter(action => delegate.selected.has(action.id)).map(action => action.key));
           const selectedPermissions =

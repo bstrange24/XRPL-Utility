@@ -50,4 +50,8 @@ describe('DelegateTransactionBuilderService', () => {
 
           expect(tx.Account).toBe('rClassicAddress');
      });
+
+     it('rejects attempts to delegate permissions to the same wallet', () => {
+          expect(() => service.buildDelegateTx({ address: 'rOwnerAddress' }, { ...delegateState([1]), destination: 'rOwnerAddress' }, 'delegateClear')).toThrowError('A wallet cannot delegate permissions to itself');
+     });
 });

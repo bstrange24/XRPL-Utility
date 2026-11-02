@@ -37,7 +37,7 @@ import { DelegateSummaryComponent } from './ui-components/delegate-summary/deleg
 @Component({
      selector: 'app-delegate',
      standalone: true,
-     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TransactionPreviewComponent, DelegateRequirementInfoComponent, DelegateCreateComponent, DelegateClearComponent, ButtonTooltipComponent],
+     imports: [CommonModule, FormsModule, TabMenuWithInfoComponent, WarningMessageComponent, ExecutionTimeDisplayComponent, TransactionOptionsComponent, TransactionPreviewComponent, DelegateCreateComponent, DelegateClearComponent, ButtonTooltipComponent],
      templateUrl: './delegate.component.html',
      styleUrl: './delegate.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -53,6 +53,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
 
      readonly menuTabs: TabConfig[] = DELEGATE_TABS;
      readonly tabMeta: Record<string, TabMetaInfo> = DELEGATE_TAB_META;
+     private accountDetailsRequestId = 0;
 
      readonly canPerformAction = computed(() => {
           if (!this.connectionGuard.isConnectionReady() || !this.isIdle() || !this.hasWallets()) return false;
@@ -63,7 +64,8 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           }
 
           const selectedDestination = this.delegateStore.destination();
-          return !!selectedDestination && this.delegateStore.existingDelegations().some(delegation => delegation.Authorize === selectedDestination);
+          const accountAddress = this.currentWallet()?.address;
+          return !!selectedDestination && selectedDestination !== accountAddress && this.delegateStore.existingDelegations().some(delegation => delegation.Account === accountAddress && delegation.Authorize === selectedDestination);
      });
 
      constructor(walletManager: WalletManagerService, transactionUiService: TransactionUiService, transactionDropdownService: TransactionDropdownService, walletDataService: WalletDataService, txEnvironmentService: TxEnvironmentService, copyUtilService: CopyUtilService, toastService: ToastService, acccountDataService: AcccountDataService, route: ActivatedRoute, storageService: StorageService) {
@@ -89,6 +91,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      private setRightPanel(): void {
           this.rightPanelService.setPanel({
                summaryComponent: DelegateSummaryComponent,
+               mainComponent: DelegateRequirementInfoComponent,
           });
      }
 
@@ -100,6 +103,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           this.selectedDestinationAddress.set('');
           this.delegateStore.setField('destination', '');
           this.delegateStore.setField('selected', new Set<number>());
+          this.delegateStore.setField('existingDelegations', []);
           await this.getAccountDetails(true);
      }
 
@@ -116,6 +120,8 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
           }
           if (this.delegateTransactionViewModelService.activeTab() === 'delegateCreate') {
                this.selectedDestinationAddress.set(destination);
+               const accountAddress = this.currentWallet()?.address || this.currentWallet()?.classicAddress || '';
+               this.delegateStore.setField('selected', this.delegateUtilService.getSelectedActionIds(accountAddress, destination));
           }
      }
 
@@ -137,6 +143,8 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      }
 
      async getAccountDetails(forceRefresh = false): Promise<void> {
+          const selectedAddress = this.walletManagerService.getSelectedWallet()?.address;
+          const requestId = ++this.accountDetailsRequestId;
           this.isSummaryLoading.set(true);
           await this.withPerf('getAccountDetails', async () => {
                this.txUiService.resetCurrentStepToIdle();
@@ -148,14 +156,17 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
                try {
                     const env = await this.txEnvironmentService.getValidatedEnvironment(forceRefresh);
                     if (!env) throw new Error('Unable to get environment.');
+                    if (requestId !== this.accountDetailsRequestId || selectedAddress !== this.walletManagerService.getSelectedWallet()?.address || env.wallet.classicAddress !== selectedAddress) return;
 
-                    this.delegateUtilService.getExistingDelegations(env.accountObjects);
+                    this.delegateUtilService.getExistingDelegations(env.accountObjects, env.wallet.classicAddress);
                } catch (error: any) {
                     console.error('Error in getAccountDetails:', error);
                     this.toastService.error(error.message || 'Failed to get delegated actions', AppConstants.TOAST.ERROR);
                } finally {
-                    this.isSummaryLoading.set(false);
-                    this.txUiService.resetCurrentStepToIdle();
+                    if (requestId === this.accountDetailsRequestId) {
+                         this.isSummaryLoading.set(false);
+                         this.txUiService.resetCurrentStepToIdle();
+                    }
                }
           });
      }
@@ -171,8 +182,8 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
                if (permissionCount > 10) return 'A maximum of 10 permissions can be granted.';
           } else {
                const selectedDestination = this.delegateStore.destination();
-               if (!selectedDestination || !this.delegateStore.existingDelegations().some(delegation => delegation.Authorize === selectedDestination)) {
-                    return 'Select an active delegate to remove.';
+               if (!selectedDestination || selectedDestination === this.currentWallet()?.address || !this.delegateStore.existingDelegations().some(delegation => delegation.Account === this.currentWallet()?.address && delegation.Authorize === selectedDestination)) {
+                    return 'Select a delegate granted permissions by this wallet.';
                }
           }
 
@@ -237,7 +248,7 @@ export class AccountDelegateComponent extends WalletDestinationBase implements O
      protected async refreshAccountObject(env: any): Promise<void> {
           this.updateSharedObjectsStore(env);
           this.acccountDataService.refreshUiState(env.wallet, env.accountInfo, env.accountObjects);
-          this.delegateUtilService.getExistingDelegations(env.accountObjects);
+          this.delegateUtilService.getExistingDelegations(env.accountObjects, env.wallet.classicAddress);
      }
 
      protected clearInputFields(): void {
