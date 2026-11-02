@@ -53,7 +53,7 @@
           @if (sortedChannels().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (channel of sortedChannels(); track channel.id) {
-               <app-summary-item [selected]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()" [isExpired]="channel.isExpired" [copyValue]="channel.id" copyTooltip="Copy Channel ID" (onClick)="onPaymentChannelClick(channel)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Channel ID')">
+               <app-summary-item [selected]="channel.id === paymentChannelUtilService.selectedPaymentChannelId()" [selectedColor]="viewModel.activeTab() === 'closePaymentChannel' ? 'red' : 'green'" [isExpired]="channel.isExpired" [copyValue]="channel.id" copyTooltip="Copy Channel ID" (onClick)="onPaymentChannelClick(channel)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Channel ID')">
                     <div item-content>
                          <div class="summary-item-content">
                               <!-- Status Icon -->

@@ -7,7 +7,7 @@ import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 // Test component for content projection
 @Component({
      template: `
-          <app-summary-item [selected]="selected" [copyValue]="copyValue" [copyTooltip]="copyTooltip" [secondaryCopyValue]="secondaryCopyValue" [secondaryCopyTooltip]="secondaryCopyTooltip" [isExpired]="isExpired" (onClick)="handleClick()" (onCopyClick)="handleCopy($event)" (secondaryCopyClick)="handleSecondaryCopy($event)">
+          <app-summary-item [selected]="selected" [selectedColor]="selectedColor" [copyValue]="copyValue" [copyTooltip]="copyTooltip" [secondaryCopyValue]="secondaryCopyValue" [secondaryCopyTooltip]="secondaryCopyTooltip" [isExpired]="isExpired" (onClick)="handleClick()" (onCopyClick)="handleCopy($event)" (secondaryCopyClick)="handleSecondaryCopy($event)">
                <div item-content>
                     <div class="test-content">Test Item Content</div>
                </div>
@@ -17,6 +17,7 @@ import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
 })
 class TestHostComponent {
      selected = false;
+     selectedColor: 'green' | 'red' = 'green';
      copyValue = '';
      copyTooltip = 'Copy to clipboard';
      secondaryCopyValue = '';
@@ -78,6 +79,10 @@ describe('SummaryItemComponent', () => {
      describe('Input signals', () => {
           it('should accept selected input', () => {
                expect(component.selected()).toBeFalse();
+          });
+
+          it('should default selectedColor to green', () => {
+               expect(component.selectedColor()).toBe('green');
           });
 
           it('should accept copyValue input', () => {
@@ -146,8 +151,18 @@ describe('SummaryItemComponent', () => {
                fixture.componentRef.setInput('selected', true);
                fixture.detectChanges();
 
-               expect(liElement.classes['bg-blue-50']).toBeTrue();
-               expect(liElement.classes['border-blue-300']).toBeTrue();
+               expect(liElement.classes['bg-green-50']).toBeTrue();
+               expect(liElement.classes['border-green-300']).toBeTrue();
+          });
+
+          it('should apply red selected styles when selectedColor is red', () => {
+               fixture.componentRef.setInput('selected', true);
+               fixture.componentRef.setInput('selectedColor', 'red');
+               fixture.detectChanges();
+
+               expect(liElement.classes['bg-red-50']).toBeTrue();
+               expect(liElement.classes['border-red-300']).toBeTrue();
+               expect(liElement.classes['bg-green-50']).toBeFalsy();
           });
 
           it('should apply expired styles when isExpired is true', () => {

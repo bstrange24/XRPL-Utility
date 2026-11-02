@@ -47,7 +47,7 @@
           @if (sortedLoans().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (loan of sortedLoans(); track loan.id || loan.index) {
-               <app-summary-item [selected]="loan.id === loanUtilService.selectedLoanId()" [isExpired]="loan.status === 'defaulted'" [class.border-red-200]="loan.status === 'defaulted'" [copyValue]="loan.id || loan.index || ''" copyTooltip="Copy Loan ID" (onClick)="onLoanClick(loan)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Loan ID')">
+               <app-summary-item [selected]="loan.id === loanUtilService.selectedLoanId()" [selectedColor]="tab() === 'deleteLoan' ? 'red' : 'green'" [isExpired]="loan.status === 'defaulted'" [class.border-red-200]="loan.status === 'defaulted'" [copyValue]="loan.id || loan.index || ''" copyTooltip="Copy Loan ID" (onClick)="onLoanClick(loan)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Loan ID')">
                     <div item-content>
                          <!-- Main Content -->
                          <div class="summary-item-content">

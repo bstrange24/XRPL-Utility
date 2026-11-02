@@ -53,7 +53,7 @@
           @if (sortedEscrows().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (escrow of sortedEscrows(); track escrow.EscrowSequence) {
-               <app-summary-item [selected]="escrow.EscrowSequence === escrowUtilService.selectedEscrowSequenceNumber()" [isExpired]="escrow.isExpired" [class.border-red-200]="escrow.isExpired" [copyValue]="escrow.EscrowSequence.toString()" copyTooltip="Copy Escrow ID" (onClick)="onEscrowClick(escrow)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Escrow ID')">
+               <app-summary-item [selected]="escrow.EscrowSequence === escrowUtilService.selectedEscrowSequenceNumber()" [selectedColor]="tab() === 'cancelEscrow' ? 'red' : 'green'" [isExpired]="escrow.isExpired" [class.border-red-200]="escrow.isExpired" [copyValue]="escrow.EscrowSequence.toString()" copyTooltip="Copy Escrow ID" (onClick)="onEscrowClick(escrow)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Escrow ID')">
                     <div item-content>
                          @switch (escrow.tab) { @case ('createEscrow') {
                          <app-escrow-create-item [escrow]="castToCreateEscrow(escrow)" (escrowSelected)="onEscrowClick($event)" />

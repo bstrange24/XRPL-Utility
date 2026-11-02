@@ -9,6 +9,7 @@ import { SortChangeEvent, SortControlComponent, SortOption } from '../../../shar
 import { SummaryItemComponent } from '../../../shared/ui-components/summary/summary-item/summary-item.component';
 import { CopyUtilService } from '../../../../services/utils/copy-util/copy-util.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
+import { TicketActionTypes } from '../../constants/tickets.types';
 
 const TICKETS_SUMMARY_CONFIG: SummaryTextConfig = {
      itemName: 'ticket',
@@ -45,7 +46,7 @@ export class TicketsSummaryComponent {
      info = input<any>();
      infoData = input<string | null>();
      isExpanded = input<boolean>();
-     tab = input<'createTicket'>('createTicket');
+     tab = input<TicketActionTypes>('createTicket');
      summaryMessage = input<string>('');
      infoPanelExpanded = input<boolean>(false);
      walletName = input<string>('');

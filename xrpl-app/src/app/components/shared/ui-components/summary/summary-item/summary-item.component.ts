@@ -11,6 +11,7 @@ import { LucideAngularModule } from 'lucide-angular';
 })
 export class SummaryItemComponent {
      selected = input<boolean>(false);
+     selectedColor = input<'green' | 'red'>('green');
      copyValue = input<string>('');
      copyTooltip = input<string>('Copy to clipboard');
 

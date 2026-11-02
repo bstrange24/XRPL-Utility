@@ -47,7 +47,7 @@
           @if (sortedBrokers().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (broker of sortedBrokers(); track broker.id || broker.index) {
-               <app-summary-item [selected]="broker.id === loanBrokerUtilService.selectedBrokerId()" [copyValue]="getBrokerId(broker)" copyTooltip="Copy Broker ID" (onClick)="onBrokerClick(broker)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Broker ID')">
+               <app-summary-item [selected]="broker.id === loanBrokerUtilService.selectedBrokerId()" [selectedColor]="tab() === 'deleteBroker' ? 'red' : 'green'" [copyValue]="getBrokerId(broker)" copyTooltip="Copy Broker ID" (onClick)="onBrokerClick(broker)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Broker ID')">
                     <div item-content>
                          <!-- Main Content -->
                          <div class="summary-item-content">

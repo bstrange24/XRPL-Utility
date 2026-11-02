@@ -46,7 +46,7 @@
           @if (sortedVaults().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (vault of sortedVaults(); track vault.VaultSequence + vault.id) {
-               <app-summary-item [selected]="vault.index === vaultStoreService.selectedVaultId()" [copyValue]="vault.index" copyTooltip="Copy Vault ID" (onClick)="onVaultClick(vault)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Vault ID')" [secondaryCopyValue]="vault.shareMPTID" [secondaryCopyTooltip]="'Copy Shared MPT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'Shared MPT ID')" (onClick)="onSharedMPTClick(vault)">
+               <app-summary-item [selected]="vault.index === vaultStoreService.selectedVaultId()" [selectedColor]="tab() === 'deleteVault' ? 'red' : 'green'" [copyValue]="vault.index" copyTooltip="Copy Vault ID" (onClick)="onVaultClick(vault)" (onCopyClick)="copyUtilService.copyAndToast($event, 'Vault ID')" [secondaryCopyValue]="vault.shareMPTID" [secondaryCopyTooltip]="'Copy Shared MPT ID'" (secondaryCopyClick)="copyUtilService.copyAndToast($event, 'Shared MPT ID')" (onClick)="onSharedMPTClick(vault)">
                     <div item-content>
                          <!-- Main Content -->
                          <div class="summary-item-content">

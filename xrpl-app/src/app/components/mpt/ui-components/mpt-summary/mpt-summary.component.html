@@ -46,7 +46,7 @@
           @if (sortedMpts().length > 0) {
           <div class="flex-1 overflow-auto custom-scrollbar p-1">
                @for (mpt of sortedMpts(); track mpt.id) {
-               <app-summary-item [selected]="mpt.mpt_issuance_id === mptUtilService.selectedMptIssuanceId()" [copyValue]="mpt.mpt_issuance_id" copyTooltip="Copy MPT Issuance ID" (onClick)="onMptClick(mpt)" (onCopyClick)="copyUtilService.copyAndToast($event, 'MPT Issuance ID')">
+               <app-summary-item [selected]="mpt.mpt_issuance_id === mptUtilService.selectedMptIssuanceId()" [selectedColor]="viewModel.activeTab() === 'destroyMpt' ? 'red' : 'green'" [copyValue]="mpt.mpt_issuance_id" copyTooltip="Copy MPT Issuance ID" (onClick)="onMptClick(mpt)" (onCopyClick)="copyUtilService.copyAndToast($event, 'MPT Issuance ID')">
                     <div item-content>
                          <!-- Main Content -->
                          <div class="summary-item-content">
