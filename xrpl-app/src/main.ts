@@ -91,6 +91,7 @@ import {
      LucideActivity,
      Coins,
      Minus,
+     ChartNoAxesCombined,
 } from 'lucide-angular';
 import {
      heroArrowDownCircle,
@@ -201,6 +202,7 @@ bootstrapApplication(AppComponent, {
                     RefreshCcw,
                     RefreshCw,
                     SplitIcon,
+                    ChartNoAxesCombined,
                     Gem,
                     Signature,
                     ShieldEllipsis,

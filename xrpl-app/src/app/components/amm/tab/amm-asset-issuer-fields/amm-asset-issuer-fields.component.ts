@@ -11,13 +11,14 @@ import { TransactionUiService } from '../../../../services/transaction-ui/transa
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { WalletManagerService } from '../../../../services/wallets/manager/wallet-manager.service';
 import { PoolOptions } from '../../constants/amm.types';
+import { LucideAngularModule } from 'lucide-angular';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
 
 @Component({
      selector: 'amm-asset-issuer-fields',
      standalone: true,
-     imports: [CommonModule, FieldHelperComponent, FormsModule, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FieldHelperComponent, FormsModule, SelectSearchDropdownComponent, NgIcon, LucideAngularModule],
      templateUrl: './amm-asset-issuer-fields.component.html',
      styleUrl: './amm-asset-issuer-fields.component.css',
 })
