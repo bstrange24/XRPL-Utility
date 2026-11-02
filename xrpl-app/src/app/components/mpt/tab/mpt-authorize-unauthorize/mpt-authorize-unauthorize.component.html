@@ -146,8 +146,8 @@
 
                     <div class="text-xs space-y-1" [class.text-blue-700]="mptAuthorizeValidator.requiresAuth()" [class.text-amber-700]="!mptAuthorizeValidator.requiresAuth()">
                          @if (mptAuthorizeValidator.authorizationMode() === 'issuer') {
-                         <p>• Use this form from the <strong>Issuer wallet</strong> to grant or revoke authorization</p>
-                         <p>• The holder will need to self-authorize on their end</p>
+                         <p>• The holder must first self-authorize from their wallet to create an MPT holder entry</p>
+                         <p>• Then use this form from the <strong>Issuer wallet</strong> to grant or revoke authorization</p>
                          <p>• Both issuer authorization AND holder self-authorization are required</p>
                          } @else if (mptAuthorizeValidator.authorizationMode() === 'holder') {
                          <p>• You are the <strong>holder</strong>. Use this form to self-authorize holding this MPT.</p>

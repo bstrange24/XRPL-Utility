@@ -50,7 +50,7 @@ describe('MptUtilService', () => {
           mockCopyUtilService = jasmine.createSpyObj('CopyUtilService', ['someMethod']);
           mockToastService = jasmine.createSpyObj('ToastService', ['someMethod']);
           mockTrustlineCurrency = jasmine.createSpyObj('TrustlineCurrencyService', ['someMethod']);
-          mockMptStoreService = jasmine.createSpyObj('MptStoreService', ['updateField', 'getAll'], {
+          mockMptStoreService = jasmine.createSpyObj('MptStoreService', ['updateField', 'getAll', 'getAuthorizedHolders', 'setAuthorizedHolders'], {
                mptIssuanceId: mptIssuanceIdSignal,
                existingMpts: existingMptsSignal,
                authAction: authActionSignal,
@@ -315,6 +315,91 @@ describe('MptUtilService', () => {
                expect(result).toEqual([]);
           });
 
+          it('should only identify MPTs linked by a Vault ShareMPTID as vault shares', async () => {
+               const accountObjectsResponse = {
+                    result: {
+                         account_objects: [
+                              {
+                                   LedgerEntryType: 'MPToken',
+                                   Account: classicAddress,
+                                   MPTokenIssuanceID: 'unlinked-issuance',
+                                   MPTAmount: '0',
+                                   index: 'holder-index',
+                              },
+                              {
+                                   LedgerEntryType: 'MPTokenIssuance',
+                                   mpt_issuance_id: 'linked-issuance',
+                                   AssetScale: 0,
+                                   index: 'issuance-index',
+                                   Account: classicAddress,
+                              },
+                              {
+                                   LedgerEntryType: 'Vault',
+                                   ShareMPTID: 'linked-issuance',
+                              },
+                         ],
+                    },
+               };
+
+               mockXrplService.getClient.and.resolveTo({} as any);
+               mockXrplService.doesMptExist.and.callFake(async (_client: any, issuanceId: string) => ({
+                    node: {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         index: `${issuanceId}-index`,
+                         mpt_issuance_id: issuanceId,
+                         Issuer: 'rIssuer',
+                         AssetScale: 0,
+                    },
+               }));
+
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
+
+               expect(result.find(mpt => mpt.mpt_issuance_id === 'unlinked-issuance')?.isVaultMpt).toBeFalse();
+               expect(result.find(mpt => mpt.mpt_issuance_id === 'linked-issuance')?.isVaultMpt).toBeTrue();
+          });
+
+          it('should preserve issuer identity when an issuer also has a zero-balance holding', async () => {
+               const accountObjectsResponse = {
+                    result: {
+                         account_objects: [
+                              {
+                                   LedgerEntryType: 'MPToken',
+                                   Account: classicAddress,
+                                   MPTokenIssuanceID: 'owned-issuance',
+                                   MPTAmount: '0',
+                                   index: 'holder-index',
+                              },
+                              {
+                                   LedgerEntryType: 'MPTokenIssuance',
+                                   Issuer: classicAddress,
+                                   mpt_issuance_id: 'owned-issuance',
+                                   OutstandingAmount: '0',
+                                   AssetScale: 0,
+                                   index: 'issuance-index',
+                              },
+                         ],
+                    },
+               };
+
+               mockXrplService.getClient.and.resolveTo({} as any);
+               mockXrplService.doesMptExist.and.resolveTo({
+                    node: {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         mpt_issuance_id: 'owned-issuance',
+                         OutstandingAmount: '0',
+                         AssetScale: 0,
+                         index: 'issuance-index',
+                    },
+               } as any);
+
+               const result = await service.getMpts(accountObjectsResponse as any, classicAddress);
+               const issuance = result.find(mpt => mpt.mpt_issuance_id === 'owned-issuance');
+
+               expect(result.length).toBe(1);
+               expect(issuance?.Issuer).toBe(classicAddress);
+               expect(issuance?.isHolder).toBeFalse();
+          });
+
           it('should add issuances not held by current account', async () => {
                const accountObjectsResponse = {
                     result: {
@@ -322,6 +407,7 @@ describe('MptUtilService', () => {
                               {
                                    LedgerEntryType: 'MPTokenIssuance',
                                    mpt_issuance_id: 'issuance-2',
+                                   Issuer: 'rIssuer2',
                                    AssetScale: 3,
                                    index: 'idx3',
                                    OutstandingAmount: '2000',
@@ -931,6 +1017,37 @@ describe('MptUtilService', () => {
                existingMptsSignal.set([{ LedgerEntryType: 'MPTokenIssuance', mpt_issuance_id: 'test-id', OutstandingAmount: '1000' }]);
                mptIssuanceIdSignal.set('test-id');
                expect(service.hasNoOutstandingMpts()).toBeFalse();
+          });
+     });
+
+     describe('refreshAuthorizedHolders', () => {
+          it('should retain only holders with a live authorized MPToken entry', async () => {
+               const issuanceId = 'issuance-1';
+               mockMptStoreService.getAuthorizedHolders.and.returnValue(['holder-1', 'holder-2']);
+               const client = jasmine.createSpyObj<xrpl.Client>('Client', ['request']);
+               client.request.and.callFake(((request: any) => Promise.resolve({
+                    result: {
+                         account_objects: request.account === 'holder-1'
+                              ? [{ LedgerEntryType: 'MPToken', MPTokenIssuanceID: issuanceId, Flags: 2 }]
+                              : [{ LedgerEntryType: 'MPToken', MPTokenIssuanceID: issuanceId, Flags: 0 }],
+                    },
+               })) as any);
+
+               const holders = await service.refreshAuthorizedHolders(issuanceId, client);
+
+               expect(holders).toEqual(['holder-1']);
+               expect(mockMptStoreService.setAuthorizedHolders).toHaveBeenCalledWith(issuanceId, ['holder-1']);
+               expect(client.request).toHaveBeenCalledTimes(2);
+          });
+
+          it('should leave the cache unchanged when a ledger lookup fails', async () => {
+               mockMptStoreService.getAuthorizedHolders.and.returnValue(['holder-1']);
+               const client = jasmine.createSpyObj<xrpl.Client>('Client', ['request']);
+               client.request.and.rejectWith(new Error('request failed'));
+
+               await expectAsync(service.refreshAuthorizedHolders('issuance-1', client)).toBeRejectedWithError('request failed');
+
+               expect(mockMptStoreService.setAuthorizedHolders).not.toHaveBeenCalled();
           });
      });
 });

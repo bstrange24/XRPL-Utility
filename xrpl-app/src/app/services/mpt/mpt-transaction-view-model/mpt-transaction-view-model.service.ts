@@ -113,7 +113,7 @@ export class MptTransactionViewModelService {
                const formattedOutstanding = this.mptUtilService.formatMptAmount(rawOutstanding, assetScale);
                const formattedMaxAmount = this.mptUtilService.formatMptAmount(rawMaxAmount, assetScale);
                const maxAmountDisplay = rawMaxAmount === 'Not set' ? 'No max set' : rawMaxAmount;
-               const isVaultMpt = Boolean(m.isVaultMpt) || (Boolean(m.isHolder) && String(rawAmount) === '0' && String(m.Account || '') === String(address) && String(m.Issuer || '') === String(address));
+               const isVaultMpt = Boolean(m.isVaultMpt);
 
                return {
                     mpt_issuance_id: m.mpt_issuance_id || 'Unknown issuance ID',
@@ -189,6 +189,28 @@ export class MptTransactionViewModelService {
                     secondary: (m.mpt_issuance_id || m.id || '').slice(0, 15) + '...' + (m.mpt_issuance_id || m.id || '').slice(-10),
                };
           });
+     });
+
+     destroyMptItems = computed(() => {
+          const wallet = this.walletManagerService.getSelectedWallet();
+          const walletAddress = wallet?.classicAddress || wallet?.address;
+          if (!walletAddress) return [];
+
+          const ownedIssuanceIds = new Set(
+               this.mptStoreService
+                    .existingMpts()
+                    .filter(m => m.Issuer === walletAddress)
+                    .map(m => m.mpt_issuance_id || m.id)
+                    .filter((id): id is string => !!id)
+          );
+
+          return this.mptItems().filter(item => ownedIssuanceIds.has(item.id));
+     });
+
+     selectedDestroyMptItem = computed(() => {
+          const id = this.mptStoreService.mptIssuanceId();
+          if (!id) return null;
+          return this.destroyMptItems().find(item => item.id === id) || null;
      });
 
      selectedMptItem = computed(() => {

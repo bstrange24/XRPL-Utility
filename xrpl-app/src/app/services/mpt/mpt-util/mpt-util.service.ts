@@ -102,8 +102,14 @@ export class MptUtilService extends PerformanceBaseComponent {
      async getMpts(accountObjects: xrpl.AccountObjectsResponse, classicAddress: string) {
           const issuances = new Map<string, any>();
           const holdings: any[] = [];
+          const accountObjectItems = accountObjects.result.account_objects ?? [];
+          const vaultShareIds = new Set(
+               accountObjectItems
+                    .filter((obj: any) => obj.LedgerEntryType === 'Vault' && typeof obj.ShareMPTID === 'string')
+                    .map((obj: any) => obj.ShareMPTID)
+          );
 
-          (accountObjects.result.account_objects ?? []).forEach(obj => {
+          accountObjectItems.forEach(obj => {
                const o = obj as any;
 
                if (o.LedgerEntryType === 'MPTokenIssuance') {
@@ -124,7 +130,6 @@ export class MptUtilService extends PerformanceBaseComponent {
                const issuance = issuances.get(holding.MPTokenIssuanceID);
                const rawBalance = holding.MPTAmount || '0';
                const hasPositiveBalance = Number(rawBalance) > 0;
-               const isIssuerOwnedZeroBalance = !hasPositiveBalance && issuance?.Account === classicAddress;
 
                const client = await this.xrplService.getClient();
                const mptData = await this.xrplService.doesMptExist(client, holding.MPTokenIssuanceID);
@@ -134,6 +139,8 @@ export class MptUtilService extends PerformanceBaseComponent {
                     continue;
                }
 
+               const issuer = issuance?.Issuer || issuance?.Account || mptNode.Issuer || mptNode.Account || 'Unknown';
+               const isIssuerOwnedZeroBalance = !hasPositiveBalance && issuer === classicAddress;
                const assetScale = issuance?.AssetScale ?? mptNode.AssetScale ?? this.mptStoreService.assetScaleCache().get(holding.MPTokenIssuanceID) ?? 0;
                this.mptStoreService.updateField('assetScaleCache', cache => {
                     const newCache = new Map(cache);
@@ -152,9 +159,9 @@ export class MptUtilService extends PerformanceBaseComponent {
                     TransferFee: '0',
                     MPTokenMetadata: 'N/A',
                     Flags: mptNode.Flags || 0,
-                    Issuer: mptNode.Issuer || 'Unknown',
+                    Issuer: issuer,
                     isHolder: !isIssuerOwnedZeroBalance,
-                    isVaultMpt: isIssuerOwnedZeroBalance,
+                    isVaultMpt: vaultShareIds.has(holding.MPTokenIssuanceID),
                     amount: holding.MPTAmount || '0',
                     Account: holding.Account || '',
                });
@@ -175,10 +182,11 @@ export class MptUtilService extends PerformanceBaseComponent {
                          TransferFee: issuance.TransferFee || '0',
                          MPTokenMetadata: issuance.MPTokenMetadata || 'N/A',
                          Flags: issuance.Flags || 0, // ← CRITICAL FIX
-                         Issuer: issuance.Account || 'Unknown',
+                         Issuer: issuance.Issuer || issuance.Account || 'Unknown',
                          isHolder: false,
+                         isVaultMpt: vaultShareIds.has(id),
                          amount: issuance.OutstandingAmount || '0',
-                         Account: issuance.Account || '',
+                         Account: issuance.Account || issuance.Issuer || '',
                     });
                }
           }
@@ -574,6 +582,63 @@ export class MptUtilService extends PerformanceBaseComponent {
           }
 
           return holders;
+     }
+
+     async refreshAuthorizedHolders(issuanceId: string, client: xrpl.Client, candidateHolders: string[] = []): Promise<string[]> {
+          const trackedHolders = this.mptStoreService.getAuthorizedHolders(issuanceId);
+          const holdersToCheck = [...new Set([...trackedHolders, ...candidateHolders])];
+          if (holdersToCheck.length === 0) return trackedHolders;
+
+          const authorizationStates = await Promise.allSettled(
+               holdersToCheck.map(async holder => {
+                    let marker: string | undefined;
+                    do {
+                         const response = await client.request({
+                              command: 'account_objects',
+                              account: holder,
+                              ledger_index: 'validated',
+                              limit: 400,
+                              ...(marker ? { marker } : {}),
+                         });
+                         const isAuthorized = response.result.account_objects.some(obj => {
+                              const token = obj as any;
+                              return token.LedgerEntryType === 'MPToken'
+                                   && String(token.MPTokenIssuanceID).toUpperCase() === issuanceId.toUpperCase()
+                                   && ((token.Flags || 0) & 0x00000002) !== 0;
+                         });
+                         if (isAuthorized) return holder;
+                         marker = response.result.marker;
+                    } while (marker);
+                    return null;
+               })
+          );
+          const failedLookups = authorizationStates.filter(result => result.status === 'rejected');
+          const successfulLookups = authorizationStates.filter(result => result.status === 'fulfilled');
+          if (successfulLookups.length === 0 && failedLookups.length > 0) {
+               throw new Error('Unable to verify authorized holders for this MPT.');
+          }
+
+          const authorizedHolders = successfulLookups
+               .map(result => result.value)
+               .filter((holder): holder is string => holder !== null);
+          for (const failedLookup of failedLookups) {
+               const error = failedLookup.status === 'rejected' ? failedLookup.reason : null;
+               console.error('Unable to check one wallet for MPT authorization:', error);
+          }
+          if (failedLookups.length > 0) {
+               const previouslyTracked = new Set(trackedHolders);
+               for (const holder of holdersToCheck) {
+                    const lookupIndex = holdersToCheck.indexOf(holder);
+                    if (authorizationStates[lookupIndex]?.status === 'rejected' && previouslyTracked.has(holder)) {
+                         authorizedHolders.push(holder);
+                    }
+               }
+          }
+
+          if (authorizedHolders.length > 0) {
+               this.mptStoreService.setAuthorizedHolders(issuanceId, authorizedHolders);
+          }
+          return authorizedHolders;
      }
 
      // Update getDestroyWarningMessage to use the Record

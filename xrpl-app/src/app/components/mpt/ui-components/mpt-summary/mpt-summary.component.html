@@ -62,7 +62,7 @@
                               <div class="flex-1 min-w-0">
                                    <div class="flex items-center gap-2 flex-wrap">
                                         <app-tooltip-link [href]="explorerUrl() + 'entry/' + mpt.id" tooltipText="View MPT on XRPL Explorer">
-                                             @if (mpt.isVaultMpt || (mpt.isHolder && mpt.formattedAmount === '0' && mpt.formattedOutstanding === '0' && mpt.Issuer !== info.walletAddress)) {
+                                             @if (mpt.isVaultMpt) {
                                              <strong class="text-gray-900 hover:text-purple-600 transition-colors">
                                                   Vault MPT
                                                   <small class="text-gray-500">(vault share)</small>

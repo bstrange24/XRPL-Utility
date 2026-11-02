@@ -299,37 +299,12 @@ export class MptAuthorizeValidatorService {
      });
 
      isActionAppropriateForMpt = computed(() => {
-          const mpt = this.getSelectedMptDetails();
-          if (!mpt) return true;
-          const requiresAuth = this.doesMptRequireAuth(mpt);
-          const action = this.mptStoreService.authAction();
-          if (requiresAuth && action === 'unauthorize') {
-               return false;
-          }
-          return true;
+          return this.isActionValid();
      });
 
      getActionErrorMessage = computed(() => {
-          const mpt = this.getSelectedMptDetails();
-          if (!mpt) return '';
-          const requiresAuth = this.doesMptRequireAuth(mpt);
-          const action = this.mptStoreService.authAction();
-          if (requiresAuth && action === 'unauthorize') {
-               return 'This MPT requires issuer authorization. Unauthorize is not available from the issuer side.';
-          }
           return '';
      });
-
-     private getSelectedMptDetails() {
-          const issuanceId = this.mptStoreService.mptIssuanceId();
-          if (!issuanceId) return null;
-          const mpts = this.mptStoreService.existingMpts();
-          return mpts.find(m => m.mpt_issuance_id === issuanceId);
-     }
-
-     private doesMptRequireAuth(mpt: any): boolean {
-          return !!(mpt?.Flags & 0x00000004) || mpt?.flags?.includes?.('isRequireAuth');
-     }
 
      async validateMptIssuanceId(issuanceId: string) {
           if (!this.isMptIssuanceIdValid()) {

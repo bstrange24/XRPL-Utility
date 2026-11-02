@@ -188,7 +188,7 @@ export class MptOrchestratorServiceService extends PerformanceBaseComponent {
                const message = meta.successMessage({ orchestrator: this, mpt });
                this.xrplTransactionService.processTxFinalResult(finalResult, message, { success: true, hash: txHash });
 
-               return { success: true, hash: txHash };
+               return { success: true, hash: txHash, tx, finalResult };
           } catch (err: any) {
                console.error(`[${type}] executeCredentialTx failed:`, err);
                this.xrplTransactionService.processTxError(err);

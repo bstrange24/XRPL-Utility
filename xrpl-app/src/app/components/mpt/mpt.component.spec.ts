@@ -139,11 +139,13 @@ describe('MptComponent', () => {
                     links: '',
                })),
                mptItems: computed(() => []),
+               destroyMptItems: computed(() => []),
+               selectedDestroyMptItem: computed(() => null),
                metadataByteLength: computed(() => 0), // default small
                metadataIsValid: computed(() => true),
           });
 
-          mptStoreService = jasmine.createSpyObj('MptStoreService', ['setField', 'getAll', 'resetMptFields', 'syncFromLocalStorage'], {
+          mptStoreService = jasmine.createSpyObj('MptStoreService', ['setField', 'getAll', 'resetMptFields', 'syncFromLocalStorage', 'getAuthorizedHolders', 'setAuthorizedHolders'], {
                mptIssuanceId: signal(''),
                metaData: signal('{}'),
                authAction: signal('authorize'),
@@ -160,7 +162,7 @@ describe('MptComponent', () => {
           });
           mptStoreService.getAll.and.returnValue({} as any);
 
-          mptUtilService = jasmine.createSpyObj('MptUtilService', ['flags', 'getFlagsValue', 'decodeMptFlagsForUi', 'resetFlags', 'toggleFlag', 'createMptButtonLabel', 'authorizeButtonLabel', 'sendMptButtonLabel', 'lockMptButtonLabel', 'clawbackMptButtonLabel', 'destroyMptButtonLabel', 'hasNoOutstandingMpts', 'getMpts'], {
+          mptUtilService = jasmine.createSpyObj('MptUtilService', ['flags', 'getFlagsValue', 'decodeMptFlagsForUi', 'resetFlags', 'toggleFlag', 'createMptButtonLabel', 'authorizeButtonLabel', 'sendMptButtonLabel', 'lockMptButtonLabel', 'clawbackMptButtonLabel', 'destroyMptButtonLabel', 'hasNoOutstandingMpts', 'getMpts', 'getMPTokenIssuance', 'getDestroyWarningMessage', 'refreshAuthorizedHolders'], {
                flags: computed(() => ({
                     canLock: false,
                     isRequireAuth: false,
@@ -182,6 +184,9 @@ describe('MptComponent', () => {
           mptUtilService.getFlagsValue.and.returnValue(0);
           mptUtilService.decodeMptFlagsForUi.and.returnValue('None');
           mptUtilService.getMpts.and.returnValue([]);
+          mptUtilService.getMPTokenIssuance.and.returnValue(true);
+          mptUtilService.getDestroyWarningMessage.and.returnValue(null);
+          mptUtilService.refreshAuthorizedHolders.and.resolveTo([]);
           mptUtilService.toggleFlag.and.callFake(() => {});
 
           mptOrchestrator = jasmine.createSpyObj('MptOrchestratorServiceService', ['executeMptTx']);
@@ -322,6 +327,119 @@ describe('MptComponent', () => {
 
                expect(toastService.error).toHaveBeenCalled();
                expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+          });
+
+          it('should block destroying an MPT that was not issued by the selected wallet', async () => {
+               mptViewModelService.activeTab.set('destroyMpt');
+               mptStoreService.mptIssuanceId.set('holder-issuance');
+               Object.defineProperty(mptViewModelService, 'destroyMptItems', {
+                    value: computed(() => []),
+                    configurable: true,
+               });
+
+               expect(component.canPerformAction()).toBeFalse();
+
+               await component.performAction();
+
+               expect(toastService.error.calls.mostRecent().args[0]).toBe('Only the wallet that issued an MPT can destroy it.');
+               expect(txEnvironmentService.prepareTxEnvironmentWithWallet).not.toHaveBeenCalled();
+               expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+          });
+
+          it('should recheck issuance ownership against fresh account objects before destruction', async () => {
+               mptViewModelService.activeTab.set('destroyMpt');
+               mptStoreService.mptIssuanceId.set('selected-issuance');
+               Object.defineProperty(mptViewModelService, 'destroyMptItems', {
+                    value: computed(() => [{ id: 'selected-issuance', display: 'MPT • 0 issued' }]),
+                    configurable: true,
+               });
+               mptUtilService.getMPTokenIssuance.and.returnValue(false);
+
+               await component.performAction();
+
+               expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalled();
+               expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+               expect(toastService.error.calls.mostRecent().args[0]).toContain('was not issued by');
+          });
+
+          it('should require the holder entry before issuer authorization', async () => {
+               const issuanceId = 'A'.repeat(48);
+               mptViewModelService.activeTab.set('authorizeMpt');
+               mptStoreService.authAction.set('authorize');
+               mptStoreService.mptIssuanceId.set(issuanceId);
+               txEnvironmentService.prepareTxEnvironmentWithWallet.and.resolveTo({
+                    client: {},
+                    wallet: mockWallet,
+                    accountObjects: {
+                         result: {
+                              account_objects: [{ LedgerEntryType: 'MPTokenIssuance', mpt_issuance_id: issuanceId, Flags: 0x00000004 }],
+                         },
+                    },
+                    destinationAccountObject: {
+                         result: { account_objects: [] },
+                    },
+               } as any);
+
+               await component.performAction();
+
+               expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalled();
+               expect(toastService.error.calls.mostRecent().args[0]).toContain('holder must first authorize this MPT');
+               expect(mptOrchestrator.executeMptTx).not.toHaveBeenCalled();
+          });
+
+          it('should remove a holder from the cache after a successful issuer unauthorization', async () => {
+               const issuanceId = 'A'.repeat(48);
+               mptViewModelService.activeTab.set('authorizeMpt');
+               mptStoreService.authAction.set('unauthorize');
+               mptStoreService.mptIssuanceId.set(issuanceId);
+               mptStoreService.getAuthorizedHolders.and.returnValue(['rDestination123']);
+               mptStoreService.getAll.and.returnValue({ mptIssuanceId: issuanceId, destination: 'rDestination123' } as any);
+               txEnvironmentService.prepareTxEnvironmentWithWallet.and.resolveTo({
+                    client: {},
+                    wallet: mockWallet,
+                    ledgerInfo: { lastIndex: 1 },
+                    fee: '10',
+                    accountObjects: {
+                         result: {
+                              account_objects: [{ LedgerEntryType: 'MPTokenIssuance', mpt_issuance_id: issuanceId, Flags: 0x00000004 }],
+                         },
+                    },
+                    destinationAccountObject: {
+                         result: { account_objects: [{ LedgerEntryType: 'MPToken', MPTokenIssuanceID: issuanceId, Flags: 0 }] },
+                    },
+               } as any);
+
+               await component.performAction();
+
+               expect(mptStoreService.setAuthorizedHolders).toHaveBeenCalledWith(issuanceId, []);
+          });
+
+          it('should not update the authorization cache when the transaction fails', async () => {
+               const issuanceId = 'A'.repeat(48);
+               mptViewModelService.activeTab.set('authorizeMpt');
+               mptStoreService.authAction.set('unauthorize');
+               mptStoreService.mptIssuanceId.set(issuanceId);
+               mptStoreService.getAuthorizedHolders.and.returnValue(['rDestination123']);
+               mptStoreService.getAll.and.returnValue({ mptIssuanceId: issuanceId, destination: 'rDestination123' } as any);
+               txEnvironmentService.prepareTxEnvironmentWithWallet.and.resolveTo({
+                    client: {},
+                    wallet: mockWallet,
+                    ledgerInfo: { lastIndex: 1 },
+                    fee: '10',
+                    accountObjects: {
+                         result: {
+                              account_objects: [{ LedgerEntryType: 'MPTokenIssuance', mpt_issuance_id: issuanceId, Flags: 0x00000004 }],
+                         },
+                    },
+                    destinationAccountObject: {
+                         result: { account_objects: [{ LedgerEntryType: 'MPToken', MPTokenIssuanceID: issuanceId, Flags: 0 }] },
+                    },
+               } as any);
+               handleTxResultSpy.and.resolveTo(false);
+
+               await component.performAction();
+
+               expect(mptStoreService.setAuthorizedHolders).not.toHaveBeenCalled();
           });
      });
 

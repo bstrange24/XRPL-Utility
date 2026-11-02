@@ -189,11 +189,32 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      selectedMPT(item: SelectItem | null) {
           const id = item?.id || '';
           this.mptStoreService.setField('mptIssuanceId', id);
+          if (this.mptTransactionViewModelService.activeTab() === 'destroyMpt' && id) {
+               void this.refreshDestroyAuthorizedHolders(id);
+          }
      }
 
      onMptSelectedFromSummary(mpt: any): void {
           if (!mpt) return;
-          this.mptStoreService.setField('mptIssuanceId', mpt.mpt_issuance_id || mpt.id || '');
+          const id = mpt.mpt_issuance_id || mpt.id || '';
+          this.mptStoreService.setField('mptIssuanceId', id);
+          if (this.mptTransactionViewModelService.activeTab() === 'destroyMpt' && id) {
+               void this.refreshDestroyAuthorizedHolders(id);
+          }
+     }
+
+     private async refreshDestroyAuthorizedHolders(issuanceId: string): Promise<void> {
+          try {
+               const env = await this.txEnvironmentService.getValidatedEnvironment(true);
+               if (!env?.client) throw new Error('Unable to get a connected XRPL client.');
+
+               const knownWalletAddresses = this.walletManagerService.wallets()
+                    .map(wallet => wallet.classicAddress)
+                    .filter((address): address is string => !!address);
+               await this.mptUtilService.refreshAuthorizedHolders(issuanceId, env.client, knownWalletAddresses);
+          } catch (error) {
+               console.error('Unable to refresh authorized MPT holders for the Destroy tab:', error);
+          }
      }
 
      selectWallet(wallet: Wallet): void {
@@ -251,17 +272,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      async performAction(): Promise<void> {
           const currentTab = this.mptTransactionViewModelService.activeTab();
 
-          // Special handling for destroy with authorization warning
-          if (currentTab === 'destroyMpt') {
-               const warningMessage = this.mptUtilService.getDestroyWarningMessage();
-               if (warningMessage) {
-                    const confirmed = await this.dialogService.confirm(warningMessage + '\n\nDo you want to proceed with destruction anyway?', 'Warning: Authorized Holders Exist');
-
-                    if (!confirmed) {
-                         this.toastService.info('Destruction cancelled', AppConstants.TOAST.INFO);
-                         return;
-                    }
-               }
+          if (currentTab === 'destroyMpt' && !this.isSelectedMptOwnedByCurrentWallet()) {
+               this.toastService.error('Only the wallet that issued an MPT can destroy it.', AppConstants.TOAST.ERROR);
+               return;
           }
 
           const wallet = this.currentWallet();
@@ -292,6 +305,57 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           } catch (err: any) {
                console.error('prepareTxEnvironment failed:', err);
                this.toastService.error('Failed to prepare transaction environment', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          if (currentTab === 'destroyMpt') {
+               try {
+                    const knownWalletAddresses = this.walletManagerService.wallets()
+                         .map(wallet => wallet.classicAddress)
+                         .filter((address): address is string => !!address);
+                    await this.mptUtilService.refreshAuthorizedHolders(
+                         this.mptStoreService.mptIssuanceId(),
+                         env.client,
+                         knownWalletAddresses
+                    );
+               } catch (error) {
+                    console.error('Unable to verify authorized MPT holders before destruction:', error);
+                    this.toastService.error('Unable to verify authorized holders. The MPT was not submitted for destruction.', AppConstants.TOAST.ERROR);
+                    return;
+               }
+
+               const warningMessage = this.mptUtilService.getDestroyWarningMessage();
+               if (warningMessage) {
+                    const confirmed = await this.dialogService.confirm(warningMessage + '\n\nDo you want to proceed with destruction anyway?', 'Warning: Authorized Holders Exist');
+
+                    if (!confirmed) {
+                         this.toastService.info('Destruction cancelled', AppConstants.TOAST.INFO);
+                         return;
+                    }
+               }
+          }
+
+          if (currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt') {
+               const issuanceId = this.mptStoreService.mptIssuanceId();
+               const issuance = env.accountObjects?.result?.account_objects?.find(
+                    (obj: any) => obj.LedgerEntryType === 'MPTokenIssuance' && obj.mpt_issuance_id === issuanceId
+               );
+               const requiresIssuerAuthorization = !!(Number(issuance?.Flags) & 0x00000004);
+               const holderEntryExists = env.destinationAccountObject?.result?.account_objects?.some(
+                    (obj: any) => obj.LedgerEntryType === 'MPToken' && obj.MPTokenIssuanceID === issuanceId
+               );
+
+               if (requiresIssuerAuthorization && !holderEntryExists) {
+                    this.toastService.error(
+                         'The holder must first authorize this MPT from their wallet. This creates the holder entry the issuer needs to authorize.',
+                         AppConstants.TOAST.ERROR
+                    );
+                    return;
+               }
+          }
+
+          if (currentTab === 'destroyMpt' && !this.mptUtilService.getMPTokenIssuance(env.accountObjects)) {
+               this.toastService.error(`MPT issuance ID ${this.mptStoreService.mptIssuanceId()} was not issued by ${wallet.classicAddress}.`, AppConstants.TOAST.ERROR);
                return;
           }
 
@@ -354,11 +418,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                extra: {},
           };
 
-          let txResult: { success: boolean; hash?: string; error?: string } | null = null;
-          let txType: string;
-
-          await this.withPerf('performAction', async () => {
+          const txResult = await this.withPerf('performAction', async (): Promise<{ success: boolean; hash?: string; error?: string; tx?: xrpl.Transaction } | null> => {
                try {
+                    let txType: MptTxType;
                     switch (currentTab) {
                          case 'createMpt': {
                               txType = 'createMpt';
@@ -369,7 +431,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                          case 'unauthorizeMpt': {
                               const action = this.mptStoreService.authAction();
                               if (action === 'authorize' || action === 'unauthorize') {
-                                   txType = `${action}Mpt`;
+                                   txType = `${action}Mpt` as MptTxType;
                               } else {
                                    throw new Error(`Invalid auth action: ${action}`);
                               }
@@ -380,7 +442,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                          case 'unlockMpt': {
                               const lockAction = this.mptStoreService.lockAction();
                               if (lockAction === 'lock' || lockAction === 'unlock') {
-                                   txType = `${lockAction}Mpt`;
+                                   txType = `${lockAction}Mpt` as MptTxType;
                               } else {
                                    throw new Error(`Invalid lock action: ${lockAction}`);
                               }
@@ -406,11 +468,11 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                               throw new Error(`Unknown tab: ${currentTab}`);
                          }
                     }
-                    txResult = await this.mptOrchestratorServiceService.executeMptTx(txType as MptTxType, config);
+                    return await this.mptOrchestratorServiceService.executeMptTx(txType, config);
                } catch (error: any) {
                     console.error(`[${currentTab}] execution failed:`, error);
                     this.toastService.error(error.message || 'Transaction failed', AppConstants.TOAST.ERROR);
-                    return;
+                    return null;
                }
           });
 
@@ -419,16 +481,24 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                return;
           }
 
-          if (currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt') {
-               await this.updateAuthorizedHolders(config.mpt.mptIssuanceId, config.mpt.destination, currentTab === 'authorizeMpt');
-          }
-
-          if (currentTab === 'destroyMpt') {
-               // Remove from localStorage when MPT is destroyed
-               this.authorizedStorage.removeIssuance(config.mpt.mptIssuanceId);
+          if (txResult.success && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+               const submittedTx = txResult.tx;
+               if (submittedTx?.TransactionType === 'MPTokenAuthorize' && submittedTx.Holder) {
+                    const issuanceId = submittedTx.MPTokenIssuanceID;
+                    const currentHolders = this.mptStoreService.getAuthorizedHolders(issuanceId);
+                    const isUnauthorize =
+                         (Number(submittedTx.Flags || 0) & xrpl.MPTokenAuthorizeFlags.tfMPTUnauthorize) !== 0;
+                    const updatedHolders = isUnauthorize
+                         ? currentHolders.filter(holder => holder !== submittedTx.Holder)
+                         : [...new Set([...currentHolders, submittedTx.Holder])];
+                    this.mptStoreService.setAuthorizedHolders(issuanceId, updatedHolders);
+               }
           }
 
           const transactionSucceeded = await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
+          if (currentTab === 'destroyMpt' && transactionSucceeded && !this.xrplTxOptionsStore.isSimulateEnabled()) {
+               this.authorizedStorage.removeIssuance(config.mpt.mptIssuanceId);
+          }
           if (currentTab === 'createMpt' && transactionSucceeded && !this.xrplTxOptionsStore.isSimulateEnabled()) {
                this.mptUtilService.resetFlags();
           }
@@ -467,24 +537,6 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           this.mptStoreService.setField('destination', query); // important for typed input
      }
 
-     private async updateAuthorizedHolders(issuanceId: string, holderAddress: string, isAuthorizing: boolean): Promise<void> {
-          const currentHolders = this.mptStoreService.getAuthorizedHolders(issuanceId);
-
-          if (isAuthorizing) {
-               // Add if not already present
-               if (!currentHolders.includes(holderAddress)) {
-                    const newHolders = [...currentHolders, holderAddress];
-                    this.mptStoreService.setAuthorizedHolders(issuanceId, newHolders);
-                    console.log(`✅ Added ${holderAddress} to authorized holders for ${issuanceId}`);
-               }
-          } else {
-               // Remove holder
-               const newHolders = currentHolders.filter(h => h !== holderAddress);
-               this.mptStoreService.setAuthorizedHolders(issuanceId, newHolders);
-               console.log(`❌ Removed ${holderAddress} from authorized holders for ${issuanceId}`);
-          }
-     }
-
      private setRightPanel(): void {
           this.rightPanelService.setPanel({
                summaryComponent: MptSummaryComponent,
@@ -513,6 +565,11 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
      onDelegateOptionToggled(enabled: boolean): void {
           this.delegateOptionEnabled.set(enabled);
           if (!enabled) this.mptStoreService.setField('delegatorAddress', '');
+     }
+
+     private isSelectedMptOwnedByCurrentWallet(): boolean {
+          const issuanceId = this.mptStoreService.mptIssuanceId();
+          return !!issuanceId && this.mptTransactionViewModelService.destroyMptItems().some(item => item.id === issuanceId);
      }
 
      public canPerformAction = computed(() => {
@@ -547,7 +604,7 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                     return !!mptId && !!(storeDestination || selectedDestination);
 
                case 'destroyMpt':
-                    return !!mptId && !hasOutstanding;
+                    return !!mptId && this.isSelectedMptOwnedByCurrentWallet() && !hasOutstanding;
 
                default:
                     return false;
@@ -594,7 +651,9 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                          if (!destination) return 'Please enter a Destination';
                          return 'Please fill MPT and Destination';
                     case 'destroyMpt':
-                         return this.mptUtilService.hasNoOutstandingMpts() ? 'Please select MPT to destroy' : 'Cannot destroy MPT with outstanding tokens';
+                         if (!mptId) return 'Please select MPT to destroy';
+                         if (!this.isSelectedMptOwnedByCurrentWallet()) return 'Only the wallet that issued an MPT can destroy it';
+                         return 'Cannot destroy MPT with outstanding tokens';
                     default:
                          return 'Cannot perform this action';
                }

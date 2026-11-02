@@ -21,7 +21,7 @@
                     </div>
 
                     <div class="relative">
-                         <app-select-search-dropdown [items]="viewModel.mptItems()" [value]="viewModel.selectedMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs available"> </app-select-search-dropdown>
+                         <app-select-search-dropdown [items]="viewModel.destroyMptItems()" [value]="viewModel.selectedDestroyMptItem()" (valueChange)="onMptSelection($event)" placeholder="Search by ID or amount..." emptyMessage="No MPTs issued by this wallet"> </app-select-search-dropdown>
                     </div>
 
                     <app-field-helper title="Select MPT" [items]="mptDestroySelectHelperItems" [show]="showMptDestroySelectHelper" />
@@ -30,7 +30,7 @@
      </div>
 
      <!-- MPT Issuance ID -->
-     @if (viewModel.selectedMptItem()) {
+     @if (viewModel.selectedDestroyMptItem()) {
      <div class="card-base">
           <div class="field-label">
                <label for="mptIssuanceID" class="label-primary">MPT Issuance ID <span class="text-red-500">*</span></label>

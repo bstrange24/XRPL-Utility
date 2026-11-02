@@ -80,6 +80,10 @@ export class MptDestroyComponent {
      });
 
      destroyWarningMessage = computed(() => {
+          const issuanceId = this.mptStoreService.mptIssuanceId();
+          const isIssuer = this.mptTransactionViewModelService.destroyMptItems().some(item => item.id === issuanceId);
+          if (!isIssuer) return null;
+
           return this.mptUtilService.getDestroyWarningMessage();
      });
 

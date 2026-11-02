@@ -402,6 +402,38 @@ describe('MptTransactionViewModelService', () => {
           });
      });
 
+     describe('destroyMptItems', () => {
+          it('should include only issuances created by the selected wallet', () => {
+               existingMptsSignal.set([
+                    {
+                         LedgerEntryType: 'MPToken',
+                         mpt_issuance_id: 'owned-issuance',
+                         Account: mockWallet.classicAddress,
+                         Issuer: mockWallet.classicAddress,
+                         isHolder: false,
+                         OutstandingAmount: '0',
+                    },
+                    {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         mpt_issuance_id: 'held-issuance',
+                         Account: mockWallet.classicAddress,
+                         Issuer: 'rAnotherIssuer',
+                         isHolder: true,
+                         MPTAmount: '0',
+                    },
+                    {
+                         LedgerEntryType: 'MPTokenIssuance',
+                         mpt_issuance_id: 'other-issuance',
+                         Account: 'rAnotherIssuer',
+                         Issuer: 'rAnotherIssuer',
+                         OutstandingAmount: '0',
+                    },
+               ]);
+
+               expect(service.destroyMptItems().map(item => item.id)).toEqual(['owned-issuance']);
+          });
+     });
+
      describe('selectedMptItem', () => {
           it('should return null when no issuance ID is selected', () => {
                mptIssuanceIdSignal.set(null);
