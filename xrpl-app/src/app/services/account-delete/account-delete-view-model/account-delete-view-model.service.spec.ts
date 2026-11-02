@@ -250,15 +250,15 @@ describe('AccountDeleteViewModelService', () => {
                expect(service.deleteWalletButtonLabel()).toBe('Delete Wallet');
           });
 
-          it('should return waiting message when waiting validation', () => {
+          it('should keep the action label while waiting for validation', () => {
                txUiServiceMock.currentStep.set('waiting_validation');
-               expect(service.deleteWalletButtonLabel()).toBe('Waiting for ledger validation...');
+               expect(service.deleteWalletButtonLabel()).toBe('Delete Wallet');
           });
 
-          it('should return step message when processing', () => {
+          it('should keep the action label while processing', () => {
                txUiServiceMock.currentStep.set('processing');
                txUiServiceMock.stepMessage.set('Processing transaction...');
-               expect(service.deleteWalletButtonLabel()).toBe('Processing transaction...');
+               expect(service.deleteWalletButtonLabel()).toBe('Delete Wallet');
           });
      });
 

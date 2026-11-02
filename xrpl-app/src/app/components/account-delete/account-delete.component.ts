@@ -84,6 +84,9 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
 
      ngOnDestroy(): void {
           this.rightPanelService.clearPanel();
+          this.deleteAccountStoreService.setField('savedTxJson', []);
+          this.deleteAccountStoreService.setField('savedTxResult', []);
+          this.txUiService.clearTxResultsHash();
      }
 
      private readonly updateRightPanelEffect = effect(() => {

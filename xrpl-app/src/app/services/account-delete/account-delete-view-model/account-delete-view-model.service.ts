@@ -116,16 +116,7 @@ export class AccountDeleteViewModelService {
 
      readonly deleteBlockers = computed(() => this.blockersList());
 
-     private buildTxLabel(defaultText: string) {
-          return computed(() => {
-               const step = this.txUiService.currentStep();
-               if (step === 'idle') return defaultText;
-               // if (step === 'waiting_validation') return 'Waiting for ledger validation...';
-               return this.txUiService.stepMessage();
-          });
-     }
-
-     readonly deleteWalletButtonLabel = this.buildTxLabel('Delete Wallet');
+     readonly deleteWalletButtonLabel = computed(() => 'Delete Wallet');
 
      readonly summaryMessage = computed(() => {
           const info = this.infoData();

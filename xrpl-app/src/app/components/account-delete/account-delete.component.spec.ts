@@ -143,6 +143,7 @@ describe('AccountDeleteComponent', () => {
 
           rightPanelService = {
                setPanel: jasmine.createSpy('setPanel'),
+               clearPanel: jasmine.createSpy('clearPanel'),
           };
 
           transactionUiService = {
@@ -236,6 +237,14 @@ describe('AccountDeleteComponent', () => {
 
      it('should create', () => {
           expect(component).toBeTruthy();
+     });
+
+     it('should clear the transaction preview when leaving the page', () => {
+          component.ngOnDestroy();
+
+          expect(deleteAccountStoreService.setField).toHaveBeenCalledWith('savedTxJson', []);
+          expect(deleteAccountStoreService.setField).toHaveBeenCalledWith('savedTxResult', []);
+          expect(transactionUiService.clearTxResultsHash).toHaveBeenCalled();
      });
 
      describe('Initialization', () => {
