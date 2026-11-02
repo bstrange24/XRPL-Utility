@@ -406,6 +406,11 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
           }
 
           const mptState = this.mptStoreService.getAll();
+          const issuerIssuance = env.accountObjects?.result?.account_objects?.some(
+               (obj: any) => obj.LedgerEntryType === 'MPTokenIssuance'
+                    && obj.mpt_issuance_id === mptState.mptIssuanceId
+          );
+          const authAction = mptState.authAction;
           const accountState = this.accountConfiguratorStoreService.getAll();
           const txOptionsState = this.xrplTxOptionsStore.getAll();
 
@@ -481,18 +486,18 @@ export class MptComponent extends WalletDestinationBase implements OnInit, OnDes
                return;
           }
 
-          if (txResult.success && !this.xrplTxOptionsStore.isSimulateEnabled()) {
-               const submittedTx = txResult.tx;
-               if (submittedTx?.TransactionType === 'MPTokenAuthorize' && submittedTx.Holder) {
-                    const issuanceId = submittedTx.MPTokenIssuanceID;
-                    const currentHolders = this.mptStoreService.getAuthorizedHolders(issuanceId);
-                    const isUnauthorize =
-                         (Number(submittedTx.Flags || 0) & xrpl.MPTokenAuthorizeFlags.tfMPTUnauthorize) !== 0;
-                    const updatedHolders = isUnauthorize
-                         ? currentHolders.filter(holder => holder !== submittedTx.Holder)
-                         : [...new Set([...currentHolders, submittedTx.Holder])];
-                    this.mptStoreService.setAuthorizedHolders(issuanceId, updatedHolders);
-               }
+          if (
+               txResult.success
+               && !this.xrplTxOptionsStore.isSimulateEnabled()
+               && issuerIssuance
+               && (currentTab === 'authorizeMpt' || currentTab === 'unauthorizeMpt')
+               && destinationAddress
+          ) {
+               const currentHolders = this.mptStoreService.getAuthorizedHolders(mptState.mptIssuanceId);
+               const updatedHolders = authAction === 'unauthorize'
+                    ? currentHolders.filter(holder => holder !== destinationAddress)
+                    : [...new Set([...currentHolders, destinationAddress])];
+               this.mptStoreService.setAuthorizedHolders(mptState.mptIssuanceId, updatedHolders);
           }
 
           const transactionSucceeded = await this.handleTxResult(txResult, env.client, env.wallet, '', this.mptStoreService.destination(), '', {});
