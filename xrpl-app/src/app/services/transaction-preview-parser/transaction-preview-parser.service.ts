@@ -230,7 +230,7 @@ class PaymentPreviewFormatter implements TransactionPreviewFormatter {
                     label: 'Amount',
                     value: tx.Amount ?? tx.DeliverMax,
                     isValid: !!(tx.Amount ?? tx.DeliverMax),
-                    message: tx.Amount ?? tx.DeliverMax ? undefined : 'Amount is required',
+                    message: (tx.Amount ?? tx.DeliverMax) ? undefined : 'Amount is required',
                },
           ];
      }
@@ -472,15 +472,7 @@ class TrustSetPreviewFormatter implements TransactionPreviewFormatter {
 
      getKeyDetails(tx: any, accountInfo?: any) {
           const limit = tx.LimitAmount;
-          return [
-               { label: 'Currency', value: limit.currency, icon: '💱', highlight: true },
-               { label: 'Issuer', value: shortenAddress(limit.issuer), icon: '🏦' },
-               { label: 'Limit', value: limit.value === '0' ? 'Removing' : limit.value, icon: '📊' },
-               { label: 'Quality In', value: tx.QualityIn || 'None', icon: '📈' },
-               { label: 'Quality Out', value: tx.QualityOut || 'None', icon: '📉' },
-               ...getTrustSetFlagDetails(tx.Flags),
-               { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' },
-          ];
+          return [{ label: 'Currency', value: limit.currency, icon: '💱', highlight: true }, { label: 'Issuer', value: shortenAddress(limit.issuer), icon: '🏦' }, { label: 'Limit', value: limit.value === '0' ? 'Removing' : limit.value, icon: '📊' }, { label: 'Quality In', value: tx.QualityIn || 'None', icon: '📈' }, { label: 'Quality Out', value: tx.QualityOut || 'None', icon: '📉' }, ...getTrustSetFlagDetails(tx.Flags), { label: 'Fee', value: formatXRPAmount(tx.Fee || '12'), icon: '⛽' }];
      }
 
      getRequiredFields(tx: any) {
@@ -516,7 +508,7 @@ class TrustSetPreviewFormatter implements TransactionPreviewFormatter {
 // 6. NFTokenMint Preview Formatter
 class NFTokenMintPreviewFormatter implements TransactionPreviewFormatter {
      getSummary(tx: any, accountInfo?: any) {
-          const properties = getNftFlagLabels(tx.Flags).map(label => label === 'Only XRP' ? 'XRP-only' : label.toLowerCase());
+          const properties = getNftFlagLabels(tx.Flags).map(label => (label === 'Only XRP' ? 'XRP-only' : label.toLowerCase()));
 
           return {
                title: 'Mint NFT',
@@ -949,45 +941,84 @@ class KnownTransactionPreviewFormatter implements TransactionPreviewFormatter {
 
      private getTransactionDescription(tx: any): string {
           switch (this.txType) {
-               case 'AccountDelete': return tx.Destination ? `Delete this account and send its remaining XRP to ${shortenAddress(tx.Destination)}` : 'Delete this account';
-               case 'CheckCreate': return `Create a check for ${formatCurrencyAmountPreview(tx.SendMax)} payable to ${shortenAddress(tx.Destination)}`;
-               case 'CheckCash': return `Cash check ${shortenAddress(tx.CheckID)}${tx.Amount ? ` for ${formatCurrencyAmountPreview(tx.Amount)}` : ''}`;
-               case 'CheckCancel': return `Cancel check ${shortenAddress(tx.CheckID)}`;
-               case 'CredentialCreate': return `Create a credential for ${shortenAddress(tx.Subject)}${tx.CredentialType ? ` (${decodeHexPreview(tx.CredentialType)})` : ''}`;
-               case 'CredentialAccept': return `Accept ${decodeHexPreview(tx.CredentialType || 'credential')} credential from ${shortenAddress(tx.Issuer)}`;
-               case 'CredentialDelete': return `Delete ${decodeHexPreview(tx.CredentialType || 'credential')} credential${tx.Subject ? ` for ${shortenAddress(tx.Subject)}` : ''}`;
-               case 'DepositPreauth': return tx.Authorize ? `Authorize deposits from ${shortenAddress(tx.Authorize)}` : `Remove deposit authorization for ${shortenAddress(tx.Unauthorize)}`;
-               case 'SetRegularKey': return tx.RegularKey ? `Set regular key to ${shortenAddress(tx.RegularKey)}` : 'Remove the regular key';
-               case 'TicketCreate': return `Create ${tx.TicketCount || 0} transaction ticket${tx.TicketCount === 1 ? '' : 's'}`;
-               case 'AMMCreate': return `Create an automated market maker with ${formatCurrencyAmountPreview(tx.Amount)} and ${formatCurrencyAmountPreview(tx.Amount2)}`;
-               case 'AMMDeposit': return 'Deposit liquidity into the automated market maker';
-               case 'AMMWithdraw': return 'Withdraw liquidity from the automated market maker';
-               case 'AMMVote': return `Vote on AMM trading fee${tx.TradingFee !== undefined ? ` (${tx.TradingFee})` : ''}`;
-               case 'AMMBid': return `Bid for the AMM auction slot${tx.BidMin ? ` with minimum ${formatCurrencyAmountPreview(tx.BidMin)}` : ''}`;
-               case 'AMMDelete': return 'Delete the automated market maker';
-               case 'AMMClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the AMM`;
-               case 'Clawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from ${shortenAddress(tx.Holder)}`;
-               case 'LoanSet': return `Create or update a loan${tx.Counterparty ? ` with ${shortenAddress(tx.Counterparty)}` : ''}`;
-               case 'LoanManage': return `Manage loan ${shortenAddress(tx.LoanID)}`;
-               case 'LoanPay': return `Make a payment on loan ${shortenAddress(tx.LoanID)}`;
-               case 'LoanDelete': return `Delete loan ${shortenAddress(tx.LoanID)}`;
-               case 'LoanBrokerSet': return 'Create or update a loan broker';
-               case 'LoanBrokerDelete': return 'Delete the loan broker';
-               case 'LoanBrokerCoverDeposit': return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into loan broker cover`;
-               case 'LoanBrokerCoverWithdraw': return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
-               case 'LoanBrokerCoverClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
-               case 'VaultCreate': return 'Create a tokenized vault';
-               case 'VaultSet': return 'Update vault settings';
-               case 'VaultDeposit': return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into the vault`;
-               case 'VaultWithdraw': return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
-               case 'VaultClawback': return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
-               case 'VaultDelete': return 'Delete the vault';
-               case 'MPTokenIssuanceCreate': return 'Create an MPT issuance';
-               case 'MPTokenAuthorize': return tx.MPTokenIssuanceID ? `Authorize MPT issuance ${shortenAddress(tx.MPTokenIssuanceID)}` : 'Authorize an MPT issuance';
-               case 'MPTokenIssuanceSet': return 'Update MPT issuance settings';
-               case 'MPTokenIssuanceDestroy': return 'Destroy an MPT issuance';
-               case 'NFTokenModify': return `Update NFT ${shortenAddress(tx.NFTokenID)}${tx.URI ? ` URI to ${truncatePreviewValue(decodeHexPreview(tx.URI), 50)}` : ''}`;
-               default: return `Prepare to submit ${humanizeTransactionType(this.txType).toLowerCase()}`;
+               case 'AccountDelete':
+                    return tx.Destination ? `Delete this account and send its remaining XRP to ${shortenAddress(tx.Destination)}` : 'Delete this account';
+               case 'CheckCreate':
+                    return `Create a check for ${formatCurrencyAmountPreview(tx.SendMax)} payable to ${shortenAddress(tx.Destination)}`;
+               case 'CheckCash':
+                    return `Cash check ${shortenAddress(tx.CheckID)}${tx.Amount ? ` for ${formatCurrencyAmountPreview(tx.Amount)}` : ''}`;
+               case 'CheckCancel':
+                    return `Cancel check ${shortenAddress(tx.CheckID)}`;
+               case 'CredentialCreate':
+                    return `Create a credential for ${shortenAddress(tx.Subject)}${tx.CredentialType ? ` (${decodeHexPreview(tx.CredentialType)})` : ''}`;
+               case 'CredentialAccept':
+                    return `Accept ${decodeHexPreview(tx.CredentialType || 'credential')} credential from ${shortenAddress(tx.Issuer)}`;
+               case 'CredentialDelete':
+                    return `Delete ${decodeHexPreview(tx.CredentialType || 'credential')} credential${tx.Subject ? ` for ${shortenAddress(tx.Subject)}` : ''}`;
+               case 'DepositPreauth':
+                    return tx.Authorize ? `Authorize deposits from ${shortenAddress(tx.Authorize)}` : `Remove deposit authorization for ${shortenAddress(tx.Unauthorize)}`;
+               case 'SetRegularKey':
+                    return tx.RegularKey ? `Set regular key to ${shortenAddress(tx.RegularKey)}` : 'Remove the regular key';
+               case 'TicketCreate':
+                    return `Create ${tx.TicketCount || 0} transaction ticket${tx.TicketCount === 1 ? '' : 's'}`;
+               case 'AMMCreate':
+                    return `Create an automated market maker with ${formatCurrencyAmountPreview(tx.Amount)} and ${formatCurrencyAmountPreview(tx.Amount2)}`;
+               case 'AMMDeposit':
+                    return 'Deposit liquidity into the automated market maker';
+               case 'AMMWithdraw':
+                    return 'Withdraw liquidity from the automated market maker';
+               case 'AMMVote':
+                    return `Vote on AMM trading fee${tx.TradingFee !== undefined ? ` (${tx.TradingFee})` : ''}`;
+               case 'AMMBid':
+                    return `Bid for the AMM auction slot${tx.BidMin ? ` with minimum ${formatCurrencyAmountPreview(tx.BidMin)}` : ''}`;
+               case 'AMMDelete':
+                    return 'Delete the automated market maker';
+               case 'AMMClawback':
+                    return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the AMM`;
+               case 'Clawback':
+                    return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from ${shortenAddress(tx.Holder)}`;
+               case 'LoanSet':
+                    return `Create or update a loan${tx.Counterparty ? ` with ${shortenAddress(tx.Counterparty)}` : ''}`;
+               case 'LoanManage':
+                    return `Manage loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanPay':
+                    return `Make a payment on loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanDelete':
+                    return `Delete loan ${shortenAddress(tx.LoanID)}`;
+               case 'LoanBrokerSet':
+                    return 'Create or update a loan broker';
+               case 'LoanBrokerDelete':
+                    return 'Delete the loan broker';
+               case 'LoanBrokerCoverDeposit':
+                    return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into loan broker cover`;
+               case 'LoanBrokerCoverWithdraw':
+                    return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
+               case 'LoanBrokerCoverClawback':
+                    return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from loan broker cover`;
+               case 'VaultCreate':
+                    return 'Create a tokenized vault';
+               case 'VaultSet':
+                    return 'Update vault settings';
+               case 'VaultDeposit':
+                    return `Deposit ${formatCurrencyAmountPreview(tx.Amount)} into the vault`;
+               case 'VaultWithdraw':
+                    return `Withdraw ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
+               case 'VaultClawback':
+                    return `Claw back ${formatCurrencyAmountPreview(tx.Amount)} from the vault`;
+               case 'VaultDelete':
+                    return 'Delete the vault';
+               case 'MPTokenIssuanceCreate':
+                    return 'Create an MPT issuance';
+               case 'MPTokenAuthorize':
+                    return tx.MPTokenIssuanceID ? `Authorize MPT issuance ${shortenAddress(tx.MPTokenIssuanceID)}` : 'Authorize an MPT issuance';
+               case 'MPTokenIssuanceSet':
+                    return 'Update MPT issuance settings';
+               case 'MPTokenIssuanceDestroy':
+                    return 'Destroy an MPT issuance';
+               case 'NFTokenModify':
+                    return `Update NFT ${shortenAddress(tx.NFTokenID)}${tx.URI ? ` URI to ${truncatePreviewValue(decodeHexPreview(tx.URI), 50)}` : ''}`;
+               default:
+                    return `Prepare to submit ${humanizeTransactionType(this.txType).toLowerCase()}`;
           }
      }
 
@@ -1551,24 +1582,29 @@ function formatCurrencyAmountPreview(amount: any): string {
           const value = new Intl.NumberFormat(undefined, { maximumFractionDigits: 15 }).format(numericValue);
           return `${value} ${amount.currency}`;
      }
+     if (amount.mpt_issuance_id) {
+          const numericValue = Number(amount.value);
+          if (!Number.isFinite(numericValue)) return `${amount.value} MPT`;
+          const value = new Intl.NumberFormat(undefined, { maximumFractionDigits: 15 }).format(numericValue);
+          return `${value} MPT`;
+     }
      return String(amount);
 }
 
 function getAmountInDisplayUnits(amount: any): number {
      if (typeof amount === 'string') {
-         const drops = Number(amount);
-         return Number.isFinite(drops) ? drops / 1000000 : 0;
+          const drops = Number(amount);
+          return Number.isFinite(drops) ? drops / 1000000 : 0;
      }
      if (amount && typeof amount.value === 'string') {
-         const value = Number(amount.value);
-         return Number.isFinite(value) ? value : 0;
+          const value = Number(amount.value);
+          return Number.isFinite(value) ? value : 0;
      }
      return 0;
 }
 
 function getNativeXrpAmount(transactionType: string, tx: any): number {
-     const nativeAmount = transactionType === 'Payment' ? (tx.Amount ?? tx.DeliverMax) :
-         ['EscrowCreate', 'PaymentChannelCreate', 'PaymentChannelFund'].includes(transactionType) ? tx.Amount : undefined;
+     const nativeAmount = transactionType === 'Payment' ? (tx.Amount ?? tx.DeliverMax) : ['EscrowCreate', 'PaymentChannelCreate', 'PaymentChannelFund'].includes(transactionType) ? tx.Amount : undefined;
      if (typeof nativeAmount !== 'string') return 0;
      const drops = Number(nativeAmount);
      return Number.isFinite(drops) ? drops : 0;
@@ -1577,8 +1613,8 @@ function getNativeXrpAmount(transactionType: string, tx: any): number {
 function hasFlag(flags: any, bit: number, objectFlag: string): boolean {
      if (typeof flags === 'number') return (flags & bit) === bit;
      if (typeof flags === 'string') {
-         const numericFlags = Number(flags);
-         return Number.isFinite(numericFlags) && (numericFlags & bit) === bit;
+          const numericFlags = Number(flags);
+          return Number.isFinite(numericFlags) && (numericFlags & bit) === bit;
      }
      return !!flags?.[objectFlag];
 }
@@ -1596,13 +1632,13 @@ function getNftFlagLabels(flags: any): string[] {
 
 function getTrustSetFlagDetails(flags: any): KeyDetail[] {
      const definitions: [number, string, string][] = [
-         [65536, 'tfSetfAuth', 'Authorize issuer'],
-         [131072, 'tfSetNoRipple', 'Set no-ripple'],
-         [262144, 'tfClearNoRipple', 'Clear no-ripple'],
-         [1048576, 'tfSetFreeze', 'Freeze trust line'],
-         [2097152, 'tfClearFreeze', 'Clear freeze'],
-         [4194304, 'tfSetDeepFreeze', 'Deep-freeze trust line'],
-         [8388608, 'tfClearDeepFreeze', 'Clear deep freeze'],
+          [65536, 'tfSetfAuth', 'Authorize issuer'],
+          [131072, 'tfSetNoRipple', 'Set no-ripple'],
+          [262144, 'tfClearNoRipple', 'Clear no-ripple'],
+          [1048576, 'tfSetFreeze', 'Freeze trust line'],
+          [2097152, 'tfClearFreeze', 'Clear freeze'],
+          [4194304, 'tfSetDeepFreeze', 'Deep-freeze trust line'],
+          [8388608, 'tfClearDeepFreeze', 'Clear deep freeze'],
      ];
      const activeFlags = definitions.filter(([bit, objectFlag]) => hasFlag(flags, bit, objectFlag)).map(([, , label]) => label);
      return activeFlags.length ? [{ label: 'Trust Line Flags', value: activeFlags.join(', '), icon: '🚩' }] : [];
@@ -1611,11 +1647,17 @@ function getTrustSetFlagDetails(flags: any): KeyDetail[] {
 function humanizeTransactionType(transactionType: string): string {
      if (!transactionType) return 'XRPL Transaction';
      const knownLabels: Record<string, string> = {
-         AMMCreate: 'Create AMM', AMMDeposit: 'AMM Deposit', AMMWithdraw: 'AMM Withdraw',
-         AMMVote: 'AMM Vote', AMMBid: 'AMM Auction Bid', AMMDelete: 'Delete AMM',
-         AMMClawback: 'AMM Clawback', NFTokenModify: 'Modify NFT',
-         MPTokenIssuanceCreate: 'Create MPT Issuance', MPTokenIssuanceSet: 'Update MPT Issuance',
-         MPTokenIssuanceDestroy: 'Destroy MPT Issuance',
+          AMMCreate: 'Create AMM',
+          AMMDeposit: 'AMM Deposit',
+          AMMWithdraw: 'AMM Withdraw',
+          AMMVote: 'AMM Vote',
+          AMMBid: 'AMM Auction Bid',
+          AMMDelete: 'Delete AMM',
+          AMMClawback: 'AMM Clawback',
+          NFTokenModify: 'Modify NFT',
+          MPTokenIssuanceCreate: 'Create MPT Issuance',
+          MPTokenIssuanceSet: 'Update MPT Issuance',
+          MPTokenIssuanceDestroy: 'Destroy MPT Issuance',
      };
      return knownLabels[transactionType] || transactionType.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2');
 }

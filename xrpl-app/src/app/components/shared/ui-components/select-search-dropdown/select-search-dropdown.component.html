@@ -2,7 +2,8 @@
 <div class="combobox-container relative w-full">
      <!-- Input -->
      <div class="relative">
-          <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (blur)="onBlur()" (keydown)="onKeydown($event)" [placeholder]="placeholder()" [class]="inputClasses()" autocomplete="off" [disabled]="isDisabled()" />
+          <!-- <input #inputEl type="text" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (blur)="onBlur()" (keydown)="onKeydown($event)" [placeholder]="placeholder()" [class]="inputClasses()" autocomplete="off" [disabled]="isDisabled()" /> -->
+          <input #inputEl type="search" role="combobox" [value]="displayValue()" (focus)="open()" (input)="onInput($event)" (blur)="onBlur()" (keydown)="onKeydown($event)" [placeholder]="placeholder()" [class]="inputClasses()" autocomplete="off" name="xrpl-wallet-selector" autocorrect="off" autocapitalize="off" spellcheck="false" [disabled]="isDisabled()" />
 
           <!-- Buttons container -->
           <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
