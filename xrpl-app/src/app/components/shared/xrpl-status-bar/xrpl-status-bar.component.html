@@ -166,10 +166,10 @@
 
           <!-- Network Options -->
           <div class="p-6 space-y-3">
-               <!-- Mainnet Option -->
+               <!-- Mainnet Option (temporarily disabled)
                <button (click)="selectNetwork('Mainnet')" class="w-full group">
                     <div class="relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4" [class.border-red-500]="getNetworkName() === 'Mainnet'" [class.border-gray-200]="getNetworkName() !== 'Mainnet'" [class.bg-red-50]="getNetworkName() === 'Mainnet'" [class.dark:bg-red-900/10]="getNetworkName() === 'Mainnet'" [class.hover:border-red-300]="getNetworkName() !== 'Mainnet'" [class.dark:hover:border-red-700]="getNetworkName() !== 'Mainnet'">
-                         <!-- Checkmark on the LEFT - for active network -->
+                         Checkmark on the LEFT - for active network
                          @if (getNetworkName() === 'Mainnet') {
                          <div class="flex-shrink-0 w-6">
                               <div class="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shadow-lg">
@@ -177,18 +177,18 @@
                               </div>
                          </div>
                          } @else {
-                         <!-- Empty spacer for alignment -->
+                         Empty spacer for alignment
                          <div class="flex-shrink-0 w-6"></div>
                          }
 
-                         <!-- Network icon -->
+                         Network icon
                          <div class="flex-shrink-0">
                               <div class="w-12 h-12 rounded-xl bg-red-100 flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                                    <lucide-icon name="lucideNetwork" size="24" class="text-red-600 dark:text-red-400"></lucide-icon>
                               </div>
                          </div>
 
-                         <!-- Network info -->
+                         Network info
                          <div class="flex-1 text-left">
                               <div class="flex items-center gap-2 mb-1">
                                    <span class="font-semibold text-gray-900 text-lg">Mainnet</span>
@@ -207,6 +207,7 @@
                          </div>
                     </div>
                </button>
+               -->
 
                <!-- Testnet Option -->
                <button (click)="selectNetwork('Testnet')" class="w-full group">
