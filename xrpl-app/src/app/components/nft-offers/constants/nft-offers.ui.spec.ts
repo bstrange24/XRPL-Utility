@@ -23,7 +23,7 @@ describe('NFT Offers UI Configuration', () => {
                expect(tab?.label).toBe('Buy NFT');
                expect(tab?.icon).toBe('heroCurrencyDollar');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -43,7 +43,7 @@ describe('NFT Offers UI Configuration', () => {
                expect(tab?.label).toBe('Buy NFT Offer');
                expect(tab?.icon).toBe('heroCurrencyDollar');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -106,7 +106,7 @@ describe('NFT Offers UI Configuration', () => {
                     expect(meta.colorClass).toBe('green-button-submenu');
                     expect(meta.title).toBe('Buy NFT');
                     expect(meta.desc).toBe('Buy an NFT from the market.');
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });
@@ -132,7 +132,7 @@ describe('NFT Offers UI Configuration', () => {
                     expect(meta.colorClass).toBe('green-button-submenu');
                     expect(meta.title).toBe('Buy NFT Offer');
                     expect(meta.desc).toBe('Create an offer to buy an NFT.');
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });

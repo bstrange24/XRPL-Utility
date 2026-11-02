@@ -23,7 +23,7 @@ describe('Payment Channel UI Configuration', () => {
                expect(tab?.label).toBe('Fund');
                expect(tab?.icon).toBe('banknote-arrow-down');
                expect(tab?.iconType).toBe('lucide-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -43,7 +43,7 @@ describe('Payment Channel UI Configuration', () => {
                expect(tab?.label).toBe('Renew');
                expect(tab?.icon).toBe('heroPlusCircle');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -106,7 +106,7 @@ describe('Payment Channel UI Configuration', () => {
                     expect(meta.colorClass).toBe('green-button-submenu');
                     expect(meta.title).toBe('Fund Payment Channel');
                     expect(meta.desc).toBe('Fund existing payment channel created by the selected account.');
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('lucide-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });
@@ -132,7 +132,7 @@ describe('Payment Channel UI Configuration', () => {
                     expect(meta.colorClass).toBe('blue-button-submenu');
                     expect(meta.title).toBe('Renew Payment Channel');
                     expect(meta.desc).toBe('Reset expiration as the source/creator (no funds claimed).');
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });

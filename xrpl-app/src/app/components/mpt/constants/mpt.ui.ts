@@ -49,7 +49,7 @@ export const MPT_TABS: {
           label: 'Clawback',
           icon: 'heroArrowUturnLeft',
           iconType: 'ng-icon',
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -116,7 +116,7 @@ export const MPT_TAB_META: Record<
           colorClass: 'red-button-submenu',
           title: 'Clawback MPT',
           desc: `Clawback a previously created MPT.`,
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

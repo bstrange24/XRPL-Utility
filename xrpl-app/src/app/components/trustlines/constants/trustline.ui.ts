@@ -43,7 +43,7 @@ export const TRUSTLINE_TABS: {
      {
           key: 'clawbackTokens',
           label: 'Clawback',
-          icon: 'heroTrash',
+          icon: 'heroArrowUturnLeft',
           iconType: 'ng-icon',
           color: '#3b82f6',
           iconSize: AppConstants.TAB_ICON_SIZE,
@@ -98,7 +98,7 @@ export const TRUSTLINE_TAB_META: Record<
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      clawbackTokens: {
-          icon: 'heroTrash',
+          icon: 'heroArrowUturnLeft',
           colorClass: 'red-button-submenu',
           title: 'Clawback Tokens',
           desc: 'Clawback tokens from another XRPL address.',

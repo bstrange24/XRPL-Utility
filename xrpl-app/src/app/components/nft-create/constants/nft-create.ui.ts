@@ -25,7 +25,7 @@ export const NFT_CREATE_TABS: {
           label: 'Update NFT',
           icon: 'heroArrowPath',
           iconType: 'ng-icon',
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -65,7 +65,7 @@ export const NFT_CREATE_TAB_META: Record<
           colorClass: 'white-button-submenu',
           title: 'Update NFT Metadata',
           desc: `Update the metadata of an existing NFT.`,
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

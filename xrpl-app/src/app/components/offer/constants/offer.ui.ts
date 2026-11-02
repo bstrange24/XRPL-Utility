@@ -23,7 +23,7 @@ export const OFFER_TABS: {
           label: 'Order Book',
           icon: 'heroChartBar',
           iconType: 'ng-icon',
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -62,7 +62,7 @@ export const OFFER_TAB_META: Record<
           colorClass: 'blue-button-submenu',
           title: 'Get Order Book',
           desc: 'Get the order book for a currency pair on the XRPL DEX.',
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

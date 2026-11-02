@@ -42,7 +42,7 @@ export class TabMenuWithInfoComponent {
           }
 
           // Default colors for different variants
-          return this.isDark() ? '#60a5fa' : '#2563eb';
+          return this.isDark() ? '#3b82f6' : '#2563eb';
      }
 
      tabButtonClasses = computed(() => {
@@ -105,7 +105,7 @@ export class TabMenuWithInfoComponent {
                     title: action === 'deposit' ? 'Deposit Vault' : 'Withdrawal Vault',
                     desc: action === 'deposit' ? 'Deposit an asset in the vault.' : 'Withdraw an asset from the vault.',
                     icon: action === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle',
-                    color: action === 'deposit' ? '#10b981' : '#60a5fa',
+                    color: action === 'deposit' ? '#10b981' : '#3b82f6',
                };
           }
 

@@ -41,7 +41,7 @@ export const VAULT_TABS: {
           label: 'Clawback',
           icon: 'heroArrowUturnLeft',
           iconType: 'ng-icon',
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconSize: AppConstants.TAB_ICON_SIZE,
      },
      {
@@ -99,7 +99,7 @@ export const VAULT_TAB_META: Record<
           colorClass: 'red-button-submenu',
           title: 'Clawback Vault Asset',
           desc: `Clawback an exiting asset in the vault.`,
-          color: '#60a5fa',
+          color: '#3b82f6',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },

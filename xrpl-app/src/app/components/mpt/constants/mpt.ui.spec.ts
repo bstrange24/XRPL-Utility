@@ -53,7 +53,7 @@ describe('MPT UI Configuration', () => {
                expect(tab?.label).toBe('Clawback');
                expect(tab?.icon).toBe('heroArrowUturnLeft');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -155,7 +155,7 @@ describe('MPT UI Configuration', () => {
                     expect(meta.colorClass).toBe('red-button-submenu');
                     expect(meta.title).toBe('Clawback MPT');
                     expect(meta.desc).toBe(`Clawback a previously created MPT.`);
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });

@@ -27,7 +27,7 @@ describe('AMM UI Configuration', () => {
           it('should have withdrawalFromAMM tab configuration', () => {
                const tab = AMM_TABS.find(t => t.key === 'withdrawalFromAMM');
                expect(tab?.label).toBe('Withdrawl');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
           });
 
           it('should have clawbackFromAMM tab configuration', () => {

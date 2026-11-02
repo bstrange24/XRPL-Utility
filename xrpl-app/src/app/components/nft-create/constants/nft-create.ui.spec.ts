@@ -23,7 +23,7 @@ describe('NFT Create UI Configuration', () => {
                expect(tab?.label).toBe('Update NFT');
                expect(tab?.icon).toBe('heroArrowPath');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -86,7 +86,7 @@ describe('NFT Create UI Configuration', () => {
                     expect(meta.colorClass).toBe('white-button-submenu');
                     expect(meta.title).toBe('Update NFT Metadata');
                     expect(meta.desc).toBe(`Update the metadata of an existing NFT.`);
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });

@@ -69,12 +69,12 @@ export const CREDENTIAL_TAB_META: Record<
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      acceptCredential: {
-          icon: 'heroArrowPath',
+          icon: 'copy-plus',
           colorClass: 'green-button-submenu',
           title: 'Accept Credentials',
           desc: 'Accept Credentials from another XRPL address.',
           color: '#c084fc',
-          iconType: 'ng-icon',
+          iconType: 'lucide-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
      },
      verifyCredential: {

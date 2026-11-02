@@ -23,7 +23,7 @@ describe('Offers UI Configuration', () => {
                expect(tab?.label).toBe('Order Book');
                expect(tab?.icon).toBe('heroChartBar');
                expect(tab?.iconType).toBe('ng-icon');
-               expect(tab?.color).toBe('#60a5fa');
+               expect(tab?.color).toBe('#3b82f6');
                expect(tab?.iconSize).toBe(AppConstants.TAB_ICON_SIZE);
           });
 
@@ -86,7 +86,7 @@ describe('Offers UI Configuration', () => {
                     expect(meta.colorClass).toBe('blue-button-submenu');
                     expect(meta.title).toBe('Get Order Book');
                     expect(meta.desc).toBe('Get the order book for a currency pair on the XRPL DEX.');
-                    expect(meta.color).toBe('#60a5fa');
+                    expect(meta.color).toBe('#3b82f6');
                     expect(meta.iconType).toBe('ng-icon');
                     expect(meta.iconSize).toBe(AppConstants.TAB_META_INFO_ICON_SIZE);
                });

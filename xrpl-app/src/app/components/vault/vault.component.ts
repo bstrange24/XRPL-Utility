@@ -148,7 +148,7 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
                          ...tab,
                          label: vaultAction === 'deposit' ? 'Deposit' : 'Withdrawal',
                          icon: vaultAction === 'deposit' ? 'heroArrowDownCircle' : 'heroArrowUpCircle',
-                         color: vaultAction === 'deposit' ? '#10b981' : '#60a5fa',
+                         color: vaultAction === 'deposit' ? '#10b981' : '#3b82f6',
                     };
                }
                return tab;
