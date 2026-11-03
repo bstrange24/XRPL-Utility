@@ -219,7 +219,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
                     this.updateCurrentWallet();
                     this.walletSelected.emit(this.currentWallet);
 
-                    this.txUiService.setTxResultSignal(newWallet);
+                    this.txUiService.setWalletOperationResult(newWallet, 'created');
                     this.toastService.success(`Generated ${newWallet.address || newWallet.wallet?.classicAddress} wallet successfully!`, AppConstants.TOAST.SUCCESS, false);
                } catch (error: any) {
                     console.error('Generate account failed', error);

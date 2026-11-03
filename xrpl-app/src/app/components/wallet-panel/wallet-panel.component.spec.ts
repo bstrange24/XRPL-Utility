@@ -124,6 +124,7 @@ describe('WalletPanelComponent', () => {
                clearTxResultsHash: jasmine.createSpy('clearTxResultsHash'),
                resetCurrentStepToIdle: jasmine.createSpy('resetCurrentStepToIdle'),
                setTxResultSignal: jasmine.createSpy('setTxResultSignal'),
+               setWalletOperationResult: jasmine.createSpy('setWalletOperationResult'),
           };
 
           toastService = {
@@ -390,6 +391,8 @@ describe('WalletPanelComponent', () => {
                await component.generateNewAccount();
 
                expect(walletGeneratorService.generateWallet).toHaveBeenCalled();
+               expect(txUiService.setWalletOperationResult).toHaveBeenCalledWith(mockNewWallet, 'created');
+               expect(txUiService.setTxResultSignal).not.toHaveBeenCalled();
                expect(toastService.success).toHaveBeenCalled();
           });
 
