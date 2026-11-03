@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, effect, signal, input } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy, OnDestroy, computed, effect, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -59,6 +59,22 @@ export class SendXrpComponent extends WalletDestinationBase implements OnInit, O
      public readonly sendXrpViewModelService = inject(SendXrpViewModelService);
      public readonly sendXrpUtilService = inject(SendXrpUtilService);
      private readonly rightPanelService = inject(RightPanelService);
+     readonly permissionedDomainItems = computed<SelectItem[]>(() => {
+          const walletAddress = this.currentWallet()?.classicAddress;
+          if (!walletAddress || this.sharedObjectsStore.address() !== walletAddress) return [];
+
+          const accountObjects = this.sharedObjectsStore.accountObjects()?.result?.account_objects;
+          if (!Array.isArray(accountObjects)) return [];
+
+          return accountObjects
+               .filter((object: unknown): object is { LedgerEntryType: string; Owner: string; index: string } => typeof object === 'object' && object !== null && 'LedgerEntryType' in object && object.LedgerEntryType === 'PermissionedDomain' && 'Owner' in object && object.Owner === walletAddress && 'index' in object && typeof object.index === 'string')
+               .map(domain => ({
+                    id: domain.index,
+                    display: `${domain.index.slice(0, 10)}...${domain.index.slice(-10)}`,
+                    secondary: 'Permissioned Domain',
+               }))
+               .sort((a, b) => a.id.localeCompare(b.id));
+     });
      public readonly sendXrpTabs = SEND_XRP_TABS;
      public readonly tabMeta = SEND_XRP_TAB_META;
      public canSendXrpFrom = signal<boolean>(false);

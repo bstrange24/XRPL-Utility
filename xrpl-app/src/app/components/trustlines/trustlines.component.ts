@@ -33,6 +33,7 @@ import { TRUSTLINE, TRUSTLINE_TAB } from './constants/trustline.constants';
 import { TrustlineStoreService } from '../../services/trustlines/trustline-store/trustline-store.service';
 import { TrustlineUtilService } from '../../services/trustlines/trustline-utils/trustline-util.service';
 import { TrustlineViewModelService } from '../../services/trustlines/trustline-view-model/trustline-view-model.service';
+import { PermissionedDomainStoreService } from '../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
 import { TrustlineActionTypes } from './constants/trustline.types';
 import { TransactionOptionsComponent } from '../shared/transaction-options/transaction-options.component';
 import { TrustlineFlagsComponent } from './tab/trustline-flags/trustline-flags.component';
@@ -69,8 +70,35 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
      public readonly trustlineStoreService = inject(TrustlineStoreService);
      public readonly trustlineUtilService = inject(TrustlineUtilService);
      public readonly trustlineViewModelService = inject(TrustlineViewModelService);
+     private readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
      private readonly rightPanelService = inject(RightPanelService);
      private readonly cdr = inject(ChangeDetectorRef);
+     readonly permissionedDomainItems = computed<SelectItem[]>(() => {
+          const walletAddress = this.currentWallet()?.classicAddress;
+          if (!walletAddress || this.sharedObjectsStore.address() !== walletAddress) return [];
+
+          const accountObjects = this.sharedObjectsStore.accountObjects()?.result?.account_objects;
+          if (!Array.isArray(accountObjects)) return [];
+
+          return accountObjects
+               .filter(
+                    (object: unknown): object is { LedgerEntryType: string; Owner: string; index: string } =>
+                         typeof object === 'object' &&
+                         object !== null &&
+                         'LedgerEntryType' in object &&
+                         object.LedgerEntryType === 'PermissionedDomain' &&
+                         'Owner' in object &&
+                         object.Owner === walletAddress &&
+                         'index' in object &&
+                         typeof object.index === 'string'
+               )
+               .map(domain => ({
+                    id: domain.index,
+                    display: `${domain.index.slice(0, 8)}...${domain.index.slice(-8)}`,
+                    secondary: 'Permissioned Domain',
+               }))
+               .sort((a, b) => a.id.localeCompare(b.id));
+     });
      public      readonly tabs = TRUSTLINE_TABS;
      public readonly tabMeta = TRUSTLINE_TAB_META;
      readonly setFlags: Record<string, any> = SET_FLAGS;
@@ -318,6 +346,7 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
                this.currencyStoreService.reset();
                this.rightPanelService.resetFilters();
                this.xrplTxOptionsStore.reset();
+               this.permissionedDomainStoreService.setField('domainId', '');
                this.clearTrustlineData();
 
                if (wallet?.classicAddress) {
@@ -684,6 +713,8 @@ export class TrustlinesComponent extends WalletDestinationBase implements OnInit
           if (this.xrplTxOptionsStore.isSimulateEnabled()) return;
           this.trustlineCurrencyService.clearFlagsValue(this.trustlineViewModelService.activeTab());
           this.currencyStoreService.setField('amount', null);
+          this.xrplTxOptionsStore.setField('destinationTag', '');
+          this.permissionedDomainStoreService.setField('domainId', '');
           this.selectedDestinationAddress.set('');
           this.destinationSearchQuery.set('');
           this.trustlineStoreService.setField('delegatorAddress', '');

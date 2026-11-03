@@ -29,6 +29,7 @@ class SelectSearchDropdownStub {
 })
 class TransactionOptionsSectionStub {
      @Input() activeTab: any;
+     @Input() permissionedDomainItems: any;
 }
 
 /** -------------------------

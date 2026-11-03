@@ -293,9 +293,12 @@
                <!-- Domain ID -->
                <div class="space-y-2">
                     <label for="domId" class="label-primary">Domain ID</label>
-                    <p class="text-secondary">Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier.</p>
+                    <p class="text-secondary">@if (tab === 'sendXrp') { Select a Permissioned Domain owned by the selected account. This will be used to scope this payment to a XRPL Permissioned Domain. } @else { Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier. }</p>
 
                     <div class="relative">
+                         @if (tab === 'sendXrp') {
+                         <app-select-search-dropdown [items]="permissionedDomainItems()" [value]="selectedPermissionedDomainItem()" (valueChange)="onPermissionedDomainSelected($event)" placeholder="Select a Permissioned Domain ID..." emptyMessage="No Permissioned Domains found for this account" />
+                         } @else {
                          <input
                               type="text"
                               class="input-base-with-validation pr-20"
@@ -310,6 +313,7 @@
 
                          <!-- Icons Container -->
                          <app-input-icons [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainid !== null && domainid !== undefined && domainid.length > 0" [showClear]="!!domainid" (clear)="permissionedDomainStoreService.setField('domainId', '')" />
+                         }
                     </div>
 
                     @if (permissionedDomainStoreService.domainId()) {

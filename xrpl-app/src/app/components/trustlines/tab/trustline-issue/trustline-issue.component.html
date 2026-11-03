@@ -1,5 +1,5 @@
 <div class="space-y-6">
-     <div class="side-by-side-fields">
+     <div>
           <!-- Destination -->
           <div>
                @if (activeTab === 'issueCurrency') {
@@ -33,26 +33,61 @@
                <app-field-helper title="{{ activeTab === 'issueCurrency' ? 'Issue To' : 'Destination' }}" [items]="iouDestinationHelperItems" [show]="showIouDestinationHelper" />
           </div>
 
-          <!-- Destination Tag -->
-          <div>
-               <div class="field-label">
-                    <label for="destinationTag" class="label-primary">Destination Tag</label>
+     </div>
+
+     <!-- Optional Fields Toggle -->
+     <div class="card-base pt-2.5 pb-2.5">
+          <div class="options">
+               <app-toggle-slider [checked]="txUiService.wantsOptions()" (checkedChange)="onOptionalFieldsToggled($event)"> Include optional fields in transaction </app-toggle-slider>
+
+               <button type="button" (click)="toggleOptionalFieldsHelper()" class="text-gray-400 hover:text-gray-600" title="Include optional fields in transaction">
+                    <ng-icon name="heroQuestionMarkCircle" size="14"></ng-icon>
+               </button>
+          </div>
+
+          <app-field-helper title="Optional Fields" [items]="optionalFieldsHelperItems" [show]="showOptionalFieldsHelper" />
+     </div>
+
+     @if (txUiService.wantsOptions()) {
+     <div class="card-base">
+          <div class="side-by-side-fields">
+               <!-- Destination Tag -->
+               <div>
+                    <div class="field-label">
+                         <label for="destinationTag" class="label-primary">Destination Tag</label>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                         <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
+                         <button type="button" (click)="toggleDestinationTagHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <ng-icon name="heroQuestionMarkCircle" size="14" />
+                         </button>
+                    </div>
+
+                    <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" max="4294967295" />
+
+                    @if (isDestinationTagInvalid()) {
+                    <p class="form-error">Destination Tag must be a whole number between 1 and 4294967295.</p>
+                    }
+
+                    <app-field-helper title="Destination Tag" [items]="iouDestinationTagHelperItems" [show]="showIouDestinationTagHelper" />
                </div>
 
-               <div class="flex items-center gap-2">
-                    <p class="text-secondary">Destination Tag identifies the recipient within a shared address. Required if the receiving address belongs to an exchange or custodian.</p>
-                    <button type="button" (click)="toggleDestinationTagHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                         <ng-icon name="heroQuestionMarkCircle" size="14" />
-                    </button>
+               <!-- Permissioned Domain -->
+               <div>
+                    <div class="field-label">
+                         <label for="trustlineDomainId" class="label-primary">Permissioned Domain</label>
+                    </div>
+                    <p class="text-secondary">Select a Permissioned Domain owned by the selected account.</p>
+                    <app-select-search-dropdown
+                         [items]="permissionedDomainItems()"
+                         [value]="selectedPermissionedDomainItem()"
+                         (valueChange)="onPermissionedDomainSelected($event)"
+                         placeholder="Select a Permissioned Domain ID..."
+                         emptyMessage="No Permissioned Domains found for this account"
+                    />
                </div>
-
-               <input type="number" class="input-base-with-validation" app-focus-border [isValid]="!isDestinationTagInvalid()" [isInvalid]="isDestinationTagInvalid()" (keydown)="utilsService.preventNegative($event)" [ngModel]="xrplTxOptionsStore.destinationTag()" (ngModelChange)="xrplTxOptionsStore.setField('destinationTag', $event)" placeholder="e.g. 1123456" step="1" min="0" max="4294967295" />
-
-               @if (isDestinationTagInvalid()) {
-               <p class="form-error">Destination Tag must be a whole number between 1 and 4294967295.</p>
-               }
-
-               <app-field-helper title="Destination Tag" [items]="iouDestinationTagHelperItems" [show]="showIouDestinationTagHelper" />
           </div>
      </div>
+     }
 </div>

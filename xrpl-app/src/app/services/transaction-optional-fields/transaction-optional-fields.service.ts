@@ -82,9 +82,12 @@ export class TransactionOptionalFieldsService extends PerformanceBaseComponent {
                     tx.CredentialIDs = credentials;
                }
 
-               const domanId = this.permissionedDomainStoreService.domainId();
-               if (domanId && domanId !== '') {
-                    tx.DomainID = domanId;
+          }
+
+          if (txType === 'sendXrp' || txType === 'issueCurrency') {
+               const domainId = this.permissionedDomainStoreService.domainId();
+               if (domainId) {
+                    tx.DomainID = domainId;
                }
           }
 

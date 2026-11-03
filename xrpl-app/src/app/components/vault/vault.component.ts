@@ -87,6 +87,32 @@ export class VaultComponent extends WalletDestinationBase implements OnInit, OnD
      public readonly vaultStoreService = inject(VaultStoreService);
      public readonly vaultUtilService = inject(VaultUtilService);
      public readonly vaultCacheService = inject(VaultCacheService);
+     readonly permissionedDomainItems = computed<SelectItem[]>(() => {
+          const walletAddress = this.currentWallet()?.classicAddress;
+          if (!walletAddress || this.sharedObjectsStore.address() !== walletAddress) return [];
+
+          const accountObjects = this.sharedObjectsStore.accountObjects()?.result?.account_objects;
+          if (!Array.isArray(accountObjects)) return [];
+
+          return accountObjects
+               .filter(
+                    (object: unknown): object is { LedgerEntryType: string; Owner: string; index: string } =>
+                         typeof object === 'object' &&
+                         object !== null &&
+                         'LedgerEntryType' in object &&
+                         object.LedgerEntryType === 'PermissionedDomain' &&
+                         'Owner' in object &&
+                         object.Owner === walletAddress &&
+                         'index' in object &&
+                         typeof object.index === 'string'
+               )
+               .map(domain => ({
+                    id: domain.index,
+                    display: `${domain.index.slice(0, 8)}...${domain.index.slice(-8)}`,
+                    secondary: 'Permissioned Domain',
+               }))
+               .sort((a, b) => a.id.localeCompare(b.id));
+     });
 
      public readonly tabMeta = VAULT_TAB_META;
      public readonly vaultFlagsConfig = VAULT_FLAGS_CONFIG;

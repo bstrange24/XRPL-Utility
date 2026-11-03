@@ -80,7 +80,7 @@
                          <!-- Special Tabs -->
                          @if (tab === 'issueCurrency') {
                          <div class="rounded-2xl border border-gray-200 bg-white p-5 mt-5 transition-shadow hover:shadow-card">
-                              <app-trustline-issue [activeTab]="tab" [view]="view" [destinationItems]="destinationItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-issue>
+                              <app-trustline-issue [activeTab]="tab" [view]="view" [destinationItems]="destinationItems()" [permissionedDomainItems]="permissionedDomainItems()" [selectedDestinationItem]="selectedDestinationItem()" [destinationSearchQuery]="destinationSearchQuery()" [canSubmit]="canSubmit()" (performAction)="performAction()" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)"> </app-trustline-issue>
                          </div>
                          } @if (tab === 'clawbackTokens') {
                          <div class="rounded-2xl border border-gray-200 bg-white p-5 mt-5 transition-shadow hover:shadow-card">

@@ -89,7 +89,7 @@
      <!-- Optional Fields Section -->
      @if (wantsOptions()) {
      <div class="card-base">
-          <app-transaction-options-section [activeTab]="'sendXrp'" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
+          <app-transaction-options-section [activeTab]="'sendXrp'" [permissionedDomainItems]="permissionedDomainItems()" (optionsValidationChange)="onOptionsValidationChange($event)"></app-transaction-options-section>
      </div>
      }
 </div>

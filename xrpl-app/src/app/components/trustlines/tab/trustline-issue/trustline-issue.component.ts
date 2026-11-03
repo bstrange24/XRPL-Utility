@@ -2,18 +2,21 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, comput
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TrustlineViewModelService } from '../../../../services/trustlines/trustline-view-model/trustline-view-model.service';
-import { SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
 import { FocusBorderDirective } from '../../../../services/shared/focus-border/focus-border.directive';
 import { XrplTxOptionsStore } from '../../../shared/stores/xrpl-tx-options.store';
 import { UtilsService } from '../../../../services/utils/util-service/utils.service';
 import { NgIcon } from '@ng-icons/core';
 import { FieldHelperComponent } from '../../../shared/field-helper/field-helper.component';
 import { AppConstants } from '../../../../core/app.constants';
+import { TransactionUiService } from '../../../../services/transaction-ui/transaction-ui.service';
+import { PermissionedDomainStoreService } from '../../../../services/permissioned-domain/permissioned-domain-store/permissioned-domain-store.service';
+import { ToggleSliderComponent } from '../../../shared/toggle-slider/toggle-slider.component';
 
 @Component({
      selector: 'app-trustline-issue',
      standalone: true,
-     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon],
+     imports: [CommonModule, FormsModule, FieldHelperComponent, FocusBorderDirective, SelectSearchDropdownComponent, NgIcon, ToggleSliderComponent],
      templateUrl: './trustline-issue.component.html',
      styleUrl: './trustline-issue.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,10 +25,13 @@ export class TrustlineIssueComponent {
      public readonly viewModel = inject(TrustlineViewModelService);
      public readonly utilsService = inject(UtilsService);
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
+     public readonly txUiService = inject(TransactionUiService);
+     public readonly permissionedDomainStoreService = inject(PermissionedDomainStoreService);
 
      // === Helper Items ===
      readonly iouDestinationHelperItems = AppConstants.IOU_DESTINATION_HELPER_ITEMS;
      readonly iouDestinationTagHelperItems = AppConstants.IOU_DESTINATION_TAG_HELPER_ITEMS;
+     readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
 
      @Input() activeTab!: 'issueCurrency' | 'clawbackTokens';
      @Input() destinationTag: string = '';
@@ -34,6 +40,7 @@ export class TrustlineIssueComponent {
 
      view = input.required<any>();
      destinationItems = input.required<any[]>();
+     permissionedDomainItems = input<SelectItem[]>([]);
      selectedDestinationItem = input.required<any>();
      destinationSearchQuery = input.required<string>();
      canSubmit = input<boolean>(false);
@@ -48,6 +55,11 @@ export class TrustlineIssueComponent {
      // UI Signals
      showIouDestinationHelper = signal(false);
      showIouDestinationTagHelper = signal(false);
+     showOptionalFieldsHelper = signal(false);
+     selectedPermissionedDomainItem = computed(() => {
+          const domainId = this.permissionedDomainStoreService.domainId();
+          return this.permissionedDomainItems().find(item => item.id === domainId) ?? null;
+     });
 
      onDestinationValidationChange(isValid: boolean) {
           this.isDestinationValid.set(isValid);
@@ -74,6 +86,18 @@ export class TrustlineIssueComponent {
           this.destinationChange.emit(item);
      }
 
+     onPermissionedDomainSelected(item: SelectItem | null): void {
+          this.permissionedDomainStoreService.setField('domainId', item?.id ?? '');
+     }
+
+     onOptionalFieldsToggled(enabled: boolean): void {
+          this.txUiService.toggleOptions(enabled);
+          if (!enabled) {
+               this.xrplTxOptionsStore.setField('destinationTag', '');
+               this.permissionedDomainStoreService.setField('domainId', '');
+          }
+     }
+
      // Toggle Methods
      toggleDestinationHelper() {
           this.showIouDestinationHelper.set(!this.showIouDestinationHelper());
@@ -81,5 +105,9 @@ export class TrustlineIssueComponent {
 
      toggleDestinationTagHelper() {
           this.showIouDestinationTagHelper.set(!this.showIouDestinationTagHelper());
+     }
+
+     toggleOptionalFieldsHelper() {
+          this.showOptionalFieldsHelper.set(!this.showOptionalFieldsHelper());
      }
 }

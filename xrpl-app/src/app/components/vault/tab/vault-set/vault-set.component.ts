@@ -70,6 +70,11 @@ export class VaultSetComponent {
      public readonly domainIdValidatorService = inject(DomainIdValidatorService);
      public readonly vaultUtilService = inject(VaultUtilService);
      public readonly walletManagerService = inject(WalletManagerService);
+     permissionedDomainItems = input<SelectItem[]>([]);
+     selectedPermissionedDomainItem = computed(() => {
+          const domainId = this.vaultStoreService.domainId();
+          return this.permissionedDomainItems().find(item => item.id === domainId) ?? null;
+     });
 
      // Helper Items
      readonly vaultSelectorHelperItems = AppConstants.VAULT_SELECTOR_HELPER_ITEMS;
@@ -243,6 +248,10 @@ export class VaultSetComponent {
 
      set domainId(value: string) {
           this.vaultStoreService.setField('domainId', value);
+     }
+
+     onPermissionedDomainSelected(item: SelectItem | null): void {
+          this.domainId = item?.id ?? '';
      }
 
      // Validation

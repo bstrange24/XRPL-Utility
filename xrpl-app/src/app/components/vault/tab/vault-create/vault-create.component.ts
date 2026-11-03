@@ -115,6 +115,11 @@ export class VaultCreateComponent {
      selectedDestinationAddress = input<string>();
      currentAddress = input<string>('');
      lastIntendedDestination = input<string>('');
+     permissionedDomainItems = input<SelectItem[]>([]);
+     selectedPermissionedDomainItem = computed(() => {
+          const domainId = this.vaultStoreService.domainId();
+          return this.permissionedDomainItems().find(item => item.id === domainId) ?? null;
+     });
 
      // Outputs to parent
      performAction = output<void>();
@@ -305,6 +310,10 @@ export class VaultCreateComponent {
      set domainid(value: string) {
           this.permissionedDomainStoreService.setField('domainId', value);
           this.vaultStoreService.setField('domainId', value);
+     }
+
+     onPermissionedDomainSelected(item: SelectItem | null): void {
+          this.domainid = item?.id ?? '';
      }
 
      get metaData() {

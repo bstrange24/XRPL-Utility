@@ -18,11 +18,11 @@
           <form #theForm="ngForm">
                <!-- Dynamic Content -->
                @if (tab === 'createVault') {
-               <app-vault-create [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" [selectedDestinationAddress]="selectedDestinationAddress()" [wantsOptions]="txUiService.wantsOptions()" [canSubmit]="canSubmit()" [tab]="tab" (canCreateVaultChange)="setTabValidity('createVault', $event)" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" (toggleOptions)="txUiService.toggleOptions($event)"> </app-vault-create>
+               <app-vault-create [currentAddress]="currentAddress()" [lastIntendedDestination]="lastIntendedDestination()" [selectedDestinationAddress]="selectedDestinationAddress()" [permissionedDomainItems]="permissionedDomainItems()" [wantsOptions]="txUiService.wantsOptions()" [canSubmit]="canSubmit()" [tab]="tab" (canCreateVaultChange)="setTabValidity('createVault', $event)" (clearFields)="clearInputFields()" (searchQueryChange)="handleSearchQueryChange($event)" (destinationChange)="handleDestinationChange($event)" (toggleOptions)="txUiService.toggleOptions($event)"> </app-vault-create>
                } @if (tab === 'deleteVault') {
                <app-vault-delete (canDeleteVaultChange)="setTabValidity('deleteVault', $event)"></app-vault-delete>
                } @if (tab === 'modifyVault') {
-               <app-vault-set (canModifyVaultChange)="setTabValidity('modifyVault', $event)"></app-vault-set>
+               <app-vault-set [permissionedDomainItems]="permissionedDomainItems()" (canModifyVaultChange)="setTabValidity('modifyVault', $event)"></app-vault-set>
                } @if (tab === 'clawbackVault') {
                <app-vault-clawback (canClawbackVaultChange)="setTabValidity('clawbackVault', $event)"></app-vault-clawback>
                } @if (tab === 'depositVault') {

@@ -106,7 +106,7 @@
                          </div>
 
                          <div class="relative">
-                              <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showInlineErrorMessage]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" (searchQueryChange)="issuerInput.set($event)" [items]="destinationItems()" [value]="issuerItem()" (valueChange)="onNewIssuerSelected($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Enter or select issuer address"> </app-select-search-dropdown>
+                              <app-select-search-dropdown app-focus-border [validateXrpAddress]="true" [showInlineErrorMessage]="false" [showClearButton]="true" [clearOnEscape]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" [allowCurrentAccountSelection]="true" [disableCurrentAccount]="false" (searchQueryChange)="issuerInput.set($event)" [items]="destinationItems()" [value]="issuerItem()" (valueChange)="onNewIssuerSelected($event)" (isValid)="onIssuerValidationChange($event)" placeholder="Enter or select issuer address"> </app-select-search-dropdown>
                          </div>
 
                          <app-field-helper title="Issuer" [items]="issuerHelperItems" [show]="showIssuerHelper" />

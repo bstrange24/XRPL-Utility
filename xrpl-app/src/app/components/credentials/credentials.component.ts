@@ -345,7 +345,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           if (credential.Expiration) {
                if (this.xrplDateService.isExpired(credential.Expiration, ledgerInfo.currentRippleTime)) {
-                    console.info('CCredential is verified but has expired.');
+                    console.info('Credential is verified but has expired.');
                     this.toastService.error('Credential is verified but has expired.', AppConstants.TOAST.ERROR);
                     return false;
                }

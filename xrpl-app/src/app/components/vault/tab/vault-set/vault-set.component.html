@@ -159,27 +159,14 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">Permissioned Domain ID used to scope this payment to a XRPL Permissioned Domain. Must be a valid hex identifier.</p>
+                         <p class="text-secondary">Select a Permissioned Domain owned by the selected account.</p>
                          <button type="button" (click)="toggleDomainIdHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
                     </div>
 
                     <div class="relative">
-                         <input
-                              type="text"
-                              class="input-base-with-validation pr-20"
-                              app-focus-border
-                              [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0"
-                              [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0"
-                              [ngModel]="vaultStoreService.domainId()"
-                              (ngModelChange)="vaultStoreService.setField('domainId', $event)"
-                              name="domainId"
-                              placeholder="Permissioned Domain ID (hex) - optional"
-                         />
-
-                         <!-- Icons Container -->
-                         <app-input-icons [isValid]="!domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0" [isInvalid]="domainIdValidatorService.hasInvalidDomainId() && domainId !== null && domainId !== undefined && domainId.length > 0" [showClear]="!!domainId" (clear)="vaultStoreService.setField('domainId', '')" />
+                         <app-select-search-dropdown [items]="permissionedDomainItems()" [value]="selectedPermissionedDomainItem()" (valueChange)="onPermissionedDomainSelected($event)" placeholder="Select a Permissioned Domain ID..." emptyMessage="No Permissioned Domains found for this account" />
                     </div>
 
                     @if (vaultStoreService.domainId()) {

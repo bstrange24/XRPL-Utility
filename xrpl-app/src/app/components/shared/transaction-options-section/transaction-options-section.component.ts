@@ -25,11 +25,13 @@ import { PaymentChannelValidatorService } from '../../../services/shared/validat
 import { CheckValidatorService } from '../../../services/shared/validators/check-validator/check-validator.service';
 import { FieldHelperComponent } from '../field-helper/field-helper.component';
 import { InputIconsComponent } from '../input-icons/input-icons.component';
+import { SelectItem, SelectSearchDropdownComponent } from '../ui-components/select-search-dropdown/select-search-dropdown.component';
+import { OverlayModule } from '@angular/cdk/overlay';
 
 @Component({
      selector: 'app-transaction-options-section',
      standalone: true,
-     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent, FieldHelperComponent, InputIconsComponent],
+     imports: [CommonModule, FormsModule, NgIcon, FocusBorderDirective, LucideAngularModule, XrplExpirationInputComponent, FieldHelperComponent, InputIconsComponent, SelectSearchDropdownComponent, OverlayModule],
      templateUrl: './transaction-options-section.component.html',
      styleUrl: './transaction-options-section.component.css',
      changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,7 @@ export class TransactionOptionsSectionComponent {
      public readonly credentialValidatorService = inject(CredentialValidatorService);
      public readonly paymentChannelValidatorService = inject(PaymentChannelValidatorService);
      public readonly checkValidatorService = inject(CheckValidatorService);
+     permissionedDomainItems = input<SelectItem[]>([]);
 
      // === Helper Items ===
      readonly optionalFieldsHelperItems = AppConstants.OPTIONAL_FIELDS_HELPER_ITEMS;
@@ -72,6 +75,10 @@ export class TransactionOptionsSectionComponent {
      isSourceTagFocused = signal(false);
      isInvoiceIdFocused = signal(false);
      newCredentialId = signal('');
+     selectedPermissionedDomainItem = computed(() => {
+          const domainId = this.permissionedDomainStoreService.domainId();
+          return this.permissionedDomainItems().find(item => item.id === domainId) ?? null;
+     });
 
      // UI State
      showOptionalFieldsHelper = signal(false);
@@ -308,6 +315,10 @@ export class TransactionOptionsSectionComponent {
 
      set domainid(value: string) {
           this.permissionedDomainStoreService.setField('domainId', value);
+     }
+
+     onPermissionedDomainSelected(item: SelectItem | null): void {
+          this.domainid = item?.id ?? '';
      }
 
      // Toggle Methods
