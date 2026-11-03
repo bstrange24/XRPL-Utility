@@ -94,7 +94,13 @@ export class CancelOfferTabComponent implements OnDestroy {
      formatOfferDisplay(offer: any): string {
           const pays = this.view.formatAmount(offer.TakerPays);
           const gets = this.view.formatAmount(offer.TakerGets);
-          return `Offer Sequence: ${offer.Sequence} - Gets: ${gets.value} ${gets.currency} → Pays: ${pays.value} ${pays.currency} - Issuer: ${pays.issuer}`;
+          const issuer = gets.issuer || pays.issuer;
+          return `Offer Sequence: ${offer.Sequence} - Gets: ${gets.value} ${gets.currency} → Pays: ${pays.value} ${pays.currency} - Issuer: ${issuer}`;
+     }
+
+     isBuyOffer(offer: any): boolean {
+          const gets = this.view.formatAmount(offer.TakerGets);
+          return Boolean(gets.currency && gets.currency !== 'XRP');
      }
 
      formatOfferSequenceDisplay(offer: any): string {

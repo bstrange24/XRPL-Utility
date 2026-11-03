@@ -396,6 +396,16 @@ describe('CancelOfferTabComponent', () => {
                const result = component.formatOfferDisplay(mockOffers[0]);
                expect(result).toContain('Gets: 50 USD');
           });
+
+          it('should display the Taker Gets issuer for a buy offer paid in XRP', () => {
+               const result = component.formatOfferDisplay(mockOffers[0]);
+               expect(result).toContain('Issuer: rIssuer1');
+          });
+
+          it('should identify a buy offer by its issued Taker Gets asset', () => {
+               expect(component.isBuyOffer(mockOffers[0])).toBeTrue();
+               expect(component.isBuyOffer(mockOffers[2])).toBeFalse();
+          });
      });
 
      describe('Template conditional rendering', () => {

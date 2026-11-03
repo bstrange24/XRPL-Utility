@@ -50,7 +50,7 @@
                <div class="mb-2 flex flex-wrap gap-2">
                     @for (offer of selectedOffers(); track offer.Sequence) {
                     <div class="inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2 py-1 shadow-sm">
-                         <span class="font-mono text-sm text-gray-700">{{ formatOfferDisplay(offer) }}</span>
+                         <span class="font-mono text-sm" [class.text-green-600]="isBuyOffer(offer)" [class.text-gray-700]="!isBuyOffer(offer)">{{ formatOfferDisplay(offer) }}</span>
                          <button type="button" class="transition-opacity hover:opacity-75" (click)="toggleOfferSelection(offer)">
                               <ng-icon name="heroXCircle" size="16" class="text-red-500"></ng-icon>
                          </button>
@@ -86,7 +86,7 @@
                     <label class="flex cursor-pointer items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-gray-50" [class.bg-blue-50]="highlightedOfferIndex() === i" (mouseenter)="highlightedOfferIndex.set(i)">
                          <input type="checkbox" [checked]="selectedOfferSequences().includes(offer.Sequence)" (change)="toggleOfferSelection(offer)" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
 
-                         <span class="font-mono text-sm text-gray-900"> {{ formatOfferDisplay(offer) }} </span>
+                         <span class="font-mono text-sm" [class.text-green-600]="selectedOfferSequences().includes(offer.Sequence) && isBuyOffer(offer)" [class.text-gray-900]="!selectedOfferSequences().includes(offer.Sequence) || !isBuyOffer(offer)"> {{ formatOfferDisplay(offer) }} </span>
                     </label>
                     } @empty {
                     <div class="px-4 py-4 text-center text-sm text-gray-500">No offers match your search</div>
