@@ -345,6 +345,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerStoreService.setField('weWantCurrency', currency);
           this.offerStoreService.setField('weWantIssuer', this.offerCurrency.weWant.issuer());
           await this.recalculateCreateOfferQuote('want');
+          await this.refreshOrderBookAfterPairChange();
      }
 
      async onWeWantIssuerSelected(item: SelectItem | null): Promise<void> {
@@ -356,6 +357,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           await this.offerCurrency.selectWeWantIssuer(issuer, wallet);
           this.offerStoreService.setField('weWantIssuer', issuer);
           await this.recalculateCreateOfferQuote('want');
+          await this.refreshOrderBookAfterPairChange();
      }
 
      async onWeSpendCurrencySelected(item: SelectItem | null): Promise<void> {
@@ -368,6 +370,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           this.offerStoreService.setField('weSpendCurrency', currency);
           this.offerStoreService.setField('weSpendIssuer', this.offerCurrency.weSpend.issuer());
           await this.recalculateCreateOfferQuote('spend');
+          await this.refreshOrderBookAfterPairChange();
      }
 
      async onWeSpendIssuerSelected(item: SelectItem | null): Promise<void> {
@@ -379,6 +382,40 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
           await this.offerCurrency.selectWeSpendIssuer(issuer, wallet);
           this.offerStoreService.setField('weSpendIssuer', issuer);
           await this.recalculateCreateOfferQuote('spend');
+          await this.refreshOrderBookAfterPairChange();
+     }
+
+     private async refreshOrderBookAfterPairChange(): Promise<void> {
+          if (this.offerTransactionViewModelService.activeTab() !== 'getOrderBook') return;
+
+          const wantCurrency = this.offerStoreService.weWantCurrency();
+          const spendCurrency = this.offerStoreService.weSpendCurrency();
+          const wantIssuer = this.offerStoreService.weWantIssuer();
+          const spendIssuer = this.offerStoreService.weSpendIssuer();
+          const wantIsXrp = wantCurrency === AppConstants.XRP_CURRENCY;
+          const spendIsXrp = spendCurrency === AppConstants.XRP_CURRENCY;
+          const sameAsset = wantCurrency.toUpperCase() === spendCurrency.toUpperCase() && (wantIsXrp || wantIssuer.toLowerCase() === spendIssuer.toLowerCase());
+
+          if (!wantCurrency || !spendCurrency || (!wantIsXrp && !wantIssuer) || (!spendIsXrp && !spendIssuer) || sameAsset) {
+               this.offerStoreService.setField('orderBookStats', null);
+               this.offerStoreService.setField('orderBookPair', '');
+               return;
+          }
+
+          const wallet = this.currentWallet();
+          if (!wallet) return;
+
+          try {
+               const env = await this.txEnvironmentService.prepareTxEnvironmentWithWallet(wallet, {
+                    includeAccountInfo: false,
+                    includeAccountObject: false,
+               });
+               if (!env?.client) throw new Error('Unable to prepare order book request.');
+               await this.offerUtilsService.fetchOrderBook(env.client, env.wallet);
+          } catch (err: any) {
+               console.error('Failed to refresh order book after asset change:', err);
+               this.toastService.error(err.message || 'Failed to refresh order book', AppConstants.TOAST.ERROR);
+          }
      }
 
      private async recalculateCreateOfferQuote(changedSide: 'want' | 'spend'): Promise<void> {

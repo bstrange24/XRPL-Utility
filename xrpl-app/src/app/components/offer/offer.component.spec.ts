@@ -153,6 +153,10 @@ describe('CreateOfferComponent', () => {
           offerStoreService = {
                getAll: jasmine.createSpy('getAll').and.returnValue({}),
                setField: jasmine.createSpy('setField'),
+               weWantCurrency: jasmine.createSpy('weWantCurrency').and.returnValue('BOB'),
+               weWantIssuer: jasmine.createSpy('weWantIssuer').and.returnValue('rBobIssuer'),
+               weSpendCurrency: jasmine.createSpy('weSpendCurrency').and.returnValue('XRP'),
+               weSpendIssuer: jasmine.createSpy('weSpendIssuer').and.returnValue(''),
           };
 
           offerTransactionViewModelService = {
@@ -380,6 +384,27 @@ describe('CreateOfferComponent', () => {
           it('should handle null selection', () => {
                component.onWeWantCurrencySelected(null);
                expect(offerCurrencyService.selectWeWantCurrency).toHaveBeenCalledWith('XRP', component.currentWallet());
+          });
+
+          it('should refresh the order book when a currency changes on the order book tab', async () => {
+               offerTransactionViewModelService.activeTab.set('getOrderBook');
+               offerCurrencyService.weWant.issuer.set('rBobIssuer');
+
+               await component.onWeWantCurrencySelected(mockItem);
+
+               expect(txEnvironmentService.prepareTxEnvironmentWithWallet).toHaveBeenCalledWith(component.currentWallet(), {
+                    includeAccountInfo: false,
+                    includeAccountObject: false,
+               });
+               expect(offerUtilsService.fetchOrderBook).toHaveBeenCalledWith(mockEnv.client, mockEnv.wallet);
+          });
+
+          it('should refresh the order book when an issuer changes on the order book tab', async () => {
+               offerTransactionViewModelService.activeTab.set('getOrderBook');
+
+               await component.onWeWantIssuerSelected({ id: 'rBobIssuer', display: 'BOB issuer' });
+
+               expect(offerUtilsService.fetchOrderBook).toHaveBeenCalledWith(mockEnv.client, mockEnv.wallet);
           });
      });
 
