@@ -70,7 +70,6 @@ describe('TrustlineCurrencyService', () => {
           });
 
           service = TestBed.inject(TrustlineCurrencyService);
-          service.load(); // Load initial data
      });
 
      describe('initialization', () => {

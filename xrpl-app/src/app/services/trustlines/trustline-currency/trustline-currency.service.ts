@@ -34,6 +34,11 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
      public readonly setFlags = SET_FLAGS;
      public readonly clearFlags = CLEAR_FLAGS;
 
+     constructor() {
+          super();
+          this.load();
+     }
+
      // Force issuerItems to recompute (especially for self-issuer)
      private readonly issuerRefreshTrigger = signal(0);
 
