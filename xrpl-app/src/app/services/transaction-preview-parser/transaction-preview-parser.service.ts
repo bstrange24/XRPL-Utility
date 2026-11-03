@@ -39,7 +39,9 @@ export interface ParsedTransactionPreview {
      }>;
      warnings?: string[];
      estimatedImpact: {
-          xrpUsed: string;
+          networkFee: string;
+          xrpTransferredOrCommitted?: string;
+          totalXrpOutflow?: string;
           sequence: number;
           lastLedger?: number;
           ticketSequence?: number;
@@ -63,14 +65,9 @@ export class TransactionPreviewParserService {
           keyDetails = this.addSignersToKeyDetails(keyDetails, tx);
           keyDetails = keyDetails.map(detail => (detail.label.toLowerCase() === 'fee' && tx.Fee != null ? { ...detail, value: formatDrops(tx.Fee) } : detail));
 
-          // Calculate estimated XRP impact
+          // Separate the network fee from native XRP transferred or committed.
           const fee = Number.parseInt(tx.Fee || '12');
-          let xrpUsed = formatXRPAmount(fee);
-
           const nativeAmount = getNativeXrpAmount(transactionType, tx);
-          if (nativeAmount > 0) {
-               xrpUsed = formatXRPAmount(fee + nativeAmount);
-          }
 
           return {
                transactionType: transactionType || 'Unknown',
@@ -83,7 +80,9 @@ export class TransactionPreviewParserService {
                requiredFields: requiredFields || [],
                warnings: warnings || [],
                estimatedImpact: {
-                    xrpUsed: xrpUsed,
+                    networkFee: formatXRPAmount(fee),
+                    xrpTransferredOrCommitted: nativeAmount > 0 ? formatXRPAmount(nativeAmount) : undefined,
+                    totalXrpOutflow: nativeAmount > 0 ? formatXRPAmount(fee + nativeAmount) : undefined,
                     sequence: tx.Sequence || 0,
                     lastLedger: tx.LastLedgerSequence,
                     ticketSequence: tx.TicketSequence || 0,

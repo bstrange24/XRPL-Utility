@@ -37,7 +37,9 @@ describe('TransactionPreviewParserService', () => {
     });
 
     expect(preview.keyDetails.find(detail => detail.label === 'Fee')?.value).toBe('12 drops');
-    expect(preview.estimatedImpact.xrpUsed).toBe('1.250012 XRP');
+    expect(preview.estimatedImpact.networkFee).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.xrpTransferredOrCommitted).toBe('1.25 XRP');
+    expect(preview.estimatedImpact.totalXrpOutflow).toBe('1.250012 XRP');
   });
 
   it('should decode the hex-encoded URI in an NFT mint preview', () => {
@@ -62,7 +64,9 @@ describe('TransactionPreviewParserService', () => {
 
     expect(preview.summary.description).toContain('2.5 XRP');
     expect(preview.keyDetails.find(detail => detail.label === 'Amount')?.value).toBe('2.5 XRP');
-    expect(preview.estimatedImpact.xrpUsed).toBe('2.500012 XRP');
+    expect(preview.estimatedImpact.networkFee).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.xrpTransferredOrCommitted).toBe('2.5 XRP');
+    expect(preview.estimatedImpact.totalXrpOutflow).toBe('2.500012 XRP');
   });
 
   it('should interpret OfferCreate flags as independent bits', () => {
@@ -162,7 +166,9 @@ describe('TransactionPreviewParserService', () => {
     });
 
     expect(preview.warnings?.some(warning => warning.includes('requires a release time'))).toBeTrue();
-    expect(preview.estimatedImpact.xrpUsed).toBe('1.000012 XRP');
+    expect(preview.estimatedImpact.networkFee).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.xrpTransferredOrCommitted).toBe('1 XRP');
+    expect(preview.estimatedImpact.totalXrpOutflow).toBe('1.000012 XRP');
   });
 
   it('should format issued-currency escrow amounts without treating them as XRP', () => {
@@ -176,7 +182,9 @@ describe('TransactionPreviewParserService', () => {
 
     expect(preview.summary.description).toContain('1.25 USD');
     expect(preview.keyDetails.find(detail => detail.label === 'Amount')?.value).toBe('1.25 USD');
-    expect(preview.estimatedImpact.xrpUsed).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.networkFee).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.xrpTransferredOrCommitted).toBeUndefined();
+    expect(preview.estimatedImpact.totalXrpOutflow).toBeUndefined();
   });
 
   it('should include XRP funded to a payment channel in estimated impact', () => {
@@ -187,7 +195,9 @@ describe('TransactionPreviewParserService', () => {
       Fee: '12',
     });
 
-    expect(preview.estimatedImpact.xrpUsed).toBe('0.500012 XRP');
+    expect(preview.estimatedImpact.networkFee).toBe('0.000012 XRP');
+    expect(preview.estimatedImpact.xrpTransferredOrCommitted).toBe('0.5 XRP');
+    expect(preview.estimatedImpact.totalXrpOutflow).toBe('0.500012 XRP');
   });
 
   it('should display descriptive summaries for transaction types without dedicated formatters', () => {

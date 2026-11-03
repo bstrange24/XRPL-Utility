@@ -102,9 +102,19 @@
           <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Estimated Impact</p>
           <div class="grid grid-cols-2 gap-4">
                <div>
-                    <p class="text-xs text-gray-500">XRP to be used</p>
-                    <p class="text-base font-semibold text-gray-900">{{ parsedPreview.estimatedImpact.xrpUsed }}</p>
+                    <p class="text-xs text-gray-500">Network fee</p>
+                    <p class="text-base font-semibold text-gray-900">{{ parsedPreview.estimatedImpact.networkFee }}</p>
                </div>
+               @if (parsedPreview.estimatedImpact.xrpTransferredOrCommitted) {
+               <div>
+                    <p class="text-xs text-gray-500">XRP transferred or committed</p>
+                    <p class="text-base font-semibold text-gray-900">{{ parsedPreview.estimatedImpact.xrpTransferredOrCommitted }}</p>
+               </div>
+               <div>
+                    <p class="text-xs text-gray-500">Estimated total XRP outflow</p>
+                    <p class="text-base font-semibold text-gray-900">{{ parsedPreview.estimatedImpact.totalXrpOutflow }}</p>
+               </div>
+               }
                @if (parsedPreview.estimatedImpact.sequence) {
                <div>
                     <p class="text-xs text-gray-500">Transaction Sequence</p>
@@ -117,9 +127,9 @@
                </div>
                } @if (parsedPreview.estimatedImpact.lastLedger) {
                <div class="col-span-2">
-                    <p class="text-xs text-gray-500">Valid Until Ledger</p>
+                    <p class="text-xs text-gray-500">Last valid ledger</p>
                     <p class="text-sm font-mono text-gray-700">{{ parsedPreview.estimatedImpact.lastLedger }}</p>
-                    <!-- <p class="text-xs text-gray-400 mt-1">Transaction expires after this ledger</p> -->
+                    <p class="mt-1 text-xs text-gray-500">The transaction expires if it is not validated by this ledger.</p>
                </div>
                }
           </div>
