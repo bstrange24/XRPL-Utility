@@ -5,6 +5,7 @@ import { UtilsService } from '../../utils/util-service/utils.service';
 import { OfferStoreService } from '../offer-store/offer-store.service';
 import { OfferTransactionViewModelService } from '../offer-transaction-view-model/offer-transaction-view-model.service';
 import { OfferCurrencyService } from '../offer-currency/offer-currency.service';
+import { XrplService } from '../../xrpl-services/xrpl.service';
 import * as xrpl from 'xrpl';
 import { AppConstants } from '../../../core/app.constants';
 
@@ -35,6 +36,13 @@ class MockUtilsService {
      encodeIfNeeded = jasmine.createSpy().and.callFake((code: string) => code);
      decodeIfNeeded = jasmine.createSpy().and.callFake((code: string) => code);
      encodeCurrencyCode = jasmine.createSpy().and.callFake((code: string) => code);
+     normalizeAmount = jasmine.createSpy().and.callFake((amount: any) => (typeof amount === 'string' && /^\d+$/.test(amount) ? String(xrpl.dropsToXrp(amount)) : typeof amount === 'string' ? amount : amount?.value ?? '0'));
+     roundAmount = jasmine.createSpy().and.callFake((amount: number) => amount.toFixed(6));
+}
+
+class MockXrplService {
+     getClient = jasmine.createSpy();
+     getAMMInfo = jasmine.createSpy();
 }
 
 class MockOfferCurrencyService {
@@ -60,6 +68,7 @@ describe('OfferUtilsService', () => {
      let offerCurrency: MockOfferCurrencyService;
      let offerTransactionViewModelService: MockOfferTransactionViewModelService;
      let mockWalletManagerService: MockWalletManagerService;
+     let xrplService: MockXrplService;
      let mockWallet: any;
      let mockClient: any;
 
@@ -83,12 +92,15 @@ describe('OfferUtilsService', () => {
           offerCurrency = new MockOfferCurrencyService();
           offerTransactionViewModelService = new MockOfferTransactionViewModelService();
           mockWalletManagerService = offerTransactionViewModelService.walletManagerService as MockWalletManagerService;
+          xrplService = new MockXrplService();
 
           mockWalletManagerService.getSelectedWallet.and.returnValue(mockWallet);
           offerCurrency.getClient.and.returnValue(Promise.resolve(mockClient));
+          xrplService.getClient.and.resolveTo(mockClient);
+          xrplService.getAMMInfo.and.resolveTo([]);
 
           TestBed.configureTestingModule({
-               providers: [OfferUtilsService, { provide: OfferStoreService, useValue: offerStoreService }, { provide: TransactionUiService, useValue: txUiService }, { provide: UtilsService, useValue: utilsService }, { provide: OfferCurrencyService, useValue: offerCurrency }, { provide: OfferTransactionViewModelService, useValue: offerTransactionViewModelService }],
+               providers: [OfferUtilsService, { provide: OfferStoreService, useValue: offerStoreService }, { provide: TransactionUiService, useValue: txUiService }, { provide: UtilsService, useValue: utilsService }, { provide: OfferCurrencyService, useValue: offerCurrency }, { provide: OfferTransactionViewModelService, useValue: offerTransactionViewModelService }, { provide: XrplService, useValue: xrplService }],
           });
 
           service = TestBed.inject(OfferUtilsService);
@@ -430,6 +442,28 @@ describe('OfferUtilsService', () => {
                expect(offerStoreService.setField).toHaveBeenCalledWith('insufficientLiquidityWarning', jasmine.any(Boolean));
           });
 
+          it('should quote AMM liquidity when no XRP/BOB offers are on the order book', async () => {
+               offerStoreService.weSpendAmount.and.returnValue('10');
+               offerStoreService.weWantCurrency.and.returnValue('BOB');
+               offerStoreService.weWantIssuer.and.returnValue('rIssuerAddress');
+               offerStoreService.weSpendCurrency.and.returnValue('XRP');
+               mockClient.request.and.resolveTo({ result: { offers: [] } });
+               xrplService.getAMMInfo.and.resolveTo({
+                    result: {
+                         amm: {
+                              amount: '1000000000',
+                              amount2: { currency: 'BOB', issuer: 'rIssuerAddress', value: '100' },
+                              trading_fee: 300,
+                         },
+                    },
+               });
+
+               await service.updateTokenBalanceAndExchange();
+
+               expect(offerStoreService.setField).toHaveBeenCalledWith('weWantAmount', jasmine.stringMatching(/^[1-9]/));
+               expect(offerStoreService.setField).toHaveBeenCalledWith('insufficientLiquidityWarning', false);
+          });
+
           it('should handle XRP to XRP exchange', async () => {
                offerStoreService.weSpendAmount.and.returnValue('100');
                offerStoreService.weWantCurrency.and.returnValue('XRP');
@@ -503,6 +537,28 @@ describe('OfferUtilsService', () => {
 
                expect(offerStoreService.setField).toHaveBeenCalledWith('weSpendAmount', jasmine.any(String));
                expect(offerStoreService.setField).toHaveBeenCalledWith('insufficientLiquidityWarning', jasmine.any(Boolean));
+          });
+
+          it('should calculate XRP required from AMM reserves when no order-book offers exist', async () => {
+               offerStoreService.weWantAmount.and.returnValue('10');
+               offerStoreService.weWantCurrency.and.returnValue('BOB');
+               offerStoreService.weWantIssuer.and.returnValue('rIssuerAddress');
+               offerStoreService.weSpendCurrency.and.returnValue('XRP');
+               mockClient.request.and.resolveTo({ result: { offers: [] } });
+               xrplService.getAMMInfo.and.resolveTo({
+                    result: {
+                         amm: {
+                              amount: '1000000000',
+                              amount2: { currency: 'BOB', issuer: 'rIssuerAddress', value: '100' },
+                              trading_fee: 300,
+                         },
+                    },
+               });
+
+               await service.updateTokenBalanceAndExchangeReverse();
+
+               expect(offerStoreService.setField).toHaveBeenCalledWith('weSpendAmount', jasmine.stringMatching(/^[1-9]/));
+               expect(offerStoreService.setField).toHaveBeenCalledWith('insufficientLiquidityWarning', false);
           });
 
           it('should handle errors', async () => {

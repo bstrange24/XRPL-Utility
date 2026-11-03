@@ -435,9 +435,11 @@ export class OfferUtilsService {
                const allOffers = orderBook.result.offers || [];
 
                if (allOffers.length === 0) {
+                    const ammQuote = await this.quoteAmmTokenForXrp(client, spendAmount);
                     this.isInternalUpdate = true;
-                    this.offerStoreService.setField('weWantAmount', '0');
+                    this.offerStoreService.setField('weWantAmount', ammQuote ?? '0');
                     this.isInternalUpdate = false;
+                    this.offerStoreService.setField('insufficientLiquidityWarning', ammQuote === null);
                     return;
                }
 
@@ -536,9 +538,11 @@ export class OfferUtilsService {
                const allOffers = orderBook.result.offers || [];
 
                if (allOffers.length === 0) {
+                    const ammQuote = await this.quoteXrpForToken(client, wantAmount);
                     this.isInternalUpdate = true;
-                    this.offerStoreService.setField('weSpendAmount', '0');
+                    this.offerStoreService.setField('weSpendAmount', ammQuote ?? '0');
                     this.isInternalUpdate = false;
+                    this.offerStoreService.setField('insufficientLiquidityWarning', ammQuote === null);
                     return;
                }
 
@@ -639,7 +643,11 @@ export class OfferUtilsService {
                const allOffers = orderBook.result.offers || [];
 
                if (allOffers.length === 0) {
-                    this.offerStoreService.setField('weWantAmount', '0');
+                    const ammQuote = await this.quoteAmmTokenForXrp(client, weSpendAmt);
+                    this.isInternalUpdate = true;
+                    this.offerStoreService.setField('weWantAmount', ammQuote ?? '0');
+                    this.isInternalUpdate = false;
+                    this.offerStoreService.setField('insufficientLiquidityWarning', ammQuote === null);
                     return;
                }
 
@@ -738,7 +746,11 @@ export class OfferUtilsService {
                const allOffers = orderBook.result.offers || [];
 
                if (allOffers.length === 0) {
-                    this.offerStoreService.setField('weSpendAmount', '0');
+                    const ammQuote = await this.quoteXrpForToken(client, weWantAmt);
+                    this.isInternalUpdate = true;
+                    this.offerStoreService.setField('weSpendAmount', ammQuote ?? '0');
+                    this.isInternalUpdate = false;
+                    this.offerStoreService.setField('insufficientLiquidityWarning', ammQuote === null);
                     return;
                }
 
@@ -789,6 +801,58 @@ export class OfferUtilsService {
           } catch {
                return null;
           }
+     }
+
+     private async getAmmReserves(client: xrpl.Client): Promise<{ token: BigNumber; xrp: BigNumber; feeRate: BigNumber } | null> {
+          const currency = this.offerStoreService.weWantCurrency();
+          const issuer = this.offerStoreService.weWantIssuer();
+          if (!currency || currency === 'XRP' || !issuer || this.offerStoreService.weSpendCurrency() !== 'XRP') {
+               return null;
+          }
+
+          const response = await this.xrplService.getAMMInfo(
+               client,
+               { currency: this.utilsService.encodeIfNeeded(currency), issuer },
+               { currency: 'XRP' },
+               undefined,
+               'validated'
+          );
+          const amm = response?.result?.amm;
+          if (!amm) return null;
+
+          const xrpAmount = typeof amm.amount === 'string' ? amm.amount : amm.amount2;
+          const tokenAmount = typeof amm.amount === 'string' ? amm.amount2 : amm.amount;
+          const xrpReserve = new BigNumber(this.utilsService.normalizeAmount(xrpAmount));
+          const tokenReserve = new BigNumber(this.utilsService.normalizeAmount(tokenAmount));
+          const tradingFee = new BigNumber(amm.trading_fee ?? 0);
+          const feeRate = tradingFee.dividedBy(100_000);
+
+          if (!xrpReserve.isFinite() || !tokenReserve.isFinite() || xrpReserve.lte(0) || tokenReserve.lte(0) || !feeRate.isFinite() || feeRate.lt(0) || feeRate.gte(1)) {
+               return null;
+          }
+
+          return { token: tokenReserve, xrp: xrpReserve, feeRate };
+     }
+
+     private async quoteAmmTokenForXrp(client: xrpl.Client, xrpInput: string): Promise<string | null> {
+          const reserves = await this.getAmmReserves(client);
+          if (!reserves) return null;
+
+          const effectiveInput = new BigNumber(xrpInput).multipliedBy(new BigNumber(1).minus(reserves.feeRate));
+          const tokenOutput = reserves.token.multipliedBy(effectiveInput).dividedBy(reserves.xrp.plus(effectiveInput));
+          return this.utilsService.roundAmount(tokenOutput.toNumber(), this.offerStoreService.weWantCurrency(), 6);
+     }
+
+     private async quoteXrpForToken(client: xrpl.Client, tokenOutput: string): Promise<string | null> {
+          const reserves = await this.getAmmReserves(client);
+          if (!reserves) return null;
+
+          const desiredOutput = new BigNumber(tokenOutput);
+          if (desiredOutput.gte(reserves.token)) return null;
+
+          const effectiveInput = reserves.xrp.multipliedBy(desiredOutput).dividedBy(reserves.token.minus(desiredOutput));
+          const xrpInput = effectiveInput.dividedBy(new BigNumber(1).minus(reserves.feeRate));
+          return this.utilsService.roundAmount(xrpInput.toNumber(), 'XRP', 6);
      }
 
      private computeBidAskSpread(tokenXrpOffers: any[], xrpTokenOffers: any[]) {

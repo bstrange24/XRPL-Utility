@@ -154,7 +154,7 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">The amount the taker is will to pay.</p>
+                              <p class="text-secondary">The amount of this asset you want to receive.</p>
                               <button type="button" (click)="toggleTakerGetsAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -172,7 +172,7 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">The amount the taker is will to pay.</p>
+                              <p class="text-secondary">The amount of this asset you are offering to pay.</p>
                               <button type="button" (click)="toggleTakerPaysAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -183,6 +183,8 @@
                     <app-field-helper title="Taker Pays Amount" [items]="takerPaysAmountHelperItems" [show]="showTakerPaysAmountHelper" />
                </div>
           </div>
+
+          <p class="mt-2 text-xs text-gray-500">When no order-book offers are available, the estimate uses the AMM pool reserves and trading fee. The final execution price may change.</p>
 
           <!-- Insufficient Liquidity Warning -->
           @if (store.insufficientLiquidityWarning()) {
