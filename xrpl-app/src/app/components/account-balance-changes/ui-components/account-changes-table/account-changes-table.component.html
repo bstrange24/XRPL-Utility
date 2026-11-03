@@ -33,7 +33,13 @@
                </div>
 
                <!-- Fee -->
-               <div class="col-span-1 text-right text-gray-500">-{{ change.fees | number:'1.6-6' }} XRP</div>
+               <div class="col-span-1 text-right text-gray-500">
+                    @if (change.currency === 'XRP') {
+                    -{{ change.fees | number:'1.6-6' }} XRP
+                    } @else {
+                    —
+                    }
+               </div>
 
                <!-- Counterparty -->
                <div class="col-span-3 text-gray-600 truncate" [matTooltip]="change.counterparty">{{ change.counterparty }}</div>

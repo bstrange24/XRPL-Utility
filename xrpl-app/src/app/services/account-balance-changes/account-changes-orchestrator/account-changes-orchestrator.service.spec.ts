@@ -65,7 +65,6 @@ describe('AccountChangesOrchestratorService', () => {
           viewMock = {
                roundToEightDecimals: jasmine.createSpy('roundToEightDecimals').and.callFake((num: number) => Math.round(num * 100000000) / 100000000),
           };
-
           TestBed.configureTestingModule({
                providers: [AccountChangesOrchestratorService, { provide: AccountChangesStoreService, useValue: storeMock }, { provide: TxEnvironmentService, useValue: txEnvironmentServiceMock }, { provide: TransactionUiService, useValue: txUiServiceMock }, { provide: XrplService, useValue: xrplServiceMock }, { provide: XrplCacheService, useValue: xrplCacheMock }, { provide: XrplDateService, useValue: xrplDateServiceMock }, { provide: AccountChangesViewModelService, useValue: viewMock }],
           });
@@ -216,6 +215,127 @@ describe('AccountChangesOrchestratorService', () => {
                expect(result[0].currency).toBe('XRP');
                expect(result[0].fees).toBe(0.012); // 12000 drops = 0.012 XRP
                expect(result[0].type).toBe('Payment');
+          });
+
+          it('should include IOU balance changes with the wallet perspective sign', () => {
+               const tx = {
+                    hash: 'iou-hash',
+                    tx_json: {
+                         TransactionType: 'Payment',
+                         Fee: '10',
+                         Account: testAddress,
+                         Destination: 'rReceiver',
+                         date: 0,
+                    },
+                    meta: {
+                         AffectedNodes: [
+                              {
+                                   ModifiedNode: {
+                                        LedgerEntryType: 'RippleState',
+                                        FinalFields: {
+                                             Balance: { currency: 'BOB', value: '561652936.1' },
+                                             LowLimit: { issuer: 'rReceiver', value: '0' },
+                                             HighLimit: { issuer: testAddress, value: '1000' },
+                                        },
+                                        PreviousFields: {
+                                             Balance: { currency: 'BOB', value: '561652836.1' },
+                                        },
+                                   },
+                              },
+                         ],
+                    },
+               };
+
+               const result = service.processTransactions([tx], testAddress);
+
+               expect(result.length).toBe(1);
+               expect(result[0]).toEqual(jasmine.objectContaining({
+                    hash: 'iou-hash',
+                    type: 'Payment',
+                    currency: 'BOB',
+                    change: -100,
+                    balanceBefore: -561652836.1,
+                    balanceAfter: -561652936.1,
+                    counterparty: 'rReceiver',
+               }));
+
+               const receiverResult = service.processTransactions([tx], 'rReceiver');
+               expect(receiverResult[0].change).toBe(100);
+          });
+
+          it('should display AMM LP token currencies without decoding binary bytes as text', () => {
+               const lpTokenCurrency = '0333D0223A3CD578BBE578932440B6B9FD7FD535';
+               const tx = {
+                    hash: 'amm-lp-hash',
+                    tx_json: { TransactionType: 'AMMCreate', Fee: '200000', date: 0 },
+                    meta: {
+                         AffectedNodes: [
+                              {
+                                   CreatedNode: {
+                                        LedgerEntryType: 'RippleState',
+                                        NewFields: {
+                                             Balance: { currency: lpTokenCurrency, value: '4472135.95499958' },
+                                             LowLimit: { issuer: testAddress, value: '0' },
+                                             HighLimit: { issuer: 'rIssuer', value: '0' },
+                                        },
+                                   },
+                              },
+                         ],
+                    },
+               };
+
+               const result = service.processTransactions([tx], testAddress);
+
+               expect(result.length).toBe(1);
+               expect(result[0].currency).toBe(`LP Token ${lpTokenCurrency}`);
+               expect(result[0].currency).not.toContain('\uFFFD');
+          });
+
+          it('should preserve multiple balance asset rows for a transaction hash', async () => {
+               const tx = {
+                    hash: 'multi-asset-hash',
+                    tx_json: {
+                         TransactionType: 'Payment',
+                         Fee: '10',
+                         Account: testAddress,
+                         Destination: 'rReceiver',
+                         date: 0,
+                    },
+                    meta: {
+                         AffectedNodes: [
+                              {
+                                   ModifiedNode: {
+                                        LedgerEntryType: 'AccountRoot',
+                                        FinalFields: { Account: testAddress, Balance: '9999990' },
+                                        PreviousFields: { Balance: '10000000' },
+                                   },
+                              },
+                              {
+                                   ModifiedNode: {
+                                        LedgerEntryType: 'RippleState',
+                                        FinalFields: {
+                                             Balance: { currency: 'BOB', value: '10' },
+                                             LowLimit: { issuer: 'rReceiver', value: '0' },
+                                             HighLimit: { issuer: testAddress, value: '1000' },
+                                        },
+                                        PreviousFields: { Balance: { currency: 'BOB', value: '0' } },
+                                   },
+                              },
+                         ],
+                    },
+               };
+               xrplServiceMock.getAccountTransactions.and.resolveTo({
+                    result: { transactions: [tx], marker: null },
+               });
+
+               await service.loadBalanceChanges(true);
+
+               const entries = storeMock.appendBalanceChanges.calls.mostRecent().args[0];
+               expect(entries).toEqual(jasmine.arrayContaining([
+                    jasmine.objectContaining({ hash: 'multi-asset-hash', currency: 'XRP' }),
+                    jasmine.objectContaining({ hash: 'multi-asset-hash', currency: 'BOB', change: -10 }),
+               ]));
+               expect(entries.length).toBe(2);
           });
 
           it('should skip transactions without meta', () => {

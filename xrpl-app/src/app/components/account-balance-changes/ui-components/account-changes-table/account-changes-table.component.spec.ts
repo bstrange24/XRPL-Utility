@@ -168,11 +168,11 @@ describe('AccountChangesTableComponent', () => {
      });
 
      describe('trackByHash', () => {
-          it('should return the hash of the balance change', () => {
+          it('should return a unique key for each balance change row', () => {
                const mockItem = mockBalanceChanges[0];
-               const result = component.trackByHash(0, mockItem);
+               const result = component.trackByHash(1, mockItem);
 
-               expect(result).toBe(mockItem.hash);
+               expect(result).toBe(`${mockItem.hash}-1`);
           });
      });
 

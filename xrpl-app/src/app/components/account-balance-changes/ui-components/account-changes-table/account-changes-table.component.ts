@@ -39,7 +39,7 @@ export class AccountChangesTableComponent {
           this.copyUtilService.copyTxHash(text);
      }
 
-     trackByHash(_: number, item: BalanceChange): string {
-          return item.hash;
+     trackByHash(index: number, item: BalanceChange): string {
+          return `${item.hash}-${index}`;
      }
 }
