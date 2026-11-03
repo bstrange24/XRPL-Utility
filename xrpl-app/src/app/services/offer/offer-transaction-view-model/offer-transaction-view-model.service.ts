@@ -162,7 +162,7 @@ export class OfferTransactionViewModelService {
                          index: offer.TxHash,
                          takerGets: `${gets.value} ${gets.currency}`,
                          takerPays: `${pays.value} ${pays.currency}`,
-                         issuer: pays.issuer,
+                         issuer: gets.issuer || pays.issuer,
                          flags: this.decodeOfferFlags(offer.Flags),
                     };
                }),

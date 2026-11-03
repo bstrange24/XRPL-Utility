@@ -417,8 +417,22 @@ describe('OfferTransactionViewModelService', () => {
                expect(infoData?.offersToShow.length).toBe(2);
                expect(infoData?.offersToShow[0].takerGets).toBe('50 USD');
                expect(infoData?.offersToShow[0].takerPays).toBe('100 XRP');
+               expect(infoData?.offersToShow[0].issuer).toBe('rIssuer2');
                expect(infoData?.offersToShow[0].flags).toEqual(['tfPassive']);
                expect(infoData?.offersToShow[1].flags).toEqual(['tfImmediateOrCancel']);
+          });
+
+          it('should show the Taker Gets issuer when a buy offer is paid in XRP', () => {
+               offerStoreService.existingOffers.and.returnValue([
+                    {
+                         TxHash: 'buy-offer',
+                         TakerGets: '25 BOB rBobIssuer',
+                         TakerPays: '10',
+                         Flags: 0,
+                    },
+               ]);
+
+               expect(service.infoData()?.offersToShow[0].issuer).toBe('rBobIssuer');
           });
 
           it('should truncate wallet name when no name provided', () => {
