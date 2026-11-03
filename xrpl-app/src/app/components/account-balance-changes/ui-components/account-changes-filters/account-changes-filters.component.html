@@ -18,7 +18,7 @@
           <div>
                <label for="dateRange" class="text-sm font-semibold text-gray-600 block mb-1.5">Date range</label>
                <div class="relative">
-                    <input #rangeInput id="dateRange" type="text" readonly placeholder="Select date range..." class="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900 cursor-pointer" />
+                    <input #rangeInput id="dateRange" type="text" readonly (click)="openDatePicker()" placeholder="Select date range..." class="w-full pl-4 pr-10 py-3 rounded-2xl border border-gray-200 focus:border-green-500 focus:outline-none text-sm bg-white text-gray-900 cursor-pointer" />
                     @if (store.dateRange().start || store.dateRange().end) {
                     <button type="button" (click)="clearDateFilter()" aria-label="Clear date range" matTooltip="Clear date filter" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors">
                          <lucide-icon name="x" size="16" />

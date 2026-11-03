@@ -182,6 +182,10 @@ export class AccountChangesFiltersComponent implements AfterViewInit, OnDestroy 
           this.store.setField('feeRange', { ...this.store.feeRange(), [bound]: value });
      }
 
+     openDatePicker(): void {
+          this.rangePicker?.open();
+     }
+
      setStartDate(value: string | null): void {
           if (!value) {
                this.store.setField('dateRange', { ...this.store.dateRange(), start: null });

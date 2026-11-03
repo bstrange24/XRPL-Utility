@@ -78,6 +78,17 @@ describe('AccountChangesFiltersComponent', () => {
           });
      });
 
+     describe('date picker', () => {
+          it('should open the existing date range picker on input click', () => {
+               const open = jasmine.createSpy('open');
+               (component as any).rangePicker = { open };
+
+               component.openDatePicker();
+
+               expect(open).toHaveBeenCalled();
+          });
+     });
+
      describe('onSearchInput', () => {
           it('should debounce search input and set filterValue in store', fakeAsync(() => {
                component.onSearchInput('test query');
