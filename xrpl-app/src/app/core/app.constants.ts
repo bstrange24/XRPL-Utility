@@ -300,9 +300,9 @@ export const AppConstants = {
      AMM_TRADING_FEE_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
      AMM_LP_TOKEN_BALANCE_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
      AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
-     AMM_SWAP_DESTINATION_HELPER_ITEMS: ['The amount of Asset 2 the selected account currently in the pool'],
-     AMM_CLAWBACK_LP_TOKEN_HELPER_ITEMS: ['Optional maximum amount of your issued token to claw back from the holder', "Leave this blank to claw back all of the holder's available tokens in the AMM pool."],
-     AMM_CLAWBACK_HOLDER_HELPER_ITEMS: ['The account that deposited your issued token into the AMM pool', 'A holder address is required for every AMMClawback transaction.'],
+     AMM_SWAP_DESTINATION_HELPER_ITEMS: ['Optional: choose another account to receive the tokens.', 'Leave this blank to send the swapped tokens to the selected wallet.'],
+     AMM_CLAWBACK_AMOUNT_HELPER_ITEMS: ['Optional maximum amount of your issued token to claw back from this holder’s AMM position.', 'Leave this blank to claw back all of the holder’s available tokens in the pool.'],
+     AMM_CLAWBACK_HOLDER_HELPER_ITEMS: ['The account whose issued tokens you want to claw back from the AMM.', 'The selected wallet must be the token issuer, and a holder address is required.'],
      AMM_LP_TOKEN_WITHDRAW_HELPER_ITEMS: ['Number of LP tokens you want to burn to withdraw your share of the pool assets.', 'When you burn LP tokens, you receive a proportional share of both assets in the pool based on your withdrawal strategy.'],
      // AMM
 

@@ -206,6 +206,11 @@ describe('AmmTransactionBuilderService', () => {
                expect(result.Flags).toBe(xrpl.PaymentFlags.tfPartialPayment);
           });
 
+          it('should send swapped tokens to the selected wallet when destination is blank', () => {
+               const result = service.buildSwapViaAmmTx(mockWallet, mockAmmState, mockEnv, '');
+               expect(result.Destination).toBe(mockWallet.classicAddress);
+          });
+
           it('should reject non-positive swap amounts', () => {
                expect(() => service.buildSwapViaAmmTx(mockWallet, { ...mockAmmState, weWantAmount: '0' }, mockEnv, 'rDest')).toThrowError('Target token amount must be a positive number.');
           });

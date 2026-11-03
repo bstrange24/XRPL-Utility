@@ -283,8 +283,8 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
           }
 
           const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
-          if (currentTab === 'swapViaAMM' && !destination?.trim()) {
-               this.toastService.error('Please enter a valid destination address for the swap.', AppConstants.TOAST.ERROR);
+          if (currentTab === 'swapViaAMM' && this.destinationSearchQuery().trim() && !destination?.trim()) {
+               this.toastService.error('Enter a valid destination address, or clear the field to receive tokens in the selected wallet.', AppConstants.TOAST.ERROR);
                return;
           }
 

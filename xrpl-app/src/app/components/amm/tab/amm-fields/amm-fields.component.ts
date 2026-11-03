@@ -62,29 +62,23 @@ export class AmmFieldsComponent {
 
      // Helper Items
      readonly showTradingFeeHelperItems = AppConstants.AMM_TRADING_FEE_HELPER_ITEMS;
-     readonly showLpTokenBalanceHelperItems = AppConstants.AMM_LP_TOKEN_BALANCE_HELPER_ITEMS;
      readonly showLpHolderAddressHelperItems = AppConstants.AMM_LP_HOLDER_ADDRESS_HELPER_ITEMS;
      readonly showSwapDestinationHelperItems = AppConstants.AMM_SWAP_DESTINATION_HELPER_ITEMS;
-     readonly showClawbackLpTokenHelperItems = AppConstants.AMM_CLAWBACK_LP_TOKEN_HELPER_ITEMS;
+     readonly showClawbackAmountHelperItems = AppConstants.AMM_CLAWBACK_AMOUNT_HELPER_ITEMS;
      readonly showClawbackHolderHelperItems = AppConstants.AMM_CLAWBACK_HOLDER_HELPER_ITEMS;
 
      // UI Signals
-     showLpWithdrawHelper = signal(false);
      showTradingFeeHelper = signal(false);
      showLpTokenBalanceHelper = signal(false);
      showLpHolderAddressHelper = signal(false);
      showSwapDestinationHelper = signal(false);
-     showClawbackLpTokenHelper = signal(false);
+     showClawbackAmountHelper = signal(false);
      showClawbackHolderHelper = signal(false);
      isDestinationValid = signal(false);
 
      // Toggle Methods
      toggleTradingFeeHelper() {
           this.showTradingFeeHelper.set(!this.showTradingFeeHelper());
-     }
-
-     toggleLpWithdrawHelper() {
-          this.showLpWithdrawHelper.set(!this.showLpWithdrawHelper());
      }
 
      toggleLpTokenBalanceHelper() {
@@ -99,8 +93,8 @@ export class AmmFieldsComponent {
           this.showSwapDestinationHelper.set(!this.showSwapDestinationHelper());
      }
 
-     toggleClawbackLpTokenHelper() {
-          this.showClawbackLpTokenHelper.set(!this.showClawbackLpTokenHelper());
+     toggleClawbackAmountHelper() {
+          this.showClawbackAmountHelper.set(!this.showClawbackAmountHelper());
      }
 
      toggleClawbackHolderHelper() {

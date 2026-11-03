@@ -274,14 +274,14 @@ export class AmmSummaryComponent {
 
      getSummaryText(info: any): string {
           if (!info || info.poolCount === 0) {
-               return ` has no active AMM participation.`;
+               return ` has no LP position in the selected AMM pool.`;
           }
 
           if (info.myPoolCount > 0) {
                return ` is a liquidity provider in <strong>${info.myPoolCount}</strong> AMM pool${info.myPoolCount === 1 ? '' : 's'}.`;
           }
 
-          return ` has interacted with <strong>${info.poolCount}</strong> AMM pool${info.poolCount === 1 ? '' : 's'}.`;
+          return ` has no LP position in the selected AMM pool.`;
      }
 
      getButtonLabel(info: any): string {
@@ -309,13 +309,13 @@ export class AmmSummaryComponent {
 
           switch (filter) {
                case 'myPools':
-                    return 'You are not a liquidity provider in any AMM pool yet.';
+                    return 'This wallet has no LP tokens in the selected AMM pool.';
                case 'highLiquidity':
                     return 'No high liquidity pools found.';
                case 'lowFee':
                     return 'No low fee pools found.';
                default:
-                    return `This wallet has no AMM participation. Create an AMM or deposit to an existing pool to get started.`;
+                    return 'No LP position found for this wallet in the selected AMM pool.';
           }
      }
 
@@ -324,7 +324,7 @@ export class AmmSummaryComponent {
           if (query && this.filteredCount() === 0 && (this.infoData()?.poolCount ?? 0) > 0) {
                return 'Try a different search term';
           }
-          return '';
+          return 'This panel shows LP-token holdings, not swap or clawback history.';
      }
 
      getQuickFilterClass(filterKey: string): string {

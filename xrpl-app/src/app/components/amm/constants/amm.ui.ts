@@ -105,8 +105,8 @@ export const AMM_TAB_META: Record<
      clawbackFromAMM: {
           icon: 'heroArrowUturnLeft',
           colorClass: 'blue-button-submenu',
-          title: 'Clawback assets from AMM',
-          desc: 'Clawback assets issued from an AMM.',
+          title: 'Claw back tokens from AMM',
+          desc: 'The token issuer can claw back its issued tokens from a holder’s AMM position.',
           color: '#3b82f6',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,
@@ -114,8 +114,8 @@ export const AMM_TAB_META: Record<
      swapViaAMM: {
           icon: 'heroCurrencyDollar',
           colorClass: 'blue-button-submenu',
-          title: 'Swap assets Via AMM',
-          desc: `Swap assets on an AMM.`,
+          title: 'Swap XRP for tokens',
+          desc: 'Swap XRP for the selected issued token through its AMM pool.',
           color: '#10b981',
           iconType: 'ng-icon',
           iconSize: AppConstants.TAB_META_INFO_ICON_SIZE,

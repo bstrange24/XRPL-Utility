@@ -47,6 +47,9 @@ describe('AmmSummaryComponent', () => {
 
      it('does not count shared pool reserves as wallet participation', () => {
           expect(component.infoData()?.poolCount).toBe(0);
+          expect(component.getSummaryText(component.infoData())).toContain('no LP position');
+          expect(component.getEmptyStateMessage()).toContain('No LP position');
+          expect(component.getEmptyStateSubMessage()).toContain('not swap or clawback history');
      });
 
      it('only shows LP holdings for the wallet that was queried', async () => {

@@ -74,36 +74,19 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="lpTokenClawback" class="label-primary">LP Token Balance</label>
+                              <label for="clawbackAmount" class="label-primary">Maximum Token Amount (optional)</label>
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">Current LP token balance in this pool</p>
-                              <button type="button" (click)="toggleClawbackLpTokenHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
+                              <p class="text-secondary">Maximum amount of your issued token to claw back from this holder’s AMM position.</p>
+                              <button type="button" (click)="toggleClawbackAmountHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
                          </div>
 
-                         <input type="text" readonly class="input-disabled" [value]="store.lpTokenBalance() || '0'" />
+                         <input id="clawbackAmount" type="text" [ngModel]="ammStoreService.withdrawlLpTokenFromPoolField()" (ngModelChange)="ammStoreService.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter maximum token amount" />
                     </div>
-                    <app-field-helper title="LP Token Balance" [items]="showClawbackLpTokenHelperItems" [show]="showClawbackLpTokenHelper" />
-               </div>
-               <div class="space-y-2">
-                    <div>
-                         <div class="field-label">
-                              <label for="lpTokenToBurn" class="label-primary">Maximum Token Amount (optional - leave blank to claw back all available tokens.)</label>
-                         </div>
-
-                         <div class="flex items-center gap-2">
-                              <p class="text-secondary">Maximum amount of your issued token to claw back from this holder.</p>
-                              <button type="button" (click)="toggleLpWithdrawHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
-                                   <ng-icon name="heroQuestionMarkCircle" size="14" />
-                              </button>
-                         </div>
-
-                         <input type="text" [ngModel]="ammStoreService.withdrawlLpTokenFromPoolField()" (ngModelChange)="ammStoreService.setField('withdrawlLpTokenFromPoolField', $event)" class="input-base" placeholder="Enter amount to withdraw" />
-                    </div>
-                    <app-field-helper title="LP Token Withdrawal" [items]="showLpTokenBalanceHelperItems" [show]="showLpWithdrawHelper" />
+                    <app-field-helper title="Maximum Clawback Amount" [items]="showClawbackAmountHelperItems" [show]="showClawbackAmountHelper" />
                </div>
                <div class="space-y-2">
                     <div>
@@ -112,7 +95,7 @@
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">Account that deposited your token into this AMM pool.</p>
+                              <p class="text-secondary">Account whose issued tokens you want to claw back from this pool.</p>
                               <button type="button" (click)="toggleClawbackHolderHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>
@@ -146,18 +129,18 @@
           <div class="space-y-2 mt-5">
                <div>
                     <div class="field-label">
-                         <label for="swapDestinationAccount" class="label-primary">Destination Account</label>
+                         <label for="swapDestinationAccount" class="label-primary">Destination Account (optional)</label>
                     </div>
 
                     <div class="flex items-center gap-2">
-                         <p class="text-secondary">The account that will receive the swapped tokens.</p>
+                         <p class="text-secondary">Choose another account to receive the tokens, or leave blank to receive them in the selected wallet.</p>
                          <button type="button" (click)="toggleSwapDestinationHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                               <ng-icon name="heroQuestionMarkCircle" size="14" />
                          </button>
                     </div>
 
                     <div class="relative">
-                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" placeholder="Enter or select destination address" />
+                         <app-select-search-dropdown [items]="destinationItems()" [value]="selectedDestinationItem()" [searchQueryInput]="destinationSearchQuery()" [validateXrpAddress]="true" [validateOn]="'blur'" [closeWhenInvalid]="true" (searchQueryChange)="destinationSearchQueryChange.emit($event)" (valueChange)="destinationValueChange.emit($event)" (isValid)="onDestinationValidationChange($event)" placeholder="Enter or select destination address" />
                     </div>
                </div>
           </div>

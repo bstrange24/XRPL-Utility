@@ -3,6 +3,7 @@ import { NgIcon } from '@ng-icons/core';
 import { LucideAngularModule } from 'lucide-angular';
 import { expandCollapse } from '../../../../services/utils/animations/animations.service';
 import { CommonModule } from '@angular/common';
+import { AmmActionTypes } from '../../constants/amm.types';
 
 @Component({
      selector: 'app-amm-requirements-info',
@@ -14,7 +15,7 @@ import { CommonModule } from '@angular/common';
      changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AmmRequirementsInfoComponent {
-     activeTab = input.required<'createAMM'>();
+     activeTab = input.required<AmmActionTypes>();
 
      // Collapsible state
      isExpanded = signal(false);
