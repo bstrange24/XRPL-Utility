@@ -11,6 +11,7 @@ import { WalletsStoreService } from '../../services/wallets/wallets-store/wallet
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
 import { ThemeService } from '../../services/utils/theme/theme.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { XrplService } from '../../services/xrpl-services/xrpl.service';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -47,6 +48,7 @@ describe('WalletPanelComponent', () => {
      let walletsStoreService: any;
      let xrplService: any;
      let themeService: any;
+     let trustlineCurrencyService: any;
 
      // Mock data
      const mockWallets: Wallet[] = [
@@ -132,6 +134,22 @@ describe('WalletPanelComponent', () => {
                error: jasmine.createSpy('error'),
           };
 
+          const knownIssuers: Record<string, string[]> = {};
+          trustlineCurrencyService = {
+               currencies: signal(['USD', 'EUR']),
+               utilsService: {
+                    isValidCurrencyCode: jasmine.createSpy('isValidCurrencyCode').and.callFake((currency: string) => /^[A-Za-z0-9]{3,20}$/.test(currency) || /^[0-9A-Fa-f]{40}$/.test(currency)),
+               },
+               getIssuersForCurrency: jasmine.createSpy('getIssuersForCurrency').and.callFake((currency: string) => knownIssuers[currency] || []),
+               getCurrenciesForIssuer: jasmine.createSpy('getCurrenciesForIssuer').and.callFake((issuer: string) => Object.entries(knownIssuers).filter(([, issuers]) => issuers.includes(issuer)).map(([currency]) => currency).sort()),
+               addToken: jasmine.createSpy('addToken').and.callFake((currency: string, issuer: string) => {
+                    knownIssuers[currency] = [...(knownIssuers[currency] || []), issuer];
+               }),
+               removeToken: jasmine.createSpy('removeToken').and.callFake((currency: string, issuer: string) => {
+                    knownIssuers[currency] = (knownIssuers[currency] || []).filter(address => address !== issuer);
+               }),
+          };
+
           walletsStoreService = {
                encryptionType: signal('familySeed'),
                updateField: jasmine.createSpy('updateField'),
@@ -160,6 +178,7 @@ describe('WalletPanelComponent', () => {
                     { provide: WalletsStoreService, useValue: walletsStoreService },
                     { provide: WalletsUtilService, useValue: {} }, // Empty object, no spies needed
                     { provide: WalletConfiguratorOrchestratorService, useValue: { executionTimeValue: signal('') } },
+                    { provide: TrustlineCurrencyService, useValue: trustlineCurrencyService },
                     { provide: XrplService, useValue: xrplService },
                     { provide: ThemeService, useValue: themeService },
                ],
@@ -320,6 +339,66 @@ describe('WalletPanelComponent', () => {
 
                expect(walletManagerService.cancelEdit).toHaveBeenCalled();
                expect(component.tempName).toBe('');
+          });
+     });
+
+     describe('Wallet IOU issuers', () => {
+          it('should list the registered IOU currencies for a wallet', () => {
+               trustlineCurrencyService.addToken('USD', 'rWallet1');
+               trustlineCurrencyService.addToken('EUR', 'rOtherWallet');
+
+               expect(component.getIssuedCurrencies(mockWallets[0])).toEqual(['USD']);
+          });
+
+          it('should expand the wallet and open issuer management', () => {
+               component.toggleIssuerManagement(0);
+
+               expect(component.issuerManagementIndex()).toBe(0);
+               expect(component.isWalletExpanded(0)).toBeTrue();
+
+               component.toggleIssuerManagement(0);
+
+               expect(component.issuerManagementIndex()).toBeNull();
+          });
+
+          it('should add a valid IOU currency for the selected wallet', () => {
+               component.issuerCurrencyInput = 'USD';
+
+               component.addWalletIssuer(0);
+
+               expect(trustlineCurrencyService.addToken).toHaveBeenCalledWith('USD', 'rWallet1');
+               expect(component.issuerCurrencyInput).toBe('');
+               expect(toastService.success).toHaveBeenCalled();
+          });
+
+          it('should reject XRP and invalid currency codes', () => {
+               component.issuerCurrencyInput = 'XRP';
+               component.addWalletIssuer(0);
+               component.issuerCurrencyInput = 'AB';
+               component.addWalletIssuer(0);
+
+               expect(trustlineCurrencyService.addToken).not.toHaveBeenCalled();
+               expect(toastService.error).toHaveBeenCalledTimes(2);
+          });
+
+          it('should reject a currency already registered to the wallet', () => {
+               trustlineCurrencyService.addToken('USD', 'rWallet1');
+               component.issuerCurrencyInput = 'USD';
+
+               component.addWalletIssuer(0);
+
+               expect(trustlineCurrencyService.addToken).toHaveBeenCalledTimes(1);
+               expect(toastService.error).toHaveBeenCalled();
+          });
+
+          it('should remove a registered IOU currency from the wallet', () => {
+               trustlineCurrencyService.addToken('USD', 'rWallet1');
+
+               component.removeWalletIssuer(0, 'USD');
+
+               expect(trustlineCurrencyService.removeToken).toHaveBeenCalledWith('USD', 'rWallet1');
+               expect(component.getIssuedCurrencies(mockWallets[0])).toEqual([]);
+               expect(toastService.success).toHaveBeenCalled();
           });
      });
 

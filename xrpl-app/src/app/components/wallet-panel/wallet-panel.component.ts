@@ -14,6 +14,7 @@ import { PerformanceBaseComponent } from '../shared/performance-base/performance
 import { WalletsStoreService } from '../../services/wallets/wallets-store/wallets-store.service';
 import { WalletsUtilService } from '../../services/wallets/wallets-util/wallets-util.service';
 import { WalletConfiguratorOrchestratorService } from '../../services/wallets/wallet-configurator-orchestrator/wallet-configurator-orchestrator.service';
+import { TrustlineCurrencyService } from '../../services/trustlines/trustline-currency/trustline-currency.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ThemeService } from '../../services/utils/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -39,6 +40,7 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
      public readonly walletsStoreService = inject(WalletsStoreService);
      public readonly walletsUtilService = inject(WalletsUtilService);
      public readonly walletConfiguratorOrchestratorService = inject(WalletConfiguratorOrchestratorService);
+     public readonly trustlineCurrencyService = inject(TrustlineCurrencyService);
      public readonly themeService = inject(ThemeService);
      private readonly dialogService = inject(DialogService);
      isDark = toSignal(this.themeService.darkMode$, { initialValue: false });
@@ -61,6 +63,8 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
      currentWallet: Wallet = this.getEmptyWallet();
      hasWallets = false;
      tempName = '';
+     issuerManagementIndex = signal<number | null>(null);
+     issuerCurrencyInput = '';
 
      private readonly _hasWalletsEffect = effect(() => {
           if (this.walletManagerService.hasWallets()) {
@@ -165,6 +169,58 @@ export class WalletPanelComponent extends PerformanceBaseComponent implements On
      cancelEdit() {
           this.walletManagerService.cancelEdit();
           this.tempName = '';
+     }
+
+     getIssuedCurrencies(wallet: Wallet): string[] {
+          const address = wallet.classicAddress || wallet.address;
+          if (!address) return [];
+
+          return this.trustlineCurrencyService.getCurrenciesForIssuer(address);
+     }
+
+     toggleIssuerManagement(index: number): void {
+          if (this.issuerManagementIndex() === index) {
+               this.issuerManagementIndex.set(null);
+               this.issuerCurrencyInput = '';
+               return;
+          }
+
+          this.issuerManagementIndex.set(index);
+          this.issuerCurrencyInput = '';
+          if (!this.isWalletExpanded(index)) this.toggleWalletExpansion(index);
+     }
+
+     addWalletIssuer(index: number): void {
+          const wallet = this.wallets[index];
+          const currency = this.issuerCurrencyInput.trim();
+          const issuer = wallet?.classicAddress || wallet?.address;
+
+          if (!issuer || !currency || currency.toUpperCase() === 'XRP' || !this.trustlineCurrencyService.utilsService.isValidCurrencyCode(currency)) {
+               this.toastService.error('Enter a valid IOU currency code (XRP cannot be issued).', AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          if (this.trustlineCurrencyService.getIssuersForCurrency(currency).includes(issuer)) {
+               this.toastService.error(`${currency} is already registered for this wallet.`, AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          this.trustlineCurrencyService.addToken(currency, issuer);
+          this.issuerCurrencyInput = '';
+          this.toastService.success(`${currency} added as an IOU issued by this wallet.`);
+     }
+
+     removeWalletIssuer(index: number, currency: string): void {
+          const wallet = this.wallets[index];
+          const issuer = wallet?.classicAddress || wallet?.address;
+
+          if (!issuer || !this.trustlineCurrencyService.getIssuersForCurrency(currency).includes(issuer)) {
+               this.toastService.error(`${currency} is not registered for this wallet.`, AppConstants.TOAST.ERROR);
+               return;
+          }
+
+          this.trustlineCurrencyService.removeToken(currency, issuer);
+          this.toastService.success(`${currency} removed from this wallet's issued IOUs.`);
      }
 
      toggleSecret(index: number) {

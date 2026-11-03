@@ -119,20 +119,26 @@
 
                                                   <!-- Actions (Copy + Edit) -->
                                                   <div class="flex items-center gap-1 flex-shrink-0 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                       <!-- Copy Address -->
-                                                       <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy address" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
-                                                            <lucide-icon name="copy" size="14" />
+                                                       <button (click)="toggleIssuerManagement(i); $event.stopPropagation()" [title]="issuerManagementIndex() === i ? 'Close IOU management' : 'Manage wallet IOUs'" [attr.aria-label]="issuerManagementIndex() === i ? 'Close IOU management' : 'Manage wallet IOUs'" class="p-1 rounded transition-colors" [class.text-amber-700]="!isDark()" [class.text-amber-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                            <lucide-icon name="coins" size="14" />
                                                        </button>
 
-                                                       <!-- Edit Name -->
-                                                       <button (click)="editName(i); $event.stopPropagation()" title="Edit name" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
-                                                            <lucide-icon name="edit-2" size="14" />
-                                                       </button>
+                                                       <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <!-- Copy Address -->
+                                                            <button (click)="copyUtilService.copyAddress(wallet.address); $event.stopPropagation()" title="Copy address" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                                 <lucide-icon name="copy" size="14" />
+                                                            </button>
 
-                                                       <!-- Refresh Wallet -->
-                                                       <button (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Wallet" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
-                                                            <lucide-icon name="refresh-ccw" size="14" />
-                                                       </button>
+                                                            <!-- Edit Name -->
+                                                            <button (click)="editName(i); $event.stopPropagation()" title="Edit name" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                                 <lucide-icon name="edit-2" size="14" />
+                                                            </button>
+
+                                                            <!-- Refresh Wallet -->
+                                                            <button (click)="refreshBalance(i); $event.stopPropagation()" title="Refresh Wallet" class="p-1 rounded transition-colors" [class.text-gray-400]="!isDark()" [class.text-gray-500]="isDark()" [class.hover:text-gray-600]="!isDark()" [class.hover:text-gray-300]="isDark()" [class.hover:bg-gray-200]="!isDark()" [class.hover:bg-gray-700]="isDark()">
+                                                                 <lucide-icon name="refresh-ccw" size="14" />
+                                                            </button>
+                                                       </div>
                                                   </div>
                                              </div>
                                              }
@@ -161,12 +167,48 @@
                                              }
                                         </div>
                                    </div>
+
+                                   @if (getIssuedCurrencies(wallet).length > 0) {
+                                   <div class="mt-2 ml-6 inline-flex flex-wrap items-center gap-1" [attr.aria-label]="'IOU issuer for ' + getIssuedCurrencies(wallet).join(', ')">
+                                        <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold" [class.bg-amber-100]="!isDark()" [class.text-amber-800]="!isDark()" [class.bg-amber-900]="isDark()" [class.text-amber-200]="isDark()">IOU issuer</span>
+                                        @for (currency of getIssuedCurrencies(wallet); track currency) {
+                                        <span class="rounded-full px-2 py-0.5 text-[10px] font-medium" [class.bg-gray-100]="!isDark()" [class.text-gray-700]="!isDark()" [class.bg-gray-700]="isDark()" [class.text-gray-200]="isDark()">{{ currency }}</span>
+                                        }
+                                   </div>
+                                   }
                               </div>
                          </div>
 
                          <!-- Expanded Content (only shown when expanded) -->
                          @if (isWalletExpanded(i)) {
                          <div class="p-4 pt-0 border-t mt-2" [class.border-gray-100]="!isDark()" [class.border-gray-700]="isDark()">
+                              @if (issuerManagementIndex() === i) {
+                              <div class="mb-3 rounded-xl border p-3 mt-3" [class.border-gray-200]="!isDark()" [class.border-gray-700]="isDark()" [class.bg-white]="!isDark()" [class.bg-gray-800]="isDark()" (click)="$event.stopPropagation()">
+                                   <div class="flex items-center justify-between gap-2">
+                                        <span class="text-sm font-semibold" [class.text-gray-900]="!isDark()" [class.text-gray-100]="isDark()">Manage issued IOUs</span>
+                                        <button type="button" (click)="toggleIssuerManagement(i)" class="rounded p-1 text-xs" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()" aria-label="Close IOU management">Close</button>
+                                   </div>
+
+                                   <div class="mt-2 flex gap-2">
+                                        <input type="text" [(ngModel)]="issuerCurrencyInput" (click)="$event.stopPropagation()" aria-label="Currency code to add" placeholder="Currency code (e.g. USD)" class="min-w-0 flex-1 rounded-lg border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [class.border-gray-300]="!isDark()" [class.border-gray-600]="isDark()" [class.bg-gray-900]="isDark()" [class.text-gray-100]="isDark()" />
+                                        <button type="button" (click)="addWalletIssuer(i)" [disabled]="!issuerCurrencyInput.trim()" class="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50">Add</button>
+                                   </div>
+
+                                   @if (getIssuedCurrencies(wallet).length > 0) {
+                                   <div class="mt-3 space-y-2">
+                                        @for (currency of getIssuedCurrencies(wallet); track currency) {
+                                        <div class="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm" [class.bg-gray-50]="!isDark()" [class.bg-gray-700]="isDark()">
+                                             <span class="font-medium" [class.text-gray-800]="!isDark()" [class.text-gray-100]="isDark()">{{ currency }}</span>
+                                             <button type="button" (click)="removeWalletIssuer(i, currency)" class="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-300" [attr.aria-label]="'Remove ' + currency + ' issuer code'">Remove</button>
+                                        </div>
+                                        }
+                                   </div>
+                                   } @else {
+                                   <p class="mt-2 text-xs" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">No IOU currency codes are registered for this wallet.</p>
+                                   }
+                              </div>
+                              }
+
                               <!-- Full Address -->
                               <div class="mb-3">
                                    <div class="text-xs mb-1 mt-2" [class.text-gray-500]="!isDark()" [class.text-gray-400]="isDark()">Full Address</div>

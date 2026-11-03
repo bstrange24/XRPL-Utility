@@ -213,6 +213,16 @@ describe('TrustlineCurrencyService', () => {
           });
      });
 
+     describe('getCurrenciesForIssuer', () => {
+          it('should return the sorted currency codes registered to an issuer', () => {
+               service.addToken('ZED', 'rTestIssuer');
+               service.addToken('ABC', 'rTestIssuer');
+               service.addToken('XRP', 'rTestIssuer');
+
+               expect(service.getCurrenciesForIssuer('rTestIssuer')).toEqual(['ABC', 'ZED']);
+          });
+     });
+
      describe('setPreferXrpAsDefault', () => {
           it('should set preferXrpAsDefault', () => {
                service.setPreferXrpAsDefault(true);

@@ -240,6 +240,13 @@ export class TrustlineCurrencyService extends PerformanceBaseComponent {
           return this.knownIssuers()[currency] || [];
      }
 
+     getCurrenciesForIssuer(issuer: string): string[] {
+          return Object.entries(this.knownIssuers())
+               .filter(([currency, issuers]) => currency !== 'XRP' && issuers.includes(issuer))
+               .map(([currency]) => currency)
+               .sort((a, b) => a.localeCompare(b));
+     }
+
      private getNiceName(address: string, currency: string): string {
           const wallet = this.walletManager.wallets()?.find(w => w.address === address);
           if (wallet?.name) return wallet.name;
