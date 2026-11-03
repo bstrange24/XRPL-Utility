@@ -18,6 +18,7 @@ export class OfferFieldsComponent {
      public readonly view = inject(OfferTransactionViewModelService);
 
      readonly tab = input.required<string>();
+     readonly orderSwitchDisabled = input(false);
 
      readonly weWantCurrencySelected = output<SelectItem | null>();
      readonly weWantIssuerSelected = output<SelectItem | null>();

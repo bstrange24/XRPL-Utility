@@ -1,4 +1,4 @@
-import { Component, inject, output, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, output, ChangeDetectionStrategy, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
@@ -30,6 +30,7 @@ export class CreateOfferTabComponent {
      readonly weWantAmountChange = output<void>();
      readonly weSpendAmountChange = output<void>();
      readonly invertOrder = output<void>();
+     readonly orderSwitchDisabled = input(false);
 
      // Helper Items
      readonly takerGetsCurrencyHelperItems = AppConstants.TAKER_GETS_CURRENCY_HELPER_ITEMS;

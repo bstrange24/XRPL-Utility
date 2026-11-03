@@ -16,7 +16,7 @@
           <!-- Form -->
           <form #theForm="ngForm">
                <!-- Dynamic Form Fields -->
-               <app-offer-fields [tab]="tab" (weWantCurrencySelected)="onWeWantCurrencySelected($event)" (weWantIssuerSelected)="onWeWantIssuerSelected($event)" (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)" (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)" (weWantAmountChange)="handleWeWantAmountChange()" (weSpendAmountChange)="handleWeSpendAmountChange()" (invertOrder)="invertOrder()"> </app-offer-fields>
+               <app-offer-fields [tab]="tab" [orderSwitchDisabled]="!isIdle() || !hasWallets()" (weWantCurrencySelected)="onWeWantCurrencySelected($event)" (weWantIssuerSelected)="onWeWantIssuerSelected($event)" (weSpendCurrencySelected)="onWeSpendCurrencySelected($event)" (weSpendIssuerSelected)="onWeSpendIssuerSelected($event)" (weWantAmountChange)="handleWeWantAmountChange()" (weSpendAmountChange)="handleWeSpendAmountChange()" (invertOrder)="invertOrder()"> </app-offer-fields>
 
                <!-- Transaction Options -->
                <app-transaction-options [showWhenTab]="['createOffer', 'cancelOffer']" [activeTab]="viewModel.activeTab" [multiSigningEnabled]="accountConfiguratorStoreService.multiSigningEnabled()" [regularKeySigningEnabled]="accountConfiguratorStoreService.regularKeySigningEnabled()"> </app-transaction-options>
@@ -29,9 +29,6 @@
                               <button type="button" [class]="offerUtilsService.actionButtonClass()" [class.opacity-50]="!canPerformAction()" [attr.aria-disabled]="!canPerformAction()" [attr.tabindex]="!canPerformAction() ? 0 : null" (click)="canPerformAction() ? performAction() : null" [disabled]="false">{{ offerUtilsService.actionButtonLabel() }}</button>
                          </app-button-tooltip>
 
-                         @if (tab === 'createOffer' || tab === 'getOrderBook') {
-                         <button type="button" class="btn-blue" (click)="invertOrder()" [disabled]="!isIdle() || !hasWallets()">Invert Order</button>
-                         }
                     </div>
 
                     <!-- Secondary Actions -->

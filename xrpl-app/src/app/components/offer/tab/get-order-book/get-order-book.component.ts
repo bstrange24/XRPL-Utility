@@ -1,4 +1,4 @@
-import { Component, inject, output, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, output, ChangeDetectionStrategy, signal, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SelectItem, SelectSearchDropdownComponent } from '../../../shared/ui-components/select-search-dropdown/select-search-dropdown.component';
@@ -28,6 +28,7 @@ export class GetOrderBookTabComponent {
      readonly weSpendCurrencySelected = output<SelectItem | null>();
      readonly weSpendIssuerSelected = output<SelectItem | null>();
      readonly invertOrder = output<void>();
+     readonly orderSwitchDisabled = input(false);
 
      // Helper Items
      readonly takerGetsCurrencyHelperItems = AppConstants.TAKER_GETS_CURRENCY_HELPER_ITEMS;

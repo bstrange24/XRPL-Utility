@@ -5,6 +5,30 @@
 
 <div class="space-y-6">
      <div class="card-base">
+          <div class="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between" style="margin-bottom: 1em">
+               <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Order direction</h3>
+                    <p class="text-xs text-gray-500">Choose whether you are buying or selling.</p>
+               </div>
+               <div class="flex items-center gap-3 self-start rounded-full bg-gray-100 px-3 py-2 sm:self-auto">
+                    <span class="text-sm font-medium text-gray-700">Buy</span>
+                    <button
+                         type="button"
+                         role="switch"
+                         [attr.aria-checked]="vm.weWantCurrency() === 'XRP'"
+                         aria-label="Switch between buying and selling"
+                         [disabled]="orderSwitchDisabled()"
+                         class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                         [class.bg-blue-600]="vm.weWantCurrency() === 'XRP'"
+                         [class.bg-gray-300]="vm.weWantCurrency() !== 'XRP'"
+                         (click)="invertOrder.emit()"
+                    >
+                         <span aria-hidden="true" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition" [class.translate-x-5]="vm.weWantCurrency() === 'XRP'" [class.translate-x-0]="vm.weWantCurrency() !== 'XRP'"></span>
+                    </button>
+                    <span class="text-sm font-medium text-gray-700">Sell</span>
+               </div>
+          </div>
+
           <!-- Headers -->
           <div class="side-by-side-fields">
                <h4 class="section-heading">
