@@ -3,6 +3,7 @@ import { TrustlineCurrencyService } from '../trustline-currency/trustline-curren
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { TrustlineActionTypes } from '../../../components/trustlines/constants/trustline.types';
+import { formatTrustlineAmount } from '../../../components/trustlines/constants/trustline.ui';
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { CurrencyStoreService } from '../../currency/currency-store/currency-store.service';
 import Decimal from 'decimal.js';
@@ -279,7 +280,7 @@ export class TrustlineViewModelService {
           const reasons: string[] = [];
           const clearFlags = this.trustlineCurrencyService.flags();
 
-          if (balance !== 0) reasons.push(`Balance is ${trustline.balance} (must be 0 to remove)`);
+          if (balance !== 0) reasons.push(`Balance is ${formatTrustlineAmount(trustline.balance)} (must be 0 to remove)`);
           // if (limit !== 0) reasons.push(`Limit is ${trustline.limit} (must be 0 to remove)`);
           if (trustline.flags?.includes('Freeze') && !clearFlags.tfClearFreeze) reasons.push(`Trustline is frozen`);
           if (trustline.flags?.includes('DeepFreeze') && !clearFlags.tfClearDeepFreeze) reasons.push(`Trustline is deep-frozen`);

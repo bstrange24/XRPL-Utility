@@ -5,6 +5,7 @@ import { WalletManagerService } from '../../wallets/manager/wallet-manager.servi
 import { TrustlineStoreService } from '../trustline-store/trustline-store.service';
 import * as xrpl from 'xrpl';
 import { TrustlineActionTypes } from '../../../components/trustlines/constants/trustline.types';
+import { formatTrustlineAmount } from '../../../components/trustlines/constants/trustline.ui';
 import { UtilsService } from '../../utils/util-service/utils.service';
 import { ToastService } from '../../utils/toast/toast.service';
 import { PrepareTxEnvironmentResult, TxEnvironmentService } from '../../transaction-environment/tx-environment.service';
@@ -91,9 +92,7 @@ export class TrustlineUtilService {
                     // Check if trustline can be removed
                     if (this.activeTab() === 'removeTrustline') {
                          const trustline = existingIOUs.find((tl: any) => tl.currency === currentCurrency && tl.issuer === currentIssuer);
-                         const canRemove = trustline
-                              ? this.canRemoveTrustline(trustline)
-                              : { canRemove: false, reasons: ['No trustline exists for this currency/issuer pair'] };
+                         const canRemove = trustline ? this.canRemoveTrustline(trustline) : { canRemove: false, reasons: ['No trustline exists for this currency/issuer pair'] };
                          this.trustlineStoreService.setField('removeTrustlineAvailable', canRemove.canRemove);
                          this.trustlineStoreService.setField('removeTrustlineMessage', canRemove.reasons);
                     } else {
@@ -170,9 +169,7 @@ export class TrustlineUtilService {
 
                if (tab === 'removeTrustline') {
                     const trustline = this.trustlineStoreService.currentTrustline(currency, issuer);
-                    const status = trustline
-                         ? this.canRemoveTrustline(trustline)
-                         : { canRemove: false, reasons: ['No trustline exists for this currency/issuer pair'] };
+                    const status = trustline ? this.canRemoveTrustline(trustline) : { canRemove: false, reasons: ['No trustline exists for this currency/issuer pair'] };
                     this.trustlineStoreService.setField('removeTrustlineAvailable', status.canRemove);
                     this.trustlineStoreService.setField('removeTrustlineMessage', status.reasons);
                }
@@ -387,13 +384,8 @@ export class TrustlineUtilService {
 
           // Check balance (must be 0)
           if (balance !== 0) {
-               reasons.push(`Balance is ${trustline.balance} (must be 0 to remove)`);
+               reasons.push(`Balance is ${formatTrustlineAmount(trustline.balance)} (must be 0 to remove)`);
           }
-
-          // Check limit (must be 0)
-          // if (limit !== 0) {
-          //      reasons.push(`Limit is ${trustline.limit} (must be 0 to remove)`);
-          // }
 
           // Check if frozen
           if (trustline.flags?.includes('Freeze') && !this.trustlineCurrencyService.flags().tfClearFreeze) {

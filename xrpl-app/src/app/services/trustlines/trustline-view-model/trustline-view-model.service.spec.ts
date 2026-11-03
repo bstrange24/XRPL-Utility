@@ -150,6 +150,23 @@ describe('TrustlineViewModelService', () => {
 
                     expect(service.canRemoveTrustline()).toEqual({ canRemove: false, reasons: ['Trustline is frozen'] });
                });
+
+               it('formats the trustline balance in removal reasons', () => {
+                    existingIOUsSignal.set([
+                         {
+                              currency: 'USD',
+                              issuer: 'rIssuerAddress',
+                              balance: '1234.5',
+                              limit: '10000',
+                              flags: [],
+                         },
+                    ]);
+
+                    expect(service.canRemoveTrustline()).toEqual({
+                         canRemove: false,
+                         reasons: ['Balance is 1,234.5 (must be 0 to remove)'],
+                    });
+               });
           });
 
           it('should return true when step is not idle', () => {

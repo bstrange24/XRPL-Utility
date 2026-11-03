@@ -302,6 +302,12 @@ describe('TrustlineUtilService', () => {
                expect(result.reasons.length).toBeGreaterThan(0);
           });
 
+          it('should format the trustline balance in removal reasons', () => {
+               const result = service.canRemoveTrustline({ balance: '1234.5' });
+
+               expect(result.reasons).toContain('Balance is 1,234.5 (must be 0 to remove)');
+          });
+
           it('should allow removal when the selected flags clear the trustline freeze', () => {
                const line = { balance: '0', flags: ['Freeze'] };
                mockFlagsSignal.set({ ...mockFlagsSignal(), tfClearFreeze: true });
