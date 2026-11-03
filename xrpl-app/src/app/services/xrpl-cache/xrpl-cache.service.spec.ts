@@ -262,6 +262,13 @@ describe('XrplCacheService', () => {
                const result = await service.getBlockingObjects(mockClient, 'rTest');
                expect(result).toBeDefined();
           });
+
+          it('should scope blocker cache entries to the active network', () => {
+               const testnetKey = service.getBlockingObjectsCacheKey('rTest');
+               xrplService.getNet.and.returnValue({ net: 'devnet', environment: 'devnet' });
+               const devnetKey = service.getBlockingObjectsCacheKey('rTest');
+               expect(devnetKey).not.toBe(testnetKey);
+          });
      });
 
      describe('getBaseFeeDrops', () => {

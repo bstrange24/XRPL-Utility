@@ -4,8 +4,6 @@ import { AccountDeleteViewModelService } from './account-delete-view-model.servi
 import { WalletManagerService } from '../../wallets/manager/wallet-manager.service';
 import { TransactionUiService } from '../../transaction-ui/transaction-ui.service';
 import { AccountDeleteStoreService } from '../account-delete-store/account-delete-store.service';
-import { BLOCKER_MAP } from '../../../components/account-delete/constants/account-delete.ui';
-import * as xrpl from 'xrpl';
 
 describe('AccountDeleteViewModelService', () => {
      let service: AccountDeleteViewModelService;
@@ -24,7 +22,7 @@ describe('AccountDeleteViewModelService', () => {
                account_data: {
                     Balance: '1000000000', // 1000 XRP
                     OwnerCount: 5,
-                    PreviousTxnLgrSeq: 100,
+                    Sequence: 100,
                     RegularKey: 'rRegularKey',
                     SignerList: true,
                },
@@ -43,7 +41,7 @@ describe('AccountDeleteViewModelService', () => {
 
      const mockBlockingObjects = {
           result: {
-               account_objects: [{ LedgerEntryType: 'Offer' }, { LedgerEntryType: 'Offer' }, { LedgerEntryType: 'TrustLine' }, { LedgerEntryType: 'Check' }],
+               account_objects: [{ LedgerEntryType: 'RippleState' }, { LedgerEntryType: 'RippleState' }, { LedgerEntryType: 'PayChannel' }, { LedgerEntryType: 'Check' }],
           },
      };
 
@@ -56,6 +54,7 @@ describe('AccountDeleteViewModelService', () => {
                blockingObjects: signal(mockBlockingObjects),
                accountInfo: signal(mockAccountInfo),
                serverInfo: signal(mockServerInfo),
+               destination: signal(''),
           };
 
           txUiServiceMock = {
@@ -88,8 +87,8 @@ describe('AccountDeleteViewModelService', () => {
      describe('accountObjectCounts', () => {
           it('should count blocking objects by type', () => {
                const counts = service.accountObjectCounts();
-               expect(counts['Offer']).toBe(2);
-               expect(counts['TrustLine']).toBe(1);
+               expect(counts['RippleState']).toBe(2);
+               expect(counts['PayChannel']).toBe(1);
                expect(counts['Check']).toBe(1);
           });
 
@@ -101,12 +100,21 @@ describe('AccountDeleteViewModelService', () => {
      });
 
      describe('blockersFromObjects', () => {
-          // it('should map blocking objects to blockers with labels from BLOCKER_MAP', () => {
-          //      const blockers = service.blockersFromObjects();
-          //      expect(blockers.length).toBe(4);
-          //      expect(blockers[0].label).toBeDefined();
-          //      expect(blockers[0].count).toBe(2);
-          // });
+          it('should explain when a payment channel was created by another account', () => {
+               accountDeleteStoreServiceMock.blockingObjects.set({
+                    result: {
+                         account_objects: [
+                              {
+                                   LedgerEntryType: 'PayChannel',
+                                   Account: 'rChannelCreator',
+                                   Destination: mockWallet.classicAddress,
+                              },
+                         ],
+                    },
+               });
+
+               expect(service.blockersFromObjects()[0].details).toEqual(['created by rChannelCreator; destination is this account']);
+          });
 
           it('should return empty array when no blocking objects', () => {
                accountDeleteStoreServiceMock.blockingObjects.set({ result: { account_objects: [] } });
@@ -115,65 +123,75 @@ describe('AccountDeleteViewModelService', () => {
           });
      });
 
-     describe('blockersFromAccountData', () => {
-          it('should return blockers for RegularKey and SignerList', () => {
-               const blockers = service.blockersFromAccountData();
-               expect(blockers.length).toBe(2);
-               expect(blockers[0].label).toBe('Regular Key');
-               expect(blockers[1].label).toBe('Signer List');
+     describe('eligibilityIssues', () => {
+          it('should calculate the wait using account Sequence and the current validated ledger', () => {
+               const issues = service.eligibilityIssues();
+               expect(issues.length).toBe(1);
+               expect(issues[0].label).toContain('Wait 155 more ledgers');
           });
 
-          it('should return empty array when no regular key or signer list', () => {
-               const accountInfoWithoutFeatures = {
+          it('should not treat RegularKey or SignerList as deletion blockers', () => {
+               accountDeleteStoreServiceMock.blockingObjects.set({ result: { account_objects: [] } });
+               expect(service.blockersList()).toEqual([]);
+          });
+
+          it('should report the NFT remint window when the account has minted NFTs', () => {
+               accountDeleteStoreServiceMock.accountInfo.set({
                     result: {
-                         account_data: {},
+                         account_data: {
+                              Sequence: 1,
+                              OwnerCount: 0,
+                              MintedNFTokens: 5,
+                              FirstNFTokenSequence: 10,
+                         },
                     },
-               };
-               accountDeleteStoreServiceMock.accountInfo.set(accountInfoWithoutFeatures);
-               const blockers = service.blockersFromAccountData();
-               expect(blockers).toEqual([]);
-          });
-     });
-
-     describe('ledgerWaitBlocker', () => {
-          it('should return ledger wait blocker when less than 256 ledgers passed', () => {
-               const blockers = service.ledgerWaitBlocker();
-               expect(blockers.length).toBeGreaterThan(0);
-               expect(blockers[0].label).toContain('Wait');
+               });
+               const issues = service.eligibilityIssues();
+               expect(issues.some(issue => issue.label.includes('NFT remint window'))).toBeTrue();
           });
 
-          // it('should return empty array when enough ledgers have passed', () => {
-          //      const accountInfoWithLargeSeq = {
-          //           result: {
-          //                account_data: {
-          //                     PreviousTxnLgrSeq: 500,
-          //                },
-          //           },
-          //      };
-          //      const serverInfoWithLargeSeq = {
-          //           result: {
-          //                info: {
-          //                     validated_ledger: { seq: 550 },
-          //                },
-          //           },
-          //      };
-          //      accountDeleteStoreServiceMock.accountInfo.set(accountInfoWithLargeSeq);
-          //      accountDeleteStoreServiceMock.serverInfo.set(serverInfoWithLargeSeq);
-          //      const blockers = service.ledgerWaitBlocker();
-          //      expect(blockers).toEqual([]);
-          // });
+          it('should report object-count and sponsorship restrictions', () => {
+               accountDeleteStoreServiceMock.accountInfo.set({
+                    result: {
+                         account_data: {
+                              Sequence: 1,
+                              OwnerCount: 1001,
+                              SponsoringOwnerCount: 1,
+                         },
+                    },
+               });
+               const labels = service.eligibilityIssues().map(issue => issue.label);
+               expect(labels.some(label => label.includes('1,000 or fewer'))).toBeTrue();
+               expect(labels.some(label => label.includes('sponsorships'))).toBeTrue();
+          });
 
-          it('should return empty array when account info missing', () => {
+          it('should require a sponsored account to use its sponsor as the destination', () => {
+               accountDeleteStoreServiceMock.accountInfo.set({
+                    result: {
+                         account_data: {
+                              Sequence: 1,
+                              OwnerCount: 0,
+                              Sponsor: 'rSponsor',
+                         },
+                    },
+               });
+               expect(service.eligibilityIssues().some(issue => issue.label.includes('rSponsor'))).toBeTrue();
+
+               accountDeleteStoreServiceMock.destination.set('rSponsor');
+               expect(service.eligibilityIssues().some(issue => issue.label.includes('sponsor'))).toBeFalse();
+          });
+
+          it('should return no eligibility issues when account data is unavailable', () => {
                accountDeleteStoreServiceMock.accountInfo.set(null);
-               const blockers = service.ledgerWaitBlocker();
-               expect(blockers).toEqual([]);
+               expect(service.eligibilityIssues()).toEqual([]);
           });
      });
 
      describe('blockersList', () => {
-          it('should combine all blockers', () => {
+          it('should only contain actual ledger object blockers', () => {
                const blockers = service.blockersList();
-               expect(blockers.length).toBeGreaterThan(0);
+               expect(blockers.length).toBe(3);
+               expect(blockers.some(blocker => blocker.label === 'Regular Key' || blocker.label === 'Signer Lists')).toBeFalse();
           });
      });
 
@@ -196,6 +214,18 @@ describe('AccountDeleteViewModelService', () => {
                const warning = service.balanceWarning();
                expect(warning).toContain('Balance too low');
           });
+
+          it('should not require the account reserve to remain after deletion', () => {
+               accountDeleteStoreServiceMock.accountInfo.set({
+                    result: {
+                         account_data: {
+                              Balance: '3000000',
+                              OwnerCount: 5,
+                         },
+                    },
+               });
+               expect(service.balanceWarning()).toBeNull();
+          });
      });
 
      describe('canDelete', () => {
@@ -207,10 +237,14 @@ describe('AccountDeleteViewModelService', () => {
                          account_data: {
                               Balance: '1000000000',
                               OwnerCount: 0,
+                              Sequence: 1,
                          },
                     },
                };
                accountDeleteStoreServiceMock.accountInfo.set(accountInfoNoBlockers);
+               accountDeleteStoreServiceMock.serverInfo.set({
+                    result: { info: { validated_ledger: { seq: 1000 }, reserve_base_xrp: 10, reserve_inc_xrp: 2 } },
+               });
                const canDelete = service.canDelete();
                expect(canDelete).toBeTrue();
           });
@@ -227,6 +261,7 @@ describe('AccountDeleteViewModelService', () => {
                expect(info.walletName).toBe('Test Wallet');
                expect(info.canDelete).toBeDefined();
                expect(info.blockers).toBeDefined();
+               expect(info.eligibilityIssues).toBeDefined();
                expect(info.balanceWarning).toBeDefined();
           });
 
@@ -238,9 +273,10 @@ describe('AccountDeleteViewModelService', () => {
      });
 
      describe('deleteBlockers', () => {
-          it('should return the blockers list', () => {
+          it('should include object blockers and account eligibility requirements', () => {
                const blockers = service.deleteBlockers();
-               expect(blockers).toEqual(service.blockersList());
+               expect(blockers.length).toBe(service.blockersList().length + service.eligibilityIssues().length + Number(!!service.balanceWarning()));
+               expect(blockers.some(blocker => blocker.label.includes('Wait'))).toBeTrue();
           });
      });
 
@@ -270,17 +306,21 @@ describe('AccountDeleteViewModelService', () => {
                          account_data: {
                               Balance: '1000000000',
                               OwnerCount: 0,
+                              Sequence: 1,
                          },
                     },
                };
                accountDeleteStoreServiceMock.accountInfo.set(accountInfoNoBlockers);
+               accountDeleteStoreServiceMock.serverInfo.set({
+                    result: { info: { validated_ledger: { seq: 1000 }, reserve_base_xrp: 10, reserve_inc_xrp: 2 } },
+               });
                const message = service.summaryMessage();
                expect(message).toContain('can be deleted');
           });
 
           it('should return blocker count message when blockers exist', () => {
                const message = service.summaryMessage();
-               expect(message).toContain('configuration blocker');
+               expect(message).toContain('deletion blockers or requirements');
           });
      });
 });

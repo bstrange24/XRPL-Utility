@@ -309,13 +309,18 @@ export class XrplCacheService {
      }
 
      async getBlockingObjects(client: xrpl.Client, address: string, forceRefresh = false): Promise<any> {
-          const blockingKey = `account:${address}:blocking`;
+          const blockingKey = this.getBlockingObjectsCacheKey(address);
 
           if (forceRefresh) {
                this.invalidate(blockingKey);
           }
 
           return await this.getOrFetch(blockingKey, () => this.xrplService.checkAccountObjectsForDeletion(client, address), this.defaultTTL);
+     }
+
+     getBlockingObjectsCacheKey(address: string): string {
+          const network = this.xrplService.getNet().environment;
+          return `account:${address}:${network}:blocking`;
      }
 
      /** Get current base fee in drops */

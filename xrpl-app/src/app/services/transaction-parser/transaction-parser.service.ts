@@ -84,9 +84,7 @@ export class TransactionParserService {
           keyDetails = this.addMemosToKeyDetails(keyDetails, txJson);
           keyDetails = this.addSignersToKeyDetails(keyDetails, txJson);
           keyDetails = this.addSigningInfoToKeyDetails(keyDetails, txJson, meta);
-          keyDetails = keyDetails.map(detail =>
-               detail.label.toLowerCase() === 'fee' && txJson.Fee != null ? { ...detail, value: formatDrops(txJson.Fee) } : detail,
-          );
+          keyDetails = keyDetails.map(detail => (detail.label.toLowerCase() === 'fee' && txJson.Fee != null ? { ...detail, value: formatDrops(txJson.Fee) } : detail));
 
           console.debug('Parsed transaction result:', keyDetails, affectedAccounts);
 
@@ -118,7 +116,7 @@ export class TransactionParserService {
                transactionType: 'Credential Verification',
                summary: {
                     title: isAccepted ? 'Credential Accepted' : 'Credential Not Accepted',
-                    description: isAccepted ? 'This credential has been accepted by its issuer.' : 'This credential has not been accepted by its issuer.',
+                    description: isAccepted ? 'This credential has been accepted by its recipient.' : 'This credential has not been accepted by its recipient.',
                },
                keyDetails: [],
                affectedAccounts: [],

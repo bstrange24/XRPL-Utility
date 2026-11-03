@@ -27,48 +27,80 @@ export class AccountDeleteViewModelService {
 
      readonly blockersFromObjects = computed(() => {
           const counts = this.accountObjectCounts();
-          const arr: { label: string; count: number; route: string; tab?: string }[] = [];
+          const blockingObjects = this.deleteAccountStoreService.blockingObjects()?.result?.account_objects ?? [];
+          const selectedAddress = this.walletManager.getSelectedWallet()?.classicAddress;
+          const arr: Blocker[] = [];
           for (const [type, count] of Object.entries(counts)) {
                const meta = BLOCKER_MAP[type] || { label: type, route: '#' };
-               arr.push({ label: meta.label, count, route: meta.route, tab: meta.tab });
+               const details =
+                    type === 'PayChannel'
+                         ? blockingObjects
+                                .filter((obj: any) => obj.LedgerEntryType === type)
+                                .map((obj: any) => {
+                                     const creator = obj.Account === selectedAddress ? 'created by this account' : `created by ${obj.Account ?? 'another account'}`;
+                                     const destination = obj.Destination === selectedAddress ? 'destination is this account' : `destination ${obj.Destination ?? 'unknown'}`;
+                                     return `${creator}; ${destination}`;
+                                })
+                         : undefined;
+               arr.push({ label: meta.label, count, route: meta.route, tab: meta.tab, details });
           }
           return arr;
      });
 
-     readonly blockersFromAccountData = computed(() => {
-          const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
-          if (!acc) return [];
-          const arr: { label: string; count: number; route: string; tab?: string }[] = [];
-
-          if (acc.RegularKey) {
-               arr.push({ label: 'Regular Key', count: 1, route: '/account-configurator', tab: 'modifyRegularKey' });
-          }
-          if (acc.SignerList) {
-               arr.push({ label: 'Signer List', count: 1, route: '/account-configurator', tab: 'modifySignerList' });
-          }
-          return arr;
-     });
-
-     readonly ledgerWaitBlocker = computed(() => {
+     readonly eligibilityIssues = computed<Blocker[]>(() => {
           const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
           const srv = this.deleteAccountStoreService.serverInfo()?.result?.info?.validated_ledger;
-          if (!acc || !srv) return [];
-          const lastTxLedger = Number(acc.PreviousTxnLgrSeq ?? 0);
+          if (!acc) return [];
+
+          const issues: Blocker[] = [];
           const currentLedger = Number(srv?.seq ?? 0);
-          if (lastTxLedger <= 0 || currentLedger <= 0) return [];
-          const ledgersSince = currentLedger - lastTxLedger;
-          const remaining = 256 - ledgersSince;
-          if (remaining <= 0) return [];
-          return [
-               {
-                    label: `Wait ${remaining} more ledgers (~${Math.ceil((remaining * 4) / 60)} min)`,
-                    count: 1,
-                    route: '#',
-               },
-          ];
+          const sequence = Number(acc.Sequence ?? 0);
+
+          if (acc.Sponsor && this.deleteAccountStoreService.destination() !== acc.Sponsor) {
+               issues.push({ label: `Use the account sponsor (${acc.Sponsor}) as the deletion destination`, count: 1, route: '#' });
+          }
+
+          const ownerCount = Number(acc.OwnerCount ?? 0);
+          if (ownerCount > 1000) {
+               issues.push({ label: `Reduce owned objects to 1,000 or fewer (currently ${ownerCount})`, count: 1, route: '#' });
+          }
+
+          const sponsoringOwnerCount = Number(acc.SponsoringOwnerCount ?? 0);
+          const sponsoringAccountCount = Number(acc.SponsoringAccountCount ?? 0);
+          if (sponsoringOwnerCount > 0 || sponsoringAccountCount > 0) {
+               issues.push({ label: 'Resolve active reserve sponsorships before deletion', count: 1, route: '#' });
+          }
+
+          if (!srv) return issues;
+
+          if (sequence > 0 && currentLedger > 0) {
+               const remaining = sequence + 255 - currentLedger;
+               if (remaining > 0) {
+                    issues.push({
+                         label: `Wait ${remaining} more ledgers (~${Math.ceil((remaining * 4) / 60)} min) before deletion`,
+                         count: 1,
+                         route: '#',
+                    });
+               }
+          }
+
+          const mintedNftokens = Number(acc.MintedNFTokens ?? 0);
+          const firstNftSequence = Number(acc.FirstNFTokenSequence ?? 0);
+          if (mintedNftokens > 0 && firstNftSequence > 0 && currentLedger > 0) {
+               const remaining = firstNftSequence + mintedNftokens + 255 - currentLedger;
+               if (remaining > 0) {
+                    issues.push({
+                         label: `Wait ${remaining} more ledgers (~${Math.ceil((remaining * 4) / 60)} min) after the NFT remint window`,
+                         count: 1,
+                         route: '#',
+                    });
+               }
+          }
+
+          return issues;
      });
 
-     readonly blockersList = computed<Blocker[]>(() => [...this.blockersFromObjects(), ...this.blockersFromAccountData(), ...this.ledgerWaitBlocker()]);
+     readonly blockersList = computed<Blocker[]>(() => this.blockersFromObjects());
 
      readonly deleteInfo = computed(() => {
           const acc = this.deleteAccountStoreService.accountInfo()?.result?.account_data;
@@ -77,18 +109,13 @@ export class AccountDeleteViewModelService {
 
           const reserveBase = Number(srv.reserve_base_xrp ?? 10); // e.g. 1 or 10
           const reserveInc = Number(srv.reserve_inc_xrp ?? 2); // usually 0.2
-          const ownerCount = Number(acc.OwnerCount ?? 0);
-
-          const reserveRequired = reserveBase + ownerCount * reserveInc;
           const deleteFee = reserveInc; // AccountDelete burns one owner reserve (~0.2 XRP)
 
           return {
                reserveBase,
                reserveInc,
-               ownerCount,
-               reserveRequired,
                deleteFee,
-               totalMinimumNeeded: reserveRequired + deleteFee,
+               minimumBalance: deleteFee,
           };
      });
 
@@ -98,23 +125,31 @@ export class AccountDeleteViewModelService {
 
           const balanceXrp = Number(xrpl.dropsToXrp(String(this.deleteAccountStoreService.accountInfo()?.result?.account_data?.Balance ?? 0)));
 
-          if (balanceXrp < info.totalMinimumNeeded) {
-               return `Balance too low. Minimum ${info.totalMinimumNeeded.toFixed(6)} XRP required.`;
+          if (balanceXrp < info.minimumBalance) {
+               return `Balance too low. At least ${info.minimumBalance.toFixed(6)} XRP is required to cover the deletion fee.`;
           }
           return null;
      });
 
-     readonly canDelete = computed(() => this.blockersList().length === 0 && !this.balanceWarning());
+     readonly deleteBlockers = computed<Blocker[]>(() => {
+          const balanceWarning = this.balanceWarning();
+          return [
+               ...this.blockersList(),
+               ...this.eligibilityIssues(),
+               ...(balanceWarning ? [{ label: balanceWarning, count: 1, route: '#' }] : []),
+          ];
+     });
+
+     readonly canDelete = computed(() => this.deleteBlockers().length === 0);
 
      readonly infoData = computed(() => ({
           walletName: this.walletManager.getSelectedWallet()?.name || 'Selected wallet',
           canDelete: this.canDelete(),
           blockers: this.blockersList(),
+          eligibilityIssues: this.eligibilityIssues(),
           balanceWarning: this.balanceWarning(),
           deleteInfo: this.deleteInfo(),
      }));
-
-     readonly deleteBlockers = computed(() => this.blockersList());
 
      readonly deleteWalletButtonLabel = computed(() => 'Delete Account');
 
@@ -122,10 +157,8 @@ export class AccountDeleteViewModelService {
           const info = this.infoData();
           if (info.canDelete) {
                return `<span> wallet <strong>can be deleted</strong> — no blockers found.</span>`;
-          } else if (info.blockers.length === 0) {
-               return `<span> wallet is ready for deletion (after final checks).</span>`;
           } else {
-               return `<span> wallet has <strong>${info.blockers.length}</strong> configuration blocker${info.blockers.length === 1 ? '' : 's'} preventing deletion.</span>`;
+               return `<span> wallet has deletion blockers or requirements that must be resolved.</span>`;
           }
      });
 }

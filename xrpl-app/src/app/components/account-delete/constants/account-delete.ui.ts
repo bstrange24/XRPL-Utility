@@ -2,20 +2,19 @@ import { AppConstants, IconType } from '../../../core/app.constants';
 import { AccountDeleteConfigTxDisplayType } from './account-delete.constants';
 
 export const BLOCKER_MAP: Record<string, { label: string; route: string; tab?: string }> = {
-     RippleState: { label: 'Trust Lines', route: '/trustlines', tab: 'removeTrustline' },
-     Offer: { label: 'DEX Offers', route: '/create-offer', tab: 'cancelOffer' },
-     Escrow: { label: 'Escrows', route: '/time-escrow', tab: 'cancelEscrow' },
+     Bridge: { label: 'Cross-Chain Bridges', route: '#' },
      Check: { label: 'Checks', route: '/checks', tab: 'cancelCheck' },
-     PayChannel: { label: 'Payment Channels', route: '/payment-channel', tab: 'closePaymentChannel' },
-     Ticket: { label: 'Tickets', route: '/tickets', tab: 'deleteTickets' },
-     SignerList: { label: 'Signer Lists', route: '/account-configurator', tab: 'modifySignerList' },
-     RegularKey: { label: 'Regular Key', route: '/account-configurator', tab: 'modifyRegularKey' },
+     Escrow: { label: 'Escrows', route: '/time-escrow', tab: 'cancelEscrow' },
+     MPToken: { label: 'MPTokens', route: '/mpt', tab: 'destroyMpt' },
+     MPTokenIssuance: { label: 'MPToken Issuances', route: '/mpt', tab: 'destroyMpt' },
      NFTokenPage: { label: 'NFTs', route: '/create-nft', tab: 'burnNft' },
+     PayChannel: { label: 'Payment Channels', route: '/payment-channel', tab: 'closePaymentChannel' },
      PermissionedDomain: { label: 'Permissioned Domains', route: '/permissioned-domain', tab: 'deletePermissionedDomain' },
-     Credential: { label: 'Credentials', route: '/create-credentials', tab: 'deleteCredentials' },
-     DID: { label: 'DID', route: '/create-did', tab: 'deleteDid' },
-     MPToken: { label: 'MPToken', route: '/mpt', tab: 'destroyMpt' },
-     MPTokenIssuance: { label: 'MPToken Issuance', route: '/mpt', tab: 'destroyMpt' },
+     RippleState: { label: 'Trust Lines', route: '/trustlines', tab: 'removeTrustline' },
+     Sponsorship: { label: 'Sponsorships', route: '#' },
+     Vault: { label: 'Vaults', route: '#' },
+     XChainOwnedClaimID: { label: 'Cross-Chain Claims', route: '#' },
+     XChainOwnedCreateAccountClaimID: { label: 'Cross-Chain Account Claims', route: '#' },
 };
 
 // Tab configuration constants

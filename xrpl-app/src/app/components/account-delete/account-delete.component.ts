@@ -71,6 +71,11 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
                     this.lastIntendedDestination.set(currentSelected);
                }
           });
+
+          effect(() => {
+               const destination = this.transactionDropdownService.getFinalDestinationAddress(this.selectedDestinationAddress, this.destinationSearchQuery);
+               this.deleteAccountStoreService.setField('destination', destination);
+          });
      }
 
      ngOnInit(): void {
@@ -249,7 +254,7 @@ export class AccountDeleteComponent extends WalletDestinationBase implements OnI
           const accountInfo = this.xrplCache.get<xrpl.AccountInfoResponse>(`account:${address}:info`);
           if (accountInfo) this.deleteAccountStoreService.setField('accountInfo', accountInfo);
 
-          const blockingObjects = this.xrplCache.get<any>(`account:${address}:blocking`);
+          const blockingObjects = this.xrplCache.get<any>(this.xrplCache.getBlockingObjectsCacheKey(address));
           if (blockingObjects) this.deleteAccountStoreService.setField('blockingObjects', blockingObjects);
 
           const serverInfo = this.xrplCache.get<xrpl.ServerInfoResponse>(`${this.environment()}:server:info:current`);

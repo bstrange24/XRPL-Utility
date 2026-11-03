@@ -11,11 +11,13 @@ export interface BlockerItem {
      count: number;
      route: string;
      tab?: string;
+     details?: string[];
 }
 
 export interface DeleteAccountInfo {
      walletName: string;
      blockers: BlockerItem[];
+     eligibilityIssues: BlockerItem[];
      balanceWarning: string | null;
 }
 
@@ -31,7 +33,7 @@ export class AccountDeleteSummaryComponent {
      private readonly walletManager = inject(WalletManagerService);
 
      readonly hasWallets = computed(() => this.walletManager.wallets().length > 0);
-     info = input.required<{ walletName: string; canDelete: boolean; blockers: BlockerItem[]; balanceWarning: string | null } | null | undefined>();
+     info = input.required<{ walletName: string; canDelete: boolean; blockers: BlockerItem[]; eligibilityIssues: BlockerItem[]; balanceWarning: string | null } | null | undefined>();
      infoPanelExpanded = input<boolean>();
      tab = input<string>('delete');
 
@@ -43,38 +45,34 @@ export class AccountDeleteSummaryComponent {
      hasContent = computed(() => {
           const i = this.info();
           if (!i) return false;
-          return i.blockers.length > 0 || !!i.balanceWarning;
+          return i.blockers.length > 0 || i.eligibilityIssues.length > 0 || !!i.balanceWarning;
+     });
+
+     issueCount = computed(() => {
+          const i = this.info();
+          if (!i) return 0;
+          return i.blockers.length + i.eligibilityIssues.length + Number(!!i.balanceWarning);
      });
 
      emptyStateMessage = computed(() => {
           const infoData = this.info();
-          if (!infoData) return 'No blocking objects detected.';
+          if (!infoData) return 'Deletion status is unavailable.';
 
-          if (infoData.blockers.length === 0 && !infoData.balanceWarning) {
-               return 'This account has no blockers and is ready for deletion.';
-          }
-
-          if (infoData.blockers.length === 0 && infoData.balanceWarning) {
-               return 'No blocking objects found, but balance issues remain.';
-          }
-
-          return `${infoData.blockers.length} blocking object${infoData.blockers.length === 1 ? '' : 's'} need to be resolved.`;
+          return 'No deletion blockers or requirements need attention.';
      });
 
      summaryMessage = computed(() => {
           const infoData = this.info();
           if (!infoData) return '';
 
-          const count = infoData.blockers.length;
-
-          if (count === 0 && !infoData.balanceWarning) {
+          if (this.issueCount() === 0) {
                return ' has no blockers preventing account deletion.';
           }
 
-          if (count === 0 && infoData.balanceWarning) {
-               return ' has no blockers, but balance needs attention.';
-          }
-
-          return ` has <strong>${count}</strong> blocking object${count === 1 ? '' : 's'} that must be resolved.`;
+          const blockingObjects = infoData.blockers.reduce((count, blocker) => count + blocker.count, 0);
+          const requirements = infoData.eligibilityIssues.length + Number(!!infoData.balanceWarning);
+          const objectText = `${blockingObjects} blocking object${blockingObjects === 1 ? '' : 's'}`;
+          const requirementText = `${requirements} deletion requirement${requirements === 1 ? '' : 's'}`;
+          return ` has <strong>${objectText}</strong> and <strong>${requirementText}</strong> that need attention.`;
      });
 }

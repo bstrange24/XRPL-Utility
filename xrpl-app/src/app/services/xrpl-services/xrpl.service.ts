@@ -950,6 +950,7 @@ export class XrplService {
                const response = await client.request({
                     command: 'account_objects',
                     account: address,
+                    ledger_index: 'validated',
                     deletion_blockers_only: true,
                });
                return response;

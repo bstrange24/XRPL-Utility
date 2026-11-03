@@ -16,6 +16,7 @@ import { LUCIDE_ICONS, LucideIconProvider, icons } from 'lucide-angular';
                <span>{{ walletName }}</span>
                <span>{{ summaryText }}</span>
                <span>Show {{ itemCount }} {{ buttonLabel }}</span>
+               <span>{{ emptyStateMessage }}</span>
                <ng-content></ng-content>
           </div>
      `,
@@ -90,6 +91,7 @@ describe('AccountDeleteSummaryComponent', () => {
                     { label: 'Open Orders', count: 3, route: '/orders' },
                     { label: 'Active Positions', count: 1, route: '/positions' },
                ],
+               eligibilityIssues: [],
                balanceWarning: null,
           });
 
@@ -106,6 +108,7 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'My Wallet',
                canDelete: false,
                blockers: [],
+               eligibilityIssues: [],
                balanceWarning: 'You have a remaining balance of 0.5 USDC',
           });
 
@@ -119,13 +122,39 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'My Wallet',
                canDelete: true,
                blockers: [],
-               balanceWarning: 'Final balance will be sent to your linked bank account',
+               eligibilityIssues: [],
+               balanceWarning: null,
           });
 
           const text = fixture.nativeElement.textContent;
-          expect(text).toContain('No blocking objects detected');
-          expect(text).toContain('This account appears ready for deletion');
-          expect(text).toContain('ready for deletion'); // more reliable check
+          expect(text).toContain('No deletion blockers or requirements need attention.');
+     });
+
+     it('should render account deletion requirements separately from ledger object blockers', () => {
+          setInfo({
+               walletName: 'My Wallet',
+               canDelete: false,
+               blockers: [],
+               eligibilityIssues: [{ label: 'Wait 20 more ledgers before deletion', count: 1, route: '#' }],
+               balanceWarning: null,
+          });
+
+          const text = fixture.nativeElement.textContent;
+          expect(text).toContain('AccountDelete requirements');
+          expect(text).toContain('Wait 20 more ledgers before deletion');
+          expect(text).not.toContain('1 Wait 20 more ledgers before deletion');
+     });
+
+     it('should show why an incoming payment channel blocks deletion', () => {
+          setInfo({
+               walletName: 'My Wallet',
+               canDelete: false,
+               blockers: [{ label: 'Payment Channels', count: 1, route: '/payment-channel', details: ['created by rChannelCreator; destination is this account'] }],
+               eligibilityIssues: [],
+               balanceWarning: null,
+          });
+
+          expect(fixture.nativeElement.textContent).toContain('created by rChannelCreator; destination is this account');
      });
 
      it('should hide items when hasContent() is false', () => {
@@ -133,6 +162,7 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'My Wallet',
                canDelete: true,
                blockers: [],
+               eligibilityIssues: [],
                balanceWarning: null,
           });
 
@@ -144,10 +174,11 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'My Wallet',
                canDelete: true,
                blockers: [],
+               eligibilityIssues: [],
                balanceWarning: null,
           });
 
-          expect(component.emptyStateMessage()).toBe('This account has no blockers and is ready for deletion.');
+          expect(component.emptyStateMessage()).toBe('No deletion blockers or requirements need attention.');
      });
 
      it('should react to info changes', () => {
@@ -155,6 +186,7 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'Wallet A',
                canDelete: false,
                blockers: [{ label: 'Test', count: 1, route: '#' }],
+               eligibilityIssues: [],
                balanceWarning: null,
           });
           expect(fixture.nativeElement.textContent).toContain('Wallet A');
@@ -163,6 +195,7 @@ describe('AccountDeleteSummaryComponent', () => {
                walletName: 'Wallet B',
                canDelete: true,
                blockers: [],
+               eligibilityIssues: [],
                balanceWarning: null,
           });
           expect(fixture.nativeElement.textContent).toContain('Wallet B');

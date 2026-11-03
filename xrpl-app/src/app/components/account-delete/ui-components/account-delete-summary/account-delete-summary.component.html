@@ -1,16 +1,18 @@
 @if (hasWallets()) { @if (info(); as infoData) {
-<app-summary-container [walletName]="infoData.walletName" [summaryText]="summaryMessage()" [itemCount]="infoData.blockers.length" [links]="null" [buttonLabel]="'blocking objects'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
+<app-summary-container [walletName]="infoData.walletName" [summaryText]="summaryMessage()" [itemCount]="issueCount()" [links]="null" [buttonLabel]="'deletion issues'" [emptyStateMessage]="emptyStateMessage()" [infoPanelExpanded]="infoPanelExpanded()" (toggleInfoPanel)="toggleInfoPanel.emit()" [showExpandButton]="hasContent()">
      <!-- Custom Content for Delete Account -->
      <div items-list>
-          <!-- Blocking Objects Section -->
           @if (infoData.blockers.length > 0) {
           <div class="space-y-2">
-               @for (blocker of infoData.blockers; track blocker.route) {
+               @for (blocker of infoData.blockers; track blocker.label) {
                <div class="flex items-center justify-between rounded-xl border border-red-100 bg-red-50 px-4 py-3 transition-all hover:shadow-sm">
                     <div class="flex items-center gap-3">
                          <ng-icon name="heroXCircle" size="20" class="text-red-500 flex-shrink-0" />
                          <div>
                               <span class="font-medium text-gray-900">{{ blocker.count }} {{ blocker.label }}</span>
+                              @for (detail of blocker.details ?? []; track detail) {
+                              <p class="text-xs text-gray-600 mt-0.5">{{ detail }}</p>
+                              }
                               @if (blocker.route && blocker.route !== '#') {
                               <p class="text-xs text-gray-500 mt-0.5">Click resolve to fix this issue</p>
                               }
@@ -27,35 +29,24 @@
           </div>
           }
 
-          <!-- Balance Warning (if blockers exist OR alone) -->
+          @if (infoData.eligibilityIssues.length > 0) {
+          <div class="space-y-2" [class.mt-4]="infoData.blockers.length > 0">
+               <h3 class="px-1 text-sm font-semibold text-gray-700">AccountDelete requirements</h3>
+               @for (issue of infoData.eligibilityIssues; track issue.label) {
+               <div class="flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                    <ng-icon name="heroExclamationTriangle" size="20" class="text-amber-600 flex-shrink-0" />
+                    <span class="text-sm text-amber-800">{{ issue.label }}</span>
+               </div>
+               }
+          </div>
+          }
+
           @if (infoData.balanceWarning) {
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4" [class.mt-4]="infoData.blockers.length > 0">
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4" [class.mt-4]="infoData.blockers.length > 0 || infoData.eligibilityIssues.length > 0">
                <div class="flex gap-3">
                     <ng-icon name="heroExclamationTriangle" size="20" class="text-amber-600 flex-shrink-0 mt-0.5" />
                     <div class="text-sm text-amber-800"><strong class="text-amber-900">Warning:</strong> {{ infoData.balanceWarning }}</div>
                </div>
-          </div>
-          }
-
-          <!-- Ready for deletion state (NO blockers AND NO balance warning) -->
-          @if (infoData.blockers.length === 0 && !infoData.balanceWarning) {
-          <div class="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-               <div class="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                    <ng-icon name="heroCheckCircle" size="28" class="text-green-600" />
-               </div>
-               <p class="text-sm text-green-700 font-medium">Account is ready for deletion</p>
-               <p class="text-xs text-gray-500 mt-1">No blocking objects or balance issues detected</p>
-          </div>
-          }
-
-          <!-- Partial ready state (no blockers but has balance warning) -->
-          @if (infoData.blockers.length === 0 && infoData.balanceWarning) {
-          <div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
-               <div class="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-3">
-                    <ng-icon name="heroExclamationTriangle" size="28" class="text-amber-600" />
-               </div>
-               <p class="text-sm text-amber-700 font-medium">Balance issue detected</p>
-               <p class="text-xs text-gray-500 mt-1">Resolve the balance warning above before deleting</p>
           </div>
           }
      </div>

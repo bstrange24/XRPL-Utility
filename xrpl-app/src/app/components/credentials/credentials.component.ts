@@ -339,7 +339,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           // Accepted check
           if (!(credential.Flags & AppConstants.LSF_ACCEPTED)) {
                console.info('Credential is not accepted.');
-               this.toastService.error('Credential is not accepted.', AppConstants.TOAST.ERROR);
+               // this.toastService.error('Credential is not accepted.', AppConstants.TOAST.ERROR);
                return false;
           }
 
@@ -356,7 +356,7 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
 
           console.info('Credential is verified.');
 
-          this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);
+          // this.toastService.success(`Credential is verified.`, AppConstants.TOAST.SUCCESS, false);
 
           return true;
      }

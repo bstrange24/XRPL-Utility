@@ -29,4 +29,5 @@ export type Blocker = {
      count: number;
      route: string;
      tab?: string;
+     details?: string[];
 };
