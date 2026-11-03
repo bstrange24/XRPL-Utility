@@ -24,7 +24,14 @@
                     </div>
 
                     <div class="relative">
-                         <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available" />
+                         <app-select-search-dropdown [items]="view.pool1CurrencyItems()" [value]="view.selectedPool1CurrencyItem()" [showShortAddress]="false" (valueChange)="pool1CurrencySelected.emit($event)" placeholder="Search currency…" emptyMessage="No currencies available">
+                              <ng-template #itemTemplate let-item>
+                                   <div class="flex items-center gap-2">
+                                        <span>{{ item.display }}</span>
+                                        <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                   </div>
+                              </ng-template>
+                         </app-select-search-dropdown>
                     </div>
                </div>
                <app-field-helper title="Asset 1" [items]="showAsset1HelperItems" [show]="showAsset1Helper" />

@@ -35,7 +35,14 @@
                          </div>
 
                          <div class="relative">
-                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                              <app-select-search-dropdown [items]="vm.weWantCurrencyItems()" [value]="vm.selectedWeWantCurrencyItem()" [showShortAddress]="false" (valueChange)="weWantCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                                   <ng-template #itemTemplate let-item>
+                                        <div class="flex items-center gap-2">
+                                             <span>{{ item.display }}</span>
+                                             <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                        </div>
+                                   </ng-template>
+                              </app-select-search-dropdown>
                          </div>
                     </div>
                     <app-field-helper title="Taker Gets Currency" [items]="takerGetsCurrencyHelperItems" [show]="showTakerGetsCurrencyHelper" />
@@ -54,7 +61,14 @@
                               </button>
                          </div>
 
-                         <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available" />
+                         <app-select-search-dropdown [items]="vm.weSpendCurrencyItems()" [value]="vm.selectedWeSpendCurrencyItem()" [showShortAddress]="false" (valueChange)="weSpendCurrencySelected.emit($event)" placeholder="Search currency code..." emptyMessage="No currencies available">
+                              <ng-template #itemTemplate let-item>
+                                   <div class="flex items-center gap-2">
+                                        <span>{{ item.display }}</span>
+                                        <span class="text-xs text-gray-500">({{ item.secondary }})</span>
+                                   </div>
+                              </ng-template>
+                         </app-select-search-dropdown>
                     </div>
                     <app-field-helper title="Taker Pays Currency" [items]="takerPaysCurrencyHelperItems" [show]="showTakerPaysCurrencyHelper" />
                </div>

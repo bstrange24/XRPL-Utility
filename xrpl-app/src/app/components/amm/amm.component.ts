@@ -140,6 +140,7 @@ export class CreateAmmComponent extends WalletDestinationBase implements OnInit,
           this.trustlineCurrencyService.load();
           this.trustlineCurrencyService.preferXrpAsDefault.set(true);
           this.trustlineCurrencyService.addXrpInCurrencyDropdown.set(true);
+          this.offerCurrency.refreshKnownIssuers();
 
           // Default pool 2
           this.offerCurrency.selectWeSpendCurrency('XRP', this.currentWallet());

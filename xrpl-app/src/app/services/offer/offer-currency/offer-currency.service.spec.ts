@@ -141,6 +141,31 @@ describe('OfferCurrencyService', () => {
           });
      });
 
+     describe('refreshKnownIssuers', () => {
+          it('should refresh issuer options while preserving the selected issuer', async () => {
+               storageService.getKnownIssuers.and.returnValue({ BOB: ['rIssuer1'] });
+               xrplService.getTokenBalance.and.returnValue(Promise.resolve({ result: { balances: {} } }));
+
+               const service = createService();
+               service.setWalletAddress(mockWallet.classicAddress);
+               await service.selectWeWantCurrency('BOB', mockWallet);
+               await service.selectWeWantIssuer('rIssuer1', mockWallet);
+
+               storageService.getKnownIssuers.and.returnValue({ BOB: ['rIssuer1', 'rIssuer2'] });
+               service.refreshKnownIssuers();
+
+               expect(service.getAvailableCurrencies()).toContain('BOB');
+               expect(service.getIssuersForCurrency('BOB')).toEqual(['rIssuer1', 'rIssuer2']);
+               expect(service.weWant.issuers().map(issuer => issuer.address)).toEqual(['rIssuer1', 'rIssuer2']);
+               expect(service.weWant.issuer()).toBe('rIssuer1');
+
+               await service.selectWeWantIssuer('rIssuer2', mockWallet);
+               service.refreshKnownIssuers();
+
+               expect(service.weWant.issuer()).toBe('rIssuer2');
+          });
+     });
+
      describe('selectWeWantCurrency', () => {
           it('should set currency, load issuers, and update balance', async () => {
                const mockIssuers = { XRP: [], USD: ['rIssuer1', 'rIssuer2'] };

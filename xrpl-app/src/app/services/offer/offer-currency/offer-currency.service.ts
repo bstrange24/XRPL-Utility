@@ -25,7 +25,7 @@ export class OfferCurrencyService {
      public readonly utils = inject(UtilsService);
      public readonly walletManagerService = inject(WalletManagerService);
 
-     private knownTrustLinesIssuers: Record<string, string[]> = { XRP: [] };
+     private readonly knownTrustLinesIssuers = signal<Record<string, string[]>>({ XRP: [] });
      public readonly weWant: CurrencySideState;
      public readonly weSpend: CurrencySideState;
      private readonly walletAddress = signal<string>('');
@@ -38,8 +38,6 @@ export class OfferCurrencyService {
           // Initialize the side states
           this.weWant = this.createSideState();
           this.weSpend = this.createSideState();
-
-          this.loadKnownIssuersFromStorage();
 
           // Watch for currency changes without infinite loops
           effect(() => {
@@ -71,13 +69,26 @@ export class OfferCurrencyService {
                const data = this.storage.getKnownIssuers('knownIssuers');
 
                if (data && typeof data === 'object') {
-                    this.knownTrustLinesIssuers = { ...data }; // deep copy
+                    this.knownTrustLinesIssuers.set({ ...data });
                } else {
-                    this.knownTrustLinesIssuers = { XRP: [] };
+                    this.knownTrustLinesIssuers.set({ XRP: [] });
                }
           } catch (e) {
                console.error('Failed to load known issuers from storage', e);
-               this.knownTrustLinesIssuers = { XRP: [] };
+               this.knownTrustLinesIssuers.set({ XRP: [] });
+          }
+     }
+
+     refreshKnownIssuers(): void {
+          this.loadKnownIssuersFromStorage();
+          this.refreshIssuerOptions(this.weWant);
+          this.refreshIssuerOptions(this.weSpend);
+     }
+
+     private refreshIssuerOptions(side: CurrencySideState): void {
+          const currency = side.currency();
+          if (currency && currency !== 'XRP') {
+               this.loadIssuersForSide(currency, side);
           }
      }
 
@@ -87,7 +98,7 @@ export class OfferCurrencyService {
      }
 
      getAvailableCurrencies(includeXrp = false): string[] {
-          let currencies = Object.keys(this.knownTrustLinesIssuers);
+          let currencies = Object.keys(this.knownTrustLinesIssuers());
           if (!includeXrp) {
                currencies = currencies.filter(c => c !== 'XRP');
           }
@@ -147,7 +158,7 @@ export class OfferCurrencyService {
                return;
           }
 
-          const known = this.knownTrustLinesIssuers[currency] || [];
+          const known = this.knownTrustLinesIssuers()[currency] || [];
 
           const issuers: IssuerItem[] = known
                .map(addr => ({
@@ -158,13 +169,11 @@ export class OfferCurrencyService {
 
           side.issuers.set(issuers);
 
-          // CRITICAL: Always set an issuer if available
           if (issuers.length > 0) {
-               const selected = issuers[0].address;
+               const currentIssuer = side.issuer();
+               const selected = issuers.some(issuer => issuer.address === currentIssuer) ? currentIssuer : issuers[0].address;
                side.issuer.set(selected);
-               console.log(`✅ Auto-selected issuer for ${currency}: ${selected}`);
           } else {
-               console.warn(`⚠️ No issuers found for currency: ${currency}`);
                side.issuer.set('');
           }
      }
@@ -282,7 +291,7 @@ export class OfferCurrencyService {
 
      getIssuersForCurrency(currency: string): string[] {
           if (!currency || currency === 'XRP') return [];
-          return this.knownTrustLinesIssuers[currency] || [];
+          return this.knownTrustLinesIssuers()[currency] || [];
      }
 
      reset() {

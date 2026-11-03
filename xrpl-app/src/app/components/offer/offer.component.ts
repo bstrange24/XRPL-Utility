@@ -108,6 +108,7 @@ export class CreateOfferComponent extends WalletDestinationBase implements OnIni
      ngOnInit(): void {
           this.applyTabFromQueryParam(this.route, OFFER_TX_TYPES as any, tab => this.setTab(tab));
           this.transactionDropdownService.loadCustomDestinations();
+          this.offerCurrency.refreshKnownIssuers();
           this.setRightPanel();
 
           // FIXED: Only load if we have wallets
