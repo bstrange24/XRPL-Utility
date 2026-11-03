@@ -368,6 +368,48 @@ describe('CreateCredentialsComponent', () => {
                expect(toastService.error).toHaveBeenCalled();
                expect(credentialOrchestrator.executeCredentialTx).not.toHaveBeenCalled();
           });
+
+          it('should verify a received credential using its issuer, not the current wallet', async () => {
+               const request = jasmine.createSpy('request').and.resolveTo({
+                    result: {
+                         node: {
+                              LedgerEntryType: 'Credential',
+                              Issuer: 'rWallet1Issuer',
+                              Subject: mockWallet.classicAddress,
+                              Flags: 65536,
+                         },
+                    },
+               });
+               txEnvironmentService.prepareTxEnvironment.and.resolveTo({
+                    client: { request } as any,
+                    wallet: mockWallet,
+                    ledgerInfo: { currentRippleTime: 1000 },
+               } as any);
+               credentialStore.selectedCredentials.set({
+                    index: 'credential-index',
+                    CredentialType: 'KYC',
+                    Issuer: 'rWallet1Issuer',
+                    Subject: mockWallet.classicAddress,
+               });
+               credentialIDSignal.set('credential-index');
+               credentialTypeSignal.set('KYC');
+               credentialViewModelService.activeTab.set('verifyCredential');
+
+               await component.performAction();
+
+               expect(request).toHaveBeenCalledWith(
+                    jasmine.objectContaining({
+                         command: 'ledger_entry',
+                         credential: {
+                              subject: mockWallet.classicAddress,
+                              issuer: 'rWallet1Issuer',
+                              credential_type: '4B5943',
+                         },
+                         ledger_index: 'validated',
+                    }),
+               );
+               expect(toastService.success).toHaveBeenCalledWith('Credential is verified.', jasmine.any(Number), false);
+          });
      });
 
      describe('handleSearchQueryChange', () => {

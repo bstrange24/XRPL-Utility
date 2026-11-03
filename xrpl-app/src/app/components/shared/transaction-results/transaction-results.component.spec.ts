@@ -31,4 +31,21 @@ describe('TransactionResultsComponent', () => {
     expect(component.formatDetailLabel(undefined)).toBe('Unknown');
     expect(component.formatDetailLabel(null)).toBe('Unknown');
   });
+
+  it('should render credential verification without a transaction hash', () => {
+    fixture.componentRef.setInput('resultData', {
+      ledger_index: 6648654,
+      node: {
+        LedgerEntryType: 'Credential',
+        Flags: 65536,
+      },
+    });
+    fixture.componentRef.setInput('explorerUrl', 'https://devnet.xrplwin.com/');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Credential accepted');
+    expect(fixture.nativeElement.textContent).toContain('Credential Accepted');
+    expect(fixture.nativeElement.textContent).not.toContain('Transaction Hash:');
+    expect(fixture.nativeElement.textContent).not.toContain('Timestamp:');
+  });
 });

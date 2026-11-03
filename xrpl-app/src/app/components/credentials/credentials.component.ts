@@ -307,14 +307,14 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
                command: 'ledger_entry',
                credential: {
                     subject: selected.Subject ?? '',
-                    issuer: env.wallet.classicAddress,
+                    issuer: selected.Issuer,
                     credential_type: credentialTypeHex,
                },
                ledger_index: 'validated',
           };
 
           console.info('Looking up credential...', ledgerEntryRequest);
-          this.txUiService.setTxResultSignal(ledgerEntryRequest);
+          this.txUiService.clearTxResultSignal();
 
           let xrplResponse;
 
@@ -323,7 +323,6 @@ export class CreateCredentialsComponent extends WalletDestinationBase implements
           } catch (error: any) {
                if (error.data?.error === 'entryNotFound') {
                     console.info('Credential was not found');
-                    this.txUiService.setTxResultSignal(error.data);
                     this.toastService.error('Credential not found.', AppConstants.TOAST.ERROR);
                     return false;
                }

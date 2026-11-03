@@ -286,7 +286,7 @@ export class CredentialsSummaryComponent {
 
      onCredentialClick(cred: CredentialItemVm) {
           if (this.tab() === 'createCredential') return;
-          this.credentialUtilService.selectCredentialFromList(cred, this.tab(), this.wallet()?.address ?? '');
+          this.credentialUtilService.selectCredentialFromList(cred);
      }
 
      clearSearch() {

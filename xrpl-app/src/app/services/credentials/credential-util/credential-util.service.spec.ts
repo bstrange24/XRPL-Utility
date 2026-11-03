@@ -162,16 +162,25 @@ describe('CredentialUtilService', () => {
      });
 
      describe('selectCredentialFromList', () => {
-          it('should set credential fields for non-verify tab', () => {
-               service.selectCredentialFromList(mockCredentialItem, 'createCredential', 'rWallet');
+          it('should set selected credential fields', () => {
+               service.selectCredentialFromList(mockCredentialItem);
                expect(credentialStoreMock.setField).toHaveBeenCalledWith('selectedCredentials', mockCredentialItem);
                expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialID', mockCredentialItem.index);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialType', mockCredentialItem.CredentialType);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialIssuer', mockCredentialItem.Issuer);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('subject', mockCredentialItem.Subject);
           });
 
-          it('should reset dropdown when subject tries to verify own credential', () => {
-               const credWithSelfSubject = { ...mockCredentialItem, Subject: 'rWallet' };
-               service.selectCredentialFromList(credWithSelfSubject, 'verifyCredential', 'rWallet');
-               expect(credentialStoreMock.resetCredentialIdDropDown).toHaveBeenCalled();
+          it('should populate fields when selecting a received credential to verify', () => {
+               const receivedCredential = { ...mockCredentialItem, Subject: 'rWallet2' };
+               service.selectCredentialFromList(receivedCredential);
+
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('selectedCredentials', receivedCredential);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialID', receivedCredential.index);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialType', receivedCredential.CredentialType);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('credentialIssuer', receivedCredential.Issuer);
+               expect(credentialStoreMock.setField).toHaveBeenCalledWith('subject', receivedCredential.Subject);
+               expect(credentialStoreMock.resetCredentialIdDropDown).not.toHaveBeenCalled();
           });
      });
 

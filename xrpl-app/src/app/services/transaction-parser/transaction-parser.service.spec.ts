@@ -62,4 +62,45 @@ describe('TransactionParserService', () => {
     expect(result.keyDetails.find(detail => detail.label === 'Properties')?.value).toBe('Burnable, Only XRP, Transferable, Mutable');
     expect(result.summary.description).toBe('Minted new NFT (burnable) (transferable)');
   });
+
+  it('should parse an accepted credential lookup without transaction metadata', () => {
+    const result = service.parse(
+      {
+        ledger_index: 6648654,
+        node: {
+          LedgerEntryType: 'Credential',
+          Flags: 65536,
+          Subject: 'rSubject',
+          Issuer: 'rIssuer',
+        },
+      },
+      'https://devnet.xrplwin.com/',
+    );
+
+    expect(result.isTransaction).toBeFalse();
+    expect(result.status).toBe('success');
+    expect(result.transactionType).toBe('Credential Verification');
+    expect(result.summary.title).toBe('Credential Accepted');
+    expect(result.hash).toBeUndefined();
+    expect(result.ledgerIndex).toBe(6648654);
+    expect(result.timestamp).toBeUndefined();
+    expect(result.explorerUrl).toBe('https://devnet.xrplwin.com/');
+  });
+
+  it('should report a credential that is still awaiting acceptance', () => {
+    const result = service.parse(
+      {
+        ledger_index: 6648654,
+        node: {
+          LedgerEntryType: 'Credential',
+          Flags: 0,
+        },
+      },
+      'https://devnet.xrplwin.com/',
+    );
+
+    expect(result.isTransaction).toBeFalse();
+    expect(result.status).toBe('failed');
+    expect(result.summary.title).toBe('Credential Not Accepted');
+  });
 });

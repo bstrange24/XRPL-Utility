@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { AppConstants } from '../../core/app.constants';
 import { TransactionUiService } from '../transaction-ui/transaction-ui.service';
 import { XrplTxOptionsStore } from '../../components/shared/stores/xrpl-tx-options.store';
 
@@ -49,11 +50,12 @@ export interface ParsedTransactionResult {
      warnings?: string[];
      errors?: string[];
      successMessage?: string[];
-     hash: string;
-     ledgerIndex: number;
-     timestamp: Date;
+     hash?: string;
+     ledgerIndex?: number;
+     timestamp?: Date;
      explorerUrl: string;
      isValidated: boolean;
+     isTransaction: boolean;
      rawData?: any; // Optional for advanced users
 }
 
@@ -62,6 +64,10 @@ export class TransactionParserService {
      public readonly xrplTxOptionsStore = inject(XrplTxOptionsStore);
 
      parse(result: any, explorerUrl: string): ParsedTransactionResult {
+          if (result.node?.LedgerEntryType === 'Credential') {
+               return this.parseCredentialVerification(result, explorerUrl);
+          }
+
           const txJson = result.tx_json || result;
           const meta = result.meta;
           const isValidated = result.validated;
@@ -99,6 +105,30 @@ export class TransactionParserService {
                successMessage: this.checkSuccessMessage(result),
                rawData: result, // Keep raw data for debugging
                isValidated: isValidated,
+               isTransaction: true,
+          };
+     }
+
+     private parseCredentialVerification(result: any, explorerUrl: string): ParsedTransactionResult {
+          const credential = result.node;
+          const isAccepted = Boolean((credential.Flags ?? 0) & AppConstants.LSF_ACCEPTED);
+
+          return {
+               status: isAccepted ? 'success' : 'failed',
+               transactionType: 'Credential Verification',
+               summary: {
+                    title: isAccepted ? 'Credential Accepted' : 'Credential Not Accepted',
+                    description: isAccepted ? 'This credential has been accepted by its issuer.' : 'This credential has not been accepted by its issuer.',
+               },
+               keyDetails: [],
+               affectedAccounts: [],
+               hash: undefined,
+               ledgerIndex: result.ledger_index,
+               timestamp: undefined,
+               explorerUrl,
+               isValidated: true,
+               isTransaction: false,
+               rawData: result,
           };
      }
 

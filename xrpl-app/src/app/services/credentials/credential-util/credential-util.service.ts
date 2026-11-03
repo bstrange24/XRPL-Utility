@@ -34,20 +34,12 @@ export class CredentialUtilService extends PerformanceBaseComponent {
      filteredSubject = computed(() => this.filterCredentials(this.credentialStore.subjectCredentials(), this.credentialStore.credentialIdSearchTerm()));
      selectedCredentialIndex = computed(() => this.credentialStore.credentialID());
 
-     selectCredentialFromList(cred: CredentialItem, tab: string, walletAddress: string) {
+     selectCredentialFromList(cred: CredentialItem) {
           this.credentialStore.setField('selectedCredentials', cred);
-
-          const isVerifyTab = tab === 'verifyCredential';
-          const isSubject = cred.Subject === walletAddress;
-
-          if (!isVerifyTab || !isSubject) {
-               this.credentialStore.setField('credentialID', cred.index);
-               this.credentialStore.setField('credentialType', cred.CredentialType || '');
-               this.credentialStore.setField('credentialIssuer', cred.Issuer);
-               this.credentialStore.setField('subject', cred.Subject);
-          } else {
-               this.credentialStore.resetCredentialIdDropDown();
-          }
+          this.credentialStore.setField('credentialID', cred.index);
+          this.credentialStore.setField('credentialType', cred.CredentialType || '');
+          this.credentialStore.setField('credentialIssuer', cred.Issuer);
+          this.credentialStore.setField('subject', cred.Subject);
      }
 
      private parseCredentials(accountObjects: xrpl.AccountObjectsResponse, address: string, role: 'issuer' | 'subject') {

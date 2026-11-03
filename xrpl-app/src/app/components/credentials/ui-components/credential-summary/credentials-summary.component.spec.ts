@@ -272,10 +272,10 @@ describe('CredentialsSummaryComponent', () => {
                expect(credentialUtilService.selectCredentialFromList).not.toHaveBeenCalled();
           });
 
-          it('should delegate selection with the active tab and wallet address', () => {
+          it('should delegate selection to the credential utility service', () => {
                component.onCredentialClick(mockCred);
 
-               expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(mockCred, 'acceptCredential', mockWallet.address);
+               expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(mockCred);
           });
 
           it('should delegate credentials from other issuers for verification to the utility service', () => {
@@ -285,7 +285,7 @@ describe('CredentialsSummaryComponent', () => {
 
                component.onCredentialClick(credentialFromOther);
 
-               expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(credentialFromOther, 'verifyCredential', mockWallet.address);
+               expect(credentialUtilService.selectCredentialFromList).toHaveBeenCalledWith(credentialFromOther);
           });
      });
 
