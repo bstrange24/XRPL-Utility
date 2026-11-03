@@ -91,11 +91,11 @@
                <div class="space-y-2">
                     <div>
                          <div class="field-label">
-                              <label for="lpTokenToBurn" class="label-primary">Maximum Token Amount (optional)</label>
+                              <label for="lpTokenToBurn" class="label-primary">Maximum Token Amount (optional - leave blank to claw back all available tokens.)</label>
                          </div>
 
                          <div class="flex items-center gap-2">
-                              <p class="text-secondary">Maximum amount of your issued token to claw back from this holder. Leave blank to claw back all available tokens.</p>
+                              <p class="text-secondary">Maximum amount of your issued token to claw back from this holder.</p>
                               <button type="button" (click)="toggleLpWithdrawHelper()" class="text-gray-400 hover:text-gray-600 pb-2">
                                    <ng-icon name="heroQuestionMarkCircle" size="14" />
                               </button>

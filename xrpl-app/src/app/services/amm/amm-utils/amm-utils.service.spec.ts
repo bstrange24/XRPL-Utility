@@ -214,6 +214,11 @@ describe('AmmUtilsService', () => {
                expect(ammStoreServiceMock.setField).toHaveBeenCalledWith('tradingFeeField', '0.3');
           });
 
+          it('should associate AMM data with the wallet that was queried', async () => {
+               await service.checkAmmParticipation(true, mockAmmResponse, undefined, 'rWallet1');
+               expect(ammStoreServiceMock.setField).toHaveBeenCalledWith('ammInfoWalletAddress', 'rWallet1');
+          });
+
           it('should assign response balances to the token and XRP assets by type', async () => {
                await service.checkAmmParticipation(true, mockAmmResponse);
                expect(utilsServiceMock.formatTokenBalance).toHaveBeenCalledWith('500', 18);

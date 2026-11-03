@@ -6,6 +6,7 @@ export interface AmmState {
      lpTokenBalance: string;
      lpTokenTotal: string;
      ammAccount: string;
+     ammInfoWalletAddress: string;
      weWantCurrency: string;
      weSpendCurrency: string;
      availableCurrencies: string[];
@@ -40,6 +41,7 @@ const initialState: AmmState = {
      lpTokenBalance: '',
      lpTokenTotal: '',
      ammAccount: '',
+     ammInfoWalletAddress: '',
      weWantCurrency: '',
      weSpendCurrency: 'XRP',
      availableCurrencies: [],

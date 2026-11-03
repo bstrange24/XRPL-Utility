@@ -88,7 +88,7 @@ export class AmmUtilsService {
      }
 
      // amm-utils.service.ts
-     async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any, totalResponse?: any) {
+     async checkAmmParticipation(displayChanges: boolean = false, ammResponse?: any, totalResponse?: any, walletAddress?: string) {
           let result: {
                isAmmPool: boolean;
                isLiquidityProvider: boolean;
@@ -137,10 +137,12 @@ export class AmmUtilsService {
 
                          // Signal whether the user is a liquidity provider
                          this.ammStoreService.setField('isLiquidityProvider', result.isLiquidityProvider);
+                         this.ammStoreService.setField('ammInfoWalletAddress', walletAddress ?? '');
                     }
                } else if (displayChanges) {
                     this.ammStoreService.setField('lpTokenBalance', '0');
                     this.ammStoreService.setField('ammAccount', '');
+                    this.ammStoreService.setField('ammInfoWalletAddress', '');
                     this.ammStoreService.setField('lpTokenTotal', '');
                     this.ammStoreService.setField('assetPool1Balance', '0');
                     this.ammStoreService.setField('assetPool2Balance', '0');
@@ -151,6 +153,7 @@ export class AmmUtilsService {
                console.warn('Not an AMM account:', e);
                if (displayChanges) {
                     this.ammStoreService.setField('isLiquidityProvider', false);
+                    this.ammStoreService.setField('ammInfoWalletAddress', '');
                }
           }
           return result;

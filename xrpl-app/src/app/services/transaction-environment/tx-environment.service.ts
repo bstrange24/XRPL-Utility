@@ -264,7 +264,7 @@ export class TxEnvironmentService {
                if (includeParticipation) {
                     // Without an account, amm_info reports the total LP supply (needed for the user's pool share)
                     const totalPromise = this.xrplService.getAMMInfo(client, asset, asset2, undefined, 'validated').catch(() => undefined);
-                    tasks.participation = Promise.all([ammPromise, totalPromise]).then(([ammResp, totalResp]) => this.ammUtilsService.checkAmmParticipation(true, ammResp, totalResp));
+                    tasks.participation = Promise.all([ammPromise, totalPromise]).then(([ammResp, totalResp]) => this.ammUtilsService.checkAmmParticipation(true, ammResp, totalResp, wallet.classicAddress));
                }
           }
 

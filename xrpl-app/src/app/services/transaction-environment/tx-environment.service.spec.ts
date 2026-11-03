@@ -117,6 +117,7 @@ describe('TxEnvironmentService', () => {
           });
 
           expect(xrplServiceMock.getAMMInfo).toHaveBeenCalled();
+          expect(ammMock.checkAmmParticipation).toHaveBeenCalledWith(true, { amm: true }, { amm: true }, 'rTEST');
      });
 
      it('should include destination data when provided', async () => {
