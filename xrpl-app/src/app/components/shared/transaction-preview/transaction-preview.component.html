@@ -19,6 +19,30 @@
 <!-- Tx Preview -->
 @if (txUiService.txSignal().length > 0) {
 <div class="mt-0">
+     @if (txUiService.txSignal().length > 1) {
+     <section class="space-y-3" aria-label="Transaction batch preview">
+          <div class="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+               <div>
+                    <h3 class="text-sm font-semibold text-blue-950">Transaction batch</h3>
+                    <p class="text-xs text-blue-700">Expand a transaction to review its details.</p>
+               </div>
+               <span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-800">{{ txUiService.txSignal().length }} transactions</span>
+          </div>
+          @for (tx of txUiService.txSignal(); track $index) {
+          <details class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm" [open]="$index === 0">
+               <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 hover:bg-gray-50">
+                    <span class="text-sm font-semibold text-gray-800">Transaction {{ $index + 1 }} of {{ txUiService.txSignal().length }}</span>
+                    <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800">{{ tx?.TransactionType || 'Transaction' }}</span>
+               </summary>
+               @if (tx) {
+               <div class="border-t border-gray-100 p-5">
+                    <app-transaction-previewer [transactionData]="tx" [accountInfo]="accountConfiguratorStoreService.accountInfo"></app-transaction-previewer>
+               </div>
+               }
+          </details>
+          }
+     </section>
+     } @else {
      @for (tx of txUiService.txSignal(); track $index) {
      <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
           <!-- Header with actions -->
@@ -36,6 +60,7 @@
                }
           </div>
      </div>
+     }
      }
 </div>
 }
@@ -80,8 +105,29 @@
 
      <!-- Result Content -->
      <div class="p-6">
+          @if (txUiService.txResultSignal().length > 1) {
+          <div class="mb-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+               <div>
+                    <h3 class="text-sm font-semibold text-gray-900">Transaction results</h3>
+                    <p class="text-xs text-gray-600">Expand a result to review its confirmation details.</p>
+               </div>
+               <span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-gray-700">{{ txUiService.txResultSignal().length }} results</span>
+          </div>
+          @for (result of txUiService.txResultSignal(); track $index) {
+          <details class="mb-3 overflow-hidden rounded-xl border border-gray-200 bg-white last:mb-0" [open]="$index === 0">
+               <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50">
+                    <span class="text-sm font-semibold text-gray-800">Result {{ $index + 1 }} of {{ txUiService.txResultSignal().length }}</span>
+                    <span class="text-xs text-gray-500">{{ result?.tx_json?.TransactionType || result?.TransactionType || 'Transaction' }}</span>
+               </summary>
+               <div class="border-t border-gray-100 p-4">
+                    <app-transaction-results [resultData]="result" [explorerUrl]="txUiService.explorerUrl()"></app-transaction-results>
+               </div>
+          </details>
+          }
+          } @else {
           @for (result of txUiService.txResultSignal(); track $index) {
           <app-transaction-results [resultData]="result" [explorerUrl]="txUiService.explorerUrl()"></app-transaction-results>
+          }
           }
      </div>
 </div>
