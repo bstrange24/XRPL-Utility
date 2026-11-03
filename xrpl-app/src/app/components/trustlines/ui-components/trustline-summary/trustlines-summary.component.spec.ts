@@ -191,6 +191,22 @@ describe('TrustlinesSummaryComponent', () => {
      });
 
      describe('Template Data Display', () => {
+          it('should format balance values consistently with trustline amounts', () => {
+               expect(component.formatBalance('1234.5')).toBe('1,234.500');
+          });
+
+          it('should format small balances represented in scientific notation', () => {
+               expect(component.formatBalance('1.2345e-7')).toBe('0.000');
+          });
+
+          it('should format large balances represented in scientific notation', () => {
+               expect(component.formatBalance('1.2345e+7')).toBe('12,345,000.000');
+          });
+
+          it('should round balances to three decimal places', () => {
+               expect(component.formatBalance('0.6666755')).toBe('0.667');
+          });
+
           it('should display trustline currency', () => {
                const trustline = mockTrustlineInfo.trustlinesToShow[0];
                expect(trustline.currency).toBe('USD');

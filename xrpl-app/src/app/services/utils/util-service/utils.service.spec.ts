@@ -542,6 +542,10 @@ describe('UtilsService', () => {
                expect(service.normalizeCurrencyCode('USD')).toBe('USD');
           });
 
+          it('should abbreviate LP token currency codes', () => {
+               expect(service.normalizeCurrencyCode('0333D0223A3CD578BBE578932440B6B9FD7FD535')).toBe('LP Token 0333D0...FD535');
+          });
+
           // it('should handle XRP', () => {
           //   expect(service.normalizeCurrencyCode('xrp')).toBe('XRP');
           // });

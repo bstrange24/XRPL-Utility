@@ -525,7 +525,7 @@ export class UtilsService {
                     }
                }
                if (hex.startsWith('03')) {
-                    return 'LP Token ' + hex;
+                    return `LP Token ${hex.slice(0, 6)}...${hex.slice(-5)}`;
                }
                const decodedHex = Buffer.from(hex, 'hex').toString('utf-8').slice(0, maxLength).trim();
                if (new RegExp(/[a-zA-Z0-9]{3,}/).exec(decodedHex) && decodedHex.toLowerCase() !== 'xrp') {

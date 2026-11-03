@@ -176,7 +176,7 @@ export class AccountChangesOrchestratorService {
      private normalizeCurrencyCode(currency: string): string {
           if (!/^[a-fA-F0-9]{40}$/.test(currency)) return currency;
           const hex = currency.replace(/(00)+$/g, '');
-          if (hex.startsWith('03')) return `LP Token ${hex}`;
+          if (hex.startsWith('03')) return `LP Token ${hex.slice(0, 6)}...${hex.slice(-5)}`;
 
           const decoded = xrpl.convertHexToString(hex).replace(/\0/g, '').trim();
           const isPrintable = /^[\x20-\x7E]+$/.test(decoded);

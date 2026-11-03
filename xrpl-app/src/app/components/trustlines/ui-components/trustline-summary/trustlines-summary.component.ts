@@ -48,6 +48,15 @@ type SortDirection = 'asc' | 'desc';
 export class TrustlinesSummaryComponent {
      readonly formatAmount = formatTrustlineAmount;
 
+     formatBalance(value: string | number | null | undefined): string {
+          if (value === null || value === undefined || value === '') return formatTrustlineAmount(value);
+
+          const amount = String(value);
+          if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(amount)) return formatTrustlineAmount(amount);
+
+          return formatTrustlineAmount(new Decimal(amount).toFixed(3));
+     }
+
      private readonly copyUtilService = inject(CopyUtilService);
      public readonly txUiService = inject(TransactionUiService);
      public readonly trustlineStoreService = inject(TrustlineStoreService);

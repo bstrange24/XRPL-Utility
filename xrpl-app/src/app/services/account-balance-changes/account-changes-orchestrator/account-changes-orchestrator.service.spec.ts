@@ -287,7 +287,7 @@ describe('AccountChangesOrchestratorService', () => {
                const result = service.processTransactions([tx], testAddress);
 
                expect(result.length).toBe(1);
-               expect(result[0].currency).toBe(`LP Token ${lpTokenCurrency}`);
+               expect(result[0].currency).toBe(`LP Token ${lpTokenCurrency.slice(0, 6)}...${lpTokenCurrency.slice(-5)}`);
                expect(result[0].currency).not.toContain('\uFFFD');
           });
 
