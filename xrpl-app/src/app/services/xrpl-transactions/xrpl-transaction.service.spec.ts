@@ -201,7 +201,7 @@ describe('XrplTransactionService', () => {
 
                service.processTxFinalResult(finalResult, message, result);
 
-               expect(toastService.success).toHaveBeenCalled();
+               expect(toastService.success).not.toHaveBeenCalled();
           });
 
           it('should handle failed transaction', () => {

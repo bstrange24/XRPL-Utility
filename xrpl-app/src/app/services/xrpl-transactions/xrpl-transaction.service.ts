@@ -133,7 +133,7 @@ export class XrplTransactionService extends PerformanceBaseComponent {
 
      processTxFinalResult(finalResult: any, message: string, result: { success: boolean; hash?: string; error?: string }) {
           if (this.utilsService.isTxSuccessful({ result: finalResult })) {
-               this.toastService.success(message, AppConstants.TOAST.SUCCESS, true, result.hash, this.txUiService.explorerUrl() + 'tx/');
+               // this.toastService.success(message, AppConstants.TOAST.SUCCESS, true, result.hash, this.txUiService.explorerUrl() + 'tx/');
                this.txUiService.currentStep.set('success');
           } else {
                const errorMsg = this.utilsService.getTransactionResultMessage({ result: finalResult });
