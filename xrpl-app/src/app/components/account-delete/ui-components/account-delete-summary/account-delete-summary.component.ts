@@ -36,6 +36,7 @@ export class AccountDeleteSummaryComponent {
      info = input.required<{ walletName: string; canDelete: boolean; blockers: BlockerItem[]; eligibilityIssues: BlockerItem[]; balanceWarning: string | null } | null | undefined>();
      infoPanelExpanded = input<boolean>();
      tab = input<string>('delete');
+     resetTrigger = input<unknown>();
 
      toggleInfoPanel = output<void>();
 

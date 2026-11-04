@@ -1,71 +1,51 @@
 <!-- Spinner / progress (shown during preparing → waiting_validation) -->
-@if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed' && txUiService.isSignedTx() === false) {
-<div class="flex flex-col items-center gap-3 p-4 bg-white rounded-2xl shadow-lg border border-blue-200 mt-3 mb-5">
-     <div class="relative">
-          <div class="w-8 h-8 border-2 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
-          <lucide-icon name="loader" size="16" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"> </lucide-icon>
-     </div>
-
-     <div class="text-center">
-          <p class="text-xs font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
-
-          @if (txUiService.detailedStatus()) {
-          <p class="text-[11px] text-blue-500 mt-0.5">{{ txUiService.detailedStatus() }}</p>
-          }
-     </div>
-</div>
-}
-
-<!-- Tx Preview -->
 @if (txUiService.txSignal().length > 0) {
-<div class="mt-0">
-     @if (txUiService.txSignal().length > 1) {
-     <section class="space-y-3" aria-label="Transaction batch preview">
-          <div class="flex items-center justify-between rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
+<div class="mt-4 bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
+     <!-- Preview Content -->
+     <div class="p-6">
+          <!-- Status / spinner card (only when active) -->
+          @if (txUiService.currentStep() !== 'idle' && txUiService.currentStep() !== 'success' && txUiService.currentStep() !== 'failed' && txUiService.isSignedTx() === false) {
+          <div class="mb-4 flex flex-col items-center gap-3 p-4 bg-white rounded-xl shadow-sm border border-blue-200">
+               <div class="relative">
+                    <div class="w-8 h-8 border-2 border-blue-200 border-t-green-600 rounded-full animate-spin"></div>
+                    <lucide-icon name="loader" size="16" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-green-600"> </lucide-icon>
+               </div>
+               <div class="text-center">
+                    <p class="text-xs font-medium text-blue-900">{{ txUiService.stepMessage() }}</p>
+                    @if (txUiService.detailedStatus()) {
+                    <p class="text-[11px] text-blue-500 mt-0.5">{{ txUiService.detailedStatus() }}</p>
+                    }
+               </div>
+          </div>
+          }
+
+          <!-- Batch header (only when > 1) -->
+          @if (txUiService.txSignal().length > 1) {
+          <div class="mb-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
                <div>
                     <h3 class="text-sm font-semibold text-blue-950">Transaction batch</h3>
                     <p class="text-xs text-blue-700">Expand a transaction to review its details.</p>
                </div>
                <span class="rounded-full bg-white px-3 py-1 text-xs font-medium text-blue-800">{{ txUiService.txSignal().length }} transactions</span>
           </div>
-          @for (tx of txUiService.txSignal(); track $index) {
-          <details class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm" [open]="$index === 0">
-               <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 hover:bg-gray-50">
+          } @if (txUiService.txSignal().length > 1) { @for (tx of txUiService.txSignal(); track $index) {
+          <details class="mb-3 overflow-hidden rounded-xl border border-gray-200 bg-white last:mb-0" [open]="$index === 0">
+               <summary class="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 hover:bg-gray-50">
                     <span class="text-sm font-semibold text-gray-800">Transaction {{ $index + 1 }} of {{ txUiService.txSignal().length }}</span>
-                    <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800">{{ tx?.TransactionType || 'Transaction' }}</span>
+                    <span class="text-xs text-gray-500">{{ tx?.TransactionType || 'Transaction' }}</span>
                </summary>
                @if (tx) {
-               <div class="border-t border-gray-100 p-5">
+               <div class="border-t border-gray-100 p-4">
                     <app-transaction-previewer [transactionData]="tx" [accountInfo]="accountConfiguratorStoreService.accountInfo"></app-transaction-previewer>
                </div>
                }
           </details>
-          }
-     </section>
-     } @else {
-     @for (tx of txUiService.txSignal(); track $index) {
-     <div class="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-          <!-- Header with actions -->
-          <!-- <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200">
-               <div class="flex items-center gap-2">
-                    <lucide-icon name="lucideZap" size="15" class="text-blue-600 dark:text-blue-400"></lucide-icon>
-                    <p class="text-sm font-semibold text-gray-700 p-0 m-0">Transaction Preview</p>
-               </div>
-          </div> -->
-
-          <!-- Preview Content -->
-          <div class="p-6">
-               @if (tx) {
-               <app-transaction-previewer [transactionData]="tx" [accountInfo]="accountConfiguratorStoreService.accountInfo"></app-transaction-previewer>
-               }
-          </div>
+          } } @else { @for (tx of txUiService.txSignal(); track $index) { @if (tx) {
+          <app-transaction-previewer [transactionData]="tx" [accountInfo]="accountConfiguratorStoreService.accountInfo"></app-transaction-previewer>
+          } } }
      </div>
-     }
-     }
 </div>
-}
-
-@if (txUiService.walletOperationResult(); as wallet) {
+} @if (txUiService.walletOperationResult(); as wallet) {
 <section class="mt-4 rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 via-white to-emerald-50 p-5 sm:p-6" aria-label="Wallet creation result">
      <div class="flex items-start gap-3">
           <svg class="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -77,8 +57,7 @@
                <div class="mt-1 flex flex-wrap gap-x-2 text-sm text-green-700">
                     @if (wallet.name) {
                     <span>{{ wallet.name }}</span>
-                    }
-                    @if (wallet.encryptionAlgorithm) {
+                    } @if (wallet.encryptionAlgorithm) {
                     <span>{{ wallet.encryptionAlgorithm }}</span>
                     }
                </div>
@@ -123,12 +102,9 @@
                     <app-transaction-results [resultData]="result" [explorerUrl]="txUiService.explorerUrl()"></app-transaction-results>
                </div>
           </details>
-          }
-          } @else {
-          @for (result of txUiService.txResultSignal(); track $index) {
+          } } @else { @for (result of txUiService.txResultSignal(); track $index) {
           <app-transaction-results [resultData]="result" [explorerUrl]="txUiService.explorerUrl()"></app-transaction-results>
-          }
-          }
+          } }
      </div>
 </div>
 }
