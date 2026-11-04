@@ -1,6 +1,7 @@
 {
      "framework": "angular",
      "buildCommand": "npm install && npm run build",
+     "installCommand": "npm ci",
      "rewrites": [
           {
                "source": "/api/(.*)",
