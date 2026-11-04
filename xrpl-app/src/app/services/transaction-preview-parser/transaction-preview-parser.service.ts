@@ -1572,22 +1572,69 @@ function formatDrops(drops: string | number): string {
 
 function formatCurrencyAmountPreview(amount: any): string {
      if (!amount) return '0 XRP';
+
      if (typeof amount === 'string') {
           return formatXRPAmount(amount);
      }
+
      if (amount.currency && amount.issuer) {
           const numericValue = Number(amount.value);
-          if (!Number.isFinite(numericValue)) return `${amount.value} ${amount.currency}`;
-          const value = new Intl.NumberFormat(undefined, { maximumFractionDigits: 15 }).format(numericValue);
-          return `${value} ${amount.currency}`;
+          const currencyCode = decodeCurrency(amount.currency);
+          if (!Number.isFinite(numericValue)) return `${amount.value} ${currencyCode}`;
+          const value = new Intl.NumberFormat(undefined, {
+               maximumFractionDigits: 15,
+          }).format(numericValue);
+          return `${value} ${currencyCode}`;
      }
+
      if (amount.mpt_issuance_id) {
           const numericValue = Number(amount.value);
           if (!Number.isFinite(numericValue)) return `${amount.value} MPT`;
-          const value = new Intl.NumberFormat(undefined, { maximumFractionDigits: 15 }).format(numericValue);
+          const value = new Intl.NumberFormat(undefined, {
+               maximumFractionDigits: 15,
+          }).format(numericValue);
           return `${value} MPT`;
      }
+
      return String(amount);
+}
+
+/**
+ * Decodes an XRPL currency code.
+ * - 3-char ASCII codes (ISO 4217 style) are returned as-is (e.g. "USD").
+ * - 40-char hex strings are decoded to ASCII and trailing NUL bytes trimmed
+ *   (e.g. "42494C4C59424F42000000000000000000000000" -> "BILLYBOB").
+ * - Special case: the 40-char all-zero string represents XRP.
+ */
+function decodeCurrency(currency: string): string {
+     if (!currency) return currency;
+
+     // XRP is represented as all-zero 40-char hex in some contexts
+     if (currency.length === 40 && /^0+$/.test(currency)) {
+          return 'XRP';
+     }
+
+     // Long-form currency: exactly 40 hex characters
+     if (currency.length === 40 && /^[0-9A-Fa-f]{40}$/.test(currency)) {
+          // Convert hex -> bytes -> ASCII, drop trailing NULs
+          let hex = currency;
+          // Trim pairs of trailing "00"
+          while (hex.length >= 2 && hex.slice(-2) === '00') {
+               hex = hex.slice(0, -2);
+          }
+          let decoded = '';
+          for (let i = 0; i < hex.length; i += 2) {
+               decoded += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+          }
+          // If decoding produced non-printable garbage, fall back to raw
+          if (/^[\x20-\x7E]+$/.test(decoded)) {
+               return decoded;
+          }
+          return currency;
+     }
+
+     // 3-char (or shorter) ISO code — return as-is
+     return currency;
 }
 
 function getAmountInDisplayUnits(amount: any): number {

@@ -339,23 +339,23 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                const succeeded = results.filter(r => r.success);
                const failed = results.filter(r => !r.success);
 
-               if (succeeded.length > 0) {
-                    this.toastService.successMultipleHashes(
-                         `${succeeded.length} flag update(s) succeeded`,
-                         AppConstants.TOAST.SUCCESS,
-                         succeeded.map(r => ({ hash: r.hash!, label: r.flagName })),
-                         `${this.txUiService.explorerUrl()}tx/`
-                    );
-               }
+               // if (succeeded.length > 0) {
+               //      this.toastService.successMultipleHashes(
+               //           `${succeeded.length} flag update(s) succeeded`,
+               //           AppConstants.TOAST.SUCCESS,
+               //           succeeded.map(r => ({ hash: r.hash!, label: r.flagName })),
+               //           `${this.txUiService.explorerUrl()}tx/`
+               //      );
+               // }
 
-               if (failed.length > 0) {
-                    this.toastService.errorMultipleHashes?.(
-                         `${failed.length} flag update(s) failed`,
-                         AppConstants.TOAST.ERROR,
-                         failed.map(r => ({ hash: r.hash, label: r.flagName, error: r.error })),
-                         `${this.txUiService.explorerUrl()}tx/`
-                    );
-               }
+               // if (failed.length > 0) {
+               //      this.toastService.errorMultipleHashes?.(
+               //           `${failed.length} flag update(s) failed`,
+               //           AppConstants.TOAST.ERROR,
+               //           failed.map(r => ({ hash: r.hash, label: r.flagName, error: r.error })),
+               //           `${this.txUiService.explorerUrl()}tx/`
+               //      );
+               // }
 
                return { success: succeeded.length > 0 || operations.length === 0, modifyCount: succeeded.length, results };
           } catch (err: any) {
@@ -463,23 +463,23 @@ export class AccountConfiguratorOrchestratorService extends PerformanceBaseCompo
                const succeeded = results.filter(r => r.success);
                const failed = results.filter(r => !r.success);
 
-               if (succeeded.length > 0) {
-                    this.toastService.successMultipleHashesWithDepositAuth(
-                         `${succeeded.length} deposit authorization(s) succeeded`,
-                         succeeded.map(r => ({ depostiAuthAddress: r.address, hash: r.hash! })),
-                         `${this.txUiService.explorerUrl()}tx/`,
-                         AppConstants.TOAST.SUCCESS
-                    );
-               }
+               // if (succeeded.length > 0) {
+               //      this.toastService.successMultipleHashesWithDepositAuth(
+               //           `${succeeded.length} deposit authorization(s) succeeded`,
+               //           succeeded.map(r => ({ depostiAuthAddress: r.address, hash: r.hash! })),
+               //           `${this.txUiService.explorerUrl()}tx/`,
+               //           AppConstants.TOAST.SUCCESS
+               //      );
+               // }
 
-               if (failed.length > 0) {
-                    this.toastService.buildMultiErrorMessage(
-                         failed.map(f => ({ address: f.address, hash: f.hash, error: f.error || 'Unknown error' })),
-                         'deposit auth update',
-                         `${this.txUiService.explorerUrl()}tx/`,
-                         AppConstants.TOAST.ERROR
-                    );
-               }
+               // if (failed.length > 0) {
+               //      this.toastService.buildMultiErrorMessage(
+               //           failed.map(f => ({ address: f.address, hash: f.hash, error: f.error || 'Unknown error' })),
+               //           'deposit auth update',
+               //           `${this.txUiService.explorerUrl()}tx/`,
+               //           AppConstants.TOAST.ERROR
+               //      );
+               // }
 
                return {
                     success: succeeded.length > 0 || account.depositAuthAddresses.length === 0,
