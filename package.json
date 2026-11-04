@@ -1,6 +1,8 @@
 {
      "overrides": {
-          "@noble/hashes": "1.8.0"
+          "@xrplf/isomorphic": {
+               "@noble/hashes": "1.8.0"
+          }
      },
      "dependencies": {
           "ang-jsoneditor": "^4.0.2",
