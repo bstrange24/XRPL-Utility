@@ -115,6 +115,7 @@ export class AccountChangesViewModelService {
                case 'VaultCreate':
                case 'VaultModify':
                case 'VaultDeposit':
+               case 'VaultWithdraw':
                case 'VaultClawback':
                case 'VaultDelete':
                     return '#79BDD8';

@@ -72,11 +72,6 @@ export class LendingBrokerCoverClawbackComponent {
           const activeTab = this.loanBrokerViewModelService.activeTab();
           return this.loanBrokerUtilService.brokerItems(brokers, activeTab, address);
      }
-     // public brokerItems() {
-     //      const address = this.loanBrokerViewModelService.currentWalletData()?.address || '';
-     //      const brokers = this.loanBrokerStoreService.existingBrokers();
-     //      return this.loanBrokerUtilService.brokerItems(brokers);
-     // }
 
      public selectedBrokerItem() {
           return this.loanBrokerUtilService.selectedBrokerItem(this.brokerItems(), this.loanBrokerStoreService.selectedBrokerId());
@@ -175,21 +170,6 @@ export class LendingBrokerCoverClawbackComponent {
           const result = (debtNum * coverMin) / 100000;
           return result.toString();
      }
-
-     // public selectedBrokerMinimumCoverRequired(): string | null {
-     //      const broker = this.getSelectedBroker();
-     //      if (!broker) return null;
-     //      // Calculate: DebtTotal * CoverRateMinimum
-     //      const debtTotal = this.selectedBrokerDebtTotal();
-     //      const coverMin = broker.CoverRateMinimum;
-     //      if (!debtTotal || coverMin === null || coverMin === undefined) return null;
-
-     //      const debtNum = parseFloat(debtTotal);
-     //      if (isNaN(debtNum)) return null;
-
-     //      const result = (debtNum * coverMin) / 100000; // CoverRateMinimum is in 1/10th basis points
-     //      return result.toString();
-     // }
 
      // Amount validation
      isAmountValid(): boolean {

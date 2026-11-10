@@ -310,7 +310,7 @@ export class LoanSummaryComponent {
           if (!id) return 'N/A';
 
           if (typeof id === 'string' && id.length > 16) {
-               return `${id.slice(0, 8)}...${id.slice(-8)}`;
+               return `${id.slice(0, 4)}...${id.slice(-4)}`;
           }
           return String(id);
      }
@@ -320,7 +320,7 @@ export class LoanSummaryComponent {
           if (!id) return 'N/A';
 
           if (id.length > 16) {
-               return `${id.slice(0, 8)}...${id.slice(-8)}`;
+               return `${id.slice(0, 4)}...${id.slice(-4)}`;
           }
           return id;
      }

@@ -295,7 +295,7 @@ export class LoanBrokerSummaryComponent {
           if (!id) return 'N/A';
 
           if (id.length > 16) {
-               return `${id.slice(0, 8)}...${id.slice(-8)}`;
+               return `${id.slice(0, 4)}...${id.slice(-4)}`;
           }
           return id;
      }
@@ -305,7 +305,7 @@ export class LoanBrokerSummaryComponent {
           if (!id) return 'N/A';
 
           if (id.length > 16) {
-               return `${id.slice(0, 8)}...${id.slice(-8)}`;
+               return `${id.slice(0, 4)}...${id.slice(-4)}`;
           }
           return id;
      }

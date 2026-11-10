@@ -302,7 +302,7 @@ export class VaultSummaryComponent {
           // If it's a string, truncate it
           if (typeof id === 'string') {
                if (id.length > 16) {
-                    return `${id.slice(0, 16)}...${id.slice(-16)}`;
+                    return `${id.slice(0, 8)}...${id.slice(-8)}`;
                }
                return id;
           }

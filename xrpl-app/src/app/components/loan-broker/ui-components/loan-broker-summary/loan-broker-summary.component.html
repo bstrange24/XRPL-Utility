@@ -87,17 +87,17 @@
 
                                    <!-- Metadata -->
                                    <div class="mt-3 text-sm space-y-1.5">
-                                        <app-summary-key-value label="Vault ID">
-                                             <span class="font-mono text-xs text-gray-900">{{ formatVaultId(broker) }}</span>
-                                        </app-summary-key-value>
-
                                         <app-summary-key-value label="Owner">
                                              <span class="font-mono text-xs">{{ broker.owner || broker.Account || 'N/A' }}</span>
                                         </app-summary-key-value>
 
+                                        <app-summary-key-value label="Vault ID">
+                                             <span class="font-mono text-xs text-gray-900">{{ formatVaultId(broker) }}</span>
+                                        </app-summary-key-value>
+
                                         @if (broker.LoanBrokerID) {
                                         <app-summary-key-value label="Loan Broker ID">
-                                             <span class="font-mono text-xs">{{ broker.LoanBrokerID }}</span>
+                                             <span class="font-mono text-xs">{{ broker.LoanBrokerID.slice(0, 8) }}...{{ broker.LoanBrokerID.slice(-8) }}</span>
                                         </app-summary-key-value>
                                         } @if (broker.ManagementFeeRate !== undefined && broker.ManagementFeeRate !== null) {
                                         <app-summary-key-value label="Management Fee">
