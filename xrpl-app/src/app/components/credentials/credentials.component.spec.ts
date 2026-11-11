@@ -62,6 +62,7 @@ describe('CreateCredentialsComponent', () => {
      const credentialIDSignal = signal('');
      const credentialTypeSignal = signal('');
      const credentialIssuerSignal = signal('');
+     const selectedCredentialsSignal = signal<any>(null);
 
      const mockWallet = {
           address: 'rTestWallet1234567890',
@@ -156,7 +157,7 @@ describe('CreateCredentialsComponent', () => {
                subject: subjectSignal,
                credentialID: credentialIDSignal,
                credentialType: credentialTypeSignal,
-               selectedCredentials: signal(null),
+               selectedCredentials: selectedCredentialsSignal,
                credentialIssuer: credentialIssuerSignal,
                existingCredentials: signal([]),
                subjectCredentials: signal([]),
@@ -212,7 +213,9 @@ describe('CreateCredentialsComponent', () => {
           copyUtilService.copyTxResultSignal.and.returnValue();
           copyUtilService.copyAndToast.and.returnValue();
 
-          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel']);
+          rightPanelService = jasmine.createSpyObj('RightPanelService', ['setPanel', 'clearPanel', 'resetFilters'], {
+               resetTrigger: signal(0),
+          });
 
           await TestBed.configureTestingModule({
                imports: [CreateCredentialsComponent],
@@ -234,7 +237,7 @@ describe('CreateCredentialsComponent', () => {
                     { provide: CopyUtilService, useValue: copyUtilService }, // Add this
                     { provide: LUCIDE_ICONS, useValue: new LucideIconProvider(icons), multi: true },
                     { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: convertToParamMap({}) } } },
-                    { provide: ConnectionGuardService, useValue: { isConnected: signal(true) } },
+                    { provide: ConnectionGuardService, useValue: { isConnected: signal(true), isConnectionReady: () => true } },
                     { provide: XrplDateService, useValue: { isExpired: () => false } },
                ],
           }).compileComponents();
@@ -385,7 +388,7 @@ describe('CreateCredentialsComponent', () => {
                     wallet: mockWallet,
                     ledgerInfo: { currentRippleTime: 1000 },
                } as any);
-               credentialStore.selectedCredentials.set({
+               selectedCredentialsSignal.set({
                     index: 'credential-index',
                     CredentialType: 'KYC',
                     Issuer: 'rWallet1Issuer',

@@ -34,14 +34,14 @@ describe('AMM UI Configuration', () => {
                const tab = AMM_TABS.find(t => t.key === 'clawbackFromAMM');
                expect(tab?.label).toBe('Clawback');
                expect(tab?.icon).toBe('heroArrowUturnLeft');
-               expect(AMM_TAB_META.clawbackFromAMM.desc).toContain('issuer');
+               expect(AMM_TAB_META['clawbackFromAMM'].desc).toContain('issuer');
           });
 
           it('should have swapViaAMM tab configuration', () => {
                const tab = AMM_TABS.find(t => t.key === 'swapViaAMM');
                expect(tab?.label).toBe('Swap');
                expect(tab?.color).toBe('#10b981');
-               expect(AMM_TAB_META.swapViaAMM.desc).toContain('XRP');
+               expect(AMM_TAB_META['swapViaAMM'].desc).toContain('XRP');
           });
 
           it('should have deleteAMM tab configuration', () => {

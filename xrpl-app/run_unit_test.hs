@@ -1,4 +1,7 @@
 To run unit test and coverage for the enitre app execute this from a terminal.
+npm --prefix xrpl-app test -- --browsers ChromeHeadless --watch=false
+ng test --browsers ChromeHeadless --watch=false --include=**/credentials.component.spec.ts
+npm test -- --browsers ChromeHeadless --watch=false
 ng test --code-coverage
 
 The below commands are to run individual test for a particular file.
@@ -6,13 +9,13 @@ The below commands are to run individual test for a particular file.
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/app.component.spec.ts
 
 ////////////////// Account Balance Changes //////////////////
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-balance-changes/account-balance-changes.component.spec.ts
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-balance-changes/ui-components/account-changes-filters/account-changes-filters.component.spec.ts
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-balance-changes/ui-components/account-changes-summary/account-changes-summary.component.spec.ts
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-balance-changes/ui-components/account-changes-table/account-changes-table.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include **/account-balance-changes.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include **/account-changes-filters.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include **/account-changes-summary.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include **/account-changes-table.component.spec.ts
 
 ////////////////// Account Configurator //////////////////
-	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-configurator/account-configurator.component.spec.ts
+	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include **/account-configurator.component.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-configurator/constants/account-configurator.constants.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-configurator/constants/account-configurator.flags.spec.ts
 	npm test -- --watch=false --browsers=ChromeHeadless --code-coverage --include src/app/components/account-configurator/constants/account-configurator.ui.spec.ts

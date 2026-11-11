@@ -91,8 +91,23 @@ export class AccountChangesViewModelService {
                case 'AMMWithdraw':
                case 'AMMCreate':
                case 'AMMDeposit':
+               case 'AMMBid':
+               case 'AMMVote':
+               case 'AMMClawback':
                case 'Clawback':
                     return '#79BDD8';
+
+               case 'XChainCreateBridge':
+               case 'XChainModifyBridge':
+               case 'XChainCreateClaimID':
+               case 'XChainAddClaimAttestation':
+               case 'XChainAddAccountCreateAttestation':
+                    return '#ac7bd4ff';
+
+               case 'XChainCommit':
+               case 'XChainAccountCreateCommit':
+               case 'XChainClaim':
+                    return '#8BE684';
 
                case 'LoanSet':
                case 'LoanDelete':
@@ -108,10 +123,13 @@ export class AccountChangesViewModelService {
                case 'LoanBrokerCoverClose':
                case 'LoanBrokerCoverLiquidate':
                case 'LoanBrokerSet':
+               case 'LoanManage':
                case 'LoanBrokerDelete':
                case 'LoanBrokerCoverCreate':
+               case 'LoanBrokerCoverClawback':
                     return '#f0874bff';
 
+               case 'VaultSet':
                case 'VaultCreate':
                case 'VaultModify':
                case 'VaultDeposit':
@@ -145,7 +163,7 @@ export class AccountChangesViewModelService {
                     return '#9bc5a2ff';
 
                default:
-                    return 'white';
+                    return '#9CA3AF';
           }
      }
 
